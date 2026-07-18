@@ -1,0 +1,111 @@
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+}
+
+header h1 {
+  font-size: 30px;
+  letter-spacing: -0.5px;
+  margin: 0 0 6px;
+}
+.sub {
+  max-width: 640px;
+  margin: 0;
+  color: var(--text);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 24px 0 8px;
+}
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text);
+}
+.controls select,
+.controls input {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text-h);
+  min-width: 150px;
+}
+.controls .search { flex: 1; min-width: 200px; }
+.controls .search input { width: 100%; }
+
+.meta-line {
+  font-size: 13px;
+  color: var(--text);
+  margin: 6px 0 16px;
+}
+
+.tablewrap {
+  overflow-x: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+thead th {
+  background: var(--card);
+  color: var(--text-h);
+  font-weight: 600;
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+thead th.left { text-align: left; }
+thead th.group {
+  text-align: center;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+th.last5, td.last5 { background: var(--last5-bg); }
+
+tbody td {
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+tbody td.left { text-align: left; }
+tbody tr:hover td { background: var(--row-hover); }
+tbody tr:hover td.last5 { background: var(--last5-bg); }
+
+td.token { color: var(--text-h); font-weight: 500; }
+td.avg { font-weight: 600; color: var(--text-h); }
+
+.cat {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.empty, .err { text-align: center; padding: 24px; color: var(--text); }
