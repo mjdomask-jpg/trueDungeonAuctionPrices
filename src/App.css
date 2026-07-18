@@ -50,6 +50,17 @@ header h1 {
   margin: 6px 0 16px;
 }
 
+.cat-section { margin-top: 32px; }
+.cat-header {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  color: var(--text-h);
+  border-bottom: 2px solid var(--accent);
+}
+
 .tablewrap {
   overflow-x: auto;
   background: var(--card);
