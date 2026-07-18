@@ -27,6 +27,9 @@ const CATEGORY_ORDER = [
   'Trade Good', 'Ultra Rare', 'Premium', 'Bonus', 'Preorder', 'Golden Ticket',
 ];
 
+// Categories whose tables get alternating row banding.
+const BANDED_CATEGORIES = new Set(['Trade Good', 'Premium']);
+
 export default function App() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [meta, setMeta] = useState<AuctionMeta[]>([]);
@@ -146,7 +149,7 @@ function CategoryTable({ category, rows }: { category: string; rows: ItemRow[] }
     <section className="cat-section">
       <h2 className="cat-header">{category}</h2>
       <div className="tablewrap">
-        <table>
+        <table className={BANDED_CATEGORIES.has(category) ? 'banded' : undefined}>
           <colgroup>
             <col className="col-token" />
             <col /><col /><col />

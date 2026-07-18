@@ -112,6 +112,9 @@ tbody td:not(.left) {
   font-family: var(--sans);
   font-variant-numeric: tabular-nums lining-nums;
 }
+/* Alternating row banding (applied only to select category tables). The band
+   sits on the row so the Last-5 column tint and hover states paint over it. */
+table.banded tbody tr:nth-child(even) { background: var(--band); }
 tbody tr:hover td { background: var(--row-hover); }
 tbody tr:hover td.last5 { background: var(--last5-bg); }
 
