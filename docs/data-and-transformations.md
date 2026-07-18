@@ -156,13 +156,24 @@ The rows are rendered as **one table per category** (not a single combined table
   Auctions** — Max / Avg / Min — then **Full Season** — Max / Avg / Min. The two
   `Avg` cells are emphasized (bold). There is no longer an Item column, a Sales
   (count) column, or an in-row Category column (the category is the table header).
-- **Token column width** is fixed at `320px` and shared across all tables (via
-  `table-layout: fixed` + a `<colgroup>`), so the column lines up table-to-table;
-  long token names wrap within it.
+- **Token column width** is set as a **percentage** (`32%`) shared across all
+  tables (via `table-layout: fixed` + a `<colgroup>`). Because every table has
+  the same overall width, the percentage yields an identical Token-column width
+  table-to-table (so columns still line up), while also **shrinking with the
+  viewport** instead of staying pinned — this was previously a fixed `320px`,
+  which crushed the number columns on narrow/mobile screens. Long token names
+  wrap on whole words within the column (`white-space: normal` with the default
+  `overflow-wrap`, so words never break mid-word); on very narrow screens the
+  number columns can no longer all fit and the table scrolls horizontally inside
+  its card (`.tablewrap { overflow-x: auto }`) rather than squishing.
 - **Row banding**: only the **Trade Good** and **Premium** tables get alternating
   row striping (`BANDED_CATEGORIES` in `src/App.tsx`, `.banded` CSS). The stripe is
   applied at the `<tr>` level so the Last-5 column tint and hover highlight paint
   correctly over it.
+- **Category heading colors**: each `<section>` carries a `data-category`
+  attribute, and its `<h2>` header (text + underline) is tinted with the
+  category's brand color via a `--cat-color` CSS variable. Colors differ per
+  theme — see [Theming](#11-theming-lightdark-and-category-colors) below.
 
 ### 9. Header text and the season stats line
 
@@ -185,6 +196,45 @@ title and category headers (`h1`, `h2`) additionally use the bundled **Caslon
 Antique** display font (`src/assets/fonts/casbantn-webfont.ttf`, declared via
 `@font-face`). Price **numbers** deliberately use a clean sans stack with
 `lining-nums tabular-nums` so digits align in columns.
+
+### 11. Theming: light/dark and category colors
+
+The site supports **light and dark modes**. All colors are CSS custom
+properties defined in `src/index.css`; the dark palette is applied whenever
+`<html>` carries `data-theme="dark"` (not via `prefers-color-scheme`, so a
+manual override can win).
+
+- **Default + auto-follow.** An inline script in `index.html` runs before first
+  paint and stamps `data-theme` onto `<html>` — using the visitor's saved choice
+  from `localStorage` (`theme` = `light`|`dark`) if present, otherwise the OS
+  `prefers-color-scheme`. Running before paint avoids a flash of the wrong theme.
+- **Manual toggle.** A ☾/☀ button in the header (`.theme-toggle`, wired by the
+  `useTheme` hook in `src/App.tsx`) flips the theme, writes the choice to
+  `localStorage`, and stops auto-following the OS. Until the visitor clicks, the
+  site keeps following live OS changes via a `matchMedia` listener.
+
+**Category heading colors.** Each category's heading color is defined per theme
+in `src/App.css` (`.cat-section[data-category='…']` for light, and
+`:root[data-theme='dark'] .cat-section[data-category='…']` for dark). Light mode
+uses the brand colors the community expects (see
+[domain-context.md](./domain-context.md#category-color-conventions)); the dark
+variants are **hue-matched but lightened** so headings stay readable (~4.5:1+
+contrast) on the dark background. The color is applied to the heading text and
+its underline only — never to the price numbers, to protect their legibility.
+
+| Category | Light | Dark | Note |
+| --- | --- | --- | --- |
+| Trade Good | `#b45f06` | `#e08b3e` | |
+| Ultra Rare | `#9900ff` | `#c084fc` | |
+| Premium | `#ff0000` | `#f87171` | |
+| Bonus | `#34a853` | `#4ade80` | brand green sits near the light-mode contrast floor (~2.9:1); kept as-is |
+| Preorder | `#0e7490` | `#00c7ff` | brand cyan `#00c7ff` is unreadable on white (~1.9:1), so light mode uses a darkened cyan; dark mode uses the bright brand value |
+| Golden Ticket | `#8a6900` | `#facc15` | darkened from brand `#bf9000` in light mode for readability, brightened in dark |
+
+> When adding a new category, give it a `--cat-color` entry in **both** the light
+> and dark blocks of `src/App.css`, and contrast-check each value against the
+> respective background (`#f7f8fa` light, `#0f1117` dark) — aim for ≥3:1 for
+> these large bold headings, ideally 4.5:1+.
 
 ## Updating the data
 

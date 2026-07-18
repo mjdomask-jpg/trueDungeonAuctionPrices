@@ -64,6 +64,32 @@ groups together all the auctions that belong to one annual set release.
 Within a season, each auction is numbered sequentially (auction 1, 2, 3, …). The
 combination of season + auction number uniquely identifies a single auction.
 
+## Category color conventions
+
+Every component sold falls into a **category** — `Trade Good`, `Ultra Rare`,
+`Premium`, `Bonus`, `Preorder`, or `Golden Ticket`. These aren't just internal
+labels: within the community each category has a **customarily associated color**,
+familiar from the tokens and from years of the maintainer's spreadsheets. Members
+recognize a category partly by its color, so the site color-codes each category's
+table heading to match those expectations rather than picking arbitrary colors.
+
+The community-expected (light-mode) colors are:
+
+| Category | Color |
+| --- | --- |
+| Trade Good | `#b45f06` (burnt orange) |
+| Ultra Rare | `#9900ff` (violet) |
+| Premium | `#ff0000` (red) |
+| Bonus | `#34a853` (green) |
+| Preorder | `#00c7ff` (cyan) |
+| Golden Ticket | `#bf9000` (gold) |
+
+These are the colors people *expect*; a few of them are too light to read on a
+white or dark background as-is, so the site keeps the recognizable hue but
+adjusts lightness per theme for legibility. The exact rendered values and the
+readability reasoning live in the implementation doc — see
+[Theming](./data-and-transformations.md#11-theming-lightdark-and-category-colors).
+
 ## Why track and publish this data
 
 For several years the project maintainer has recorded the final sale prices from
