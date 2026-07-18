@@ -107,6 +107,11 @@ tbody td {
   font-variant-numeric: tabular-nums;
 }
 tbody td.left { text-align: left; }
+/* Price numbers use a clean lining/tabular sans font, not Georgia. */
+tbody td:not(.left) {
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums lining-nums;
+}
 tbody tr:hover td { background: var(--row-hover); }
 tbody tr:hover td.last5 { background: var(--last5-bg); }
 
