@@ -30,12 +30,50 @@ const CATEGORY_ORDER = [
 // Categories whose tables get alternating row banding.
 const BANDED_CATEGORIES = new Set(['Trade Good', 'Premium']);
 
+type Theme = 'light' | 'dark';
+
+const prefersDark = () =>
+  window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+// Reads the theme already stamped onto <html> by the inline script in
+// index.html (seeded from localStorage, else the OS preference).
+const readTheme = (): Theme =>
+  document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+
+function useTheme(): [Theme, () => void] {
+  const [theme, setTheme] = useState<Theme>(readTheme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // Keep following the OS while the visitor hasn't made an explicit choice.
+  useEffect(() => {
+    if (localStorage.getItem('theme')) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => setTheme(prefersDark());
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  const toggle = () => {
+    setTheme((t) => {
+      const next = t === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', next); // an explicit choice; stop following the OS
+      return next;
+    });
+  };
+
+  return [theme, toggle];
+}
+
 export default function App() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [meta, setMeta] = useState<AuctionMeta[]>([]);
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
   const [error, setError] = useState('');
+  const [theme, toggleTheme] = useTheme();
 
   useEffect(() => {
     Promise.all([
@@ -108,6 +146,15 @@ export default function App() {
   return (
     <div className="wrap">
       <header>
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? '☀' : '☾'}
+        </button>
         <h1>True Dungeon Auction Prices</h1>
         <p className="sub">
           Welcome to the True Dungeon auction analysis! These statistics are calculated
@@ -146,7 +193,7 @@ export default function App() {
 
 function CategoryTable({ category, rows }: { category: string; rows: ItemRow[] }) {
   return (
-    <section className="cat-section">
+    <section className="cat-section" data-category={category}>
       <h2 className="cat-header">{category}</h2>
       <div className="tablewrap">
         <table className={BANDED_CATEGORIES.has(category) ? 'banded' : undefined}>

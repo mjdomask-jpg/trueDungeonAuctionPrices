@@ -4,11 +4,34 @@
   padding: 28px 20px 80px;
 }
 
+header { position: relative; }
 header h1 {
   font-size: 30px;
   letter-spacing: -0.5px;
   margin: 0 0 6px;
+  padding-right: 52px; /* keep the title clear of the toggle */
 }
+
+.theme-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-h);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sub {
   max-width: 640px;
   margin: 0;
@@ -57,9 +80,30 @@ header h1 {
   letter-spacing: -0.2px;
   margin: 0 0 10px;
   padding-bottom: 6px;
-  color: var(--text-h);
-  border-bottom: 2px solid var(--accent);
+  /* Category accent colour; falls back to the neutral defaults when a
+     category has no colour assigned. Applied to text + underline only. */
+  color: var(--cat-color, var(--text-h));
+  border-bottom: 2px solid var(--cat-color, var(--accent));
 }
+
+/* Per-category heading colours. Light-mode values are the brand colours the
+   users expect; the [data-theme='dark'] overrides are hue-matched but
+   lightened to stay readable (~4.5:1+) on the dark background. Preorder is the
+   exception: its bright brand cyan (#00c7ff) is unreadable on white, so light
+   mode uses a darkened cyan and dark mode uses the bright brand value. */
+.cat-section[data-category='Trade Good']    { --cat-color: #b45f06; }
+.cat-section[data-category='Ultra Rare']    { --cat-color: #9900ff; }
+.cat-section[data-category='Premium']       { --cat-color: #ff0000; }
+.cat-section[data-category='Bonus']         { --cat-color: #34a853; }
+.cat-section[data-category='Preorder']      { --cat-color: #0e7490; }
+.cat-section[data-category='Golden Ticket'] { --cat-color: #8a6900; }
+
+:root[data-theme='dark'] .cat-section[data-category='Trade Good']    { --cat-color: #e08b3e; }
+:root[data-theme='dark'] .cat-section[data-category='Ultra Rare']    { --cat-color: #c084fc; }
+:root[data-theme='dark'] .cat-section[data-category='Premium']       { --cat-color: #f87171; }
+:root[data-theme='dark'] .cat-section[data-category='Bonus']         { --cat-color: #4ade80; }
+:root[data-theme='dark'] .cat-section[data-category='Preorder']      { --cat-color: #00c7ff; }
+:root[data-theme='dark'] .cat-section[data-category='Golden Ticket'] { --cat-color: #facc15; }
 
 .tablewrap {
   overflow-x: auto;
@@ -76,8 +120,11 @@ table {
   /* Fixed layout so the Token column is the same width in every table. */
   table-layout: fixed;
 }
-/* Shared Token-column width across all per-category tables. */
-col.col-token { width: 320px; }
+/* Shared Token-column width. A percentage (not a fixed px) so every table —
+   all the same overall width — gets an identical Token-column width, while
+   still shrinking/growing with the viewport instead of staying pinned. Token
+   text wraps on whole words (td.token has white-space: normal). */
+col.col-token { width: 32%; }
 
 thead th {
   background: var(--card);
