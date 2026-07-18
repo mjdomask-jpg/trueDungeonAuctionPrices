@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Caslon Antique';
+  src: url('./assets/fonts/casbantn-webfont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --text: #4b5563;
   --text-h: #0b1020;
@@ -12,6 +20,7 @@
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --serif: Georgia, 'Times New Roman', serif;
+  --display: 'Caslon Antique', Georgia, serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 15px/1.5 var(--serif);
@@ -38,4 +47,5 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; }
+h1, h2 { font-family: var(--display); }
 h1 { color: var(--text-h); }
