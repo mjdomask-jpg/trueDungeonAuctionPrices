@@ -8,6 +8,19 @@ import './App.css';
 const money = (n: number | undefined) =>
   n == null ? '—' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
+const MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+// Format an ISO close date ("YYYY-MM-DD") as "Mon DD" (three-letter month,
+// two-digit zero-padded day). Returns null when missing/unparseable.
+const fmtCloseDate = (iso: string | undefined): string | null => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
+  const month = m && MONTHS[parseInt(m[2], 10) - 1];
+  return m && month ? `${month} ${m[3]}` : null;
+};
+
 // Fixed display order for the per-category tables. Any category not listed
 // here is appended afterward, alphabetically.
 const CATEGORY_ORDER = [
@@ -68,9 +81,24 @@ export default function App() {
     }));
   }, [filtered]);
 
-  const seasonAuctions = meta
-    .filter((m) => m.season === season && Number.isFinite(m.auctionNumber))
+  const closedAuctions = meta
+    .filter((m) => m.season === season && m.status === 'Closed')
     .length;
+
+  // Global intro stats (across all seasons).
+  const totalClosedAuctions = meta.filter((m) => m.status === 'Closed').length;
+  const firstYear = seasons[seasons.length - 1];
+  const lastYear = seasons[0];
+
+  // Close dates for the "Last 5" window, looked up from metadata by auction
+  // number. Falls back to "#N" if a close date is missing.
+  const closeDateByNumber = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const m of meta) if (m.season === season) map.set(m.auctionNumber, m.closeDate);
+    return map;
+  }, [meta, season]);
+  const last5Label = (n: number | undefined) =>
+    n == null ? '' : fmtCloseDate(closeDateByNumber.get(n)) ?? `#${n}`;
 
   if (error) return <div className="wrap"><p className="err">Failed to load data: {error}</p></div>;
 
@@ -79,8 +107,9 @@ export default function App() {
       <header>
         <h1>True Dungeon Auction Prices</h1>
         <p className="sub">
-          Final sale prices from community group-buy auctions. Statistics are calculated
-          live from {sales.length.toLocaleString()} recorded sales.
+          Welcome to the True Dungeon auction analysis! These statistics are calculated
+          live from {totalClosedAuctions.toLocaleString()} auctions from {firstYear} to {lastYear}.
+          This covers {sales.length.toLocaleString()} items sold!
         </p>
       </header>
 
@@ -100,8 +129,8 @@ export default function App() {
       </div>
 
       <p className="meta-line">
-        Season {season}: {seasonAuctions} auctions · {rows.length} distinct items ·
-        {' '}"Last 5" = auctions #{last5Nums[0]}–#{last5Nums[last5Nums.length - 1]}
+        Season {season}: {closedAuctions} closed auctions ·
+        {' '}"Last 5" = {last5Nums.map(last5Label).join(', ')}
       </p>
 
       {groups.length === 0 && <p className="empty">No matching items.</p>}
