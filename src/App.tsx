@@ -18,7 +18,6 @@ export default function App() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [meta, setMeta] = useState<AuctionMeta[]>([]);
   const [season, setSeason] = useState<string>('');
-  const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [error, setError] = useState('');
 
@@ -44,14 +43,7 @@ export default function App() {
     [rows]
   );
 
-  const filtered = rows.filter((r) => {
-    if (category !== 'All' && r.category !== category) return false;
-    if (query) {
-      const q = query.toLowerCase();
-      return r.item.toLowerCase().includes(q) || r.displayName.toLowerCase().includes(q);
-    }
-    return true;
-  });
+  const filtered = rows.filter((r) => category === 'All' || r.category === category);
 
   // Group the filtered rows into per-category tables, ordered by CATEGORY_ORDER
   // (unlisted categories appended alphabetically). Rows within each table are
@@ -105,15 +97,6 @@ export default function App() {
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
-        <label className="search">
-          Search
-          <input
-            type="text"
-            placeholder="item or token name…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
       </div>
 
       <p className="meta-line">
@@ -135,6 +118,11 @@ function CategoryTable({ category, rows }: { category: string; rows: ItemRow[] }
       <h2 className="cat-header">{category}</h2>
       <div className="tablewrap">
         <table>
+          <colgroup>
+            <col className="col-token" />
+            <col /><col /><col />
+            <col /><col /><col />
+          </colgroup>
           <thead>
             <tr>
               <th rowSpan={2} className="left">Token</th>
