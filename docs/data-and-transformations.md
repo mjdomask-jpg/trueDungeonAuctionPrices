@@ -35,7 +35,7 @@ append-only data the maintainer maintains.
 | `Item` | The internal, **stable** label for the thing sold (e.g. `8k Bonus`, `PYP`, `1k Bonus`). Stable across seasons, so it is used as the grouping key. |
 | `Price` | The final sale price, as a number (may carry stray whitespace from export). |
 | `Display Name` | The public, human-facing token name (e.g. `Orb of Dragonkind`). **Changes from season to season** even when the `Item` label stays the same. |
-| `Category` | Groups related items: `Trade Good`, `Premium`, `Bonus`, `Preorder`, `Ultra Rare`, `Patron`, `Golden Ticket`, and others. |
+| `Category` | Groups related items. The values the site renders as separate tables, in fixed display order, are: `Trade Good`, `Ultra Rare`, `Premium`, `Bonus`, `Preorder`, `Golden Ticket`. Any other/unknown category is still shown, appended alphabetically after these. |
 
 ### `metadata.csv` — the auction log (one row per auction)
 
@@ -50,8 +50,9 @@ is back-office information retained for reference.
 | `auctioneer` | Optional | Who ran the auction. |
 | `auctionStyle`, `completionStyle` | Optional | How the auction was run/closed. |
 | `Link` | Optional | URL to view the original auction. |
-| `openDate`, `closeDate`, `daysToClose` | Optional | Timing. Older seasons store `n/a`. |
-| `Status` | Yes (filter) | e.g. `Closed`, `Failed`. |
+| `closeDate` | Yes | Date the auction closed, ISO `YYYY-MM-DD`. Used to label the "Last 5" window in the season stats line. Blank for still-open auctions; older seasons store `n/a`. |
+| `openDate`, `daysToClose` | Optional | Other timing fields. Older seasons store `n/a`. |
+| `Status` | Yes (filter) | Auction outcome: `Closed` (completed), `Failed` (did not fund/complete), `Open` (in progress). The site's auction counts include **only `Closed`**. |
 | `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal`, month fields | No | Financial/back-office fields not surfaced publicly. |
 
 ### The relationship between the two files
@@ -106,7 +107,9 @@ of `Price` over two windows:
 - **Full season** — every sale of that item in the season.
 - **Last 5 auctions** — see the precise definition below.
 
-Average is a simple arithmetic mean of the sale prices in the window.
+Average is a simple arithmetic mean of the sale prices in the window. The **count**
+(`n`) is still computed but is **not currently displayed** in the table (the former
+"Sales" column was removed); it remains available in `ItemRow` for future use.
 
 ### 6. The "Last 5 auctions" definition
 
@@ -132,8 +135,56 @@ appearing later in a season will have full-season numbers but blank last-5 numbe
 After aggregation, the UI applies non-destructive view filters that do not change
 the underlying statistics:
 
-- **Category** filter (or "All").
-- **Search** across `Item` and `Display Name`.
+- **Season** selector — chooses which season is aggregated and displayed.
+- **Category** filter (or "All") — when a single category is chosen, only that
+  category's table is shown.
+
+> A free-text **Search** box existed in the first iteration and was **removed**.
+> The filter logic still matches on both `Item` and `Display Name` internally, so
+> reinstating search would not require re-plumbing the data layer.
+
+### 8. Rendering: per-category tables
+
+The rows are rendered as **one table per category** (not a single combined table):
+
+- **Table order** follows the fixed `CATEGORY_ORDER` in `src/App.tsx`: Trade Good,
+  Ultra Rare, Premium, Bonus, Preorder, Golden Ticket (unknown categories appended
+  alphabetically). Each table has the category name as an `<h2>` header above it.
+- **Rows within a table** are sorted **alphabetically by `Display Name`** (token
+  name), independent of the `Item` grouping key.
+- **Columns** (left to right): `Token` (the `Display Name`), then **Last 5
+  Auctions** — Max / Avg / Min — then **Full Season** — Max / Avg / Min. The two
+  `Avg` cells are emphasized (bold). There is no longer an Item column, a Sales
+  (count) column, or an in-row Category column (the category is the table header).
+- **Token column width** is fixed at `320px` and shared across all tables (via
+  `table-layout: fixed` + a `<colgroup>`), so the column lines up table-to-table;
+  long token names wrap within it.
+- **Row banding**: only the **Trade Good** and **Premium** tables get alternating
+  row striping (`BANDED_CATEGORIES` in `src/App.tsx`, `.banded` CSS). The stripe is
+  applied at the `<tr>` level so the Last-5 column tint and hover highlight paint
+  correctly over it.
+
+### 9. Header text and the season stats line
+
+Two blocks of live-computed text sit above the tables:
+
+- **Intro sentence** (global, across *all* seasons): total `Closed` auctions, the
+  first and most recent seasons present in the data, and the total number of
+  recorded sales. Counts are comma-formatted.
+- **Season stats line** (for the selected season): the number of `Closed` auctions
+  in that season, and the **close dates of the five auctions in the "Last 5"
+  window**, formatted as `Mon DD` (three-letter month, zero-padded two-digit day —
+  e.g. `Apr 09`) via `fmtCloseDate` in `src/App.tsx`. If a close date is missing it
+  falls back to `#<auctionNumber>`. This replaced an earlier line that showed the
+  window as an auction-number range and a distinct-item count.
+
+### 10. Typography
+
+Set in `src/index.css`. Body/heading text uses a **Georgia** serif stack; the page
+title and category headers (`h1`, `h2`) additionally use the bundled **Caslon
+Antique** display font (`src/assets/fonts/casbantn-webfont.ttf`, declared via
+`@font-face`). Price **numbers** deliberately use a clean sans stack with
+`lining-nums tabular-nums` so digits align in columns.
 
 ## Updating the data
 
@@ -146,7 +197,24 @@ the underlying statistics:
 
 ## Validation
 
-`validate.mjs` (repository root) runs the same parse/filter/join/aggregate pipeline
-outside the browser for a single season and prints the resulting table, including
-both candidate "last 5" definitions side by side. It exists to confirm the site's
-numbers against the historical spreadsheet whenever the logic or data changes.
+`validate.mjs` (kept in `C:\claude\`, outside the site repo) runs the same
+parse/filter/join/aggregate pipeline outside the browser for a single season and
+prints the resulting table, including both candidate "last 5" definitions side by
+side. It exists to confirm the site's numbers against the historical spreadsheet
+whenever the logic or data changes.
+
+## Deployment
+
+The site is hosted on **GitHub Pages** and deployed by a single GitHub Actions
+workflow, `.github/workflows/deploy.yml`, which runs on every push to `main`:
+`npm ci` → `npm run build` → publish the built `dist/`. Live URL:
+<https://mjdomask-jpg.github.io/trueDungeonAuctionPrices/>.
+
+Because the site is served from a repo subpath, `vite.config.ts` sets
+`base: './'` so all asset/data URLs are relative. Keep that in place, and reference
+bundled assets (fonts, etc.) through `src/` imports/relative URLs so Vite
+fingerprints them for the subpath — do **not** hardcode absolute `/…` paths.
+
+> Only `deploy.yml` should deploy. A second auto-generated `static.yml` workflow
+> (which published the *unbuilt* repository and would break the site) was removed;
+> don't reintroduce a raw-upload Pages workflow alongside the Vite build.

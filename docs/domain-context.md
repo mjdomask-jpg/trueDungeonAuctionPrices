@@ -48,6 +48,12 @@ underlying catalog of tokens.
 The **final sale price** of each component in each auction is the key piece of
 public information: it tells the community what a given token actually sold for.
 
+Not every auction completes. Each auction has an **outcome**: most **close**
+successfully (and have a **close date**), but some **fail** (e.g. do not reach
+funding) and others may still be **open**. When the site reports "how many
+auctions" happened, it counts only the ones that actually **closed** — failed and
+open auctions are excluded from those counts.
+
 ## Seasons, not calendar years
 
 A set's buying window does **not** line up with the calendar year. Auctions for a
@@ -107,3 +113,5 @@ website is ultimately built to present.
 | **Component / Item** | A thing sold in an auction (a token or a bundle such as a premium/bonus item). |
 | **Full-season stats** | Min/max/average sale price of an item across every auction in the season. |
 | **Last-5 stats** | Min/max/average across the five most recent auctions in the season. |
+| **Status / outcome** | Whether an auction `Closed`, `Failed`, or is `Open`. Auction counts on the site include only `Closed`. |
+| **Close date** | The date an auction closed; used to label the recent ("Last 5") window. |
