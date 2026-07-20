@@ -242,10 +242,12 @@ td.avg { font-weight: 600; color: var(--text-h); }
 .chart-tooltip {
   position: absolute;
   top: 6px;
-  transform: translateX(-50%);
+  /* horizontal transform is set inline (proportional to crosshair position) so
+     the tooltip stays inside the plot at either edge — see PriceTimeline. */
   pointer-events: none;
   z-index: 2;
   min-width: 120px;
+  max-width: 100%;
   padding: 7px 10px;
   background: var(--card);
   border: 1px solid var(--border);

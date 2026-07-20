@@ -171,7 +171,11 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
         </svg>
 
         {tip && (
-          <div className="chart-tooltip" style={{ left: `${Math.max(8, Math.min(92, tip.leftPct))}%` }}>
+          // Position by percent of the plot width and shift the tooltip by that
+          // same percent of its OWN width: centered mid-plot, but sliding so an
+          // edge (not the middle) tracks the crosshair near the ends — which
+          // keeps the whole tooltip inside the plot (no overflow/scrollbar).
+          <div className="chart-tooltip" style={{ left: `${tip.leftPct}%`, transform: `translateX(-${tip.leftPct}%)` }}>
             <div className="tt-date">{tip.date}</div>
             <ul>
               {tip.rows.map((r) => (
