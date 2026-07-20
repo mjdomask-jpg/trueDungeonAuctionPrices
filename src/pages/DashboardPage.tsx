@@ -9,7 +9,7 @@ import { CategoryTable } from '../components/CategoryTable';
 // Fixed display order for the per-category tables. Any category not listed
 // here is appended afterward, alphabetically.
 const CATEGORY_ORDER = [
-  'Trade Good 1', 'Trade Good 2', 'Ultra Rare', 'Premium', 'Bonus', 'Preorder', 'Golden Ticket',
+  'Trade 1', 'Trade 2', 'Ultra Rare', 'Premium', 'Bonus', 'Preorder', 'Golden Ticket',
 ];
 
 export default function DashboardPage() {
