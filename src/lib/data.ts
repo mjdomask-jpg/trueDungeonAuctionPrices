@@ -72,7 +72,9 @@ export function parseSales(text: string): Sale[] {
   const objs = toObjects(parseCSV(text));
   const out: Sale[] = [];
   for (const o of objs) {
-    const price = parseFloat((o['Price'] || '').replace(/,/g, ''));
+    // Normalize currency formatting on import: strip $ and thousands commas
+    // (main prices.csv has neither; the Onyx export writes "$110.00 ").
+    const price = parseFloat((o['Price'] || '').replace(/[$,]/g, ''));
     if (!o['auctionId'] || !isFinite(price)) continue; // drop blank/invalid rows
     out.push({
       auctionId: o['auctionId'],
