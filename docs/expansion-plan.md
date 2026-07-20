@@ -170,6 +170,25 @@ Data requirements when authoring the recipe sheet:
 
 ## 5. Foundational refactors (do before Phase 2+)
 
+> **Status: DONE** (branch `phase-0-foundation`, two commits; no behavior change to the
+> dashboard, verified in-browser). What shipped:
+> - **Routing** via `react-router-dom` **HashRouter** — chosen over BrowserRouter because
+>   `vite.config.ts` sets `base: './'` for GitHub Pages subpath hosting; HashRouter needs no
+>   server rewrites and resolves assets correctly from any subpath. `App.tsx` is now a layout
+>   shell (`<div class="wrap">` + `SiteHeader` + `<Outlet/>`); routes live in `main.tsx`; nav
+>   entries in `src/nav.ts` (the nav bar stays hidden until there's more than one).
+> - **Component split**: `src/pages/DashboardPage.tsx`, `src/components/{SiteHeader,
+>   ThemeToggle,CategoryTable}.tsx`, `src/hooks/useTheme.ts`, `src/lib/format.ts`. The old
+>   monolithic `App.tsx` constants moved with their components (`CATEGORY_ORDER` →
+>   DashboardPage, `BANDED_CATEGORIES` → CategoryTable, `money`/`fmtCloseDate` → lib/format).
+> - **Shared load-once data layer**: `src/data/AuctionDataProvider.tsx` fetches + parses both
+>   CSVs once; `src/data/auctionDataContext.ts` holds the context + `useAuctionData()` hook
+>   (split into two files so the provider file stays component-only for Fast Refresh).
+> - **`src/lib/data.ts` (pure aggregation) untouched** — the seam held.
+>
+> The build-time CSV→JSON step below is **deferred** (runtime fetch+parse via the provider is
+> the current foundation); revisit when compute/joins grow.
+
 Cheap now while the code is small, painful later. Independent of which features land:
 - **Add routing.** The site goes from one page to many (dashboards, timelines, compare,
   transmutes, auction stats, explorer). Introduce it before the second view exists.
@@ -186,7 +205,7 @@ Cheap now while the code is small, painful later. Independent of which features 
 
 | Phase | Scope | Bucket | Notes |
 | --- | --- | --- | --- |
-| **0** | Foundational refactors (§5) | — | Routing, component split, data layer. Unblocks everything. |
+| **0** ✅ | Foundational refactors (§5) | — | **Done.** Routing, component split, shared data layer. Unblocked everything. |
 | **1** | Onyx sub-list in dashboards | A/D | Small; completes true MVP parity. New CSV, reuse aggregation. |
 | **2** | Price Timelines (per-token charts) | C | First new view; needs charting + time-series pivot. |
 | **3** | Compare Years tool | C | Cross-season, keyed on canonicalName; % diff. |
