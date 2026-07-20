@@ -129,7 +129,6 @@ header h1 {
    lightened to stay readable (~4.5:1+) on the dark background. Preorder is the
    exception: its bright brand cyan (#00c7ff) is unreadable on white, so light
    mode uses a darkened cyan and dark mode uses the bright brand value. */
-.cat-section[data-category='Trade Good']    { --cat-color: #b45f06; }
 .cat-section[data-category='Trade 1']    { --cat-color: #b45f06; }
 .cat-section[data-category='Trade 2']    { --cat-color: #b45f06; }
 .cat-section[data-category='Ultra Rare']    { --cat-color: #9900ff; }
@@ -138,7 +137,6 @@ header h1 {
 .cat-section[data-category='Preorder']      { --cat-color: #0e7490; }
 .cat-section[data-category='Golden Ticket'] { --cat-color: #8a6900; }
 
-:root[data-theme='dark'] .cat-section[data-category='Trade Good']    { --cat-color: #e08b3e; }
 :root[data-theme='dark'] .cat-section[data-category='Trade 1']    { --cat-color: #e08b3e; }
 :root[data-theme='dark'] .cat-section[data-category='Trade 2']    { --cat-color: #e08b3e; }
 :root[data-theme='dark'] .cat-section[data-category='Ultra Rare']    { --cat-color: #c084fc; }

@@ -66,8 +66,9 @@ combination of season + auction number uniquely identifies a single auction.
 
 ## Category color conventions
 
-Every component sold falls into a **category** — `Trade Good`, `Ultra Rare`,
-`Premium`, `Bonus`, `Preorder`, or `Golden Ticket`. These aren't just internal
+Every component sold falls into a **category** — `Trade 1`, `Trade 2`, `Ultra Rare`,
+`Premium`, `Bonus`, `Preorder`, or `Golden Ticket`. (`Trade 1` and `Trade 2` are the
+site's split of the single community "Trade Good" class, kept on one shared color.) These aren't just internal
 labels: within the community each category has a **customarily associated color**,
 familiar from the tokens and from years of the maintainer's spreadsheets. Members
 recognize a category partly by its color, so the site color-codes each category's
@@ -77,7 +78,8 @@ The community-expected (light-mode) colors are:
 
 | Category | Color |
 | --- | --- |
-| Trade Good | `#b45f06` (burnt orange) |
+| Trade 1 | `#b45f06` (burnt orange) |
+| Trade 2 | `#b45f06` (burnt orange) |
 | Ultra Rare | `#9900ff` (violet) |
 | Premium | `#ff0000` (red) |
 | Bonus | `#34a853` (green) |
@@ -117,7 +119,7 @@ Two views matter most to the community:
 Beyond simply buying tokens, players can **craft** — or "transmute" — a more powerful
 token from a set of cheaper ones, much like a crafting system in a computer RPG. Each
 transmute has a **recipe**: a bill of materials listing quantities of other tokens
-required to make it. Recipe ingredients are mostly `Trade Good`s and `Ultra Rare`s, and
+required to make it. Recipe ingredients are mostly trade goods and `Ultra Rare`s, and
 occasionally `Premium` items.
 
 Crucially, **transmuted tokens are not sold in the auctions.** The auctions distribute

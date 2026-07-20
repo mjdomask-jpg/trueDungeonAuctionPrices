@@ -64,7 +64,7 @@ append-only data the maintainer maintains.
 | `Item` | The internal, **stable** label for the thing sold (e.g. `8k Bonus`, `PYP`, `1k Bonus`). Stable across seasons, so it is used as the grouping key. |
 | `Price` | The final sale price, as a number (may carry stray whitespace from export). |
 | `Display Name` | The public, human-facing token name (e.g. `Orb of Dragonkind`). **Changes from season to season** even when the `Item` label stays the same. |
-| `Category` | Groups related items. The values the site renders as separate tables, in fixed display order, are: `Trade Good`, `Ultra Rare`, `Premium`, `Bonus`, `Preorder`, `Golden Ticket`. Any other/unknown category is still shown, appended alphabetically after these. |
+| `Category` | Groups related items. The values the site renders as separate tables, in fixed display order, are: `Trade 1`, `Trade 2`, `Ultra Rare`, `Premium`, `Bonus`, `Preorder`, `Golden Ticket`. Any other/unknown category is still shown, appended alphabetically after these. |
 
 ### `metadata.csv` — the auction log (one row per auction)
 
@@ -176,8 +176,8 @@ the underlying statistics:
 
 The rows are rendered as **one table per category** (not a single combined table):
 
-- **Table order** follows the fixed `CATEGORY_ORDER` in `src/pages/DashboardPage.tsx`: Trade Good,
-  Ultra Rare, Premium, Bonus, Preorder, Golden Ticket (unknown categories appended
+- **Table order** follows the fixed `CATEGORY_ORDER` in `src/pages/DashboardPage.tsx`: Trade 1,
+  Trade 2, Ultra Rare, Premium, Bonus, Preorder, Golden Ticket (unknown categories appended
   alphabetically). Each table has the category name as an `<h2>` header above it.
 - **Rows within a table** are sorted **alphabetically by `Display Name`** (token
   name), independent of the `Item` grouping key.
@@ -195,7 +195,7 @@ The rows are rendered as **one table per category** (not a single combined table
   `overflow-wrap`, so words never break mid-word); on very narrow screens the
   number columns can no longer all fit and the table scrolls horizontally inside
   its card (`.tablewrap { overflow-x: auto }`) rather than squishing.
-- **Row banding**: only the **Trade Good** and **Premium** tables get alternating
+- **Row banding**: only the **Trade 1**, **Trade 2**, and **Premium** tables get alternating
   row striping (`BANDED_CATEGORIES` in `src/components/CategoryTable.tsx`, `.banded` CSS). The stripe is
   applied at the `<tr>` level so the Last-5 column tint and hover highlight paint
   correctly over it.
@@ -253,7 +253,8 @@ its underline only — never to the price numbers, to protect their legibility.
 
 | Category | Light | Dark | Note |
 | --- | --- | --- | --- |
-| Trade Good | `#b45f06` | `#e08b3e` | |
+| Trade 1 | `#b45f06` | `#e08b3e` | |
+| Trade 2 | `#b45f06` | `#e08b3e` | |
 | Ultra Rare | `#9900ff` | `#c084fc` | |
 | Premium | `#ff0000` | `#f87171` | |
 | Bonus | `#34a853` | `#4ade80` | brand green sits near the light-mode contrast floor (~2.9:1); kept as-is |
