@@ -20,6 +20,25 @@
   --band: rgba(16, 24, 40, 0.035);
   --shadow: rgba(16, 24, 40, 0.06) 0 1px 3px, rgba(16, 24, 40, 0.04) 0 8px 24px;
 
+  /* Categorical chart palette (dataviz skill's validated 8-hue set, light
+     steps). Slot order is the CVD-safety mechanism — do not reorder. Validated
+     against the --card surface (#fff): all checks pass; aqua/yellow/magenta sit
+     below 3:1 on white, so the chart always ships a legend (identity by label,
+     not color alone). Dark steps are overridden below. */
+  --series-1: #2a78d6;
+  --series-2: #1baf7a;
+  --series-3: #eda100;
+  --series-4: #008300;
+  --series-5: #4a3aa7;
+  --series-6: #e34948;
+  --series-7: #e87ba4;
+  --series-8: #eb6834;
+
+  /* Named line-colour overrides for timeline charts (tokenGroups.csv "Line
+     Color"). Themed like everything else — dark values overridden below. */
+  --line-light-purple: #a855f7;
+  --line-dark-purple: #6b21a8;
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --serif: Georgia, 'Times New Roman', serif;
   --display: 'Caslon Antique', Georgia, serif;
@@ -51,6 +70,20 @@
   --nav-hover: rgba(255, 255, 255, 0.06);
   --band: rgba(255, 255, 255, 0.04);
   --shadow: rgba(0, 0, 0, 0.4) 0 1px 3px, rgba(0, 0, 0, 0.3) 0 8px 24px;
+
+  /* Same eight hues stepped for the dark --card surface (#171a22), validated
+     as a set (worst adjacent CVD ΔE 10.3 — floor band, held up by the legend). */
+  --series-1: #3987e5;
+  --series-2: #199e70;
+  --series-3: #c98500;
+  --series-4: #008300;
+  --series-5: #9085e9;
+  --series-6: #e66767;
+  --series-7: #d55181;
+  --series-8: #d95926;
+
+  --line-light-purple: #d8b4fe;
+  --line-dark-purple: #9333ea;
 }
 
 * { box-sizing: border-box; }

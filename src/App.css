@@ -217,3 +217,76 @@ td.avg { font-weight: 600; color: var(--text-h); }
 }
 
 .empty, .err { text-align: center; padding: 24px; color: var(--text); }
+
+/* Price Timelines chart card. The SVG keeps its 820×360 viewBox aspect and
+   scales to the card width; --accent/--text/--border inside it theme for free. */
+.chartwrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px 8px 4px;
+  overflow-x: auto;
+}
+.timeline-chart {
+  display: block;
+  width: 100%;
+  min-width: 480px; /* below this, scroll rather than crush the labels */
+  height: auto;
+}
+.timeline-chart text { font-family: var(--sans); }
+
+/* Positioning context for the crosshair tooltip, which is placed by percentage
+   of the SVG's own width (so it tracks the chart at any size). */
+.chart-plot { position: relative; }
+.chart-tooltip {
+  position: absolute;
+  top: 6px;
+  /* horizontal transform is set inline (proportional to crosshair position) so
+     the tooltip stays inside the plot at either edge — see PriceTimeline. */
+  pointer-events: none;
+  z-index: 2;
+  min-width: 120px;
+  max-width: 100%;
+  padding: 7px 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--text-h);
+}
+.chart-tooltip .tt-date { font-weight: 600; margin-bottom: 4px; }
+.chart-tooltip ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.chart-tooltip li { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.chart-tooltip .dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.chart-tooltip .tt-val { margin-left: auto; padding-left: 14px; font-variant-numeric: tabular-nums; }
+
+/* Legend: color swatch → token name. Hovering an entry emphasizes its line
+   (the chart dims the rest). Labels wear text ink, never the series color. */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 10px 4px 2px;
+  padding: 0;
+  list-style: none;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+.chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-h);
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+.chart-legend li.dim { opacity: 0.35; }
+.chart-legend .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { parseSales, parseMeta, type Sale, type AuctionMeta } from '../lib/data';
+import { parseSales, parseMeta, parseGroups, type Sale, type AuctionMeta, type GroupRow } from '../lib/data';
 import { AuctionDataContext } from './auctionDataContext';
 
 // Shared, load-once auction data. Lifting the fetch/parse out of a single page
@@ -15,6 +15,7 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
   const [sales, setSales] = useState<Sale[]>([]);
   const [meta, setMeta] = useState<AuctionMeta[]>([]);
   const [onyxSales, setOnyxSales] = useState<Sale[]>([]);
+  const [groupRows, setGroupRows] = useState<GroupRow[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -37,10 +38,17 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
       .then((r) => (r.ok ? r.text() : ''))
       .then((t) => setOnyxSales(t ? parseSales(t) : []))
       .catch(() => setOnyxSales([]));
+
+    // Timeline groupings are optional too: a missing file just means the
+    // Timelines page falls back to listing every token as ungrouped.
+    fetch(dataUrl('tokenGroups.csv'))
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((t) => setGroupRows(t ? parseGroups(t) : []))
+      .catch(() => setGroupRows([]));
   }, []);
 
   return (
-    <AuctionDataContext.Provider value={{ sales, meta, onyxSales, loading, error }}>
+    <AuctionDataContext.Provider value={{ sales, meta, onyxSales, groupRows, loading, error }}>
       {children}
     </AuctionDataContext.Provider>
   );
