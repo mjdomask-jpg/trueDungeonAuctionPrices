@@ -9,7 +9,18 @@ import { money, fmtCloseDate } from '../lib/format';
 // defined in index.css); a legend maps color→token so identity never rests on
 // color alone (the light-mode relief rule + dark-mode CVD floor both need it).
 
-export type Series = { label: string; points: TimelinePoint[] };
+export type Series = { label: string; points: TimelinePoint[]; lineColor?: string };
+
+// Named line-colour overrides map to theme-aware CSS vars (defined in
+// index.css); anything else is passed through as a raw CSS colour.
+const LINE_COLORS: Record<string, string> = {
+  'light-purple': 'var(--line-light-purple)',
+  'dark-purple': 'var(--line-dark-purple)',
+};
+function lineColorOf(raw: string | undefined): string | null {
+  if (!raw) return null;
+  return LINE_COLORS[raw.trim().toLowerCase().replace(/\s+/g, '-')] ?? raw.trim();
+}
 
 const W = 820, H = 360;
 const M = { top: 16, right: 18, bottom: 40, left: 60 };
@@ -64,6 +75,12 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
   const xStride = Math.max(1, Math.ceil(slots.length / 8));
   const showLegend = series.length > 1;
 
+  // Line colour: explicit override → a lone series takes its category colour
+  // (matching the heading) → otherwise the categorical palette for distinctness.
+  const strokeFor = (si: number) =>
+    lineColorOf(series[si].lineColor)
+    ?? (series.length === 1 ? 'var(--cat-color, var(--series-1))' : seriesVar(si));
+
   return (
     <div className="chartwrap">
       <svg
@@ -94,12 +111,12 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
             <g key={s.label} style={{ opacity: dim ? 0.18 : 1, transition: 'opacity 0.12s ease' }}
               onMouseEnter={() => setActive(si)} onMouseLeave={() => setActive(null)}>
               {pts.length > 1 && (
-                <path d={d} fill="none" stroke={seriesVar(si)} strokeWidth={active === si ? 3 : 2}
+                <path d={d} fill="none" stroke={strokeFor(si)} strokeWidth={active === si ? 3 : 2}
                   strokeLinejoin="round" strokeLinecap="round" />
               )}
               {pts.map((p) => (
                 <circle key={p.auctionNumber} className="pt" cx={x(p.auctionNumber)} cy={y(p.avg)} r={3.5}
-                  fill="var(--card)" stroke={seriesVar(si)} strokeWidth={2}>
+                  fill="var(--card)" stroke={strokeFor(si)} strokeWidth={2}>
                   <title>
                     {`${s.label} — Auction #${p.auctionNumber}`}
                     {fmtCloseDate(p.closeDate) ? ` · ${fmtCloseDate(p.closeDate)}` : ''}
@@ -119,7 +136,7 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
             <li key={s.label}
               className={active !== null && active !== si ? 'dim' : undefined}
               onMouseEnter={() => setActive(si)} onMouseLeave={() => setActive(null)}>
-              <span className="swatch" style={{ background: seriesVar(si) }} />
+              <span className="swatch" style={{ background: strokeFor(si) }} />
               {s.label}
             </li>
           ))}

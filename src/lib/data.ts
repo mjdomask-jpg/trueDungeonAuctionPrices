@@ -218,25 +218,50 @@ export function itemTimeline(
 // keyed on the canonical Item; a group is the chart unit and may span
 // categories, so charts are ordered by a global Group Order, not by category.
 
-export type GroupRow = { item: string; group: string; groupOrder: number };
+export type GroupRow = {
+  item: string;
+  group: string;
+  groupOrder: number;
+  category: string; // drives the chart's heading colour (reuses the Prices-page category colours)
+  lineColor?: string; // optional per-token line-colour override (see PriceTimeline)
+};
 
 // Parse tokenGroups.csv. Columns: Category, Item, Display Name, Group,
-// Group Order. Category/Display Name are authoring aids the app ignores (the
-// per-season display name comes from prices.csv). A blank Group means "don't
-// chart this token".
+// Group Order, Line Color. Display Name is an authoring aid the app ignores
+// (the per-season display name comes from prices.csv). A blank Group means
+// "don't chart this token".
 export function parseGroups(text: string): GroupRow[] {
   const out: GroupRow[] = [];
   for (const o of toObjects(parseCSV(text))) {
     const item = o['Item'], group = o['Group'];
     if (!item || !group) continue;
     const go = parseInt(o['Group Order'], 10);
-    out.push({ item, group, groupOrder: isFinite(go) ? go : Number.MAX_SAFE_INTEGER });
+    out.push({
+      item, group,
+      groupOrder: isFinite(go) ? go : Number.MAX_SAFE_INTEGER,
+      category: o['Category'] ?? '',
+      lineColor: o['Line Color'] || undefined,
+    });
   }
   return out;
 }
 
-export type TimelineSeries = { item: string; displayName: string; points: TimelinePoint[] };
-export type TimelineGroup = { group: string; groupOrder: number; series: TimelineSeries[] };
+export type TimelineSeries = { item: string; displayName: string; points: TimelinePoint[]; lineColor?: string };
+export type TimelineGroup = { group: string; groupOrder: number; category: string; series: TimelineSeries[] };
+
+// A group's heading colour follows its dominant token category (a group may mix
+// categories — e.g. Bonus + Preorder — so we take the most common, first-seen
+// winning ties).
+function modeCategory(rows: GroupRow[]): string {
+  const count = new Map<string, number>();
+  let best = '', bestN = 0;
+  for (const r of rows) {
+    const n = (count.get(r.category) ?? 0) + 1;
+    count.set(r.category, n);
+    if (n > bestN) { bestN = n; best = r.category; }
+  }
+  return best;
+}
 export type GroupedTimelines = {
   groups: TimelineGroup[];
   ungrouped: string[]; // sold this season but in no group — surfaced so nothing is silently dropped
@@ -256,25 +281,27 @@ export function groupedTimelines(
   for (const s of seasonSales) { dispByItem.set(s.item, s.displayName); itemsInSeason.add(s.item); }
   const everSold = new Set(sales.map((s) => s.item));
 
-  const byGroup = new Map<string, { order: number; items: string[] }>();
+  const byGroup = new Map<string, { order: number; rows: GroupRow[] }>();
   const groupedItems = new Set<string>();
   for (const r of groupRows) {
     groupedItems.add(r.item);
     let g = byGroup.get(r.group);
-    if (!g) { g = { order: r.groupOrder, items: [] }; byGroup.set(r.group, g); }
+    if (!g) { g = { order: r.groupOrder, rows: [] }; byGroup.set(r.group, g); }
     g.order = Math.min(g.order, r.groupOrder);
-    g.items.push(r.item);
+    g.rows.push(r);
   }
 
   const groups: TimelineGroup[] = [];
-  for (const [group, { order, items }] of byGroup) {
+  for (const [group, { order, rows }] of byGroup) {
     const series: TimelineSeries[] = [];
-    for (const item of items) {
-      if (!itemsInSeason.has(item)) continue;
-      const points = itemTimeline(seasonSales, meta, item, season);
-      if (points.length) series.push({ item, displayName: dispByItem.get(item) ?? item, points });
+    for (const r of rows) {
+      if (!itemsInSeason.has(r.item)) continue;
+      const points = itemTimeline(seasonSales, meta, r.item, season);
+      if (points.length) {
+        series.push({ item: r.item, displayName: dispByItem.get(r.item) ?? r.item, points, lineColor: r.lineColor });
+      }
     }
-    if (series.length) groups.push({ group, groupOrder: order, series });
+    if (series.length) groups.push({ group, groupOrder: order, category: modeCategory(rows), series });
   }
   groups.sort((a, b) => a.groupOrder - b.groupOrder || a.group.localeCompare(b.group));
 

@@ -34,6 +34,11 @@
   --series-7: #e87ba4;
   --series-8: #eb6834;
 
+  /* Named line-colour overrides for timeline charts (tokenGroups.csv "Line
+     Color"). Themed like everything else — dark values overridden below. */
+  --line-light-purple: #a855f7;
+  --line-dark-purple: #6b21a8;
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --serif: Georgia, 'Times New Roman', serif;
   --display: 'Caslon Antique', Georgia, serif;
@@ -76,6 +81,9 @@
   --series-6: #e66767;
   --series-7: #d55181;
   --series-8: #d95926;
+
+  --line-light-purple: #d8b4fe;
+  --line-dark-purple: #9333ea;
 }
 
 * { box-sizing: border-box; }
