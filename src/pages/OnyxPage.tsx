@@ -66,7 +66,7 @@ export default function OnyxPage() {
 
           {groups.length === 0 && <p className="empty">No Onyx sales in {activeSeason}.</p>}
           {groups.map((g) => (
-            <CategoryTable key={g.category} category={g.category} rows={g.rows} />
+            <CategoryTable key={g.category} category={g.category} rows={g.rows} banded />
           ))}
         </>
       )}

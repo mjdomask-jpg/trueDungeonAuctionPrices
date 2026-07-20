@@ -4,12 +4,17 @@ import { money } from '../lib/format';
 // Categories whose tables get alternating row banding.
 const BANDED_CATEGORIES = new Set(['Trade 1', 'Trade 2', 'Premium']);
 
-export function CategoryTable({ category, rows }: { category: string; rows: ItemRow[] }) {
+export function CategoryTable(
+  { category, rows, banded }: { category: string; rows: ItemRow[]; banded?: boolean },
+) {
+  // Band either when the caller opts in (banded) or when the category is one of
+  // the always-banded dashboard categories.
+  const isBanded = banded || BANDED_CATEGORIES.has(category);
   return (
     <section className="cat-section" data-category={category}>
       <h2 className="cat-header">{category}</h2>
       <div className="tablewrap">
-        <table className={BANDED_CATEGORIES.has(category) ? 'banded' : undefined}>
+        <table className={isBanded ? 'banded' : undefined}>
           <colgroup>
             <col className="col-token" />
             <col /><col /><col />
