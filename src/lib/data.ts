@@ -210,3 +210,79 @@ export function itemTimeline(
   });
   return points;
 }
+
+// --- Timeline grouping (Phase 2) -----------------------------------------
+// Tokens are grouped for display so similarly-priced tokens share one chart's
+// linear axis (a $2,500 token and a $130 token on one axis would flatten the
+// cheaper line). The grouping is authored in public/data/tokenGroups.csv and
+// keyed on the canonical Item; a group is the chart unit and may span
+// categories, so charts are ordered by a global Group Order, not by category.
+
+export type GroupRow = { item: string; group: string; groupOrder: number };
+
+// Parse tokenGroups.csv. Columns: Category, Item, Display Name, Group,
+// Group Order. Category/Display Name are authoring aids the app ignores (the
+// per-season display name comes from prices.csv). A blank Group means "don't
+// chart this token".
+export function parseGroups(text: string): GroupRow[] {
+  const out: GroupRow[] = [];
+  for (const o of toObjects(parseCSV(text))) {
+    const item = o['Item'], group = o['Group'];
+    if (!item || !group) continue;
+    const go = parseInt(o['Group Order'], 10);
+    out.push({ item, group, groupOrder: isFinite(go) ? go : Number.MAX_SAFE_INTEGER });
+  }
+  return out;
+}
+
+export type TimelineSeries = { item: string; displayName: string; points: TimelinePoint[] };
+export type TimelineGroup = { group: string; groupOrder: number; series: TimelineSeries[] };
+export type GroupedTimelines = {
+  groups: TimelineGroup[];
+  ungrouped: string[]; // sold this season but in no group — surfaced so nothing is silently dropped
+  unmatched: string[]; // Item codes in the grouping file that never appear in any sale (likely typos)
+};
+
+// Build every group's per-token timelines for one season. Display names are
+// resolved from that season's own sales, so legends always show the right
+// year's name. Tokens that didn't sell this season are simply absent; empty
+// groups are dropped. Groups are ordered by Group Order (name as tiebreak).
+export function groupedTimelines(
+  sales: Sale[], meta: AuctionMeta[], groupRows: GroupRow[], season: string,
+): GroupedTimelines {
+  const seasonSales = sales.filter((s) => s.season === season);
+  const dispByItem = new Map<string, string>();
+  const itemsInSeason = new Set<string>();
+  for (const s of seasonSales) { dispByItem.set(s.item, s.displayName); itemsInSeason.add(s.item); }
+  const everSold = new Set(sales.map((s) => s.item));
+
+  const byGroup = new Map<string, { order: number; items: string[] }>();
+  const groupedItems = new Set<string>();
+  for (const r of groupRows) {
+    groupedItems.add(r.item);
+    let g = byGroup.get(r.group);
+    if (!g) { g = { order: r.groupOrder, items: [] }; byGroup.set(r.group, g); }
+    g.order = Math.min(g.order, r.groupOrder);
+    g.items.push(r.item);
+  }
+
+  const groups: TimelineGroup[] = [];
+  for (const [group, { order, items }] of byGroup) {
+    const series: TimelineSeries[] = [];
+    for (const item of items) {
+      if (!itemsInSeason.has(item)) continue;
+      const points = itemTimeline(seasonSales, meta, item, season);
+      if (points.length) series.push({ item, displayName: dispByItem.get(item) ?? item, points });
+    }
+    if (series.length) groups.push({ group, groupOrder: order, series });
+  }
+  groups.sort((a, b) => a.groupOrder - b.groupOrder || a.group.localeCompare(b.group));
+
+  const ungrouped = [...itemsInSeason]
+    .filter((i) => !groupedItems.has(i))
+    .map((i) => dispByItem.get(i) ?? i)
+    .sort((a, b) => a.localeCompare(b));
+  const unmatched = [...groupedItems].filter((i) => !everSold.has(i)).sort();
+
+  return { groups, ungrouped, unmatched };
+}

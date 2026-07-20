@@ -238,3 +238,31 @@ td.avg { font-weight: 600; color: var(--text-h); }
 /* Points grow slightly on hover to invite the native tooltip. */
 .timeline-chart .pt { transition: r 0.1s ease; cursor: pointer; }
 .timeline-chart .pt:hover { r: 5; }
+
+/* Legend: color swatch → token name. Hovering an entry emphasizes its line
+   (the chart dims the rest). Labels wear text ink, never the series color. */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 10px 4px 2px;
+  padding: 0;
+  list-style: none;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+.chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-h);
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+.chart-legend li.dim { opacity: 0.35; }
+.chart-legend .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+}

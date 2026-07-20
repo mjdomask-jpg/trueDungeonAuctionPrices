@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { type Sale, type AuctionMeta } from '../lib/data';
+import { type Sale, type AuctionMeta, type GroupRow } from '../lib/data';
 
 // Context + hook only (no component) so the provider file can stay
 // component-only for React Fast Refresh. See AuctionDataProvider.tsx.
@@ -8,6 +8,7 @@ export type AuctionData = {
   sales: Sale[];
   meta: AuctionMeta[];
   onyxSales: Sale[]; // chase-UR "Onyx" sub-list; same shape as sales, tracked separately
+  groupRows: GroupRow[]; // token→chart-group mapping for Price Timelines (optional)
   loading: boolean;
   error: string;
 };
