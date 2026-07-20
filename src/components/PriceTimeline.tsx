@@ -80,7 +80,16 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
     : M.left + (slotIndex.get(n)! / (slots.length - 1)) * PLOT_W;
   const y = (v: number) => M.top + (1 - (v - lo) / (hi - lo)) * PLOT_H;
 
+  // x-axis labels: every xStride slots, plus always the last one — but drop any
+  // strided label that would sit within a stride of the forced last (otherwise
+  // the final two dates overlap, e.g. Jun 28 / Jul 17).
   const xStride = Math.max(1, Math.ceil(slots.length / 8));
+  const last = slots.length - 1;
+  const labelIdx = new Set<number>();
+  for (let i = 0; i < slots.length; i += xStride) labelIdx.add(i);
+  for (const i of [...labelIdx]) if (i !== last && last - i < xStride) labelIdx.delete(i);
+  labelIdx.add(last);
+
   const showLegend = series.length > 1;
 
   // Line colour: explicit override → a lone series takes its category colour
@@ -128,7 +137,7 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
           ))}
 
           {/* x-axis close-date labels */}
-          {slots.map(([n, d], i) => (i % xStride === 0 || i === slots.length - 1) && (
+          {slots.map(([n, d], i) => labelIdx.has(i) && (
             <text key={n} x={x(n)} y={H - M.bottom + 20} textAnchor="middle" fontSize={12} fill="var(--text)">
               {fmtCloseDate(d) ?? `#${n}`}
             </text>
