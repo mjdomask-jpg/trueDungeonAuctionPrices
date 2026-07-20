@@ -14,6 +14,7 @@ const dataUrl = (name: string) => `${import.meta.env.BASE_URL}data/${name}`;
 export function AuctionDataProvider({ children }: { children: ReactNode }) {
   const [sales, setSales] = useState<Sale[]>([]);
   const [meta, setMeta] = useState<AuctionMeta[]>([]);
+  const [onyxSales, setOnyxSales] = useState<Sale[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -28,10 +29,18 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
+
+    // Onyx is optional and independent: a missing or header-only file leaves
+    // the Onyx section empty without failing the main dashboard. It uses the
+    // same raw-sales schema as prices.csv, so parseSales handles it directly.
+    fetch(dataUrl('onyx.csv'))
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((t) => setOnyxSales(t ? parseSales(t) : []))
+      .catch(() => setOnyxSales([]));
   }, []);
 
   return (
-    <AuctionDataContext.Provider value={{ sales, meta, loading, error }}>
+    <AuctionDataContext.Provider value={{ sales, meta, onyxSales, loading, error }}>
       {children}
     </AuctionDataContext.Provider>
   );

@@ -7,6 +7,7 @@ import { type Sale, type AuctionMeta } from '../lib/data';
 export type AuctionData = {
   sales: Sale[];
   meta: AuctionMeta[];
+  onyxSales: Sale[]; // chase-UR "Onyx" sub-list; same shape as sales, tracked separately
   loading: boolean;
   error: string;
 };
