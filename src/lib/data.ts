@@ -313,3 +313,48 @@ export function groupedTimelines(
 
   return { groups, ungrouped, unmatched };
 }
+
+// --- Compare Years (Phase 3) ---------------------------------------------
+// Join two seasons' per-item full-season stats so you can see how each token's
+// price moved year over year. Keyed on the canonical Item (not the display
+// name), so a token that filled the same role is compared across years even
+// when its yearly display name changed. A token absent in one of the two years
+// keeps its row with null stats (rendered as "—"); the % change is only defined
+// when both years have an average and the earlier one is non-zero.
+
+export type CompareRow = {
+  item: string;
+  category: string;      // stable per Item; taken from the newer season present, else the other
+  nameA: string | null;  // display name in season A (null if it didn't sell that year)
+  nameB: string | null;  // display name in season B
+  a: Stats | null;       // full-season stats in season A
+  b: Stats | null;       // full-season stats in season B
+  avgPct: number | null; // % change of the average from A→B; null unless both years priced (A.avg ≠ 0)
+};
+
+// Compare two seasons. seasonA / seasonB are just the two picked seasons in the
+// order the caller wants them shown; avgPct is always the change from A's avg to
+// B's avg. Category/name preference leans on whichever season is numerically
+// newer (handles a token being recategorised or renamed across years).
+export function compareSeasons(sales: Sale[], seasonA: string, seasonB: string): CompareRow[] {
+  const A = new Map(aggregateSeason(sales, seasonA).map((r) => [r.item, r]));
+  const B = new Map(aggregateSeason(sales, seasonB).map((r) => [r.item, r]));
+  const newerIsB = Number(seasonB) >= Number(seasonA);
+
+  const rows: CompareRow[] = [];
+  for (const item of new Set([...A.keys(), ...B.keys()])) {
+    const ra = A.get(item), rb = B.get(item);
+    const a = ra?.full ?? null, b = rb?.full ?? null;
+    const avgPct = a && b && a.avg !== 0 ? ((b.avg - a.avg) / a.avg) * 100 : null;
+    const newer = newerIsB ? rb : ra;
+    const older = newerIsB ? ra : rb;
+    rows.push({
+      item,
+      category: (newer ?? older)!.category,
+      nameA: ra?.displayName ?? null,
+      nameB: rb?.displayName ?? null,
+      a, b, avgPct,
+    });
+  }
+  return rows;
+}

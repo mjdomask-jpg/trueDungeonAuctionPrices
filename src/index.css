@@ -39,6 +39,11 @@
   --line-light-purple: #a855f7;
   --line-dark-purple: #6b21a8;
 
+  /* Compare Years Δ colours: a price that rose vs. fell year over year. Ledger
+     convention (up = green), readable on the light --card; dark steps below. */
+  --diff-up: #15803d;
+  --diff-down: #b91c1c;
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --serif: Georgia, 'Times New Roman', serif;
   --display: 'Caslon Antique', Georgia, serif;
@@ -84,6 +89,9 @@
 
   --line-light-purple: #d8b4fe;
   --line-dark-purple: #9333ea;
+
+  --diff-up: #4ade80;
+  --diff-down: #f87171;
 }
 
 * { box-sizing: border-box; }
