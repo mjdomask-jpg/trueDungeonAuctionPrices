@@ -235,9 +235,31 @@ td.avg { font-weight: 600; color: var(--text-h); }
   height: auto;
 }
 .timeline-chart text { font-family: var(--sans); }
-/* Points grow slightly on hover to invite the native tooltip. */
-.timeline-chart .pt { transition: r 0.1s ease; cursor: pointer; }
-.timeline-chart .pt:hover { r: 5; }
+
+/* Positioning context for the crosshair tooltip, which is placed by percentage
+   of the SVG's own width (so it tracks the chart at any size). */
+.chart-plot { position: relative; }
+.chart-tooltip {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+  min-width: 120px;
+  padding: 7px 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--text-h);
+}
+.chart-tooltip .tt-date { font-weight: 600; margin-bottom: 4px; }
+.chart-tooltip ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.chart-tooltip li { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.chart-tooltip .dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.chart-tooltip .tt-val { margin-left: auto; padding-left: 14px; font-variant-numeric: tabular-nums; }
 
 /* Legend: color swatch → token name. Hovering an entry emphasizes its line
    (the chart dims the rest). Labels wear text ink, never the series color. */

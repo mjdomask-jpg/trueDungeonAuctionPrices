@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { type TimelinePoint } from '../lib/data';
 import { money, fmtCloseDate } from '../lib/format';
 
 // Hand-rolled multi-series SVG line chart — zero dependencies, themes via CSS
 // variables. Each series is one token in a group; they share this chart's x
-// (auction close-date order) and a single linear y auto-framed to the group's
-// range. Line colors come from a validated categorical palette (--series-1..8,
-// defined in index.css); a legend maps color→token so identity never rests on
-// color alone (the light-mode relief rule + dark-mode CVD floor both need it).
+// (auction close-date order) and a single linear y auto-framed tightly to the
+// group's range. Line colors come from a validated categorical palette
+// (--series-1..8) or per-token overrides; a legend maps color→token so identity
+// never rests on color alone (the palette's light/dark relief needs it). Moving
+// over the plot drops a crosshair and a tooltip of every series' value at the
+// nearest auction.
 
 export type Series = { label: string; points: TimelinePoint[]; lineColor?: string };
 
@@ -29,15 +31,20 @@ const PLOT_H = H - M.top - M.bottom;
 
 const dateKey = (iso: string) => (/^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10) : '');
 
-// "Nice" axis bounds + step (Heckbert) so tick labels read as $120, $140…
-function niceScale(lo: number, hi: number, maxTicks = 5) {
-  if (hi <= lo) { const p = Math.max(1, Math.abs(hi) * 0.1); lo -= p; hi += p; }
-  const step = niceNum(niceNum(hi - lo, false) / (maxTicks - 1), true);
-  const niceLo = Math.floor(lo / step) * step;
-  const niceHi = Math.ceil(hi / step) * step;
+// Frame tightly to the data: pad the range ~6% and place nice round ticks
+// *inside* that band (rather than flooring the bottom to $0, which flattens a
+// high, narrow-range series). Only when the data genuinely sits near zero does
+// the axis include $0 — prices are non-negative, so we never invent a negative.
+function niceScale(min: number, max: number, targetTicks = 5) {
+  if (max <= min) { const p = Math.max(1, Math.abs(max) * 0.1); min -= p; max += p; }
+  const pad = (max - min) * 0.06;
+  let lo = min - pad;
+  const hi = max + pad;
+  if (lo < 0 && min >= 0) lo = 0;
+  const step = niceNum((hi - lo) / targetTicks, true);
   const ticks: number[] = [];
-  for (let v = niceLo; v <= niceHi + step / 2; v += step) ticks.push(v);
-  return { lo: niceLo, hi: niceHi, ticks };
+  for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-6; v += step) ticks.push(v);
+  return { lo, hi, ticks };
 }
 function niceNum(x: number, round: boolean): number {
   const exp = Math.floor(Math.log10(x));
@@ -51,7 +58,8 @@ function niceNum(x: number, round: boolean): number {
 const seriesVar = (i: number) => `var(--series-${(i % 8) + 1})`;
 
 export function PriceTimeline({ series, title }: { series: Series[]; title: string }) {
-  const [active, setActive] = useState<number | null>(null);
+  const [active, setActive] = useState<number | null>(null); // legend emphasis
+  const [hoverN, setHoverN] = useState<number | null>(null); // crosshair auction
   if (series.every((s) => s.points.length === 0)) return <p className="empty">No sales to chart.</p>;
 
   // Shared x: the union of auctions any series sold in, ordered by close date.
@@ -81,54 +89,95 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
     lineColorOf(series[si].lineColor)
     ?? (series.length === 1 ? 'var(--cat-color, var(--series-1))' : seriesVar(si));
 
+  // Map the cursor to the nearest auction slot (works through the SVG's scaling
+  // via the rendered rect). setState with the same slot is a no-op re-render.
+  const onMove = (e: MouseEvent<SVGSVGElement>) => {
+    if (!slots.length) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * W;
+    const raw = slots.length === 1 ? 0 : Math.round(((svgX - M.left) / PLOT_W) * (slots.length - 1));
+    setHoverN(slots[Math.max(0, Math.min(slots.length - 1, raw))][0]);
+  };
+
+  // Tooltip: every series that has a point at the hovered auction.
+  const tip = hoverN == null ? null : (() => {
+    const rows = series
+      .map((s, si) => {
+        const p = s.points.find((pt) => pt.auctionNumber === hoverN);
+        return p ? { label: s.label, color: strokeFor(si), p } : null;
+      })
+      .filter((r): r is { label: string; color: string; p: TimelinePoint } => r !== null);
+    if (!rows.length) return null;
+    return { date: fmtCloseDate(slotDate.get(hoverN)!) ?? `#${hoverN}`, rows, leftPct: (x(hoverN) / W) * 100 };
+  })();
+
   return (
     <div className="chartwrap">
-      <svg
-        className="timeline-chart" viewBox={`0 0 ${W} ${H}`} role="img"
-        aria-label={`Average auction price over time for ${title}: ${series.map((s) => s.label).join(', ')}`}
-      >
-        {/* gridlines + y ($) labels */}
-        {ticks.map((t) => (
-          <g key={t}>
-            <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={1} />
-            <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={12} fill="var(--text)">{money(t)}</text>
-          </g>
-        ))}
-
-        {/* x-axis close-date labels */}
-        {slots.map(([n, d], i) => (i % xStride === 0 || i === slots.length - 1) && (
-          <text key={n} x={x(n)} y={H - M.bottom + 20} textAnchor="middle" fontSize={12} fill="var(--text)">
-            {fmtCloseDate(d) ?? `#${n}`}
-          </text>
-        ))}
-
-        {/* one line + points per series; hovering dims the others */}
-        {series.map((s, si) => {
-          const pts = s.points.slice().sort((a, b) => slotIndex.get(a.auctionNumber)! - slotIndex.get(b.auctionNumber)!);
-          const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.auctionNumber)},${y(p.avg)}`).join(' ');
-          const dim = active !== null && active !== si;
-          return (
-            <g key={s.label} style={{ opacity: dim ? 0.18 : 1, transition: 'opacity 0.12s ease' }}
-              onMouseEnter={() => setActive(si)} onMouseLeave={() => setActive(null)}>
-              {pts.length > 1 && (
-                <path d={d} fill="none" stroke={strokeFor(si)} strokeWidth={active === si ? 3 : 2}
-                  strokeLinejoin="round" strokeLinecap="round" />
-              )}
-              {pts.map((p) => (
-                <circle key={p.auctionNumber} className="pt" cx={x(p.auctionNumber)} cy={y(p.avg)} r={3.5}
-                  fill="var(--card)" stroke={strokeFor(si)} strokeWidth={2}>
-                  <title>
-                    {`${s.label} — Auction #${p.auctionNumber}`}
-                    {fmtCloseDate(p.closeDate) ? ` · ${fmtCloseDate(p.closeDate)}` : ''}
-                    {`\nAvg ${money(p.avg)}`}
-                    {p.n > 1 ? ` (${p.n} sales · ${money(p.min)}–${money(p.max)})` : ''}
-                  </title>
-                </circle>
-              ))}
+      <div className="chart-plot">
+        <svg
+          className="timeline-chart" viewBox={`0 0 ${W} ${H}`} role="img"
+          aria-label={`Average auction price over time for ${title}: ${series.map((s) => s.label).join(', ')}`}
+          onMouseMove={onMove} onMouseLeave={() => setHoverN(null)}
+        >
+          {/* gridlines + y ($) labels */}
+          {ticks.map((t) => (
+            <g key={t}>
+              <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={1} />
+              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={12} fill="var(--text)">{money(t)}</text>
             </g>
-          );
-        })}
-      </svg>
+          ))}
+
+          {/* x-axis close-date labels */}
+          {slots.map(([n, d], i) => (i % xStride === 0 || i === slots.length - 1) && (
+            <text key={n} x={x(n)} y={H - M.bottom + 20} textAnchor="middle" fontSize={12} fill="var(--text)">
+              {fmtCloseDate(d) ?? `#${n}`}
+            </text>
+          ))}
+
+          {/* crosshair at the hovered auction */}
+          {hoverN != null && tip && (
+            <line x1={x(hoverN)} x2={x(hoverN)} y1={M.top} y2={H - M.bottom}
+              stroke="var(--text)" strokeOpacity={0.35} strokeWidth={1} strokeDasharray="3 3" pointerEvents="none" />
+          )}
+
+          {/* one line + points per series; a legend hover dims the others */}
+          {series.map((s, si) => {
+            const pts = s.points.slice().sort((a, b) => slotIndex.get(a.auctionNumber)! - slotIndex.get(b.auctionNumber)!);
+            const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.auctionNumber)},${y(p.avg)}`).join(' ');
+            const dim = active !== null && active !== si;
+            return (
+              <g key={s.label} style={{ opacity: dim ? 0.18 : 1, transition: 'opacity 0.12s ease' }}>
+                {pts.length > 1 && (
+                  <path d={d} fill="none" stroke={strokeFor(si)} strokeWidth={active === si ? 3 : 2}
+                    strokeLinejoin="round" strokeLinecap="round" />
+                )}
+                {pts.map((p) => (
+                  <circle key={p.auctionNumber} cx={x(p.auctionNumber)} cy={y(p.avg)}
+                    r={hoverN === p.auctionNumber ? 5 : 3.5}
+                    fill="var(--card)" stroke={strokeFor(si)} strokeWidth={2} />
+                ))}
+              </g>
+            );
+          })}
+        </svg>
+
+        {tip && (
+          <div className="chart-tooltip" style={{ left: `${Math.max(8, Math.min(92, tip.leftPct))}%` }}>
+            <div className="tt-date">{tip.date}</div>
+            <ul>
+              {tip.rows.map((r) => (
+                <li key={r.label}>
+                  <span className="dot" style={{ background: r.color }} />
+                  {r.label}
+                  <span className="tt-val">
+                    {money(r.p.avg)}{r.p.n > 1 ? ` · ${r.p.n}×` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
 
       {showLegend && (
         <ul className="chart-legend">
