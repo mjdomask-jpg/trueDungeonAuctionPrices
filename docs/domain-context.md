@@ -112,6 +112,44 @@ Two views matter most to the community:
    most recent auctions** in the season. This captures the *current* market, which
    can differ substantially from the season-long average as prices drift over time.
 
+## Transmutes: crafting and the build-vs-buy decision
+
+Beyond simply buying tokens, players can **craft** — or "transmute" — a more powerful
+token from a set of cheaper ones, much like a crafting system in a computer RPG. Each
+transmute has a **recipe**: a bill of materials listing quantities of other tokens
+required to make it. Recipe ingredients are mostly `Trade Good`s and `Ultra Rare`s, and
+occasionally `Premium` items.
+
+Crucially, **transmuted tokens are not sold in the auctions.** The auctions distribute
+tokens bought directly from the game's first-party creator; transmutes are made by players
+and bought/sold through third-party resellers. So there is no auction price to look up for a
+transmute. Instead, the community **estimates the cost to craft one**: for each ingredient in
+the recipe, multiply its recent auction price (either the **average** or the **minimum**) by
+the quantity required, then sum. That total is the **build** cost.
+
+Players weigh that estimated build cost against the price of simply **buying** the finished
+transmute from a reseller — the **build-vs-buy** decision the tracking data exists to inform.
+
+Transmutes come in tiers that form an upgrade ladder, roughly:
+`Enhanced`/`Exalted` → `Relic` → `Legendary` → `Arcanum` → `Paragon` → `Mythic` →
+`Eldritch` → `Omni`. **Safehold** is a separate line with its own upgrade chain, numbered in
+descending Roman numerals (`Safehold V` → `IV` → `III` → `II` → `I`, where V is the entry
+level and I the top). A higher-tier recipe can require a lower-tier token as a **source**
+ingredient — e.g. some (not all) Legendaries consume a Relic. When a recipe consumes a
+source token that is itself craftable, its cost can in turn be estimated from *its* recipe.
+
+Some ingredients are **not sold at auction** at all (most notably **Fleece**) yet are still
+required by recipes and still fluctuate in price year to year. These are tracked **manually**
+so build costs remain complete.
+
+## Onyx orders
+
+**Onyx** is a special order type. Instead of letting a buyer choose specific (non-chase)
+Ultra Rares, an Onyx order replaces a portion of the Ultra Rares with **chase** versions — a
+fixed list of one of each Ultra Rare in the set. Onyx tokens sell through the auctions like
+other components and have their own price history, tracked separately from the main
+Ultra Rare list.
+
 ## From spreadsheet to website
 
 Historically this information lived in Google Sheets: one workbook held the raw
@@ -141,3 +179,12 @@ website is ultimately built to present.
 | **Last-5 stats** | Min/max/average across the five most recent auctions in the season. |
 | **Status / outcome** | Whether an auction `Closed`, `Failed`, or is `Open`. Auction counts on the site include only `Closed`. |
 | **Close date** | The date an auction closed; used to label the recent ("Last 5") window. |
+| **Transmute** | A more powerful token *crafted* from other tokens rather than bought at auction. |
+| **Recipe** | The bill of materials for a transmute: the tokens and quantities needed to craft it. |
+| **Build cost** | Estimated cost to craft a transmute: Σ (ingredient quantity × its auction avg or min price). |
+| **Build-vs-buy** | The decision to craft a transmute yourself vs. buy the finished one from a reseller. |
+| **Source token** | A lower-tier token consumed as an ingredient when crafting a higher-tier one (e.g. a Relic inside a Legendary). |
+| **Tier / level** | A transmute's rank on the upgrade ladder (Relic, Legendary, Arcanum, …; Safehold V–I). |
+| **Onyx** | A special order that swaps part of the Ultra Rares for a fixed set of chase versions. |
+| **Fleece** | A recipe ingredient not sold at auction, whose price is tracked manually. |
+| **Augment** | A prior-season transmute an auctioneer may bundle into an auction to help it fund. |

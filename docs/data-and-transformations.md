@@ -20,6 +20,35 @@ public/data/metadata.csv ─┘
 The aggregation logic lives in [`src/lib/data.ts`](../src/lib/data.ts) and is
 exercised/verified by the standalone script `validate.mjs` at the repository root.
 
+## Application structure
+
+The app is a small React + Vite single-page app with client-side routing
+(`react-router-dom`, **HashRouter**). As of the Phase 0 refactor (see
+[expansion-plan.md §5](./expansion-plan.md)), responsibilities are split as:
+
+| Module | Responsibility |
+| --- | --- |
+| `src/main.tsx` | Mounts `HashRouter`, wraps the tree in `AuctionDataProvider`, declares routes. |
+| `src/App.tsx` | Layout shell: the `.wrap` container, `SiteHeader`, and an `<Outlet/>` for the routed page. |
+| `src/pages/DashboardPage.tsx` | The price dashboard — season/category controls, stats text, per-category tables. Owns `CATEGORY_ORDER`. |
+| `src/components/` | `SiteHeader`, `ThemeToggle`, and `CategoryTable` (owns `BANDED_CATEGORIES` and the row rendering). |
+| `src/hooks/useTheme.ts` | Light/dark theme state (see §11). |
+| `src/lib/data.ts` | Pure parse/filter/join/aggregate logic (below). |
+| `src/lib/format.ts` | Presentation helpers `money` and `fmtCloseDate`. |
+| `src/data/AuctionDataProvider.tsx` + `auctionDataContext.ts` | Load-once shared data, exposed via `useAuctionData()`. |
+| `src/nav.ts` | Top-level nav entries; the nav bar stays hidden until there is more than one. |
+
+**Routing uses HashRouter deliberately.** `vite.config.ts` sets `base: './'` for GitHub
+Pages subpath hosting; hash-based routing then works from any subpath with no server
+rewrites and no asset-path breakage on deep links. (Switching to clean URLs later would
+require a host with an SPA fallback and an absolute `base`.)
+
+**Data loading is centralized.** The fetch/parse no longer lives in a page:
+`AuctionDataProvider` fetches and parses both CSVs **once** and exposes
+`{ sales, meta, loading, error }` through the `useAuctionData()` hook, so every current and
+future page reads the same parsed rows. When the deferred build-time CSV→JSON step lands,
+only this provider changes.
+
 ## Source data
 
 ### `prices.csv` — the sales log (one row per sale)
@@ -147,7 +176,7 @@ the underlying statistics:
 
 The rows are rendered as **one table per category** (not a single combined table):
 
-- **Table order** follows the fixed `CATEGORY_ORDER` in `src/App.tsx`: Trade Good,
+- **Table order** follows the fixed `CATEGORY_ORDER` in `src/pages/DashboardPage.tsx`: Trade Good,
   Ultra Rare, Premium, Bonus, Preorder, Golden Ticket (unknown categories appended
   alphabetically). Each table has the category name as an `<h2>` header above it.
 - **Rows within a table** are sorted **alphabetically by `Display Name`** (token
@@ -167,7 +196,7 @@ The rows are rendered as **one table per category** (not a single combined table
   number columns can no longer all fit and the table scrolls horizontally inside
   its card (`.tablewrap { overflow-x: auto }`) rather than squishing.
 - **Row banding**: only the **Trade Good** and **Premium** tables get alternating
-  row striping (`BANDED_CATEGORIES` in `src/App.tsx`, `.banded` CSS). The stripe is
+  row striping (`BANDED_CATEGORIES` in `src/components/CategoryTable.tsx`, `.banded` CSS). The stripe is
   applied at the `<tr>` level so the Last-5 column tint and hover highlight paint
   correctly over it.
 - **Category heading colors**: each `<section>` carries a `data-category`
@@ -185,7 +214,7 @@ Two blocks of live-computed text sit above the tables:
 - **Season stats line** (for the selected season): the number of `Closed` auctions
   in that season, and the **close dates of the five auctions in the "Last 5"
   window**, formatted as `Mon DD` (three-letter month, zero-padded two-digit day —
-  e.g. `Apr 09`) via `fmtCloseDate` in `src/App.tsx`. If a close date is missing it
+  e.g. `Apr 09`) via `fmtCloseDate` in `src/lib/format.ts`. If a close date is missing it
   falls back to `#<auctionNumber>`. This replaced an earlier line that showed the
   window as an auction-number range and a distinct-item count.
 
@@ -208,8 +237,8 @@ manual override can win).
   paint and stamps `data-theme` onto `<html>` — using the visitor's saved choice
   from `localStorage` (`theme` = `light`|`dark`) if present, otherwise the OS
   `prefers-color-scheme`. Running before paint avoids a flash of the wrong theme.
-- **Manual toggle.** A ☾/☀ button in the header (`.theme-toggle`, wired by the
-  `useTheme` hook in `src/App.tsx`) flips the theme, writes the choice to
+- **Manual toggle.** A ☾/☀ button in the header (`.theme-toggle`, the `ThemeToggle`
+  component, wired by the `useTheme` hook in `src/hooks/useTheme.ts`) flips the theme, writes the choice to
   `localStorage`, and stops auto-following the OS. Until the visitor clicks, the
   site keeps following live OS changes via a `matchMedia` listener.
 
