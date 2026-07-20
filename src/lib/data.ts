@@ -151,3 +151,62 @@ export function lastFiveAuctionNumbers(sales: Sale[], season: string): number[] 
   const nums = [...new Set(sales.filter((s) => s.season === season).map((s) => s.auctionNumber))].sort((a, b) => a - b);
   return nums.slice(-5);
 }
+
+// --- Price timelines (Phase 2) -------------------------------------------
+// One plotted point per auction in which a token sold. A token can sell more
+// than once in the same auction (multiple copies), so each point aggregates
+// that auction's sales to their average; min/max/n are kept for the tooltip.
+
+export type TimelinePoint = {
+  auctionNumber: number;
+  closeDate: string; // ISO 'YYYY-MM-DD', or '' when metadata has none
+  avg: number;
+  min: number;
+  max: number;
+  n: number; // sales aggregated into this point
+};
+
+// Sortable date key: real ISO dates compare lexically; anything else (missing/
+// 'n/a') collapses to '' so a season with no close dates falls back cleanly to
+// auction-number order.
+function dateKey(iso: string): string {
+  return /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10) : '';
+}
+
+// Per-auction average price for one item across one season, ordered by auction
+// close date (auction number as tiebreak, and as the sole order when a season
+// carries no close dates).
+export function itemTimeline(
+  sales: Sale[], meta: AuctionMeta[], item: string, season: string,
+): TimelinePoint[] {
+  const closeByAuction = new Map<string, string>();
+  for (const m of meta) closeByAuction.set(m.auctionId, m.closeDate);
+
+  const byAuction = new Map<number, { prices: number[]; auctionId: string }>();
+  for (const s of sales) {
+    if (s.season !== season || s.item !== item) continue;
+    let bucket = byAuction.get(s.auctionNumber);
+    if (!bucket) { bucket = { prices: [], auctionId: s.auctionId }; byAuction.set(s.auctionNumber, bucket); }
+    bucket.prices.push(s.price);
+  }
+
+  const points: TimelinePoint[] = [];
+  for (const [auctionNumber, { prices, auctionId }] of byAuction) {
+    const sum = prices.reduce((a, b) => a + b, 0);
+    points.push({
+      auctionNumber,
+      closeDate: closeByAuction.get(auctionId) ?? '',
+      avg: sum / prices.length,
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+      n: prices.length,
+    });
+  }
+
+  points.sort((a, b) => {
+    const ka = dateKey(a.closeDate), kb = dateKey(b.closeDate);
+    if (ka !== kb) return ka < kb ? -1 : 1;
+    return a.auctionNumber - b.auctionNumber;
+  });
+  return points;
+}

@@ -217,3 +217,24 @@ td.avg { font-weight: 600; color: var(--text-h); }
 }
 
 .empty, .err { text-align: center; padding: 24px; color: var(--text); }
+
+/* Price Timelines chart card. The SVG keeps its 820×360 viewBox aspect and
+   scales to the card width; --accent/--text/--border inside it theme for free. */
+.chartwrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px 8px 4px;
+  overflow-x: auto;
+}
+.timeline-chart {
+  display: block;
+  width: 100%;
+  min-width: 480px; /* below this, scroll rather than crush the labels */
+  height: auto;
+}
+.timeline-chart text { font-family: var(--sans); }
+/* Points grow slightly on hover to invite the native tooltip. */
+.timeline-chart .pt { transition: r 0.1s ease; cursor: pointer; }
+.timeline-chart .pt:hover { r: 5; }
