@@ -208,6 +208,15 @@ tbody tr:hover td.last5 { background: var(--last5-bg); }
 td.token { color: var(--text-h); font-weight: 500; white-space: normal; }
 td.avg { font-weight: 600; color: var(--text-h); }
 
+/* Compare Years. A vertical rule separates the two seasons' column groups and
+   the Δ column; the older display name (when a token was renamed) rides muted
+   next to the current one; Δ Avg is coloured by direction. */
+th.sep, td.sep { border-left: 1px solid var(--border); }
+td.token .alt { color: var(--text); font-weight: 400; }
+td.diff { font-weight: 600; }
+td.diff.up { color: var(--diff-up); }
+td.diff.down { color: var(--diff-down); }
+
 .cat {
   display: inline-block;
   font-size: 12px;
