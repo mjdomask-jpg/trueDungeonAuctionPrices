@@ -1,0 +1,24 @@
+Key,Year,Level,Transmute,Good,GoodYear,ResolvedYear,GoodDisplayName,Quantity,IsSource
+2026|Ring of the Sacred Circle|1k Bonus||FALSE,2026,Relic,Ring of the Sacred Circle,1k Bonus,,2026,Ring of the 1st Circle,1,FALSE
+2026|Ring of the Sacred Circle|1k Bonus|-1|FALSE,2026,Relic,Ring of the Sacred Circle,1k Bonus,-1,2025,Ring of the 2nd Circle,1,FALSE
+2026|Ring of the Sacred Circle|1k Bonus|-2|FALSE,2026,Relic,Ring of the Sacred Circle,1k Bonus,-2,2024,Ring of the 3rd Circle,1,FALSE
+2026|Ring of the Sacred Circle|1k Bonus|-3|FALSE,2026,Relic,Ring of the Sacred Circle,1k Bonus,-3,2023,Ring of the 4th Circle,1,FALSE
+2026|Ring of the Sacred Circle|1k Bonus|-4|FALSE,2026,Relic,Ring of the Sacred Circle,1k Bonus,-4,2022,Ring of the 5th Circle,1,FALSE
+2026|Deathward Greaves|PYP||FALSE,2026,Relic,Deathward Greaves,PYP,,2026,Ultra Rare,1,FALSE
+2026|Deathward Greaves|PYP|-1|FALSE,2026,Relic,Deathward Greaves,PYP,-1,2025,Ultra Rare,1,FALSE
+2026|Deathward Greaves|PYP|-2|FALSE,2026,Relic,Deathward Greaves,PYP,-2,2024,Ultra Rare,1,FALSE
+2026|Deathward Greaves|PYP|-3|FALSE,2026,Relic,Deathward Greaves,PYP,-3,2023,Ultra Rare,1,FALSE
+2026|Deathward Greaves|Dwarven Steel||FALSE,2026,Relic,Deathward Greaves,Dwarven Steel,,2026,Dwarven Steel,10,FALSE
+2026|EXAMPLE Simple Relic|PYP||TRUE,2026,Relic,EXAMPLE Simple Relic,PYP,,2026,Ultra Rare,1,TRUE
+2026|EXAMPLE Simple Relic|Alchemist's Ink||FALSE,2026,Relic,EXAMPLE Simple Relic,Alchemist's Ink,,2026,Alchemist's Ink,15,FALSE
+2026|EXAMPLE Simple Relic|Aragonite||FALSE,2026,Relic,EXAMPLE Simple Relic,Aragonite,,2026,Aragonite,10,FALSE
+2026|EXAMPLE Legendary|EXAMPLE Simple Relic||TRUE,2026,Legendary,EXAMPLE Legendary,EXAMPLE Simple Relic,,2026,EXAMPLE Simple Relic (transmute),1,TRUE
+2026|EXAMPLE Legendary|PYP||FALSE,2026,Legendary,EXAMPLE Legendary,PYP,,2026,Ultra Rare,2,FALSE
+2026|EXAMPLE Legendary|Darkwood Plank||FALSE,2026,Legendary,EXAMPLE Legendary,Darkwood Plank,,2026,Darkwood Plank,20,FALSE
+2026|Safehold V|Elven Bismuth||FALSE,2026,Safehold,Safehold V,Elven Bismuth,,2026,Elven Bismuth,20,FALSE
+2026|Safehold IV|Safehold V||TRUE,2026,Safehold,Safehold IV,Safehold V,,2026,Safehold V (transmute),1,TRUE
+2026|Safehold IV|Elven Bismuth||FALSE,2026,Safehold,Safehold IV,Elven Bismuth,,2026,Elven Bismuth,12,FALSE
+2026|EXAMPLE Pinned Year|8k Bonus|2019|FALSE,2026,Relic,EXAMPLE Pinned Year,8k Bonus,2019,2019,Orb of Dragonkind (Old),1,FALSE
+2026|Golden Fleece|Monster Trophy||FALSE,2026,Enhanced,Golden Fleece,Monster Trophy,,2026,Monster Trophy,10,FALSE
+2026|EXAMPLE Uses Fleece Parts|Monster Trophy||FALSE,2026,Relic,EXAMPLE Uses Fleece Parts,Monster Trophy,,2026,Monster Trophy,3,FALSE
+2026|EXAMPLE Uses Fleece Parts|Aragonite||FALSE,2026,Relic,EXAMPLE Uses Fleece Parts,Aragonite,,2026,Aragonite,8,FALSE

@@ -66,7 +66,8 @@ currently carries display name + category inline in `prices.csv`; `tokenMetadata
 cleaner normalized source and is what `Compare Years` relies on.
 
 ### 3.2 Recipe table — `Transmute table` (long format)
-Columns: `Key (transmute+good)`, `Year`, `Level`, `Transmute`, `Good`, `Quantity`.
+Columns as found: `Key (transmute+good)`, `Year`, `Level`, `Transmute`, `Good`, `Quantity`.
+Two columns are added by the amendments below: **`IsSource`** (§4.1) and **`GoodYear`** (§4.2).
 One row per (transmute, ingredient). This is a clean relational bill-of-materials — ideal to
 port as-is. Key findings:
 - **The tier ladder is deep.** Levels present: `Enhanced`, `Exalted`, `Relic`, `Legendary`,
@@ -82,6 +83,20 @@ port as-is. Key findings:
   source rows real quantities. See §4.1.
 - **Not all tokens of a tier have a source.** Some Legendaries require a source Relic, some don't
   — modeled cleanly as presence/absence of an `IsSource` line (§4.1).
+- **Some recipes draw ingredients from multiple specific seasons.** E.g. `Ring of the Sacred Circle`
+  needs a `1k Bonus` from each of 2026–2022; `Deathward Greaves` needs an Ultra Rare from each of
+  2026–2023. The recipe's own `Year` is therefore *not* enough to price its lines. Handled by the
+  **`GoodYear`** column — see §4.2.
+- **"Ultra Rare" is unambiguous: the tier and the token are 1:1.** `tokenMetadata` holds exactly 8
+  UR rows, one per season 2019–2026, *all* with `canonicalName = PYP`; `prices.csv` agrees
+  (`PYP,…,Ultra Rare,Ultra Rare` — canonical name, display name and category match all the way
+  down, over 371 sale rows). So the category `Ultra Rare` and the token `PYP` denote the same
+  thing. Recipe lines should still key on `canonicalName` (`PYP`) for consistency with every other
+  good, but there is no collision to resolve. See §4.2.
+- **The Onyx list is a separate tier, not the UR pool.** `onyx.csv` carries category
+  `Onyx Ultra Rare` — ~21 distinct named tokens per season (20 in 2022; 21 in 2023–2026), 844 sale
+  rows — and is **disjoint from PYP**, which never appears in it. Per the maintainer, recipes that
+  call for "any UR tier token" price as **PYP**, not as the cheapest Onyx UR (§4.2).
 - **Safehold is the only other laddered tier**, and it's an *upgrade* chain in descending Roman
   numerals: `Safehold V → IV → III → II → I` (V is the base, I the top). Each level's recipe
   carries an `IsSource` line pointing at the next-lower tier. This folds the standalone
@@ -89,7 +104,12 @@ port as-is. Key findings:
   no ladder in the sheet — the maintainer only ever hand-wired the relic→legendary add-on.
 
 ### 3.3 Off-auction priced inputs — `pricesFleece`
-Columns: `Key`, `Year`, `Category`, `Display Name`, `max Price`, `avg Price`. **Manually
+> **Corrected against the real export.** Actual columns: `Key`, `Year`, `Category`, `Good`,
+> `Display Name`, `max Price`, `avg Price`, **`min Price`**. The earlier "no min price" note below
+> was wrong — min is present and populated. Also note `Good` = **`Fleece`** (the canonicalName);
+> `Golden Fleece` is only the display name.
+
+Columns as originally read: `Key`, `Year`, `Category`, `Display Name`, `max Price`, `avg Price`. **Manually
 maintained**, one row per year, and note **no min price** (only max + avg). Fleece isn't sold
 at auction but is required by recipes. This is a small hand-edited price table — there may be
 other tokens like this over time, so model it as a general "manual off-auction prices" file,
@@ -114,11 +134,14 @@ Core computation, per transmute per season:
 cost_avg = Σ over goods ( quantity × priceAvg(good, season) )
 cost_min = Σ over goods ( quantity × priceMin(good, season) )
 ```
-- Leaf price lookup order: auction stats → manual off-auction table (Fleece etc.) → **excluded**
-  if the good has negligible/no price (the sheet drops ≤ ~$1 filler goods from the sum).
+- Leaf price lookup order: auction stats → derived-price rule (§4.3) → manual off-auction table
+  (Fleece etc.) → **excluded** if the good has negligible/no price (the sheet drops ≤ ~$1 filler
+  goods from the sum). All three sources carry max/avg/**min**, so no stat-substitution is needed.
 - For the **current season**, compute both full-year and last-5 variants (prices move); older
   seasons use full-year only.
-- Prices are always taken from *that transmute's own season*.
+- Each line is priced in **its own resolved season**, which defaults to the transmute's season but
+  can differ — see §4.2. (Superseded the earlier flat rule "prices are always taken from that
+  transmute's own season", which multi-year recipes break.)
 - UI: a per-transmute cost card (avg + min totals) above its recipe line-items, colored by tier
   (the existing category-color pattern extends to transmute levels).
 
@@ -168,6 +191,221 @@ Data requirements when authoring the recipe sheet:
   (for the recurse case) or the leaf token's name (for the base-token case). Consistent naming is
   what lets the engine resolve `isTransmute(good)` and the price lookup automatically.
 
+### 4.2 Multi-season ingredients (the `GoodYear` column)
+
+Some recipes require the *same* good from several *specific* past seasons (§3.2). The season of an
+ingredient is therefore a real per-line attribute, not a property of the recipe. Promote the
+implicit rule "price in the transmute's own season" from hardcoded engine behavior to a **column
+with that rule as its default**.
+
+Add `GoodYear` to the recipe table, accepting three forms:
+
+| Value | Meaning | Notes |
+|---|---|---|
+| *blank* | the transmute's own season | the default — **every existing row migrates untouched** |
+| `-1`, `-2`, … | relative to the row's `Year` column | the primary form for multi-season recipes |
+| `2023` | pinned absolute season | escape hatch for genuine one-offs |
+
+Offsets are relative to the recipe's own `Year`, **not** the current calendar year — a `Year=2024`
+row with `GoodYear=-1` means 2023 permanently, and does not shift meaning as seasons pass.
+
+```
+resolveYear(line, transmute) =
+    line.GoodYear === ""        ? transmute.Year
+  : /^[+-]/.test(line.GoodYear) ? transmute.Year + Number(line.GoodYear)
+  :                               Number(line.GoodYear)
+```
+
+`Ring of the Sacred Circle` (2026) becomes five rows:
+
+```csv
+Year,Level,Transmute,Good,GoodYear,Quantity,IsSource
+2026,Relic,Ring of the Sacred Circle,1k Bonus,,1,FALSE
+2026,Relic,Ring of the Sacred Circle,1k Bonus,-1,1,FALSE
+2026,Relic,Ring of the Sacred Circle,1k Bonus,-2,1,FALSE
+2026,Relic,Ring of the Sacred Circle,1k Bonus,-3,1,FALSE
+2026,Relic,Ring of the Sacred Circle,1k Bonus,-4,1,FALSE
+```
+
+`Deathward Greaves` is the same shape with `Good = PYP` and offsets `0..-3`.
+
+**Why relative offsets are the primary form.** These are "one from each of the last N seasons"
+designs, so next season's recipe is a copy-paste with `Year` bumped — the engine re-resolves
+2027–2023 by itself. Absolute years would force a hand-rewrite of every row each season.
+
+**Resolving the "Ultra Rare" overlap.** The apparent overlap is **entirely a season problem**, not
+a referent problem. Three distinct-sounding phrasings all resolve to the token `PYP`:
+
+| Recipe says | Resolves to |
+|---|---|
+| "an Ultra Rare" (this season's) | `Good = PYP`, `GoodYear` blank |
+| "an Ultra Rare from 2026, 2025, 2024, 2023" | four `PYP` rows, `GoodYear` = `` / `-1` / `-2` / `-3` |
+| "any token of UR tier" | `Good = PYP` (maintainer-confirmed pricing policy — see below) |
+
+Because the tier ≡ the token (§3.2), the only thing that ever varies between these is the season.
+`GoodYear` carries it; nothing else is needed. Render as "Ultra Rare (2024)" in the UI.
+
+**Display names are season-dependent, so resolve them against `GoodYear`, not `Year`.** `1k Bonus`
+renders as Ring of the 1st/2nd/3rd/4th/5th Circle in 2026/2025/2024/2023/2022 — so the five
+Ring of the Sacred Circle rows are five *different-looking* tokens sharing one canonical name. Any
+UI that labels a recipe line must look up `displayName` at the line's **resolved** season or every
+row will wrongly read "Ring of the 1st Circle". The authoring sheet carries `ResolvedYear` and
+`GoodDisplayName` as formula columns for the same reason — see
+[`transmute-recipes-template.md`](transmute-recipes-template.md). **The importer ignores both**;
+the site re-derives them, so a stale derived column in the sheet can never poison the data.
+
+The one other axis people conflate into the word — *is this the token I'm upgrading, or fuel I'm
+consuming?* — is already carried by `IsSource` (§4.1). Season and role are orthogonal, one column
+each; referent needs no column at all.
+
+**Knock-on consequences:**
+- **The row key changes.** `Key (transmute+good)` is no longer unique once five rows share
+  transmute+good. It becomes `transmute + good + goodYear + isSource`. Fix in the sheet **before**
+  authoring more multi-season rows.
+- **The last-5-auctions variant only applies to current-season lines.** Past-season lines have no
+  "recent" window and use that season's full-year stats. A 2026 Ring of the Sacred Circle has one
+  line of five that responds to the recent-prices toggle — surface that as a footnote on the cost
+  card, or the toggle looks broken.
+- **Import validation** should assert every resolved year exists in the price data, so a bad offset
+  fails loudly instead of silently pricing at zero.
+- **Thin early seasons.** PYP is priced in every season 2019–2026, so multi-season offsets always
+  resolve — but sale counts are 6 (2019), 15 (2020), 20 (2021) versus 50–79 for 2022–2026. A
+  min-based cost reaching back that far rests on very few sales; consider surfacing sale count on
+  the line, or at least not treating those minima as equally trustworthy.
+
+**Deliberately not built: a `GoodType: token | category` column.** Recipes asking for "any token of
+UR tier" **do** exist (maintainer-confirmed). They still need no column, because the maintainer's
+pricing policy resolves them to the same place as a named UR:
+
+- **Pool = PYP only.** Players are assumed to acquire the generic; the ~21 named Onyx URs of the
+  season do *not* compete as candidates.
+- **"Cheapest" = per-stat**: the avg total takes PYP's season average, the min total takes PYP's
+  season minimum — each consistent with how every other line in that same total is priced. Over a
+  one-token pool this is *exactly* the standard leaf lookup, so there is no second pricing path to
+  build or test.
+
+So "any UR" and "an Ultra Rare" produce byte-identical rows.
+
+> **Decision record — what would reopen this.** The cost of the simplification is that the data
+> can no longer distinguish the two phrasings, so (a) the UI cannot render "any UR" differently,
+> and (b) if the pool ever widens to include Onyx URs, the recipes must be re-authored to say
+> which lines were "any UR". Both are recoverable by adding the column later and back-filling;
+> neither is worth paying for now. Revisit if the Onyx set is ever declared substitutable.
+
+### 4.3 Derived prices — the Golden Fleece ingredients
+
+**Golden Fleece is itself a transmute**: 10 **Monster Trophy** → 1 Fleece. Monster Trophies are
+earned by playing, never auctioned, so they have no market price. Some recipes consume them.
+Neither `Monster Trophy` nor `Golden Fleece` exists in any currently-ported file.
+
+**The sheet's existing workaround:** express the quantity as a *fraction of a Fleece* — needing 3
+Trophies is written `Golden Fleece × 0.3` — because the Fleece has strictly more utility than its
+parts, so `price(Fleece) ÷ 10` is a **ceiling** on each Trophy. This saved the maintainer from
+hand-tracking a second price series.
+
+**Ported as a derived-price rule instead (maintainer-confirmed).** The fraction conflates two
+separate facts — *how many* ingredients, and *what they're worth*. Split them:
+
+```
+price(ingredient, season) = price(Golden Fleece, season) ÷ ratio      // ratio = 10
+```
+
+Recipes then name the real ingredient with an **integer** quantity, and the price still derives
+from the single hand-maintained Fleece series — the labor saving is fully preserved. Requires a
+small rule table (§3.3's "manual off-auction prices" file grows a sibling):
+
+| Column | Meaning |
+|---|---|
+| `Token` | the derived token's `canonicalName` (`Monster Trophy`) |
+| `DerivedFrom` | the parent's `canonicalName` (`Golden Fleece`) |
+| `Ratio` | how many `Token` make one `DerivedFrom` (`10`) |
+| `Year` | blank = applies to every season; a year = per-season override, which wins |
+| `Bound` | `ceiling` — the derived value is an upper bound, not a measurement |
+
+The blank-year convention deliberately mirrors `GoodYear` (§4.2): one row states the durable rule,
+per-season rows override it only where reality differs.
+
+Why this over keeping the fraction:
+- **Integer-only quantities stay enforceable.** If `0.3` is legal anywhere, a validator can no
+  longer distinguish it from a fat-fingered `3` — a free correctness check across hundreds of
+  hand-typed rows, lost for one convention.
+- **Recipe lines read truthfully.** "3 × Monster Trophy", not "0.3 × a token nobody can buy 0.3 of".
+- **The ingredient becomes a real token**, so `GoodDisplayName`, `GoodYear` offsets and price
+  lookups all work on it like anything else.
+- **Reversible cheaply**: if the ingredient is ever auctioned directly, delete the rule row and the
+  normal price path takes over untouched.
+
+**Three engine requirements this creates:**
+
+1. **Cycle guard (mandatory).** Fleece's own recipe is `10 × ingredient`, and the ingredient prices
+   off Fleece — a cycle. Break it *by construction*: a derived-price lookup reads the parent's
+   **market price** from the manual table and must **never** call `buildCost(parent)`. This is the
+   one place the acyclicity argument in §4 does not hold on its own.
+2. **Fleece's own build-vs-buy card is degenerate.** `buildCost(Fleece) = 10 × (fleeceMarket ÷ 10)
+   = fleeceMarket`, always, exactly. That is an artifact of the definition, not a finding —
+   suppress the card or label it, or it will read as a suspiciously perfect break-even.
+3. **`ceiling` must surface in the UI.** Lines priced this way are biased high, so any total
+   containing one is an upper bound. Mark the line and caveat the total; otherwise it silently
+   contradicts the bargain-hunting assumption every other line uses.
+
+**Missing min — MOOT (corrected against the real export).** §3.3's claim that `pricesFleece` has no
+min was **wrong**: the actual export
+(`auctionData - pricesFleece.csv`) carries `max Price`, `avg Price` **and** `min Price`, populated
+on every row. No avg-as-min fallback is needed; off-auction leaves price exactly like auction ones.
+
+The general question survives in weaker form: if a *future* off-auction token ever ships without a
+min, decide then.
+
+`Stalker Token` and `Herald Token` now live in the same off-auction file with full max/avg/min, so
+the "manual off-auction prices" table is confirmed general rather than a Fleece special case — as
+§3.3 predicted. They are priced directly and need **no** derived-price rule; only `Monster Trophy`
+does.
+
+### 4.4 Season fallback — recipes outside the priced range
+
+Recipes exist for **2012–2018** (before auction data begins) and **2027** (a preview season that
+hasn't happened). Neither has price data. Maintainer-confirmed handling:
+
+- **2012–2018 → price from 2019**, full-year stats. The earliest data we have.
+- **2027 → price from 2026, `last 5` variant.** A preview is a forward estimate, so the most recent
+  auctions are the best predictor.
+
+**Encode as a rule, not a table.** Both cases are the same idea — clamp into the priced range —
+and stating it generally means zero maintenance as seasons roll:
+
+```
+pricingSeason(nominal) =
+    nominal < earliestPriced  ->  { season: earliestPriced, variant: 'full'  }   // 2012-18 -> 2019
+    nominal > latestPriced    ->  { season: latestPriced,   variant: 'last5' }   // 2027 -> 2026 last5
+    otherwise                 ->  { season: nominal,        variant: 'full'  }
+```
+
+This reproduces both instructions exactly, and **self-heals**: when 2027 auctions start landing,
+`latestPriced` becomes 2027 and those recipes silently switch to real data. A 2028 preview then
+falls back to 2027 last-5 with no edit. A lookup table would need touching every season.
+
+Consult it **only when a direct lookup misses**, per source, so real data always wins. A 2027
+recipe can legitimately mix a real 2027 Fleece price (if `pricesFleece` gains a 2027 row) with
+2026-last5 trade goods.
+
+**Four consequences worth building for:**
+
+1. **Resolution is two-stage.** `GoodYear` resolves the *nominal* season (§4.2); `pricingSeason`
+   then maps nominal → *priced* season. Keep them separate — conflating them breaks the next point.
+2. **One recipe can price two lines at "2026" differently.** In a 2027 recipe, a blank-`GoodYear`
+   line is nominally 2027 → 2026 **last-5**, while a `GoodYear=-1` line is nominally 2026 → 2026
+   **full-year**. Both are correct: the first is a stand-in for an unknown price, the second is a
+   real historical purchase. Surprising enough that the UI should label which lines were mapped.
+3. **Mapped lines are estimates and must be marked** — same treatment as the `ceiling` bound
+   (§4.3). 2012–2018 especially: pricing a 2012 recipe off 2019 data spans seven years of drift, so
+   those totals are indicative, not measurements.
+4. **2027 totals are not reproducible over time.** "Last 5 of 2026" moves as 2026 auctions close,
+   so a preview cost changes week to week. That is the intent — but date-stamp it, or it reads as
+   instability.
+
+**Deliberately not built: a per-season override table.** The clamp rule covers every known case. Add
+one only if some season ever needs treatment the rule can't express.
+
 ## 5. Foundational refactors (do before Phase 2+)
 
 > **Status: DONE** (branch `phase-0-foundation`, two commits; no behavior change to the
@@ -209,7 +447,7 @@ Cheap now while the code is small, painful later. Independent of which features 
 | **1** | Onyx sub-list in dashboards | A/D | Small; completes true MVP parity. New CSV, reuse aggregation. |
 | **2** | Price Timelines (per-token charts) | C | First new view; needs charting + time-series pivot. |
 | **3** | Compare Years tool | C | Cross-season, keyed on canonicalName; % diff. |
-| **4** | **Transmutes / build-vs-buy** | B | Headline feature. Resolve §4 toggle question first. |
+| **4** | **Transmutes / build-vs-buy** | B | Headline feature. Design settled (§4–§4.2); blocked only on recipe-sheet authoring (`IsSource`, `GoodYear`, canonical `Good` names). |
 | **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | Metadata-driven dashboards & filterable explorer. Open Auctions needs a live-ish feed. |
 
 Rationale: Phases 1–3 are pure computation over data we already parse, so they exercise the new
@@ -224,11 +462,19 @@ and is naturally last.
    only laddered tiers are relic→legendary (hand-wired historically) and Safehold (V→I upgrade
    chain); other tiers have no source. Remaining task is *data authoring* — add the `IsSource`
    column and real quantities in the source sheet — not a design question.
-2. **Onyx as a third CSV** — confirm shape/columns and how it joins to a season (the maintainer
+2. ~~**Multi-season ingredients / the "Ultra Rare" overlap**~~ — RESOLVED (§4.2): the overlap is
+   purely a *season* problem, since the `Ultra Rare` tier and the token `PYP` are 1:1 (§3.2).
+   Solved by one per-line column, `GoodYear` (blank = own season, `-N` = relative, `YYYY` =
+   pinned). Maintainer-confirmed: "any UR tier token" prices as PYP only (not the Onyx set), by
+   season avg / season min per total — identical to a named UR, so no `GoodType` column. Remaining
+   task is *data authoring* — add the `GoodYear` column, expand multi-season recipes to one row per
+   season, and re-key the sheet on `transmute + good + goodYear + isSource`.
+3. **Onyx as a third CSV** — confirm shape/columns and how it joins to a season (the maintainer
    already flagged wanting this).
-3. **Off-auction prices** (`pricesFleece`) — keep as a hand-edited file with max+avg only (no min)?
-   How should min-based build cost behave when a leaf has no min?
-4. **Open Auctions freshness** — is live/near-live auction status in scope for the static site, or
+4. ~~**Off-auction prices** (`pricesFleece`) — min-based build cost when a leaf has no min~~ —
+   MOOT (§4.3): the real export **does** carry `min Price` on every row. §3.3's "max+avg only" note
+   was mistaken. No fallback needed. Stays a hand-edited file.
+5. **Open Auctions freshness** — is live/near-live auction status in scope for the static site, or
    is that view better left in the spreadsheet?
-5. **`Safehold` / `Patron` levels** — are these standard transmutes in the same engine, or special
+6. **`Safehold` / `Patron` levels** — are these standard transmutes in the same engine, or special
    cases (they have their own sheet / row group)?
