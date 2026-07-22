@@ -1271,7 +1271,7 @@ Key,Year,Level,Transmute,Good,GoodYear,ResolvedYear,GoodDisplayName,Quantity,IsS
 2025|Safehold II|Oil of Enchantment||FALSE,2025,Safehold,Safehold II,Oil of Enchantment,,2025,Oil of Enchantment,6,FALSE
 2025|Safehold II|Philosopher's Stone||FALSE,2025,Safehold,Safehold II,Philosopher's Stone,,2025,Philosopher's Stone,50,FALSE
 "2025|Safehold II|1,000 GP Gold Bar||FALSE",2025,Safehold,Safehold II,"1,000 GP Gold Bar",,2025,"1,000 GP Gold Bar",25,FALSE
-2025|Safehold II|Safehold III||TRUE,2025,Safehold,Safehold II,Safehold III,,2025,Safehold III (transmute),1,TRUE
+2025|Safehold II|Safehold III|2024|TRUE,2025,Safehold,Safehold II,Safehold III,2024,2024,Safehold III,1,TRUE
 2025|Safehold I|Alchemist's Ink||FALSE,2025,Safehold,Safehold I,Alchemist's Ink,,2025,Alchemist's Ink,30,FALSE
 2025|Safehold I|Alchemist's Parchment||FALSE,2025,Safehold,Safehold I,Alchemist's Parchment,,2025,Alchemist's Parchment,30,FALSE
 2025|Safehold I|Aragonite||FALSE,2025,Safehold,Safehold I,Aragonite,,2025,Aragonite,7,FALSE
@@ -1594,3 +1594,15 @@ Key,Year,Level,Transmute,Good,GoodYear,ResolvedYear,GoodDisplayName,Quantity,IsS
 2027|Charm of Unity|Oil of Enchantment||FALSE,2027,Relic,Charm of Unity,Oil of Enchantment,,2027,Oil of Enchantment,2,FALSE
 2027|Charm of Unity|Philosopher's Stone||FALSE,2027,Relic,Charm of Unity,Philosopher's Stone,,2027,Philosopher's Stone,10,FALSE
 "2027|Charm of Unity|1,000 GP Gold Bar||FALSE",2027,Relic,Charm of Unity,"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",5,FALSE
+2026|Mark of Enlightenment|8k Bonus||FALSE,2026,Paragon,Mark of Enlightenment,8k Bonus,,2026,Path to Enlightenment (Fragment 4),1,FALSE
+2026|Mark of Enlightenment|8k Bonus|-1|FALSE,2026,Paragon,Mark of Enlightenment,8k Bonus,-1,2025,Path to Enlightenment (Fragment 3),1,FALSE
+2026|Mark of Enlightenment|8k Bonus|-2|FALSE,2026,Paragon,Mark of Enlightenment,8k Bonus,-2,2024,Path to Enlightenment (Fragment 2),1,FALSE
+2026|Mark of Enlightenment|8k Bonus|-3|FALSE,2026,Paragon,Mark of Enlightenment,8k Bonus,-3,2023,Path to Enlightenment (Fragment 1),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus||FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,,2022,Orb of Dragonkind (Great Wyrm),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus|-1|FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,-1,2021,Orb of Dragonkind (Ancient),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus|-2|FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,-2,2020,Orb of Dragonkind (Old),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus|-3|FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,-3,2019,Orb of Dragonkind (Elder Serpent),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus|-4|FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,-4,2018,Orb of Dragonkind (Dragon),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus|-5|FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,-5,2017,Orb of Dragonkind (Dragonelle),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus|-6|FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,-6,2016,Orb of Dragonkind (Wyrmkin),1,FALSE
+2022|Eldest Orb of Dragonkind|8k Bonus|-7|FALSE,2022,Paragon,Eldest Orb of Dragonkind,8k Bonus,-7,2015,Orb of Dragonkind (Hatchling),1,FALSE
