@@ -278,23 +278,14 @@ its underline only — never to the price numbers, to protect their legibility.
 
 ## Updating the data
 
-1. Append new sales to the source sales file and, if a new auction was added, add a
-   row to the metadata file.
-2. Export both sheets to CSV and replace `public/data/prices.csv` and
-   `public/data/auctionMetadata.csv`.
-3. Redeploy (or just reload in development). All statistics recompute automatically
-   from the new raw rows — there are no precomputed values to update by hand.
+**The step-by-step procedure lives in
+[`updating-the-data.md`](updating-the-data.md)** — sheet edit → export → place →
+validate → commit → deploy → verify, with a section per file. Keep the detail
+there rather than duplicating it here, so the two can't drift apart.
 
-**Export straight into `public/data/`.** There is no staging copy elsewhere and no
-sync step: the file the spreadsheet writes is the file the site serves and the file
-the validators check. The exports are `prices.csv`, `auctionMetadata.csv`,
-`tokenMetadata.csv`, `transmuteRecipes.csv`, `offAuctionPrices.csv` and `onyx.csv`;
-`derivedPrices.csv` and `tokenGroups.csv` are hand-authored here and have no sheet
-behind them.
-
-After any export, run `npm run validate` — it fails loudly, naming the exact
-column, if the sheet's headers drift from the shared `Item` / `auctionSeason` /
-`Display Name` / `Category` vocabulary.
+In short: export straight into `public/data/` (there is no staging copy and no
+sync step), then run `npm run validate` before committing. All statistics
+recompute from the raw rows — there are no precomputed values to update by hand.
 
 ## Column vocabulary
 
