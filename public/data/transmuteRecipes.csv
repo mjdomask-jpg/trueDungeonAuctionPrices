@@ -1058,7 +1058,7 @@ Key,Year,Level,Transmute,Good,GoodYear,ResolvedYear,GoodDisplayName,Quantity,IsS
 2024|Safehold III|Mystic Silk||FALSE,2024,Safehold,Safehold III,Mystic Silk,,2024,Mystic Silk,50,FALSE
 2024|Safehold III|Oil of Enchantment||FALSE,2024,Safehold,Safehold III,Oil of Enchantment,,2024,Oil of Enchantment,5,FALSE
 2024|Safehold III|Philosopher's Stone||FALSE,2024,Safehold,Safehold III,Philosopher's Stone,,2024,Philosopher's Stone,50,FALSE
-2024|Safehold III|Safehold IV||FALSE,2024,Safehold,Safehold III,Safehold IV,,2024,Safehold IV (transmute),1,FALSE
+2024|Safehold III|Safehold IV||TRUE,2024,Safehold,Safehold III,Safehold IV,,2024,Safehold IV (transmute),1,TRUE
 "2024|Safehold IV|1,000 GP Gold Bar||FALSE",2024,Safehold,Safehold IV,"1,000 GP Gold Bar",,2024,"1,000 GP Gold Bar",5,FALSE
 2024|Safehold IV|Alchemist's Ink||FALSE,2024,Safehold,Safehold IV,Alchemist's Ink,,2024,Alchemist's Ink,3,FALSE
 2024|Safehold IV|Alchemist's Parchment||FALSE,2024,Safehold,Safehold IV,Alchemist's Parchment,,2024,Alchemist's Parchment,10,FALSE
@@ -1072,7 +1072,7 @@ Key,Year,Level,Transmute,Good,GoodYear,ResolvedYear,GoodDisplayName,Quantity,IsS
 2024|Safehold IV|Mystic Silk||FALSE,2024,Safehold,Safehold IV,Mystic Silk,,2024,Mystic Silk,30,FALSE
 2024|Safehold IV|Oil of Enchantment||FALSE,2024,Safehold,Safehold IV,Oil of Enchantment,,2024,Oil of Enchantment,2,FALSE
 2024|Safehold IV|Philosopher's Stone||FALSE,2024,Safehold,Safehold IV,Philosopher's Stone,,2024,Philosopher's Stone,20,FALSE
-2024|Safehold IV|Safehold V||TRUE,2024,Safehold,Safehold IV,Safehold V,,2024,Safehold V (transmute),1,TRUE
+2024|Safehold IV|Safehold V|2023|TRUE,2024,Safehold,Safehold IV,Safehold V,2023,2023,Safehold V (transmute),1,TRUE
 "2024|Underling|1,000 GP Gold Bar||FALSE",2024,Safehold,Underling,"1,000 GP Gold Bar",,2024,"1,000 GP Gold Bar",2,FALSE
 2024|Underling|Alchemist's Ink||FALSE,2024,Safehold,Underling,Alchemist's Ink,,2024,Alchemist's Ink,2,FALSE
 2024|Underling|Alchemist's Parchment||FALSE,2024,Safehold,Underling,Alchemist's Parchment,,2024,Alchemist's Parchment,2,FALSE
