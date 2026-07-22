@@ -301,3 +301,117 @@ td.diff.down { color: var(--diff-down); }
   border-radius: 3px;
   flex: none;
 }
+
+/* --- Transmutes / build-vs-buy (Phase 4) ------------------------------- */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.tx-check { display: flex; align-items: center; gap: 7px; color: var(--text); cursor: pointer; font-size: 14px; }
+.tx-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.tx-hint {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%; background: var(--band);
+  color: var(--text); font-size: 11px; cursor: help; font-family: var(--sans);
+}
+
+.tx-season {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  margin-top: 14px; overflow: hidden; box-shadow: var(--shadow);
+}
+.tx-shead {
+  display: flex; align-items: center; gap: 10px; width: 100%; background: none;
+  border: none; padding: 14px 16px; cursor: pointer; text-align: left;
+  color: var(--text-h); font-family: inherit;
+}
+.tx-shead:hover { background: var(--row-hover); }
+.tx-syear { font-size: 20px; font-weight: 600; font-family: var(--display); }
+.tx-scount { font-size: 13px; color: var(--text); }
+.tx-snote { font-size: 12px; color: var(--text); font-style: italic; margin-left: auto; max-width: 55%; text-align: right; }
+.tx-sbody { padding: 2px 12px 14px; }
+
+.tx-group.ladder { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 4px; }
+.tx-group-label {
+  font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text); opacity: 0.75; padding: 12px 6px 5px; font-family: var(--sans);
+}
+
+.tx-pair { border-left: 2px solid var(--accent); margin: 3px 0; padding-left: 3px; }
+.tx-row { border-radius: 8px; }
+.tx-row:hover { background: var(--row-hover); }
+.tx-row.upgrade { margin-left: 20px; }
+
+.tx-rhead {
+  display: flex; align-items: center; gap: 10px; width: 100%; background: none;
+  border: none; padding: 9px 8px; cursor: pointer; text-align: left;
+  color: var(--text-h); font-family: inherit; font-size: 15px;
+}
+.tx-chev { font-style: normal; color: var(--text); transition: transform 0.12s ease; flex: none; font-size: 12px; }
+.tx-chev.open { transform: rotate(90deg); }
+.tx-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-upfrom { font-size: 12px; color: var(--text); opacity: 0.75; margin-left: 8px; font-family: var(--sans); }
+
+.tx-badges { display: flex; gap: 6px; align-items: center; flex: none; }
+.tx-badge { font-size: 10.5px; padding: 1px 8px; border-radius: 20px; font-family: var(--sans); white-space: nowrap; }
+.tx-badge.ceiling { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
+.tx-badge.est { background: var(--band); color: var(--text); }
+.tx-market { font-size: 11px; color: var(--text); font-family: var(--sans); white-space: nowrap; }
+
+.tx-cost { display: flex; flex-direction: column; align-items: flex-end; flex: none; font-family: var(--sans); line-height: 1.3; }
+.tx-line { font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tx-line.up { font-size: 12px; color: var(--text); }
+.tx-lab { font-size: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.03em; }
+.tx-min { font-size: 11px; color: var(--text); }
+
+.tx-bom { padding: 6px 10px 14px 30px; font-family: var(--sans); }
+.tx-bom-head {
+  display: grid; grid-template-columns: 1fr 84px 84px; gap: 10px; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--text); opacity: 0.7;
+  padding: 2px 0 6px; border-bottom: 1px solid var(--border);
+}
+.tx-bom-head span:not(:first-child) { text-align: right; }
+.tx-bom-row {
+  display: grid; grid-template-columns: 1fr 84px 84px; gap: 10px; align-items: center;
+  font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--border); color: var(--text-h);
+}
+.tx-bom-row span:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+.tx-ing { display: flex; flex-direction: column; gap: 1px; }
+.tx-src { font-size: 10.5px; color: var(--text); opacity: 0.75; }
+.tx-bom-row.src { background: var(--accent-bg); border-radius: 6px; border-bottom: none; padding: 6px 8px; margin: 3px 0; }
+.tx-bom-row.foot { border-bottom: none; font-weight: 600; padding-top: 8px; }
+.tx-bom-row.foot span:not(:first-child) { color: var(--text-h); }
+.tx-bom-row.foot em { font-style: normal; font-weight: 400; color: var(--text); opacity: 0.85; font-size: 12px; }
+.tx-bom-row.foot.total span:not(:first-child) { color: var(--accent); }
+.tx-bom-note { font-size: 12px; color: var(--text); margin: 8px 0 0; font-style: italic; }
+
+/* Tier chips. Colours echo the dashboard category palette; tiers that share a
+   power rank (Arcanum/Eldritch) share a colour. */
+.tchip {
+  font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
+  white-space: nowrap; flex: none; font-family: var(--sans);
+  background: var(--band); color: var(--text-h);
+}
+.tchip[data-tier='Relic']     { background: rgba(124, 58, 237, 0.13); color: #6d28d9; }
+.tchip[data-tier='Legendary'] { background: rgba(217, 90, 48, 0.15);  color: #b0451f; }
+.tchip[data-tier='Arcanum'],
+.tchip[data-tier='Eldritch']  { background: rgba(212, 83, 126, 0.15); color: #a3355a; }
+.tchip[data-tier='Enhanced']  { background: rgba(186, 117, 23, 0.17); color: #8a5a0b; }
+.tchip[data-tier='Exalted']   { background: rgba(29, 158, 117, 0.16); color: #0f6e56; }
+.tchip[data-tier='Mythic']    { background: rgba(226, 75, 74, 0.16);  color: #a32d2d; }
+.tchip[data-tier='Safehold']  { background: rgba(55, 138, 221, 0.16); color: #185fa5; }
+.tchip[data-tier='Patron'],
+.tchip[data-tier='Paragon']   { background: rgba(100, 116, 139, 0.18); color: #475569; }
+.tchip[data-tier='Omni']      { background: rgba(136, 135, 128, 0.18); color: #5f5e5a; }
+
+:root[data-theme='dark'] .tchip[data-tier='Relic']     { color: #c4b5fd; }
+:root[data-theme='dark'] .tchip[data-tier='Legendary'] { color: #f0997b; }
+:root[data-theme='dark'] .tchip[data-tier='Arcanum'],
+:root[data-theme='dark'] .tchip[data-tier='Eldritch']  { color: #ed93b1; }
+:root[data-theme='dark'] .tchip[data-tier='Enhanced']  { color: #efb663; }
+:root[data-theme='dark'] .tchip[data-tier='Exalted']   { color: #5dcaa5; }
+:root[data-theme='dark'] .tchip[data-tier='Mythic']    { color: #f09595; }
+:root[data-theme='dark'] .tchip[data-tier='Safehold']  { color: #85b7eb; }
+:root[data-theme='dark'] .tchip[data-tier='Patron'],
+:root[data-theme='dark'] .tchip[data-tier='Paragon']   { color: #94a3b8; }
+:root[data-theme='dark'] .tchip[data-tier='Omni']      { color: #b4b2a9; }

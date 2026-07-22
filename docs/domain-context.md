@@ -132,13 +132,34 @@ the quantity required, then sum. That total is the **build** cost.
 Players weigh that estimated build cost against the price of simply **buying** the finished
 transmute from a reseller — the **build-vs-buy** decision the tracking data exists to inform.
 
-Transmutes come in tiers that form an upgrade ladder, roughly:
-`Enhanced`/`Exalted` → `Relic` → `Legendary` → `Arcanum` → `Paragon` → `Mythic` →
-`Eldritch` → `Omni`. **Safehold** is a separate line with its own upgrade chain, numbered in
-descending Roman numerals (`Safehold V` → `IV` → `III` → `II` → `I`, where V is the entry
-level and I the top). A higher-tier recipe can require a lower-tier token as a **source**
-ingredient — e.g. some (not all) Legendaries consume a Relic. When a recipe consumes a
-source token that is itself craftable, its cost can in turn be estimated from *its* recipe.
+Transmutes are ranked by **in-game power level**, but the company gives one power level
+different **names** depending on how the ingredients are gathered — so the level names are not a
+simple linear list. The power tiers, low to high (maintainer-confirmed):
+
+1. `Enhanced`
+2. `Exalted`
+3. `Relic`
+4. `Arcanum` / `Eldritch` — **the same power tier**. Both use multi-year ingredients; the two
+   names are just successive "sets" (like MMO gear sets — when one set is completed the company
+   opens a new one in its place), so a given season shows one or the other, never both.
+5. `Legendary`
+6. `Mythic`
+
+Four token types sit **outside** this ladder:
+- **Safehold** — a separate, self-contained upgrade chain numbered in descending Roman numerals
+  (`Safehold V` → `IV` → `III` → `II` → `I`, where V is the entry level and I the top).
+- **Patron** and **Paragon** — concerned exclusively with the 8k-bonus tokens, intended as
+  rewards for the largest purchasers.
+- **Omni** — a "wildcard" transmute meant to soak up excess trade goods in the market; it has no
+  in-game function of its own.
+
+A higher-tier recipe can require a lower-tier token as a **source** ingredient — most notably,
+23 of the game's Legendaries upgrade from a same-season Relic (some Legendaries have no source).
+When a recipe consumes a source that is itself craftable, its cost is estimated from *its* recipe
+in turn. The Transmutes page orders each season by these tiers, but leads with the Relic→Legendary
+pairs (source Relic immediately above the Legendary it feeds), since those are what players build
+most; `Mythic` is placed last despite its power because only the largest spenders craft them.
+The tier order lives as `TIER_ORDER` / `orderSeason` in `src/lib/transmutes.ts`.
 
 Some ingredients are **not sold at auction** at all (most notably **Fleece**) yet are still
 required by recipes and still fluctuate in price year to year. These are tracked **manually**

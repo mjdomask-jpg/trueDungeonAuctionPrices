@@ -533,3 +533,91 @@ export class CostEngine {
     return this.allCosts().filter((c) => c.year === year);
   }
 }
+
+// --- Season ordering (Phase 4 page layout) -------------------------------
+// Players care most about Relics and the Legendaries they upgrade into, and
+// want each source Relic shown immediately above its Legendary. Everything
+// else follows in power-tier order. This is maintainer-specified layout, not a
+// property of the data, so it lives here as a pure transform over BuildCosts.
+
+// Same-power sets that never co-occur in a season (Arcanum/Eldritch are
+// successive "sets" at one tier), then the rest of the ladder. Mythic is last
+// despite its power because only the largest spenders build them.
+const FLAT_LEVEL_ORDER = ['Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic'];
+// Tokens outside the normal upgrade ladder, in maintainer-specified order.
+const LADDER_LEVEL_ORDER = ['Safehold', 'Patron', 'Paragon', 'Omni'];
+
+export type UpgradePair = { source: BuildCost; upgrade: BuildCost };
+
+export type SeasonGroup =
+  | { kind: 'pairs'; label: string; pairs: UpgradePair[] }
+  | { kind: 'flat'; label: string; rows: BuildCost[] }
+  | { kind: 'ladder'; label: string; rows: BuildCost[] };
+
+const byName = (a: BuildCost, b: BuildCost) => a.transmute.localeCompare(b.transmute);
+
+/** The display name of the source token a transmute upgrades from, or null. */
+export function sourceName(c: BuildCost): string | null {
+  const s = c.lines.find((l) => l.isSource);
+  return s ? s.displayName : null;
+}
+
+/** Group one season's costs into the maintainer's display order. Every input
+ *  cost appears exactly once across the returned groups. */
+export function orderSeason(costs: BuildCost[]): SeasonGroup[] {
+  const index = new Map(costs.map((c) => [c.transmute, c]));
+  const used = new Set<string>();
+  const groups: SeasonGroup[] = [];
+
+  const take = (level: string): BuildCost[] => {
+    const rows = costs.filter((c) => c.level === level && !used.has(c.transmute)).sort(byName);
+    rows.forEach((r) => used.add(r.transmute));
+    return rows;
+  };
+
+  // 1. Relic → Legendary upgrade pairs (all 23 Legendary sources are same-season
+  //    Relics, verified). Ordered by the source Relic's name.
+  const pairs: UpgradePair[] = [];
+  for (const c of costs) {
+    if (c.level !== 'Legendary') continue;
+    const src = sourceLineTransmute(c, index);
+    if (src && src.level === 'Relic') {
+      pairs.push({ source: src, upgrade: c });
+      used.add(src.transmute);
+      used.add(c.transmute);
+    }
+  }
+  pairs.sort((a, b) => byName(a.source, b.source));
+  if (pairs.length) groups.push({ kind: 'pairs', label: 'Relic → Legendary upgrades', pairs });
+
+  // 2. standalone Relics, 3. source-less Legendaries
+  const relics = take('Relic');
+  if (relics.length) groups.push({ kind: 'flat', label: 'Relics', rows: relics });
+  const legendaries = take('Legendary');
+  if (legendaries.length) groups.push({ kind: 'flat', label: 'Legendaries', rows: legendaries });
+
+  // 4–7. the rest of the power ladder
+  for (const level of FLAT_LEVEL_ORDER) {
+    const rows = take(level);
+    if (rows.length) groups.push({ kind: 'flat', label: level, rows });
+  }
+
+  // Outside the ladder, kept together under one divider.
+  const ladder: BuildCost[] = [];
+  for (const level of LADDER_LEVEL_ORDER) ladder.push(...take(level));
+  if (ladder.length) groups.push({ kind: 'ladder', label: 'Outside the tier ladder', rows: ladder });
+
+  // Anything with an unrecognized level still shows, rather than vanishing.
+  const leftover = costs.filter((c) => !used.has(c.transmute)).sort(byName);
+  if (leftover.length) groups.push({ kind: 'flat', label: 'Other', rows: leftover });
+
+  return groups;
+}
+
+// The same-season transmute a source line points at, if it is one.
+function sourceLineTransmute(c: BuildCost, index: Map<string, BuildCost>): BuildCost | null {
+  const s = c.lines.find((l) => l.isSource);
+  if (!s) return null;
+  const src = index.get(s.good);
+  return src && src.year === s.pricedYear ? src : null;
+}
