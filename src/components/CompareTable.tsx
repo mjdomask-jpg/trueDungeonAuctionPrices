@@ -12,9 +12,11 @@ export function CompareTable({
   seasonB: string;
   newerIsB: boolean;
 }) {
+  // General rule across the site: any table with 4+ rows gets row banding.
+  const isBanded = rows.length >= 4;
   return (
     <div className="tablewrap">
-      <table>
+      <table className={isBanded ? 'banded' : undefined}>
         <colgroup>
           <col className="col-token" />
           <col /><col /><col />

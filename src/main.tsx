@@ -6,6 +6,7 @@ import App from './App.tsx'
 import DashboardPage from './pages/DashboardPage.tsx'
 import TimelinesPage from './pages/TimelinesPage.tsx'
 import ComparePage from './pages/ComparePage.tsx'
+import TransmutesPage from './pages/TransmutesPage.tsx'
 import OnyxPage from './pages/OnyxPage.tsx'
 import { AuctionDataProvider } from './data/AuctionDataProvider.tsx'
 
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
             <Route index element={<DashboardPage />} />
             <Route path="timelines" element={<TimelinesPage />} />
             <Route path="compare" element={<ComparePage />} />
+            <Route path="transmutes" element={<TransmutesPage />} />
             <Route path="onyx" element={<OnyxPage />} />
           </Route>
         </Routes>

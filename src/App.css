@@ -301,3 +301,129 @@ td.diff.down { color: var(--diff-down); }
   border-radius: 3px;
   flex: none;
 }
+
+/* --- Transmutes / build-vs-buy (Phase 4) ------------------------------- */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.tx-check { display: flex; align-items: center; gap: 7px; color: var(--text); cursor: pointer; font-size: 14px; }
+.tx-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.tx-hint {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%; background: var(--band);
+  color: var(--text); font-size: 11px; cursor: help; font-family: var(--sans);
+}
+
+.tx-season {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  margin-top: 14px; overflow: hidden; box-shadow: var(--shadow);
+}
+.tx-shead {
+  display: flex; align-items: center; gap: 10px; width: 100%; background: none;
+  border: none; padding: 14px 16px; cursor: pointer; text-align: left;
+  color: var(--text-h); font-family: inherit;
+}
+.tx-shead:hover { background: var(--row-hover); }
+.tx-syear { font-size: 20px; font-weight: 600; font-family: var(--display); }
+.tx-scount { font-size: 13px; color: var(--text); }
+.tx-snote { font-size: 12px; color: var(--text); font-style: italic; margin-left: auto; max-width: 55%; text-align: right; }
+.tx-sbody { padding: 2px 12px 14px; }
+.tx-season-toggle { margin: 8px 6px 0; font-size: 13px; }
+
+.tx-group.ladder { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 4px; }
+.tx-group-label {
+  font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text); padding: 12px 6px 5px; font-family: var(--sans);
+}
+
+.tx-pair { border-left: 2px solid var(--accent); margin: 3px 0; padding-left: 3px; }
+.tx-row { border-radius: 8px; }
+.tx-row:hover { background: var(--row-hover); }
+.tx-row.upgrade { margin-left: 20px; }
+
+.tx-rhead {
+  display: flex; align-items: center; gap: 10px; width: 100%; background: none;
+  border: none; padding: 9px 8px; cursor: pointer; text-align: left;
+  color: var(--text-h); font-family: inherit; font-size: 15px;
+}
+.tx-chev { font-style: normal; color: var(--text); transition: transform 0.12s ease; flex: none; font-size: 12px; }
+.tx-chev.open { transform: rotate(90deg); }
+.tx-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-upfrom { font-size: 12px; color: var(--text); margin-left: 8px; font-family: var(--sans); }
+
+.tx-badges { display: flex; gap: 6px; align-items: center; flex: none; }
+.tx-badge { font-size: 10.5px; padding: 1px 8px; border-radius: 20px; font-family: var(--sans); white-space: nowrap; }
+.tx-badge.ceiling { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
+.tx-badge.est { background: var(--band); color: var(--text); }
+.tx-market { font-size: 11px; color: var(--text); font-family: var(--sans); white-space: nowrap; }
+
+.tx-cost { display: flex; flex-direction: column; align-items: flex-end; flex: none; font-family: var(--sans); line-height: 1.3; }
+.tx-line { font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tx-line.up { font-size: 12px; color: var(--text); }
+.tx-lab { font-size: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.03em; }
+.tx-min { font-size: 11px; color: var(--text); }
+
+.tx-bom { padding: 6px 10px 14px 30px; font-family: var(--sans); }
+.tx-bom-head {
+  display: grid; grid-template-columns: 1fr 84px 84px; gap: 10px; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--text);
+  padding: 2px 0 6px; border-bottom: 1px solid var(--border);
+}
+.tx-bom-head span:not(:first-child) { text-align: right; }
+.tx-bom-row {
+  display: grid; grid-template-columns: 1fr 84px 84px; gap: 10px; align-items: baseline;
+  font-size: 13px; padding: 3px 0; border-bottom: 1px solid var(--border); color: var(--text-h);
+}
+/* Direct-child spans only (the avg/min number columns) — a descendant selector
+   would also catch the nested .tx-src tag and override its non-auction colour. */
+.tx-bom-row > span:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+.tx-ing { min-width: 0; }
+.tx-good { color: var(--text-h); }
+.tx-src { font-size: 10.5px; color: var(--text); margin-left: 8px; white-space: nowrap; }
+.tx-src.nonauction { color: var(--accent); }
+.tx-bom-row.band { background: var(--band); }
+.tx-bom-row.src { background: var(--accent-bg); border-radius: 6px; border-bottom: none; padding: 6px 8px; margin: 3px 0; }
+.tx-bom-row.foot { border-bottom: none; font-weight: 600; padding-top: 8px; }
+.tx-bom-row.foot span:not(:first-child) { color: var(--text-h); }
+.tx-bom-row.foot em { font-style: normal; font-weight: 400; color: var(--text); font-size: 12px; }
+.tx-bom-row.foot.total span:not(:first-child) { color: var(--accent); }
+.tx-bom-note { font-size: 12px; color: var(--text); margin: 8px 0 0; font-style: italic; }
+
+/* Tier chips. Each transmute tier has its OWN in-game colour (these mark
+   transmutes apart from blind-pack tokens). Enhanced + Exalted share light
+   blue; Patron reuses the Ultra Rare purple and Omni the Trade brown, matching
+   the dashboard. Filled pills so the chip *is* the tier colour. Light and dark
+   are tuned separately for text contrast and edge visibility on each card.
+   Mythic is "white" and Safehold "light gray" — kept apart by giving Mythic a
+   pure-white fill with a defined ring (an outlined white pill) and Safehold a
+   solid gray fill. */
+.tchip {
+  font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
+  white-space: nowrap; flex: none; font-family: var(--sans);
+  border: 1px solid transparent; background: var(--band); color: var(--text-h);
+}
+.tchip[data-tier='Enhanced'],
+.tchip[data-tier='Exalted']   { background: #cfe4f7; color: #0c447c; border-color: #a6cceb; }
+.tchip[data-tier='Relic']     { background: #1f5fa6; color: #fff; }
+.tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
+.tchip[data-tier='Arcanum']   { background: #6d28aa; color: #fff; }
+.tchip[data-tier='Legendary'] { background: #f0730f; color: #3d1a02; }
+.tchip[data-tier='Mythic']    { background: #fff;    color: #363c46; border-color: #aeb6c2; }
+.tchip[data-tier='Safehold']  { background: #d6dae0; color: #363c46; border-color: #bdc3cb; }
+.tchip[data-tier='Patron']    { background: #9900ff; color: #fff; }
+.tchip[data-tier='Paragon']   { background: #a52121; color: #fff; }
+.tchip[data-tier='Omni']      { background: #b45f06; color: #fff; }
+
+:root[data-theme='dark'] .tchip[data-tier='Enhanced'],
+:root[data-theme='dark'] .tchip[data-tier='Exalted']   { background: #bcdcf5; color: #0a2f56; border-color: transparent; }
+:root[data-theme='dark'] .tchip[data-tier='Relic']     { background: #2767b3; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Arcanum']   { background: #7b34ba; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Legendary'] { background: #f2701e; color: #241003; }
+:root[data-theme='dark'] .tchip[data-tier='Mythic']    { background: #f6f8fb; color: #23262e; border-color: #f6f8fb; }
+:root[data-theme='dark'] .tchip[data-tier='Safehold']  { background: #c2c8d1; color: #23262e; border-color: transparent; }
+:root[data-theme='dark'] .tchip[data-tier='Patron']    { background: #c084fc; color: #3b0764; }
+:root[data-theme='dark'] .tchip[data-tier='Paragon']   { background: #cf3a3a; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Omni']      { background: #e08b3e; color: #3a1f04; }
