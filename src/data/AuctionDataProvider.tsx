@@ -30,7 +30,7 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     Promise.all([
       fetch(dataUrl('prices.csv')).then((r) => r.text()),
-      fetch(dataUrl('metadata.csv')).then((r) => r.text()),
+      fetch(dataUrl('auctionMetadata.csv')).then((r) => r.text()),
     ])
       .then(([p, m]) => {
         setSales(parseSales(p));

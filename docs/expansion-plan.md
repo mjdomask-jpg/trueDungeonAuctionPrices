@@ -54,7 +54,7 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
 
 ### D. Raw data imports (source of truth)
 `auctionMetadata`, `auctionPrices`, `pricesOnyx`. These are local copies of the data-layer
-CSVs. `prices.csv`, `metadata.csv`, and `onyx.csv` back the site today. Phase 4 added four more
+CSVs. `prices.csv`, `auctionMetadata.csv`, and `onyx.csv` back the site today. Phase 4 added four more
 under `public/data/`: `transmuteRecipes.csv`, `tokenMetadata.csv`, `offAuctionPrices.csv` (from
 `pricesFleece`), and `derivedPrices.csv`.
 
