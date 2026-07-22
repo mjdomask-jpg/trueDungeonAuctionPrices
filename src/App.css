@@ -383,6 +383,7 @@ td.diff.down { color: var(--diff-down); }
 .tx-good { color: var(--text-h); }
 .tx-src { font-size: 10.5px; color: var(--text); margin-left: 8px; white-space: nowrap; }
 .tx-src.nonauction { color: var(--accent); }
+.tx-bom-row.band { background: var(--band); }
 .tx-bom-row.src { background: var(--accent-bg); border-radius: 6px; border-bottom: none; padding: 6px 8px; margin: 3px 0; }
 .tx-bom-row.foot { border-bottom: none; font-weight: 600; padding-top: 8px; }
 .tx-bom-row.foot span:not(:first-child) { color: var(--text-h); }

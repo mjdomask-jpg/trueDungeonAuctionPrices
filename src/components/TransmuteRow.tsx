@@ -37,6 +37,9 @@ export function TransmuteRow({
   const [open, setOpen] = useState(false);
   const src = sourceName(cost);
   const estBadge = cost.estimate && !cost.ceiling && !seasonFallback;
+  // Alternating row shading kicks in once the ingredient list is long enough to
+  // benefit from it (4+ goods); short recipes stay plain.
+  const banded = cost.lines.length >= 4;
 
   return (
     <div className={`tx-row${paired ? ' upgrade' : ''}`}>
@@ -75,7 +78,7 @@ export function TransmuteRow({
             <span>Ingredient</span><span>avg</span><span>min</span>
           </div>
           {cost.lines.map((l, i) => (
-            <div key={i} className={`tx-bom-row${l.isSource ? ' src' : ''}`}>
+            <div key={i} className={`tx-bom-row${l.isSource ? ' src' : ''}${banded && !l.isSource && i % 2 === 1 ? ' band' : ''}`}>
               <span className="tx-ing">
                 <span className="tx-good">{l.quantity} × {l.displayName}</span>
                 <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>{priceTag(l)}</span>
