@@ -38,9 +38,11 @@ participants:
 - The high bidder **wins** those tokens and pays their bid.
 - The collected bids fund the order.
 
-Different auctions run in different **styles** (e.g. "Lightning", "Regular",
-"Super Condensed", "Ultra Condensed", "Onyx", "Safehold" variants), and complete
-in different ways. Many different community members act as **auctioneers** and run
+Different auctions run in different **styles** ("Super Condensed", "Ultra
+Condensed", "Limited", and the "Onyx"/"Safehold" variants) and complete in
+different ways — the `completionStyle` column records that second axis, and as
+of the 2026-07-22 metadata export its values are "Lightning", "Semi-Lightning"
+and "Fixed Date" (which replaced the older "Regular" and the `n/a` placeholder). Many different community members act as **auctioneers** and run
 their own auctions. As a result, over a single buying season there are **dozens of
 separate auctions**, each producing its own set of final sale prices for the same
 underlying catalog of tokens.

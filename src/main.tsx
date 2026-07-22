@@ -8,6 +8,7 @@ import TimelinesPage from './pages/TimelinesPage.tsx'
 import ComparePage from './pages/ComparePage.tsx'
 import TransmutesPage from './pages/TransmutesPage.tsx'
 import OnyxPage from './pages/OnyxPage.tsx'
+import ExplorerPage from './pages/ExplorerPage.tsx'
 import { AuctionDataProvider } from './data/AuctionDataProvider.tsx'
 
 // HashRouter keeps client-side routing working on any static host served from a
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="compare" element={<ComparePage />} />
             <Route path="transmutes" element={<TransmutesPage />} />
             <Route path="onyx" element={<OnyxPage />} />
+            <Route path="explorer" element={<ExplorerPage />} />
           </Route>
         </Routes>
       </AuctionDataProvider>

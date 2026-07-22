@@ -3,12 +3,7 @@ import { Link } from 'react-router-dom';
 import { seasonsOf, compareSeasons, type CompareRow } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CompareTable } from '../components/CompareTable';
-
-// Fixed display order for the per-category sections (mirrors DashboardPage).
-// Any category not listed is appended afterward, alphabetically.
-const CATEGORY_ORDER = [
-  'Trade 1', 'Trade 2', 'Ultra Rare', 'Premium', 'Bonus', 'Preorder', 'Golden Ticket',
-];
+import { compareCategories } from '../lib/categories';
 
 type SortMode = 'category' | 'movers';
 
@@ -46,13 +41,7 @@ export default function ComparePage() {
       if (!byCat.has(r.category)) byCat.set(r.category, []);
       byCat.get(r.category)!.push(r);
     }
-    const order = [...byCat.keys()].sort((x, y) => {
-      const ix = CATEGORY_ORDER.indexOf(x), iy = CATEGORY_ORDER.indexOf(y);
-      if (ix !== -1 && iy !== -1) return ix - iy;
-      if (ix !== -1) return -1;
-      if (iy !== -1) return 1;
-      return x.localeCompare(y);
-    });
+    const order = [...byCat.keys()].sort(compareCategories);
     return order.map((cat) => ({
       category: cat,
       rows: byCat.get(cat)!.sort((x, y) => sortLabel(x).localeCompare(sortLabel(y))),

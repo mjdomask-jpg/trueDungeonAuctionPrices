@@ -5,12 +5,7 @@ import {
 import { fmtCloseDate } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CategoryTable } from '../components/CategoryTable';
-
-// Fixed display order for the per-category tables. Any category not listed
-// here is appended afterward, alphabetically.
-const CATEGORY_ORDER = [
-  'Trade 1', 'Trade 2', 'Ultra Rare', 'Premium', 'Bonus', 'Preorder', 'Golden Ticket',
-];
+import { compareCategories } from '../lib/categories';
 
 export default function DashboardPage() {
   const { sales, meta, loading, error } = useAuctionData();
@@ -45,14 +40,7 @@ export default function DashboardPage() {
       if (!byCat.has(r.category)) byCat.set(r.category, []);
       byCat.get(r.category)!.push(r);
     }
-    const order = [...byCat.keys()].sort((a, b) => {
-      const ia = CATEGORY_ORDER.indexOf(a);
-      const ib = CATEGORY_ORDER.indexOf(b);
-      if (ia !== -1 && ib !== -1) return ia - ib;
-      if (ia !== -1) return -1;
-      if (ib !== -1) return 1;
-      return a.localeCompare(b);
-    });
+    const order = [...byCat.keys()].sort(compareCategories);
     return order.map((cat) => ({
       category: cat,
       rows: byCat.get(cat)!.sort((a, b) => a.displayName.localeCompare(b.displayName)),

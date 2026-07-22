@@ -9,10 +9,10 @@ reading the actual sheets, and proposes a phased build order.
 Read [domain-context.md](./domain-context.md) first for the *why*; this doc is the
 *what next* and *how*.
 
-> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`. Phase 5 is next.** The transmute
-> build-vs-buy engine (the headline feature) is live. Remaining: auction analytics + the
-> Detailed Auction Data explorer + Open Auctions (Phase 5). See the build-order table in §6
-> for per-phase status.
+> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`; Phase 5 is under way.** The transmute
+> build-vs-buy engine (the headline feature) is live, and the Detailed Auction Data explorer
+> (`/explorer`) has landed. Remaining in Phase 5: the auction-analytics dashboards and Open
+> Auctions. See the build-order table in §6 for per-phase status.
 
 ## 1. The load-bearing conclusion
 
@@ -47,8 +47,33 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   changed. `-` where an item is absent in a year.
 - ⏳ **Phase 5** — `Current Year Auction Stats`, `Historical Stats` — dashboards of pivots/charts
   derived from **auction metadata** (counts by style, by auctioneer, close-date cadence, YoY, etc.).
-- ⏳ **Phase 5** — `Detailed Auction Data` — a filterable raw-sales explorer with pickers for
-  Season / Auction Name / Category.
+- ✅ **DONE (Phase 5)** — `Detailed Auction Data` — a filterable sales explorer at `/explorer`,
+  in **two views behind a toggle**: grouped by auction (a `<details>` card per auction, body
+  mounted only while open) and a flat sortable table (columns Season / # / Closed / Auction /
+  Auctioneer / Token / Category / Price, sortable on any of them, default season descending then
+  auction number descending; the sort always runs over the whole result set and only the display
+  is capped, at 1,000 rows, with a "Show all" button under the table that lifts the cap — so a
+  sort is never computed over a truncated slice). Both views render the same query object, so
+  they cannot disagree.
+  - **Filtering is deliberately thin**: Season, Category and Auctioneer pickers, one full-width
+    search box matching *either* a token name or the auction's name, and a two-state view toggle.
+    The maintainer had the Auction picker (276 options), Auction style, Completion style and a
+    second auction-only search box removed as more clutter than help.
+  - **Only `Closed` auctions are listed.** The five `Failed` ones recorded no sales at all, so
+    this removes empty rows rather than any price data (276 auctions → 271; prices and totals
+    unchanged).
+  - **Grain: one price per token per auction.** Repeat sales of a token within one auction
+    (1,707 such pairs in `prices.csv`, 20 in `onyx.csv`) collapse to their average — maintainer's
+    call, and deliberately *not* labelled as an average in the UI: it is simply that auction's
+    price for that token. Totals are therefore sums of collapsed prices, not of raw sales.
+  - **Both sale feeds.** This is the only view that unions `prices.csv` with `onyx.csv`. Safe to
+    concatenate: all 38 Onyx auctions already exist in `auctionMetadata.csv`, all 38 also carry
+    main sales, and no `(auction, Item)` pair collides between the two files — so Onyx rows land
+    in their existing auction's card under their own `Onyx Ultra Rare` category. Unfiltered:
+    276 auctions, 6,418 prices, 129 distinct tokens, $497,843.93.
+  - `exploreAuctions` / `flattenAuctions` / `sortFlatRows` in `lib/data.ts`; `pages/ExplorerPage.tsx`
+    + `components/{AuctionCard,SaleTable}.tsx`. First view to read `completionStyle` from
+    `auctionMetadata.csv`.
 - ⏳ **Phase 5** — `Open Auctions` — currently-running auctions (metadata filtered to `Open`) with
   links. Note: this is the one **time-sensitive** view; it's only meaningful when fed live-ish data.
 
@@ -464,7 +489,7 @@ Cheap now while the code is small, painful later. Independent of which features 
 | **2** ✅ | Price Timelines (per-token charts) | C | **DONE (PR #5).** Hand-rolled SVG charts (zero deps), data-authored grouping via `tokenGroups.csv`. |
 | **3** ✅ | Compare Years tool | C | **DONE (PR #6).** Cross-season, keyed on canonical Item; % diff on avg; category + biggest-movers views. |
 | **4** ✅ | **Transmutes / build-vs-buy** | B | **DONE — SHIPPED (PR #8, merge `d6ece93`, 2026-07-22).** Cost engine (`lib/transmutes.ts`) + `/transmutes` page: Relic→Legendary paired layout, both build/upgrade costs, full BOM, game-canonical tier colors. All of §3–§4.4 landed. |
-| **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **← NEXT.** Metadata-driven dashboards & filterable explorer. Open Auctions needs a live-ish feed. |
+| **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **IN PROGRESS.** Detailed Auction Data explorer **DONE** — `/explorer`, grouped + flat views, one price per token per auction, unions the Onyx feed. Still open: the metadata-driven analytics dashboards, and Open Auctions (needs a live-ish feed). |
 
 Rationale: Phases 1–3 were pure computation over data we already parse, so they exercised the new
 routing/data-layer plumbing on low-risk features before the transmute engine (Phase 4), which

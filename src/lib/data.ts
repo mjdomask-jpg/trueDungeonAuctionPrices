@@ -2,6 +2,8 @@
 // Ported from the validated validate.mjs. "Last 5" = the 5 most recent
 // auctions in the season overall (confirmed definition).
 
+import { compareCategories } from './categories';
+
 export type Sale = {
   auctionId: string;
   season: string;
@@ -19,6 +21,7 @@ export type AuctionMeta = {
   name: string;
   auctioneer: string;
   style: string;
+  completionStyle: string;
   status: string;
   link: string;
   closeDate: string;
@@ -101,6 +104,7 @@ export function parseMeta(text: string): AuctionMeta[] {
       name: o['auctionName'],
       auctioneer: o['auctioneer'],
       style: o['auctionStyle'],
+      completionStyle: o['completionStyle'],
       status: o['Status'],
       link: o['Link'],
       closeDate: o['closeDate'],
@@ -357,4 +361,228 @@ export function compareSeasons(sales: Sale[], seasonA: string, seasonB: string):
     });
   }
   return rows;
+}
+
+// --- Detailed Auction Data explorer (Phase 5) ----------------------------
+// The raw sales, grouped under the auction they happened in, so you can answer
+// "what actually went for what, and where" rather than "what does this token
+// average". The join is metadata-driven — the auction is the unit, and its
+// style / completion style / auctioneer / close date are filterable dimensions,
+// not just labels.
+//
+// Grain: ONE PRICE PER TOKEN PER AUCTION. A token can sell more than once in
+// the same auction (1,707 such pairs in prices.csv, 20 in onyx.csv); those
+// duplicates collapse to their average, which is the single number the auction
+// is treated as having produced for that token. Deliberately not labelled as an
+// average in the UI — from the reader's side it is just that auction's price.
+
+export type ExplorerFilters = {
+  season: string; // '' = every season
+  category: string; // '' = every category
+  auctioneer: string; // '' = every auctioneer
+  search: string; // free text over token names AND the auction's name
+};
+
+export const EMPTY_FILTERS: ExplorerFilters = {
+  season: '', category: '', auctioneer: '', search: '',
+};
+
+// One token's result in one auction — the explorer's row. `price` is that
+// auction's price for the token: the sale price when it sold once, the average
+// of them when it sold several times.
+export type SaleRow = {
+  auctionId: string;
+  item: string;
+  displayName: string;
+  category: string;
+  price: number;
+};
+
+export type AuctionGroup = {
+  meta: AuctionMeta;
+  rows: SaleRow[]; // the tokens in this auction that matched the sale-level filters
+  total: number; // sum of their prices
+  min: number; // 0 when the auction matched with nothing
+  max: number;
+};
+
+export type ExplorerResult = {
+  auctions: AuctionGroup[];
+  rowCount: number; // matching token-prices across every listed auction
+  total: number; // their summed value
+  tokenCount: number; // distinct canonical Items among them
+};
+
+// Collapse an auction's sales to one row per token, averaging repeat sales.
+// Rows read in the site's category order, then by display name.
+function collapseToRows(sales: Sale[]): SaleRow[] {
+  const byItem = new Map<string, Sale[]>();
+  for (const s of sales) {
+    let bucket = byItem.get(s.item);
+    if (!bucket) { bucket = []; byItem.set(s.item, bucket); }
+    bucket.push(s);
+  }
+
+  const rows: SaleRow[] = [];
+  for (const [item, group] of byItem) {
+    const sum = group.reduce((a, s) => a + s.price, 0);
+    rows.push({
+      auctionId: group[0].auctionId,
+      item,
+      displayName: group[0].displayName,
+      category: group[0].category,
+      price: sum / group.length,
+    });
+  }
+  return rows.sort((a, b) =>
+    compareCategories(a.category, b.category) || a.displayName.localeCompare(b.displayName));
+}
+
+// Auctions read newest-first: season descending, then close date descending,
+// with auction number as the tiebreak (and the sole order for the 42 rows
+// whose close date is 'n/a').
+function compareAuctionsDesc(a: AuctionMeta, b: AuctionMeta): number {
+  if (a.season !== b.season) return Number(b.season) - Number(a.season);
+  const ka = dateKey(a.closeDate), kb = dateKey(b.closeDate);
+  if (ka !== kb) return ka < kb ? 1 : -1;
+  return b.auctionNumber - a.auctionNumber;
+}
+
+// Case-insensitive substring match on either name a token goes by.
+function tokenMatches(s: Sale, needle: string): boolean {
+  const q = needle.toLowerCase();
+  return s.displayName.toLowerCase().includes(q) || s.item.toLowerCase().includes(q);
+}
+
+function auctionNameMatches(m: AuctionMeta, needle: string): boolean {
+  return m.name.toLowerCase().includes(needle.toLowerCase());
+}
+
+// Run the explorer query. Auction-level filters (season / auctioneer / auction
+// name) select which auctions are listed; sale-level filtering (category, and
+// the token half of the general search) selects which rows show inside them,
+// and prunes auctions left matching nothing.
+//
+// Only Closed auctions are listed. The five Failed ones recorded no sales
+// anyway, so this drops empty rows rather than any price data.
+//
+// The general search spans both levels: an auction whose NAME matches keeps all
+// its rows, and any token whose name matches keeps its row. That is what makes
+// one box able to answer both "Trent" and "Wish Ring".
+export function exploreAuctions(
+  sales: Sale[], meta: AuctionMeta[], f: ExplorerFilters,
+): ExplorerResult {
+  const salesByAuction = new Map<string, Sale[]>();
+  for (const s of sales) {
+    let bucket = salesByAuction.get(s.auctionId);
+    if (!bucket) { bucket = []; salesByAuction.set(s.auctionId, bucket); }
+    bucket.push(s);
+  }
+
+  const needle = f.search.trim();
+  const saleLevelFilter = Boolean(f.category || needle);
+
+  const auctions: AuctionGroup[] = [];
+  let rowCount = 0, total = 0;
+  const items = new Set<string>();
+
+  for (const m of meta) {
+    if (m.status !== 'Closed') continue;
+    if (f.season && m.season !== f.season) continue;
+    if (f.auctioneer && m.auctioneer !== f.auctioneer) continue;
+
+    // A general-search hit on the auction's own name qualifies every token in
+    // it; otherwise each token has to match on its own.
+    const nameHit = Boolean(needle) && auctionNameMatches(m, needle);
+    const matched = (salesByAuction.get(m.auctionId) ?? []).filter(
+      (s) => (!f.category || s.category === f.category) && (!needle || nameHit || tokenMatches(s, needle)),
+    );
+    if (!matched.length && saleLevelFilter) continue;
+
+    const rows = collapseToRows(matched);
+
+    let sum = 0;
+    for (const r of rows) { sum += r.price; items.add(r.item); }
+    rowCount += rows.length;
+    total += sum;
+
+    auctions.push({
+      meta: m,
+      rows,
+      total: sum,
+      min: rows.length ? Math.min(...rows.map((r) => r.price)) : 0,
+      max: rows.length ? Math.max(...rows.map((r) => r.price)) : 0,
+    });
+  }
+
+  auctions.sort((a, b) => compareAuctionsDesc(a.meta, b.meta));
+  return { auctions, rowCount, total, tokenCount: items.size };
+}
+
+// --- Flat table view -----------------------------------------------------
+// The same rows the grouped view shows, flattened to one list with their
+// auction alongside, and sortable on any column. Same query, same numbers —
+// only the shape differs, so the toggle between the two views never changes
+// what is being reported.
+
+export type FlatRow = { row: SaleRow; meta: AuctionMeta };
+export type SortKey =
+  | 'season' | 'number' | 'date' | 'auction' | 'auctioneer' | 'token' | 'category' | 'price';
+export type SortDir = 'asc' | 'desc';
+
+// The table's opening sort: newest season first, and within a season the
+// highest auction number first.
+export const DEFAULT_SORT: { key: SortKey; dir: SortDir } = { key: 'season', dir: 'desc' };
+
+export function flattenAuctions(auctions: AuctionGroup[]): FlatRow[] {
+  return auctions.flatMap((a) => a.rows.map((row) => ({ row, meta: a.meta })));
+}
+
+// Each column's comparator, written ASCENDING; the direction is applied once by
+// the caller so a column can't disagree with its own arrow.
+const ASCENDING: Record<SortKey, (a: FlatRow, b: FlatRow) => number> = {
+  season: (a, b) => Number(a.meta.season) - Number(b.meta.season),
+  number: (a, b) => a.meta.auctionNumber - b.meta.auctionNumber,
+  date: (a, b) => dateKey(a.meta.closeDate).localeCompare(dateKey(b.meta.closeDate)),
+  auction: (a, b) => a.meta.name.localeCompare(b.meta.name),
+  auctioneer: (a, b) => a.meta.auctioneer.localeCompare(b.meta.auctioneer),
+  token: (a, b) => a.row.displayName.localeCompare(b.row.displayName),
+  category: (a, b) => compareCategories(a.row.category, b.row.category),
+  price: (a, b) => a.row.price - b.row.price,
+};
+
+// Ties resolve the way the default sort orders the table — newest season, then
+// highest auction number, then token name — so every sort is total and the rows
+// never shuffle between renders.
+function tiebreak(a: FlatRow, b: FlatRow): number {
+  return Number(b.meta.season) - Number(a.meta.season) ||
+    b.meta.auctionNumber - a.meta.auctionNumber ||
+    a.row.displayName.localeCompare(b.row.displayName);
+}
+
+export function sortFlatRows(rows: FlatRow[], key: SortKey, dir: SortDir): FlatRow[] {
+  const sign = dir === 'asc' ? 1 : -1;
+  const primary = ASCENDING[key];
+  return [...rows].sort((a, b) => primary(a, b) * sign || tiebreak(a, b));
+}
+
+// The option lists for the explorer's two remaining pickers, derived from the
+// data rather than hardcoded so a new auctioneer in the export shows up without
+// a code change. Seasons come back newest-first, categories in site order.
+// Auctioneers are taken from Closed auctions only, matching what the page
+// lists, and blanks are dropped — they'd be unselectable noise in a dropdown.
+export type ExplorerOptions = {
+  seasons: string[];
+  categories: string[];
+  auctioneers: string[];
+};
+
+export function explorerOptions(sales: Sale[], meta: AuctionMeta[]): ExplorerOptions {
+  return {
+    seasons: seasonsOf(sales),
+    categories: [...new Set(sales.map((s) => s.category))].sort(compareCategories),
+    auctioneers: [...new Set(meta.filter((m) => m.status === 'Closed').map((m) => m.auctioneer))]
+      .filter((v) => v && v !== 'n/a')
+      .sort((a, b) => a.localeCompare(b)),
+  };
 }
