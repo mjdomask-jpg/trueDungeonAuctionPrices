@@ -51,12 +51,14 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   in **two views behind a toggle**: grouped by auction (a `<details>` card per auction, body
   mounted only while open) and a flat sortable table (columns Season / # / Closed / Auction /
   Auctioneer / Token / Category / Price, sortable on any of them, default season descending then
-  auction number descending; the sort runs over the whole result set and only the display is
-  capped at 1,000 rows). Both render the same query object, so they cannot disagree.
-  - **Filtering is deliberately thin**: Season, Category and Auctioneer pickers, plus two
-    full-width search boxes — a general one matching *either* a token name or the auction's name,
-    and one matching auction names only. The maintainer had the Auction picker (276 options),
-    Auction style and Completion style removed as more clutter than help.
+  auction number descending; the sort always runs over the whole result set and only the display
+  is capped, at 1,000 rows, with a "Show all" button under the table that lifts the cap — so a
+  sort is never computed over a truncated slice). Both views render the same query object, so
+  they cannot disagree.
+  - **Filtering is deliberately thin**: Season, Category and Auctioneer pickers, one full-width
+    search box matching *either* a token name or the auction's name, and a two-state view toggle.
+    The maintainer had the Auction picker (276 options), Auction style, Completion style and a
+    second auction-only search box removed as more clutter than help.
   - **Only `Closed` auctions are listed.** The five `Failed` ones recorded no sales at all, so
     this removes empty rows rather than any price data (276 auctions → 271; prices and totals
     unchanged).

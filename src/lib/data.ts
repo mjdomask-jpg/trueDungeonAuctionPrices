@@ -381,11 +381,10 @@ export type ExplorerFilters = {
   category: string; // '' = every category
   auctioneer: string; // '' = every auctioneer
   search: string; // free text over token names AND the auction's name
-  auctionSearch: string; // free text over the auction's name only
 };
 
 export const EMPTY_FILTERS: ExplorerFilters = {
-  season: '', category: '', auctioneer: '', search: '', auctionSearch: '',
+  season: '', category: '', auctioneer: '', search: '',
 };
 
 // One token's result in one auction — the explorer's row. `price` is that
@@ -481,7 +480,6 @@ export function exploreAuctions(
   }
 
   const needle = f.search.trim();
-  const auctionNeedle = f.auctionSearch.trim();
   const saleLevelFilter = Boolean(f.category || needle);
 
   const auctions: AuctionGroup[] = [];
@@ -492,7 +490,6 @@ export function exploreAuctions(
     if (m.status !== 'Closed') continue;
     if (f.season && m.season !== f.season) continue;
     if (f.auctioneer && m.auctioneer !== f.auctioneer) continue;
-    if (auctionNeedle && !auctionNameMatches(m, auctionNeedle)) continue;
 
     // A general-search hit on the auction's own name qualifies every token in
     // it; otherwise each token has to match on its own.

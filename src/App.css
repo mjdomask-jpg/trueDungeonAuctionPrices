@@ -81,6 +81,10 @@ header h1 {
   flex-wrap: wrap;
   gap: 16px;
   margin: 24px 0 8px;
+  /* One height for every control in the row. Selects, inputs and the view
+     toggle are different elements with different intrinsic line boxes, so
+     matching them by padding alone leaves them a pixel or two apart. */
+  --control-h: 32px;
 }
 .controls label {
   display: flex;
@@ -95,7 +99,8 @@ header h1 {
 .controls select,
 .controls input {
   font: inherit;
-  padding: 8px 10px;
+  height: var(--control-h);
+  padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card);
@@ -558,13 +563,19 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
 }
 .toggle-buttons {
   display: inline-flex;
+  height: var(--control-h);
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
+/* The sibling <select>s inherit their 12px size from .controls label; the
+   toggle is not a label, so it has to say so itself or the buttons render at
+   the page's 15px. Height comes from --control-h, not from the line box. */
 .toggle-buttons button {
   font: inherit;
-  padding: 8px 14px;
+  font-size: 12px;
+  height: 100%;
+  padding: 0 12px;
   cursor: pointer;
   color: var(--text);
   background: var(--card);
@@ -592,3 +603,17 @@ table.flat col.col-token      { width: 24%; }
 table.flat col.col-cat        { width: 12%; }
 table.flat col.col-price      { width: 10%; }
 tbody td.wrap-text { white-space: normal; }
+
+/* "Show all" button under a capped flat table. */
+.show-all { margin: 12px 0 0; text-align: center; }
+.show-all button {
+  font: inherit;
+  padding: 8px 18px;
+  cursor: pointer;
+  color: var(--text-h);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.show-all button:hover { border-color: var(--accent); color: var(--accent); }
+.show-all button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

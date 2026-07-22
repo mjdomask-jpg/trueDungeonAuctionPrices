@@ -4,7 +4,6 @@ import {
   exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows,
   EMPTY_FILTERS, DEFAULT_SORT, type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
-import { money } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
 import { AuctionCard } from '../components/AuctionCard';
 import { SaleTable } from '../components/SaleTable';
@@ -20,9 +19,10 @@ import { SaleTable } from '../components/SaleTable';
 const AUTO_EXPAND_LIMIT = 5;
 
 // The flat view renders one <tr> per matching price, and unfiltered that is
-// ~6,400 rows — enough to make sorting feel sluggish. The sort runs over the
-// whole result set and only the display is capped, so "highest price" still
-// answers with the genuine top of the data, not the top of a truncated slice.
+// ~6,400 rows — enough to make sorting feel sluggish. It opens capped at this
+// many, with a button to render the lot. The sort always runs over the whole
+// result set and only the display is capped, so "highest price" answers with
+// the genuine top of the data even before the cap is lifted.
 const FLAT_ROW_LIMIT = 1000;
 
 type View = 'grouped' | 'flat';
@@ -34,6 +34,7 @@ export default function ExplorerPage() {
   const [view, setView] = useState<View>('grouped');
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT.dir);
+  const [showAll, setShowAll] = useState(false);
 
   // The explorer is the one view that reads both sale feeds. The Onyx auctions
   // are all present in auctionMetadata and none of their (auction, token) pairs
@@ -41,8 +42,12 @@ export default function ExplorerPage() {
   // land in their existing auction's card under their own category.
   const allSales = useMemo(() => [...sales, ...onyxSales], [sales, onyxSales]);
 
-  const set = <K extends keyof ExplorerFilters>(key: K, value: ExplorerFilters[K]) =>
+  // Re-filtering re-caps the table: a new query deserves its own first page,
+  // and "show all" on 6,400 rows shouldn't silently persist into the next one.
+  const set = <K extends keyof ExplorerFilters>(key: K, value: ExplorerFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }));
+    setShowAll(false);
+  };
 
   const options = useMemo(() => explorerOptions(allSales, meta), [allSales, meta]);
   const result = useMemo(() => exploreAuctions(allSales, meta, filters), [allSales, meta, filters]);
@@ -131,7 +136,7 @@ export default function ExplorerPage() {
               aria-pressed={view === 'grouped'}
               onClick={() => setView('grouped')}
             >
-              Grouped by auction
+              Group by auction
             </button>
             <button
               type="button"
@@ -139,7 +144,7 @@ export default function ExplorerPage() {
               aria-pressed={view === 'flat'}
               onClick={() => setView('flat')}
             >
-              Flat table
+              See full list
             </button>
           </div>
         </div>
@@ -153,22 +158,12 @@ export default function ExplorerPage() {
             onChange={(e) => set('search', e.target.value)}
           />
         </label>
-        <label className="search">
-          Auction
-          <input
-            type="search"
-            placeholder="Search auction names…"
-            value={filters.auctionSearch}
-            onChange={(e) => set('auctionSearch', e.target.value)}
-          />
-        </label>
       </div>
 
       <p className="meta-line">
         {result.auctions.length.toLocaleString()} auction{result.auctions.length === 1 ? '' : 's'} ·{' '}
         {result.rowCount.toLocaleString()} price{result.rowCount === 1 ? '' : 's'} ·{' '}
-        {result.tokenCount.toLocaleString()} distinct token{result.tokenCount === 1 ? '' : 's'} ·{' '}
-        {money(result.total)} total
+        {result.tokenCount.toLocaleString()} distinct token{result.tokenCount === 1 ? '' : 's'}
         <span className="explorer-actions">
           {view === 'grouped' && <>
             <button type="button" onClick={expandAll}>Expand all</button>
@@ -191,23 +186,32 @@ export default function ExplorerPage() {
         />
       ))}
 
-      {view === 'flat' && result.auctions.length > 0 && (
-        <>
-          {flatRows.length > FLAT_ROW_LIMIT && (
-            <p className="meta-line">
-              Showing the first {FLAT_ROW_LIMIT.toLocaleString()} of{' '}
-              {flatRows.length.toLocaleString()} rows in this sort order — narrow
-              the filters to see the rest.
-            </p>
-          )}
-          <SaleTable
-            rows={flatRows.slice(0, FLAT_ROW_LIMIT)}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={onSort}
-          />
-        </>
-      )}
+      {view === 'flat' && result.auctions.length > 0 && (() => {
+        const capped = !showAll && flatRows.length > FLAT_ROW_LIMIT;
+        return (
+          <>
+            {capped && (
+              <p className="meta-line">
+                Showing the first {FLAT_ROW_LIMIT.toLocaleString()} of{' '}
+                {flatRows.length.toLocaleString()} rows in this sort order.
+              </p>
+            )}
+            <SaleTable
+              rows={capped ? flatRows.slice(0, FLAT_ROW_LIMIT) : flatRows}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={onSort}
+            />
+            {capped && (
+              <p className="show-all">
+                <button type="button" onClick={() => setShowAll(true)}>
+                  Show all {flatRows.length.toLocaleString()} rows
+                </button>
+              </p>
+            )}
+          </>
+        );
+      })()}
     </>
   );
 }
