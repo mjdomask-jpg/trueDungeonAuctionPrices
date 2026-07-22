@@ -51,6 +51,16 @@ only this provider changes.
 
 ## Source data
 
+All data lives in `public/data/`. Six files are **exported from the spreadsheet**
+straight into that directory — `prices.csv`, `auctionMetadata.csv`,
+`tokenMetadata.csv`, `transmuteRecipes.csv`, `offAuctionPrices.csv`, `onyx.csv`.
+Two are **hand-authored here** with no sheet behind them: `derivedPrices.csv` and
+`tokenGroups.csv`. There is no staging copy and no sync step; the file the sheet
+writes is the file the site serves and the file the validators check.
+
+The two below back the main dashboard. The rest are covered in
+[`expansion-plan.md`](expansion-plan.md) §3.
+
 ### `prices.csv` — the sales log (one row per sale)
 
 Each row is a single component sold in a single auction. This is the raw,
@@ -268,31 +278,82 @@ its underline only — never to the price numbers, to protect their legibility.
 
 ## Updating the data
 
-1. Append new sales to the source sales file and, if a new auction was added, add a
-   row to the metadata file.
-2. Export both sheets to CSV and replace `public/data/prices.csv` and
-   `public/data/auctionMetadata.csv`.
-3. Redeploy (or just reload in development). All statistics recompute automatically
-   from the new raw rows — there are no precomputed values to update by hand.
+**The step-by-step procedure lives in
+[`updating-the-data.md`](updating-the-data.md)** — sheet edit → export → place →
+validate → commit → deploy → verify, with a section per file. Keep the detail
+there rather than duplicating it here, so the two can't drift apart.
 
-**Export straight into `public/data/`.** There is no staging copy elsewhere and no
-sync step: the file the spreadsheet writes is the file the site serves and the file
-the validators check. The exports are `prices.csv`, `auctionMetadata.csv`,
-`tokenMetadata.csv`, `transmuteRecipes.csv`, `offAuctionPrices.csv` and `onyx.csv`;
-`derivedPrices.csv` and `tokenGroups.csv` are hand-authored here and have no sheet
-behind them.
+In short: export straight into `public/data/` (there is no staging copy and no
+sync step), then run `npm run validate` before committing. All statistics
+recompute from the raw rows — there are no precomputed values to update by hand.
 
-After any export, run `npm run validate` — it fails loudly, naming the exact
-column, if the sheet's headers drift from the shared `Item` / `auctionSeason` /
-`Display Name` / `Category` vocabulary.
+## Column vocabulary
+
+Every data file describes tokens with the **same column names**, because they all
+describe the same thing and `prices.csv` is the source of truth for token identity:
+
+| concept | column |
+|---|---|
+| the token, by its stable canonical name | `Item` |
+| the season | `auctionSeason` (`Year` in the recipe/off-auction tables) |
+| the token's public name that season | `Display Name` |
+| the token's class | `Category` |
+
+The recipe table adds `Transmute` for the token a recipe *produces* — a distinct
+role from `Item`, the ingredient — and `ItemYear` for an ingredient's season
+offset. Retired spellings that must not come back: `year`, `canonicalName`,
+`displayName`, `tokenCategory`, `Good`, `GoodYear`, `GoodDisplayName`.
+
+`Category` values are `Trade 1`, `Trade 2`, `Ultra Rare`, `Premium`, `Bonus`,
+`Preorder`, `Golden Ticket`, `Condensed`, `Safehold`; `Onyx Ultra Rare`, which
+appears only in `onyx.csv`; and `Fleece` and `Treasure Chest`, which appear only
+in `tokenMetadata` for never-auctioned tokens. `Trade Good` and `Patron` are
+retired.
 
 ## Validation
 
-`scripts/validate.mjs` (`node scripts/validate.mjs [season]`) runs the same
+Three checks, each catching a different failure:
+
+**`npm run validate`** (`scripts/validate-recipes.mjs`) cross-checks
+`transmuteRecipes` / `tokenMetadata` / `offAuctionPrices` / `prices` for duplicate
+keys, `ResolvedYear` arithmetic, unresolvable ingredients, source cycles and
+missing price coverage. It opens with a **schema guard**: each file declares its
+required columns plus a map of retired header → replacement, so a spreadsheet
+exported under old headers fails immediately, naming the exact rename, instead of
+silently indexing every row under `undefined`. A schema failure aborts before the
+row checks — otherwise one bad header buries its own diagnosis under thousands of
+cascading errors. Near-misses in spacing or case (`DisplayName` for
+`Display Name`) are reported as such rather than as a missing column.
+
+**`npm run build`** runs `scripts/check-dist-data.mjs` as `postbuild`, comparing
+`public/data` to `dist/data` in both directions. Vite copies `public/` in but does
+not clean orphans, so a CSV renamed or deleted in `public/` keeps being served
+from `dist/` with nothing to indicate it.
+
+**`node scripts/validate.mjs [season]`** runs the same
 parse/filter/join/aggregate pipeline outside the browser for a single season and
 prints the resulting table, including both candidate "last 5" definitions side by
-side. It exists to confirm the site's numbers against the historical spreadsheet
-whenever the logic or data changes.
+side. It confirms the site's numbers against the historical spreadsheet whenever
+the logic or data changes.
+
+## Known gaps
+
+- **CI does not run `npm run validate`.** `deploy.yml` runs `npm run build`, so
+  the `postbuild` data check gates a deploy but the recipe/schema validator does
+  not. A bad export can reach production if nobody runs it locally.
+- **The spreadsheet is upstream and can still regress.** The schema guard catches
+  a bad export at validate time, but nothing prevents one being made. The headers
+  in the sheet are the real fix for any drift the guard reports.
+- **`.claude/launch.json` is outside the repo.** It hardcodes an absolute
+  `node.exe` path and paths relative to `C:\claude`, so it cannot simply move in;
+  a portable version would live at `.claude/launch.json` here and call
+  `npm run dev`.
+- **`deploy.yml` pins actions that target the deprecated Node 20.**
+  `actions/checkout@v4`, `actions/setup-node@v4` and `actions/upload-artifact@v4`
+  are being force-run on Node 24 and warn on every run; they want bumping before
+  the fallback is removed.
+- **`README.md` is still the stock Vite template.** It describes none of this
+  project.
 
 ## Deployment
 
