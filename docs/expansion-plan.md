@@ -9,6 +9,11 @@ reading the actual sheets, and proposes a phased build order.
 Read [domain-context.md](./domain-context.md) first for the *why*; this doc is the
 *what next* and *how*.
 
+> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`. Phase 5 is next.** The transmute
+> build-vs-buy engine (the headline feature) is live. Remaining: auction analytics + the
+> Detailed Auction Data explorer + Open Auctions (Phase 5). See the build-order table in §6
+> for per-phase status.
+
 ## 1. The load-bearing conclusion
 
 **Nothing in the workbook requires per-user state, accounts, or a backend.** Every
@@ -26,30 +31,32 @@ cost far better than the sheet's apparent size does.
 
 ### A. Already solved (MVP) — price dashboards
 `2022–2026 Dashboard`, and their hidden feeders `pricesYYYY`, `pricesLastFiveYYYY`.
-These are the MVP. The only gap is the **Onyx** sub-list (below).
+These are the MVP. The one-time gap, the **Onyx** sub-list, shipped in Phase 1.
 
-### B. New reference data + derived computation — the Transmutes engine (headline)
+### B. New reference data + derived computation — the Transmutes engine (headline) — ✅ SHIPPED (Phase 4)
 `Transmute Cost Estimates`, `Safehold Cost Estimates`, `Transmute table`, `pricesFleece`.
-The big one. New data model + a recursive cost engine. Detailed in §3–§4.
+The big one. New data model + a recursive cost engine. Detailed in §3–§4. **Built and merged
+(PR #8) — `lib/transmutes.ts` + the `/transmutes` page.**
 
-### C. New views over existing data (charts / comparisons / explorers)
-- `Price Timelines YYYY` + `Chart Pivot - YYYY` — per-token price-over-time line charts,
-  ordered by auction close date (auction number as tiebreak). Needs a charting approach
-  and a "pivot" of raw sales into per-token time series.
-- `Compare Years` + `Year Comparison Table` — pick two seasons, show avg/max/min per token
-  for each plus % difference. **Keys on `canonicalName` (Item), not display name**, so it
-  compares the item that filled the same role across years even when the display name
+### C. New views over existing data (charts / comparisons / explorers) — partly shipped
+- ✅ **DONE (Phase 2)** — `Price Timelines YYYY` + `Chart Pivot - YYYY` — per-token
+  price-over-time line charts, ordered by auction close date (auction number as tiebreak).
+- ✅ **DONE (Phase 3)** — `Compare Years` + `Year Comparison Table` — pick two seasons, show
+  avg/max/min per token for each plus % difference. **Keys on `canonicalName` (Item), not display
+  name**, so it compares the item that filled the same role across years even when the display name
   changed. `-` where an item is absent in a year.
-- `Current Year Auction Stats`, `Historical Stats` — dashboards of pivots/charts derived
-  from **auction metadata** (counts by style, by auctioneer, close-date cadence, YoY, etc.).
-- `Detailed Auction Data` — a filterable raw-sales explorer with pickers for Season /
-  Auction Name / Category.
-- `Open Auctions` — currently-running auctions (metadata filtered to `Open`) with links.
-  Note: this is the one **time-sensitive** view; it's only meaningful when fed live-ish data.
+- ⏳ **Phase 5** — `Current Year Auction Stats`, `Historical Stats` — dashboards of pivots/charts
+  derived from **auction metadata** (counts by style, by auctioneer, close-date cadence, YoY, etc.).
+- ⏳ **Phase 5** — `Detailed Auction Data` — a filterable raw-sales explorer with pickers for
+  Season / Auction Name / Category.
+- ⏳ **Phase 5** — `Open Auctions` — currently-running auctions (metadata filtered to `Open`) with
+  links. Note: this is the one **time-sensitive** view; it's only meaningful when fed live-ish data.
 
 ### D. Raw data imports (source of truth)
 `auctionMetadata`, `auctionPrices`, `pricesOnyx`. These are local copies of the data-layer
-CSVs. `prices.csv` and `metadata.csv` already back the site; **Onyx needs its own CSV**.
+CSVs. `prices.csv`, `metadata.csv`, and `onyx.csv` back the site today. Phase 4 added four more
+under `public/data/`: `transmuteRecipes.csv`, `tokenMetadata.csv`, `offAuctionPrices.csv` (from
+`pricesFleece`), and `derivedPrices.csv`.
 
 ### E. Per-user state
 **Empty.** Nothing here. (Worth stating explicitly — it's why we stay static.)
@@ -441,19 +448,23 @@ Cheap now while the code is small, painful later. Independent of which features 
 
 ## 6. Proposed build order
 
-| Phase | Scope | Bucket | Notes |
+| Phase | Scope | Bucket | Status |
 | --- | --- | --- | --- |
-| **0** ✅ | Foundational refactors (§5) | — | **Done.** Routing, component split, shared data layer. Unblocked everything. |
-| **1** | Onyx sub-list in dashboards | A/D | Small; completes true MVP parity. New CSV, reuse aggregation. |
-| **2** | Price Timelines (per-token charts) | C | First new view; needs charting + time-series pivot. |
-| **3** | Compare Years tool | C | Cross-season, keyed on canonicalName; % diff. |
-| **4** | **Transmutes / build-vs-buy** | B | Headline feature. Design settled (§4–§4.2); blocked only on recipe-sheet authoring (`IsSource`, `GoodYear`, canonical `Good` names). |
-| **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | Metadata-driven dashboards & filterable explorer. Open Auctions needs a live-ish feed. |
+| **0** ✅ | Foundational refactors (§5) | — | **DONE (PR #1).** Routing, component split, shared data layer. Unblocked everything. |
+| **1** ✅ | Onyx sub-list in dashboards | A/D | **DONE (PR #2).** New `onyx.csv`, reuses the aggregation pipeline; own `/onyx` route. |
+| **2** ✅ | Price Timelines (per-token charts) | C | **DONE (PR #5).** Hand-rolled SVG charts (zero deps), data-authored grouping via `tokenGroups.csv`. |
+| **3** ✅ | Compare Years tool | C | **DONE (PR #6).** Cross-season, keyed on canonical Item; % diff on avg; category + biggest-movers views. |
+| **4** ✅ | **Transmutes / build-vs-buy** | B | **DONE — SHIPPED (PR #8, merge `d6ece93`, 2026-07-22).** Cost engine (`lib/transmutes.ts`) + `/transmutes` page: Relic→Legendary paired layout, both build/upgrade costs, full BOM, game-canonical tier colors. All of §3–§4.4 landed. |
+| **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **← NEXT.** Metadata-driven dashboards & filterable explorer. Open Auctions needs a live-ish feed. |
 
-Rationale: Phases 1–3 are pure computation over data we already parse, so they exercise the new
+Rationale: Phases 1–3 were pure computation over data we already parse, so they exercised the new
 routing/data-layer plumbing on low-risk features before the transmute engine (Phase 4), which
-carries the only genuinely new algorithm. Phase 5 is a distinct data domain (metadata analytics)
+carried the only genuinely new algorithm. Phase 5 is a distinct data domain (metadata analytics)
 and is naturally last.
+
+**Not phases, but also shipped along the way:** UI-polish PRs (#3 GitHub-style nav tabs, #4 favicon),
+Onyx row banding (#7, later generalized to "any table with 4+ rows"), a site-wide dark-mode
+muted-text brighten, and the curly→straight apostrophe normalization in recipe names.
 
 ## 7. Open questions to resolve with the maintainer
 
@@ -469,12 +480,17 @@ and is naturally last.
    season avg / season min per total — identical to a named UR, so no `GoodType` column. Remaining
    task is *data authoring* — add the `GoodYear` column, expand multi-season recipes to one row per
    season, and re-key the sheet on `transmute + good + goodYear + isSource`.
-3. **Onyx as a third CSV** — confirm shape/columns and how it joins to a season (the maintainer
-   already flagged wanting this).
+3. ~~**Onyx as a third CSV**~~ — RESOLVED / SHIPPED (Phase 1, PR #2). The Onyx feed uses the same
+   raw-sales schema as `prices.csv`, so it reuses `parseSales` + `aggregateSeason` unchanged; loaded
+   optionally by the provider on its own `/onyx` route.
 4. ~~**Off-auction prices** (`pricesFleece`) — min-based build cost when a leaf has no min~~ —
    MOOT (§4.3): the real export **does** carry `min Price` on every row. §3.3's "max+avg only" note
    was mistaken. No fallback needed. Stays a hand-edited file.
 5. **Open Auctions freshness** — is live/near-live auction status in scope for the static site, or
    is that view better left in the spreadsheet?
-6. **`Safehold` / `Patron` levels** — are these standard transmutes in the same engine, or special
-   cases (they have their own sheet / row group)?
+6. ~~**`Safehold` / `Patron` levels**~~ — RESOLVED / SHIPPED (Phase 4). All run through the one
+   engine. `Safehold` is a self-contained V→I upgrade ladder (source lines point one rung down;
+   cross-season source resolution handles rungs whose recipe lives in an earlier season). `Patron`,
+   `Paragon`, and `Omni` sit *outside* the power ladder and render in their own "Outside the tier
+   ladder" group — no special engine path. See [domain-context.md](./domain-context.md) for the tier
+   structure.
