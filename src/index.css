@@ -64,7 +64,7 @@
    the site still auto-follows the OS until the visitor picks a theme. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --text: #9ca3af;
+  --text: #b7bdc7;
   --text-h: #f3f4f6;
   --bg: #0f1117;
   --card: #171a22;

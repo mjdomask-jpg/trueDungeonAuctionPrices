@@ -303,12 +303,6 @@ td.diff.down { color: var(--diff-down); }
 }
 
 /* --- Transmutes / build-vs-buy (Phase 4) ------------------------------- */
-/* This page carries a lot of small muted labels (price-source tags, mins, tier
-   headings). In dark mode the shared --text (#9ca3af) reads dim at those sizes,
-   so lift it a step for this page only — other pages keep their approved look.
-   Paired with removing the opacity that used to compound the dimming. */
-:root[data-theme='dark'] .tx-page { --text: #b7bdc7; }
-
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
