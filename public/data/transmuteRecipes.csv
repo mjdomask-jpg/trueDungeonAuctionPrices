@@ -1428,7 +1428,7 @@ Key,Year,Level,Transmute,Good,GoodYear,ResolvedYear,GoodDisplayName,Quantity,IsS
 2026|Deathward Greaves|PYP|-2|FALSE,2026,Arcanum,Deathward Greaves,PYP,-2,2024,Ultra Rare,1,FALSE
 2026|Deathward Greaves|PYP|-3|FALSE,2026,Arcanum,Deathward Greaves,PYP,-3,2023,Ultra Rare,1,FALSE
 2026|Earcuff of Greater Glory|PYP||FALSE,2026,Relic,Earcuff of Greater Glory,PYP,,2026,Ultra Rare,1,FALSE
-2026|Earcuff of Greater Glory|Fleece||FALSE,2026,Relic,Earcuff of Greater Glory,Monster Trophy,,2026,Golden Fleece,26,FALSE
+2026|Earcuff of Greater Glory|Monster Trophy||FALSE,2026,Relic,Earcuff of Greater Glory,Monster Trophy,,2026,Monster Trophy,26,FALSE
 2026|Ioun Stone of Mystic Heroism|Alchemist's Ink||FALSE,2026,Relic,Ioun Stone of Mystic Heroism,Alchemist's Ink,,2026,Alchemist's Ink,1,FALSE
 2026|Ioun Stone of Mystic Heroism|Alchemist's Parchment||FALSE,2026,Relic,Ioun Stone of Mystic Heroism,Alchemist's Parchment,,2026,Alchemist's Parchment,1,FALSE
 2026|Ioun Stone of Mystic Heroism|Aragonite||FALSE,2026,Relic,Ioun Stone of Mystic Heroism,Aragonite,,2026,Aragonite,1,FALSE
