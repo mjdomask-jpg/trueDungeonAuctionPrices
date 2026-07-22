@@ -229,8 +229,10 @@ columns, and the rules that will bite you.
 
 **Export from:** the `auctionMetadata` tab → save as `auctionMetadata.csv`
 
-**Drives:** the auction count on the Prices page, the season list, and the
-"Last 5" date labels. It does **not** contain any prices.
+**Drives:** the auction count on the Prices page, the season list, the
+"Last 5" date labels, and the whole **Auction Data** explorer — which shows each
+auction's name, close date, style, completion style, auctioneer and forum link.
+It does **not** contain any prices.
 
 **Update when:** a new auction opens, an auction closes, or an auction's details
 change.
@@ -244,11 +246,12 @@ change.
 | `auctionNumber` | **Yes** | Sequence within the season, e.g. `47`. |
 | `auctionName` | **Yes** | Free text, shown to users. May contain commas — the sheet quotes them correctly on export. |
 | `Status` | **Yes** | One of `Closed`, `Failed`, `Open`. |
-| `closeDate` | **Yes** | ISO `YYYY-MM-DD`. Blank for still-open auctions; older seasons use `n/a`. |
-| `auctioneer` | Optional | Who ran it. |
-| `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. |
-| `Link` | Optional | URL to the original forum thread. |
-| `completionStyle`, `openDate`, `daysToClose`, `Open Month`, `Close Month` | No | Not read by the site. |
+| `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Blank for still-open auctions; older seasons use `n/a`. See the padding warning below. |
+| `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
+| `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
+| `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
+| `Link` | Optional | URL to the original forum thread; the explorer's "Auction link". |
+| `openDate`, `daysToClose`, `Open Month`, `Close Month` | No | Not read by the site. |
 | `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced. |
 
 ### Rules that matter
@@ -259,6 +262,12 @@ change.
 - **`closeDate` drives the "Last 5" labels.** The Prices page shows the five most
   recent auctions in a season by date. A missing or wrong `closeDate` puts the
   window in the wrong place.
+- **`closeDate` must be zero-padded, and fails silently if it isn't.** The site
+  only recognises `YYYY-MM-DD`; a value like `2024-8-13` is treated as *no date
+  at all*, so the auction sorts as undated and renders "unknown" rather than
+  showing an obviously wrong date. Five rows were in this state until the
+  2026-07-22 export. If an auction claims to have no close date, check the
+  padding before assuming the cell is empty.
 - **`auctionId` is the join key** to `prices.csv` and `onyx.csv`. A sale whose
   `auctionId` has no row here still loads, but the auction has no name or date.
 
