@@ -5,16 +5,17 @@ import { money } from '../lib/format';
 // (Max/Avg/Min) | Δ Avg. Used both for a single category section and for the
 // flat "biggest movers" view, so it takes the rows already ordered by the page.
 export function CompareTable({
-  rows, seasonA, seasonB, newerIsB,
+  rows, seasonA, seasonB, newerIsB, banded,
 }: {
   rows: CompareRow[];
   seasonA: string;
   seasonB: string;
   newerIsB: boolean;
+  banded?: boolean;
 }) {
   return (
     <div className="tablewrap">
-      <table>
+      <table className={banded ? 'banded' : undefined}>
         <colgroup>
           <col className="col-token" />
           <col /><col /><col />

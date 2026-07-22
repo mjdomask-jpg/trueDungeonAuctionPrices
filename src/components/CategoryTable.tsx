@@ -1,8 +1,9 @@
 import { type ItemRow } from '../lib/data';
 import { money } from '../lib/format';
 
-// Categories whose tables get alternating row banding.
-const BANDED_CATEGORIES = new Set(['Trade 1', 'Trade 2', 'Premium']);
+// Categories whose tables get alternating row banding. Exported so other views
+// (Compare Years) band the same categories the dashboard does.
+export const BANDED_CATEGORIES = new Set(['Trade 1', 'Trade 2', 'Premium']);
 
 export function CategoryTable(
   { category, rows, banded }: { category: string; rows: ItemRow[]; banded?: boolean },

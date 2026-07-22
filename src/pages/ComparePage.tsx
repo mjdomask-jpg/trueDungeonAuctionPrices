@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { seasonsOf, compareSeasons, type CompareRow } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CompareTable } from '../components/CompareTable';
+import { BANDED_CATEGORIES } from '../components/CategoryTable';
 
 // Fixed display order for the per-category sections (mirrors DashboardPage).
 // Any category not listed is appended afterward, alphabetically.
@@ -136,7 +137,7 @@ export default function ComparePage() {
       {rows.length > 0 && sort === 'category' && groups.map((g) => (
         <section key={g.category} className="cat-section" data-category={g.category}>
           <h2 className="cat-header">{g.category}</h2>
-          <CompareTable rows={g.rows} seasonA={a} seasonB={b} newerIsB={newerIsB} />
+          <CompareTable rows={g.rows} seasonA={a} seasonB={b} newerIsB={newerIsB} banded={BANDED_CATEGORIES.has(g.category)} />
         </section>
       ))}
 
