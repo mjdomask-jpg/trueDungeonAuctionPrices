@@ -21,7 +21,7 @@ export function AuctionCard({
   open: boolean;
   onToggle: (auctionId: string, open: boolean) => void;
 }) {
-  const { meta, sales, total, min, max } = group;
+  const { meta, rows, total, min, max } = group;
   const date = longDate(meta.closeDate);
 
   // Metadata worth showing as chips. 'n/a' and blanks are dropped rather than
@@ -53,8 +53,8 @@ export function AuctionCard({
         <p className="auction-facts">
           {facts.map((f) => <span key={f} className="cat">{f}</span>)}
           <span className="auction-totals">
-            {sales.length} sale{sales.length === 1 ? '' : 's'}
-            {sales.length > 0 && <> · {money(total)} total · {money(min)}–{money(max)}</>}
+            {rows.length} token{rows.length === 1 ? '' : 's'}
+            {rows.length > 0 && <> · {money(total)} total · {money(min)}–{money(max)}</>}
           </span>
           {meta.link && (
             <a className="auction-link" href={meta.link} target="_blank" rel="noopener noreferrer">
@@ -63,11 +63,11 @@ export function AuctionCard({
           )}
         </p>
 
-        {sales.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="auction-none">No recorded sales for this auction.</p>
         ) : (
           <div className="tablewrap">
-            <table className={sales.length >= 4 ? 'banded' : undefined}>
+            <table className={rows.length >= 4 ? 'banded' : undefined}>
               <colgroup><col className="col-token" /><col /><col /></colgroup>
               <thead>
                 <tr>
@@ -77,17 +77,17 @@ export function AuctionCard({
                 </tr>
               </thead>
               <tbody>
-                {sales.map((s, i) => (
-                  <tr key={`${s.item}-${i}`}>
+                {rows.map((r) => (
+                  <tr key={r.item}>
                     <td className="left token">
-                      {s.displayName}
+                      {r.displayName}
                       {/* The canonical Item, shown only when the yearly display
                           name differs — it's how the token lines up across
                           seasons on the Compare and Timelines pages. */}
-                      {s.item !== s.displayName && <span className="alt"> · {s.item}</span>}
+                      {r.item !== r.displayName && <span className="alt"> · {r.item}</span>}
                     </td>
-                    <td className="left">{s.category}</td>
-                    <td>{money(s.price)}</td>
+                    <td className="left">{r.category}</td>
+                    <td>{money(r.price)}</td>
                   </tr>
                 ))}
               </tbody>

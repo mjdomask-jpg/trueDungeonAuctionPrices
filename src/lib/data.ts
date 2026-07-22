@@ -364,12 +364,17 @@ export function compareSeasons(sales: Sale[], seasonA: string, seasonB: string):
 }
 
 // --- Detailed Auction Data explorer (Phase 5) ----------------------------
-// Every other view aggregates. This one deliberately does not: it shows the
-// individual sales, grouped under the auction they happened in, so you can
-// answer "what actually went for what, and where" rather than "what does this
-// token average". The join is metadata-driven — the auction is the unit, and
-// its style / completion style / auctioneer / close date are filterable
-// dimensions, not just labels.
+// The raw sales, grouped under the auction they happened in, so you can answer
+// "what actually went for what, and where" rather than "what does this token
+// average". The join is metadata-driven — the auction is the unit, and its
+// style / completion style / auctioneer / close date are filterable dimensions,
+// not just labels.
+//
+// Grain: ONE PRICE PER TOKEN PER AUCTION. A token can sell more than once in
+// the same auction (1,707 such pairs in prices.csv, 20 in onyx.csv); those
+// duplicates collapse to their average, which is the single number the auction
+// is treated as having produced for that token. Deliberately not labelled as an
+// average in the UI — from the reader's side it is just that auction's price.
 
 export type ExplorerFilters = {
   season: string; // '' = every season
@@ -385,20 +390,56 @@ export const EMPTY_FILTERS: ExplorerFilters = {
   season: '', auctionId: '', category: '', style: '', completionStyle: '', auctioneer: '', search: '',
 };
 
+// One token's result in one auction — the explorer's row. `price` is that
+// auction's price for the token: the sale price when it sold once, the average
+// of them when it sold several times.
+export type SaleRow = {
+  auctionId: string;
+  item: string;
+  displayName: string;
+  category: string;
+  price: number;
+};
+
 export type AuctionGroup = {
   meta: AuctionMeta;
-  sales: Sale[]; // the sales in this auction that matched the sale-level filters
-  total: number; // sum of those sales
-  min: number; // 0 when the auction matched with no sales
+  rows: SaleRow[]; // the tokens in this auction that matched the sale-level filters
+  total: number; // sum of their prices
+  min: number; // 0 when the auction matched with nothing
   max: number;
 };
 
 export type ExplorerResult = {
   auctions: AuctionGroup[];
-  saleCount: number; // matching sales across every listed auction
+  rowCount: number; // matching token-prices across every listed auction
   total: number; // their summed value
   tokenCount: number; // distinct canonical Items among them
 };
+
+// Collapse an auction's sales to one row per token, averaging repeat sales.
+// Rows read in the site's category order, then by display name.
+function collapseToRows(sales: Sale[]): SaleRow[] {
+  const byItem = new Map<string, Sale[]>();
+  for (const s of sales) {
+    let bucket = byItem.get(s.item);
+    if (!bucket) { bucket = []; byItem.set(s.item, bucket); }
+    bucket.push(s);
+  }
+
+  const rows: SaleRow[] = [];
+  for (const [item, group] of byItem) {
+    const sum = group.reduce((a, s) => a + s.price, 0);
+    rows.push({
+      auctionId: group[0].auctionId,
+      item,
+      displayName: group[0].displayName,
+      category: group[0].category,
+      price: sum / group.length,
+    });
+  }
+  return rows.sort((a, b) =>
+    compareCategories(a.category, b.category) || a.displayName.localeCompare(b.displayName));
+}
 
 // Auctions read newest-first: season descending, then close date descending,
 // with auction number as the tiebreak (and the sole order for the 42 rows
@@ -439,7 +480,7 @@ export function exploreAuctions(
   const saleLevelFilter = Boolean(f.category || needle);
 
   const auctions: AuctionGroup[] = [];
-  let saleCount = 0, total = 0;
+  let rowCount = 0, total = 0;
   const items = new Set<string>();
 
   for (const m of meta) {
@@ -454,30 +495,61 @@ export function exploreAuctions(
     );
     if (!matched.length && saleLevelFilter) continue;
 
-    // Within an auction, sales read in the site's category order, then by the
-    // token's display name, then by price — so repeat sales of the same token
-    // (1,713 of them site-wide) sit together, cheapest first.
-    matched.sort((a, b) =>
-      compareCategories(a.category, b.category) ||
-      a.displayName.localeCompare(b.displayName) ||
-      a.price - b.price);
+    const rows = collapseToRows(matched);
 
     let sum = 0;
-    for (const s of matched) { sum += s.price; items.add(s.item); }
-    saleCount += matched.length;
+    for (const r of rows) { sum += r.price; items.add(r.item); }
+    rowCount += rows.length;
     total += sum;
 
     auctions.push({
       meta: m,
-      sales: matched,
+      rows,
       total: sum,
-      min: matched.length ? Math.min(...matched.map((s) => s.price)) : 0,
-      max: matched.length ? Math.max(...matched.map((s) => s.price)) : 0,
+      min: rows.length ? Math.min(...rows.map((r) => r.price)) : 0,
+      max: rows.length ? Math.max(...rows.map((r) => r.price)) : 0,
     });
   }
 
   auctions.sort((a, b) => compareAuctionsDesc(a.meta, b.meta));
-  return { auctions, saleCount, total, tokenCount: items.size };
+  return { auctions, rowCount, total, tokenCount: items.size };
+}
+
+// --- Flat table view -----------------------------------------------------
+// The same rows the grouped view shows, flattened to one list with their
+// auction alongside, and sortable on any column. Same query, same numbers —
+// only the shape differs, so the toggle between the two views never changes
+// what is being reported.
+
+export type FlatRow = { row: SaleRow; meta: AuctionMeta };
+export type SortKey = 'auction' | 'token' | 'category' | 'price';
+export type SortDir = 'asc' | 'desc';
+
+export function flattenAuctions(auctions: AuctionGroup[]): FlatRow[] {
+  return auctions.flatMap((a) => a.rows.map((row) => ({ row, meta: a.meta })));
+}
+
+// Sort the flat rows. 'auction' uses the same newest-first ordering the grouped
+// view uses (season, then close date, then number), so the default sort of each
+// view agrees with the other. Every key falls back to the auction order, then
+// the token name, so the sort is total and stable-looking.
+export function sortFlatRows(rows: FlatRow[], key: SortKey, dir: SortDir): FlatRow[] {
+  const sign = dir === 'asc' ? -1 : 1; // 'desc' is the natural direction of compareAuctionsDesc
+  const byAuction = (a: FlatRow, b: FlatRow) => compareAuctionsDesc(a.meta, b.meta) * sign;
+
+  const primary = (a: FlatRow, b: FlatRow): number => {
+    switch (key) {
+      case 'auction': return byAuction(a, b);
+      case 'token': return a.row.displayName.localeCompare(b.row.displayName) * -sign;
+      case 'category': return compareCategories(a.row.category, b.row.category) * -sign;
+      case 'price': return (b.row.price - a.row.price) * sign;
+    }
+  };
+
+  return [...rows].sort((a, b) =>
+    primary(a, b) ||
+    compareAuctionsDesc(a.meta, b.meta) ||
+    a.row.displayName.localeCompare(b.row.displayName));
 }
 
 // The option lists for the explorer's pickers, derived from the data rather

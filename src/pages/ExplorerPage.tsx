@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  exploreAuctions, explorerOptions, auctionChoices, EMPTY_FILTERS,
-  type ExplorerFilters,
+  exploreAuctions, explorerOptions, auctionChoices, flattenAuctions, sortFlatRows,
+  EMPTY_FILTERS, type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
 import { money } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
 import { AuctionCard } from '../components/AuctionCard';
+import { SaleTable } from '../components/SaleTable';
 
 // Detailed Auction Data (Phase 5). Every other view on this site aggregates;
 // this one shows the raw sales, grouped under the auction they happened in.
@@ -18,10 +19,27 @@ import { AuctionCard } from '../components/AuctionCard';
 // almost always one you want to read, not scan.
 const AUTO_EXPAND_LIMIT = 5;
 
+// The flat view renders one <tr> per matching price, and unfiltered that is
+// ~6,400 rows — enough to make sorting feel sluggish. The sort runs over the
+// whole result set and only the display is capped, so "highest price" still
+// answers with the genuine top of the data, not the top of a truncated slice.
+const FLAT_ROW_LIMIT = 1000;
+
+type View = 'grouped' | 'flat';
+
 export default function ExplorerPage() {
-  const { sales, meta, loading, error } = useAuctionData();
+  const { sales, onyxSales, meta, loading, error } = useAuctionData();
   const [filters, setFilters] = useState<ExplorerFilters>(EMPTY_FILTERS);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<View>('grouped');
+  const [sortKey, setSortKey] = useState<SortKey>('auction');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  // The explorer is the one view that reads both sale feeds. The Onyx auctions
+  // are all present in auctionMetadata and none of their (auction, token) pairs
+  // collide with prices.csv, so the two feeds simply concatenate — Onyx rows
+  // land in their existing auction's card under their own category.
+  const allSales = useMemo(() => [...sales, ...onyxSales], [sales, onyxSales]);
 
   const set = <K extends keyof ExplorerFilters>(key: K, value: ExplorerFilters[K]) =>
     setFilters((f) => ({
@@ -32,9 +50,23 @@ export default function ExplorerPage() {
       ...(key === 'auctionId' ? null : { auctionId: '' }),
     }));
 
-  const options = useMemo(() => explorerOptions(sales, meta), [sales, meta]);
+  const options = useMemo(() => explorerOptions(allSales, meta), [allSales, meta]);
   const choices = useMemo(() => auctionChoices(meta, filters), [meta, filters]);
-  const result = useMemo(() => exploreAuctions(sales, meta, filters), [sales, meta, filters]);
+  const result = useMemo(() => exploreAuctions(allSales, meta, filters), [allSales, meta, filters]);
+
+  // The flat view is the same result set, flattened and re-sorted — never a
+  // second query, so the two views can't disagree.
+  const flatRows = useMemo(
+    () => (view === 'flat' ? sortFlatRows(flattenAuctions(result.auctions), sortKey, sortDir) : []),
+    [view, result, sortKey, sortDir],
+  );
+
+  // Clicking the active column flips its direction; a new column starts in its
+  // most useful direction — newest/highest first, but A→Z for the text columns.
+  const onSort = (key: SortKey) => {
+    if (key === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir(key === 'token' || key === 'category' ? 'asc' : 'desc'); }
+  };
 
   // Re-apply the auto-expand rule whenever the result set changes, so narrowing
   // to a couple of auctions shows their sales without a second click.
@@ -63,11 +95,12 @@ export default function ExplorerPage() {
   return (
     <>
       <p className="sub">
-        Every individual sale, grouped under the auction it happened in — the raw
-        rows behind the averages on <Link to="/">Prices</Link>. Narrow by season,
-        auction, token, or category; the auction's style, completion style and
-        auctioneer are filters too, so you can ask things like "what did Trade 1
-        tokens fetch in Lightning auctions this year".
+        What every token went for in every auction — the raw rows behind the
+        averages on <Link to="/">Prices</Link>, including the{' '}
+        <Link to="/onyx">Onyx</Link> chase set. Narrow by season, auction, token
+        or category; the auction's style, completion style and auctioneer are
+        filters too, so you can ask things like "what did Trade 1 tokens fetch in
+        Lightning auctions this year".
       </p>
 
       <div className="controls">
@@ -117,6 +150,13 @@ export default function ExplorerPage() {
             {options.auctioneers.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
         </label>
+        <label>
+          View
+          <select value={view} onChange={(e) => setView(e.target.value as View)}>
+            <option value="grouped">Grouped by auction</option>
+            <option value="flat">Flat table</option>
+          </select>
+        </label>
         <label className="search">
           Token
           <input
@@ -130,12 +170,14 @@ export default function ExplorerPage() {
 
       <p className="meta-line">
         {result.auctions.length.toLocaleString()} auction{result.auctions.length === 1 ? '' : 's'} ·{' '}
-        {result.saleCount.toLocaleString()} sale{result.saleCount === 1 ? '' : 's'} ·{' '}
+        {result.rowCount.toLocaleString()} price{result.rowCount === 1 ? '' : 's'} ·{' '}
         {result.tokenCount.toLocaleString()} distinct token{result.tokenCount === 1 ? '' : 's'} ·{' '}
         {money(result.total)} total
         <span className="explorer-actions">
-          <button type="button" onClick={expandAll}>Expand all</button>
-          <button type="button" onClick={collapseAll}>Collapse all</button>
+          {view === 'grouped' && <>
+            <button type="button" onClick={expandAll}>Expand all</button>
+            <button type="button" onClick={collapseAll}>Collapse all</button>
+          </>}
           {anyFilter && (
             <button type="button" onClick={() => setFilters(EMPTY_FILTERS)}>Clear filters</button>
           )}
@@ -144,7 +186,7 @@ export default function ExplorerPage() {
 
       {result.auctions.length === 0 && <p className="empty">No auctions match these filters.</p>}
 
-      {result.auctions.map((g) => (
+      {view === 'grouped' && result.auctions.map((g) => (
         <AuctionCard
           key={g.meta.auctionId}
           group={g}
@@ -152,6 +194,24 @@ export default function ExplorerPage() {
           onToggle={toggle}
         />
       ))}
+
+      {view === 'flat' && result.auctions.length > 0 && (
+        <>
+          {flatRows.length > FLAT_ROW_LIMIT && (
+            <p className="meta-line">
+              Showing the first {FLAT_ROW_LIMIT.toLocaleString()} of{' '}
+              {flatRows.length.toLocaleString()} rows in this sort order — narrow
+              the filters to see the rest.
+            </p>
+          )}
+          <SaleTable
+            rows={flatRows.slice(0, FLAT_ROW_LIMIT)}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={onSort}
+          />
+        </>
+      )}
     </>
   );
 }
