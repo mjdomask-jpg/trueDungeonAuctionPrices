@@ -66,15 +66,24 @@ under `public/data/`: `transmuteRecipes.csv`, `tokenMetadata.csv`, `offAuctionPr
 These are the concrete shapes we'll need to model. Confirmed by dumping the real cells.
 
 ### 3.1 Token dimension table — `tokenMetadata`
-Columns: `key (year+canonicalName)`, `year`, `canonicalName`, `displayName`, `tokenCategory`.
+Columns: `key (auctionSeason+Item)`, `auctionSeason`, `Item`, `Display Name`, `Category` —
+deliberately the same names `prices.csv` uses, since both describe the same token identity and
+`prices.csv` is the source of truth for it.
 This is the proper dimension table the site should arguably be built on: it maps the stable
-`canonicalName` (the "Item") ↔ the yearly `displayName` ↔ `category`, per season. The MVP
+`Item` (historically called the `canonicalName`) ↔ the yearly `Display Name` ↔ `Category`,
+per season. The MVP
 currently carries display name + category inline in `prices.csv`; `tokenMetadata` is the
 cleaner normalized source and is what `Compare Years` relies on.
 
 ### 3.2 Recipe table — `Transmute table` (long format)
 Columns as found: `Key (transmute+good)`, `Year`, `Level`, `Transmute`, `Good`, `Quantity`.
 Two columns are added by the amendments below: **`IsSource`** (§4.1) and **`GoodYear`** (§4.2).
+
+> **Renamed since.** The ingredient columns now use the shared `Item` vocabulary:
+> `Good` → `Item`, `GoodYear` → `ItemYear`, `GoodDisplayName` → `Display Name`. The same
+> `Good` → `Item` rename applies to the off-auction table in §3.3. This section and those
+> below record the original names; the live column reference is
+> [`transmute-recipes-template.md`](transmute-recipes-template.md).
 One row per (transmute, ingredient). This is a clean relational bill-of-materials — ideal to
 port as-is. Key findings:
 - **The tier ladder is deep.** Levels present: `Enhanced`, `Exalted`, `Relic`, `Legendary`,

@@ -1,4 +1,4 @@
-Key,Year,Level,Transmute,Good,GoodYear,ResolvedYear,GoodDisplayName,Quantity,IsSource
+Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSource
 "2012|Khing's Ring of Supreme Evasion|1,000 GP Gold Bar||FALSE",2012,Legendary,Khing's Ring of Supreme Evasion,"1,000 GP Gold Bar",,2012,"1,000 GP Gold Bar",25,FALSE
 2012|Khing's Ring of Supreme Evasion|Alchemist's Ink||FALSE,2012,Legendary,Khing's Ring of Supreme Evasion,Alchemist's Ink,,2012,Alchemist's Ink,4,FALSE
 2012|Khing's Ring of Supreme Evasion|Alchemist's Parchment||FALSE,2012,Legendary,Khing's Ring of Supreme Evasion,Alchemist's Parchment,,2012,Alchemist's Parchment,12,FALSE
