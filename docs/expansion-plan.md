@@ -9,10 +9,10 @@ reading the actual sheets, and proposes a phased build order.
 Read [domain-context.md](./domain-context.md) first for the *why*; this doc is the
 *what next* and *how*.
 
-> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`. Phase 5 is next.** The transmute
-> build-vs-buy engine (the headline feature) is live. Remaining: auction analytics + the
-> Detailed Auction Data explorer + Open Auctions (Phase 5). See the build-order table in §6
-> for per-phase status.
+> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`; Phase 5 is under way.** The transmute
+> build-vs-buy engine (the headline feature) is live, and the Detailed Auction Data explorer
+> (`/explorer`) has landed. Remaining in Phase 5: the auction-analytics dashboards and Open
+> Auctions. See the build-order table in §6 for per-phase status.
 
 ## 1. The load-bearing conclusion
 
@@ -47,8 +47,15 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   changed. `-` where an item is absent in a year.
 - ⏳ **Phase 5** — `Current Year Auction Stats`, `Historical Stats` — dashboards of pivots/charts
   derived from **auction metadata** (counts by style, by auctioneer, close-date cadence, YoY, etc.).
-- ⏳ **Phase 5** — `Detailed Auction Data` — a filterable raw-sales explorer with pickers for
-  Season / Auction Name / Category.
+- ✅ **DONE (Phase 5)** — `Detailed Auction Data` — a filterable raw-sales explorer at
+  `/explorer`. Sales are grouped under the auction they happened in (a `<details>` card per
+  auction, body mounted only while open so the DOM never holds all ~7,300 rows). Pickers for
+  Season / Auction / Category as planned, plus three more the metadata already supported —
+  auction style, completion style, auctioneer — and a token search box. Auction-level filters
+  choose which auctions list; sale-level filters (category, search) choose which sales show
+  inside them, and prune auctions that then match nothing. `exploreAuctions` in `lib/data.ts`;
+  `pages/ExplorerPage.tsx` + `components/AuctionCard.tsx`. This is the first view to read
+  `completionStyle` from `auctionMetadata.csv`.
 - ⏳ **Phase 5** — `Open Auctions` — currently-running auctions (metadata filtered to `Open`) with
   links. Note: this is the one **time-sensitive** view; it's only meaningful when fed live-ish data.
 
@@ -464,7 +471,7 @@ Cheap now while the code is small, painful later. Independent of which features 
 | **2** ✅ | Price Timelines (per-token charts) | C | **DONE (PR #5).** Hand-rolled SVG charts (zero deps), data-authored grouping via `tokenGroups.csv`. |
 | **3** ✅ | Compare Years tool | C | **DONE (PR #6).** Cross-season, keyed on canonical Item; % diff on avg; category + biggest-movers views. |
 | **4** ✅ | **Transmutes / build-vs-buy** | B | **DONE — SHIPPED (PR #8, merge `d6ece93`, 2026-07-22).** Cost engine (`lib/transmutes.ts`) + `/transmutes` page: Relic→Legendary paired layout, both build/upgrade costs, full BOM, game-canonical tier colors. All of §3–§4.4 landed. |
-| **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **← NEXT.** Metadata-driven dashboards & filterable explorer. Open Auctions needs a live-ish feed. |
+| **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **IN PROGRESS.** Detailed Auction Data explorer **DONE** — `/explorer`, `exploreAuctions` in `lib/data.ts`. Still open: the metadata-driven analytics dashboards, and Open Auctions (needs a live-ish feed). |
 
 Rationale: Phases 1–3 were pure computation over data we already parse, so they exercised the new
 routing/data-layer plumbing on low-risk features before the transmute engine (Phase 4), which

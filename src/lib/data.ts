@@ -2,6 +2,8 @@
 // Ported from the validated validate.mjs. "Last 5" = the 5 most recent
 // auctions in the season overall (confirmed definition).
 
+import { compareCategories } from './categories';
+
 export type Sale = {
   auctionId: string;
   season: string;
@@ -19,6 +21,7 @@ export type AuctionMeta = {
   name: string;
   auctioneer: string;
   style: string;
+  completionStyle: string;
   status: string;
   link: string;
   closeDate: string;
@@ -101,6 +104,7 @@ export function parseMeta(text: string): AuctionMeta[] {
       name: o['auctionName'],
       auctioneer: o['auctioneer'],
       style: o['auctionStyle'],
+      completionStyle: o['completionStyle'],
       status: o['Status'],
       link: o['Link'],
       closeDate: o['closeDate'],
@@ -357,4 +361,160 @@ export function compareSeasons(sales: Sale[], seasonA: string, seasonB: string):
     });
   }
   return rows;
+}
+
+// --- Detailed Auction Data explorer (Phase 5) ----------------------------
+// Every other view aggregates. This one deliberately does not: it shows the
+// individual sales, grouped under the auction they happened in, so you can
+// answer "what actually went for what, and where" rather than "what does this
+// token average". The join is metadata-driven — the auction is the unit, and
+// its style / completion style / auctioneer / close date are filterable
+// dimensions, not just labels.
+
+export type ExplorerFilters = {
+  season: string; // '' = every season
+  auctionId: string; // '' = every auction
+  category: string; // '' = every category
+  style: string; // auctionStyle; '' = every style
+  completionStyle: string; // '' = every completion style
+  auctioneer: string; // '' = every auctioneer
+  search: string; // free text over display name + canonical Item
+};
+
+export const EMPTY_FILTERS: ExplorerFilters = {
+  season: '', auctionId: '', category: '', style: '', completionStyle: '', auctioneer: '', search: '',
+};
+
+export type AuctionGroup = {
+  meta: AuctionMeta;
+  sales: Sale[]; // the sales in this auction that matched the sale-level filters
+  total: number; // sum of those sales
+  min: number; // 0 when the auction matched with no sales
+  max: number;
+};
+
+export type ExplorerResult = {
+  auctions: AuctionGroup[];
+  saleCount: number; // matching sales across every listed auction
+  total: number; // their summed value
+  tokenCount: number; // distinct canonical Items among them
+};
+
+// Auctions read newest-first: season descending, then close date descending,
+// with auction number as the tiebreak (and the sole order for the 42 rows
+// whose close date is 'n/a').
+function compareAuctionsDesc(a: AuctionMeta, b: AuctionMeta): number {
+  if (a.season !== b.season) return Number(b.season) - Number(a.season);
+  const ka = dateKey(a.closeDate), kb = dateKey(b.closeDate);
+  if (ka !== kb) return ka < kb ? 1 : -1;
+  return b.auctionNumber - a.auctionNumber;
+}
+
+// Case-insensitive substring match on either name a token goes by.
+function matchesSearch(s: Sale, needle: string): boolean {
+  if (!needle) return true;
+  const q = needle.toLowerCase();
+  return s.displayName.toLowerCase().includes(q) || s.item.toLowerCase().includes(q);
+}
+
+// Run the explorer query. Auction-level filters (season / auction / style /
+// completion style / auctioneer) select which auctions are listed; sale-level
+// filters (category / search) select which sales show inside them.
+//
+// An auction with no matching sales is kept only while no sale-level filter is
+// active — that keeps genuinely empty auctions (the 6 with no sales, mostly
+// Failed ones) visible in the unfiltered view, while a category or search
+// filter still prunes the list down to auctions that actually answer it.
+export function exploreAuctions(
+  sales: Sale[], meta: AuctionMeta[], f: ExplorerFilters,
+): ExplorerResult {
+  const salesByAuction = new Map<string, Sale[]>();
+  for (const s of sales) {
+    let bucket = salesByAuction.get(s.auctionId);
+    if (!bucket) { bucket = []; salesByAuction.set(s.auctionId, bucket); }
+    bucket.push(s);
+  }
+
+  const needle = f.search.trim();
+  const saleLevelFilter = Boolean(f.category || needle);
+
+  const auctions: AuctionGroup[] = [];
+  let saleCount = 0, total = 0;
+  const items = new Set<string>();
+
+  for (const m of meta) {
+    if (f.season && m.season !== f.season) continue;
+    if (f.auctionId && m.auctionId !== f.auctionId) continue;
+    if (f.style && m.style !== f.style) continue;
+    if (f.completionStyle && m.completionStyle !== f.completionStyle) continue;
+    if (f.auctioneer && m.auctioneer !== f.auctioneer) continue;
+
+    const matched = (salesByAuction.get(m.auctionId) ?? []).filter(
+      (s) => (!f.category || s.category === f.category) && matchesSearch(s, needle),
+    );
+    if (!matched.length && saleLevelFilter) continue;
+
+    // Within an auction, sales read in the site's category order, then by the
+    // token's display name, then by price — so repeat sales of the same token
+    // (1,713 of them site-wide) sit together, cheapest first.
+    matched.sort((a, b) =>
+      compareCategories(a.category, b.category) ||
+      a.displayName.localeCompare(b.displayName) ||
+      a.price - b.price);
+
+    let sum = 0;
+    for (const s of matched) { sum += s.price; items.add(s.item); }
+    saleCount += matched.length;
+    total += sum;
+
+    auctions.push({
+      meta: m,
+      sales: matched,
+      total: sum,
+      min: matched.length ? Math.min(...matched.map((s) => s.price)) : 0,
+      max: matched.length ? Math.max(...matched.map((s) => s.price)) : 0,
+    });
+  }
+
+  auctions.sort((a, b) => compareAuctionsDesc(a.meta, b.meta));
+  return { auctions, saleCount, total, tokenCount: items.size };
+}
+
+// The option lists for the explorer's pickers, derived from the data rather
+// than hardcoded so a new auction style or auctioneer in the export shows up
+// without a code change. Seasons come back newest-first; the rest sort
+// alphabetically. Blank values ('' auctioneer, 'n/a' style) are dropped —
+// they'd be unselectable noise in a dropdown.
+export type ExplorerOptions = {
+  seasons: string[];
+  categories: string[];
+  styles: string[];
+  completionStyles: string[];
+  auctioneers: string[];
+};
+
+const realValues = (values: string[]) =>
+  [...new Set(values)].filter((v) => v && v !== 'n/a').sort((a, b) => a.localeCompare(b));
+
+export function explorerOptions(sales: Sale[], meta: AuctionMeta[]): ExplorerOptions {
+  return {
+    seasons: seasonsOf(sales),
+    categories: [...new Set(sales.map((s) => s.category))].sort(compareCategories),
+    styles: realValues(meta.map((m) => m.style)),
+    completionStyles: realValues(meta.map((m) => m.completionStyle)),
+    auctioneers: realValues(meta.map((m) => m.auctioneer)),
+  };
+}
+
+// The auctions offered in the "Auction" picker, narrowed to the currently
+// selected season (and the other auction-level filters) so the list stays
+// usable — 276 auctions in one flat dropdown is not.
+export function auctionChoices(meta: AuctionMeta[], f: ExplorerFilters): AuctionMeta[] {
+  return meta
+    .filter((m) =>
+      (!f.season || m.season === f.season) &&
+      (!f.style || m.style === f.style) &&
+      (!f.completionStyle || m.completionStyle === f.completionStyle) &&
+      (!f.auctioneer || m.auctioneer === f.auctioneer))
+    .sort(compareAuctionsDesc);
 }
