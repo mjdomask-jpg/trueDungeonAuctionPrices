@@ -5,17 +5,18 @@ import { money } from '../lib/format';
 // (Max/Avg/Min) | Δ Avg. Used both for a single category section and for the
 // flat "biggest movers" view, so it takes the rows already ordered by the page.
 export function CompareTable({
-  rows, seasonA, seasonB, newerIsB, banded,
+  rows, seasonA, seasonB, newerIsB,
 }: {
   rows: CompareRow[];
   seasonA: string;
   seasonB: string;
   newerIsB: boolean;
-  banded?: boolean;
 }) {
+  // General rule across the site: any table with 4+ rows gets row banding.
+  const isBanded = rows.length >= 4;
   return (
     <div className="tablewrap">
-      <table className={banded ? 'banded' : undefined}>
+      <table className={isBanded ? 'banded' : undefined}>
         <colgroup>
           <col className="col-token" />
           <col /><col /><col />

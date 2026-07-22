@@ -1,16 +1,12 @@
 import { type ItemRow } from '../lib/data';
 import { money } from '../lib/format';
 
-// Categories whose tables get alternating row banding. Exported so other views
-// (Compare Years) band the same categories the dashboard does.
-export const BANDED_CATEGORIES = new Set(['Trade 1', 'Trade 2', 'Premium']);
-
 export function CategoryTable(
-  { category, rows, banded }: { category: string; rows: ItemRow[]; banded?: boolean },
+  { category, rows }: { category: string; rows: ItemRow[] },
 ) {
-  // Band either when the caller opts in (banded) or when the category is one of
-  // the always-banded dashboard categories.
-  const isBanded = banded || BANDED_CATEGORIES.has(category);
+  // General rule across the site: any table long enough to be worth scanning
+  // (4+ rows) gets alternating row banding.
+  const isBanded = rows.length >= 4;
   return (
     <section className="cat-section" data-category={category}>
       <h2 className="cat-header">{category}</h2>
