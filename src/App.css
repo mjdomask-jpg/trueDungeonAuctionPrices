@@ -303,6 +303,12 @@ td.diff.down { color: var(--diff-down); }
 }
 
 /* --- Transmutes / build-vs-buy (Phase 4) ------------------------------- */
+/* This page carries a lot of small muted labels (price-source tags, mins, tier
+   headings). In dark mode the shared --text (#9ca3af) reads dim at those sizes,
+   so lift it a step for this page only — other pages keep their approved look.
+   Paired with removing the opacity that used to compound the dimming. */
+:root[data-theme='dark'] .tx-page { --text: #b7bdc7; }
+
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
@@ -335,7 +341,7 @@ td.diff.down { color: var(--diff-down); }
 .tx-group.ladder { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 4px; }
 .tx-group-label {
   font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--text); opacity: 0.75; padding: 12px 6px 5px; font-family: var(--sans);
+  color: var(--text); padding: 12px 6px 5px; font-family: var(--sans);
 }
 
 .tx-pair { border-left: 2px solid var(--accent); margin: 3px 0; padding-left: 3px; }
@@ -351,7 +357,7 @@ td.diff.down { color: var(--diff-down); }
 .tx-chev { font-style: normal; color: var(--text); transition: transform 0.12s ease; flex: none; font-size: 12px; }
 .tx-chev.open { transform: rotate(90deg); }
 .tx-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tx-upfrom { font-size: 12px; color: var(--text); opacity: 0.75; margin-left: 8px; font-family: var(--sans); }
+.tx-upfrom { font-size: 12px; color: var(--text); margin-left: 8px; font-family: var(--sans); }
 
 .tx-badges { display: flex; gap: 6px; align-items: center; flex: none; }
 .tx-badge { font-size: 10.5px; padding: 1px 8px; border-radius: 20px; font-family: var(--sans); white-space: nowrap; }
@@ -368,7 +374,7 @@ td.diff.down { color: var(--diff-down); }
 .tx-bom { padding: 6px 10px 14px 30px; font-family: var(--sans); }
 .tx-bom-head {
   display: grid; grid-template-columns: 1fr 84px 84px; gap: 10px; font-size: 10.5px;
-  text-transform: uppercase; letter-spacing: 0.04em; color: var(--text); opacity: 0.7;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--text);
   padding: 2px 0 6px; border-bottom: 1px solid var(--border);
 }
 .tx-bom-head span:not(:first-child) { text-align: right; }
@@ -381,12 +387,12 @@ td.diff.down { color: var(--diff-down); }
 .tx-bom-row > span:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
 .tx-ing { min-width: 0; }
 .tx-good { color: var(--text-h); }
-.tx-src { font-size: 10.5px; color: var(--text); opacity: 0.7; margin-left: 8px; white-space: nowrap; }
-.tx-src.nonauction { color: var(--accent); opacity: 1; }
+.tx-src { font-size: 10.5px; color: var(--text); margin-left: 8px; white-space: nowrap; }
+.tx-src.nonauction { color: var(--accent); }
 .tx-bom-row.src { background: var(--accent-bg); border-radius: 6px; border-bottom: none; padding: 6px 8px; margin: 3px 0; }
 .tx-bom-row.foot { border-bottom: none; font-weight: 600; padding-top: 8px; }
 .tx-bom-row.foot span:not(:first-child) { color: var(--text-h); }
-.tx-bom-row.foot em { font-style: normal; font-weight: 400; color: var(--text); opacity: 0.85; font-size: 12px; }
+.tx-bom-row.foot em { font-style: normal; font-weight: 400; color: var(--text); font-size: 12px; }
 .tx-bom-row.foot.total span:not(:first-child) { color: var(--accent); }
 .tx-bom-note { font-size: 12px; color: var(--text); margin: 8px 0 0; font-style: italic; }
 

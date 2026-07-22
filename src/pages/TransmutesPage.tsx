@@ -63,7 +63,7 @@ export default function TransmutesPage() {
   if (!ready) return <p className="empty">No transmute recipe data loaded.</p>;
 
   return (
-    <>
+    <div className="tx-page">
       <p className="sub">
         What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
         building against buying from a reseller. Costs come from current auction prices — an{' '}
@@ -105,6 +105,6 @@ export default function TransmutesPage() {
           recentToggle={engine != null && year === engine.prices.latestPriced ? { on: recentPrices, onChange: setRecentPrices } : undefined}
         />
       ))}
-    </>
+    </div>
   );
 }
