@@ -390,33 +390,39 @@ td.diff.down { color: var(--diff-down); }
 .tx-bom-row.foot.total span:not(:first-child) { color: var(--accent); }
 .tx-bom-note { font-size: 12px; color: var(--text); margin: 8px 0 0; font-style: italic; }
 
-/* Tier chips. Colours echo the dashboard category palette; tiers that share a
-   power rank (Arcanum/Eldritch) share a colour. */
+/* Tier chips. Each transmute tier has its OWN in-game colour (these mark
+   transmutes apart from blind-pack tokens). Enhanced + Exalted share light
+   blue; Patron reuses the Ultra Rare purple and Omni the Trade brown, matching
+   the dashboard. Filled pills so the chip *is* the tier colour. Light and dark
+   are tuned separately for text contrast and edge visibility on each card.
+   Mythic is "white" and Safehold "light gray" — kept apart by giving Mythic a
+   pure-white fill with a defined ring (an outlined white pill) and Safehold a
+   solid gray fill. */
 .tchip {
   font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
   white-space: nowrap; flex: none; font-family: var(--sans);
-  background: var(--band); color: var(--text-h);
+  border: 1px solid transparent; background: var(--band); color: var(--text-h);
 }
-.tchip[data-tier='Relic']     { background: rgba(124, 58, 237, 0.13); color: #6d28d9; }
-.tchip[data-tier='Legendary'] { background: rgba(217, 90, 48, 0.15);  color: #b0451f; }
-.tchip[data-tier='Arcanum'],
-.tchip[data-tier='Eldritch']  { background: rgba(212, 83, 126, 0.15); color: #a3355a; }
-.tchip[data-tier='Enhanced']  { background: rgba(186, 117, 23, 0.17); color: #8a5a0b; }
-.tchip[data-tier='Exalted']   { background: rgba(29, 158, 117, 0.16); color: #0f6e56; }
-.tchip[data-tier='Mythic']    { background: rgba(226, 75, 74, 0.16);  color: #a32d2d; }
-.tchip[data-tier='Safehold']  { background: rgba(55, 138, 221, 0.16); color: #185fa5; }
-.tchip[data-tier='Patron'],
-.tchip[data-tier='Paragon']   { background: rgba(100, 116, 139, 0.18); color: #475569; }
-.tchip[data-tier='Omni']      { background: rgba(136, 135, 128, 0.18); color: #5f5e5a; }
+.tchip[data-tier='Enhanced'],
+.tchip[data-tier='Exalted']   { background: #cfe4f7; color: #0c447c; border-color: #a6cceb; }
+.tchip[data-tier='Relic']     { background: #1f5fa6; color: #fff; }
+.tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
+.tchip[data-tier='Arcanum']   { background: #6d28aa; color: #fff; }
+.tchip[data-tier='Legendary'] { background: #f0730f; color: #3d1a02; }
+.tchip[data-tier='Mythic']    { background: #fff;    color: #363c46; border-color: #aeb6c2; }
+.tchip[data-tier='Safehold']  { background: #d6dae0; color: #363c46; border-color: #bdc3cb; }
+.tchip[data-tier='Patron']    { background: #9900ff; color: #fff; }
+.tchip[data-tier='Paragon']   { background: #a52121; color: #fff; }
+.tchip[data-tier='Omni']      { background: #b45f06; color: #fff; }
 
-:root[data-theme='dark'] .tchip[data-tier='Relic']     { color: #c4b5fd; }
-:root[data-theme='dark'] .tchip[data-tier='Legendary'] { color: #f0997b; }
-:root[data-theme='dark'] .tchip[data-tier='Arcanum'],
-:root[data-theme='dark'] .tchip[data-tier='Eldritch']  { color: #ed93b1; }
-:root[data-theme='dark'] .tchip[data-tier='Enhanced']  { color: #efb663; }
-:root[data-theme='dark'] .tchip[data-tier='Exalted']   { color: #5dcaa5; }
-:root[data-theme='dark'] .tchip[data-tier='Mythic']    { color: #f09595; }
-:root[data-theme='dark'] .tchip[data-tier='Safehold']  { color: #85b7eb; }
-:root[data-theme='dark'] .tchip[data-tier='Patron'],
-:root[data-theme='dark'] .tchip[data-tier='Paragon']   { color: #94a3b8; }
-:root[data-theme='dark'] .tchip[data-tier='Omni']      { color: #b4b2a9; }
+:root[data-theme='dark'] .tchip[data-tier='Enhanced'],
+:root[data-theme='dark'] .tchip[data-tier='Exalted']   { background: #bcdcf5; color: #0a2f56; border-color: transparent; }
+:root[data-theme='dark'] .tchip[data-tier='Relic']     { background: #2767b3; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Arcanum']   { background: #7b34ba; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Legendary'] { background: #f2701e; color: #241003; }
+:root[data-theme='dark'] .tchip[data-tier='Mythic']    { background: #f6f8fb; color: #23262e; border-color: #f6f8fb; }
+:root[data-theme='dark'] .tchip[data-tier='Safehold']  { background: #c2c8d1; color: #23262e; border-color: transparent; }
+:root[data-theme='dark'] .tchip[data-tier='Patron']    { background: #c084fc; color: #3b0764; }
+:root[data-theme='dark'] .tchip[data-tier='Paragon']   { background: #cf3a3a; color: #fff; }
+:root[data-theme='dark'] .tchip[data-tier='Omni']      { background: #e08b3e; color: #3a1f04; }
