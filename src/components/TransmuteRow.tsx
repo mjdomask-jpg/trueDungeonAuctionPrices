@@ -1,6 +1,21 @@
 import { useState } from 'react';
 import { money0 } from '../lib/format';
-import { sourceName, type BuildCost } from '../lib/transmutes';
+import { sourceName, type BuildCost, type PricedLine } from '../lib/transmutes';
+
+// Friendly, non-camelCase label for where a line's price came from, plus the
+// season-mapped / ceiling qualifiers.
+function priceTag(l: PricedLine): string {
+  let base: string;
+  if (l.isSource) base = 'source · built';
+  else if (l.source === 'auction') base = 'auction';
+  else if (l.source === 'offAuction') base = 'non-auction item';
+  else if (l.source === 'derived') base = 'derived';
+  else if (l.source === 'build') base = 'built';
+  else base = 'no price';
+  if (l.seasonMapped) base += ` · from ${l.pricedYear}`;
+  if (l.bound === 'ceiling') base += ' · ceiling';
+  return base;
+}
 
 // One transmute in the season list: a header line showing the build cost (and,
 // for tokens with a source, the cheaper "upgrade from source" cost), expanding
@@ -62,12 +77,8 @@ export function TransmuteRow({
           {cost.lines.map((l, i) => (
             <div key={i} className={`tx-bom-row${l.isSource ? ' src' : ''}`}>
               <span className="tx-ing">
-                {l.quantity} × {l.displayName}
-                <span className="tx-src">
-                  {l.isSource ? 'source · built' : l.source ?? 'no price'}
-                  {l.seasonMapped && ` · from ${l.pricedYear}`}
-                  {l.bound === 'ceiling' && ' · ceiling'}
-                </span>
+                <span className="tx-good">{l.quantity} × {l.displayName}</span>
+                <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>{priceTag(l)}</span>
               </span>
               <span>{money0(l.extAvg)}</span>
               <span>{money0(l.extMin)}</span>
