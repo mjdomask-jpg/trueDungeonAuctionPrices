@@ -14,11 +14,11 @@ maintainer replaces a CSV — nothing else changes.
 ```
 public/data/prices.csv  ─┐
                           ├─►  parse ─► filter ─► join ─► aggregate ─► render
-public/data/metadata.csv ─┘
+public/data/auctionMetadata.csv ─┘
 ```
 
 The aggregation logic lives in [`src/lib/data.ts`](../src/lib/data.ts) and is
-exercised/verified by the standalone script `validate.mjs` at the repository root.
+exercised/verified by the standalone script [`scripts/validate.mjs`](../scripts/validate.mjs).
 
 ## Application structure
 
@@ -66,7 +66,7 @@ append-only data the maintainer maintains.
 | `Display Name` | The public, human-facing token name (e.g. `Orb of Dragonkind`). **Changes from season to season** even when the `Item` label stays the same. |
 | `Category` | Groups related items. The values the site renders as separate tables, in fixed display order, are: `Trade 1`, `Trade 2`, `Ultra Rare`, `Premium`, `Bonus`, `Preorder`, `Golden Ticket`. Any other/unknown category is still shown, appended alphabetically after these. |
 
-### `metadata.csv` — the auction log (one row per auction)
+### `auctionMetadata.csv` — the auction log (one row per auction)
 
 Each row describes one auction. Only a subset is used for public display; the rest
 is back-office information retained for reference.
@@ -271,13 +271,24 @@ its underline only — never to the price numbers, to protect their legibility.
 1. Append new sales to the source sales file and, if a new auction was added, add a
    row to the metadata file.
 2. Export both sheets to CSV and replace `public/data/prices.csv` and
-   `public/data/metadata.csv`.
+   `public/data/auctionMetadata.csv`.
 3. Redeploy (or just reload in development). All statistics recompute automatically
    from the new raw rows — there are no precomputed values to update by hand.
 
+**Export straight into `public/data/`.** There is no staging copy elsewhere and no
+sync step: the file the spreadsheet writes is the file the site serves and the file
+the validators check. The exports are `prices.csv`, `auctionMetadata.csv`,
+`tokenMetadata.csv`, `transmuteRecipes.csv`, `offAuctionPrices.csv` and `onyx.csv`;
+`derivedPrices.csv` and `tokenGroups.csv` are hand-authored here and have no sheet
+behind them.
+
+After any export, run `npm run validate` — it fails loudly, naming the exact
+column, if the sheet's headers drift from the shared `Item` / `auctionSeason` /
+`Display Name` / `Category` vocabulary.
+
 ## Validation
 
-`validate.mjs` (kept in `C:\claude\`, outside the site repo) runs the same
+`scripts/validate.mjs` (`node scripts/validate.mjs [season]`) runs the same
 parse/filter/join/aggregate pipeline outside the browser for a single season and
 prints the resulting table, including both candidate "last 5" definitions side by
 side. It exists to confirm the site's numbers against the historical spreadsheet
