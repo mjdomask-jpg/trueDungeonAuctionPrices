@@ -35,7 +35,7 @@ export default function TransmutesPage() {
     if (!engine) return undefined;
     const { earliestPriced, latestPriced } = engine.prices;
     if (year < earliestPriced)
-      return `Estimated — no auctions ran before ${earliestPriced}, so these costs are priced from ${earliestPriced} data.`;
+      return `Estimated — no auction data before ${earliestPriced}, so these costs are priced from ${earliestPriced} data`;
     if (year > latestPriced)
       return `Preview — priced from ${latestPriced} recent sales; costs will firm up as ${year} auctions close.`;
     return undefined;
