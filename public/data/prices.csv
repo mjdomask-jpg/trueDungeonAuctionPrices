@@ -1,8 +1,8 @@
-﻿auctionId,auctionSeason,auctionNumber,Item, Price ,Display Name,Category
+auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20191,2019,1,1k Bonus,75,5th Tooth of Cavadar,Premium
 20191,2019,1,2k Bonus,2.25,Mask of Mayhem,Premium
 20191,2019,1,3 Star,3.25,Canteen of Quaffing,Bonus
-20191,2019,1,8k Bonus,605,Orb of Dragonkind (Old),Premium
+20191,2019,1,8k Bonus,605,Orb of Dragonkind (Elder Serpent),Premium
 20191,2019,1,Alchemist's Ink,2.75,Alchemist's Ink,Trade 1
 20191,2019,1,Alchemist's Parchment,4,Alchemist's Parchment,Trade 1
 20191,2019,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
@@ -20,7 +20,7 @@
 20192,2019,2,1k Bonus,45,5th Tooth of Cavadar,Premium
 20192,2019,2,2k Bonus,3.75,Mask of Mayhem,Premium
 20192,2019,2,3 Star,3.25,Canteen of Quaffing,Bonus
-20192,2019,2,8k Bonus,575,Orb of Dragonkind (Old),Premium
+20192,2019,2,8k Bonus,575,Orb of Dragonkind (Elder Serpent),Premium
 20192,2019,2,Alchemist's Ink,3.25,Alchemist's Ink,Trade 1
 20192,2019,2,Alchemist's Parchment,8,Alchemist's Parchment,Trade 1
 20192,2019,2,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
@@ -38,7 +38,7 @@
 20193,2019,3,1k Bonus,45,5th Tooth of Cavadar,Premium
 20193,2019,3,2k Bonus,5,Mask of Mayhem,Premium
 20193,2019,3,3 Star,3,Canteen of Quaffing,Bonus
-20193,2019,3,8k Bonus,555,Orb of Dragonkind (Old),Premium
+20193,2019,3,8k Bonus,555,Orb of Dragonkind (Elder Serpent),Premium
 20193,2019,3,Alchemist's Ink,3.5,Alchemist's Ink,Trade 1
 20193,2019,3,Alchemist's Parchment,7,Alchemist's Parchment,Trade 1
 20193,2019,3,Aragonite,27,Aragonite,Trade 2
@@ -59,7 +59,7 @@
 20194,2019,4,1k Bonus,31,5th Tooth of Cavadar,Premium
 20194,2019,4,2k Bonus,5.75,Mask of Mayhem,Premium
 20194,2019,4,3 Star,3,Canteen of Quaffing,Bonus
-20194,2019,4,8k Bonus,425,Orb of Dragonkind (Old),Premium
+20194,2019,4,8k Bonus,425,Orb of Dragonkind (Elder Serpent),Premium
 20194,2019,4,Alchemist's Ink,3.5,Alchemist's Ink,Trade 1
 20194,2019,4,Alchemist's Parchment,6.75,Alchemist's Parchment,Trade 1
 20194,2019,4,Aragonite,26,Aragonite,Trade 2
@@ -79,7 +79,7 @@
 20195,2019,5,1k Bonus,32,5th Tooth of Cavadar,Premium
 20195,2019,5,2k Bonus,3,Mask of Mayhem,Premium
 20195,2019,5,3 Star,3.25,Canteen of Quaffing,Bonus
-20195,2019,5,8k Bonus,450,Orb of Dragonkind (Old),Premium
+20195,2019,5,8k Bonus,450,Orb of Dragonkind (Elder Serpent),Premium
 20195,2019,5,Alchemist's Ink,3,Alchemist's Ink,Trade 1
 20195,2019,5,Alchemist's Parchment,5.25,Alchemist's Parchment,Trade 1
 20195,2019,5,Aragonite,27,Aragonite,Trade 2
@@ -99,7 +99,7 @@
 20196,2019,6,1k Bonus,41,5th Tooth of Cavadar,Premium
 20196,2019,6,2k Bonus,0.25,Mask of Mayhem,Premium
 20196,2019,6,3 Star,2,Canteen of Quaffing,Bonus
-20196,2019,6,8k Bonus,501,Orb of Dragonkind (Old),Premium
+20196,2019,6,8k Bonus,501,Orb of Dragonkind (Elder Serpent),Premium
 20196,2019,6,Alchemist's Ink,3.25,Alchemist's Ink,Trade 1
 20196,2019,6,Alchemist's Parchment,5,Alchemist's Parchment,Trade 1
 20196,2019,6,Aragonite,30,Aragonite,Trade 2
@@ -1831,7 +1831,7 @@
 202246,2022,46,Mystic Silk,2,Mystic Silk,Trade 1
 202246,2022,46,Oil of Enchantment,6.75,Oil of Enchantment,Trade 2
 202246,2022,46,Patron Pin,225,Patron Pin,Premium
-202246,2022,46,Patron Token 1,245,Ghost Accelerator,Patron
+202246,2022,46,Patron Token 1,245,Ghost Accelerator,Premium
 202246,2022,46,PCH,1.75,Potion Condensed Healing,Bonus
 202246,2022,46,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202246,2022,46,PYP,85,Ultra Rare,Ultra Rare
@@ -1853,7 +1853,7 @@
 202247,2022,47,Mystic Silk,2,Mystic Silk,Trade 1
 202247,2022,47,Oil of Enchantment,10.25,Oil of Enchantment,Trade 2
 202247,2022,47,Patron Pin,161,Patron Pin,Premium
-202247,2022,47,Patron Token 1,216,Ghost Accelerator,Patron
+202247,2022,47,Patron Token 1,216,Ghost Accelerator,Premium
 202247,2022,47,PCH,1.75,Potion Condensed Healing,Bonus
 202247,2022,47,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
 202247,2022,47,PYP,82,Ultra Rare,Ultra Rare
@@ -1875,7 +1875,7 @@
 202248,2022,48,Mystic Silk,2.5,Mystic Silk,Trade 1
 202248,2022,48,Oil of Enchantment,5.5,Oil of Enchantment,Trade 2
 202248,2022,48,Patron Pin,210,Patron Pin,Premium
-202248,2022,48,Patron Token 1,200,Ghost Accelerator,Patron
+202248,2022,48,Patron Token 1,200,Ghost Accelerator,Premium
 202248,2022,48,PCH,2,Potion Condensed Healing,Bonus
 202248,2022,48,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202248,2022,48,PYP,90,Ultra Rare,Ultra Rare
@@ -1895,7 +1895,7 @@
 202249,2022,49,Mystic Silk,1.75,Mystic Silk,Trade 1
 202249,2022,49,Oil of Enchantment,7.25,Oil of Enchantment,Trade 2
 202249,2022,49,Patron Pin,255,Patron Pin,Premium
-202249,2022,49,Patron Token 1,155,Ghost Accelerator,Patron
+202249,2022,49,Patron Token 1,155,Ghost Accelerator,Premium
 202249,2022,49,PCH,1.25,Potion Condensed Healing,Bonus
 202249,2022,49,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 202249,2022,49,PYP,90,Ultra Rare,Ultra Rare
@@ -1917,7 +1917,7 @@
 202250,2022,50,Mystic Silk,2,Mystic Silk,Trade 1
 202250,2022,50,Oil of Enchantment,7,Oil of Enchantment,Trade 2
 202250,2022,50,Patron Pin,160,Patron Pin,Premium
-202250,2022,50,Patron Token 1,135,Ghost Accelerator,Patron
+202250,2022,50,Patron Token 1,135,Ghost Accelerator,Premium
 202250,2022,50,PCH,1.75,Potion Condensed Healing,Bonus
 202250,2022,50,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202250,2022,50,PYP,90,Ultra Rare,Ultra Rare
@@ -2753,7 +2753,7 @@
 202337,2023,37,Mystic Silk,2,Mystic Silk,Trade 1
 202337,2023,37,Oil of Enchantment,7.25,Oil of Enchantment,Trade 2
 202337,2023,37,Patron Pin,180,Patron Pin,Premium
-202337,2023,37,Patron Token 1,105,Charm of Biting,Patron
+202337,2023,37,Patron Token 1,105,Charm of Biting,Premium
 202337,2023,37,PCH,1,Potion Healer's Rum,Bonus
 202337,2023,37,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
 202337,2023,37,PYP,85,Ultra Rare,Ultra Rare
@@ -2775,7 +2775,7 @@
 202338,2023,38,Mystic Silk,2,Mystic Silk,Trade 1
 202338,2023,38,Oil of Enchantment,7.25,Oil of Enchantment,Trade 2
 202338,2023,38,Patron Pin,155,Patron Pin,Premium
-202338,2023,38,Patron Token 1,125,Charm of Biting,Patron
+202338,2023,38,Patron Token 1,125,Charm of Biting,Premium
 202338,2023,38,PCH,1.25,Potion Healer's Rum,Bonus
 202338,2023,38,Philosopher's Stone,4.25,Philosopher's Stone,Trade 1
 202338,2023,38,PYP,90,Ultra Rare,Ultra Rare
@@ -2797,7 +2797,7 @@
 202339,2023,39,Mystic Silk,1.6,Mystic Silk,Trade 1
 202339,2023,39,Oil of Enchantment,6,Oil of Enchantment,Trade 2
 202339,2023,39,Patron Pin,253,Patron Pin,Premium
-202339,2023,39,Patron Token 1,130,Charm of Biting,Patron
+202339,2023,39,Patron Token 1,130,Charm of Biting,Premium
 202339,2023,39,PCH,1.5,Potion Healer's Rum,Bonus
 202339,2023,39,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
 202339,2023,39,PYP,96,Ultra Rare,Ultra Rare
@@ -2819,7 +2819,7 @@
 202340,2023,40,Mystic Silk,1.64,Mystic Silk,Trade 1
 202340,2023,40,Oil of Enchantment,6.53,Oil of Enchantment,Trade 2
 202340,2023,40,Patron Pin,160,Patron Pin,Premium
-202340,2023,40,Patron Token 1,135,Charm of Biting,Patron
+202340,2023,40,Patron Token 1,135,Charm of Biting,Premium
 202340,2023,40,PCH,2.17,Potion Healer's Rum,Bonus
 202340,2023,40,Philosopher's Stone,1.92,Philosopher's Stone,Trade 1
 202340,2023,40,PYP,97.85,Ultra Rare,Ultra Rare
@@ -2840,7 +2840,7 @@
 202341,2023,41,Mystic Silk,1.89,Mystic Silk,Trade 1
 202341,2023,41,Oil of Enchantment,7.6,Oil of Enchantment,Trade 2
 202341,2023,41,Patron Pin,155,Patron Pin,Premium
-202341,2023,41,Patron Token 1,115,Charm of Biting,Patron
+202341,2023,41,Patron Token 1,115,Charm of Biting,Premium
 202341,2023,41,PCH,1.06,Potion Healer's Rum,Bonus
 202341,2023,41,Philosopher's Stone,3.57,Philosopher's Stone,Trade 1
 202341,2023,41,PYP,92.7,Ultra Rare,Ultra Rare
@@ -2862,7 +2862,7 @@
 202342,2023,42,Mystic Silk,2,Mystic Silk,Trade 1
 202342,2023,42,Oil of Enchantment,7.75,Oil of Enchantment,Trade 2
 202342,2023,42,Patron Pin,135,Patron Pin,Premium
-202342,2023,42,Patron Token 1,110,Charm of Biting,Patron
+202342,2023,42,Patron Token 1,110,Charm of Biting,Premium
 202342,2023,42,PCH,1,Potion Healer's Rum,Bonus
 202342,2023,42,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 202342,2023,42,PYP,90,Ultra Rare,Ultra Rare
@@ -2883,7 +2883,7 @@
 202343,2023,43,Mystic Silk,1.96,Mystic Silk,Trade 1
 202343,2023,43,Oil of Enchantment,7.5,Oil of Enchantment,Trade 2
 202343,2023,43,Patron Pin,141.36,Patron Pin,Premium
-202343,2023,43,Patron Token 1,117,Charm of Biting,Patron
+202343,2023,43,Patron Token 1,117,Charm of Biting,Premium
 202343,2023,43,PCH,0.72,Potion Healer's Rum,Bonus
 202343,2023,43,Philosopher's Stone,1.89,Philosopher's Stone,Trade 1
 202343,2023,43,PYP,96.06,Ultra Rare,Ultra Rare
@@ -2905,7 +2905,7 @@
 202344,2023,44,Mystic Silk,2.06,Mystic Silk,Trade 1
 202344,2023,44,Oil of Enchantment,8.03,Oil of Enchantment,Trade 2
 202344,2023,44,Patron Pin,127.46,Patron Pin,Premium
-202344,2023,44,Patron Token 1,105,Charm of Biting,Patron
+202344,2023,44,Patron Token 1,105,Charm of Biting,Premium
 202344,2023,44,PCH,1.02,Potion Healer's Rum,Bonus
 202344,2023,44,Philosopher's Stone,4.15,Philosopher's Stone,Trade 1
 202344,2023,44,PYP,89.31,Ultra Rare,Ultra Rare
@@ -2927,7 +2927,7 @@
 202345,2023,45,Mystic Silk,2.02,Mystic Silk,Trade 1
 202345,2023,45,Oil of Enchantment,7.36,Oil of Enchantment,Trade 2
 202345,2023,45,Patron Pin,90,Patron Pin,Premium
-202345,2023,45,Patron Token 1,88,Charm of Biting,Patron
+202345,2023,45,Patron Token 1,88,Charm of Biting,Premium
 202345,2023,45,PCH,0.78,Potion Healer's Rum,Bonus
 202345,2023,45,Philosopher's Stone,3.17,Philosopher's Stone,Trade 1
 202345,2023,45,PYP,83.63,Ultra Rare,Ultra Rare
@@ -2949,7 +2949,7 @@
 202346,2023,46,Mystic Silk,2.75,Mystic Silk,Trade 1
 202346,2023,46,Oil of Enchantment,6.5,Oil of Enchantment,Trade 2
 202346,2023,46,Patron Pin,111,Patron Pin,Premium
-202346,2023,46,Patron Token 1,81,Charm of Biting,Patron
+202346,2023,46,Patron Token 1,81,Charm of Biting,Premium
 202346,2023,46,PCH,1,Potion Healer's Rum,Bonus
 202346,2023,46,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 202346,2023,46,PYP,87,Ultra Rare,Ultra Rare
@@ -2971,7 +2971,7 @@
 202347,2023,47,Mystic Silk,1.75,Mystic Silk,Trade 1
 202347,2023,47,Oil of Enchantment,8,Oil of Enchantment,Trade 2
 202347,2023,47,Patron Pin,125,Patron Pin,Premium
-202347,2023,47,Patron Token 1,90,Charm of Biting,Patron
+202347,2023,47,Patron Token 1,90,Charm of Biting,Premium
 202347,2023,47,PCH,1,Potion Healer's Rum,Bonus
 202347,2023,47,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202347,2023,47,PYP,90,Ultra Rare,Ultra Rare
@@ -2993,7 +2993,7 @@
 202348,2023,48,Mystic Silk,1.87,Mystic Silk,Trade 1
 202348,2023,48,Oil of Enchantment,5.9,Oil of Enchantment,Trade 2
 202348,2023,48,Patron Pin,106.5,Patron Pin,Premium
-202348,2023,48,Patron Token 1,105,Charm of Biting,Patron
+202348,2023,48,Patron Token 1,105,Charm of Biting,Premium
 202348,2023,48,PCH,1.5,Potion Healer's Rum,Bonus
 202348,2023,48,Philosopher's Stone,2.43,Philosopher's Stone,Trade 1
 202348,2023,48,PYP,86.95,Ultra Rare,Ultra Rare
@@ -3014,7 +3014,7 @@
 202349,2023,49,Mystic Silk,2,Mystic Silk,Trade 1
 202349,2023,49,Oil of Enchantment,6,Oil of Enchantment,Trade 2
 202349,2023,49,Patron Pin,100,Patron Pin,Premium
-202349,2023,49,Patron Token 1,80,Charm of Biting,Patron
+202349,2023,49,Patron Token 1,80,Charm of Biting,Premium
 202349,2023,49,PCH,1.5,Potion Healer's Rum,Bonus
 202349,2023,49,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 202349,2023,49,PYP,89,Ultra Rare,Ultra Rare
@@ -3034,7 +3034,7 @@
 202350,2023,50,Mystic Silk,1.5,Mystic Silk,Trade 1
 202350,2023,50,Oil of Enchantment,6.75,Oil of Enchantment,Trade 2
 202350,2023,50,Patron Pin,135,Patron Pin,Premium
-202350,2023,50,Patron Token 1,100,Charm of Biting,Patron
+202350,2023,50,Patron Token 1,100,Charm of Biting,Premium
 202350,2023,50,PCH,1.75,Potion Healer's Rum,Bonus
 202350,2023,50,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202350,2023,50,PYP,90,Ultra Rare,Ultra Rare
@@ -3054,7 +3054,7 @@
 202351,2023,51,Mystic Silk,1.25,Mystic Silk,Trade 1
 202351,2023,51,Oil of Enchantment,6.5,Oil of Enchantment,Trade 2
 202351,2023,51,Patron Pin,105,Patron Pin,Premium
-202351,2023,51,Patron Token 1,87,Charm of Biting,Patron
+202351,2023,51,Patron Token 1,87,Charm of Biting,Premium
 202351,2023,51,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
 202351,2023,51,PYP,86,Ultra Rare,Ultra Rare
 202351,2023,51,Wish,175,Wish Ring,Premium
@@ -5214,7 +5214,7 @@
 202528,2025,28,Dwarven Steel,3.1,Dwarven Steel,Trade 1
 202528,2025,28,Elven Bismuth,10,Elven Bismuth,Trade 2
 202528,2025,28,Enchanter's Munition,6.1,Enchanter's Munition,Trade 1
-202528,2025,28,Guild Button, -   ,Adventurers' Guild Button,Bonus
+202528,2025,28,Guild Button,-,Adventurers' Guild Button,Bonus
 202528,2025,28,Minotaur Hide,3.88,Minotaur Hide,Trade 1
 202528,2025,28,Mystic Silk,1.2,Mystic Silk,Trade 1
 202528,2025,28,Oil of Enchantment,19,Oil of Enchantment,Trade 2
@@ -5344,7 +5344,7 @@
 202529,2025,29,Dwarven Steel,2.5,Dwarven Steel,Trade 1
 202529,2025,29,Elven Bismuth,11.26,Elven Bismuth,Trade 2
 202529,2025,29,Enchanter's Munition,6.53,Enchanter's Munition,Trade 1
-202529,2025,29,Guild Button, -   ,Adventurers' Guild Button,Bonus
+202529,2025,29,Guild Button,-,Adventurers' Guild Button,Bonus
 202529,2025,29,Minotaur Hide,7.1,Minotaur Hide,Trade 1
 202529,2025,29,Mystic Silk,1,Mystic Silk,Trade 1
 202529,2025,29,Oil of Enchantment,19.01,Oil of Enchantment,Trade 2
@@ -5422,7 +5422,7 @@
 202530,2025,30,Dwarven Steel,2.5,Dwarven Steel,Trade 1
 202530,2025,30,Elven Bismuth,11.04,Elven Bismuth,Trade 2
 202530,2025,30,Enchanter's Munition,6.43,Enchanter's Munition,Trade 1
-202530,2025,30,Guild Button, -   ,Adventurers' Guild Button,Bonus
+202530,2025,30,Guild Button,-,Adventurers' Guild Button,Bonus
 202530,2025,30,Minotaur Hide,4.03,Minotaur Hide,Trade 1
 202530,2025,30,Mystic Silk,1,Mystic Silk,Trade 1
 202530,2025,30,Oil of Enchantment,21,Oil of Enchantment,Trade 2
@@ -5677,7 +5677,7 @@
 202539,2025,39,Dwarven Steel,2.5,Dwarven Steel,Trade 1
 202539,2025,39,Elven Bismuth,15.01,Elven Bismuth,Trade 2
 202539,2025,39,Enchanter's Munition,6.7,Enchanter's Munition,Trade 1
-202539,2025,39,Guild Button, -   ,Adventurers' Guild Button,Bonus
+202539,2025,39,Guild Button,-,Adventurers' Guild Button,Bonus
 202539,2025,39,Minotaur Hide,3.88,Minotaur Hide,Trade 1
 202539,2025,39,Mystic Silk,1.35,Mystic Silk,Trade 1
 202539,2025,39,Oil of Enchantment,26,Oil of Enchantment,Trade 2
@@ -6733,7 +6733,7 @@
 202627,2026,27,Dwarven Steel,1.63,Dwarven Steel,Trade 1
 202627,2026,27,Elven Bismuth,25,Elven Bismuth,Trade 2
 202627,2026,27,Enchanter's Munition,6,Enchanter's Munition,Trade 1
-202627,2026,27,Guild Button, -   ,Adventurers' Guild Button,Bonus
+202627,2026,27,Guild Button,-,Adventurers' Guild Button,Bonus
 202627,2026,27,Minotaur Hide,2.53,Minotaur Hide,Trade 1
 202627,2026,27,Mystic Silk,0.5,Mystic Silk,Trade 1
 202627,2026,27,Oil of Enchantment,44,Oil of Enchantment,Trade 2
@@ -7042,7 +7042,7 @@
 202636,2026,36,Dwarven Steel,1.7,Dwarven Steel,Trade 1
 202636,2026,36,Elven Bismuth,41,Elven Bismuth,Trade 2
 202636,2026,36,Enchanter's Munition,5.13,Enchanter's Munition,Trade 1
-202636,2026,36,Guild Button, -   ,Adventurers' Guild Button,Bonus
+202636,2026,36,Guild Button,-,Adventurers' Guild Button,Bonus
 202636,2026,36,Minotaur Hide,2.38,Minotaur Hide,Trade 1
 202636,2026,36,Mystic Silk,1.3,Mystic Silk,Trade 1
 202636,2026,36,Oil of Enchantment,60,Oil of Enchantment,Trade 2

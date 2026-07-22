@@ -11,20 +11,20 @@ lives in [`expansion-plan.md`](expansion-plan.md) §3.2 and §4.1–§4.2; this 
 | B | `Year` | **you type** | The season **the transmute belongs to**. Not the ingredient's season. |
 | C | `Level` | **you type** | Tier: `Enhanced`, `Exalted`, `Relic`, `Legendary`, `Arcanum`, `Paragon`, `Mythic`, `Eldritch`, `Omni`, `Safehold`, `Patron`. |
 | D | `Transmute` | **you type** | The token being produced. |
-| E | `Good` | **you type** | One ingredient, as a **`canonicalName`**. |
-| F | `GoodYear` | **you type** | Ingredient's season. Blank = same as `Year`. See below. |
-| G | `ResolvedYear` | formula | The season `GoodYear` actually resolves to. Read-only sanity check. |
-| H | `GoodDisplayName` | formula | The ingredient's display name that season — **for your eyes only**. |
+| E | `Item` | **you type** | One ingredient, by its canonical `Item` name — the same vocabulary `prices.csv` and `tokenMetadata` use. |
+| F | `ItemYear` | **you type** | Ingredient's season. Blank = same as `Year`. See below. |
+| G | `ResolvedYear` | formula | The season `ItemYear` actually resolves to. Read-only sanity check. |
+| H | `Display Name` | formula | The ingredient's display name that season — **for your eyes only**. |
 | I | `Quantity` | **you type** | How many. **Never 0** — the old qty-0 marker convention is retired. |
 | J | `IsSource` | **you type** | `TRUE` = the token being upgraded *from*; `FALSE` = consumed ingredient. |
 
 One row per (transmute, ingredient, season, role). Six columns to type; four to leave alone.
 
-**The importer reads only B–F, I, J.** `Key`, `ResolvedYear` and `GoodDisplayName` are authoring
+**The importer reads only B–F, I, J.** `Key`, `ResolvedYear` and `Display Name` are authoring
 aids and are ignored — the site derives all three itself. That is deliberate: derived columns can
 drift from their source, so nothing downstream is allowed to trust them.
 
-## `GoodYear` — offsets are relative to the `Year` column
+## `ItemYear` — offsets are relative to the `Year` column
 
 **This is the part worth being precise about: `-1` means one season before the value in the row's
 `Year` column — the transmute's own season. It has nothing to do with the current calendar year,
@@ -32,12 +32,12 @@ and the numbers do not change meaning as time passes.**
 
 ```
 ResolvedYear =
-    GoodYear is blank      ->  Year                 (the common case)
-    GoodYear is negative   ->  Year + GoodYear      (e.g. Year 2026, GoodYear -2  ->  2024)
-    GoodYear is a year     ->  GoodYear             (e.g. 2019 -> 2019, pinned)
+    ItemYear is blank      ->  Year                 (the common case)
+    ItemYear is negative   ->  Year + ItemYear      (e.g. Year 2026, ItemYear -2  ->  2024)
+    ItemYear is a year     ->  ItemYear             (e.g. 2019 -> 2019, pinned)
 ```
 
-So a `Year = 2024` recipe with `GoodYear = -1` means **2023**, permanently — reading it in 2026
+So a `Year = 2024` recipe with `ItemYear = -1` means **2023**, permanently — reading it in 2026
 does not make it mean 2025. Every row's answer is visible in the `ResolvedYear` column; if that
 column ever shows something surprising, trust it over your mental arithmetic.
 
@@ -52,12 +52,12 @@ relative recipe rolls forward to next season by copying the block and bumping `Y
 re-resolve themselves. Absolute years would force a hand-rewrite every season. Use absolute only
 for a genuine one-off pinned to a specific historical token.
 
-## `GoodDisplayName` — why you want it
+## `Display Name` — why you want it
 
 Display names change every season, so a canonical name alone is nearly unreadable while authoring.
 `1k Bonus` is the sharpest case:
 
-| `Good` | `ResolvedYear` | `GoodDisplayName` |
+| `Item` | `ResolvedYear` | `Display Name` |
 |---|---|---|
 | `1k Bonus` | 2026 | Ring of the 1st Circle |
 | `1k Bonus` | 2025 | Ring of the 2nd Circle |
@@ -70,10 +70,10 @@ it keys on `ResolvedYear`, not `Year`, or every row would wrongly read "Ring of 
 
 It doubles as a spell-checker. Three possible outputs:
 
-- **a display name** — the `Good` resolved cleanly against `tokenMetadata`. ✅
+- **a display name** — the `Item` resolved cleanly against `tokenMetadata`. ✅
 - **`… (transmute)`** — no token matched, but the name matches something in the `Transmute`
   column, so it's a ladder reference. Expected on `IsSource` rows (`Safehold V`). ✅
-- **`⚠ check name`** — matched nothing. The `Good` is misspelled, or the token doesn't exist that
+- **`⚠ check name`** — matched nothing. The `Item` is misspelled, or the token doesn't exist that
   season. **Fix before importing** — the site's validator will reject it too, just later.
 
 ## Formulas
@@ -91,26 +91,26 @@ H2  =IFERROR(VLOOKUP($G2&$E2,tokenMetadata!$A:$D,4,FALSE),
       IF(COUNTIF($D:$D,$E2)>0,$E2&" (transmute)","⚠ check name"))
 ```
 
-`H2` relies on `tokenMetadata`'s key column being `year & canonicalName` concatenated bare
+`H2` relies on `tokenMetadata`'s key column being `auctionSeason & Item` concatenated bare
 (`2026PYP`, `20241k Bonus`) — which is how that sheet already builds it.
 
 ### About `Key`
 
 Two deviations from the old `transmute+good` key, both deliberate:
 - **`Year` is included** so the same transmute in two seasons doesn't collide.
-- **Parts are `|`-separated** rather than concatenated bare. With `GoodYear` in the key, bare
+- **Parts are `|`-separated** rather than concatenated bare. With `ItemYear` in the key, bare
   concatenation is ambiguous (`PYP` + `-1` + `FALSE` vs `PYP-1` + blank + `FALSE`).
 
-## `Good` — always the canonical name
+## `Item` — always the canonical name
 
-Use the `canonicalName` from `tokenMetadata`, never the display name:
+Use the `Item` from `tokenMetadata`, never the display name:
 
 - ✅ `PYP` — ❌ `Ultra Rare`
 - ✅ `1k Bonus` — ❌ `Ring of the 3rd Circle`
 - ✅ `Dwarven Steel`
 
 This is what lets the engine resolve `isTransmute(good)` and look up prices automatically. Watch
-`GoodDisplayName` as you type — it tells you immediately whether you got it right.
+`Display Name` as you type — it tells you immediately whether you got it right.
 
 **"Any token of UR tier" is written `PYP`.** The tier and the token are 1:1, and the agreed pricing
 policy resolves "any UR" to PYP anyway — so it is written identically to a named Ultra Rare.
@@ -122,7 +122,7 @@ quantity like any other line. The site's "I already own the source" toggle switc
 and out of the total, so the distinction has to be in the data.
 
 - A transmute with no upgrade-from requirement simply has **no `IsSource` row**.
-- If the `Good` on an `IsSource` row is itself a transmute (`Safehold V`), the engine recurses into
+- If the `Item` on an `IsSource` row is itself a transmute (`Safehold V`), the engine recurses into
   that recipe. If it's a plain token (`PYP`), it uses the auction price.
 
 ## Golden Fleece ingredients — write the real token, integer quantity
@@ -145,8 +145,8 @@ Two consequences for you as an author:
 - **Quantities are always whole numbers.** A decimal anywhere is now unambiguously a typo, which is
   the point — it lets validation catch `3` fat-fingered as `0.3`.
 - **`Monster Trophy` is not yet in `tokenMetadata`** — it appears nowhere in the current data. Add
-  one row per season it exists in, or `GoodDisplayName` will show `⚠ check name` on every Trophy
-  line. You'll need to pick its `tokenCategory`; none of the existing ones (`Trade Good`,
+  one row per season it exists in, or `Display Name` will show `⚠ check name` on every Trophy
+  line. You'll need to pick its `Category`; none of the existing ones (`Trade 1`, `Trade 2`,
   `Premium`, `Bonus`, `Preorder`, `Condensed`, `Ultra Rare`, `Patron`, `Golden Ticket`,
   `Safehold`) obviously covers a reward-only token, so a new category may be warranted.
 
@@ -155,7 +155,7 @@ Rationale and the engine-side requirements are in [`expansion-plan.md`](expansio
 ## Before importing
 
 - [ ] Every row has a non-zero, **whole-number** `Quantity` — no decimals, no fractions of a Fleece.
-- [ ] No `⚠ check name` anywhere in `GoodDisplayName`.
+- [ ] No `⚠ check name` anywhere in `Display Name`.
 - [ ] `Monster Trophy` added to `tokenMetadata` (one row per season) with a chosen category.
 - [ ] `Golden Fleece` present in the manual off-auction price table for every season it's used in.
 - [ ] `ResolvedYear` looks right on every multi-season row.

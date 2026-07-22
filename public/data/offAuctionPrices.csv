@@ -1,4 +1,4 @@
-Key,Year,Category,Good,Display Name,max Price,avg Price,min Price
+Key,Year,Category,Item,Display Name,max Price,avg Price,min Price
 2019Fleece,2019,Transmute,Fleece,Golden Fleece,70,60,50
 2020Fleece,2020,Transmute,Fleece,Golden Fleece,60,50,40
 2021Fleece,2021,Transmute,Fleece,Golden Fleece,50,40,30

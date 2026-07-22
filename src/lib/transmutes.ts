@@ -53,7 +53,7 @@ export type DerivedRule = {
 };
 
 // --- Parsers -------------------------------------------------------------
-// The recipe sheet carries `ResolvedYear` and `GoodDisplayName` as authoring
+// The recipe sheet carries `ResolvedYear` and `Display Name` as authoring
 // aids. Both are DELIBERATELY IGNORED here and re-derived, so a stale formula
 // column in the sheet can never poison the site (§4.2).
 
@@ -66,7 +66,7 @@ function toObjects(rows: string[][]): Record<string, string>[] {
   });
 }
 
-// `GoodYear`: blank = the recipe's own season; a signed offset is relative to
+// `ItemYear`: blank = the recipe's own season; a signed offset is relative to
 // the recipe's Year (so it never shifts meaning as seasons pass); a bare year
 // is pinned. The <1900 test distinguishes an offset from an absolute year.
 export function resolveGoodYear(goodYear: string, recipeYear: number): number {
@@ -83,7 +83,7 @@ export function parseRecipes(text: string): Recipe[] {
   for (const o of objs) {
     const year = parseInt(o['Year'], 10);
     const transmute = o['Transmute'];
-    const good = o['Good'];
+    const good = o['Item'];
     const quantity = parseInt(o['Quantity'], 10);
     if (!transmute || !good || !isFinite(year) || !isFinite(quantity)) continue;
 
@@ -93,7 +93,7 @@ export function parseRecipes(text: string): Recipe[] {
       recipe = { key, year, level: o['Level'], transmute, lines: [] };
       byKey.set(key, recipe);
     }
-    const goodYear = o['GoodYear'] ?? '';
+    const goodYear = o['ItemYear'] ?? '';
     recipe.lines.push({
       good,
       goodYear,
@@ -109,13 +109,15 @@ export function parseTokenMetadata(text: string): TokenMeta[] {
   const objs = toObjects(parseCSV(text));
   const out: TokenMeta[] = [];
   for (const o of objs) {
-    const year = parseInt(o['year'], 10);
-    if (!o['canonicalName'] || !isFinite(year)) continue;
+    // Columns match prices.csv (the source of truth for token identity):
+    // auctionSeason, Item, Display Name, Category — plus the authoring key.
+    const year = parseInt(o['auctionSeason'], 10);
+    if (!o['Item'] || !isFinite(year)) continue;
     out.push({
       year,
-      canonicalName: o['canonicalName'],
-      displayName: o['displayName'] || o['canonicalName'],
-      tokenCategory: o['tokenCategory'],
+      canonicalName: o['Item'],
+      displayName: o['Display Name'] || o['Item'],
+      tokenCategory: o['Category'],
     });
   }
   return out;
@@ -131,13 +133,13 @@ export function parseOffAuctionPrices(text: string): OffAuctionPrice[] {
   for (const o of objs) {
     const year = parseInt(o['Year'], 10);
     const avg = money(o['avg Price']);
-    if (!o['Good'] || !isFinite(year) || !isFinite(avg)) continue;
+    if (!o['Item'] || !isFinite(year) || !isFinite(avg)) continue;
     const max = money(o['max Price']);
     const min = money(o['min Price']);
     out.push({
       year,
-      good: o['Good'],
-      displayName: o['Display Name'] || o['Good'],
+      good: o['Item'],
+      displayName: o['Display Name'] || o['Item'],
       category: o['Category'],
       // n = 0 marks these as hand-maintained rather than observed sales.
       stats: { n: 0, min: isFinite(min) ? min : avg, max: isFinite(max) ? max : avg, avg },
