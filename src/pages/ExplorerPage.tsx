@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  exploreAuctions, explorerOptions, auctionChoices, flattenAuctions, sortFlatRows,
-  EMPTY_FILTERS, type ExplorerFilters, type SortKey, type SortDir,
+  exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows,
+  EMPTY_FILTERS, DEFAULT_SORT, type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
 import { money } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
@@ -10,10 +10,10 @@ import { AuctionCard } from '../components/AuctionCard';
 import { SaleTable } from '../components/SaleTable';
 
 // Detailed Auction Data (Phase 5). Every other view on this site aggregates;
-// this one shows the raw sales, grouped under the auction they happened in.
-// Auction-level filters (season / auction / style / completion / auctioneer)
-// choose which auctions are listed, sale-level filters (category / search)
-// choose which sales show inside them — see exploreAuctions in lib/data.ts.
+// this one shows the sales themselves, in two shapes behind a toggle: grouped
+// under the auction they happened in, or one flat sortable table. Filtering is
+// deliberately thin — season, category, auctioneer and two searches — see
+// exploreAuctions in lib/data.ts for what each one narrows.
 
 // Below this many results, every auction opens by default: a narrow query is
 // almost always one you want to read, not scan.
@@ -32,8 +32,8 @@ export default function ExplorerPage() {
   const [filters, setFilters] = useState<ExplorerFilters>(EMPTY_FILTERS);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<View>('grouped');
-  const [sortKey, setSortKey] = useState<SortKey>('auction');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
+  const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT.dir);
 
   // The explorer is the one view that reads both sale feeds. The Onyx auctions
   // are all present in auctionMetadata and none of their (auction, token) pairs
@@ -42,16 +42,9 @@ export default function ExplorerPage() {
   const allSales = useMemo(() => [...sales, ...onyxSales], [sales, onyxSales]);
 
   const set = <K extends keyof ExplorerFilters>(key: K, value: ExplorerFilters[K]) =>
-    setFilters((f) => ({
-      ...f,
-      [key]: value,
-      // Changing an auction-level filter can strip the selected auction out of
-      // the picker's own list, which would leave an invisible filter pinned on.
-      ...(key === 'auctionId' ? null : { auctionId: '' }),
-    }));
+    setFilters((f) => ({ ...f, [key]: value }));
 
   const options = useMemo(() => explorerOptions(allSales, meta), [allSales, meta]);
-  const choices = useMemo(() => auctionChoices(meta, filters), [meta, filters]);
   const result = useMemo(() => exploreAuctions(allSales, meta, filters), [allSales, meta, filters]);
 
   // The flat view is the same result set, flattened and re-sorted — never a
@@ -65,7 +58,11 @@ export default function ExplorerPage() {
   // most useful direction — newest/highest first, but A→Z for the text columns.
   const onSort = (key: SortKey) => {
     if (key === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else { setSortKey(key); setSortDir(key === 'token' || key === 'category' ? 'asc' : 'desc'); }
+    else {
+      setSortKey(key);
+      const alphabetical = key === 'auction' || key === 'auctioneer' || key === 'token' || key === 'category';
+      setSortDir(alphabetical ? 'asc' : 'desc');
+    }
   };
 
   // Re-apply the auto-expand rule whenever the result set changes, so narrowing
@@ -95,12 +92,10 @@ export default function ExplorerPage() {
   return (
     <>
       <p className="sub">
-        What every token went for in every auction — the raw rows behind the
+        What every token went for in every closed auction — the rows behind the
         averages on <Link to="/">Prices</Link>, including the{' '}
-        <Link to="/onyx">Onyx</Link> chase set. Narrow by season, auction, token
-        or category; the auction's style, completion style and auctioneer are
-        filters too, so you can ask things like "what did Trade 1 tokens fetch in
-        Lightning auctions this year".
+        <Link to="/onyx">Onyx</Link> chase set. Search for a token or an auction,
+        or narrow by season, category and auctioneer.
       </p>
 
       <div className="controls">
@@ -112,35 +107,10 @@ export default function ExplorerPage() {
           </select>
         </label>
         <label>
-          Auction
-          <select value={filters.auctionId} onChange={(e) => set('auctionId', e.target.value)}>
-            <option value="">All auctions ({choices.length})</option>
-            {choices.map((m) => (
-              <option key={m.auctionId} value={m.auctionId}>
-                {m.season} #{m.auctionNumber} — {m.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
           Category
           <select value={filters.category} onChange={(e) => set('category', e.target.value)}>
             <option value="">All categories</option>
             {options.categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </label>
-        <label>
-          Auction style
-          <select value={filters.style} onChange={(e) => set('style', e.target.value)}>
-            <option value="">All styles</option>
-            {options.styles.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-        <label>
-          Completion
-          <select value={filters.completionStyle} onChange={(e) => set('completionStyle', e.target.value)}>
-            <option value="">All</option>
-            {options.completionStyles.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
         <label>
@@ -150,20 +120,46 @@ export default function ExplorerPage() {
             {options.auctioneers.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
         </label>
-        <label>
-          View
-          <select value={view} onChange={(e) => setView(e.target.value as View)}>
-            <option value="grouped">Grouped by auction</option>
-            <option value="flat">Flat table</option>
-          </select>
-        </label>
+        {/* A two-state toggle rather than a dropdown: with only two choices the
+            select hid one of them behind a click. */}
+        <div className="toggle" role="group" aria-label="View">
+          <span className="toggle-label">View</span>
+          <div className="toggle-buttons">
+            <button
+              type="button"
+              className={view === 'grouped' ? 'on' : undefined}
+              aria-pressed={view === 'grouped'}
+              onClick={() => setView('grouped')}
+            >
+              Grouped by auction
+            </button>
+            <button
+              type="button"
+              className={view === 'flat' ? 'on' : undefined}
+              aria-pressed={view === 'flat'}
+              onClick={() => setView('flat')}
+            >
+              Flat table
+            </button>
+          </div>
+        </div>
+
         <label className="search">
-          Token
+          Search
           <input
             type="search"
-            placeholder="Search token name…"
+            placeholder="Search by token or auction name…"
             value={filters.search}
             onChange={(e) => set('search', e.target.value)}
+          />
+        </label>
+        <label className="search">
+          Auction
+          <input
+            type="search"
+            placeholder="Search auction names…"
+            value={filters.auctionSearch}
+            onChange={(e) => set('auctionSearch', e.target.value)}
           />
         </label>
       </div>

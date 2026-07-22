@@ -49,12 +49,17 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   derived from **auction metadata** (counts by style, by auctioneer, close-date cadence, YoY, etc.).
 - ✅ **DONE (Phase 5)** — `Detailed Auction Data` — a filterable sales explorer at `/explorer`,
   in **two views behind a toggle**: grouped by auction (a `<details>` card per auction, body
-  mounted only while open) and a flat sortable table (sort on any column; the sort runs over the
-  whole result set and only the display is capped at 1,000 rows). Both render the same query
-  object, so they cannot disagree. Pickers for Season / Auction / Category as planned, plus three
-  more the metadata already supported — auction style, completion style, auctioneer — and a token
-  search box. Auction-level filters choose which auctions list; sale-level filters (category,
-  search) choose which rows show inside them, and prune auctions that then match nothing.
+  mounted only while open) and a flat sortable table (columns Season / # / Closed / Auction /
+  Auctioneer / Token / Category / Price, sortable on any of them, default season descending then
+  auction number descending; the sort runs over the whole result set and only the display is
+  capped at 1,000 rows). Both render the same query object, so they cannot disagree.
+  - **Filtering is deliberately thin**: Season, Category and Auctioneer pickers, plus two
+    full-width search boxes — a general one matching *either* a token name or the auction's name,
+    and one matching auction names only. The maintainer had the Auction picker (276 options),
+    Auction style and Completion style removed as more clutter than help.
+  - **Only `Closed` auctions are listed.** The five `Failed` ones recorded no sales at all, so
+    this removes empty rows rather than any price data (276 auctions → 271; prices and totals
+    unchanged).
   - **Grain: one price per token per auction.** Repeat sales of a token within one auction
     (1,707 such pairs in `prices.csv`, 20 in `onyx.csv`) collapse to their average — maintainer's
     call, and deliberately *not* labelled as an average in the UI: it is simply that auction's

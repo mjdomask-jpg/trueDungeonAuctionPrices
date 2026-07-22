@@ -378,16 +378,14 @@ export function compareSeasons(sales: Sale[], seasonA: string, seasonB: string):
 
 export type ExplorerFilters = {
   season: string; // '' = every season
-  auctionId: string; // '' = every auction
   category: string; // '' = every category
-  style: string; // auctionStyle; '' = every style
-  completionStyle: string; // '' = every completion style
   auctioneer: string; // '' = every auctioneer
-  search: string; // free text over display name + canonical Item
+  search: string; // free text over token names AND the auction's name
+  auctionSearch: string; // free text over the auction's name only
 };
 
 export const EMPTY_FILTERS: ExplorerFilters = {
-  season: '', auctionId: '', category: '', style: '', completionStyle: '', auctioneer: '', search: '',
+  season: '', category: '', auctioneer: '', search: '', auctionSearch: '',
 };
 
 // One token's result in one auction — the explorer's row. `price` is that
@@ -452,20 +450,26 @@ function compareAuctionsDesc(a: AuctionMeta, b: AuctionMeta): number {
 }
 
 // Case-insensitive substring match on either name a token goes by.
-function matchesSearch(s: Sale, needle: string): boolean {
-  if (!needle) return true;
+function tokenMatches(s: Sale, needle: string): boolean {
   const q = needle.toLowerCase();
   return s.displayName.toLowerCase().includes(q) || s.item.toLowerCase().includes(q);
 }
 
-// Run the explorer query. Auction-level filters (season / auction / style /
-// completion style / auctioneer) select which auctions are listed; sale-level
-// filters (category / search) select which sales show inside them.
+function auctionNameMatches(m: AuctionMeta, needle: string): boolean {
+  return m.name.toLowerCase().includes(needle.toLowerCase());
+}
+
+// Run the explorer query. Auction-level filters (season / auctioneer / auction
+// name) select which auctions are listed; sale-level filtering (category, and
+// the token half of the general search) selects which rows show inside them,
+// and prunes auctions left matching nothing.
 //
-// An auction with no matching sales is kept only while no sale-level filter is
-// active — that keeps genuinely empty auctions (the 6 with no sales, mostly
-// Failed ones) visible in the unfiltered view, while a category or search
-// filter still prunes the list down to auctions that actually answer it.
+// Only Closed auctions are listed. The five Failed ones recorded no sales
+// anyway, so this drops empty rows rather than any price data.
+//
+// The general search spans both levels: an auction whose NAME matches keeps all
+// its rows, and any token whose name matches keeps its row. That is what makes
+// one box able to answer both "Trent" and "Wish Ring".
 export function exploreAuctions(
   sales: Sale[], meta: AuctionMeta[], f: ExplorerFilters,
 ): ExplorerResult {
@@ -477,6 +481,7 @@ export function exploreAuctions(
   }
 
   const needle = f.search.trim();
+  const auctionNeedle = f.auctionSearch.trim();
   const saleLevelFilter = Boolean(f.category || needle);
 
   const auctions: AuctionGroup[] = [];
@@ -484,14 +489,16 @@ export function exploreAuctions(
   const items = new Set<string>();
 
   for (const m of meta) {
+    if (m.status !== 'Closed') continue;
     if (f.season && m.season !== f.season) continue;
-    if (f.auctionId && m.auctionId !== f.auctionId) continue;
-    if (f.style && m.style !== f.style) continue;
-    if (f.completionStyle && m.completionStyle !== f.completionStyle) continue;
     if (f.auctioneer && m.auctioneer !== f.auctioneer) continue;
+    if (auctionNeedle && !auctionNameMatches(m, auctionNeedle)) continue;
 
+    // A general-search hit on the auction's own name qualifies every token in
+    // it; otherwise each token has to match on its own.
+    const nameHit = Boolean(needle) && auctionNameMatches(m, needle);
     const matched = (salesByAuction.get(m.auctionId) ?? []).filter(
-      (s) => (!f.category || s.category === f.category) && matchesSearch(s, needle),
+      (s) => (!f.category || s.category === f.category) && (!needle || nameHit || tokenMatches(s, needle)),
     );
     if (!matched.length && saleLevelFilter) continue;
 
@@ -522,71 +529,63 @@ export function exploreAuctions(
 // what is being reported.
 
 export type FlatRow = { row: SaleRow; meta: AuctionMeta };
-export type SortKey = 'auction' | 'token' | 'category' | 'price';
+export type SortKey =
+  | 'season' | 'number' | 'date' | 'auction' | 'auctioneer' | 'token' | 'category' | 'price';
 export type SortDir = 'asc' | 'desc';
+
+// The table's opening sort: newest season first, and within a season the
+// highest auction number first.
+export const DEFAULT_SORT: { key: SortKey; dir: SortDir } = { key: 'season', dir: 'desc' };
 
 export function flattenAuctions(auctions: AuctionGroup[]): FlatRow[] {
   return auctions.flatMap((a) => a.rows.map((row) => ({ row, meta: a.meta })));
 }
 
-// Sort the flat rows. 'auction' uses the same newest-first ordering the grouped
-// view uses (season, then close date, then number), so the default sort of each
-// view agrees with the other. Every key falls back to the auction order, then
-// the token name, so the sort is total and stable-looking.
-export function sortFlatRows(rows: FlatRow[], key: SortKey, dir: SortDir): FlatRow[] {
-  const sign = dir === 'asc' ? -1 : 1; // 'desc' is the natural direction of compareAuctionsDesc
-  const byAuction = (a: FlatRow, b: FlatRow) => compareAuctionsDesc(a.meta, b.meta) * sign;
+// Each column's comparator, written ASCENDING; the direction is applied once by
+// the caller so a column can't disagree with its own arrow.
+const ASCENDING: Record<SortKey, (a: FlatRow, b: FlatRow) => number> = {
+  season: (a, b) => Number(a.meta.season) - Number(b.meta.season),
+  number: (a, b) => a.meta.auctionNumber - b.meta.auctionNumber,
+  date: (a, b) => dateKey(a.meta.closeDate).localeCompare(dateKey(b.meta.closeDate)),
+  auction: (a, b) => a.meta.name.localeCompare(b.meta.name),
+  auctioneer: (a, b) => a.meta.auctioneer.localeCompare(b.meta.auctioneer),
+  token: (a, b) => a.row.displayName.localeCompare(b.row.displayName),
+  category: (a, b) => compareCategories(a.row.category, b.row.category),
+  price: (a, b) => a.row.price - b.row.price,
+};
 
-  const primary = (a: FlatRow, b: FlatRow): number => {
-    switch (key) {
-      case 'auction': return byAuction(a, b);
-      case 'token': return a.row.displayName.localeCompare(b.row.displayName) * -sign;
-      case 'category': return compareCategories(a.row.category, b.row.category) * -sign;
-      case 'price': return (b.row.price - a.row.price) * sign;
-    }
-  };
-
-  return [...rows].sort((a, b) =>
-    primary(a, b) ||
-    compareAuctionsDesc(a.meta, b.meta) ||
-    a.row.displayName.localeCompare(b.row.displayName));
+// Ties resolve the way the default sort orders the table — newest season, then
+// highest auction number, then token name — so every sort is total and the rows
+// never shuffle between renders.
+function tiebreak(a: FlatRow, b: FlatRow): number {
+  return Number(b.meta.season) - Number(a.meta.season) ||
+    b.meta.auctionNumber - a.meta.auctionNumber ||
+    a.row.displayName.localeCompare(b.row.displayName);
 }
 
-// The option lists for the explorer's pickers, derived from the data rather
-// than hardcoded so a new auction style or auctioneer in the export shows up
-// without a code change. Seasons come back newest-first; the rest sort
-// alphabetically. Blank values ('' auctioneer, 'n/a' style) are dropped —
-// they'd be unselectable noise in a dropdown.
+export function sortFlatRows(rows: FlatRow[], key: SortKey, dir: SortDir): FlatRow[] {
+  const sign = dir === 'asc' ? 1 : -1;
+  const primary = ASCENDING[key];
+  return [...rows].sort((a, b) => primary(a, b) * sign || tiebreak(a, b));
+}
+
+// The option lists for the explorer's two remaining pickers, derived from the
+// data rather than hardcoded so a new auctioneer in the export shows up without
+// a code change. Seasons come back newest-first, categories in site order.
+// Auctioneers are taken from Closed auctions only, matching what the page
+// lists, and blanks are dropped — they'd be unselectable noise in a dropdown.
 export type ExplorerOptions = {
   seasons: string[];
   categories: string[];
-  styles: string[];
-  completionStyles: string[];
   auctioneers: string[];
 };
-
-const realValues = (values: string[]) =>
-  [...new Set(values)].filter((v) => v && v !== 'n/a').sort((a, b) => a.localeCompare(b));
 
 export function explorerOptions(sales: Sale[], meta: AuctionMeta[]): ExplorerOptions {
   return {
     seasons: seasonsOf(sales),
     categories: [...new Set(sales.map((s) => s.category))].sort(compareCategories),
-    styles: realValues(meta.map((m) => m.style)),
-    completionStyles: realValues(meta.map((m) => m.completionStyle)),
-    auctioneers: realValues(meta.map((m) => m.auctioneer)),
+    auctioneers: [...new Set(meta.filter((m) => m.status === 'Closed').map((m) => m.auctioneer))]
+      .filter((v) => v && v !== 'n/a')
+      .sort((a, b) => a.localeCompare(b)),
   };
-}
-
-// The auctions offered in the "Auction" picker, narrowed to the currently
-// selected season (and the other auction-level filters) so the list stays
-// usable — 276 auctions in one flat dropdown is not.
-export function auctionChoices(meta: AuctionMeta[], f: ExplorerFilters): AuctionMeta[] {
-  return meta
-    .filter((m) =>
-      (!f.season || m.season === f.season) &&
-      (!f.style || m.style === f.style) &&
-      (!f.completionStyle || m.completionStyle === f.completionStyle) &&
-      (!f.auctioneer || m.auctioneer === f.auctioneer))
-    .sort(compareAuctionsDesc);
 }

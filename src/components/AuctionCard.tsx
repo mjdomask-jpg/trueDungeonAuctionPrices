@@ -21,7 +21,7 @@ export function AuctionCard({
   open: boolean;
   onToggle: (auctionId: string, open: boolean) => void;
 }) {
-  const { meta, rows, total, min, max } = group;
+  const { meta, rows } = group;
   const date = longDate(meta.closeDate);
 
   // Metadata worth showing as chips. 'n/a' and blanks are dropped rather than
@@ -40,10 +40,9 @@ export function AuctionCard({
           <span className="auction-num">{meta.season} · #{meta.auctionNumber}</span>
           <span className="auction-name">{meta.name}</span>
         </span>
-        <span className="auction-when">
-          {date ?? 'close date unknown'}
-          {meta.status !== 'Closed' && <span className="auction-status"> {meta.status}</span>}
-        </span>
+        {/* Only Closed auctions are listed, so the date is always a close
+            date — labelling it says which date it is without a status chip. */}
+        <span className="auction-when">Closed: {date ?? 'unknown'}</span>
       </summary>
 
       {/* Body is mounted only while open. With every auction listed that's the
@@ -52,13 +51,9 @@ export function AuctionCard({
       {open && <div className="auction-body">
         <p className="auction-facts">
           {facts.map((f) => <span key={f} className="cat">{f}</span>)}
-          <span className="auction-totals">
-            {rows.length} token{rows.length === 1 ? '' : 's'}
-            {rows.length > 0 && <> · {money(total)} total · {money(min)}–{money(max)}</>}
-          </span>
           {meta.link && (
             <a className="auction-link" href={meta.link} target="_blank" rel="noopener noreferrer">
-              Forum thread ↗
+              Auction link ↗
             </a>
           )}
         </p>

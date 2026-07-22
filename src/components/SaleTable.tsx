@@ -2,11 +2,15 @@ import { fmtCloseDate, money } from '../lib/format';
 import type { FlatRow, SortKey, SortDir } from '../lib/data';
 
 // The explorer's flat view: every matching token-price in one sortable table,
-// with its auction alongside. Same rows as the grouped view — only the shape
-// differs.
+// with its auction broken out into its own columns. Same rows as the grouped
+// view — only the shape differs.
 
 const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
+  { key: 'season', label: 'Season', numeric: true },
+  { key: 'number', label: '#', numeric: true },
+  { key: 'date', label: 'Closed' },
   { key: 'auction', label: 'Auction' },
+  { key: 'auctioneer', label: 'Auctioneer' },
   { key: 'token', label: 'Token' },
   { key: 'category', label: 'Category' },
   { key: 'price', label: 'Price', numeric: true },
@@ -22,8 +26,12 @@ export function SaleTable({
 }) {
   return (
     <div className="tablewrap">
-      <table className={rows.length >= 4 ? 'banded' : undefined}>
-        <colgroup><col /><col className="col-token" /><col /><col /></colgroup>
+      <table className={`flat${rows.length >= 4 ? ' banded' : ''}`}>
+        <colgroup>
+          <col className="col-season" /><col className="col-num" /><col className="col-date" />
+          <col className="col-auction" /><col className="col-auctioneer" />
+          <col className="col-token" /><col className="col-cat" /><col className="col-price" />
+        </colgroup>
         <thead>
           <tr>
             {COLUMNS.map((c) => {
@@ -50,13 +58,11 @@ export function SaleTable({
         <tbody>
           {rows.map(({ row, meta }) => (
             <tr key={`${row.auctionId}-${row.item}`}>
-              <td className="left">
-                <span className="flat-auction">{meta.name}</span>
-                <span className="alt">
-                  {' '}· {meta.season} #{meta.auctionNumber}
-                  {fmtCloseDate(meta.closeDate) && ` · ${fmtCloseDate(meta.closeDate)}`}
-                </span>
-              </td>
+              <td>{meta.season}</td>
+              <td>{meta.auctionNumber}</td>
+              <td className="left">{fmtCloseDate(meta.closeDate) ?? '—'}</td>
+              <td className="left wrap-text">{meta.name}</td>
+              <td className="left wrap-text">{meta.auctioneer || '—'}</td>
               <td className="left token">
                 {row.displayName}
                 {row.item !== row.displayName && <span className="alt"> · {row.item}</span>}
