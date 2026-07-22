@@ -330,6 +330,7 @@ td.diff.down { color: var(--diff-down); }
 .tx-scount { font-size: 13px; color: var(--text); }
 .tx-snote { font-size: 12px; color: var(--text); font-style: italic; margin-left: auto; max-width: 55%; text-align: right; }
 .tx-sbody { padding: 2px 12px 14px; }
+.tx-season-toggle { margin: 8px 6px 0; font-size: 13px; }
 
 .tx-group.ladder { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 4px; }
 .tx-group-label {

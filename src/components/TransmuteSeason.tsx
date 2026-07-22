@@ -11,12 +11,15 @@ export function TransmuteSeason({
   open,
   onToggle,
   note,
+  recentToggle,
 }: {
   year: number;
   costs: BuildCost[];
   open: boolean;
   onToggle: () => void;
   note?: string;
+  // Present only for the current season, whose prices this toggle affects.
+  recentToggle?: { on: boolean; onChange: (v: boolean) => void };
 }) {
   const groups = orderSeason(costs);
 
@@ -31,6 +34,17 @@ export function TransmuteSeason({
 
       {open && (
         <div className="tx-sbody">
+          {recentToggle && (
+            <label className="tx-check tx-season-toggle">
+              <input
+                type="checkbox"
+                checked={recentToggle.on}
+                onChange={(e) => recentToggle.onChange(e.target.checked)}
+              />
+              Recent prices
+              <span className="tx-hint" title="Use data from this season's last 5 auctions">?</span>
+            </label>
+          )}
           {groups.map((g) => (
             <div key={g.label} className={`tx-group${g.kind === 'ladder' ? ' ladder' : ''}`}>
               <div className="tx-group-label">{g.label}</div>

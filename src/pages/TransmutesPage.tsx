@@ -82,15 +82,6 @@ export default function TransmutesPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>
-        <label className="tx-check">
-          <input
-            type="checkbox"
-            checked={recentPrices}
-            onChange={(e) => setRecentPrices(e.target.checked)}
-          />
-          Recent prices
-          <span className="tx-hint" title="Use each season's last-5-auctions window where available (current season only)">?</span>
-        </label>
       </div>
 
       <p className="meta-line">
@@ -108,6 +99,10 @@ export default function TransmutesPage() {
           open={isOpen(year)}
           onToggle={() => toggle(year)}
           note={noteFor(year)}
+          // "Recent prices" only moves the current season's numbers (past seasons
+          // are closed; the preview already prices off recent sales), so the
+          // toggle lives inside that one season rather than floating globally.
+          recentToggle={engine != null && year === engine.prices.latestPriced ? { on: recentPrices, onChange: setRecentPrices } : undefined}
         />
       ))}
     </>
