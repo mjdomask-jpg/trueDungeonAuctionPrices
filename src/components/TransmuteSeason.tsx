@@ -1,4 +1,5 @@
 import { orderSeason, type BuildCost } from '../lib/transmutes';
+import { HintPopover } from './HintPopover';
 import { TransmuteRow } from './TransmuteRow';
 
 // One collapsible season section: its transmutes grouped and ordered by
@@ -42,7 +43,9 @@ export function TransmuteSeason({
                 onChange={(e) => recentToggle.onChange(e.target.checked)}
               />
               Recent prices
-              <span className="tx-hint" title="Use data from this season's last 5 auctions">?</span>
+              <HintPopover label="About recent prices">
+                Use data from this season's last 5 auctions
+              </HintPopover>
             </label>
           )}
           {groups.map((g) => (
