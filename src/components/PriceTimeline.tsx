@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, type PointerEvent } from 'react';
 import { type TimelinePoint } from '../lib/data';
 import { money, fmtCloseDate } from '../lib/format';
 
@@ -100,7 +100,11 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
 
   // Map the cursor to the nearest auction slot (works through the SVG's scaling
   // via the rendered rect). setState with the same slot is a no-op re-render.
-  const onMove = (e: MouseEvent<SVGSVGElement>) => {
+  // Pointer (not mouse) events so touch works too: a mouse hover fires
+  // pointermove; a finger fires pointerdown on tap and pointermove while it
+  // drags. touch-action is left alone, so a deliberate horizontal drag still
+  // scrolls the (min-width 480px) chart — a tap is enough to read a point.
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
     if (!slots.length) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const svgX = ((e.clientX - rect.left) / rect.width) * W;
@@ -126,7 +130,8 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
         <svg
           className="timeline-chart" viewBox={`0 0 ${W} ${H}`} role="img"
           aria-label={`Average auction price over time for ${title}: ${series.map((s) => s.label).join(', ')}`}
-          onMouseMove={onMove} onMouseLeave={() => setHoverN(null)}
+          onPointerMove={onMove} onPointerDown={onMove}
+          onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHoverN(null); }}
         >
           {/* gridlines + y ($) labels */}
           {ticks.map((t) => (
