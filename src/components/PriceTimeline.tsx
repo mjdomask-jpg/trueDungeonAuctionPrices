@@ -1,7 +1,8 @@
-import { useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { type TimelinePoint } from '../lib/data';
 import { money, fmtCloseDate } from '../lib/format';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { TOKEN_ABBREVIATIONS } from '../lib/tokenAbbreviations';
 
 // Hand-rolled multi-series SVG line chart — zero dependencies, themes via CSS
 // variables. Each series is one token in a group; they share this chart's x
@@ -57,6 +58,19 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
   const [active, setActive] = useState<number | null>(null); // legend emphasis
   const [hoverN, setHoverN] = useState<number | null>(null); // crosshair auction
   const narrow = useMediaQuery(NARROW);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // On touch there's no pointer-leave to clear the readout, so a tap outside the
+  // chart dismisses it (a tap on another point still lands on the svg and just
+  // moves the crosshair). Mouse hover clears itself via onPointerLeave.
+  useEffect(() => {
+    if (hoverN == null) return;
+    const onDocDown = (e: globalThis.PointerEvent) => {
+      if (svgRef.current && !svgRef.current.contains(e.target as Node)) setHoverN(null);
+    };
+    document.addEventListener('pointerdown', onDocDown);
+    return () => document.removeEventListener('pointerdown', onDocDown);
+  }, [hoverN]);
 
   // A phone gets a narrower viewBox — the desktop 820-wide box scaled down to a
   // ~335px card renders the axis text at ~7px. A 420-wide box lets the chart
@@ -103,6 +117,14 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
 
   const showLegend = series.length > 1;
 
+  // Legend shown alphabetically by full token name (so the order reads the same
+  // on mobile and desktop); each entry keeps its series' own colour and index.
+  // Phones swap in the community abbreviations to keep each label on one line.
+  const legendOrder = series
+    .map((_, si) => si)
+    .sort((a, b) => series[a].label.localeCompare(series[b].label));
+  const legendLabel = (s: Series) => (narrow ? TOKEN_ABBREVIATIONS[s.label] ?? s.label : s.label);
+
   // Line colour: explicit override → a lone series takes its category colour
   // (matching the heading) → otherwise the categorical palette for distinctness.
   const strokeFor = (si: number) =>
@@ -139,6 +161,7 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
     <div className="chartwrap">
       <div className="chart-plot">
         <svg
+          ref={svgRef}
           className="timeline-chart" viewBox={`0 0 ${W} ${H}`} role="img"
           aria-label={`Average auction price over time for ${title}: ${series.map((s) => s.label).join(', ')}`}
           onPointerMove={onMove} onPointerDown={onMove}
@@ -152,9 +175,13 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
             </g>
           ))}
 
-          {/* x-axis close-date labels */}
+          {/* x-axis close-date labels. The edge labels anchor inward (start at
+              the left, end at the right) so the first/last date can't spill past
+              the plot and clip against the SVG edge. */}
           {slots.map(([n, d], i) => labelIdx.has(i) && (
-            <text key={n} x={x(n)} y={H - M.bottom + 20} textAnchor="middle" fontSize={axisFont} fill="var(--text)">
+            <text key={n} x={x(n)} y={H - M.bottom + 20}
+              textAnchor={i === 0 ? 'start' : i === last ? 'end' : 'middle'}
+              fontSize={axisFont} fill="var(--text)">
               {fmtCloseDate(d) ?? `#${n}`}
             </text>
           ))}
@@ -210,15 +237,18 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
 
       {showLegend && (
         <ul className="chart-legend">
-          {series.map((s, si) => (
-            <li key={s.label}
-              className={active !== null && active !== si ? 'dim' : undefined}
-              onMouseEnter={() => setActive(si)} onMouseLeave={() => setActive(null)}
-              onClick={() => setActive((a) => (a === si ? null : si))}>
-              <span className="swatch" style={{ background: strokeFor(si) }} />
-              {s.label}
-            </li>
-          ))}
+          {legendOrder.map((si) => {
+            const s = series[si];
+            return (
+              <li key={s.label}
+                className={active !== null && active !== si ? 'dim' : undefined}
+                onMouseEnter={() => setActive(si)} onMouseLeave={() => setActive(null)}
+                onClick={() => setActive((a) => (a === si ? null : si))}>
+                <span className="swatch" style={{ background: strokeFor(si) }} />
+                {legendLabel(s)}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
