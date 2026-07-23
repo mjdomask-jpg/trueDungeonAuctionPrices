@@ -282,12 +282,32 @@ tbody td:not(.left) {
   font-variant-numeric: tabular-nums lining-nums;
 }
 /* Alternating row banding (applied only to select category tables). The band
-   sits on the row so the Last-5 column tint and hover states paint over it. */
-table.banded tbody tr:nth-child(even) { background: var(--band); }
+   sits on the row so the Last-5 column tint and hover states paint over it.
+   The row's current background is also published as --row-bg so the sticky
+   Token cell (below) can repaint it — a sticky cell needs its own opaque
+   background or the columns scrolling under it show through. Hover still lands
+   on the Token cell directly via the `tr:hover td` rule, so --row-bg only has
+   to carry the resting colour. */
+tbody tr { --row-bg: var(--card); }
+table.banded tbody tr:nth-child(even) { background: var(--band); --row-bg: var(--band); }
 tbody tr:hover td { background: var(--row-hover); }
 tbody tr:hover td.last5 { background: var(--last5-bg); }
 
-td.token { color: var(--text-h); font-weight: 500; white-space: normal; }
+/* Sticky Token column: pin the row's name to the left edge so scrolling a wide
+   table sideways (Compare's two seasons, or any table overflowing a narrow
+   screen) doesn't scroll the label out of view. This works where a sticky
+   *header* can't (see the note by `thead th`): the wrap's own `overflow-x` is
+   the scroll container it sticks within, and the horizontal axis has none of
+   the height-constraint problem the vertical one hits. */
+td.token, thead th.left { position: sticky; left: 0; }
+td.token {
+  color: var(--text-h);
+  font-weight: 500;
+  white-space: normal;
+  background: var(--row-bg);
+  z-index: 1;
+}
+thead th.left { z-index: 2; }
 td.avg { font-weight: 600; color: var(--text-h); }
 
 /* Compare Years. A vertical rule separates the two seasons' column groups and
