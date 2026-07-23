@@ -1077,4 +1077,9 @@ table.an-opens col.col-days { width: 16%; }
      table sits in a .cat-section too but has no room to spare. Desktop, which
      always shows both groups, keeps the shared 32%. */
   table.one-group col.col-token { width: 40%; }
+
+  /* Price-timeline charts switch to a narrower viewBox on a phone (see
+     PriceTimeline), so they fit the card at a legible text size — drop the
+     480px floor that forced sideways scrolling. */
+  .timeline-chart { min-width: 0; }
 }
