@@ -6,11 +6,17 @@ import { fmtCloseDate } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CategoryTable } from '../components/CategoryTable';
 import { compareCategories } from '../lib/categories';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 export default function DashboardPage() {
   const { sales, meta, loading, error } = useAuctionData();
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
+  // Seven columns collide on a phone, so narrow screens show one stat group at
+  // a time. Last 5 leads: it's the topical number, and only ~10% of tokens have
+  // no sale in that window.
+  const narrow = useMediaQuery('(max-width: 640px)');
+  const [statGroup, setStatGroup] = useState<'last5' | 'full'>('last5');
 
   const seasons = useMemo(() => seasonsOf(sales), [sales]);
   // Default to the newest season once data has loaded.
@@ -90,6 +96,21 @@ export default function DashboardPage() {
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
+        {narrow && (
+          <div className="toggle" role="group" aria-label="Stat group">
+            <span className="toggle-label">Show</span>
+            <div className="toggle-buttons">
+              <button type="button" className={statGroup === 'last5' ? 'on' : undefined}
+                aria-pressed={statGroup === 'last5'} onClick={() => setStatGroup('last5')}>
+                Last 5
+              </button>
+              <button type="button" className={statGroup === 'full' ? 'on' : undefined}
+                aria-pressed={statGroup === 'full'} onClick={() => setStatGroup('full')}>
+                Full Season
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <p className="meta-line">
@@ -99,7 +120,12 @@ export default function DashboardPage() {
 
       {groups.length === 0 && <p className="empty">No matching items.</p>}
       {groups.map((g) => (
-        <CategoryTable key={g.category} category={g.category} rows={g.rows} />
+        <CategoryTable
+          key={g.category}
+          category={g.category}
+          rows={g.rows}
+          group={narrow ? statGroup : 'both'}
+        />
       ))}
     </>
   );

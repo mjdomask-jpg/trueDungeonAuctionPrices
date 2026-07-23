@@ -82,6 +82,19 @@ inherit 12px from their uppercase labels, so the override lives in the
 
 ## Tables
 
+**Wide stat tables show one group at a time on mobile.** Seven columns do not
+fit a phone: six numeric columns get ~38px each, of which 24px is padding, so
+the values spill out of their cells and overlap the column to their left. Where
+a table's columns fall into groups, render one group at a time below 640px
+behind the standard `.toggle` segmented control, and keep the group's header row
+so the table still says which set you are looking at once the controls scroll
+away. `CategoryTable` does this with a `group` prop (`'both' | 'last5' |
+'full'`), defaulting to `'both'` so desktop is untouched.
+
+Pick the breakpoint in React via `useMediaQuery`, not in CSS — hiding columns
+with `display: none` fights `table-layout: fixed` and the colspan'd group
+headers, which map by *rendered* column index.
+
 **Table headers do not stick.** `.tablewrap` sets `overflow-x: auto`, and CSS
 forces `overflow-y` to compute to `auto` alongside it, which makes the wrap the
 nearest scroll container for anything inside. The wrap has no height constraint,
