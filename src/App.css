@@ -6,7 +6,9 @@
 
 header { position: relative; }
 header h1 {
-  font-size: 30px;
+  /* At 30px the title wraps to three lines on a phone and eats an eighth of the
+     viewport before anything useful. Scales down to ~21px at 375px wide. */
+  font-size: clamp(21px, 5.5vw, 30px);
   letter-spacing: -0.5px;
   margin: 0 0 6px;
   padding-right: 52px; /* keep the title clear of the toggle */
@@ -967,4 +969,13 @@ table.an-opens col.col-days { width: 16%; }
   .an-picker select { font-size: 16px; }
   /* .an-picker sets its own height rather than using --control-h. */
   .an-picker select { height: 40px; }
+
+  /* Let selects shrink to their content so a picker and a toggle share one
+     row. 150px is a comfortable desktop minimum but forces a wrap here. */
+  .controls select { min-width: 0; }
+
+  /* Purely informational counts, dropped to get data above the fold sooner.
+     Only lines marked `.stats` go — a .meta-line that carries a truncation
+     warning or holds controls is not a stats line and must stay. */
+  .meta-line.stats { display: none; }
 }

@@ -114,7 +114,7 @@ export default function ComparePage() {
         </label>
       </div>
 
-      <p className="meta-line">
+      <p className="meta-line stats">
         {rows.length} token{rows.length === 1 ? '' : 's'} · {summary.rose} rose ·{' '}
         {summary.fell} fell · {summary.added} new in {newer} · {summary.gone} gone since {older}
         {a === b && ' · pick two different seasons to see changes'}
