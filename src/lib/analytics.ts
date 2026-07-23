@@ -297,11 +297,29 @@ export function auctionsPerSeason(meta: AuctionMeta[]): SeasonCount[] {
 
 // --- Historical: auctioneer share, per season and as a matrix -----------
 
-export type AuctioneerShare = { auctioneer: string; count: number; share: number };
+export type AuctioneerShare = {
+  auctioneer: string;
+  count: number;
+  share: number;
+  /** Names behind an aggregated slice; absent on a slice for one person. */
+  members?: string[];
+};
 export type SeasonShares = { season: string; total: number; slices: AuctioneerShare[] };
+
+// The label for the aggregated slice of one-auction auctioneers.
+export const SINGLE_RUNNERS = 'Single Auction Runners';
 
 // Per-season breakdown of who ran how many auctions, as a share of that
 // season's total. Newest season first; within a season, biggest share first.
+//
+// Everyone who ran exactly ONE auction that season is aggregated into a single
+// `SINGLE_RUNNERS` slice, carrying their names in `members`. Without this the
+// pies fragment badly — 2024 had 11 auctioneers of whom 10 ran one auction
+// each, which is eleven wedges to say "Trent, and a crowd". The grouping is
+// per season, not career: these charts are about who shaped a given season.
+//
+// One exception: a season with a single such person shows them by name, since
+// aggregating one person into a category is just a worse label for them.
 export function auctioneerSharesBySeason(meta: AuctionMeta[]): SeasonShares[] {
   const labels = auctioneerLabels(meta);
   const bySeason = new Map<string, AuctionMeta[]>();
@@ -315,17 +333,25 @@ export function auctioneerSharesBySeason(meta: AuctionMeta[]): SeasonShares[] {
         const k = auctioneerKey(m.auctioneer);
         counts.set(k, (counts.get(k) ?? 0) + 1);
       }
-      return {
-        season,
-        total: rows.length,
-        slices: [...counts.entries()]
-          .map(([key, count]) => ({
-            auctioneer: labels.get(key) ?? key,
-            count,
-            share: count / rows.length,
-          }))
-          .sort((a, b) => b.count - a.count || (a.auctioneer < b.auctioneer ? -1 : 1)),
-      };
+
+      const all = [...counts.entries()]
+        .map(([key, count]) => ({ auctioneer: labels.get(key) ?? key, count, share: count / rows.length }))
+        .sort((a, b) => b.count - a.count || (a.auctioneer < b.auctioneer ? -1 : 1));
+
+      const singles = all.filter((s) => s.count === 1);
+      const slices = singles.length > 1
+        ? [
+            ...all.filter((s) => s.count > 1),
+            {
+              auctioneer: SINGLE_RUNNERS,
+              count: singles.length,
+              share: singles.length / rows.length,
+              members: singles.map((s) => s.auctioneer).sort((a, b) => (a < b ? -1 : 1)),
+            },
+          ]
+        : all;
+
+      return { season, total: rows.length, slices };
     });
 }
 

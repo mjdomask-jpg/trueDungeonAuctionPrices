@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { AuctionMeta } from '../lib/data';
 import {
   closedByMonthAndAuctioneer, auctionsByOpenDate, daysToCloseByCloseDate,
@@ -25,6 +25,20 @@ const PRIOR_COLOR = 'var(--series-3)';
 
 const days = (n: number | null | undefined) => (n == null ? '—' : `${Math.round(n * 10) / 10}`);
 
+const jumpTo = (id: string) =>
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+// Expand all / Collapse all over a set of month accordions, matching the pair
+// above the grouped view on the Auction Data page.
+function AccordionActions({ onExpand, onCollapse }: { onExpand: () => void; onCollapse: () => void }) {
+  return (
+    <p className="an-actions">
+      <button type="button" onClick={onExpand}>Expand all</button>
+      <button type="button" onClick={onCollapse}>Collapse all</button>
+    </p>
+  );
+}
+
 export function CurrentYearStats({
   meta, season, prior,
 }: {
@@ -32,16 +46,20 @@ export function CurrentYearStats({
   season: string;
   prior: string | null;
 }) {
-  // Both accordion panels start with every month open: the current season is
-  // ~7 months and the whole point is to read it end to end.
   const byAuctioneer = useMemo(() => closedByMonthAndAuctioneer(meta, season), [meta, season]);
   const byOpenDate = useMemo(() => auctionsByOpenDate(meta, season), [meta, season]);
   const bars = useMemo(() => daysToCloseByCloseDate(meta, season), [meta, season]);
   const closeCounts = useMemo(() => closedByCloseMonth(meta, season, prior), [meta, season, prior]);
   const closeDays = useMemo(() => avgDaysByCloseMonth(meta, season, prior), [meta, season, prior]);
 
-  const [shutA, setShutA] = useState<Set<number>>(new Set());
-  const [shutB, setShutB] = useState<Set<number>>(new Set());
+  // Accordions hold the months that are OPEN and start empty — every month
+  // expanded made the page enormously long, and both tables are meant to be
+  // scanned by month rather than read end to end. Switching season resets
+  // them, since the months themselves are different.
+  const [openA, setOpenA] = useState<Set<number>>(new Set());
+  const [openB, setOpenB] = useState<Set<number>>(new Set());
+  useEffect(() => { setOpenA(new Set()); setOpenB(new Set()); }, [season]);
+
   const toggle = (set: (fn: (s: Set<number>) => Set<number>) => void, m: number) =>
     set((s) => { const n = new Set(s); if (n.has(m)) n.delete(m); else n.add(m); return n; });
 
@@ -52,10 +70,30 @@ export function CurrentYearStats({
   const totalClosed = byOpenDate.reduce((a, g) => a + g.rows.length, 0);
   const missingDuration = totalClosed - bars.length;
 
+  // Section ids double as the jump-link targets and the panel anchors, so the
+  // two can't drift apart.
+  const sections = [
+    { id: 'by-auctioneer', label: 'By month & auctioneer' },
+    { id: 'by-open-date', label: 'By open date' },
+    { id: 'days-to-close', label: 'Days to close' },
+    { id: 'closed-vs-prior', label: `Closed by month vs ${prior ?? 'prior'}` },
+    { id: 'avg-close-vs-prior', label: `Avg time to close vs ${prior ?? 'prior'}` },
+  ];
+
   return (
     <>
+      {/* Buttons, not <a href="#id">. The app runs on a HashRouter, so the URL
+          hash IS the route — a fragment link would be read as a navigation to
+          "/by-auctioneer" and blank the page. */}
+      <nav className="an-jump" aria-label="Jump to section">
+        <span className="an-jump-label">Jump to</span>
+        {sections.map((s) => (
+          <button key={s.id} type="button" onClick={() => jumpTo(s.id)}>{s.label}</button>
+        ))}
+      </nav>
+
       {/* --- Auctions closed by month and auctioneer --- */}
-      <section className="an-panel">
+      <section className="an-panel" id="by-auctioneer">
         <h2>Auctions closed by month and auctioneer</h2>
         <p className="an-lede">
           Closed auctions grouped by the month they <strong>opened</strong>, then by who ran them,
@@ -64,11 +102,16 @@ export function CurrentYearStats({
         </p>
         {byAuctioneer.length === 0 ? (
           <p className="empty">No auctions with an open month recorded for {season}.</p>
-        ) : byAuctioneer.map((g) => (
+        ) : <>
+          <AccordionActions
+            onExpand={() => setOpenA(new Set(byAuctioneer.map((g) => g.month)))}
+            onCollapse={() => setOpenA(new Set())}
+          />
+          {byAuctioneer.map((g) => (
           <MonthAccordion
             key={g.month} month={g.month} firstOpen={g.firstOpen} lastOpen={g.lastOpen}
             count={g.rows.reduce((a, r) => a + r.closed, 0)} countLabel="auction"
-            open={!shutA.has(g.month)} onToggle={() => toggle(setShutA, g.month)}
+            open={openA.has(g.month)} onToggle={() => toggle(setOpenA, g.month)}
           >
             <table className={`an-table${g.rows.length >= 4 ? ' banded' : ''}`}>
               <thead>
@@ -85,24 +128,37 @@ export function CurrentYearStats({
               </tbody>
             </table>
           </MonthAccordion>
-        ))}
+          ))}
+        </>}
       </section>
 
       {/* --- Auctions by open date --- */}
-      <section className="an-panel">
+      <section className="an-panel" id="by-open-date">
         <h2>Auctions by open date</h2>
         <p className="an-lede">
           Every closed auction of the season in the order it opened.
         </p>
         {byOpenDate.length === 0 ? (
           <p className="empty">No auctions with an open date recorded for {season}.</p>
-        ) : byOpenDate.map((g) => (
+        ) : <>
+          <AccordionActions
+            onExpand={() => setOpenB(new Set(byOpenDate.map((g) => g.month)))}
+            onCollapse={() => setOpenB(new Set())}
+          />
+          {byOpenDate.map((g) => (
           <MonthAccordion
             key={g.month} month={g.month} firstOpen={g.firstOpen} lastOpen={g.lastOpen}
             count={g.rows.length} countLabel="auction"
-            open={!shutB.has(g.month)} onToggle={() => toggle(setShutB, g.month)}
+            open={openB.has(g.month)} onToggle={() => toggle(setOpenB, g.month)}
           >
-            <table className={`an-table${g.rows.length >= 4 ? ' banded' : ''}`}>
+            {/* Fixed layout + explicit widths: auction names run to 60-odd
+                characters and would otherwise shove the later columns off the
+                card. The name cell wraps; the rest stay on one line. */}
+            <table className={`an-table an-opens${g.rows.length >= 4 ? ' banded' : ''}`}>
+              <colgroup>
+                <col className="col-opened" /><col className="col-auction" />
+                <col className="col-auctioneer" /><col className="col-days" />
+              </colgroup>
               <thead>
                 <tr>
                   <th className="left">Opened</th><th className="left">Auction</th><th className="left">Auctioneer</th><th className="num">Days to close</th>
@@ -112,23 +168,24 @@ export function CurrentYearStats({
                 {g.rows.map((r) => (
                   <tr key={r.auctionId}>
                     <td className="left an-date">{fmtCloseDate(r.openDate) ?? r.openDate}</td>
-                    <td className="left">
+                    <td className="left wrap-text">
                       {r.link
                         ? <a href={r.link} target="_blank" rel="noreferrer noopener">{r.name}</a>
                         : r.name}
                     </td>
-                    <td className="left">{r.auctioneer}</td>
+                    <td className="left wrap-text">{r.auctioneer}</td>
                     <td className="num">{r.daysToClose ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </MonthAccordion>
-        ))}
+          ))}
+        </>}
       </section>
 
       {/* --- Days to close by close date --- */}
-      <section className="an-panel">
+      <section className="an-panel" id="days-to-close">
         <h2>Days to close, by close date</h2>
         <p className="an-lede">
           One bar per auction, in close-date order.{' '}
@@ -148,7 +205,7 @@ export function CurrentYearStats({
       </section>
 
       {/* --- Prior-year comparison: auctions closed by month --- */}
-      <section className="an-panel">
+      <section className="an-panel" id="closed-vs-prior">
         <h2>Auctions closed by month vs {prior ?? 'prior season'}</h2>
         {!prior ? (
           <p className="empty">No earlier season with month data to compare against.</p>
@@ -159,7 +216,18 @@ export function CurrentYearStats({
               each season's first month — so the two years line up by how far into the season they
               are, not by calendar date.
             </p>
-            <table className={`an-table${closeCounts.length >= 4 ? ' banded' : ''}`}>
+            <BarChart
+              categories={closeCounts.map((r) => `M${r.month}`)}
+              series={[
+                { label: season, color: CURRENT_COLOR, values: closeCounts.map((r) => r.current) },
+                { label: prior, color: PRIOR_COLOR, values: closeCounts.map((r) => r.prior) },
+              ]}
+              yLabel="Auctions closed" format={(n) => String(Math.round(n))}
+              ariaLabel={`Auctions closed per season month, ${season} against ${prior}`}
+              maxLabels={16}
+            />
+
+            <table className={`an-table an-after-chart${closeCounts.length >= 4 ? ' banded' : ''}`}>
               <thead>
                 <tr>
                   <th className="left">Close month</th>
@@ -192,23 +260,12 @@ export function CurrentYearStats({
                 </tr>
               </tfoot>
             </table>
-
-            <BarChart
-              categories={closeCounts.map((r) => `M${r.month}`)}
-              series={[
-                { label: season, color: CURRENT_COLOR, values: closeCounts.map((r) => r.current) },
-                { label: prior, color: PRIOR_COLOR, values: closeCounts.map((r) => r.prior) },
-              ]}
-              yLabel="Auctions closed" format={(n) => String(Math.round(n))}
-              ariaLabel={`Auctions closed per season month, ${season} against ${prior}`}
-              maxLabels={16}
-            />
           </>
         )}
       </section>
 
       {/* --- Prior-year comparison: average time to close --- */}
-      <section className="an-panel">
+      <section className="an-panel" id="avg-close-vs-prior">
         <h2>Average time to close by month vs {prior ?? 'prior season'}</h2>
         {!prior ? (
           <p className="empty">No earlier season with month data to compare against.</p>

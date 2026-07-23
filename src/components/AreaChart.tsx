@@ -10,7 +10,7 @@ import type { ItemHistoryPoint } from '../lib/analytics';
 // the line; the season's min–max range is drawn as a faint band behind it, so
 // the compression stays visible rather than pretending each season was a
 // single price. Seasons the token didn't sell in are simply absent — the line
-// bridges them, and the tooltip's sale count shows where the data is thin.
+// bridges them rather than dropping to zero.
 
 const W = 820, H = 320;
 const M = { top: 16, right: 22, bottom: 40, left: 64 };
@@ -130,7 +130,6 @@ export function AreaChart({
             <ul>
               <li><span className="dot" style={{ background: 'var(--series-1)' }} />Average<span className="tt-val">{money(hp.avg)}</span></li>
               <li><span className="dot" style={{ background: 'var(--border)' }} />Range<span className="tt-val">{money(hp.min)} – {money(hp.max)}</span></li>
-              <li><span className="dot" style={{ background: 'var(--border)' }} />Sales<span className="tt-val">{hp.n}</span></li>
             </ul>
           </div>
         )}

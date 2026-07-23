@@ -56,6 +56,10 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   - **Historical** (four panels, every season on record): one token's average price per season as a
     filled area chart with a min–max band and a 129-token picker; auctions per season as a table
     beside a bar chart; auctioneer share as one pie per season; and an auctioneer × season matrix.
+    Pies group everyone who ran a **single** auction that season into one *Single Auction Runners*
+    wedge, naming them on hover — without it the pies fragment badly (2024 had 11 auctioneers of
+    whom 10 ran one auction each, so eleven wedges said "Trent, and a crowd"). A season with only
+    one such person still shows them by name.
   - **Season months, not calendar months.** `Open Month`/`Close Month` are ordinals within a season
     (month 1 ≈ September of the previous calendar year) and the calendar month they land on drifts
     year to year. That is precisely what makes the prior-year comparison valid — it aligns the two
@@ -67,10 +71,12 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
     counted as zero.
   - **Funding columns are deliberately unused** (maintainer's call) — they are reserved for a future
     "augmented auctions" view, where auctioneers supplement the standard auction package.
-  - **Auctioneer names are folded on case only** (`edwin`/`Edwin`, `ralykam`/`Ralykam`); the blank
-    one renders as `Unknown`. Similar-but-distinct names (`Wade`/`Wade S`, `Casey Wren`/`Casey`,
-    `David Harris`/`David H`) are **not** merged — that is a judgement about who people are, and it
-    belongs in the sheet rather than in a display-time heuristic.
+  - **Auctioneer names are folded on case only**; the one blank renders as `Unknown`. The site does
+    **not** merge similar-but-distinct names — that is a judgement about who people are, and it
+    belongs in the sheet rather than in a display-time heuristic. The 2026-07-22 build surfaced six
+    such names, and the maintainer fixed them **at source**: `Wade`→`Wade S`, `Casey`→`Casey Wren`,
+    `David H`→`David Harris`, plus the `edwin`/`Edwin` and `ralykam`/`Ralykam` case pairs. 40 raw
+    names became 36 (35 after case-folding, which is now a no-op guard against regression).
   - New files: `lib/analytics.ts` (pure), `pages/AnalyticsPage.tsx`, and
     `components/{CurrentYearStats,HistoricalStats,MonthAccordion,BarChart,PieChart,AreaChart}.tsx`.
     `parseMeta` now also reads `openDate`, `daysToClose`, `Open Month` and `Close Month`.

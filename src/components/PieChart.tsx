@@ -4,14 +4,23 @@ import { useState } from 'react';
 // Used as small multiples: one pie per season showing each auctioneer's share
 // of that season's auctions.
 //
-// The categorical palette has 8 hues and some seasons had 17 different
-// auctioneers, so anything past the first `maxSlices - 1` collapses into a
-// single "Other" wedge. The collapse is by count, so the people who actually
-// shaped a season stay named and the long tail of one-offs stops fragmenting
-// the pie into unreadable slivers. The exact tail is never hidden — the legend
-// says how many were folded in, and the tooltip gives any wedge's real count.
+// Slices arrive already aggregated (see auctioneerSharesBySeason, which folds
+// everyone who ran a single auction that season into one slice). A slice may
+// therefore stand for several people; `members` carries their names, and both
+// the wedge and its legend entry reveal the full list on hover.
+//
+// The categorical palette has 8 hues, so anything past `maxSlices - 1` still
+// collapses into a trailing "Other" wedge as a backstop. With the current data
+// that never fires — the largest season is 8 slices after aggregation — but a
+// future season with many multi-auction runners would otherwise reuse colours.
 
-export type PieSlice = { label: string; count: number; share: number };
+export type PieSlice = {
+  label: string;
+  count: number;
+  share: number;
+  /** Names behind an aggregated slice; absent when the slice is one person. */
+  members?: string[];
+};
 
 const SIZE = 200;
 const R = 78;
@@ -35,6 +44,8 @@ function arcPath(startFrac: number, endFrac: number): string {
   return `M ${CX} ${CY} L ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} Z`;
 }
 
+const pct = (share: number) => `${(share * 100).toFixed(share < 0.1 ? 1 : 0)}%`;
+
 export function PieChart({
   slices, title, subtitle, maxSlices = 8,
 }: {
@@ -47,8 +58,6 @@ export function PieChart({
 
   if (!slices.length) return null;
 
-  // Collapse the tail. `folded` is how many real auctioneers the Other wedge
-  // stands for, so the legend can say so rather than just "Other".
   let shown: (PieSlice & { folded?: number })[] = slices;
   if (slices.length > maxSlices) {
     const head = slices.slice(0, maxSlices - 1);
@@ -58,6 +67,8 @@ export function PieChart({
       count: tail.reduce((a, s) => a + s.count, 0),
       share: tail.reduce((a, s) => a + s.share, 0),
       folded: tail.length,
+      // Roll up the tail's own names so the Other wedge stays inspectable too.
+      members: tail.flatMap((s) => s.members ?? [s.label]).sort((a, b) => (a < b ? -1 : 1)),
     }];
   }
 
@@ -71,6 +82,7 @@ export function PieChart({
   });
 
   const total = slices.reduce((a, s) => a + s.count, 0);
+  const hovered = active == null ? null : wedges[active];
 
   return (
     <figure className="pie">
@@ -79,17 +91,39 @@ export function PieChart({
         {subtitle && <span className="pie-sub">{subtitle}</span>}
       </figcaption>
 
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img"
-        aria-label={`${title}: ${shown.map((s) => `${s.label} ${Math.round(s.share * 100)}%`).join(', ')}`}>
-        {wedges.map((w, i) => (
-          <path
-            key={w.label} d={arcPath(w.start, w.end)} fill={w.color}
-            stroke="var(--card)" strokeWidth={1.5}
-            opacity={active == null || active === i ? 1 : 0.45}
-            onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
-          />
-        ))}
-      </svg>
+      {/* The tooltip is positioned over the pie rather than following the
+          cursor: these are small multiples, and a cursor-tracked tooltip in a
+          200px figure spends most of its time outside its own chart. */}
+      <div className="pie-plot">
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img"
+          aria-label={`${title}: ${shown.map((s) => `${s.label} ${pct(s.share)}`).join(', ')}`}>
+          {wedges.map((w, i) => (
+            <path
+              key={w.label} d={arcPath(w.start, w.end)} fill={w.color}
+              stroke="var(--card)" strokeWidth={1.5}
+              opacity={active == null || active === i ? 1 : 0.4}
+              onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
+            />
+          ))}
+        </svg>
+
+        {hovered && (
+          <div className="pie-tooltip" role="status">
+            <div className="tt-date">
+              <span className="dot" style={{ background: hovered.color }} />
+              {hovered.label}
+            </div>
+            <div className="tt-hint">
+              {hovered.count} auction{hovered.count === 1 ? '' : 's'} · {pct(hovered.share)}
+            </div>
+            {hovered.members && (
+              <ul className="pie-members">
+                {hovered.members.map((m) => <li key={m}>{m}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
 
       <ul className="pie-legend">
         {wedges.map((w, i) => (
@@ -100,7 +134,7 @@ export function PieChart({
             <span className="pie-name">
               {w.label}{w.folded ? ` (${w.folded})` : ''}
             </span>
-            <span className="pie-val">{w.count} · {(w.share * 100).toFixed(w.share < 0.1 ? 1 : 0)}%</span>
+            <span className="pie-val">{w.count} · {pct(w.share)}</span>
           </li>
         ))}
       </ul>

@@ -127,15 +127,17 @@ export function HistoricalStats({
       <section className="an-panel">
         <h2>Share of auctions by auctioneer</h2>
         <p className="an-lede">
-          One chart per season, newest first. Where a season had more auctioneers than the palette
-          can distinguish, the smallest are folded into a single <em>Other</em> wedge — the number
-          in brackets is how many people that covers.
+          One chart per season, newest first. Everyone who ran a single auction that season is
+          grouped as <em>Single Auction Runners</em> — hover the wedge or its legend entry for the
+          names.
         </p>
         <div className="an-pies">
           {shares.map((s) => (
             <PieChart
               key={s.season} title={s.season}
-              slices={s.slices.map((x) => ({ label: x.auctioneer, count: x.count, share: x.share }))}
+              slices={s.slices.map((x) => ({
+                label: x.auctioneer, count: x.count, share: x.share, members: x.members,
+              }))}
             />
           ))}
         </div>
