@@ -1070,9 +1070,11 @@ table.an-opens col.col-days { width: 16%; }
      warning or holds controls is not a stats line and must stay. */
   .meta-line.stats { display: none; }
 
-  /* One stat group shows at a time on phones (4 columns, not 7), so the three
+  /* A phone shows one stat group at a time (4 columns, not 7), so the three
      number columns need less room and the Token column can take more — long
-     names like "Path to Enlightenment (Fragment 4)" wrap to fewer lines. The
-     desktop 7-column view keeps the shared 32%. */
-  col.col-token { width: 40%; }
+     names like "Path to Enlightenment (Fragment 4)" wrap to fewer lines. Scoped
+     to `.one-group` (CategoryTable's single-group view): Compare's eight-column
+     table sits in a .cat-section too but has no room to spare. Desktop, which
+     always shows both groups, keeps the shared 32%. */
+  table.one-group col.col-token { width: 40%; }
 }

@@ -14,12 +14,17 @@ export function CategoryTable(
   const isBanded = rows.length >= 4;
   const showLast5 = group !== 'full';
   const showFull = group !== 'last5';
+  // `one-group` marks the phone view (a single stat group, so four columns not
+  // seven); the CSS uses it to widen the Token column, which Compare's eight-
+  // column table — also in a .cat-section — must not get.
+  const tableClass = [isBanded && 'banded', group !== 'both' && 'one-group']
+    .filter(Boolean).join(' ') || undefined;
 
   return (
     <section className="cat-section" data-category={category}>
       <h2 className="cat-header">{category}</h2>
       <div className="tablewrap">
-        <table className={isBanded ? 'banded' : undefined}>
+        <table className={tableClass}>
           <colgroup>
             <col className="col-token" />
             {showLast5 && <><col /><col /><col /></>}
