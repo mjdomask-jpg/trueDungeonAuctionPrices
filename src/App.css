@@ -335,7 +335,8 @@ td.diff.down { color: var(--diff-down); }
 /* Click-opened help bubble. Anchored to its trigger but clamped to the viewport
    so it can never push the page into a horizontal scroll on a phone. */
 .hint-pop {
-  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  position: absolute; top: calc(100% + 8px); left: 50%;
+  transform: translateX(calc(-50% + var(--hint-shift, 0px)));
   z-index: 20; display: flex; align-items: flex-start; gap: 8px;
   width: max-content; max-width: min(260px, calc(100vw - 32px));
   padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px;
@@ -378,9 +379,20 @@ td.diff.down { color: var(--diff-down); }
 .tx-row:hover { background: var(--row-hover); }
 .tx-row.upgrade { margin-left: 20px; }
 
-.tx-rhead {
-  display: flex; align-items: center; gap: 10px; width: 100%; background: none;
-  border: none; padding: 9px 8px; cursor: pointer; text-align: left;
+/* The expand button is an overlay covering the whole row, sitting behind the
+   visible face. That keeps one tab stop and a full-row click target while
+   letting the badges host their own help popovers — a button can't nest in a
+   button. See TransmuteRow. */
+.tx-rhead { position: relative; }
+.tx-rtoggle {
+  position: absolute; inset: 0; width: 100%; margin: 0; padding: 0;
+  border: none; background: none; cursor: pointer; border-radius: 8px;
+}
+.tx-rtoggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tx-rface {
+  position: relative; pointer-events: none;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 8px; text-align: left;
   color: var(--text-h); font-family: inherit; font-size: 15px;
 }
 .tx-chev { font-style: normal; color: var(--text); transition: transform 0.12s ease; flex: none; font-size: 12px; }
@@ -388,7 +400,9 @@ td.diff.down { color: var(--diff-down); }
 .tx-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tx-upfrom { font-size: 12px; color: var(--text); margin-left: 8px; font-family: var(--sans); }
 
-.tx-badges { display: flex; gap: 6px; align-items: center; flex: none; }
+/* Opts back into pointer events so the badge popovers are clickable through the
+   inert face; everything else in the row falls through to .tx-rtoggle. */
+.tx-badges { display: flex; gap: 6px; align-items: center; flex: none; pointer-events: auto; }
 .tx-badge { font-size: 10.5px; padding: 1px 8px; border-radius: 20px; font-family: var(--sans); white-space: nowrap; }
 .tx-badge.ceiling { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
 .tx-badge.est { background: var(--band); color: var(--text); }

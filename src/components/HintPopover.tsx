@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect, useId, useLayoutEffect, useRef, useState,
+  type CSSProperties, type ReactNode,
+} from 'react';
+
+// Keep the bubble on screen. It is centred on its trigger, which overflows once
+// the trigger sits near either edge, so measure once on open and slide it back.
+const EDGE = 8;
 
 // The site-wide mechanism for explanatory help text. See docs/ui-conventions.md:
 // help is NEVER a `title` attribute, because those only appear on hover and are
@@ -19,8 +26,24 @@ export function HintPopover({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [shift, setShift] = useState(0);
   const wrap = useRef<HTMLSpanElement>(null);
+  const pop = useRef<HTMLSpanElement>(null);
   const id = useId();
+
+  // Measured before paint, from the un-shifted position, so the bubble never
+  // appears off-screen and then jumps.
+  useLayoutEffect(() => {
+    if (!open) {
+      setShift(0);
+      return;
+    }
+    const r = pop.current?.getBoundingClientRect();
+    if (!r) return;
+    const vw = document.documentElement.clientWidth;
+    if (r.left < EDGE) setShift(EDGE - r.left);
+    else if (r.right > vw - EDGE) setShift(vw - EDGE - r.right);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -56,7 +79,14 @@ export function HintPopover({
         {trigger ?? '?'}
       </button>
       {open && (
-        <span className="hint-pop" id={id} role="note" onClick={(e) => e.stopPropagation()}>
+        <span
+          className="hint-pop"
+          id={id}
+          role="note"
+          ref={pop}
+          style={{ '--hint-shift': `${shift}px` } as CSSProperties}
+          onClick={(e) => e.stopPropagation()}
+        >
           <span className="hint-text">{children}</span>
           <button
             type="button"

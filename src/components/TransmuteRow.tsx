@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { money0 } from '../lib/format';
+import { HintPopover } from './HintPopover';
 import { sourceName, type BuildCost, type PricedLine } from '../lib/transmutes';
 
 // Friendly, non-camelCase label for where a line's price came from, plus the
@@ -43,34 +44,63 @@ export function TransmuteRow({
 
   return (
     <div className={`tx-row${paired ? ' upgrade' : ''}`}>
-      <button
-        type="button"
-        className="tx-rhead"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <i className={`tx-chev ${open ? 'open' : ''}`} aria-hidden="true">▸</i>
-        <span className="tchip" data-tier={cost.level}>{cost.level}</span>
-        <span className="tx-name">
-          {cost.displayName}
-          {paired && src && <span className="tx-upfrom">upgrades from {src}</span>}
+      {/* The expand control is an overlay behind the row's content rather than a
+          wrapper around it: the badges carry their own help popovers, and a
+          button cannot contain another button. The face is inert to pointers so
+          clicks fall through to the overlay; the badges opt back in. */}
+      <div className="tx-rhead">
+        <button
+          type="button"
+          className="tx-rtoggle"
+          aria-expanded={open}
+          aria-label={`${cost.displayName} — show ingredients`}
+          onClick={() => setOpen((v) => !v)}
+        />
+        <span className="tx-rface">
+          <i className={`tx-chev ${open ? 'open' : ''}`} aria-hidden="true">▸</i>
+          <span className="tchip" data-tier={cost.level}>{cost.level}</span>
+          <span className="tx-name">
+            {cost.displayName}
+            {paired && src && <span className="tx-upfrom">upgrades from {src}</span>}
+          </span>
+          <span className="tx-badges">
+            {cost.ceiling && (
+              <HintPopover
+                label="What “ceiling” means"
+                trigger={<span className="tx-badge ceiling">ceiling</span>}
+              >
+                Contains a ceiling-priced ingredient — the total is an upper bound.
+              </HintPopover>
+            )}
+            {estBadge && (
+              <HintPopover
+                label="What “est.” means"
+                trigger={<span className="tx-badge est">est.</span>}
+              >
+                Some ingredients are priced from another season.
+              </HintPopover>
+            )}
+            {cost.marketAvg != null && (
+              <HintPopover
+                label="About the buy price"
+                trigger={<span className="tx-market">buy ~{money0(cost.marketAvg)}</span>}
+              >
+                This token also sells at auction.
+              </HintPopover>
+            )}
+          </span>
+          <span className="tx-cost">
+            {cost.hasSource ? (
+              <>
+                <span className="tx-line"><span className="tx-lab">Build</span> <b>{money0(cost.fullAvg)}</b> <span className="tx-min">min {money0(cost.fullMin)}</span></span>
+                <span className="tx-line up"><span className="tx-lab">Upgrade</span> <b>{money0(cost.ownAvg)}</b> <span className="tx-min">min {money0(cost.ownMin)}</span></span>
+              </>
+            ) : (
+              <span className="tx-line"><b>{money0(cost.fullAvg)}</b> <span className="tx-min">min {money0(cost.fullMin)}</span></span>
+            )}
+          </span>
         </span>
-        <span className="tx-badges">
-          {cost.ceiling && <span className="tx-badge ceiling" title="Contains a ceiling-priced ingredient — the total is an upper bound">ceiling</span>}
-          {estBadge && <span className="tx-badge est" title="Some ingredients are priced from another season">est.</span>}
-          {cost.marketAvg != null && <span className="tx-market" title="This token also sells at auction">buy ~{money0(cost.marketAvg)}</span>}
-        </span>
-        <span className="tx-cost">
-          {cost.hasSource ? (
-            <>
-              <span className="tx-line"><span className="tx-lab">Build</span> <b>{money0(cost.fullAvg)}</b> <span className="tx-min">min {money0(cost.fullMin)}</span></span>
-              <span className="tx-line up"><span className="tx-lab">Upgrade</span> <b>{money0(cost.ownAvg)}</b> <span className="tx-min">min {money0(cost.ownMin)}</span></span>
-            </>
-          ) : (
-            <span className="tx-line"><b>{money0(cost.fullAvg)}</b> <span className="tx-min">min {money0(cost.fullMin)}</span></span>
-          )}
-        </span>
-      </button>
+      </div>
 
       {open && (
         <div className="tx-bom">

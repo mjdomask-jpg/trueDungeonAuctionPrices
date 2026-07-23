@@ -27,25 +27,46 @@ guarantees the required behaviour:
   anywhere outside it. The outside-click path matters most — it makes the whole
   screen the close target, so a phone user never has to hit the 18px `×`.
   `pointerdown` rather than `click` so the first touch closes it.
-- **Clamped to the viewport** (`max-width: min(260px, calc(100vw - 32px))`) so it
-  can never introduce a horizontal page scroll.
+- **Clamped to the viewport** — capped at `min(260px, calc(100vw - 32px))`, and
+  measured on open so a bubble whose trigger sits near an edge slides back on
+  screen instead of causing a horizontal page scroll.
 - **Stops click propagation**, so it is safe inside a `<label>` or any other
   clickable container whose control it would otherwise trigger.
 
 `trigger` replaces the default `?` circle when the help attaches to an existing
-affordance (a badge, say) rather than standing on its own.
+affordance rather than standing on its own — as the `ceiling`, `est.` and
+`buy ~$X` badges in `TransmuteRow` do:
+
+```tsx
+<HintPopover label="What “est.” means" trigger={<span className="tx-badge est">est.</span>}>
+  Some ingredients are priced from another season.
+</HintPopover>
+```
+
+### Putting a popover inside a clickable row
+
+A `<button>` cannot contain another `<button>`, so a row that is itself a click
+target can't simply wrap badges that open popovers. `TransmuteRow` solves this
+with an **overlay toggle** rather than a wrapper, and that is the pattern to
+copy:
+
+- the row header is a plain `<div>` with `position: relative`;
+- the expand control (`.tx-rtoggle`) is an empty `<button>` at `inset: 0`,
+  painted *behind* the content, carrying `aria-expanded` and an explicit
+  `aria-label` (it has no text of its own);
+- the visible face (`.tx-rface`) sets `pointer-events: none` so clicks fall
+  through to that button, preserving the whole-row click target;
+- only the interactive bits — `.tx-badges` — set `pointer-events: auto` to opt
+  back in.
+
+The result is one tab stop per row, valid HTML, and badges that open their help
+without expanding the row. The trade-off is that text in the face can no longer
+be selected with the mouse.
 
 **The one exception**: `title` is still fine as a *name* for a self-evident icon
 control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, not
 help. The test is whether a user who cannot see the tooltip loses information.
 For a sun/moon toggle, no. For "what does `est.` mean", yes.
-
-### Known gap
-
-The three badges in `TransmuteRow` (`ceiling`, `est.`, and the `buy ~$X` market
-tag) still use `title`. They sit inside the row's expand `<button>`, so a
-popover trigger button cannot nest there without invalid HTML — converting them
-needs the row header restructured first.
 
 ## Tables
 
