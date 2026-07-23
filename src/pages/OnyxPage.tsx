@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { seasonsOf, aggregateSeason, type ItemRow } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CategoryTable } from '../components/CategoryTable';
+import { PageIntro } from '../components/PageIntro';
 
 // Onyx sub-list. Onyx orders swap part of an Ultra Rare allotment for a fixed
 // set of chase versions; those tokens sell through the auctions with their own
@@ -40,12 +41,12 @@ export default function OnyxPage() {
 
   return (
     <>
-      <p className="sub">
+      <PageIntro short="Prices for Onyx ultra rares sold through auctions.">
         An <strong>Onyx</strong> order swaps part of an Ultra Rare allotment for a fixed set of{' '}
         <em>chase</em> versions — one of each Ultra Rare in the set. Onyx tokens sell through the
         auctions with their own price history, tracked separately from the main{' '}
         <Link to="/">Prices</Link> list.
-      </p>
+      </PageIntro>
 
       {onyxSales.length === 0 ? (
         <p className="empty">

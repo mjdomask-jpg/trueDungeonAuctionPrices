@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCostEngine } from '../hooks/useCostEngine';
 import { TransmuteSeason } from '../components/TransmuteSeason';
+import { PageIntro } from '../components/PageIntro';
 
 // Transmutes / build-vs-buy (Phase 4). Every craftable token's estimated build
 // cost, computed from current auction prices via the cost engine. Seasons are
@@ -64,13 +65,13 @@ export default function TransmutesPage() {
 
   return (
     <>
-      <p className="sub">
+      <PageIntro short="Estimated transmute costs if you bought ingredients from auctions.">
         What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
         building against buying from a reseller. Costs come from current auction prices — an{' '}
         <strong>avg</strong> and a <strong>min</strong> total per recipe. Tokens with a source show
         both the full build and the cheaper cost if you already own that source. Expand any row for
         its full bill of materials. For single-token price history, see <Link to="/">Prices</Link>.
-      </p>
+      </PageIntro>
 
       <div className="controls">
         <label className="search">
