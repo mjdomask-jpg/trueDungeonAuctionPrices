@@ -315,19 +315,26 @@ td.diff.down { color: var(--diff-down); }
 
 .tx-check { display: flex; align-items: center; gap: 7px; color: var(--text); cursor: pointer; font-size: 14px; }
 .tx-check input { width: 16px; height: 16px; accent-color: var(--accent); }
-.tx-hint-wrap { position: relative; display: inline-flex; }
-.tx-hint {
+/* Help popovers — the site-wide replacement for `title` tooltips.
+   See docs/ui-conventions.md. Not transmute-specific: usable anywhere. */
+.hint-wrap { position: relative; display: inline-flex; }
+.hint-q {
   display: inline-flex; align-items: center; justify-content: center;
   width: 16px; height: 16px; padding: 0; border: 0; border-radius: 50%;
   background: var(--band); color: var(--text); font-size: 11px; line-height: 1;
   cursor: pointer; font-family: var(--sans);
 }
-.tx-hint:hover, .tx-hint[aria-expanded='true'] { background: var(--accent-bg); color: var(--accent); }
-.tx-hint:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hint-q:hover, .hint-q[aria-expanded='true'] { background: var(--accent-bg); color: var(--accent); }
+/* A custom trigger keeps its own look; the button is just a click surface. */
+.hint-trigger {
+  display: inline-flex; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; cursor: pointer;
+}
+.hint-q:focus-visible, .hint-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Click-opened help bubble. Anchored to the "?" but clamped to the viewport so
-   it can never push the page into a horizontal scroll on a phone. */
-.tx-pop {
+/* Click-opened help bubble. Anchored to its trigger but clamped to the viewport
+   so it can never push the page into a horizontal scroll on a phone. */
+.hint-pop {
   position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   z-index: 20; display: flex; align-items: flex-start; gap: 8px;
   width: max-content; max-width: min(260px, calc(100vw - 32px));
@@ -336,13 +343,13 @@ td.diff.down { color: var(--diff-down); }
   font-size: 12.5px; font-weight: 400; line-height: 1.45;
   text-align: left; white-space: normal; cursor: auto;
 }
-.tx-pop-x {
+.hint-x {
   flex: none; width: 18px; height: 18px; margin: -1px -2px 0 0; padding: 0;
   border: 0; border-radius: 4px; background: none; color: var(--text);
   font-size: 15px; line-height: 1; cursor: pointer; font-family: var(--sans);
 }
-.tx-pop-x:hover { background: var(--band); color: var(--text-h); }
-.tx-pop-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hint-x:hover { background: var(--band); color: var(--text-h); }
+.hint-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .tx-season {
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;

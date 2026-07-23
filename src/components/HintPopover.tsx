@@ -1,20 +1,30 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
-// A "?" affordance whose help text opens on click/tap and stays up until it is
-// dismissed — via the ×, Escape, or a click anywhere outside. Deliberately not a
-// `title` tooltip: those only appear on hover, so touch devices never see them.
+// The site-wide mechanism for explanatory help text. See docs/ui-conventions.md:
+// help is NEVER a `title` attribute, because those only appear on hover and are
+// invisible on touch. Opens on click/tap and stays up until dismissed — via the
+// ×, Escape, or a pointerdown anywhere outside, so the whole screen is the close
+// target rather than the small ×.
 //
-// Safe to drop inside a <label>: every click within the popover is stopped from
-// reaching the label, which would otherwise toggle the label's control.
-export function HintPopover({ label = 'Help', children }: { label?: string; children: ReactNode }) {
+// `trigger` defaults to the standard "?" circle; pass a node to attach help to an
+// existing affordance instead. Safe to drop inside a <label>: every click within
+// is stopped from reaching it, which would otherwise toggle the label's control.
+export function HintPopover({
+  label = 'Help',
+  trigger,
+  children,
+}: {
+  label?: string;
+  trigger?: ReactNode;
+  children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
   const id = useId();
 
   useEffect(() => {
     if (!open) return;
-    // pointerdown (not click) so a tap anywhere dismisses it — the whole screen
-    // is the close target, not just the small ×.
+    // pointerdown, not click, so the first touch dismisses it.
     const onDown = (e: PointerEvent) => {
       if (!wrap.current?.contains(e.target as Node)) setOpen(false);
     };
@@ -30,10 +40,10 @@ export function HintPopover({ label = 'Help', children }: { label?: string; chil
   }, [open]);
 
   return (
-    <span className="tx-hint-wrap" ref={wrap}>
+    <span className="hint-wrap" ref={wrap}>
       <button
         type="button"
-        className="tx-hint"
+        className={trigger ? 'hint-trigger' : 'hint-q'}
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         aria-label={label}
@@ -43,14 +53,14 @@ export function HintPopover({ label = 'Help', children }: { label?: string; chil
           setOpen((v) => !v);
         }}
       >
-        ?
+        {trigger ?? '?'}
       </button>
       {open && (
-        <span className="tx-pop" id={id} role="note" onClick={(e) => e.stopPropagation()}>
-          <span className="tx-pop-text">{children}</span>
+        <span className="hint-pop" id={id} role="note" onClick={(e) => e.stopPropagation()}>
+          <span className="hint-text">{children}</span>
           <button
             type="button"
-            className="tx-pop-x"
+            className="hint-x"
             aria-label="Close"
             onClick={(e) => {
               e.preventDefault();
