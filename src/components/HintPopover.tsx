@@ -3,9 +3,26 @@ import {
   type CSSProperties, type ReactNode,
 } from 'react';
 
-// Keep the bubble on screen. It is centred on its trigger, which overflows once
-// the trigger sits near either edge, so measure once on open and slide it back.
+// Keep the bubble visible. It is centred on its trigger, which overflows once
+// the trigger sits near an edge, so measure once on open and slide it back.
 const EDGE = 8;
+
+// The bubble is clipped by any scrolling/hidden ancestor, not just the viewport
+// — `.tx-season` sets `overflow: hidden`, so a badge near a season card's right
+// edge gets cut off well before the window runs out. Clamp to the narrowest
+// bound that actually applies.
+function visibleBounds(el: HTMLElement): { lo: number; hi: number } {
+  let lo = 0;
+  let hi = document.documentElement.clientWidth;
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const cs = getComputedStyle(p);
+    if (cs.overflow === 'visible' && cs.overflowX === 'visible') continue;
+    const r = p.getBoundingClientRect();
+    lo = Math.max(lo, r.left);
+    hi = Math.min(hi, r.right);
+  }
+  return { lo, hi };
+}
 
 // The site-wide mechanism for explanatory help text. See docs/ui-conventions.md:
 // help is NEVER a `title` attribute, because those only appear on hover and are
@@ -38,11 +55,14 @@ export function HintPopover({
       setShift(0);
       return;
     }
-    const r = pop.current?.getBoundingClientRect();
-    if (!r) return;
-    const vw = document.documentElement.clientWidth;
-    if (r.left < EDGE) setShift(EDGE - r.left);
-    else if (r.right > vw - EDGE) setShift(vw - EDGE - r.right);
+    const el = pop.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const { lo, hi } = visibleBounds(el);
+    // Left wins if the bubble is wider than the space, so it never slides out
+    // the opposite side chasing the other edge.
+    if (r.left < lo + EDGE) setShift(lo + EDGE - r.left);
+    else if (r.right > hi - EDGE) setShift(hi - EDGE - r.right);
   }, [open]);
 
   useEffect(() => {

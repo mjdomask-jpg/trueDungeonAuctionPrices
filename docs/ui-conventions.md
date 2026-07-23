@@ -27,9 +27,12 @@ guarantees the required behaviour:
   anywhere outside it. The outside-click path matters most — it makes the whole
   screen the close target, so a phone user never has to hit the 18px `×`.
   `pointerdown` rather than `click` so the first touch closes it.
-- **Clamped to the viewport** — capped at `min(260px, calc(100vw - 32px))`, and
-  measured on open so a bubble whose trigger sits near an edge slides back on
-  screen instead of causing a horizontal page scroll.
+- **Clamped to whatever actually clips it** — capped at
+  `min(260px, calc(100vw - 32px))`, then measured on open and slid back inside
+  the narrowest bound among the viewport *and every scrolling/hidden ancestor*.
+  The viewport alone is not enough: `.tx-season` sets `overflow: hidden`, so a
+  bubble anchored near a season card's right edge is cut off by the card long
+  before the window runs out.
 - **Stops click propagation**, so it is safe inside a `<label>` or any other
   clickable container whose control it would otherwise trigger.
 
