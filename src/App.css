@@ -52,6 +52,77 @@ header h1 {
   border-radius: 8px 8px 0 0;
 }
 
+/* Mobile top-level nav: replaces the tab strip below 640px (SiteHeader renders
+   one or the other per breakpoint), so these classes only ever exist on a
+   phone. A button labelled with the current page opens the full list; each row
+   is a 44px tap target. See components/MobileNav.tsx. */
+.mobile-nav {
+  position: relative;
+  margin-top: 18px;
+}
+.mobile-nav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.mobile-nav-toggle .chev {
+  color: var(--text);
+  font-size: 12px;
+  transition: transform 0.15s ease;
+}
+.mobile-nav-toggle[aria-expanded='true'] .chev { transform: rotate(180deg); }
+.mobile-nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.mobile-nav-menu {
+  position: absolute;
+  top: 50px; /* 44px button + 6px gap */
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.mobile-nav-menu a {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px 0 34px;
+  position: relative;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 8px;
+}
+.mobile-nav-menu a:hover { background: var(--nav-hover); color: var(--text-h); }
+.mobile-nav-menu a.active { color: var(--text-h); font-weight: 600; }
+.mobile-nav-menu a.active::before {
+  content: '✓';
+  position: absolute;
+  left: 12px;
+  color: var(--accent);
+}
+.mobile-nav-menu a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
 .theme-toggle {
   position: absolute;
   top: 0;
@@ -978,4 +1049,10 @@ table.an-opens col.col-days { width: 16%; }
      Only lines marked `.stats` go — a .meta-line that carries a truncation
      warning or holds controls is not a stats line and must stay. */
   .meta-line.stats { display: none; }
+
+  /* One stat group shows at a time on phones (4 columns, not 7), so the three
+     number columns need less room and the Token column can take more — long
+     names like "Path to Enlightenment (Fragment 4)" wrap to fewer lines. The
+     desktop 7-column view keeps the shared 32%. */
+  col.col-token { width: 40%; }
 }
