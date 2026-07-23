@@ -71,7 +71,24 @@ control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, no
 help. The test is whether a user who cannot see the tooltip loses information.
 For a sun/moon toggle, no. For "what does `est.` mean", yes.
 
+## Form controls on mobile
+
+**Any `<select>`, `<input>` or `<textarea>` must render at 16px or larger on
+narrow screens.** Below 16px, iOS Safari zooms the whole page in when the
+control takes focus and does not zoom back out, stranding the user at a zoomed
+viewport. This is a browser threshold, not a taste call — the site's controls
+inherit 12px from their uppercase labels, so the override lives in the
+`max-width: 640px` block at the foot of `App.css`.
+
 ## Tables
+
+**Table headers do not stick.** `.tablewrap` sets `overflow-x: auto`, and CSS
+forces `overflow-y` to compute to `auto` alongside it, which makes the wrap the
+nearest scroll container for anything inside. The wrap has no height constraint,
+so it never scrolls vertically and a `position: sticky` header simply travels up
+and out with the page. Adding `position: sticky` to a `th` does nothing; making
+headers genuinely stick requires restructuring how the table scrolls.
+
 
 - **4+ rows get alternating row shading.** `CategoryTable` and `CompareTable`
   apply `.banded` themselves based on `rows.length >= 4`; do the same rather than

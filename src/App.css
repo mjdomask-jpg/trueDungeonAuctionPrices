@@ -171,6 +171,12 @@ table {
    text wraps on whole words (td.token has white-space: normal). */
 col.col-token { width: 32%; }
 
+/* No `position: sticky` here. It cannot work: .tablewrap sets `overflow-x:
+   auto`, which forces overflow-y to compute to `auto` as well, so the wrap
+   becomes the header's nearest scroll container — and the wrap has no height
+   constraint, so it never scrolls vertically. The page scrolls instead, and the
+   header goes with it. Making it genuinely stick needs a structural change, not
+   a sticky declaration. */
 thead th {
   background: var(--card);
   color: var(--text-h);
@@ -178,8 +184,6 @@ thead th {
   padding: 10px 12px;
   text-align: right;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
   white-space: nowrap;
 }
 thead th.left { text-align: left; }
@@ -946,4 +950,21 @@ table.an-opens col.col-days { width: 16%; }
   flex-direction: column;
   gap: 2px;
   color: var(--text);
+}
+
+/* ---- Narrow screens ---------------------------------------------------- */
+
+/* iOS Safari zooms the page in whenever a focused form control has a font-size
+   below 16px, and does not zoom back out afterwards. Every picker on the site
+   inherits 12px from its uppercase label, so tapping one strands the user at a
+   zoomed-in viewport. 16px is the browser's threshold, not a design choice.
+   Control height grows to suit the larger text, which also brings the controls
+   closer to a comfortable tap target. */
+@media (max-width: 640px) {
+  .controls { --control-h: 40px; }
+  .controls select,
+  .controls input,
+  .an-picker select { font-size: 16px; }
+  /* .an-picker sets its own height rather than using --control-h. */
+  .an-picker select { height: 40px; }
 }
