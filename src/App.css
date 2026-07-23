@@ -617,3 +617,289 @@ tbody td.wrap-text { white-space: normal; }
 }
 .show-all button:hover { border-color: var(--accent); color: var(--accent); }
 .show-all button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------------------
+   Auction analytics (Phase 5). Two views behind the shared .toggle control:
+   Current Year (one season in detail) and Historical (every season on record).
+   Panels are cards; the charts inside reuse .chartwrap from Price Timelines.
+   --------------------------------------------------------------------------- */
+
+/* Numeric cells. Tables already default to right-aligned, so this is a no-op
+   visually — it is here so the markup states which columns are numbers and
+   .left/.num read as a matched pair rather than one class and an absence. */
+th.num, td.num { text-align: right; }
+td.muted { color: var(--text); }
+td.strong { font-weight: 600; color: var(--text-h); }
+
+.an-panel {
+  margin: 32px 0 0;
+  padding-top: 8px;
+}
+.an-panel h2 {
+  font-family: var(--display);
+  font-size: 22px;
+  color: var(--text-h);
+  margin: 0 0 4px;
+}
+.an-lede {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--text);
+  max-width: 78ch;
+}
+.an-note {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  max-width: 78ch;
+}
+
+/* Panel-local tables sit in a card like the rest of the site, but unlike the
+   price tables they are content-width rather than full-bleed. */
+.an-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.an-table thead th { position: static; } /* short tables — no sticky header */
+.an-table tfoot th {
+  padding: 10px 12px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-h);
+  border-top: 1px solid var(--border);
+  background: var(--card);
+}
+.an-table tfoot th.left { text-align: left; }
+.an-table td.diff { font-weight: 600; }
+.an-table td.diff.up { color: var(--diff-up); }
+.an-table td.diff.down { color: var(--diff-down); }
+.an-date { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Month accordions (Current Year). Same chevron + header affordance as the
+   Transmutes season accordions, so the two pages behave alike. */
+.an-month {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  margin: 0 0 8px;
+  overflow: hidden;
+}
+.an-mhead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-h);
+  background: none;
+  border: 0;
+}
+.an-mhead:hover { background: var(--row-hover); }
+.an-mhead:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.an-mnum { font-weight: 600; }
+.an-mspan { font-size: 13px; color: var(--text); }
+.an-mcount { margin-left: auto; font-size: 13px; color: var(--text); }
+.an-mbody { padding: 0 10px 12px; }
+.an-mbody .an-table { border: 0; border-radius: 0; }
+
+/* Auctions-per-season panel: table beside its chart on a wide screen, stacked
+   below it on a narrow one. */
+.an-split {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+/* 340px, not 300: below that the "Auctioneers" header is wider than its
+   column and overflows its own right padding, so the heading sat flush to the
+   table edge while the numbers under it were inset 12px. */
+.an-narrow { flex: 0 1 340px; }
+.an-chartcol { flex: 1 1 420px; min-width: 0; }
+
+/* Small-multiple pies, one per season. */
+.an-pies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+.pie {
+  margin: 0;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.pie figcaption { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.pie-title { font-family: var(--display); font-size: 19px; color: var(--text-h); }
+.pie-sub { font-size: 12px; color: var(--text); }
+.pie svg { display: block; width: 100%; max-width: 190px; margin: 0 auto; height: auto; }
+.pie-legend {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+.pie-legend li { display: flex; align-items: center; gap: 7px; cursor: default; }
+.pie-legend li.dim { color: var(--text); }
+.pie-legend .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.pie-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pie-val { margin-left: auto; padding-left: 10px; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pie-total { margin: 8px 0 0; font-size: 12px; color: var(--text); text-align: center; }
+
+/* The auctioneer x season matrix is the one table here that can outgrow the
+   page on a narrow screen; it scrolls in its own box rather than the body. */
+.an-scroll { overflow-x: auto; }
+.an-matrix { min-width: 620px; }
+
+/* Standalone picker (the token selector), styled like a .controls label but
+   able to sit on its own inside a panel. */
+.an-picker {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text);
+}
+.an-picker select {
+  font: inherit;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text-h);
+  min-width: 260px;
+  max-width: 100%;
+}
+
+/* Bar and area charts reuse .chartwrap; they only need their own sizing. */
+.bar-chart, .area-chart {
+  display: block;
+  width: 100%;
+  min-width: 480px; /* below this, scroll rather than crush the labels */
+  height: auto;
+}
+.bar-chart text, .area-chart text { font-family: var(--sans); }
+.chart-tooltip .tt-hint { font-size: 12px; color: var(--text); margin-bottom: 4px; max-width: 260px; white-space: normal; }
+
+/* Jump-to nav at the top of the Current Year view. These are buttons, not
+   fragment links: the app runs on a HashRouter, so the URL hash is the route
+   and an <a href="#id"> would be read as a navigation. */
+.an-jump {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 4px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.an-jump-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text);
+}
+.an-jump button {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.an-jump button:hover { border-color: var(--accent); color: var(--accent); }
+.an-jump button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Expand all / Collapse all above a set of month accordions — same pill
+   buttons as .explorer-actions on the Auction Data page. */
+.an-actions { display: flex; gap: 8px; margin: 0 0 10px; }
+.an-actions button {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+  color: var(--text-h);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.an-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.an-actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Anchor targets: leave room so a jumped-to heading isn't flush to the top. */
+.an-panel[id] { scroll-margin-top: 16px; }
+
+/* Auctions-by-open-date table. Fixed layout so a 60-character auction name
+   wraps inside its own column instead of pushing the later columns out. */
+table.an-opens { table-layout: fixed; }
+table.an-opens col.col-opened { width: 14%; }
+table.an-opens col.col-auction { width: 48%; }
+table.an-opens col.col-auctioneer { width: 22%; }
+table.an-opens col.col-days { width: 16%; }
+
+/* A table directly under a chart in the same panel needs its own breathing
+   room — the chart card's bottom edge is otherwise flush against the header. */
+.an-after-chart { margin-top: 20px; }
+
+/* Pie tooltip. Anchored over the chart rather than tracking the cursor: in a
+   200px small multiple a cursor-tracked tooltip spends most of its time
+   outside its own figure. */
+.pie-plot { position: relative; }
+.pie-tooltip {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, -6px);
+  z-index: 5;
+  min-width: 150px;
+  max-width: 220px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-h);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+.pie-tooltip .tt-date { display: flex; align-items: center; gap: 7px; font-weight: 600; margin-bottom: 2px; }
+.pie-tooltip .dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.pie-tooltip .tt-hint { color: var(--text); margin-bottom: 0; }
+.pie-members {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 6px 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text);
+}

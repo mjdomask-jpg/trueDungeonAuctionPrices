@@ -11,4 +11,5 @@ export const navItems: NavItem[] = [
   { path: '/compare', label: 'Compare Years' },
   { path: '/transmutes', label: 'Transmutes' },
   { path: '/explorer', label: 'Auction Data' },
+  { path: '/analytics', label: 'Analytics' },
 ];

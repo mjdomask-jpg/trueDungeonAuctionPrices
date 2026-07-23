@@ -230,9 +230,10 @@ columns, and the rules that will bite you.
 **Export from:** the `auctionMetadata` tab → save as `auctionMetadata.csv`
 
 **Drives:** the auction count on the Prices page, the season list, the
-"Last 5" date labels, and the whole **Auction Data** explorer — which shows each
-auction's name, close date, style, completion style, auctioneer and forum link.
-It does **not** contain any prices.
+"Last 5" date labels, the whole **Auction Data** explorer — which shows each
+auction's name, close date, style, completion style, auctioneer and forum link —
+and the whole **Analytics** page, which is built on this file alone (plus the
+price feeds for the one token-price panel). It does **not** contain any prices.
 
 **Update when:** a new auction opens, an auction closes, or an auction's details
 change.
@@ -251,8 +252,10 @@ change.
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
 | `Link` | Optional | URL to the original forum thread; the explorer's "Auction link". |
-| `openDate`, `daysToClose`, `Open Month`, `Close Month` | No | Not read by the site. |
-| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced. |
+| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it. Recorded from 2022 on; `n/a` earlier. |
+| `daysToClose` | Optional | Whole days the auction ran. The Analytics days-to-close chart and every "avg days to close" figure. An auction with this blank is **left out of those averages**, not counted as zero. |
+| `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. Recorded from 2022 on. |
+| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced. Recorded from 2023 on. Reserved for a future "augmented auctions" view. |
 
 ### Rules that matter
 

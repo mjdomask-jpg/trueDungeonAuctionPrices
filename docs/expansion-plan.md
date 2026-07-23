@@ -9,10 +9,11 @@ reading the actual sheets, and proposes a phased build order.
 Read [domain-context.md](./domain-context.md) first for the *why*; this doc is the
 *what next* and *how*.
 
-> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`; Phase 5 is under way.** The transmute
-> build-vs-buy engine (the headline feature) is live, and the Detailed Auction Data explorer
-> (`/explorer`) has landed. Remaining in Phase 5: the auction-analytics dashboards and Open
-> Auctions. See the build-order table in §6 for per-phase status.
+> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`; Phase 5 all but complete.** The transmute
+> build-vs-buy engine (the headline feature) is live, the Detailed Auction Data explorer
+> (`/explorer`) has landed, and the auction-analytics dashboards (`/analytics`) are in. Only Open
+> Auctions remains, and it is **deferred** — the metadata currently holds no `Open` rows at all, so
+> the view has nothing to render until there is a live-ish feed. See §6 for per-phase status.
 
 ## 1. The load-bearing conclusion
 
@@ -45,8 +46,40 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   avg/max/min per token for each plus % difference. **Keys on `canonicalName` (Item), not display
   name**, so it compares the item that filled the same role across years even when the display name
   changed. `-` where an item is absent in a year.
-- ⏳ **Phase 5** — `Current Year Auction Stats`, `Historical Stats` — dashboards of pivots/charts
-  derived from **auction metadata** (counts by style, by auctioneer, close-date cadence, YoY, etc.).
+- ✅ **DONE (Phase 5)** — `Current Year Auction Stats`, `Historical Stats` — dashboards derived from
+  **auction metadata**, at `/analytics`, in **two views behind a toggle**.
+  - **Current Year** (six panels, on a season picker that defaults to the newest season with
+    cadence data — never a hardcoded year): auctions closed by month and auctioneer; auctions by
+    open date; days-to-close per auction coloured Trent vs everyone else; and three prior-season
+    comparisons — a close-month count table, the same as a grouped bar chart, and average days to
+    close by close month.
+  - **Historical** (four panels, every season on record): one token's average price per season as a
+    filled area chart with a min–max band and a 129-token picker; auctions per season as a table
+    beside a bar chart; auctioneer share as one pie per season; and an auctioneer × season matrix.
+    Pies group everyone who ran a **single** auction that season into one *Single Auction Runners*
+    wedge, naming them on hover — without it the pies fragment badly (2024 had 11 auctioneers of
+    whom 10 ran one auction each, so eleven wedges said "Trent, and a crowd"). A season with only
+    one such person still shows them by name.
+  - **Season months, not calendar months.** `Open Month`/`Close Month` are ordinals within a season
+    (month 1 ≈ September of the previous calendar year) and the calendar month they land on drifts
+    year to year. That is precisely what makes the prior-year comparison valid — it aligns the two
+    seasons by how far into the run they are. Month accordions carry the real date span in the
+    heading so the ordinal stays readable.
+  - **Uneven coverage is load-bearing.** `daysToClose`/`Open Month`/`Close Month` start in 2022, so
+    the Current Year picker offers 2022–2026 only and says why; Historical needs just season +
+    auctioneer and so covers 2019–2026. A blank `daysToClose` is excluded from averages, never
+    counted as zero.
+  - **Funding columns are deliberately unused** (maintainer's call) — they are reserved for a future
+    "augmented auctions" view, where auctioneers supplement the standard auction package.
+  - **Auctioneer names are folded on case only**; the one blank renders as `Unknown`. The site does
+    **not** merge similar-but-distinct names — that is a judgement about who people are, and it
+    belongs in the sheet rather than in a display-time heuristic. The 2026-07-22 build surfaced six
+    such names, and the maintainer fixed them **at source**: `Wade`→`Wade S`, `Casey`→`Casey Wren`,
+    `David H`→`David Harris`, plus the `edwin`/`Edwin` and `ralykam`/`Ralykam` case pairs. 40 raw
+    names became 36 (35 after case-folding, which is now a no-op guard against regression).
+  - New files: `lib/analytics.ts` (pure), `pages/AnalyticsPage.tsx`, and
+    `components/{CurrentYearStats,HistoricalStats,MonthAccordion,BarChart,PieChart,AreaChart}.tsx`.
+    `parseMeta` now also reads `openDate`, `daysToClose`, `Open Month` and `Close Month`.
 - ✅ **DONE (Phase 5)** — `Detailed Auction Data` — a filterable sales explorer at `/explorer`,
   in **two views behind a toggle**: grouped by auction (a `<details>` card per auction, body
   mounted only while open) and a flat sortable table (columns Season / # / Closed / Auction /
@@ -74,8 +107,11 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   - `exploreAuctions` / `flattenAuctions` / `sortFlatRows` in `lib/data.ts`; `pages/ExplorerPage.tsx`
     + `components/{AuctionCard,SaleTable}.tsx`. First view to read `completionStyle` from
     `auctionMetadata.csv`.
-- ⏳ **Phase 5** — `Open Auctions` — currently-running auctions (metadata filtered to `Open`) with
-  links. Note: this is the one **time-sensitive** view; it's only meaningful when fed live-ish data.
+- ⛔ **DEFERRED (Phase 5)** — `Open Auctions` — currently-running auctions (metadata filtered to
+  `Open`) with links. This is the one **time-sensitive** view, and it is only meaningful when fed
+  live-ish data. As of the 2026-07-22 export `Status` holds **271 `Closed` and 5 `Failed`, and no
+  `Open` rows whatsoever**, so the view would render empty on day one. Maintainer's call: skip it
+  until there is a feed behind it.
 
 ### D. Raw data imports (source of truth)
 `auctionMetadata`, `auctionPrices`, `pricesOnyx`. These are local copies of the data-layer
@@ -489,7 +525,7 @@ Cheap now while the code is small, painful later. Independent of which features 
 | **2** ✅ | Price Timelines (per-token charts) | C | **DONE (PR #5).** Hand-rolled SVG charts (zero deps), data-authored grouping via `tokenGroups.csv`. |
 | **3** ✅ | Compare Years tool | C | **DONE (PR #6).** Cross-season, keyed on canonical Item; % diff on avg; category + biggest-movers views. |
 | **4** ✅ | **Transmutes / build-vs-buy** | B | **DONE — SHIPPED (PR #8, merge `d6ece93`, 2026-07-22).** Cost engine (`lib/transmutes.ts`) + `/transmutes` page: Relic→Legendary paired layout, both build/upgrade costs, full BOM, game-canonical tier colors. All of §3–§4.4 landed. |
-| **5** | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **IN PROGRESS.** Detailed Auction Data explorer **DONE** — `/explorer`, grouped + flat views, one price per token per auction, unions the Onyx feed. Still open: the metadata-driven analytics dashboards, and Open Auctions (needs a live-ish feed). |
+| **5** ✅ | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **DONE, less one deferral.** Detailed Auction Data explorer — `/explorer`, grouped + flat views, one price per token per auction, unions the Onyx feed. Auction analytics — `/analytics`, Current Year + Historical behind a toggle, ten panels over `auctionMetadata.csv`. Open Auctions **deferred**: the metadata has no `Open` rows, so there is nothing to render until a live-ish feed exists. |
 
 Rationale: Phases 1–3 were pure computation over data we already parse, so they exercised the new
 routing/data-layer plumbing on low-risk features before the transmute engine (Phase 4), which
@@ -520,8 +556,9 @@ muted-text brighten, and the curly→straight apostrophe normalization in recipe
 4. ~~**Off-auction prices** (`pricesFleece`) — min-based build cost when a leaf has no min~~ —
    MOOT (§4.3): the real export **does** carry `min Price` on every row. §3.3's "max+avg only" note
    was mistaken. No fallback needed. Stays a hand-edited file.
-5. **Open Auctions freshness** — is live/near-live auction status in scope for the static site, or
-   is that view better left in the spreadsheet?
+5. ~~**Open Auctions freshness**~~ — RESOLVED for now (2026-07-22): **deferred**, because the
+   question is moot until the data changes. `auctionMetadata.csv` contains no `Open` rows at all,
+   so the view has nothing to show. Revisit if a live-ish feed appears.
 6. ~~**`Safehold` / `Patron` levels**~~ — RESOLVED / SHIPPED (Phase 4). All run through the one
    engine. `Safehold` is a self-contained V→I upgrade ladder (source lines point one rung down;
    cross-season source resolution handles rungs whose recipe lives in an earlier season). `Patron`,

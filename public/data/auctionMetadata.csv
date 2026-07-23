@@ -1,10 +1,10 @@
 auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,auctioneer,Link,openDate,closeDate,daysToClose,Status,Open Month,Close Month,targetFunding,augmentated,augmentTokens,augmentGrunnel,augmentWithheld,augmentedTotal,fundingNoAugment,preorderTotal
 20191,2019,1,Nick Braun,n/a,Fixed Date,Nick Braun,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 20192,2019,2,Azzy,n/a,Fixed Date,Azzy,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-20193,2019,3,Wade,n/a,Fixed Date,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-20194,2019,4,edwin,n/a,Fixed Date,edwin,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+20193,2019,3,Wade,n/a,Fixed Date,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+20194,2019,4,edwin,n/a,Fixed Date,Edwin,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 20195,2019,5,Tialong,n/a,Fixed Date,Tialong,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-20196,2019,6,Wade 2,n/a,Fixed Date,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+20196,2019,6,Wade 2,n/a,Fixed Date,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 20201,2020,1,Hayward 1,n/a,Lightning,Matthew Hayward,,n/a,n/a,n/a,Closed,,,,,,,,,,$12.80
 20202,2020,2,Hayward 2,n/a,Lightning,Matthew Hayward,,n/a,n/a,n/a,Closed,,,,,,,,,,$12.80
 20203,2020,3,Hayward 3,n/a,Lightning,Matthew Hayward,,n/a,n/a,n/a,Closed,,,,,,,,,,$11.20
@@ -15,27 +15,27 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 20208,2020,8,Hayward 8,n/a,Lightning,Matthew Hayward,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 20209,2020,9,Hayward 9,n/a,Fixed Date,Matthew Hayward,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202010,2020,10,Azzy 1,n/a,Fixed Date,Azzy,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-202011,2020,11,edwin 1,n/a,Fixed Date,edwin,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+202011,2020,11,edwin 1,n/a,Fixed Date,Edwin,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202012,2020,12,Dergidan 1,n/a,Fixed Date,Dergidan,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-202013,2020,13,ralykam 1,n/a,Lightning,ralykam,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+202013,2020,13,ralykam 1,n/a,Lightning,Ralykam,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202014,2020,14,Azzy 2,n/a,Fixed Date,Azzy,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-202015,2020,15,Wade 1,n/a,Fixed Date,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-20211,2021,1,Wade 2,n/a,Lightning,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$32.00
+202015,2020,15,Wade 1,n/a,Fixed Date,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+20211,2021,1,Wade 2,n/a,Lightning,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$32.00
 20212,2021,2,Azzy 3,n/a,Fixed Date,Azzy,,n/a,n/a,n/a,Closed,,,,,,,,,,$24.00
 20213,2021,3,ralykam 2,n/a,Lightning,Ralykam,,n/a,n/a,n/a,Closed,,,,,,,,,,$16.00
 20214,2021,4,Tyler 1,n/a,Fixed Date,Tyler,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 20215,2021,5,jpotter 1,n/a,Fixed Date,jpotter,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 20216,2021,6,Unknown,n/a,Fixed Date,,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 20217,2021,7,Miathin March 14,n/a,Lightning,Miathin,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-20218,2021,8,Wade Apr 1,n/a,Lightning,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-20219,2021,9,Wade Apr 25,n/a,Lightning,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-202110,2021,10,David H apr 12,n/a,Lightning,David H,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+20218,2021,8,Wade Apr 1,n/a,Lightning,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+20219,2021,9,Wade Apr 25,n/a,Lightning,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+202110,2021,10,David H apr 12,n/a,Lightning,David Harris,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202111,2021,11,Casey Apr 16,n/a,Lightning,Casey Wren,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202112,2021,12,Matt May 27,n/a,Lightning,Matt Soto,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202113,2021,13,Scott May 20,n/a,Lightning,Scott,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-202114,2021,14,Wade Aug 20,n/a,Lightning,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+202114,2021,14,Wade Aug 20,n/a,Lightning,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202115,2021,15,Matt Sep 6,n/a,Lightning,Matt Soto,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
-202116,2021,16,Wade Oct 1,n/a,Lightning,Wade,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
+202116,2021,16,Wade Oct 1,n/a,Lightning,Wade S,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202117,2021,17,Matt Oct 10,n/a,Lightning,Matt Soto,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202118,2021,18,Matt Oct 11,n/a,Lightning,Matt Soto,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
 202119,2021,19,Matt Oct 16,n/a,Lightning,Matt Soto,,n/a,n/a,n/a,Closed,,,,,,,,,,$0.00
@@ -58,7 +58,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 202216,2022,16,Josh M,Super Condensed,Lightning,Josh M,,2021-11-06,2021-11-16,10,Closed,1,1,,,,,,,,$32.00
 202217,2022,17,WM13,Super Condensed,Lightning,WM13,,2021-11-17,2021-11-21,4,Closed,1,1,,,,,,,,$40.00
 202218,2022,18,Edwin 3,Super Condensed,Lightning,Edwin,,2021-11-27,2021-11-30,3,Closed,2,2,,,,,,,,$0.00
-202219,2022,19,ralykam,Onyx Super Condensed,Lightning,ralykam,,2021-11-08,2021-11-16,8,Closed,1,1,,,,,,,,$32.00
+202219,2022,19,ralykam,Onyx Super Condensed,Lightning,Ralykam,,2021-11-08,2021-11-16,8,Closed,1,1,,,,,,,,$32.00
 202220,2022,20,Edwin 4,Super Condensed,Lightning,Edwin,,2021-11-30,2021-12-04,4,Closed,2,2,,,,,,,,$0.00
 202221,2022,21,Wade,Onyx Super Condensed,Lightning,Wade S,,2021-11-06,2021-11-08,2,Closed,1,1,,,,,,,,$32.00
 202222,2022,22,UTC 10,Onyx Super Condensed,Lightning,Matt Soto,,2021-12-01,2021-12-15,14,Closed,2,2,,,,,,,,$0.00
@@ -69,9 +69,9 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 202227,2022,27,laz auction,Super Condensed,Fixed Date,Laz,,2021-12-04,2021-12-28,24,Closed,2,3,,,,,,,,$0.00
 202228,2022,28,One more (before preorder end),Super Condensed,Lightning,WM13,,2022-01-07,2022-01-15,8,Closed,3,3,,,,,,,,$0.00
 202229,2022,29,UTC #13,Super Condensed,Lightning,Matt Soto,,2022-01-14,2022-01-16,2,Closed,3,3,,,,,,,,$0.00
-202230,2022,30,12 Days Xmas Auction,Super Condensed,Lightning,edwin,,2021-12-13,2022-01-07,25,Closed,2,3,,,,,,,,$0.00
+202230,2022,30,12 Days Xmas Auction,Super Condensed,Lightning,Edwin,,2021-12-13,2022-01-07,25,Closed,2,3,,,,,,,,$0.00
 202231,2022,31,AND THE KITCHEN SINK,Super Condensed,Semi-Lightning,jpotter,,2022-01-22,2022-01-24,2,Closed,3,3,,,,,,,,$0.00
-202232,2022,32,Another Augmented Auction,Super Condensed,Semi-Lightning,ralykam,,2022-02-04,2022-02-15,11,Closed,4,4,,,,,,,,$0.00
+202232,2022,32,Another Augmented Auction,Super Condensed,Semi-Lightning,Ralykam,,2022-02-04,2022-02-15,11,Closed,4,4,,,,,,,,$0.00
 202233,2022,33,Augmented 8K Auction,Super Condensed,Semi-Lightning,Wade S,,2022-01-28,2022-02-05,8,Closed,4,4,,,,,,,,$0.00
 202234,2022,34,UTC #14,Super Condensed,Lightning,Matt Soto,,2022-02-16,2022-02-27,11,Closed,4,5,,,,,,,,$0.00
 202235,2022,35,Beertram's 8K,Super Condensed,Semi-Lightning,Beertram,,2022-02-15,2022-02-26,11,Closed,4,5,,,,,,,,$0.00
@@ -85,7 +85,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 202243,2022,43,Beertram May 23,Super Condensed,Semi-Lightning,Beertram,,2022-05-23,2022-06-04,12,Closed,7,8,,,,,,,,$0.00
 202244,2022,44,UTC Jun 1,Super Condensed,Semi-Lightning,Matt Soto,,2022-06-01,2022-06-13,12,Closed,8,8,,,,,,,,$0.00
 202245,2022,45,UTC Jun 23,Onyx Super Condensed,Lightning,Matt Soto,,2022-06-23,2022-07-07,14,Closed,8,9,,,,,,,,$0.00
-202246,2022,46,ralykam Jun 23,Super Condensed,Lightning,ralykam,,2022-06-23,2022-07-10,17,Closed,8,9,,,,,,,,$0.00
+202246,2022,46,ralykam Jun 23,Super Condensed,Lightning,Ralykam,,2022-06-23,2022-07-10,17,Closed,8,9,,,,,,,,$0.00
 202247,2022,47,Casey Wren Jun 25,Super Condensed,Lightning,Casey Wren,,2022-06-25,2022-07-19,24,Closed,8,9,,,,,,,,$0.00
 202248,2022,48,UTC Sponsored by Krym,Super Condensed,Lightning,Matt Soto,,2022-07-08,2022-08-12,35,Closed,9,10,,,,,,,,$0.00
 202249,2022,49,WM13 August,Super Condensed,Lightning,WM13,,2022-08-11,2022-08-31,20,Closed,10,11,,,,,,,,$0.00
@@ -96,8 +96,8 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 20233,2023,3,"2023's ""Tyler-Style"" Auction",Super Condensed,Lightning,Tyler,https://truedungeon.com/forum?view=topic&catid=584&id=255505,2022-10-04,2022-10-05,1,Closed,1,1,"$8,000.00",Yes,"$1,061.00",,,"$1,061.00","$6,939.00",$16.00
 20234,2023,4,UTC Auction House 3,Super Condensed,Lightning,Matt Soto,https://truedungeon.com/forum?view=topic&catid=584&id=255544,2022-10-05,2022-10-06,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$16.00
 20235,2023,5,UTC Auction House 4,Super Condensed,Lightning,Matt Soto,https://truedungeon.com/forum?view=topic&catid=584&id=255549,2022-10-06,2022-10-08,2,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$16.00
-20236,2023,6,2023 ULTRA Condensed Augmented 8K Pre-Order Auction,Ultra Condensed,Lightning,Casey,https://truedungeon.com/forum?view=topic&catid=584&id=255533,2022-10-05,2022-10-10,5,Closed,1,1,"$8,000.00",Yes,$647.00,,-$10.50,$636.50,"$7,363.50",$8.00
-20237,2023,7,2023 Onyx Auction,Onyx Super Condensed,Lightning,Wade,https://truedungeon.com/forum?view=topic&catid=584&id=255504,2022-10-04,2022-10-11,7,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$8.00
+20236,2023,6,2023 ULTRA Condensed Augmented 8K Pre-Order Auction,Ultra Condensed,Lightning,Casey Wren,https://truedungeon.com/forum?view=topic&catid=584&id=255533,2022-10-05,2022-10-10,5,Closed,1,1,"$8,000.00",Yes,$647.00,,-$10.50,$636.50,"$7,363.50",$8.00
+20237,2023,7,2023 Onyx Auction,Onyx Super Condensed,Lightning,Wade S,https://truedungeon.com/forum?view=topic&catid=584&id=255504,2022-10-04,2022-10-11,7,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$8.00
 20238,2023,8,UTC Auction House 5,Onyx Super Condensed,Lightning,Matt Soto,https://truedungeon.com/forum?view=topic&catid=584&id=255568,2022-10-06,2022-10-13,7,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$16.00
 20239,2023,9,UTC Auction House 6,Super Condensed,Lightning,Matt Soto,https://truedungeon.com/forum?view=topic&catid=584&id=255603,2022-10-13,2022-10-15,2,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$16.00
 202310,2023,10,(Token of Time) 2023 8k Super-Condensed Auction,Super Condensed,Lightning,Lord Brian,https://truedungeon.com/forum?view=topic&catid=584&id=255570,2022-10-11,2022-10-21,10,Closed,1,1,"$7,500.00",Yes,$435.00,,,$435.00,"$7,065.00",$16.00
@@ -111,7 +111,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 202318,2023,18,Trent Auction 4,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2022-11-08,2022-11-09,1,Closed,2,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$14.00
 202319,2023,19,UTC Auction House 10,Onyx Super Condensed,Lightning,Matt Soto,https://truedungeon.com/forum?view=topic&catid=584&id=255691#436975,2022-11-06,2022-11-12,6,Closed,2,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$24.00
 202320,2023,20,LAZ's preorder super condensed auction,Super Condensed,Lightning,Laz,https://truedungeon.com/forum?view=topic&catid=584&id=255675,2022-11-01,2022-11-14,13,Closed,1,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$24.00
-202321,2023,21,American Cancer Society Holiday 8k Benefit Auction,Super Condensed,Fixed Date,Casey,https://truedungeon.com/forum?view=topic&catid=584&id=255655#436464,2022-10-26,2022-11-16,21,Closed,1,2,"$8,000.00",Yes,"$2,187.00",,,"$2,187.00","$5,813.00",$16.00
+202321,2023,21,American Cancer Society Holiday 8k Benefit Auction,Super Condensed,Fixed Date,Casey Wren,https://truedungeon.com/forum?view=topic&catid=584&id=255655#436464,2022-10-26,2022-11-16,21,Closed,1,2,"$8,000.00",Yes,"$2,187.00",,,"$2,187.00","$5,813.00",$16.00
 202322,2023,22,Trent Auction 5,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2022-11-08,2022-11-16,8,Closed,2,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$18.00
 202323,2023,23,UTC Auction House 11,Onyx Super Condensed,Lightning,Matt Soto,https://truedungeon.com/forum?view=topic&catid=584&id=255739,2022-11-12,2022-11-19,7,Closed,2,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$16.00
 202324,2023,24,Super Condensed Lightning Auction 34 PYPs,Super Condensed,Lightning,WM13,https://truedungeon.com/forum?view=topic&catid=584&id=255663#436510,2022-10-28,2022-11-20,23,Closed,1,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$16.00
@@ -124,7 +124,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 202331,2023,31,Beertram's Augmented Onyx 8K Auction,Onyx Super Condensed,Lightning,Beertram,https://truedungeon.com/forum?view=topic&catid=584&id=255748,2022-11-17,2022-12-11,24,Closed,2,3,"$8,000.00",Yes,$942.00,,,$942.00,"$7,058.00",$32.00
 202332,2023,32,Chaosorbit's 8K Lightning Style Super Condensed Auction,Super Condensed,Lightning,David Harris,https://truedungeon.com/forum?view=topic&catid=584&id=255791,2022-12-01,2022-12-14,13,Closed,2,3,"$7,200.00",Yes,,$55.00,,$55.00,"$7,145.00",$24.00
 202333,2023,33,UTC Auction House 13,Onyx Super Condensed,Lightning,Matt Soto,https://truedungeon.com/forum?view=topic&catid=584&id=255812,2022-12-07,2022-12-15,8,Closed,3,3,"$7,500.00",No,,,,$0.00,"$7,500.00",$8.00
-202334,2023,34,24 hour $8k auction For the Love of TD,Super Condensed,Fixed Date,Casey,https://truedungeon.com/forum?view=topic&catid=584&id=255850,2022-12-15,2022-12-16,1,Closed,3,3,"$8,000.00",Yes,"$1,401.00",$155.00,,"$1,556.00","$6,444.00",$24.00
+202334,2023,34,24 hour $8k auction For the Love of TD,Super Condensed,Fixed Date,Casey Wren,https://truedungeon.com/forum?view=topic&catid=584&id=255850,2022-12-15,2022-12-16,1,Closed,3,3,"$8,000.00",Yes,"$1,401.00",$155.00,,"$1,556.00","$6,444.00",$24.00
 202335,2023,35,Trent Auction 8,Onyx Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2022-12-09,2022-12-21,12,Closed,3,3,"$7,500.00",No,,,,$0.00,"$7,500.00",$16.00
 202336,2023,36,Kusig's New Years Onyx 8k Auction,Onyx Super Condensed,Lightning,Kusig,https://truedungeon.com/forum?view=topic&catid=584&id=2558677,2022-12-30,2023-02-08,40,Closed,3,5,"$7,500.00",Yes,,$127.00,,$127.00,"$7,373.00",$0.00
 202337,2023,37,Raly's Super Condensed Auction,Ultra Condensed,Lightning,Ralykam,https://truedungeon.com/forum?view=topic&defaultmenu=141&catid=584&id=255906&start=0,2023-01-13,2023-02-04,22,Closed,4,5,"$7,500.00",Yes,$602.00,$125.00,,$727.00,"$6,773.00",$0.00
@@ -191,7 +191,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 20256,2025,6,Trent Auction 3,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2024-09-19,2024-09-19,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$18.88
 20257,2025,7,Trent Auction 4,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2024-09-19,2024-09-20,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$20.16
 20258,2025,8,Trent Auction 5,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2024-09-20,2024-09-21,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$19.04
-20259,2025,9,2025 Onyx Pre Order Auction,Super Condensed,Lightning,Wade,https://truedungeon.com/forum?view=topic&catid=584&id=258030,2024-09-20,2024-10-05,15,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$32.00
+20259,2025,9,2025 Onyx Pre Order Auction,Super Condensed,Lightning,Wade S,https://truedungeon.com/forum?view=topic&catid=584&id=258030,2024-09-20,2024-10-05,15,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$32.00
 202510,2025,10,Trent Auction 6,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2024-09-21,2024-09-21,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$19.20
 202511,2025,11,Trent Auction 7,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2024-09-21,2024-09-22,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$20.16
 202512,2025,12,Trent Auction 8,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2024-09-22,2024-09-23,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$21.12
