@@ -25,6 +25,17 @@ export type AuctionMeta = {
   status: string;
   link: string;
   closeDate: string;
+  openDate: string;
+  // How long the auction ran. Recorded from 2022 on; null before that, and for
+  // a handful of 2025/2026 rows the sheet left blank.
+  daysToClose: number | null;
+  // SEASON months, not calendar months: month 1 is the season's first month
+  // (≈ September of the previous calendar year), so a "2026" auction opening
+  // 2025-09-25 is openMonth 1. The calendar month each season-month lands on
+  // drifts by ±1 year to year, which is exactly why the analytics compare
+  // seasons on this ordinal rather than on the date. Null before 2022.
+  openMonth: number | null;
+  closeMonth: number | null;
 };
 
 export type Stats = { n: number; min: number; max: number; avg: number };
@@ -92,6 +103,15 @@ export function parseSales(text: string): Sale[] {
   return out;
 }
 
+// The metadata export writes "n/a" (not blank) for values that don't apply —
+// most of the pre-2022 date columns. Both read as "no value".
+function intOrNull(raw: string | undefined): number | null {
+  const s = (raw ?? '').trim();
+  if (!s || s === 'n/a') return null;
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function parseMeta(text: string): AuctionMeta[] {
   const objs = toObjects(parseCSV(text));
   const out: AuctionMeta[] = [];
@@ -108,6 +128,10 @@ export function parseMeta(text: string): AuctionMeta[] {
       status: o['Status'],
       link: o['Link'],
       closeDate: o['closeDate'],
+      openDate: o['openDate'],
+      daysToClose: intOrNull(o['daysToClose']),
+      openMonth: intOrNull(o['Open Month']),
+      closeMonth: intOrNull(o['Close Month']),
     });
   }
   return out;
