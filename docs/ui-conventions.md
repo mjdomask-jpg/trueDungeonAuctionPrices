@@ -119,6 +119,13 @@ headers genuinely stick requires restructuring how the table scrolls.
   defined for both light and dark. No hard-coded hex in components.
 - **Transmute tier colours are game-canonical**, not a palette choice — see
   `domain-context.md`. Don't "fix" them to match the category palette.
+- **The chip's *text* colour is not canonical** — only the fill is. Text is
+  tuned per tier for contrast against that fill, and is the knob to reach for
+  when a chip reads poorly. Legendary is the worked example: its orange is a
+  bright, high-chroma `#f0730f`, on which white is 2.93:1 (a clear AA failure)
+  and the original brown was 5.32:1 but still muddy at chip size. Black is
+  7.16:1. Darkening the *fill* so white could work would have meant reaching
+  `#c2560a`, which no longer reads as Legendary orange and crowds Omni.
 
 ## Charts
 

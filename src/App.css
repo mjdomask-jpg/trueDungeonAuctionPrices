@@ -546,7 +546,7 @@ td.diff.down { color: var(--diff-down); }
    pure-white fill with a defined ring (an outlined white pill) and Safehold a
    solid gray fill. */
 .tchip {
-  font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
+  font-size: 12px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
   white-space: nowrap; flex: none; font-family: var(--sans);
   border: 1px solid transparent; background: var(--band); color: var(--text-h);
 }
@@ -555,7 +555,7 @@ td.diff.down { color: var(--diff-down); }
 .tchip[data-tier='Relic']     { background: #1f5fa6; color: #fff; }
 .tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
 .tchip[data-tier='Arcanum']   { background: #6d28aa; color: #fff; }
-.tchip[data-tier='Legendary'] { background: #f0730f; color: #3d1a02; }
+.tchip[data-tier='Legendary'] { background: #f0730f; color: #000; }
 .tchip[data-tier='Mythic']    { background: #fff;    color: #363c46; border-color: #aeb6c2; }
 .tchip[data-tier='Safehold']  { background: #d6dae0; color: #363c46; border-color: #bdc3cb; }
 .tchip[data-tier='Patron']    { background: #9900ff; color: #fff; }
@@ -567,7 +567,7 @@ td.diff.down { color: var(--diff-down); }
 :root[data-theme='dark'] .tchip[data-tier='Relic']     { background: #2767b3; color: #fff; }
 :root[data-theme='dark'] .tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
 :root[data-theme='dark'] .tchip[data-tier='Arcanum']   { background: #7b34ba; color: #fff; }
-:root[data-theme='dark'] .tchip[data-tier='Legendary'] { background: #f2701e; color: #241003; }
+:root[data-theme='dark'] .tchip[data-tier='Legendary'] { background: #f2701e; color: #000; }
 :root[data-theme='dark'] .tchip[data-tier='Mythic']    { background: #f6f8fb; color: #23262e; border-color: #f6f8fb; }
 :root[data-theme='dark'] .tchip[data-tier='Safehold']  { background: #c2c8d1; color: #23262e; border-color: transparent; }
 :root[data-theme='dark'] .tchip[data-tier='Patron']    { background: #c084fc; color: #3b0764; }
