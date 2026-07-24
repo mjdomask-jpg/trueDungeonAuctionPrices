@@ -628,7 +628,24 @@ td.diff.down { color: var(--diff-down); }
 }
 .auction[open] > .auction-head::before { transform: rotate(90deg); }
 
-.auction-title { flex: 1; min-width: 260px; }
+/* Two lines of title, then an ellipsis. Nine of 271 auction names wrap to a
+   third line at 375px, and those cards stand 119px tall against the 74px the
+   other 218 manage — enough jitter to make a long list read ragged.
+
+   The clamp goes on the title, not on .auction-name: the name shares its first
+   line with the "2026 · #46" prefix, and making the name itself a -webkit-box
+   would break the two onto separate lines and cost more height than it saves.
+   Clamping their shared parent keeps them inline and counts rendered lines.
+
+   Truncating is safe here because .auction-num already identifies the auction
+   uniquely — the lost tail is never the only thing telling two cards apart,
+   and on these names it is usually "- Ends 7/17", which the close date beside
+   it already says. */
+.auction-title {
+  flex: 1; min-width: 260px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
+}
 .auction-num {
   font-family: var(--sans);
   font-variant-numeric: tabular-nums;
@@ -649,6 +666,23 @@ td.diff.down { color: var(--diff-down); }
 .auction-status { color: var(--diff-up); font-weight: 600; }
 
 .auction-body { padding: 0 16px 16px; }
+
+/* The card's sales table. Token, Category and Price split 32/34/34 of a
+   1125px table on a desktop card, which left 662px of dead space between a
+   "Trade 1" and its right-aligned price.
+
+   Category and Price are sized to their content instead, and Token — the
+   column whose text is both longest and most variable — takes the rest. The
+   slack has to live somewhere in a three-column table this wide; parked
+   behind the token name it reads like any figures-right table, where before
+   it sat in the middle and pulled the two numbers apart.
+
+   150px clears "Onyx Ultra Rare" (125px) on one line; 120px clears
+   "$2,530.00" (83px), the highest price in the data. The 640px block tightens
+   both further, where the padding is smaller and every pixel is contested. */
+.auction-body col.col-token { width: auto; }
+.auction-body col:nth-child(2) { width: 150px; }
+.auction-body col:nth-child(3) { width: 120px; }
 .auction-facts {
   display: flex;
   flex-wrap: wrap;
@@ -659,8 +693,12 @@ td.diff.down { color: var(--diff-down); }
   color: var(--text);
 }
 .auction-totals { font-family: var(--sans); font-variant-numeric: tabular-nums; }
-.auction-link { color: var(--accent); text-decoration: none; white-space: nowrap; }
+/* Sits in the summary beside the close date. margin-left: auto pins it to the
+   right edge whether it shares that line with the date (phones, where the
+   title's min-width forces a wrap) or trails the whole header on one line. */
+.auction-link { color: var(--accent); text-decoration: none; white-space: nowrap; margin-left: auto; }
 .auction-link:hover { text-decoration: underline; }
+.auction-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .auction-none { margin: 0; font-size: 13px; color: var(--text); }
 
 /* Sortable column headers in the explorer's flat view. The <th> keeps its
@@ -691,6 +729,34 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
 /* Explorer controls: the two search boxes each take a full row of the wrapping
    flex container, so the pickers sit on one line and the searches below. */
 .controls .search { flex: 1 0 100%; min-width: 0; }
+
+/* The phone's collapsed filter set (ExplorerPage renders this below 640px
+   only). Styled to read as one more control in the row rather than as a
+   section heading — same height, border and radius as the selects beside it. */
+.filterset { flex: 1 0 100%; }
+.filterset > summary {
+  display: flex; align-items: center; gap: 8px;
+  height: var(--control-h); padding: 0 12px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+  color: var(--text-h); cursor: pointer;
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  list-style: none; /* the default triangle is replaced by ::after below */
+}
+.filterset > summary::-webkit-details-marker { display: none; }
+.filterset > summary::after {
+  content: '▸'; margin-left: auto; color: var(--accent);
+  transition: transform 0.12s ease;
+}
+.filterset[open] > summary::after { transform: rotate(90deg); }
+.filterset > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Count of active pickers, so a narrowed result doesn't read as the full set
+   once the controls that narrowed it are folded away. */
+.filterset-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  background: var(--accent); color: #fff; font-size: 11px; letter-spacing: 0;
+}
+.filterset-body { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 2px 2px; }
 
 /* Two-state view toggle. Styled as one segmented control so the pair reads as
    a single choice rather than two independent buttons. */
@@ -744,6 +810,23 @@ table.flat col.col-token      { width: 24%; }
 table.flat col.col-cat        { width: 12%; }
 table.flat col.col-price      { width: 10%; }
 tbody td.wrap-text { white-space: normal; }
+
+/* The phone's three-column flat table (SaleTable's compact mode). These
+   override the eight-column widths above by being more specific — the compact
+   colgroup renders only three of those classes.
+
+   Sized from the narrowest supported width, 320px, where the table's content
+   box is 278px: "2026 · #46" needs 76px (27.3%) and the widest price in the
+   data, $2,530.00, needs 71px (25.5%). Both are nowrap, so a shortfall clips
+   rather than wraps — at 52/26/22 they were 4px and 10px short and 806 cells
+   clipped. Token takes what's left: it wraps, so it degrades to a taller row
+   instead of lost text, which makes it the right column to borrow from. */
+table.flat.compact col.col-token   { width: 45%; }
+table.flat.compact col.col-auction { width: 28%; }
+table.flat.compact col.col-price   { width: 27%; }
+/* Tabular figures so the season·number references line up down the column,
+   matching how .auction-num sets them in the cards. */
+td.auction-ref { font-family: var(--sans); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
 
 /* "Show all" button under a capped flat table. */
 .show-all { margin: 12px 0 0; text-align: center; }
@@ -1054,7 +1137,11 @@ table.an-opens col.col-days { width: 16%; }
    Control height grows to suit the larger text, which also brings the controls
    closer to a comfortable tap target. */
 @media (max-width: 640px) {
-  .controls { --control-h: 40px; }
+  /* 44px, not 40: this is the height every control in the row inherits —
+     selects, the search box, the view toggle's buttons and the filter
+     disclosure's summary — so raising it here is what puts the whole control
+     row on the touch guideline at once. */
+  .controls { --control-h: 44px; }
   .controls select,
   .controls input,
   .an-picker select { font-size: 16px; }
@@ -1161,6 +1248,58 @@ table.an-opens col.col-days { width: 16%; }
   .tx-check { min-height: 44px; gap: 12px; }
   .tx-check input { width: 18px; height: 18px; }
   .tx-check .hint-q::after { inset: -11px -12px; }
+
+  /* --- Auction Data touch targets -------------------------------------------
+     Expand all / Collapse all / Clear filters were 25.5px pills. They sit in
+     the count line rather than the control row, so they don't inherit
+     --control-h and have to say 44px themselves. They may wrap to two rows at
+     this size, which is the right trade — they're the page's primary actions
+     on a list of 271 cards. */
+  .explorer-actions { gap: 10px; flex-wrap: wrap; }
+  .explorer-actions button { min-height: 44px; padding: 0 14px; font-size: 13px; }
+
+  /* The segmented control sets its height on the wrapper, so its 1px borders
+     came off the buttons inside and left them 42.5px. Let the wrapper size to
+     its content and put the 44px on the buttons themselves. */
+  .toggle-buttons { height: auto; }
+  .toggle-buttons button { min-height: 44px; }
+
+  /* An inline anchor is only as tall as its text — 19.5px here. inline-flex
+     lets it carry a height without becoming a block and breaking the header
+     line it shares with the close date. */
+  .auction-link { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* --- Expanded auction card table ------------------------------------------
+     Token held 32% (96px of 300px) while Category and Price split the rest at
+     34% each, so a short "Trade 1" sat marooned to the left of the price with
+     the token name clipping beside it. Category is the column to take from:
+     its values are short, and the only long one is "Onyx Ultra Rare", which
+     was forcing 125px because the cell is nowrap. Letting it wrap costs two
+     lines on a handful of rows and buys Token half the table.
+
+     Category and Price are sized in px, not percentages, and Token takes
+     whatever is left. Percentages can't work at both widths: the two fixed
+     columns need 166px together, which is 55% of the table at 375px but 67%
+     at 320px, so any split that fits one clips the other. Token is the column
+     that can absorb the difference because it wraps.
+
+     86px is the longest category that CANNOT wrap — "Condensed", a single
+     word; the longer "Onyx Ultra Rare" and "Golden Ticket" have spaces and
+     break over two lines. 82px is "$2,530.00", the dataset's highest price,
+     which stays nowrap because breaking a figure would be worse than a narrow
+     token column. */
+  .auction-body td,
+  .auction-body th { padding-left: 8px; padding-right: 8px; }
+  .auction-body td.left:not(.token) { white-space: normal; }
+  /* At 320px the three columns genuinely don't fit: Token's longest unbreakable
+     word ("Enlightenment") wants 101px and only 77px is left once Category and
+     Price take theirs. Breaking mid-word is ugly on those few rows, but it
+     shows the whole name — clipping hides it. Only engages when a word can't
+     otherwise fit, so 375px and up are untouched. */
+  .auction-body td.token { overflow-wrap: break-word; }
+  .auction-body col.col-token { width: auto; }
+  .auction-body col:nth-child(2) { width: 86px; }
+  .auction-body col:nth-child(3) { width: 82px; }
 }
 
 /* The ceiling badge's light-theme brown is 2.94:1 on the dark card — below AA,

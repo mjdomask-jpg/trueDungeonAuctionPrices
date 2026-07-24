@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows,
-  EMPTY_FILTERS, DEFAULT_SORT, type ExplorerFilters, type SortKey, type SortDir,
+  EMPTY_FILTERS, DEFAULT_SORT, COMPACT_SORT_KEYS,
+  type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { AuctionCard } from '../components/AuctionCard';
 import { SaleTable } from '../components/SaleTable';
 import { PageIntro } from '../components/PageIntro';
@@ -53,22 +55,38 @@ export default function ExplorerPage() {
   const options = useMemo(() => explorerOptions(allSales, meta), [allSales, meta]);
   const result = useMemo(() => exploreAuctions(allSales, meta, filters), [allSales, meta, filters]);
 
+  // Phones get a three-column table (see SaleTable), so only those three keys
+  // have a header to sort from. A sort picked on a wide screen — auctioneer,
+  // say — would otherwise order the table by a column that isn't there and
+  // show no caret anywhere, so it falls back to the default instead. The
+  // stored sortKey is left alone: going back to a wide screen restores it.
+  const narrow = useMediaQuery(NARROW);
+  const sortHidden = narrow && !COMPACT_SORT_KEYS.includes(sortKey);
+  const activeKey = sortHidden ? DEFAULT_SORT.key : sortKey;
+  const activeDir = sortHidden ? DEFAULT_SORT.dir : sortDir;
+
   // The flat view is the same result set, flattened and re-sorted — never a
   // second query, so the two views can't disagree.
   const flatRows = useMemo(
-    () => (view === 'flat' ? sortFlatRows(flattenAuctions(result.auctions), sortKey, sortDir) : []),
-    [view, result, sortKey, sortDir],
+    () => (view === 'flat' ? sortFlatRows(flattenAuctions(result.auctions), activeKey, activeDir) : []),
+    [view, result, activeKey, activeDir],
   );
 
   // Clicking the active column flips its direction; a new column starts in its
   // most useful direction — newest/highest first, but A→Z for the text columns.
+  // Compared against the *active* key, not the stored one: when a hidden sort
+  // has fallen back (see above), the header the user can see is the active one,
+  // so tapping it should flip that — committing the fallback on the way — not
+  // silently re-apply a direction from a column that isn't rendered.
   const onSort = (key: SortKey) => {
-    if (key === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortKey(key);
-      const alphabetical = key === 'auction' || key === 'auctioneer' || key === 'token' || key === 'category';
-      setSortDir(alphabetical ? 'asc' : 'desc');
+    if (key === activeKey) {
+      setSortKey(activeKey);
+      setSortDir(activeDir === 'asc' ? 'desc' : 'asc');
+      return;
     }
+    setSortKey(key);
+    const alphabetical = key === 'auction' || key === 'auctioneer' || key === 'token' || key === 'category';
+    setSortDir(alphabetical ? 'asc' : 'desc');
   };
 
   // Re-apply the auto-expand rule whenever the result set changes, so narrowing
@@ -92,6 +110,37 @@ export default function ExplorerPage() {
 
   const anyFilter = Object.values(filters).some(Boolean);
 
+  // The three dropdown filters, shared between the inline desktop layout and
+  // the phone's disclosure. `pickerCount` labels that disclosure, so a filter
+  // set earlier is still visible once it's collapsed out of sight — search is
+  // excluded because its own box stays on screen and says so itself.
+  const pickerCount = [filters.season, filters.category, filters.auctioneer].filter(Boolean).length;
+  const pickers = (
+    <>
+      <label>
+        Season
+        <select value={filters.season} onChange={(e) => set('season', e.target.value)}>
+          <option value="">All seasons</option>
+          {options.seasons.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </label>
+      <label>
+        Category
+        <select value={filters.category} onChange={(e) => set('category', e.target.value)}>
+          <option value="">All categories</option>
+          {options.categories.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </label>
+      <label>
+        Auctioneer
+        <select value={filters.auctioneer} onChange={(e) => set('auctioneer', e.target.value)}>
+          <option value="">All auctioneers</option>
+          {options.auctioneers.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
+      </label>
+    </>
+  );
+
   if (error) return <p className="err">Failed to load data: {error}</p>;
   if (loading) return <p className="empty">Loading auction data…</p>;
 
@@ -105,27 +154,19 @@ export default function ExplorerPage() {
       </PageIntro>
 
       <div className="controls">
-        <label>
-          Season
-          <select value={filters.season} onChange={(e) => set('season', e.target.value)}>
-            <option value="">All seasons</option>
-            {options.seasons.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-        <label>
-          Category
-          <select value={filters.category} onChange={(e) => set('category', e.target.value)}>
-            <option value="">All categories</option>
-            {options.categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </label>
-        <label>
-          Auctioneer
-          <select value={filters.auctioneer} onChange={(e) => set('auctioneer', e.target.value)}>
-            <option value="">All auctioneers</option>
-            {options.auctioneers.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </label>
+        {/* Three stacked pickers cost 124px on a phone and pushed the first
+            auction to y=533. Behind a disclosure they cost one 44px row, and
+            the badge keeps a narrowed result from looking like the whole set.
+            Desktop has the width, so it renders them inline as before. */}
+        {narrow ? (
+          <details className="filterset">
+            <summary>
+              Filters
+              {pickerCount > 0 && <span className="filterset-count">{pickerCount}</span>}
+            </summary>
+            <div className="filterset-body">{pickers}</div>
+          </details>
+        ) : pickers}
         {/* A two-state toggle rather than a dropdown: with only two choices the
             select hid one of them behind a click. */}
         <div className="toggle" role="group" aria-label="View">
@@ -152,9 +193,13 @@ export default function ExplorerPage() {
 
         <label className="search">
           Search
+          {/* Names both things it matches, in the fewest words: the box spans
+              token names AND auction names (see exploreAuctions), which is what
+              lets it answer "Trent" as well as "Wish Ring". The longer phrasing
+              this replaces overflowed the input at 320px. */}
           <input
             type="search"
-            placeholder="Search by token or auction name…"
+            placeholder="Search tokens or auctions…"
             value={filters.search}
             onChange={(e) => set('search', e.target.value)}
           />
@@ -199,9 +244,10 @@ export default function ExplorerPage() {
             )}
             <SaleTable
               rows={capped ? flatRows.slice(0, FLAT_ROW_LIMIT) : flatRows}
-              sortKey={sortKey}
-              sortDir={sortDir}
+              sortKey={activeKey}
+              sortDir={activeDir}
               onSort={onSort}
+              compact={narrow}
             />
             {capped && (
               <p className="show-all">
