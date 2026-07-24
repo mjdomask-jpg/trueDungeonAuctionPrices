@@ -628,7 +628,24 @@ td.diff.down { color: var(--diff-down); }
 }
 .auction[open] > .auction-head::before { transform: rotate(90deg); }
 
-.auction-title { flex: 1; min-width: 260px; }
+/* Two lines of title, then an ellipsis. Nine of 271 auction names wrap to a
+   third line at 375px, and those cards stand 119px tall against the 74px the
+   other 218 manage — enough jitter to make a long list read ragged.
+
+   The clamp goes on the title, not on .auction-name: the name shares its first
+   line with the "2026 · #46" prefix, and making the name itself a -webkit-box
+   would break the two onto separate lines and cost more height than it saves.
+   Clamping their shared parent keeps them inline and counts rendered lines.
+
+   Truncating is safe here because .auction-num already identifies the auction
+   uniquely — the lost tail is never the only thing telling two cards apart,
+   and on these names it is usually "- Ends 7/17", which the close date beside
+   it already says. */
+.auction-title {
+  flex: 1; min-width: 260px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
+}
 .auction-num {
   font-family: var(--sans);
   font-variant-numeric: tabular-nums;
