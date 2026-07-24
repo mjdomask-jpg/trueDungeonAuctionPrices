@@ -29,7 +29,7 @@ export function TransmuteSeason({
       <button type="button" className="tx-shead" aria-expanded={open} onClick={onToggle}>
         <i className={`tx-chev ${open ? 'open' : ''}`} aria-hidden="true">▸</i>
         <span className="tx-syear">{year}</span>
-        <span className="tx-scount">{costs.length} buildable</span>
+        <span className="tx-scount">{costs.length} transmute{costs.length === 1 ? '' : 's'}</span>
         {note && <span className="tx-snote">{note}</span>}
       </button>
 
