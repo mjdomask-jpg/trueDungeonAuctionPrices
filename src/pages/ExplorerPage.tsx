@@ -193,9 +193,13 @@ export default function ExplorerPage() {
 
         <label className="search">
           Search
+          {/* Names both things it matches, in the fewest words: the box spans
+              token names AND auction names (see exploreAuctions), which is what
+              lets it answer "Trent" as well as "Wish Ring". The longer phrasing
+              this replaces overflowed the input at 320px. */}
           <input
             type="search"
-            placeholder="Search by token or auction name…"
+            placeholder="Search tokens or auctions…"
             value={filters.search}
             onChange={(e) => set('search', e.target.value)}
           />
