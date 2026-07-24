@@ -85,7 +85,11 @@ export default function TransmutesPage() {
         </label>
       </div>
 
-      <p className="meta-line">
+      {/* A bare count while idle, so it earns `.stats` and drops on phones to get
+          the seasons above the fold. Searching changes its job — the match tally
+          is the only confirmation the query hit anything — so the class comes off
+          and the line stays. */}
+      <p className={`meta-line${searching ? '' : ' stats'}`}>
         {total} transmute{total === 1 ? '' : 's'} across {seasons.length} seasons
         {searching && ` · ${shown.length} season${shown.length === 1 ? '' : 's'} with matches`}
       </p>
