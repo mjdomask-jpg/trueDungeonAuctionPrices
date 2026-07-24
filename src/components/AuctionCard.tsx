@@ -43,20 +43,36 @@ export function AuctionCard({
         {/* Only Closed auctions are listed, so the date is always a close
             date — labelling it says which date it is without a status chip. */}
         <span className="auction-when">Closed: {date ?? 'unknown'}</span>
+        {/* Shares the date's line rather than sitting alone above the table,
+            and only once the card is open — on a list of 271 collapsed cards
+            it would be 271 outbound links competing with the disclosure.
+            stopPropagation because a click inside a <summary> would otherwise
+            toggle the card shut on the way out. */}
+        {open && meta.link && (
+          <a
+            className="auction-link"
+            href={meta.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Auction link ↗
+          </a>
+        )}
       </summary>
 
       {/* Body is mounted only while open. With every auction listed that's the
           difference between ~7,300 rows in the DOM and only the ones you asked
           to see. */}
       {open && <div className="auction-body">
-        <p className="auction-facts">
-          {facts.map((f) => <span key={f} className="cat">{f}</span>)}
-          {meta.link && (
-            <a className="auction-link" href={meta.link} target="_blank" rel="noopener noreferrer">
-              Auction link ↗
-            </a>
-          )}
-        </p>
+        {/* The link moved up to the summary, so this row can be nothing but
+            chips — and 42 auctions carry no style or auctioneer at all, which
+            would leave an empty paragraph holding its margin open. */}
+        {facts.length > 0 && (
+          <p className="auction-facts">
+            {facts.map((f) => <span key={f} className="cat">{f}</span>)}
+          </p>
+        )}
 
         {rows.length === 0 ? (
           <p className="auction-none">No recorded sales for this auction.</p>

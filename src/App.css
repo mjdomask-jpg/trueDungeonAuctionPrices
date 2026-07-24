@@ -659,8 +659,12 @@ td.diff.down { color: var(--diff-down); }
   color: var(--text);
 }
 .auction-totals { font-family: var(--sans); font-variant-numeric: tabular-nums; }
-.auction-link { color: var(--accent); text-decoration: none; white-space: nowrap; }
+/* Sits in the summary beside the close date. margin-left: auto pins it to the
+   right edge whether it shares that line with the date (phones, where the
+   title's min-width forces a wrap) or trails the whole header on one line. */
+.auction-link { color: var(--accent); text-decoration: none; white-space: nowrap; margin-left: auto; }
 .auction-link:hover { text-decoration: underline; }
+.auction-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .auction-none { margin: 0; font-size: 13px; color: var(--text); }
 
 /* Sortable column headers in the explorer's flat view. The <th> keeps its
@@ -1227,9 +1231,41 @@ table.an-opens col.col-days { width: 16%; }
   .toggle-buttons button { min-height: 44px; }
 
   /* An inline anchor is only as tall as its text — 19.5px here. inline-flex
-     lets it carry a height without becoming a block and breaking the fact row
-     it shares with the metadata chips. */
+     lets it carry a height without becoming a block and breaking the header
+     line it shares with the close date. */
   .auction-link { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* --- Expanded auction card table ------------------------------------------
+     Token held 32% (96px of 300px) while Category and Price split the rest at
+     34% each, so a short "Trade 1" sat marooned to the left of the price with
+     the token name clipping beside it. Category is the column to take from:
+     its values are short, and the only long one is "Onyx Ultra Rare", which
+     was forcing 125px because the cell is nowrap. Letting it wrap costs two
+     lines on a handful of rows and buys Token half the table.
+
+     Category and Price are sized in px, not percentages, and Token takes
+     whatever is left. Percentages can't work at both widths: the two fixed
+     columns need 166px together, which is 55% of the table at 375px but 67%
+     at 320px, so any split that fits one clips the other. Token is the column
+     that can absorb the difference because it wraps.
+
+     86px is the longest category that CANNOT wrap — "Condensed", a single
+     word; the longer "Onyx Ultra Rare" and "Golden Ticket" have spaces and
+     break over two lines. 82px is "$2,530.00", the dataset's highest price,
+     which stays nowrap because breaking a figure would be worse than a narrow
+     token column. */
+  .auction-body td,
+  .auction-body th { padding-left: 8px; padding-right: 8px; }
+  .auction-body td.left:not(.token) { white-space: normal; }
+  /* At 320px the three columns genuinely don't fit: Token's longest unbreakable
+     word ("Enlightenment") wants 101px and only 77px is left once Category and
+     Price take theirs. Breaking mid-word is ugly on those few rows, but it
+     shows the whole name — clipping hides it. Only engages when a word can't
+     otherwise fit, so 375px and up are untouched. */
+  .auction-body td.token { overflow-wrap: break-word; }
+  .auction-body col.col-token { width: auto; }
+  .auction-body col:nth-child(2) { width: 86px; }
+  .auction-body col:nth-child(3) { width: 82px; }
 }
 
 /* The ceiling badge's light-theme brown is 2.94:1 on the dark card — below AA,
