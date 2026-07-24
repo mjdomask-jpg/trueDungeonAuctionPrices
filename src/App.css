@@ -1130,3 +1130,9 @@ table.an-opens col.col-days { width: 16%; }
      one ("auction · from 2025 · ceiling") wraps instead of forcing overflow. */
   .tx-src { display: block; margin-left: 0; white-space: normal; }
 }
+
+/* The ceiling badge's light-theme brown is 2.94:1 on the dark card — below AA,
+   on the smallest text on the page. Dark gets the same hue lightened to sit on
+   a dark surface. Hex rather than a variable because there is no amber token;
+   matches how the tier chips above are themed. */
+:root[data-theme='dark'] .tx-badge.ceiling { background: rgba(240, 168, 60, 0.18); color: #f0a83c; }
