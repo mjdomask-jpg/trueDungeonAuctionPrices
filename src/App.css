@@ -649,6 +649,23 @@ td.diff.down { color: var(--diff-down); }
 .auction-status { color: var(--diff-up); font-weight: 600; }
 
 .auction-body { padding: 0 16px 16px; }
+
+/* The card's sales table. Token, Category and Price split 32/34/34 of a
+   1125px table on a desktop card, which left 662px of dead space between a
+   "Trade 1" and its right-aligned price.
+
+   Category and Price are sized to their content instead, and Token — the
+   column whose text is both longest and most variable — takes the rest. The
+   slack has to live somewhere in a three-column table this wide; parked
+   behind the token name it reads like any figures-right table, where before
+   it sat in the middle and pulled the two numbers apart.
+
+   150px clears "Onyx Ultra Rare" (125px) on one line; 120px clears
+   "$2,530.00" (83px), the highest price in the data. The 640px block tightens
+   both further, where the padding is smaller and every pixel is contested. */
+.auction-body col.col-token { width: auto; }
+.auction-body col:nth-child(2) { width: 150px; }
+.auction-body col:nth-child(3) { width: 120px; }
 .auction-facts {
   display: flex;
   flex-wrap: wrap;
