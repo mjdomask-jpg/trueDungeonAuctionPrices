@@ -7,6 +7,12 @@ export const money = (n: number | undefined) =>
 export const money0 = (n: number | null | undefined) =>
   n == null ? '—' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
+// Currency that drops the cents once a value reaches $1,000, where they're just
+// noise and cost horizontal room — used in the condensed mobile Compare view.
+// Below $1,000 it keeps cents so cheap tokens stay precise.
+export const moneyTight = (n: number | null | undefined) =>
+  n == null ? '—' : Math.abs(n) >= 1000 ? money0(n) : money(n);
+
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',

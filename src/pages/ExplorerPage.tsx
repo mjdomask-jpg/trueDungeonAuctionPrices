@@ -7,6 +7,7 @@ import {
 import { useAuctionData } from '../data/auctionDataContext';
 import { AuctionCard } from '../components/AuctionCard';
 import { SaleTable } from '../components/SaleTable';
+import { PageIntro } from '../components/PageIntro';
 
 // Detailed Auction Data (Phase 5). Every other view on this site aggregates;
 // this one shows the sales themselves, in two shapes behind a toggle: grouped
@@ -96,12 +97,12 @@ export default function ExplorerPage() {
 
   return (
     <>
-      <p className="sub">
+      <PageIntro short="What every token went for in every closed auction.">
         What every token went for in every closed auction — the rows behind the
         averages on <Link to="/">Prices</Link>, including the{' '}
         <Link to="/onyx">Onyx</Link> chase set. Search for a token or an auction,
         or narrow by season, category and auctioneer.
-      </p>
+      </PageIntro>
 
       <div className="controls">
         <label>

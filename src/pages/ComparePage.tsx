@@ -4,6 +4,7 @@ import { seasonsOf, compareSeasons, type CompareRow } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CompareTable } from '../components/CompareTable';
 import { compareCategories } from '../lib/categories';
+import { PageIntro } from '../components/PageIntro';
 
 type SortMode = 'category' | 'movers';
 
@@ -84,13 +85,13 @@ export default function ComparePage() {
 
   return (
     <>
-      <p className="sub">
+      <PageIntro short="How each token's full-season price changed between two years.">
         How each token's full-season price changed between two years. Values are
         Max / Avg / Min for the whole season; <strong>Δ Avg</strong> is the change
         in average from the left year to the right. Tokens are matched across years
         by their role, so a renamed token still lines up — <em>{newer} name / {older} name</em>{' '}
         when it changed. For a single season's detail, see <Link to="/">Prices</Link>.
-      </p>
+      </PageIntro>
 
       <div className="controls">
         <label>
@@ -114,7 +115,7 @@ export default function ComparePage() {
         </label>
       </div>
 
-      <p className="meta-line">
+      <p className="meta-line stats compare-summary">
         {rows.length} token{rows.length === 1 ? '' : 's'} · {summary.rose} rose ·{' '}
         {summary.fell} fell · {summary.added} new in {newer} · {summary.gone} gone since {older}
         {a === b && ' · pick two different seasons to see changes'}

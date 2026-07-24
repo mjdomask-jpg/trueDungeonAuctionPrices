@@ -1,4 +1,5 @@
 import { orderSeason, type BuildCost } from '../lib/transmutes';
+import { HintPopover } from './HintPopover';
 import { TransmuteRow } from './TransmuteRow';
 
 // One collapsible season section: its transmutes grouped and ordered by
@@ -28,7 +29,7 @@ export function TransmuteSeason({
       <button type="button" className="tx-shead" aria-expanded={open} onClick={onToggle}>
         <i className={`tx-chev ${open ? 'open' : ''}`} aria-hidden="true">▸</i>
         <span className="tx-syear">{year}</span>
-        <span className="tx-scount">{costs.length} buildable</span>
+        <span className="tx-scount">{costs.length} transmute{costs.length === 1 ? '' : 's'}</span>
         {note && <span className="tx-snote">{note}</span>}
       </button>
 
@@ -42,7 +43,9 @@ export function TransmuteSeason({
                 onChange={(e) => recentToggle.onChange(e.target.checked)}
               />
               Recent prices
-              <span className="tx-hint" title="Use data from this season's last 5 auctions">?</span>
+              <HintPopover label="About recent prices">
+                Use data from this season's last 5 auctions
+              </HintPopover>
             </label>
           )}
           {groups.map((g) => (

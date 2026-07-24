@@ -1,6 +1,8 @@
-import { useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { type TimelinePoint } from '../lib/data';
 import { money, fmtCloseDate } from '../lib/format';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { TOKEN_ABBREVIATIONS } from '../lib/tokenAbbreviations';
 
 // Hand-rolled multi-series SVG line chart — zero dependencies, themes via CSS
 // variables. Each series is one token in a group; they share this chart's x
@@ -23,11 +25,6 @@ function lineColorOf(raw: string | undefined): string | null {
   if (!raw) return null;
   return LINE_COLORS[raw.trim().toLowerCase().replace(/\s+/g, '-')] ?? raw.trim();
 }
-
-const W = 820, H = 360;
-const M = { top: 16, right: 18, bottom: 40, left: 60 };
-const PLOT_W = W - M.left - M.right;
-const PLOT_H = H - M.top - M.bottom;
 
 const dateKey = (iso: string) => (/^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10) : '');
 
@@ -60,6 +57,34 @@ const seriesVar = (i: number) => `var(--series-${(i % 8) + 1})`;
 export function PriceTimeline({ series, title }: { series: Series[]; title: string }) {
   const [active, setActive] = useState<number | null>(null); // legend emphasis
   const [hoverN, setHoverN] = useState<number | null>(null); // crosshair auction
+  const narrow = useMediaQuery(NARROW);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // On touch there's no pointer-leave to clear the readout, so a tap outside the
+  // chart dismisses it (a tap on another point still lands on the svg and just
+  // moves the crosshair). Mouse hover clears itself via onPointerLeave.
+  useEffect(() => {
+    if (hoverN == null) return;
+    const onDocDown = (e: globalThis.PointerEvent) => {
+      if (svgRef.current && !svgRef.current.contains(e.target as Node)) setHoverN(null);
+    };
+    document.addEventListener('pointerdown', onDocDown);
+    return () => document.removeEventListener('pointerdown', onDocDown);
+  }, [hoverN]);
+
+  // A phone gets a narrower viewBox — the desktop 820-wide box scaled down to a
+  // ~335px card renders the axis text at ~7px. A 420-wide box lets the chart
+  // fill the card (no sideways scroll) with the labels at a legible size, and a
+  // shorter frame keeps the stack of charts from running long.
+  const W = narrow ? 420 : 820;
+  const H = narrow ? 300 : 360;
+  const M = narrow
+    ? { top: 12, right: 14, bottom: 40, left: 60 }
+    : { top: 16, right: 18, bottom: 40, left: 60 };
+  const PLOT_W = W - M.left - M.right;
+  const PLOT_H = H - M.top - M.bottom;
+  const axisFont = narrow ? 15 : 12;
+
   if (series.every((s) => s.points.length === 0)) return <p className="empty">No sales to chart.</p>;
 
   // Shared x: the union of auctions any series sold in, ordered by close date.
@@ -83,7 +108,7 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
   // x-axis labels: every xStride slots, plus always the last one — but drop any
   // strided label that would sit within a stride of the forced last (otherwise
   // the final two dates overlap, e.g. Jun 28 / Jul 17).
-  const xStride = Math.max(1, Math.ceil(slots.length / 8));
+  const xStride = Math.max(1, Math.ceil(slots.length / (narrow ? 4 : 8)));
   const last = slots.length - 1;
   const labelIdx = new Set<number>();
   for (let i = 0; i < slots.length; i += xStride) labelIdx.add(i);
@@ -91,6 +116,14 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
   labelIdx.add(last);
 
   const showLegend = series.length > 1;
+
+  // Legend shown alphabetically by full token name (so the order reads the same
+  // on mobile and desktop); each entry keeps its series' own colour and index.
+  // Phones swap in the community abbreviations to keep each label on one line.
+  const legendOrder = series
+    .map((_, si) => si)
+    .sort((a, b) => series[a].label.localeCompare(series[b].label));
+  const legendLabel = (s: Series) => (narrow ? TOKEN_ABBREVIATIONS[s.label] ?? s.label : s.label);
 
   // Line colour: explicit override → a lone series takes its category colour
   // (matching the heading) → otherwise the categorical palette for distinctness.
@@ -100,7 +133,11 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
 
   // Map the cursor to the nearest auction slot (works through the SVG's scaling
   // via the rendered rect). setState with the same slot is a no-op re-render.
-  const onMove = (e: MouseEvent<SVGSVGElement>) => {
+  // Pointer (not mouse) events so touch works too: a mouse hover fires
+  // pointermove; a finger fires pointerdown on tap and pointermove while it
+  // drags. touch-action is left alone, so a deliberate horizontal drag still
+  // scrolls the (min-width 480px) chart — a tap is enough to read a point.
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
     if (!slots.length) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const svgX = ((e.clientX - rect.left) / rect.width) * W;
@@ -124,21 +161,27 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
     <div className="chartwrap">
       <div className="chart-plot">
         <svg
+          ref={svgRef}
           className="timeline-chart" viewBox={`0 0 ${W} ${H}`} role="img"
           aria-label={`Average auction price over time for ${title}: ${series.map((s) => s.label).join(', ')}`}
-          onMouseMove={onMove} onMouseLeave={() => setHoverN(null)}
+          onPointerMove={onMove} onPointerDown={onMove}
+          onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHoverN(null); }}
         >
           {/* gridlines + y ($) labels */}
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={1} />
-              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={12} fill="var(--text)">{money(t)}</text>
+              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={axisFont} fill="var(--text)">{money(t)}</text>
             </g>
           ))}
 
-          {/* x-axis close-date labels */}
+          {/* x-axis close-date labels. The edge labels anchor inward (start at
+              the left, end at the right) so the first/last date can't spill past
+              the plot and clip against the SVG edge. */}
           {slots.map(([n, d], i) => labelIdx.has(i) && (
-            <text key={n} x={x(n)} y={H - M.bottom + 20} textAnchor="middle" fontSize={12} fill="var(--text)">
+            <text key={n} x={x(n)} y={H - M.bottom + 20}
+              textAnchor={i === 0 ? 'start' : i === last ? 'end' : 'middle'}
+              fontSize={axisFont} fill="var(--text)">
               {fmtCloseDate(d) ?? `#${n}`}
             </text>
           ))}
@@ -194,14 +237,18 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
 
       {showLegend && (
         <ul className="chart-legend">
-          {series.map((s, si) => (
-            <li key={s.label}
-              className={active !== null && active !== si ? 'dim' : undefined}
-              onMouseEnter={() => setActive(si)} onMouseLeave={() => setActive(null)}>
-              <span className="swatch" style={{ background: strokeFor(si) }} />
-              {s.label}
-            </li>
-          ))}
+          {legendOrder.map((si) => {
+            const s = series[si];
+            return (
+              <li key={s.label}
+                className={active !== null && active !== si ? 'dim' : undefined}
+                onMouseEnter={() => setActive(si)} onMouseLeave={() => setActive(null)}
+                onClick={() => setActive((a) => (a === si ? null : si))}>
+                <span className="swatch" style={{ background: strokeFor(si) }} />
+                {legendLabel(s)}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

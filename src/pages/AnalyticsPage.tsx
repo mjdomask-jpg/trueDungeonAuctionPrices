@@ -5,6 +5,7 @@ import {
 } from '../lib/analytics';
 import { CurrentYearStats } from '../components/CurrentYearStats';
 import { HistoricalStats } from '../components/HistoricalStats';
+import { PageIntro } from '../components/PageIntro';
 
 // Auction analytics (Phase 5). Two views behind a toggle, matching the two
 // workbook tabs this replaces — Current Year Auction Stats and Historical
@@ -39,10 +40,10 @@ export default function AnalyticsPage() {
 
   return (
     <>
-      <p className="lede">
+      <PageIntro className="lede" short="Statistics about the auctions themselves.">
         Statistics about the auctions themselves — who ran them, when they opened, and how long
         they took to close — rather than what the tokens sold for.
-      </p>
+      </PageIntro>
 
       <div className="controls">
         <div className="toggle" role="group" aria-label="Analytics view">

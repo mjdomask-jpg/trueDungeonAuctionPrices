@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { seasonsOf, groupedTimelines } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { PriceTimeline } from '../components/PriceTimeline';
+import { PageIntro } from '../components/PageIntro';
 
 // Price Timelines (Phase 2). Every token's per-auction average price over a
 // season, shown at once as a stack of charts. Tokens are grouped (via
@@ -29,12 +30,12 @@ export default function TimelinesPage() {
 
   return (
     <>
-      <p className="sub">
+      <PageIntro short="Track how each token's auction price moved across a season.">
         How each token's auction price moved across a season. Every point is one auction's{' '}
         <strong>average</strong> sale price, ordered by close date; tokens are grouped so
         similarly-priced ones share a chart. For per-season min/max/avg tables, see{' '}
         <Link to="/">Prices</Link>.
-      </p>
+      </PageIntro>
 
       <div className="controls">
         <label>

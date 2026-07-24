@@ -1,5 +1,6 @@
 import { type CompareRow } from '../lib/data';
-import { money } from '../lib/format';
+import { money, moneyTight } from '../lib/format';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 // One Compare-Years table: Token | season A (Max/Avg/Min) | season B
 // (Max/Avg/Min) | Δ Avg. Used both for a single category section and for the
@@ -12,8 +13,47 @@ export function CompareTable({
   seasonB: string;
   newerIsB: boolean;
 }) {
+  const narrow = useMediaQuery(NARROW);
   // General rule across the site: any table with 4+ rows gets row banding.
   const isBanded = rows.length >= 4;
+
+  // Phones can't fit all eight columns without crushing the numbers, so show
+  // just the two averages and their change; Max/Min stay on desktop and on the
+  // Prices tab. `compare-compact` sets this four-column view's widths — a wide
+  // Token column and an extra-wide Δ so three-digit swings like "+165.1%" fit.
+  if (narrow) {
+    const cls = [isBanded && 'banded', 'compare-compact'].filter(Boolean).join(' ');
+    return (
+      <div className="tablewrap">
+        <table className={cls}>
+          <colgroup>
+            <col className="col-token" />
+            <col /><col />
+            <col className="col-delta" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th className="left">Token</th>
+              <th>Avg {seasonA}</th>
+              <th className="sep">Avg {seasonB}</th>
+              <th className="sep">Δ Avg</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.item}>
+                <TokenCell r={r} newerIsB={newerIsB} />
+                <td className="avg">{moneyTight(r.a?.avg)}</td>
+                <td className="avg sep">{moneyTight(r.b?.avg)}</td>
+                <PctCell pct={r.avgPct} />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="tablewrap">
       <table className={isBanded ? 'banded' : undefined}>

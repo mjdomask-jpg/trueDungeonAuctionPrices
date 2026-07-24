@@ -564,6 +564,34 @@ export function sourceName(c: BuildCost): string | null {
   return s ? s.displayName : null;
 }
 
+/* Short tier codes for the phone layout, where a spelled-out "Legendary" chip
+   costs 72px of a ~300px row. Each is the shortest prefix that stays unique
+   across ALL eleven tiers: one letter where that's unambiguous, two for the
+   three E-tiers, three for Paragon/Patron (which collide at both one and two).
+   Deliberately a fixed table, not computed: tiers vary by season, so deriving
+   prefixes from whatever a season happens to contain would let the same letter
+   mean different things on different seasons. Adding a tier means checking it
+   against this whole table by hand. */
+const TIER_ABBREV: Record<string, string> = {
+  Arcanum: 'A',
+  Eldritch: 'El',
+  Enhanced: 'En',
+  Exalted: 'Ex',
+  Legendary: 'L',
+  Mythic: 'M',
+  Omni: 'O',
+  Paragon: 'Par',
+  Patron: 'Pat',
+  Relic: 'R',
+  Safehold: 'S',
+};
+
+/** The phone-sized code for a tier. Unrecognized tiers keep their full name —
+ *  a wide chip is better than an abbreviation that might collide. */
+export function tierAbbrev(level: string): string {
+  return TIER_ABBREV[level] ?? level;
+}
+
 /** Group one season's costs into the maintainer's display order. Every input
  *  cost appears exactly once across the returned groups. */
 export function orderSeason(costs: BuildCost[]): SeasonGroup[] {

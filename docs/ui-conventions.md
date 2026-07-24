@@ -1,0 +1,184 @@
+# UI conventions
+
+House rules for this site. They exist so independently-built pages still read as
+one product. If you change one, change it here in the same commit.
+
+## Help text is never a `title` attribute
+
+**Rule: any explanatory help uses `<HintPopover>`, never `title`.**
+
+A `title` tooltip only appears on hover. Touch devices have no hover, so on a
+phone the help simply does not exist — and roughly half this site's traffic is
+someone checking a price on their phone at a convention.
+
+```tsx
+import { HintPopover } from '../components/HintPopover';
+
+<HintPopover label="About recent prices">
+  Use data from this season's last 5 auctions
+</HintPopover>
+```
+
+The component ([`src/components/HintPopover.tsx`](../src/components/HintPopover.tsx))
+guarantees the required behaviour:
+
+- **Opens on click/tap**, and stays open until dismissed. It is not a hover state.
+- **Dismisses three ways**: the `×`, the `Escape` key, and a `pointerdown`
+  anywhere outside it. The outside-click path matters most — it makes the whole
+  screen the close target, so a phone user never has to hit the 18px `×`.
+  `pointerdown` rather than `click` so the first touch closes it.
+- **Clamped to whatever actually clips it** — capped at
+  `min(260px, calc(100vw - 32px))`, then measured on open and slid back inside
+  the narrowest bound among the viewport *and every scrolling/hidden ancestor*.
+  The viewport alone is not enough: `.tx-season` sets `overflow: hidden`, so a
+  bubble anchored near a season card's right edge is cut off by the card long
+  before the window runs out.
+- **Stops click propagation**, so it is safe inside a `<label>` or any other
+  clickable container whose control it would otherwise trigger.
+
+`trigger` replaces the default `?` circle when the help attaches to an existing
+affordance rather than standing on its own — as the `ceiling`, `est.` and
+`buy ~$X` badges in `TransmuteRow` do:
+
+```tsx
+<HintPopover label="What “est.” means" trigger={<span className="tx-badge est">est.</span>}>
+  Some ingredients are priced from another season.
+</HintPopover>
+```
+
+### Putting a popover inside a clickable row
+
+A `<button>` cannot contain another `<button>`, so a row that is itself a click
+target can't simply wrap badges that open popovers. `TransmuteRow` solves this
+with an **overlay toggle** rather than a wrapper, and that is the pattern to
+copy:
+
+- the row header is a plain `<div>` with `position: relative`;
+- the expand control (`.tx-rtoggle`) is an empty `<button>` at `inset: 0`,
+  painted *behind* the content, carrying `aria-expanded` and an explicit
+  `aria-label` (it has no text of its own);
+- the visible face (`.tx-rface`) sets `pointer-events: none` so clicks fall
+  through to that button, preserving the whole-row click target;
+- only the interactive bits — `.tx-badges` — set `pointer-events: auto` to opt
+  back in.
+
+The result is one tab stop per row, valid HTML, and badges that open their help
+without expanding the row. The trade-off is that text in the face can no longer
+be selected with the mouse.
+
+### Touch targets grow by overlay, not by padding
+
+Both popover triggers are small by design — the `?` circle is 16px, the badges
+are 46×18px — and both are far under the ~44px a thumb needs. Below 640px each
+grows an `::after` at negative `inset`, which enlarges the hit area without
+changing the pill's size or disturbing the row's rhythm. Padding would do the
+second thing as well as the first.
+
+How far they can grow is set by what sits next to them, and getting this wrong
+is worse than leaving the target small:
+
+- **Badges** stop at 3px horizontally, because `.tx-badges` has a 6px gap and
+  two overlapping targets would hand a tap between them to whichever sits later
+  in the DOM. They reach ~52×44px.
+- **The `?` circle** stops at 7px, the size of its gap to the label text, and
+  reaches 30×42px — short of 44px, and deliberately so.
+
+Where a trigger and its neighbouring control compete for a tap, **the trigger
+should win**. Opening help is safe and reversible; the control beside it usually
+is not — the one on `.tx-check` reprices every number on the page. That is why
+the `?` spends its whole gap rather than splitting it.
+
+**The one exception**: `title` is still fine as a *name* for a self-evident icon
+control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, not
+help. The test is whether a user who cannot see the tooltip loses information.
+For a sun/moon toggle, no. For "what does `est.` mean", yes.
+
+## Form controls on mobile
+
+**Any `<select>`, `<input>` or `<textarea>` must render at 16px or larger on
+narrow screens.** Below 16px, iOS Safari zooms the whole page in when the
+control takes focus and does not zoom back out, stranding the user at a zoomed
+viewport. This is a browser threshold, not a taste call — the site's controls
+inherit 12px from their uppercase labels, so the override lives in the
+`max-width: 640px` block at the foot of `App.css`.
+
+## Tables
+
+**Wide stat tables show one group at a time on mobile.** Seven columns do not
+fit a phone: six numeric columns get ~38px each, of which 24px is padding, so
+the values spill out of their cells and overlap the column to their left. Where
+a table's columns fall into groups, render one group at a time below 640px
+behind the standard `.toggle` segmented control, and keep the group's header row
+so the table still says which set you are looking at once the controls scroll
+away. `CategoryTable` does this with a `group` prop (`'both' | 'last5' |
+'full'`), defaulting to `'both'` so desktop is untouched.
+
+Pick the breakpoint in React via `useMediaQuery`, not in CSS — hiding columns
+with `display: none` fights `table-layout: fixed` and the colspan'd group
+headers, which map by *rendered* column index.
+
+**Table headers do not stick.** `.tablewrap` sets `overflow-x: auto`, and CSS
+forces `overflow-y` to compute to `auto` alongside it, which makes the wrap the
+nearest scroll container for anything inside. The wrap has no height constraint,
+so it never scrolls vertically and a `position: sticky` header simply travels up
+and out with the page. Adding `position: sticky` to a `th` does nothing; making
+headers genuinely stick requires restructuring how the table scrolls.
+
+
+- **4+ rows get alternating row shading.** `CategoryTable` and `CompareTable`
+  apply `.banded` themselves based on `rows.length >= 4`; do the same rather than
+  maintaining a per-category allowlist.
+- **Cells are right-aligned by default** (`tbody td { text-align: right }` in
+  `App.css`). Text columns need `className="left"`. Change/delta columns need
+  `className="diff"` for the up/down colours to apply.
+
+## Tier chips
+
+**Below 640px the tier chip shows a short code, not the tier name.** A
+spelled-out `Legendary` is 72px of a ~300px row, and the row's flex line gives
+every pixel it can't afford to `.tx-name` — measured before this change, the
+token name on a paired Legendary row was down to 11.9px at 375px and 0px at
+320px. The codes live in `tierAbbrev` ([`src/lib/transmutes.ts`](../src/lib/transmutes.ts)):
+
+| A | El | En | Ex | L | M | O | Par | Pat | R | S |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Arcanum | Eldritch | Enhanced | Exalted | Legendary | Mythic | Omni | Paragon | Patron | Relic | Safehold |
+
+Each is the shortest prefix that is unique across **all eleven** tiers — one
+letter where that's unambiguous, two for the three E-tiers, three for
+Paragon/Patron, which collide at both one and two letters.
+
+Two rules for maintaining it:
+
+- **It is a fixed table, never computed.** Seasons carry different tier sets, so
+  deriving prefixes from whatever a season happens to contain would let the same
+  letter mean different things on different seasons. A new tier means checking it
+  against the whole table by hand; an unmapped tier falls back to its full name,
+  because a wide chip beats a colliding one.
+- **The full tier name stays in the accessibility tree.** The chip renders the
+  code in an `aria-hidden` span beside an `.sr-only` span carrying the real name,
+  so the tier is never conveyed by a letter and a colour alone.
+
+## Colour and contrast
+
+- **Never use `opacity` to mute text.** It compounds against whatever is behind
+  it and destroys contrast in one theme or the other. Set a real colour — the
+  muted token is `var(--text)`.
+- **Everything is themed through the CSS variables in `index.css`**, which are
+  defined for both light and dark. No hard-coded hex in components.
+- **Transmute tier colours are game-canonical**, not a palette choice — see
+  `domain-context.md`. Don't "fix" them to match the category palette.
+- **The chip's *text* colour is not canonical** — only the fill is. Text is
+  tuned per tier for contrast against that fill, and is the knob to reach for
+  when a chip reads poorly. Legendary is the worked example: its orange is a
+  bright, high-chroma `#f0730f`, on which white is 2.93:1 (a clear AA failure)
+  and the original brown was 5.32:1 but still muddy at chip size. Black is
+  7.16:1. Darkening the *fill* so white could work would have meant reaching
+  `#c2560a`, which no longer reads as Legendary orange and crowds Omni.
+
+## Charts
+
+Hand-rolled zero-dependency SVG, themed with the same CSS variables. A null data
+point renders as a **gap, never a zero-height bar** — the distinction between "no
+data" and "zero" carries real meaning here, since cadence columns only start in
+2022.

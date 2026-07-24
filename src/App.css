@@ -6,7 +6,9 @@
 
 header { position: relative; }
 header h1 {
-  font-size: 30px;
+  /* At 30px the title wraps to three lines on a phone and eats an eighth of the
+     viewport before anything useful. Scales down to ~21px at 375px wide. */
+  font-size: clamp(21px, 5.5vw, 30px);
   letter-spacing: -0.5px;
   margin: 0 0 6px;
   padding-right: 52px; /* keep the title clear of the toggle */
@@ -49,6 +51,77 @@ header h1 {
   outline-offset: -2px;
   border-radius: 8px 8px 0 0;
 }
+
+/* Mobile top-level nav: replaces the tab strip below 640px (SiteHeader renders
+   one or the other per breakpoint), so these classes only ever exist on a
+   phone. A button labelled with the current page opens the full list; each row
+   is a 44px tap target. See components/MobileNav.tsx. */
+.mobile-nav {
+  position: relative;
+  margin-top: 18px;
+}
+.mobile-nav-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.mobile-nav-toggle .chev {
+  color: var(--text);
+  font-size: 12px;
+  transition: transform 0.15s ease;
+}
+.mobile-nav-toggle[aria-expanded='true'] .chev { transform: rotate(180deg); }
+.mobile-nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.mobile-nav-menu {
+  position: absolute;
+  top: 50px; /* 44px button + 6px gap */
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.mobile-nav-menu a {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px 0 34px;
+  position: relative;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 8px;
+}
+.mobile-nav-menu a:hover { background: var(--nav-hover); color: var(--text-h); }
+.mobile-nav-menu a.active { color: var(--text-h); font-weight: 600; }
+.mobile-nav-menu a.active::before {
+  content: '✓';
+  position: absolute;
+  left: 12px;
+  color: var(--accent);
+}
+.mobile-nav-menu a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .theme-toggle {
   position: absolute;
@@ -171,6 +244,12 @@ table {
    text wraps on whole words (td.token has white-space: normal). */
 col.col-token { width: 32%; }
 
+/* No `position: sticky` here. It cannot work: .tablewrap sets `overflow-x:
+   auto`, which forces overflow-y to compute to `auto` as well, so the wrap
+   becomes the header's nearest scroll container — and the wrap has no height
+   constraint, so it never scrolls vertically. The page scrolls instead, and the
+   header goes with it. Making it genuinely stick needs a structural change, not
+   a sticky declaration. */
 thead th {
   background: var(--card);
   color: var(--text-h);
@@ -178,8 +257,6 @@ thead th {
   padding: 10px 12px;
   text-align: right;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
   white-space: nowrap;
 }
 thead th.left { text-align: left; }
@@ -205,12 +282,32 @@ tbody td:not(.left) {
   font-variant-numeric: tabular-nums lining-nums;
 }
 /* Alternating row banding (applied only to select category tables). The band
-   sits on the row so the Last-5 column tint and hover states paint over it. */
-table.banded tbody tr:nth-child(even) { background: var(--band); }
+   sits on the row so the Last-5 column tint and hover states paint over it.
+   The row's current background is also published as --row-bg so the sticky
+   Token cell (below) can repaint it — a sticky cell needs its own opaque
+   background or the columns scrolling under it show through. Hover still lands
+   on the Token cell directly via the `tr:hover td` rule, so --row-bg only has
+   to carry the resting colour. */
+tbody tr { --row-bg: var(--card); }
+table.banded tbody tr:nth-child(even) { background: var(--band); --row-bg: var(--band); }
 tbody tr:hover td { background: var(--row-hover); }
 tbody tr:hover td.last5 { background: var(--last5-bg); }
 
-td.token { color: var(--text-h); font-weight: 500; white-space: normal; }
+/* Sticky Token column: pin the row's name to the left edge so scrolling a wide
+   table sideways (Compare's two seasons, or any table overflowing a narrow
+   screen) doesn't scroll the label out of view. This works where a sticky
+   *header* can't (see the note by `thead th`): the wrap's own `overflow-x` is
+   the scroll container it sticks within, and the horizontal axis has none of
+   the height-constraint problem the vertical one hits. */
+td.token, thead th.left { position: sticky; left: 0; }
+td.token {
+  color: var(--text-h);
+  font-weight: 500;
+  white-space: normal;
+  background: var(--row-bg);
+  z-index: 1;
+}
+thead th.left { z-index: 2; }
 td.avg { font-weight: 600; color: var(--text-h); }
 
 /* Compare Years. A vertical rule separates the two seasons' column groups and
@@ -315,11 +412,42 @@ td.diff.down { color: var(--diff-down); }
 
 .tx-check { display: flex; align-items: center; gap: 7px; color: var(--text); cursor: pointer; font-size: 14px; }
 .tx-check input { width: 16px; height: 16px; accent-color: var(--accent); }
-.tx-hint {
+/* Help popovers — the site-wide replacement for `title` tooltips.
+   See docs/ui-conventions.md. Not transmute-specific: usable anywhere. */
+.hint-wrap { position: relative; display: inline-flex; }
+.hint-q {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px; border-radius: 50%; background: var(--band);
-  color: var(--text); font-size: 11px; cursor: help; font-family: var(--sans);
+  width: 16px; height: 16px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--band); color: var(--text); font-size: 11px; line-height: 1;
+  cursor: pointer; font-family: var(--sans);
 }
+.hint-q:hover, .hint-q[aria-expanded='true'] { background: var(--accent-bg); color: var(--accent); }
+/* A custom trigger keeps its own look; the button is just a click surface. */
+.hint-trigger {
+  display: inline-flex; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; cursor: pointer;
+}
+.hint-q:focus-visible, .hint-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Click-opened help bubble. Anchored to its trigger but clamped to the viewport
+   so it can never push the page into a horizontal scroll on a phone. */
+.hint-pop {
+  position: absolute; top: calc(100% + 8px); left: 50%;
+  transform: translateX(calc(-50% + var(--hint-shift, 0px)));
+  z-index: 20; display: flex; align-items: flex-start; gap: 8px;
+  width: max-content; max-width: min(260px, calc(100vw - 32px));
+  padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--card); box-shadow: var(--shadow); color: var(--text-h);
+  font-size: 12.5px; font-weight: 400; line-height: 1.45;
+  text-align: left; white-space: normal; cursor: auto;
+}
+.hint-x {
+  flex: none; width: 18px; height: 18px; margin: -1px -2px 0 0; padding: 0;
+  border: 0; border-radius: 4px; background: none; color: var(--text);
+  font-size: 15px; line-height: 1; cursor: pointer; font-family: var(--sans);
+}
+.hint-x:hover { background: var(--band); color: var(--text-h); }
+.hint-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .tx-season {
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;
@@ -348,9 +476,20 @@ td.diff.down { color: var(--diff-down); }
 .tx-row:hover { background: var(--row-hover); }
 .tx-row.upgrade { margin-left: 20px; }
 
-.tx-rhead {
-  display: flex; align-items: center; gap: 10px; width: 100%; background: none;
-  border: none; padding: 9px 8px; cursor: pointer; text-align: left;
+/* The expand button is an overlay covering the whole row, sitting behind the
+   visible face. That keeps one tab stop and a full-row click target while
+   letting the badges host their own help popovers — a button can't nest in a
+   button. See TransmuteRow. */
+.tx-rhead { position: relative; }
+.tx-rtoggle {
+  position: absolute; inset: 0; width: 100%; margin: 0; padding: 0;
+  border: none; background: none; cursor: pointer; border-radius: 8px;
+}
+.tx-rtoggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tx-rface {
+  position: relative; pointer-events: none;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 8px; text-align: left;
   color: var(--text-h); font-family: inherit; font-size: 15px;
 }
 .tx-chev { font-style: normal; color: var(--text); transition: transform 0.12s ease; flex: none; font-size: 12px; }
@@ -358,7 +497,9 @@ td.diff.down { color: var(--diff-down); }
 .tx-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tx-upfrom { font-size: 12px; color: var(--text); margin-left: 8px; font-family: var(--sans); }
 
-.tx-badges { display: flex; gap: 6px; align-items: center; flex: none; }
+/* Opts back into pointer events so the badge popovers are clickable through the
+   inert face; everything else in the row falls through to .tx-rtoggle. */
+.tx-badges { display: flex; gap: 6px; align-items: center; flex: none; pointer-events: auto; }
 .tx-badge { font-size: 10.5px; padding: 1px 8px; border-radius: 20px; font-family: var(--sans); white-space: nowrap; }
 .tx-badge.ceiling { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
 .tx-badge.est { background: var(--band); color: var(--text); }
@@ -405,7 +546,7 @@ td.diff.down { color: var(--diff-down); }
    pure-white fill with a defined ring (an outlined white pill) and Safehold a
    solid gray fill. */
 .tchip {
-  font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
+  font-size: 12px; padding: 2px 9px; border-radius: 20px; font-weight: 600;
   white-space: nowrap; flex: none; font-family: var(--sans);
   border: 1px solid transparent; background: var(--band); color: var(--text-h);
 }
@@ -414,7 +555,7 @@ td.diff.down { color: var(--diff-down); }
 .tchip[data-tier='Relic']     { background: #1f5fa6; color: #fff; }
 .tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
 .tchip[data-tier='Arcanum']   { background: #6d28aa; color: #fff; }
-.tchip[data-tier='Legendary'] { background: #f0730f; color: #3d1a02; }
+.tchip[data-tier='Legendary'] { background: #f0730f; color: #000; }
 .tchip[data-tier='Mythic']    { background: #fff;    color: #363c46; border-color: #aeb6c2; }
 .tchip[data-tier='Safehold']  { background: #d6dae0; color: #363c46; border-color: #bdc3cb; }
 .tchip[data-tier='Patron']    { background: #9900ff; color: #fff; }
@@ -426,7 +567,7 @@ td.diff.down { color: var(--diff-down); }
 :root[data-theme='dark'] .tchip[data-tier='Relic']     { background: #2767b3; color: #fff; }
 :root[data-theme='dark'] .tchip[data-tier='Eldritch']  { background: #157a3c; color: #fff; }
 :root[data-theme='dark'] .tchip[data-tier='Arcanum']   { background: #7b34ba; color: #fff; }
-:root[data-theme='dark'] .tchip[data-tier='Legendary'] { background: #f2701e; color: #241003; }
+:root[data-theme='dark'] .tchip[data-tier='Legendary'] { background: #f2701e; color: #000; }
 :root[data-theme='dark'] .tchip[data-tier='Mythic']    { background: #f6f8fb; color: #23262e; border-color: #f6f8fb; }
 :root[data-theme='dark'] .tchip[data-tier='Safehold']  { background: #c2c8d1; color: #23262e; border-color: transparent; }
 :root[data-theme='dark'] .tchip[data-tier='Patron']    { background: #c084fc; color: #3b0764; }
@@ -903,3 +1044,123 @@ table.an-opens col.col-days { width: 16%; }
   gap: 2px;
   color: var(--text);
 }
+
+/* ---- Narrow screens ---------------------------------------------------- */
+
+/* iOS Safari zooms the page in whenever a focused form control has a font-size
+   below 16px, and does not zoom back out afterwards. Every picker on the site
+   inherits 12px from its uppercase label, so tapping one strands the user at a
+   zoomed-in viewport. 16px is the browser's threshold, not a design choice.
+   Control height grows to suit the larger text, which also brings the controls
+   closer to a comfortable tap target. */
+@media (max-width: 640px) {
+  .controls { --control-h: 40px; }
+  .controls select,
+  .controls input,
+  .an-picker select { font-size: 16px; }
+  /* .an-picker sets its own height rather than using --control-h. */
+  .an-picker select { height: 40px; }
+
+  /* Let selects shrink to their content so a picker and a toggle share one
+     row. 150px is a comfortable desktop minimum but forces a wrap here. */
+  .controls select { min-width: 0; }
+
+  /* Purely informational counts, dropped to get data above the fold sooner.
+     Only lines marked `.stats` go — a .meta-line that carries a truncation
+     warning or holds controls is not a stats line and must stay. */
+  .meta-line.stats { display: none; }
+  /* ...except Compare's tally (rose / fell / new / gone), which is the headline
+     of a year-over-year comparison, so it stays on phones. */
+  .meta-line.stats.compare-summary { display: block; }
+
+  /* A phone shows one stat group at a time (4 columns, not 7), so the three
+     number columns need less room and the Token column can take more — long
+     names like "Path to Enlightenment (Fragment 4)" wrap to fewer lines. Scoped
+     to `.one-group` (CategoryTable's single-group view): Compare's eight-column
+     table sits in a .cat-section too but has no room to spare. Desktop, which
+     always shows both groups, keeps the shared 32%. */
+  table.one-group col.col-token { width: 40%; }
+
+  /* Price-timeline charts switch to a narrower viewBox on a phone (see
+     PriceTimeline), so they fit the card at a legible text size — drop the
+     480px floor that forced sideways scrolling. */
+  .timeline-chart { min-width: 0; }
+
+  /* Compare Years' condensed four-column phone view (Token | Avg A | Avg B | Δ).
+     A wide Token column, an extra-wide Δ so "+165.1%" doesn't clip, and the two
+     Avg columns split the ~38% that's left. */
+  table.compare-compact col.col-token { width: 36%; }
+  table.compare-compact col.col-delta { width: 26%; }
+
+  /* --- Transmute rows -------------------------------------------------------
+     The desktop row is one flex line where only .tx-name can shrink, so on a
+     phone the name absorbs every deficit: measured at 375px it fell to 11.9px
+     on paired Legendary rows (and 0px at 320px), ellipsing away the one thing
+     that says which transmute the row is. Let the line wrap and give the cost
+     its own full-width row underneath. */
+  .tx-rface { flex-wrap: wrap; align-items: flex-start; column-gap: 8px; row-gap: 3px; padding: 10px 8px; }
+  .tx-chev { margin-top: 3px; }
+  /* Wrap to as many lines as the name needs instead of ellipsing to nothing. */
+  .tx-name { flex: 1 1 auto; white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.3; }
+  /* `upgrades from X` is inline on desktop, so it inherits the nowrap above and
+     lays out ~200px past the viewport, where it is clipped and never seen. Its
+     own line is the only way it reads on a phone. */
+  .tx-upfrom { display: block; margin: 2px 0 0; }
+  /* flex-basis 100% forces the price onto its own line; the existing
+     align-items: flex-end keeps it right-aligned there. */
+  .tx-cost { flex: 1 0 100%; }
+  /* The pair's left rule already marks the relationship, so the indent can give
+     most of its width back to the name. */
+  .tx-row.upgrade { margin-left: 10px; }
+
+  /* Tier chips carry a short code here (TransmuteRow/tierAbbrev), so centre the
+     text and hold a floor width — otherwise "R" and "Par" render as visibly
+     different-sized pills down the column. */
+  .tchip { min-width: 30px; text-align: center; padding: 2px 7px; }
+
+  /* --- Bill of materials ----------------------------------------------------
+     84px per number column leaves the ingredient 77px of a 265px row at 375px
+     (22px at 320px) to hold "5 × Alchemist's Parchment" — and .tx-season sets
+     overflow: hidden, so the excess is clipped rather than scrollable. The
+     numbers are 3-5 characters; 58px is enough. */
+  .tx-bom { padding: 6px 6px 12px 14px; }
+  .tx-bom-head,
+  .tx-bom-row { grid-template-columns: minmax(0, 1fr) 58px 58px; gap: 8px; }
+  /* The price tag sits under the ingredient rather than trailing it, so a long
+     one ("auction · from 2025 · ceiling") wraps instead of forcing overflow. */
+  .tx-src { display: block; margin-left: 0; white-space: normal; }
+
+  /* The badge popovers are 46x18px triggers sitting directly on top of
+     .tx-rtoggle, which covers the whole row — so a near miss doesn't just fail
+     to open the help, it expands the row instead. Grow the hit area with an
+     overlay rather than padding, so the pill keeps its size and the row keeps
+     its rhythm. 13px vertical takes the target to ~44px tall; horizontal stops
+     at 3px because .tx-badges' gap is 6px and overlapping targets would hand
+     taps between two badges to whichever sits later in the DOM. */
+  .tx-badges .hint-trigger { position: relative; }
+  .tx-badges .hint-trigger::after { content: ''; position: absolute; inset: -13px -3px; }
+
+  /* The standalone `?` circle is 16px square — too small to aim at with a thumb.
+     Same overlay treatment, but it can't grow as freely: the circle usually sits
+     inside a label whose control a stray tap would toggle, and its gap to the
+     text beside it is 7px. Growing to 30x42px rather than a full 44px square is
+     the honest ceiling here.
+
+     Where the two do compete, the tap should land on the `?`: opening help is
+     safe and reversible, while toggling the control beside it silently reprices
+     the page. So the horizontal growth spends the whole 7px gap. */
+  .hint-q { position: relative; }
+  .hint-q::after { content: ''; position: absolute; inset: -13px -7px; }
+
+  /* A 22px checkbox row is a marginal target even with the whole label
+     clickable, and this one gates every price on the page. The row carries the
+     44px; the box grows a little so the thing people aim at grows too. */
+  .tx-check { min-height: 44px; }
+  .tx-check input { width: 18px; height: 18px; }
+}
+
+/* The ceiling badge's light-theme brown is 2.94:1 on the dark card — below AA,
+   on the smallest text on the page. Dark gets the same hue lightened to sit on
+   a dark surface. Hex rather than a variable because there is no amber token;
+   matches how the tier chips above are themed. */
+:root[data-theme='dark'] .tx-badge.ceiling { background: rgba(240, 168, 60, 0.18); color: #f0a83c; }
