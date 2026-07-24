@@ -1092,8 +1092,41 @@ table.an-opens col.col-days { width: 16%; }
   table.compare-compact col.col-token { width: 36%; }
   table.compare-compact col.col-delta { width: 26%; }
 
+  /* --- Transmute rows -------------------------------------------------------
+     The desktop row is one flex line where only .tx-name can shrink, so on a
+     phone the name absorbs every deficit: measured at 375px it fell to 11.9px
+     on paired Legendary rows (and 0px at 320px), ellipsing away the one thing
+     that says which transmute the row is. Let the line wrap and give the cost
+     its own full-width row underneath. */
+  .tx-rface { flex-wrap: wrap; align-items: flex-start; column-gap: 8px; row-gap: 3px; padding: 10px 8px; }
+  .tx-chev { margin-top: 3px; }
+  /* Wrap to as many lines as the name needs instead of ellipsing to nothing. */
+  .tx-name { flex: 1 1 auto; white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.3; }
+  /* `upgrades from X` is inline on desktop, so it inherits the nowrap above and
+     lays out ~200px past the viewport, where it is clipped and never seen. Its
+     own line is the only way it reads on a phone. */
+  .tx-upfrom { display: block; margin: 2px 0 0; }
+  /* flex-basis 100% forces the price onto its own line; the existing
+     align-items: flex-end keeps it right-aligned there. */
+  .tx-cost { flex: 1 0 100%; }
+  /* The pair's left rule already marks the relationship, so the indent can give
+     most of its width back to the name. */
+  .tx-row.upgrade { margin-left: 10px; }
+
   /* Tier chips carry a short code here (TransmuteRow/tierAbbrev), so centre the
      text and hold a floor width — otherwise "R" and "Par" render as visibly
      different-sized pills down the column. */
   .tchip { min-width: 30px; text-align: center; padding: 2px 7px; }
+
+  /* --- Bill of materials ----------------------------------------------------
+     84px per number column leaves the ingredient 77px of a 265px row at 375px
+     (22px at 320px) to hold "5 × Alchemist's Parchment" — and .tx-season sets
+     overflow: hidden, so the excess is clipped rather than scrollable. The
+     numbers are 3-5 characters; 58px is enough. */
+  .tx-bom { padding: 6px 6px 12px 14px; }
+  .tx-bom-head,
+  .tx-bom-row { grid-template-columns: minmax(0, 1fr) 58px 58px; gap: 8px; }
+  /* The price tag sits under the ingredient rather than trailing it, so a long
+     one ("auction · from 2025 · ceiling") wraps instead of forcing overflow. */
+  .tx-src { display: block; margin-left: 0; white-space: normal; }
 }
