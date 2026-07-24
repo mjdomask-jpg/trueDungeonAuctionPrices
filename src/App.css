@@ -1139,6 +1139,24 @@ table.an-opens col.col-days { width: 16%; }
      taps between two badges to whichever sits later in the DOM. */
   .tx-badges .hint-trigger { position: relative; }
   .tx-badges .hint-trigger::after { content: ''; position: absolute; inset: -13px -3px; }
+
+  /* The standalone `?` circle is 16px square — too small to aim at with a thumb.
+     Same overlay treatment, but it can't grow as freely: the circle usually sits
+     inside a label whose control a stray tap would toggle, and its gap to the
+     text beside it is 7px. Growing to 30x42px rather than a full 44px square is
+     the honest ceiling here.
+
+     Where the two do compete, the tap should land on the `?`: opening help is
+     safe and reversible, while toggling the control beside it silently reprices
+     the page. So the horizontal growth spends the whole 7px gap. */
+  .hint-q { position: relative; }
+  .hint-q::after { content: ''; position: absolute; inset: -13px -7px; }
+
+  /* A 22px checkbox row is a marginal target even with the whole label
+     clickable, and this one gates every price on the page. The row carries the
+     44px; the box grows a little so the thing people aim at grows too. */
+  .tx-check { min-height: 44px; }
+  .tx-check input { width: 18px; height: 18px; }
 }
 
 /* The ceiling badge's light-theme brown is 2.94:1 on the dark card — below AA,

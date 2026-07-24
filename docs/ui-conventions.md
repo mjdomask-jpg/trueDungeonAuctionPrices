@@ -66,6 +66,28 @@ The result is one tab stop per row, valid HTML, and badges that open their help
 without expanding the row. The trade-off is that text in the face can no longer
 be selected with the mouse.
 
+### Touch targets grow by overlay, not by padding
+
+Both popover triggers are small by design — the `?` circle is 16px, the badges
+are 46×18px — and both are far under the ~44px a thumb needs. Below 640px each
+grows an `::after` at negative `inset`, which enlarges the hit area without
+changing the pill's size or disturbing the row's rhythm. Padding would do the
+second thing as well as the first.
+
+How far they can grow is set by what sits next to them, and getting this wrong
+is worse than leaving the target small:
+
+- **Badges** stop at 3px horizontally, because `.tx-badges` has a 6px gap and
+  two overlapping targets would hand a tap between them to whichever sits later
+  in the DOM. They reach ~52×44px.
+- **The `?` circle** stops at 7px, the size of its gap to the label text, and
+  reaches 30×42px — short of 44px, and deliberately so.
+
+Where a trigger and its neighbouring control compete for a tap, **the trigger
+should win**. Opening help is safe and reversible; the control beside it usually
+is not — the one on `.tx-check` reprices every number on the page. That is why
+the `?` spends its whole gap rather than splitting it.
+
 **The one exception**: `title` is still fine as a *name* for a self-evident icon
 control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, not
 help. The test is whether a user who cannot see the tooltip loses information.
