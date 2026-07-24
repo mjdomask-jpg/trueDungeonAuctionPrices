@@ -80,13 +80,20 @@ is worse than leaving the target small:
 - **Badges** stop at 3px horizontally, because `.tx-badges` has a 6px gap and
   two overlapping targets would hand a tap between them to whichever sits later
   in the DOM. They reach ~52×44px.
-- **The `?` circle** stops at 7px, the size of its gap to the label text, and
-  reaches 30×42px — short of 44px, and deliberately so.
+- **The `?` circle** takes the whole gap beside it: 7px for a bare `.hint-q`,
+  and 12px inside a `.tx-check`, whose gap is widened on mobile precisely to
+  give it that clearance. Inside one it reaches 46×44px.
 
 Where a trigger and its neighbouring control compete for a tap, **the trigger
 should win**. Opening help is safe and reversible; the control beside it usually
 is not — the one on `.tx-check` reprices every number on the page. That is why
 the `?` spends its whole gap rather than splitting it.
+
+**An overlay alone is not enough for a small target.** The `?` first got the
+overlay treatment while staying 16px, and still tested as fiddly: people aim at
+the circle they can see, not the invisible box around it. It is 22px on mobile
+for that reason. Grow the visible control first, then let the overlay carry the
+remainder.
 
 **The one exception**: `title` is still fine as a *name* for a self-evident icon
 control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, not
