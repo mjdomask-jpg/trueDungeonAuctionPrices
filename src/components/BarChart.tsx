@@ -1,4 +1,5 @@
-import { useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 // Hand-rolled SVG bar chart — zero dependencies, themes via CSS variables,
 // same approach as PriceTimeline (see the note there on why we don't take a
@@ -32,10 +33,11 @@ export type BarChartProps = {
   maxLabels?: number;
 };
 
-const W = 820, H = 320;
-const M = { top: 16, right: 18, bottom: 46, left: 56 };
-const PLOT_W = W - M.left - M.right;
-const PLOT_H = H - M.top - M.bottom;
+// Below this many categories a phone renders the chart in a compact fit-to-card
+// viewBox (see below); above it — the days-to-close chart, one bar per auction,
+// dozens of them — the chart stays wide and scrolls sideways instead, because
+// there is no legible way to fit that many labelled bars in ~335px.
+const COMPACT_MAX_CATEGORIES = 16;
 
 // Bars sit on zero (counts and durations are non-negative and a bar's length
 // only means anything measured from zero), so unlike the line chart we do not
@@ -61,6 +63,33 @@ export function BarChart({
   categories, series, barColors, hints, yLabel, format, ariaLabel, maxLabels = 12,
 }: BarChartProps) {
   const [hover, setHover] = useState<number | null>(null);
+  const narrow = useMediaQuery(NARROW);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // On touch there is no pointer-leave to clear the tooltip, so a tap outside
+  // the chart dismisses it. Mouse hover clears itself via onPointerLeave.
+  useEffect(() => {
+    if (hover == null) return;
+    const onDocDown = (e: globalThis.PointerEvent) => {
+      if (svgRef.current && !svgRef.current.contains(e.target as Node)) setHover(null);
+    };
+    document.addEventListener('pointerdown', onDocDown);
+    return () => document.removeEventListener('pointerdown', onDocDown);
+  }, [hover]);
+
+  // Compact only when a phone AND the category count is small enough to read at
+  // ~335px. A compact chart fills the card (the `.fit` class drops the 480px
+  // scroll floor); a wide one keeps that floor and scrolls. Same 420-wide box
+  // and larger axis text as PriceTimeline so the labels stay legible.
+  const compact = narrow && categories.length <= COMPACT_MAX_CATEGORIES;
+  const W = compact ? 420 : 820;
+  const H = compact ? 300 : 320;
+  const M = compact
+    ? { top: 12, right: 14, bottom: 46, left: 52 }
+    : { top: 16, right: 18, bottom: 46, left: 56 };
+  const PLOT_W = W - M.left - M.right;
+  const PLOT_H = H - M.top - M.bottom;
+  const axisFont = compact ? 15 : 12;
 
   const fmt = format ?? ((n: number) => String(Math.round(n * 10) / 10));
   const all = series.flatMap((s) => s.values).filter((v): v is number => v != null);
@@ -77,11 +106,14 @@ export function BarChart({
   const barW = groupW / series.length;
 
   const showLegend = series.length > 1;
-  const stride = Math.max(1, Math.ceil(categories.length / maxLabels));
+  // Fewer x-labels on a compact chart — the box is half as wide.
+  const stride = Math.max(1, Math.ceil(categories.length / (compact ? Math.min(maxLabels, 8) : maxLabels)));
 
   // Hover is by category slot, so a thin bar (43 of them on the days-to-close
   // chart) doesn't require pixel-accurate pointing.
-  const onMove = (e: MouseEvent<SVGSVGElement>) => {
+  // Pointer (not mouse) events so touch works: a mouse hover fires pointermove;
+  // a finger fires pointerdown on tap and pointermove while dragging.
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const svgX = ((e.clientX - rect.left) / rect.width) * W;
     const i = Math.floor((svgX - M.left) / slotW);
@@ -101,20 +133,22 @@ export function BarChart({
     <div className="chartwrap">
       <div className="chart-plot">
         <svg
-          className="bar-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={ariaLabel}
-          onMouseMove={onMove} onMouseLeave={() => setHover(null)}
+          ref={svgRef}
+          className={`bar-chart${compact ? ' fit' : ''}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={ariaLabel}
+          onPointerMove={onMove} onPointerDown={onMove}
+          onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHover(null); }}
         >
           {/* gridlines + y labels */}
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={1} />
-              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={12} fill="var(--text)">{fmt(t)}</text>
+              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={axisFont} fill="var(--text)">{fmt(t)}</text>
             </g>
           ))}
 
           {yLabel && (
             <text x={-(M.top + PLOT_H / 2)} y={14} transform="rotate(-90)" textAnchor="middle"
-              fontSize={12} fill="var(--text)">{yLabel}</text>
+              fontSize={axisFont} fill="var(--text)">{yLabel}</text>
           )}
 
           {/* hovered slot highlight, drawn under the bars */}
@@ -149,7 +183,7 @@ export function BarChart({
           {/* x labels, strided so they never collide */}
           {categories.map((cat, i) => (i % stride === 0 || i === categories.length - 1) && (
             <text key={cat + i} x={M.left + slotW * (i + 0.5)} y={H - M.bottom + 18}
-              textAnchor="middle" fontSize={12} fill="var(--text)">{cat}</text>
+              textAnchor="middle" fontSize={axisFont} fill="var(--text)">{cat}</text>
           ))}
         </svg>
 

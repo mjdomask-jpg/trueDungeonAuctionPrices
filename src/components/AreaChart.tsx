@@ -1,5 +1,6 @@
-import { useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { money } from '../lib/format';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import type { ItemHistoryPoint } from '../lib/analytics';
 
 // Filled area chart of one token's average price across every season it sold
@@ -11,11 +12,6 @@ import type { ItemHistoryPoint } from '../lib/analytics';
 // the compression stays visible rather than pretending each season was a
 // single price. Seasons the token didn't sell in are simply absent — the line
 // bridges them rather than dropping to zero.
-
-const W = 820, H = 320;
-const M = { top: 16, right: 22, bottom: 40, left: 64 };
-const PLOT_W = W - M.left - M.right;
-const PLOT_H = H - M.top - M.bottom;
 
 function niceScale(min: number, max: number, targetTicks = 5) {
   if (max <= min) { const p = Math.max(1, Math.abs(max) * 0.1); min -= p; max += p; }
@@ -46,6 +42,33 @@ export function AreaChart({
   nameFor?: (season: string) => string;
 }) {
   const [hover, setHover] = useState<number | null>(null);
+  const narrow = useMediaQuery(NARROW);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // On touch there is no pointer-leave to clear the readout, so a tap anywhere
+  // outside the chart dismisses it. A tap on another point still lands on the
+  // svg and just moves the marker. Mouse hover clears itself via onPointerLeave.
+  useEffect(() => {
+    if (hover == null) return;
+    const onDocDown = (e: globalThis.PointerEvent) => {
+      if (svgRef.current && !svgRef.current.contains(e.target as Node)) setHover(null);
+    };
+    document.addEventListener('pointerdown', onDocDown);
+    return () => document.removeEventListener('pointerdown', onDocDown);
+  }, [hover]);
+
+  // A phone gets a narrower viewBox: the desktop 820-wide box scaled into a
+  // ~335px card renders the axis text at ~7px. A 420-wide box lets the chart
+  // fill the card with no sideways scroll and legible labels — same treatment
+  // as PriceTimeline. Only ever ≤8 season points here, so it never crowds.
+  const W = narrow ? 420 : 820;
+  const H = narrow ? 300 : 320;
+  const M = narrow
+    ? { top: 12, right: 16, bottom: 40, left: 58 }
+    : { top: 16, right: 22, bottom: 40, left: 64 };
+  const PLOT_W = W - M.left - M.right;
+  const PLOT_H = H - M.top - M.bottom;
+  const axisFont = narrow ? 15 : 12;
 
   if (!points.length) return <p className="empty">No sales recorded for this token.</p>;
 
@@ -70,7 +93,9 @@ export function AreaChart({
       + ' ' + points.slice().reverse().map((p, j) => `L${x(points.length - 1 - j)},${y(p.min)}`).join(' ') + ' Z'
     : null;
 
-  const onMove = (e: MouseEvent<SVGSVGElement>) => {
+  // Pointer (not mouse) events so touch works: a mouse hover fires pointermove;
+  // a finger fires pointerdown on tap and pointermove while dragging.
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const svgX = ((e.clientX - rect.left) / rect.width) * W;
     const raw = points.length === 1 ? 0 : Math.round(((svgX - M.left) / PLOT_W) * (points.length - 1));
@@ -82,9 +107,10 @@ export function AreaChart({
   return (
     <div className="chartwrap">
       <div className="chart-plot">
-        <svg className="area-chart" viewBox={`0 0 ${W} ${H}`} role="img"
+        <svg ref={svgRef} className={`area-chart${narrow ? ' fit' : ''}`} viewBox={`0 0 ${W} ${H}`} role="img"
           aria-label={`Average auction price of ${label} by season`}
-          onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+          onPointerMove={onMove} onPointerDown={onMove}
+          onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHover(null); }}>
           <defs>
             <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--series-1)" stopOpacity="0.38" />
@@ -95,7 +121,7 @@ export function AreaChart({
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={1} />
-              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={12} fill="var(--text)">{money(t)}</text>
+              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={axisFont} fill="var(--text)">{money(t)}</text>
             </g>
           ))}
 
@@ -117,8 +143,9 @@ export function AreaChart({
           ))}
 
           {points.map((p, i) => (
-            <text key={p.season} x={x(i)} y={H - M.bottom + 20} textAnchor="middle"
-              fontSize={12} fill="var(--text)">{p.season}</text>
+            <text key={p.season} x={x(i)} y={H - M.bottom + 20}
+              textAnchor={points.length === 1 ? 'middle' : i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}
+              fontSize={axisFont} fill="var(--text)">{p.season}</text>
           ))}
         </svg>
 

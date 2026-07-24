@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Hand-rolled SVG pie — zero dependencies, themes via CSS variables.
 // Used as small multiples: one pie per season showing each auctioneer's share
@@ -55,6 +55,22 @@ export function PieChart({
   maxSlices?: number;
 }) {
   const [active, setActive] = useState<number | null>(null);
+  const figureRef = useRef<HTMLElement>(null);
+
+  // Desktop reveals a wedge's detail on hover; touch has none, so a tap on a
+  // wedge or its legend row opens it (and taps it again to close), while a tap
+  // anywhere outside the figure dismisses it. Mouse still uses enter/leave.
+  useEffect(() => {
+    if (active == null) return;
+    const onDocDown = (e: globalThis.PointerEvent) => {
+      if (figureRef.current && !figureRef.current.contains(e.target as Node)) setActive(null);
+    };
+    document.addEventListener('pointerdown', onDocDown);
+    return () => document.removeEventListener('pointerdown', onDocDown);
+  }, [active]);
+  const tapToggle = (i: number) => (e: { pointerType?: string }) => {
+    if (e.pointerType !== 'mouse') setActive((a) => (a === i ? null : i));
+  };
 
   if (!slices.length) return null;
 
@@ -85,7 +101,7 @@ export function PieChart({
   const hovered = active == null ? null : wedges[active];
 
   return (
-    <figure className="pie">
+    <figure className="pie" ref={figureRef}>
       <figcaption>
         <span className="pie-title">{title}</span>
         {subtitle && <span className="pie-sub">{subtitle}</span>}
@@ -103,6 +119,7 @@ export function PieChart({
               stroke="var(--card)" strokeWidth={1.5}
               opacity={active == null || active === i ? 1 : 0.4}
               onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
+              onPointerDown={tapToggle(i)}
             />
           ))}
         </svg>
@@ -129,7 +146,8 @@ export function PieChart({
         {wedges.map((w, i) => (
           <li key={w.label}
             className={active != null && active !== i ? 'dim' : undefined}
-            onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}>
+            onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)}
+            onPointerDown={tapToggle(i)}>
             <span className="swatch" style={{ background: w.color }} />
             <span className="pie-name">
               {w.label}{w.folded ? ` (${w.folded})` : ''}

@@ -19,7 +19,7 @@ import { PageIntro } from '../components/PageIntro';
 type View = 'current' | 'historical';
 
 export default function AnalyticsPage() {
-  const { meta, sales, onyxSales, loading, error } = useAuctionData();
+  const { meta, sales, loading, error } = useAuctionData();
   const [view, setView] = useState<View>('current');
   const [picked, setPicked] = useState<string>('');
 
@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
           </>
         )
       ) : (
-        <HistoricalStats meta={meta} sales={sales} onyxSales={onyxSales} />
+        <HistoricalStats meta={meta} sales={sales} />
       )}
     </>
   );

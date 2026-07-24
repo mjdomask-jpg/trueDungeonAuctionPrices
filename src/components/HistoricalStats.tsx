@@ -4,6 +4,7 @@ import {
   auctionsPerSeason, auctioneerSharesBySeason, auctioneerSeasonMatrix,
   historyItems, itemPriceHistory, displayNameIn,
 } from '../lib/analytics';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { BarChart } from './BarChart';
 import { PieChart } from './PieChart';
 import { AreaChart } from './AreaChart';
@@ -16,29 +17,42 @@ import { AreaChart } from './AreaChart';
 const BAR_COLOR = 'var(--series-1)';
 
 export function HistoricalStats({
-  meta, sales, onyxSales,
+  meta, sales,
 }: {
   meta: AuctionMeta[];
   sales: Sale[];
-  onyxSales: Sale[];
 }) {
   const perSeason = useMemo(() => auctionsPerSeason(meta), [meta]);
   const shares = useMemo(() => auctioneerSharesBySeason(meta), [meta]);
   const matrix = useMemo(() => auctioneerSeasonMatrix(meta), [meta]);
 
-  // The price-history picker spans both sale feeds. Their canonical names are
-  // disjoint (no Item appears in both prices.csv and onyx.csv), so they simply
-  // concatenate — but they stay in separate <optgroup>s because 101 Onyx chase
-  // tokens would otherwise bury the 28 main ones.
+  // Below 640px the wide auctioneer×season grid becomes a per-auctioneer list
+  // (see the panel below), so we prep it here: each row keeps only the seasons
+  // it actually ran, and the single-auction runners (career total of 1, the
+  // same people the pie folds into "Single Auction Runners") split off to sit
+  // behind a toggle rather than tail the list with a dozen one-cell rows.
+  const narrow = useMediaQuery(NARROW);
+  const [showRunners, setShowRunners] = useState(false);
+  const listRows = useMemo(() => matrix.rows.map((r) => ({
+    auctioneer: r.auctioneer,
+    total: r.total,
+    seasons: r.counts
+      .map((c, i) => ({ season: matrix.seasons[i], count: c }))
+      .filter((x): x is { season: string; count: number } => x.count != null),
+  })), [matrix]);
+  const mainRows = listRows.filter((r) => r.total !== 1);
+  const singleRunners = listRows.filter((r) => r.total === 1);
+
+  // The price-history picker lists only the auction tokens. Onyx chase tokens
+  // are deliberately excluded: they carry exactly one season of data apiece, so
+  // "price over time" has no trend to show for them.
   const mainItems = useMemo(() => historyItems(sales), [sales]);
-  const onyxItems = useMemo(() => historyItems(onyxSales), [onyxSales]);
-  const allSales = useMemo(() => [...sales, ...onyxSales], [sales, onyxSales]);
 
   const [item, setItem] = useState<string>('');
-  const chosen = item || mainItems[0] || onyxItems[0] || '';
+  const chosen = item || mainItems[0] || '';
   const history = useMemo(
-    () => (chosen ? itemPriceHistory(allSales, chosen) : []),
-    [allSales, chosen],
+    () => (chosen ? itemPriceHistory(sales, chosen) : []),
+    [sales, chosen],
   );
 
   const maxClosed = Math.max(...perSeason.map((s) => s.closed), 0);
@@ -58,14 +72,7 @@ export function HistoricalStats({
         <label className="an-picker">
           Token
           <select value={chosen} onChange={(e) => setItem(e.target.value)}>
-            <optgroup label={`Auction tokens (${mainItems.length})`}>
-              {mainItems.map((i) => <option key={i} value={i}>{i}</option>)}
-            </optgroup>
-            {onyxItems.length > 0 && (
-              <optgroup label={`Onyx chase tokens (${onyxItems.length})`}>
-                {onyxItems.map((i) => <option key={i} value={i}>{i}</option>)}
-              </optgroup>
-            )}
+            {mainItems.map((i) => <option key={i} value={i}>{i}</option>)}
           </select>
         </label>
 
@@ -77,7 +84,7 @@ export function HistoricalStats({
         )}
         <AreaChart
           points={history} label={chosen}
-          nameFor={(season) => displayNameIn(allSales, chosen, season)}
+          nameFor={(season) => displayNameIn(sales, chosen, season)}
         />
       </section>
 
@@ -147,42 +154,86 @@ export function HistoricalStats({
       <section className="an-panel">
         <h2>Auctions by auctioneer and season</h2>
         <p className="an-lede">
-          Every auctioneer on record, ordered by career total. A dash means they ran nothing that
-          season.
+          Every auctioneer on record, ordered by career total{narrow
+            ? ', with the seasons they ran.'
+            : '. A dash means they ran nothing that season.'}
         </p>
-        <div className="an-scroll">
-          <table className={`an-table an-matrix${matrix.rows.length >= 4 ? ' banded' : ''}`}>
-            <thead>
-              <tr>
-                <th className="left">Auctioneer</th>
-                {matrix.seasons.map((s) => <th key={s} className="num">{s}</th>)}
-                <th className="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {matrix.rows.map((r) => (
-                <tr key={r.auctioneer}>
-                  <td className="left">{r.auctioneer}</td>
-                  {r.counts.map((c, i) => (
-                    <td key={matrix.seasons[i]} className={`num${c == null ? ' muted' : ''}`}>{c ?? '—'}</td>
-                  ))}
-                  <td className="num strong">{r.total}</td>
-                </tr>
+        {narrow ? (
+          // Below 640px the 8-season grid becomes one row per auctioneer: name,
+          // career total, and only the seasons they ran — no sideways scroll and
+          // no grid of dashes. The single-auction runners fold behind a toggle.
+          <>
+            <ul className="an-alist">
+              {mainRows.map((r) => (
+                <li key={r.auctioneer} className="an-arow">
+                  <div className="an-atop">
+                    <span className="an-aname">{r.auctioneer}</span>
+                    <span className="an-atotal"><strong>{r.total}</strong> total</span>
+                  </div>
+                  <div className="an-ayears">
+                    {r.seasons.map((s) => (
+                      <span key={s.season} className="an-ychip">’{s.season.slice(-2)} ×{s.count}</span>
+                    ))}
+                  </div>
+                </li>
               ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <th className="left">Total</th>
-                {matrix.seasons.map((s, i) => (
-                  <th key={s} className="num">
-                    {matrix.rows.reduce((a, r) => a + (r.counts[i] ?? 0), 0)}
-                  </th>
+            </ul>
+            {singleRunners.length > 0 && (
+              <>
+                <button type="button" className="an-fold" aria-expanded={showRunners}
+                  onClick={() => setShowRunners((v) => !v)}>
+                  {showRunners ? 'Hide' : 'Show'} single-auction runners ({singleRunners.length})
+                </button>
+                {showRunners && (
+                  <ul className="an-alist an-runners">
+                    {singleRunners.map((r) => (
+                      <li key={r.auctioneer} className="an-arow">
+                        <div className="an-atop">
+                          <span className="an-aname">{r.auctioneer}</span>
+                          <span className="an-atotal">{r.seasons.map((s) => `’${s.season.slice(-2)}`).join(', ')}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </>
+        ) : (
+          <div className="an-scroll">
+            <table className={`an-table an-matrix${matrix.rows.length >= 4 ? ' banded' : ''}`}>
+              <thead>
+                <tr>
+                  <th className="left">Auctioneer</th>
+                  {matrix.seasons.map((s) => <th key={s} className="num">{s}</th>)}
+                  <th className="num">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matrix.rows.map((r) => (
+                  <tr key={r.auctioneer}>
+                    <td className="left">{r.auctioneer}</td>
+                    {r.counts.map((c, i) => (
+                      <td key={matrix.seasons[i]} className={`num${c == null ? ' muted' : ''}`}>{c ?? '—'}</td>
+                    ))}
+                    <td className="num strong">{r.total}</td>
+                  </tr>
                 ))}
-                <th className="num">{matrix.rows.reduce((a, r) => a + r.total, 0)}</th>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th className="left">Total</th>
+                  {matrix.seasons.map((s, i) => (
+                    <th key={s} className="num">
+                      {matrix.rows.reduce((a, r) => a + (r.counts[i] ?? 0), 0)}
+                    </th>
+                  ))}
+                  <th className="num">{matrix.rows.reduce((a, r) => a + r.total, 0)}</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
       </section>
     </>
   );
