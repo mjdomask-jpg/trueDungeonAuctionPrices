@@ -1129,6 +1129,16 @@ table.an-opens col.col-days { width: 16%; }
   /* The price tag sits under the ingredient rather than trailing it, so a long
      one ("auction · from 2025 · ceiling") wraps instead of forcing overflow. */
   .tx-src { display: block; margin-left: 0; white-space: normal; }
+
+  /* The badge popovers are 46x18px triggers sitting directly on top of
+     .tx-rtoggle, which covers the whole row — so a near miss doesn't just fail
+     to open the help, it expands the row instead. Grow the hit area with an
+     overlay rather than padding, so the pill keeps its size and the row keeps
+     its rhythm. 13px vertical takes the target to ~44px tall; horizontal stops
+     at 3px because .tx-badges' gap is 6px and overlapping targets would hand
+     taps between two badges to whichever sits later in the DOM. */
+  .tx-badges .hint-trigger { position: relative; }
+  .tx-badges .hint-trigger::after { content: ''; position: absolute; inset: -13px -3px; }
 }
 
 /* The ceiling badge's light-theme brown is 2.94:1 on the dark card — below AA,
