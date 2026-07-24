@@ -10,7 +10,7 @@ key,auctionSeason,Item,Display Name,Category
 2012Elven Bismuth,2012,Elven Bismuth,Elven Bismuth,Trade 2
 2012Enchanter's Munition,2012,Enchanter's Munition,Enchanter's Munition,Trade 1
 2012Fleece,2012,Fleece,Golden Fleece,Fleece
-2012Guild Button,2012,Guild Button,Adventurers' Guild Button,Bonus
+2012Adventurers' Guild Button,2012,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2012Minotaur Hide,2012,Minotaur Hide,Minotaur Hide,Trade 1
 2012Monster Trophy,2012,Monster Trophy,Monster Trophy,Treasure Chest
 2012Mystic Silk,2012,Mystic Silk,Mystic Silk,Trade 1
@@ -19,11 +19,11 @@ key,auctionSeason,Item,Display Name,Category
 2012PCH,2012,PCH,Potion Condensed Healing,Bonus
 2012Philosopher's Stone,2012,Philosopher's Stone,Philosopher's Stone,Trade 1
 2012Preorder Bonus,2012,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2012PYP,2012,PYP,Ultra Rare,Ultra Rare
+2012Ultra Rare,2012,Ultra Rare,Ultra Rare,Ultra Rare
 2012Rare Bag,2012,Rare Bag,Rare Bag,Condensed
 2012Treasure Chip,2012,Treasure Chip,Treasure Chip (each),Preorder
 2012Uncommon Bag,2012,Uncommon Bag,Uncommon Bag,Condensed
-2012Wish,2012,Wish,Wish Ring,Premium
+2012Wish Ring,2012,Wish Ring,Wish Ring,Premium
 "20131,000 GP Gold Bar",2013,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20131k Bonus,2013,1k Bonus,Rod of Seven Parts Segment 6,Premium
 20133 Star,2013,3 Star,Canteen of Quaffing,Bonus
@@ -35,7 +35,7 @@ key,auctionSeason,Item,Display Name,Category
 2013Elven Bismuth,2013,Elven Bismuth,Elven Bismuth,Trade 2
 2013Enchanter's Munition,2013,Enchanter's Munition,Enchanter's Munition,Trade 1
 2013Fleece,2013,Fleece,Golden Fleece,Fleece
-2013Guild Button,2013,Guild Button,Adventurers' Guild Button,Bonus
+2013Adventurers' Guild Button,2013,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2013Minotaur Hide,2013,Minotaur Hide,Minotaur Hide,Trade 1
 2013Monster Trophy,2013,Monster Trophy,Monster Trophy,Treasure Chest
 2013Mystic Silk,2013,Mystic Silk,Mystic Silk,Trade 1
@@ -44,11 +44,11 @@ key,auctionSeason,Item,Display Name,Category
 2013PCH,2013,PCH,Potion Condensed Healing,Bonus
 2013Philosopher's Stone,2013,Philosopher's Stone,Philosopher's Stone,Trade 1
 2013Preorder Bonus,2013,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2013PYP,2013,PYP,Ultra Rare,Ultra Rare
+2013Ultra Rare,2013,Ultra Rare,Ultra Rare,Ultra Rare
 2013Rare Bag,2013,Rare Bag,Rare Bag,Condensed
 2013Treasure Chip,2013,Treasure Chip,Treasure Chip (each),Preorder
 2013Uncommon Bag,2013,Uncommon Bag,Uncommon Bag,Condensed
-2013Wish,2013,Wish,Wish Ring,Premium
+2013Wish Ring,2013,Wish Ring,Wish Ring,Premium
 "20141,000 GP Gold Bar",2014,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20141k Bonus,2014,1k Bonus,Rod of Seven Parts Segment 7,Premium
 20143 Star,2014,3 Star,Canteen of Quaffing,Bonus
@@ -60,7 +60,7 @@ key,auctionSeason,Item,Display Name,Category
 2014Elven Bismuth,2014,Elven Bismuth,Elven Bismuth,Trade 2
 2014Enchanter's Munition,2014,Enchanter's Munition,Enchanter's Munition,Trade 1
 2014Fleece,2014,Fleece,Golden Fleece,Fleece
-2014Guild Button,2014,Guild Button,Adventurers' Guild Button,Bonus
+2014Adventurers' Guild Button,2014,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2014Minotaur Hide,2014,Minotaur Hide,Minotaur Hide,Trade 1
 2014Monster Trophy,2014,Monster Trophy,Monster Trophy,Treasure Chest
 2014Mystic Silk,2014,Mystic Silk,Mystic Silk,Trade 1
@@ -69,11 +69,11 @@ key,auctionSeason,Item,Display Name,Category
 2014PCH,2014,PCH,Potion Condensed Healing,Bonus
 2014Philosopher's Stone,2014,Philosopher's Stone,Philosopher's Stone,Trade 1
 2014Preorder Bonus,2014,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2014PYP,2014,PYP,Ultra Rare,Ultra Rare
+2014Ultra Rare,2014,Ultra Rare,Ultra Rare,Ultra Rare
 2014Rare Bag,2014,Rare Bag,Rare Bag,Condensed
 2014Treasure Chip,2014,Treasure Chip,Treasure Chip (each),Preorder
 2014Uncommon Bag,2014,Uncommon Bag,Uncommon Bag,Condensed
-2014Wish,2014,Wish,Wish Ring,Premium
+2014Wish Ring,2014,Wish Ring,Wish Ring,Premium
 "20151,000 GP Gold Bar",2015,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20151k Bonus,2015,1k Bonus,1st Tooth of Cavadar,Premium
 20153 Star,2015,3 Star,Canteen of Quaffing,Bonus
@@ -86,7 +86,7 @@ key,auctionSeason,Item,Display Name,Category
 2015Elven Bismuth,2015,Elven Bismuth,Elven Bismuth,Trade 2
 2015Enchanter's Munition,2015,Enchanter's Munition,Enchanter's Munition,Trade 1
 2015Fleece,2015,Fleece,Golden Fleece,Fleece
-2015Guild Button,2015,Guild Button,Adventurers' Guild Button,Bonus
+2015Adventurers' Guild Button,2015,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2015Minotaur Hide,2015,Minotaur Hide,Minotaur Hide,Trade 1
 2015Monster Trophy,2015,Monster Trophy,Monster Trophy,Treasure Chest
 2015Mystic Silk,2015,Mystic Silk,Mystic Silk,Trade 1
@@ -95,11 +95,11 @@ key,auctionSeason,Item,Display Name,Category
 2015PCH,2015,PCH,Potion Condensed Healing,Bonus
 2015Philosopher's Stone,2015,Philosopher's Stone,Philosopher's Stone,Trade 1
 2015Preorder Bonus,2015,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2015PYP,2015,PYP,Ultra Rare,Ultra Rare
+2015Ultra Rare,2015,Ultra Rare,Ultra Rare,Ultra Rare
 2015Rare Bag,2015,Rare Bag,Rare Bag,Condensed
 2015Treasure Chip,2015,Treasure Chip,Treasure Chip (each),Preorder
 2015Uncommon Bag,2015,Uncommon Bag,Uncommon Bag,Condensed
-2015Wish,2015,Wish,Wish Ring,Premium
+2015Wish Ring,2015,Wish Ring,Wish Ring,Premium
 "20161,000 GP Gold Bar",2016,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20161k Bonus,2016,1k Bonus,2nd Tooth of Cavadar,Premium
 20163 Star,2016,3 Star,Canteen of Quaffing,Bonus
@@ -112,7 +112,7 @@ key,auctionSeason,Item,Display Name,Category
 2016Elven Bismuth,2016,Elven Bismuth,Elven Bismuth,Trade 2
 2016Enchanter's Munition,2016,Enchanter's Munition,Enchanter's Munition,Trade 1
 2016Fleece,2016,Fleece,Golden Fleece,Fleece
-2016Guild Button,2016,Guild Button,Adventurers' Guild Button,Bonus
+2016Adventurers' Guild Button,2016,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2016Minotaur Hide,2016,Minotaur Hide,Minotaur Hide,Trade 1
 2016Monster Trophy,2016,Monster Trophy,Monster Trophy,Treasure Chest
 2016Mystic Silk,2016,Mystic Silk,Mystic Silk,Trade 1
@@ -121,11 +121,11 @@ key,auctionSeason,Item,Display Name,Category
 2016PCH,2016,PCH,Potion Condensed Healing,Bonus
 2016Philosopher's Stone,2016,Philosopher's Stone,Philosopher's Stone,Trade 1
 2016Preorder Bonus,2016,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2016PYP,2016,PYP,Ultra Rare,Ultra Rare
+2016Ultra Rare,2016,Ultra Rare,Ultra Rare,Ultra Rare
 2016Rare Bag,2016,Rare Bag,Rare Bag,Condensed
 2016Treasure Chip,2016,Treasure Chip,Treasure Chip (each),Preorder
 2016Uncommon Bag,2016,Uncommon Bag,Uncommon Bag,Condensed
-2016Wish,2016,Wish,Wish Ring,Premium
+2016Wish Ring,2016,Wish Ring,Wish Ring,Premium
 "20171,000 GP Gold Bar",2017,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20171k Bonus,2017,1k Bonus,3rd Tooth of Cavadar,Premium
 20173 Star,2017,3 Star,Canteen of Quaffing,Bonus
@@ -138,7 +138,7 @@ key,auctionSeason,Item,Display Name,Category
 2017Elven Bismuth,2017,Elven Bismuth,Elven Bismuth,Trade 2
 2017Enchanter's Munition,2017,Enchanter's Munition,Enchanter's Munition,Trade 1
 2017Fleece,2017,Fleece,Golden Fleece,Fleece
-2017Guild Button,2017,Guild Button,Adventurers' Guild Button,Bonus
+2017Adventurers' Guild Button,2017,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2017Minotaur Hide,2017,Minotaur Hide,Minotaur Hide,Trade 1
 2017Monster Trophy,2017,Monster Trophy,Monster Trophy,Treasure Chest
 2017Mystic Silk,2017,Mystic Silk,Mystic Silk,Trade 1
@@ -147,11 +147,11 @@ key,auctionSeason,Item,Display Name,Category
 2017PCH,2017,PCH,Potion Condensed Healing,Bonus
 2017Philosopher's Stone,2017,Philosopher's Stone,Philosopher's Stone,Trade 1
 2017Preorder Bonus,2017,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2017PYP,2017,PYP,Ultra Rare,Ultra Rare
+2017Ultra Rare,2017,Ultra Rare,Ultra Rare,Ultra Rare
 2017Rare Bag,2017,Rare Bag,Rare Bag,Condensed
 2017Treasure Chip,2017,Treasure Chip,Treasure Chip (each),Preorder
 2017Uncommon Bag,2017,Uncommon Bag,Uncommon Bag,Condensed
-2017Wish,2017,Wish,Wish Ring,Premium
+2017Wish Ring,2017,Wish Ring,Wish Ring,Premium
 "20181,000 GP Gold Bar",2018,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20181k Bonus,2018,1k Bonus,4th Tooth of Cavadar,Premium
 20183 Star,2018,3 Star,Canteen of Quaffing,Bonus
@@ -164,7 +164,7 @@ key,auctionSeason,Item,Display Name,Category
 2018Elven Bismuth,2018,Elven Bismuth,Elven Bismuth,Trade 2
 2018Enchanter's Munition,2018,Enchanter's Munition,Enchanter's Munition,Trade 1
 2018Fleece,2018,Fleece,Golden Fleece,Fleece
-2018Guild Button,2018,Guild Button,Adventurers' Guild Button,Bonus
+2018Adventurers' Guild Button,2018,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2018Minotaur Hide,2018,Minotaur Hide,Minotaur Hide,Trade 1
 2018Monster Trophy,2018,Monster Trophy,Monster Trophy,Treasure Chest
 2018Mystic Silk,2018,Mystic Silk,Mystic Silk,Trade 1
@@ -173,11 +173,11 @@ key,auctionSeason,Item,Display Name,Category
 2018PCH,2018,PCH,Potion Condensed Healing,Bonus
 2018Philosopher's Stone,2018,Philosopher's Stone,Philosopher's Stone,Trade 1
 2018Preorder Bonus,2018,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2018PYP,2018,PYP,Ultra Rare,Ultra Rare
+2018Ultra Rare,2018,Ultra Rare,Ultra Rare,Ultra Rare
 2018Rare Bag,2018,Rare Bag,Rare Bag,Condensed
 2018Treasure Chip,2018,Treasure Chip,Treasure Chip (each),Preorder
 2018Uncommon Bag,2018,Uncommon Bag,Uncommon Bag,Condensed
-2018Wish,2018,Wish,Wish Ring,Premium
+2018Wish Ring,2018,Wish Ring,Wish Ring,Premium
 "20191,000 GP Gold Bar",2019,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20191k Bonus,2019,1k Bonus,5th Tooth of Cavadar,Premium
 20192k Bonus,2019,2k Bonus,Mask of Mayhem,Premium
@@ -191,7 +191,7 @@ key,auctionSeason,Item,Display Name,Category
 2019Elven Bismuth,2019,Elven Bismuth,Elven Bismuth,Trade 2
 2019Enchanter's Munition,2019,Enchanter's Munition,Enchanter's Munition,Trade 1
 2019Fleece,2019,Fleece,Golden Fleece,Fleece
-2019Guild Button,2019,Guild Button,Adventurers' Guild Button,Bonus
+2019Adventurers' Guild Button,2019,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2019Minotaur Hide,2019,Minotaur Hide,Minotaur Hide,Trade 1
 2019Monster Trophy,2019,Monster Trophy,Monster Trophy,Treasure Chest
 2019Mystic Silk,2019,Mystic Silk,Mystic Silk,Trade 1
@@ -200,11 +200,11 @@ key,auctionSeason,Item,Display Name,Category
 2019PCH,2019,PCH,Potion Condensed Healing,Bonus
 2019Philosopher's Stone,2019,Philosopher's Stone,Philosopher's Stone,Trade 1
 2019Preorder Bonus,2019,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
-2019PYP,2019,PYP,Ultra Rare,Ultra Rare
+2019Ultra Rare,2019,Ultra Rare,Ultra Rare,Ultra Rare
 2019Rare Bag,2019,Rare Bag,Rare Bag,Condensed
 2019Treasure Chip,2019,Treasure Chip,Treasure Chip (each),Preorder
 2019Uncommon Bag,2019,Uncommon Bag,Uncommon Bag,Condensed
-2019Wish,2019,Wish,Wish Ring,Premium
+2019Wish Ring,2019,Wish Ring,Wish Ring,Premium
 "20201,000 GP Gold Bar",2020,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20201k Bonus,2020,1k Bonus,6th Tooth of Cavadar,Premium
 20202k Bonus,2020,2k Bonus,Hitchhiking Ghost: Shog,Premium
@@ -218,7 +218,7 @@ key,auctionSeason,Item,Display Name,Category
 2020Elven Bismuth,2020,Elven Bismuth,Elven Bismuth,Trade 2
 2020Enchanter's Munition,2020,Enchanter's Munition,Enchanter's Munition,Trade 1
 2020Fleece,2020,Fleece,Golden Fleece,Fleece
-2020Guild Button,2020,Guild Button,Adventurers' Guild Button,Bonus
+2020Adventurers' Guild Button,2020,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2020Minotaur Hide,2020,Minotaur Hide,Minotaur Hide,Trade 1
 2020Monster Trophy,2020,Monster Trophy,Monster Trophy,Treasure Chest
 2020Mystic Silk,2020,Mystic Silk,Mystic Silk,Trade 1
@@ -227,11 +227,11 @@ key,auctionSeason,Item,Display Name,Category
 2020PCH,2020,PCH,Potion Condensed Healing,Bonus
 2020Philosopher's Stone,2020,Philosopher's Stone,Philosopher's Stone,Trade 1
 2020Preorder Bonus,2020,Preorder Bonus,Averon's +3 Cherry Wine,Preorder
-2020PYP,2020,PYP,Ultra Rare,Ultra Rare
+2020Ultra Rare,2020,Ultra Rare,Ultra Rare,Ultra Rare
 2020Rare Bag,2020,Rare Bag,Rare Bag,Condensed
 2020Treasure Chip,2020,Treasure Chip,Treasure Chip (each),Preorder
 2020Uncommon Bag,2020,Uncommon Bag,Uncommon Bag,Condensed
-2020Wish,2020,Wish,Wish Ring,Premium
+2020Wish Ring,2020,Wish Ring,Wish Ring,Premium
 "20211,000 GP Gold Bar",2021,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20211k Bonus,2021,1k Bonus,7th Tooth of Cavadar,Premium
 20212k Bonus,2021,2k Bonus,Goggles of Ethereal Vision,Premium
@@ -245,7 +245,7 @@ key,auctionSeason,Item,Display Name,Category
 2021Elven Bismuth,2021,Elven Bismuth,Elven Bismuth,Trade 2
 2021Enchanter's Munition,2021,Enchanter's Munition,Enchanter's Munition,Trade 1
 2021Fleece,2021,Fleece,Golden Fleece,Fleece
-2021Guild Button,2021,Guild Button,Adventurers' Guild Button,Bonus
+2021Adventurers' Guild Button,2021,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2021Minotaur Hide,2021,Minotaur Hide,Minotaur Hide,Trade 1
 2021Monster Trophy,2021,Monster Trophy,Monster Trophy,Treasure Chest
 2021Mystic Silk,2021,Mystic Silk,Mystic Silk,Trade 1
@@ -255,11 +255,11 @@ key,auctionSeason,Item,Display Name,Category
 2021PCH,2021,PCH,Potion Condensed Healing,Bonus
 2021Philosopher's Stone,2021,Philosopher's Stone,Philosopher's Stone,Trade 1
 2021Preorder Bonus,2021,Preorder Bonus,Potion Re-Pete Healing,Preorder
-2021PYP,2021,PYP,Ultra Rare,Ultra Rare
+2021Ultra Rare,2021,Ultra Rare,Ultra Rare,Ultra Rare
 2021Rare Bag,2021,Rare Bag,Rare Bag,Condensed
 2021Treasure Chip,2021,Treasure Chip,Treasure Chip (each),Preorder
 2021Uncommon Bag,2021,Uncommon Bag,Uncommon Bag,Condensed
-2021Wish,2021,Wish,Wish Ring,Premium
+2021Wish Ring,2021,Wish Ring,Wish Ring,Premium
 "20221,000 GP Gold Bar",2022,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20221k Bonus,2022,1k Bonus,Ring of the 5th Circle,Premium
 20222k Bonus,2022,2k Bonus,+1 Turkey Leg of Smiting,Premium
@@ -273,7 +273,7 @@ key,auctionSeason,Item,Display Name,Category
 2022Elven Bismuth,2022,Elven Bismuth,Elven Bismuth,Trade 2
 2022Enchanter's Munition,2022,Enchanter's Munition,Enchanter's Munition,Trade 1
 2022Fleece,2022,Fleece,Golden Fleece,Fleece
-2022Guild Button,2022,Guild Button,Adventurers' Guild Button,Bonus
+2022Adventurers' Guild Button,2022,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2022Minotaur Hide,2022,Minotaur Hide,Minotaur Hide,Trade 1
 2022Monster Trophy,2022,Monster Trophy,Monster Trophy,Treasure Chest
 2022Mystic Silk,2022,Mystic Silk,Mystic Silk,Trade 1
@@ -283,11 +283,11 @@ key,auctionSeason,Item,Display Name,Category
 2022PCH,2022,PCH,Potion Condensed Healing,Bonus
 2022Philosopher's Stone,2022,Philosopher's Stone,Philosopher's Stone,Trade 1
 2022Preorder Bonus,2022,Preorder Bonus,+1 Turkey Leg,Preorder
-2022PYP,2022,PYP,Ultra Rare,Ultra Rare
+2022Ultra Rare,2022,Ultra Rare,Ultra Rare,Ultra Rare
 2022Rare Bag,2022,Rare Bag,Rare Bag,Condensed
 2022Treasure Chip,2022,Treasure Chip,Treasure Chip (each),Preorder
 2022Uncommon Bag,2022,Uncommon Bag,Uncommon Bag,Condensed
-2022Wish,2022,Wish,Wish Ring,Premium
+2022Wish Ring,2022,Wish Ring,Wish Ring,Premium
 "20231,000 GP Gold Bar",2023,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20231k Bonus,2023,1k Bonus,Ring of the 4th Circle,Premium
 20232k Bonus,2023,2k Bonus,Grunnel's +2 Pointy Stick,Premium
@@ -301,7 +301,7 @@ key,auctionSeason,Item,Display Name,Category
 2023Elven Bismuth,2023,Elven Bismuth,Elven Bismuth,Trade 2
 2023Enchanter's Munition,2023,Enchanter's Munition,Enchanter's Munition,Trade 1
 2023Fleece,2023,Fleece,Golden Fleece,Fleece
-2023Guild Button,2023,Guild Button,Adventurers' Guild Button,Bonus
+2023Adventurers' Guild Button,2023,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2023Minotaur Hide,2023,Minotaur Hide,Minotaur Hide,Trade 1
 2023Monster Trophy,2023,Monster Trophy,Monster Trophy,Treasure Chest
 2023Mystic Silk,2023,Mystic Silk,Mystic Silk,Trade 1
@@ -311,12 +311,12 @@ key,auctionSeason,Item,Display Name,Category
 2023PCH,2023,PCH,Potion Healer's Rum,Bonus
 2023Philosopher's Stone,2023,Philosopher's Stone,Philosopher's Stone,Trade 1
 2023Preorder Bonus,2023,Preorder Bonus,Gib Gub's Handy Acorn,Preorder
-2023PYP,2023,PYP,Ultra Rare,Ultra Rare
+2023Ultra Rare,2023,Ultra Rare,Ultra Rare,Ultra Rare
 2023Rare Bag,2023,Rare Bag,Rare Bag,Condensed
 2023Stalker Token,2023,Stalker Token,Stalker Token,Treasure Chest
 2023Treasure Chip,2023,Treasure Chip,Treasure Chip (each),Preorder
 2023Uncommon Bag,2023,Uncommon Bag,Uncommon Bag,Condensed
-2023Wish,2023,Wish,Wish Ring,Premium
+2023Wish Ring,2023,Wish Ring,Wish Ring,Premium
 "20241,000 GP Gold Bar",2024,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20241k Bonus,2024,1k Bonus,Ring of the 3rd Circle,Premium
 20242k Bonus,2024,2k Bonus,Mark of the 3rd Tenet,Premium
@@ -330,7 +330,7 @@ key,auctionSeason,Item,Display Name,Category
 2024Elven Bismuth,2024,Elven Bismuth,Elven Bismuth,Trade 2
 2024Enchanter's Munition,2024,Enchanter's Munition,Enchanter's Munition,Trade 1
 2024Fleece,2024,Fleece,Golden Fleece,Fleece
-2024Guild Button,2024,Guild Button,Adventurers' Guild Button,Bonus
+2024Adventurers' Guild Button,2024,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2024Minotaur Hide,2024,Minotaur Hide,Minotaur Hide,Trade 1
 2024Monster Trophy,2024,Monster Trophy,Monster Trophy,Treasure Chest
 2024Mystic Silk,2024,Mystic Silk,Mystic Silk,Trade 1
@@ -340,12 +340,12 @@ key,auctionSeason,Item,Display Name,Category
 2024PCH,2024,PCH,Potion Healer's Rum,Bonus
 2024Philosopher's Stone,2024,Philosopher's Stone,Philosopher's Stone,Trade 1
 2024Preorder Bonus,2024,Preorder Bonus,Averon's Cherry Ale,Preorder
-2024PYP,2024,PYP,Ultra Rare,Ultra Rare
+2024Ultra Rare,2024,Ultra Rare,Ultra Rare,Ultra Rare
 2024Rare Bag,2024,Rare Bag,Rare Bag,Condensed
 2024Safehold III,2024,Safehold III,Safehold III,Safehold
 2024Treasure Chip,2024,Treasure Chip,Treasure Chip (each),Preorder
 2024Uncommon Bag,2024,Uncommon Bag,Uncommon Bag,Condensed
-2024Wish,2024,Wish,Wish Ring,Premium
+2024Wish Ring,2024,Wish Ring,Wish Ring,Premium
 "20251,000 GP Gold Bar",2025,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20251k Bonus,2025,1k Bonus,Ring of the 2nd Circle,Premium
 20252k Bonus,2025,2k Bonus,Mark of the 2nd Tenet,Premium
@@ -360,7 +360,7 @@ key,auctionSeason,Item,Display Name,Category
 2025Enchanter's Munition,2025,Enchanter's Munition,Enchanter's Munition,Trade 1
 2025Fleece,2025,Fleece,Golden Fleece,Fleece
 2025Golden Ticket,2025,Golden Ticket,Golden Ticket,Golden Ticket
-2025Guild Button,2025,Guild Button,Adventurers' Guild Button,Bonus
+2025Adventurers' Guild Button,2025,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2025Minotaur Hide,2025,Minotaur Hide,Minotaur Hide,Trade 1
 2025Monster Trophy,2025,Monster Trophy,Monster Trophy,Treasure Chest
 2025Mystic Silk,2025,Mystic Silk,Mystic Silk,Trade 1
@@ -370,11 +370,11 @@ key,auctionSeason,Item,Display Name,Category
 2025PCH,2025,PCH,Potion Healer's Rum,Bonus
 2025Philosopher's Stone,2025,Philosopher's Stone,Philosopher's Stone,Trade 1
 2025Preorder Bonus,2025,Preorder Bonus,Averon's Cherry Mead,Preorder
-2025PYP,2025,PYP,Ultra Rare,Ultra Rare
+2025Ultra Rare,2025,Ultra Rare,Ultra Rare,Ultra Rare
 2025Rare Bag,2025,Rare Bag,Rare Bag,Condensed
 2025Treasure Chip,2025,Treasure Chip,Treasure Chip (each),Preorder
 2025Uncommon Bag,2025,Uncommon Bag,Uncommon Bag,Condensed
-2025Wish,2025,Wish,Wish Ring,Premium
+2025Wish Ring,2025,Wish Ring,Wish Ring,Premium
 "20261,000 GP Gold Bar",2026,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 202610x Treasure Chip,2026,10x Treasure Chip,Treasure Chip (each),Preorder
 20261k Bonus,2026,1k Bonus,Ring of the 1st Circle,Premium
@@ -389,7 +389,7 @@ key,auctionSeason,Item,Display Name,Category
 2026Enchanter's Munition,2026,Enchanter's Munition,Enchanter's Munition,Trade 1
 2026Fleece,2026,Fleece,Golden Fleece,Fleece
 2026Golden Ticket,2026,Golden Ticket,Golden Ticket,Golden Ticket
-2026Guild Button,2026,Guild Button,Adventurers' Guild Button,Bonus
+2026Adventurers' Guild Button,2026,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2026Herald Token,2026,Herald Token,Herald Token,Treasure Chest
 2026Minotaur Hide,2026,Minotaur Hide,Minotaur Hide,Trade 1
 2026Monster Trophy,2026,Monster Trophy,Monster Trophy,Treasure Chest
@@ -398,9 +398,9 @@ key,auctionSeason,Item,Display Name,Category
 2026Patron Pin,2026,Patron Pin,Patron Pin,Premium
 2026Philosopher's Stone,2026,Philosopher's Stone,Philosopher's Stone,Trade 1
 2026Preorder Bonus,2026,Preorder Bonus,Drake's Draught,Preorder
-2026PYP,2026,PYP,Ultra Rare,Ultra Rare
+2026Ultra Rare,2026,Ultra Rare,Ultra Rare,Ultra Rare
 2026Treasure Chip,2026,Treasure Chip,Treasure Chip (each),Preorder
-2026Wish,2026,Wish,Wish Ring,Premium
+2026Wish Ring,2026,Wish Ring,Wish Ring,Premium
 "20271,000 GP Gold Bar",2027,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 202710x Treasure Chip,2027,10x Treasure Chip,Treasure Chip (each),Preorder
 20271k Bonus,2027,1k Bonus,Ring of the 1st Circle,Premium
@@ -415,7 +415,7 @@ key,auctionSeason,Item,Display Name,Category
 2027Enchanter's Munition,2027,Enchanter's Munition,Enchanter's Munition,Trade 1
 2027Fleece,2027,Fleece,Golden Fleece,Fleece
 2027Golden Ticket,2027,Golden Ticket,Golden Ticket,Golden Ticket
-2027Guild Button,2027,Guild Button,Adventurers' Guild Button,Bonus
+2027Adventurers' Guild Button,2027,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2027Minotaur Hide,2027,Minotaur Hide,Minotaur Hide,Trade 1
 2027Monster Trophy,2027,Monster Trophy,Monster Trophy,Treasure Chest
 2027Mystic Silk,2027,Mystic Silk,Mystic Silk,Trade 1
@@ -423,6 +423,6 @@ key,auctionSeason,Item,Display Name,Category
 2027Patron Pin,2027,Patron Pin,Patron Pin,Premium
 2027Philosopher's Stone,2027,Philosopher's Stone,Philosopher's Stone,Trade 1
 2027Preorder Bonus,2027,Preorder Bonus,Drake's Draught,Preorder
-2027PYP,2027,PYP,Ultra Rare,Ultra Rare
+2027Ultra Rare,2027,Ultra Rare,Ultra Rare,Ultra Rare
 2027Treasure Chip,2027,Treasure Chip,Treasure Chip (each),Preorder
-2027Wish,2027,Wish,Wish Ring,Premium
+2027Wish Ring,2027,Wish Ring,Wish Ring,Premium
