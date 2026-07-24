@@ -558,6 +558,15 @@ export type SortDir = 'asc' | 'desc';
 // highest auction number first.
 export const DEFAULT_SORT: { key: SortKey; dir: SortDir } = { key: 'season', dir: 'desc' };
 
+// The keys the phone's three-column flat table can sort by, in the order its
+// columns render — SaleTable builds its compact header row from this, and
+// ExplorerPage uses it to detect a sort whose column isn't on screen. Lives
+// here rather than in the component so both read one source.
+//
+// `season` is the compact "2026 · #46" column: sorting by it matches what that
+// column shows, because tiebreak below resolves a season tie by auction number.
+export const COMPACT_SORT_KEYS: SortKey[] = ['token', 'season', 'price'];
+
 export function flattenAuctions(auctions: AuctionGroup[]): FlatRow[] {
   return auctions.flatMap((a) => a.rows.map((row) => ({ row, meta: a.meta })));
 }

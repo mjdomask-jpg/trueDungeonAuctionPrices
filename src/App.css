@@ -745,6 +745,23 @@ table.flat col.col-cat        { width: 12%; }
 table.flat col.col-price      { width: 10%; }
 tbody td.wrap-text { white-space: normal; }
 
+/* The phone's three-column flat table (SaleTable's compact mode). These
+   override the eight-column widths above by being more specific — the compact
+   colgroup renders only three of those classes.
+
+   Sized from the narrowest supported width, 320px, where the table's content
+   box is 278px: "2026 · #46" needs 76px (27.3%) and the widest price in the
+   data, $2,530.00, needs 71px (25.5%). Both are nowrap, so a shortfall clips
+   rather than wraps — at 52/26/22 they were 4px and 10px short and 806 cells
+   clipped. Token takes what's left: it wraps, so it degrades to a taller row
+   instead of lost text, which makes it the right column to borrow from. */
+table.flat.compact col.col-token   { width: 45%; }
+table.flat.compact col.col-auction { width: 28%; }
+table.flat.compact col.col-price   { width: 27%; }
+/* Tabular figures so the season·number references line up down the column,
+   matching how .auction-num sets them in the cards. */
+td.auction-ref { font-family: var(--sans); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
+
 /* "Show all" button under a capped flat table. */
 .show-all { margin: 12px 0 0; text-align: center; }
 .show-all button {
