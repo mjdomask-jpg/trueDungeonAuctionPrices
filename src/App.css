@@ -1091,4 +1091,9 @@ table.an-opens col.col-days { width: 16%; }
      Avg columns split the ~38% that's left. */
   table.compare-compact col.col-token { width: 36%; }
   table.compare-compact col.col-delta { width: 26%; }
+
+  /* Tier chips carry a short code here (TransmuteRow/tierAbbrev), so centre the
+     text and hold a floor width — otherwise "R" and "Par" render as visibly
+     different-sized pills down the column. */
+  .tchip { min-width: 30px; text-align: center; padding: 2px 7px; }
 }

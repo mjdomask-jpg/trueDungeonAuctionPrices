@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { money0 } from '../lib/format';
 import { HintPopover } from './HintPopover';
-import { sourceName, type BuildCost, type PricedLine } from '../lib/transmutes';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { sourceName, tierAbbrev, type BuildCost, type PricedLine } from '../lib/transmutes';
 
 // Friendly, non-camelCase label for where a line's price came from, plus the
 // season-mapped / ceiling qualifiers.
@@ -36,6 +37,7 @@ export function TransmuteRow({
   seasonFallback?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const narrow = useMediaQuery(NARROW);
   const src = sourceName(cost);
   const estBadge = cost.estimate && !cost.ceiling && !seasonFallback;
   // Alternating row shading kicks in once the ingredient list is long enough to
@@ -58,7 +60,14 @@ export function TransmuteRow({
         />
         <span className="tx-rface">
           <i className={`tx-chev ${open ? 'open' : ''}`} aria-hidden="true">▸</i>
-          <span className="tchip" data-tier={cost.level}>{cost.level}</span>
+          {/* On phones the chip shrinks to a tier code (see tierAbbrev) — a
+              spelled-out "Legendary" costs a quarter of the row. The full name
+              stays in the accessibility tree so the tier is never carried by a
+              letter and a colour alone. */}
+          <span className="tchip" data-tier={cost.level}>
+            <span aria-hidden="true">{narrow ? tierAbbrev(cost.level) : cost.level}</span>
+            <span className="sr-only">{cost.level}</span>
+          </span>
           <span className="tx-name">
             {cost.displayName}
             {paired && src && <span className="tx-upfrom">upgrades from {src}</span>}

@@ -110,6 +110,33 @@ headers genuinely stick requires restructuring how the table scrolls.
   `App.css`). Text columns need `className="left"`. Change/delta columns need
   `className="diff"` for the up/down colours to apply.
 
+## Tier chips
+
+**Below 640px the tier chip shows a short code, not the tier name.** A
+spelled-out `Legendary` is 72px of a ~300px row, and the row's flex line gives
+every pixel it can't afford to `.tx-name` — measured before this change, the
+token name on a paired Legendary row was down to 11.9px at 375px and 0px at
+320px. The codes live in `tierAbbrev` ([`src/lib/transmutes.ts`](../src/lib/transmutes.ts)):
+
+| A | El | En | Ex | L | M | O | Par | Pat | R | S |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Arcanum | Eldritch | Enhanced | Exalted | Legendary | Mythic | Omni | Paragon | Patron | Relic | Safehold |
+
+Each is the shortest prefix that is unique across **all eleven** tiers — one
+letter where that's unambiguous, two for the three E-tiers, three for
+Paragon/Patron, which collide at both one and two letters.
+
+Two rules for maintaining it:
+
+- **It is a fixed table, never computed.** Seasons carry different tier sets, so
+  deriving prefixes from whatever a season happens to contain would let the same
+  letter mean different things on different seasons. A new tier means checking it
+  against the whole table by hand; an unmapped tier falls back to its full name,
+  because a wide chip beats a colliding one.
+- **The full tier name stays in the accessibility tree.** The chip renders the
+  code in an `aria-hidden` span beside an `.sr-only` span carrying the real name,
+  so the tier is never conveyed by a letter and a colour alone.
+
 ## Colour and contrast
 
 - **Never use `opacity` to mute text.** It compounds against whatever is behind
