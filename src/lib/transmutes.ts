@@ -547,7 +547,7 @@ export class CostEngine {
 // despite its power because only the largest spenders build them.
 const FLAT_LEVEL_ORDER = ['Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic'];
 // Tokens outside the normal upgrade ladder, in maintainer-specified order.
-const LADDER_LEVEL_ORDER = ['Safehold', 'Patron', 'Paragon', 'Omni'];
+const LADDER_LEVEL_ORDER = ['Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
 
 export type UpgradePair = { source: BuildCost; upgrade: BuildCost };
 
@@ -581,7 +581,7 @@ const TIER_ABBREV: Record<string, string> = {
   Mythic: 'M',
   Omni: 'O',
   Paragon: 'Par',
-  Patron: 'Pat',
+  "Ultra Rare": 'UR',
   Relic: 'R',
   Safehold: 'S',
 };

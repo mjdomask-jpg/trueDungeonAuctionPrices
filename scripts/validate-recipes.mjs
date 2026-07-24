@@ -130,7 +130,7 @@ const pricedYears = new Set(prices.map(p => p.auctionSeason));
 // ---------- per-row recipe checks ----------
 const seenKeys = new Map();
 const LEVELS = new Set(['Enhanced','Exalted','Relic','Legendary','Arcanum','Paragon','Mythic',
-                        'Eldritch','Omni','Safehold','Patron']);
+                        'Eldritch','Omni','Safehold','Ultra Rare']);
 const unresolvedGoods = new Map();   // "year|good" -> count
 const usedGoodYears = new Set();
 

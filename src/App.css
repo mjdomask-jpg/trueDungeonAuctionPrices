@@ -558,7 +558,7 @@ td.diff.down { color: var(--diff-down); }
 .tchip[data-tier='Legendary'] { background: #f0730f; color: #000; }
 .tchip[data-tier='Mythic']    { background: #fff;    color: #363c46; border-color: #aeb6c2; }
 .tchip[data-tier='Safehold']  { background: #d6dae0; color: #363c46; border-color: #bdc3cb; }
-.tchip[data-tier='Patron']    { background: #9900ff; color: #fff; }
+.tchip[data-tier='Ultra Rare']    { background: #9900ff; color: #fff; }
 .tchip[data-tier='Paragon']   { background: #a52121; color: #fff; }
 .tchip[data-tier='Omni']      { background: #b45f06; color: #fff; }
 
@@ -570,7 +570,7 @@ td.diff.down { color: var(--diff-down); }
 :root[data-theme='dark'] .tchip[data-tier='Legendary'] { background: #f2701e; color: #000; }
 :root[data-theme='dark'] .tchip[data-tier='Mythic']    { background: #f6f8fb; color: #23262e; border-color: #f6f8fb; }
 :root[data-theme='dark'] .tchip[data-tier='Safehold']  { background: #c2c8d1; color: #23262e; border-color: transparent; }
-:root[data-theme='dark'] .tchip[data-tier='Patron']    { background: #c084fc; color: #3b0764; }
+:root[data-theme='dark'] .tchip[data-tier='Ultra Rare']    { background: #c084fc; color: #3b0764; }
 :root[data-theme='dark'] .tchip[data-tier='Paragon']   { background: #cf3a3a; color: #fff; }
 :root[data-theme='dark'] .tchip[data-tier='Omni']      { background: #e08b3e; color: #3a1f04; }
 
