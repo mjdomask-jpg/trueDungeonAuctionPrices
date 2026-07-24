@@ -1,11 +1,23 @@
 Key,Year,Category,Item,Display Name,max Price,avg Price,min Price
-2019Fleece,2019,Transmute,Fleece,Golden Fleece,70,60,50
-2020Fleece,2020,Transmute,Fleece,Golden Fleece,60,50,40
-2021Fleece,2021,Transmute,Fleece,Golden Fleece,50,40,30
-2022Fleece,2022,Transmute,Fleece,Golden Fleece,50,40,30
-2023Fleece,2023,Transmute,Fleece,Golden Fleece,40,35,30
-2024Fleece,2024,Transmute,Fleece,Golden Fleece,50,45,40
-2025Fleece,2025,Transmute,Fleece,Golden Fleece,70,60,50
-2026Fleece,2026,Transmute,Fleece,Golden Fleece,90,85,75
+2019Fleece,2019,Fleece,Fleece,Golden Fleece,70,60,50
+2020Fleece,2020,Fleece,Fleece,Golden Fleece,60,50,40
+2021Fleece,2021,Fleece,Fleece,Golden Fleece,50,40,30
+2022Fleece,2022,Fleece,Fleece,Golden Fleece,50,40,30
+2023Fleece,2023,Fleece,Fleece,Golden Fleece,40,35,30
+2024Fleece,2024,Fleece,Fleece,Golden Fleece,50,45,40
+2025Fleece,2025,Fleece,Fleece,Golden Fleece,70,60,50
+2026Fleece,2026,Fleece,Fleece,Golden Fleece,90,85,75
 2023Stalker Token,2023,Treasure Chest,Stalker Token,Stalker Token,5,4,3
-2026Herald Token,2026,Treasure Chest,Herald Token,Herald Token,20,15,10
+2026Herald Token (20 Unique),2026,Treasure Chest,Herald Token (20 Unique),Herald Token (20 Unique),20,15,10
+2026Melonbrant Concentrate,2026,Silver Ship Games,Melonbrant Concentrate,Melonbrant Concentrate,50,40,29
+2026Mirthwood Bliss Blossom,2026,Silver Ship Games,Mirthwood Bliss Blossom,Mirthwood Bliss Blossom,50,40,29
+2026Nil Crystal,2026,Silver Ship Games,Nil Crystal,Nil Crystal,60,50,39
+2026Pemberton Pain Extract,2026,Silver Ship Games,Pemberton Pain Extract,Pemberton Pain Extract,50,40,29
+2026Golem Piece (40 Unique),2026,Treasure Chest,Golem Piece (40 Unique),Golem Piece (40 Unique),30,20,15
+2026Ioun Stone of Envy,2026,Participation,Ioun Stone of Envy,Ioun Stone of Envy,15,10,5
+2026Ioun Stone of Pride,2026,Participation,Ioun Stone of Pride,Ioun Stone of Pride,15,10,5
+2026Ioun Stone of the Dead,2026,Participation,Ioun Stone of the Dead,Ioun Stone of the Dead,15,10,5
+2026Ioun Stone of the Grave,2026,Participation,Ioun Stone of the Grave,Ioun Stone of the Grave,15,10,5
+2026Ioun Stone of the Night,2026,Participation,Ioun Stone of the Night,Ioun Stone of the Night,15,10,5
+2026Ioun Stone of Wrath,2026,Participation,Ioun Stone of Wrath,Ioun Stone of Wrath,15,10,5
+2026Ioun Stone Rock Candy,2026,Participation,Ioun Stone Rock Candy,Ioun Stone Rock Candy,15,10,5
