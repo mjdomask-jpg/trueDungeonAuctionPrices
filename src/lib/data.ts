@@ -146,6 +146,35 @@ export function seasonsOf(sales: Sale[]): string[] {
   return [...new Set(sales.map((s) => s.season))].sort((a, b) => Number(b) - Number(a));
 }
 
+export type PricedAuction = {
+  season: string;
+  auctionNumber: number;
+  closeDate: string;
+  auctioneer: string;
+};
+
+// The most recent auction that actually contributed prices: of the auctions
+// present in `sales`, the one with the latest close date (tie-broken by the
+// higher number, and by number alone when close dates are missing). Joined to
+// `meta` on auctionId for its close date and auctioneer. Null when there are no
+// priced auctions or none of them have metadata. Drives the footer's data line.
+export function latestPricedAuction(sales: Sale[], meta: AuctionMeta[]): PricedAuction | null {
+  const pricedIds = new Set(sales.map((s) => s.auctionId));
+  const priced = meta.filter((m) => pricedIds.has(m.auctionId));
+  if (!priced.length) return null;
+  const best = priced.reduce((best, m) => {
+    const kb = dateKey(best.closeDate), km = dateKey(m.closeDate);
+    if (km !== kb) return km > kb ? m : best;
+    return m.auctionNumber > best.auctionNumber ? m : best;
+  });
+  return {
+    season: best.season,
+    auctionNumber: best.auctionNumber,
+    closeDate: best.closeDate,
+    auctioneer: best.auctioneer,
+  };
+}
+
 // Aggregate one season into per-item rows.
 export function aggregateSeason(sales: Sale[], season: string): ItemRow[] {
   const seasonSales = sales.filter((s) => s.season === season);
