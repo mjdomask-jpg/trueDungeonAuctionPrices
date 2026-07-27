@@ -389,6 +389,18 @@ export type CompareRow = {
   avgPct: number | null; // % change of the average from A→B; null unless both years priced (A.avg ≠ 0)
 };
 
+// The three per-season stats a reader can pivot the comparison on. On desktop
+// all three show at once; the phone's compact view shows one at a time and the
+// user picks which with a toggle.
+export type StatKind = 'max' | 'avg' | 'min';
+
+// % change from one value to another, in the same shape avgPct uses: defined
+// only when both ends exist and the starting value is non-zero. Shared so the
+// mobile Max/Min deltas are computed exactly like the Avg delta.
+export function pctChange(from: number | undefined, to: number | undefined): number | null {
+  return from != null && to != null && from !== 0 ? ((to - from) / from) * 100 : null;
+}
+
 // Compare two seasons. seasonA / seasonB are just the two picked seasons in the
 // order the caller wants them shown; avgPct is always the change from A's avg to
 // B's avg. Category/name preference leans on whichever season is numerically
@@ -402,7 +414,7 @@ export function compareSeasons(sales: Sale[], seasonA: string, seasonB: string):
   for (const item of new Set([...A.keys(), ...B.keys()])) {
     const ra = A.get(item), rb = B.get(item);
     const a = ra?.full ?? null, b = rb?.full ?? null;
-    const avgPct = a && b && a.avg !== 0 ? ((b.avg - a.avg) / a.avg) * 100 : null;
+    const avgPct = pctChange(a?.avg, b?.avg);
     const newer = newerIsB ? rb : ra;
     const older = newerIsB ? ra : rb;
     rows.push({

@@ -1249,16 +1249,18 @@ table.an-opens col.col-days { width: 16%; }
      480px floor that forced sideways scrolling. */
   .timeline-chart { min-width: 0; }
 
-  /* Compare Years' condensed four-column phone view (Token | Avg A | Avg B | Δ).
-     A wide Token column, an extra-wide Δ so "+165.1%" doesn't clip, and the two
-     Avg columns split the ~38% that's left. */
-  table.compare-compact col.col-token { width: 36%; }
-  table.compare-compact col.col-delta { width: 26%; }
+  /* Compare Years' condensed four-column phone view (Token | val A | val B | Δ),
+     where the shown value is Avg, Max, or Min per the page toggle. A wide Token
+     column, an extra-wide Δ so even a four-digit swing like "+2740.0%" (a Min can
+     multiply off a near-zero base) doesn't clip, and the two value columns split
+     the ~38% that's left. */
+  table.compare-compact col.col-token { width: 33%; }
+  table.compare-compact col.col-delta { width: 29%; }
 
-  /* "Avg 2025" is a touch wider than its ~76px column, so stack the year under
-     "Avg" — two short lines fit with room to spare down to 320px. Tight
-     line-height keeps the header row from growing much; single-line Token and
-     Δ Avg headers stay vertically centred against it. */
+  /* "Avg 2025" (or "Max"/"Min") is a touch wider than its column, so stack the
+     year under the stat name — two short lines fit with room to spare down to
+     320px. Tight line-height keeps the header row from growing much; single-line
+     Token and Δ headers stay vertically centred against it. */
   table.compare-compact th.stacked { line-height: 1.15; }
 
   /* --- Transmute rows -------------------------------------------------------

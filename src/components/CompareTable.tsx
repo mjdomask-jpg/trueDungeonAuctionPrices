@@ -1,28 +1,37 @@
-import { type CompareRow } from '../lib/data';
+import { type CompareRow, type StatKind, pctChange } from '../lib/data';
 import { money, moneyTight } from '../lib/format';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+
+const STAT_LABEL: Record<StatKind, string> = { max: 'Max', avg: 'Avg', min: 'Min' };
 
 // One Compare-Years table: Token | season A (Max/Avg/Min) | season B
 // (Max/Avg/Min) | Δ Avg. Used both for a single category section and for the
 // flat "biggest movers" view, so it takes the rows already ordered by the page.
+// `stat` only bites in the compact phone view (see below); desktop always shows
+// all three stats and the Avg delta.
 export function CompareTable({
-  rows, seasonA, seasonB, newerIsB,
+  rows, seasonA, seasonB, newerIsB, stat,
 }: {
   rows: CompareRow[];
   seasonA: string;
   seasonB: string;
   newerIsB: boolean;
+  stat: StatKind;
 }) {
   const narrow = useMediaQuery(NARROW);
   // General rule across the site: any table with 4+ rows gets row banding.
   const isBanded = rows.length >= 4;
 
-  // Phones can't fit all eight columns without crushing the numbers, so show
-  // just the two averages and their change; Max/Min stay on desktop and on the
-  // Prices tab. `compare-compact` sets this four-column view's widths — a wide
-  // Token column and an extra-wide Δ so three-digit swings like "+165.1%" fit.
+  // Phones can't fit all eight columns without crushing the numbers, so show a
+  // single stat — the one picked in the page's toggle — for each year plus its
+  // change; the other two stats stay on desktop and on the Prices tab. The delta
+  // tracks the shown stat, not a hidden average, so the change always describes
+  // the numbers on screen. `compare-compact` sets this four-column view's widths
+  // — a wide Token column and an extra-wide Δ so three-digit swings like
+  // "+165.1%" fit.
   if (narrow) {
     const cls = [isBanded && 'banded', 'compare-compact'].filter(Boolean).join(' ');
+    const label = STAT_LABEL[stat];
     return (
       <div className="tablewrap">
         <table className={cls}>
@@ -34,18 +43,18 @@ export function CompareTable({
           <thead>
             <tr>
               <th className="left">Token</th>
-              <th className="stacked">Avg<br />{seasonA}</th>
-              <th className="sep stacked">Avg<br />{seasonB}</th>
-              <th className="sep">Δ Avg</th>
+              <th className="stacked">{label}<br />{seasonA}</th>
+              <th className="sep stacked">{label}<br />{seasonB}</th>
+              <th className="sep">Δ {label}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.item}>
                 <TokenCell r={r} newerIsB={newerIsB} />
-                <td className="avg">{moneyTight(r.a?.avg)}</td>
-                <td className="avg sep">{moneyTight(r.b?.avg)}</td>
-                <PctCell pct={r.avgPct} />
+                <td className="avg">{moneyTight(r.a?.[stat])}</td>
+                <td className="avg sep">{moneyTight(r.b?.[stat])}</td>
+                <PctCell pct={pctChange(r.a?.[stat], r.b?.[stat])} />
               </tr>
             ))}
           </tbody>
