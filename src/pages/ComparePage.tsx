@@ -1,12 +1,19 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { seasonsOf, compareSeasons, type CompareRow } from '../lib/data';
+import { seasonsOf, compareSeasons, pctChange, type CompareRow, type StatKind } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CompareTable } from '../components/CompareTable';
 import { compareCategories } from '../lib/categories';
 import { PageIntro } from '../components/PageIntro';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 type SortMode = 'category' | 'movers';
+
+const STAT_OPTIONS: { key: StatKind; label: string }[] = [
+  { key: 'avg', label: 'Avg' },
+  { key: 'max', label: 'Max' },
+  { key: 'min', label: 'Min' },
+];
 
 // Compare Years (Phase 3). Pick two seasons; see each token's full-season
 // Max/Avg/Min side by side plus the % change in average, keyed on the canonical
@@ -16,10 +23,15 @@ export default function ComparePage() {
   const { sales, loading, error } = useAuctionData();
   const seasons = useMemo(() => seasonsOf(sales), [sales]); // newest first
 
+  const narrow = useMediaQuery(NARROW);
+
   // Default to the two most recent seasons: older on the left, newer on the right.
   const [seasonA, setSeasonA] = useState('');
   const [seasonB, setSeasonB] = useState('');
   const [sort, setSort] = useState<SortMode>('category');
+  // Which stat the compact phone view shows. Ignored on desktop (all three show
+  // there); defaults to Avg to match the desktop delta column.
+  const [stat, setStat] = useState<StatKind>('avg');
 
   const a = seasonA || seasons[1] || seasons[0] || '';
   const b = seasonB || seasons[0] || '';
@@ -50,16 +62,23 @@ export default function ComparePage() {
     // sortLabel depends on newerIsB; rows/newerIsB cover it.
   }, [rows, newerIsB]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The change a row is judged on: the shown stat's % change in the compact
+  // phone view (so "biggest change" ranks by the delta actually on screen), and
+  // the average change on desktop, where the delta column is always Δ Avg.
+  const rowPct = (r: CompareRow) =>
+    narrow ? pctChange(r.a?.[stat], r.b?.[stat]) : r.avgPct;
+
   // Flat "biggest movers" order: largest absolute % change first; rows without a
   // defined % change (token absent in one year) fall to the bottom, by name.
   const movers = useMemo(() => {
     return [...rows].sort((x, y) => {
-      const mx = x.avgPct == null ? -Infinity : Math.abs(x.avgPct);
-      const my = y.avgPct == null ? -Infinity : Math.abs(y.avgPct);
+      const px = rowPct(x), py = rowPct(y);
+      const mx = px == null ? -Infinity : Math.abs(px);
+      const my = py == null ? -Infinity : Math.abs(py);
       if (mx !== my) return my - mx;
       return sortLabel(x).localeCompare(sortLabel(y));
     });
-  }, [rows, newerIsB]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rows, newerIsB, narrow, stat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Summary line: how many tokens rose / fell / are new / dropped out.
   const summary = useMemo(() => {
@@ -86,11 +105,18 @@ export default function ComparePage() {
   return (
     <>
       <PageIntro short="How each token's full-season price changed between two years.">
-        How each token's full-season price changed between two years. Values are
-        Max / Avg / Min for the whole season; <strong>Δ Avg</strong> is the change
-        in average from the left year to the right. Tokens are matched across years
-        by their role, so a renamed token still lines up — <em>{newer} name / {older} name</em>{' '}
-        when it changed. For a single season's detail, see <Link to="/">Prices</Link>.
+        How each token's full-season price changed between two years.{' '}
+        {narrow ? (
+          <>Pick <strong>Avg</strong>, <strong>Max</strong>, or <strong>Min</strong> to see
+          that full-season value for each year; <strong>Δ</strong> is its change from the
+          left year to the right.</>
+        ) : (
+          <>Values are Max / Avg / Min for the whole season; <strong>Δ Avg</strong> is the
+          change in average from the left year to the right.</>
+        )}{' '}
+        Tokens are matched across years by their role, so a renamed token still lines
+        up — <em>{newer} name / {older} name</em> when it changed. For a single season's
+        detail, see <Link to="/">Prices</Link>.
       </PageIntro>
 
       <div className="controls">
@@ -113,6 +139,20 @@ export default function ComparePage() {
             <option value="movers">By biggest change</option>
           </select>
         </label>
+        {narrow && (
+          <div className="toggle" role="group" aria-label="Stat">
+            <span className="toggle-label">Show</span>
+            <div className="toggle-buttons">
+              {STAT_OPTIONS.map((o) => (
+                <button key={o.key} type="button"
+                  className={stat === o.key ? 'on' : undefined}
+                  aria-pressed={stat === o.key} onClick={() => setStat(o.key)}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <p className="meta-line stats compare-summary">
@@ -126,13 +166,13 @@ export default function ComparePage() {
       {rows.length > 0 && sort === 'category' && groups.map((g) => (
         <section key={g.category} className="cat-section" data-category={g.category}>
           <h2 className="cat-header">{g.category}</h2>
-          <CompareTable rows={g.rows} seasonA={a} seasonB={b} newerIsB={newerIsB} />
+          <CompareTable rows={g.rows} seasonA={a} seasonB={b} newerIsB={newerIsB} stat={stat} />
         </section>
       ))}
 
       {rows.length > 0 && sort === 'movers' && (
         <section className="cat-section">
-          <CompareTable rows={movers} seasonA={a} seasonB={b} newerIsB={newerIsB} />
+          <CompareTable rows={movers} seasonA={a} seasonB={b} newerIsB={newerIsB} stat={stat} />
         </section>
       )}
     </>
