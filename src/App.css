@@ -1389,3 +1389,19 @@ table.an-opens col.col-days { width: 16%; }
    a dark surface. Hex rather than a variable because there is no amber token;
    matches how the tier chips above are themed. */
 :root[data-theme='dark'] .tx-badge.ceiling { background: rgba(240, 168, 60, 0.18); color: #f0a83c; }
+
+/* Global footer: site version (feature-tied) over a separate data-freshness
+   line. Small and muted — it sits under every page's content on a hairline. */
+.site-footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-family: var(--sans);
+}
+.foot-version { font-size: 12px; font-weight: 500; color: var(--text-h); margin: 0 0 4px; }
+.foot-data { font-size: 12px; line-height: 1.6; color: var(--text); margin: 0; }
+/* The auction number and its "Mon DD YYYY" close date get the heading colour so
+   they stand out from the surrounding muted text; tabular figures keep the
+   date aligned. */
+.foot-num { color: var(--text-h); font-weight: 500; }
+.foot-close { color: var(--text-h); font-variant-numeric: tabular-nums; }
