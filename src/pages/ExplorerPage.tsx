@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows,
+  exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows, asTenXSales,
   EMPTY_FILTERS, DEFAULT_SORT, COMPACT_SORT_KEYS,
   type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useTenX } from '../hooks/useTenX';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { AuctionCard } from '../components/AuctionCard';
 import { SaleTable } from '../components/SaleTable';
+import { TenXToggle } from '../components/TenXToggle';
 import { PageIntro } from '../components/PageIntro';
 
 // Detailed Auction Data (Phase 5). Every other view on this site aggregates;
@@ -38,12 +40,19 @@ export default function ExplorerPage() {
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT.dir);
   const [showAll, setShowAll] = useState(false);
+  // Show Trade 1 sales as their 10x bundle (a ×10 price projection, "10x " name),
+  // matching the Prices/Timelines pages — see useTenX. Applied to the sale feed
+  // up front so every derived number reflects it (see asTenXSales).
+  const [tenX, setTenX] = useTenX();
 
   // The explorer is the one view that reads both sale feeds. The Onyx auctions
   // are all present in auctionMetadata and none of their (auction, token) pairs
   // collide with prices.csv, so the two feeds simply concatenate — Onyx rows
   // land in their existing auction's card under their own category.
-  const allSales = useMemo(() => [...sales, ...onyxSales], [sales, onyxSales]);
+  const allSales = useMemo(
+    () => asTenXSales([...sales, ...onyxSales], tenX),
+    [sales, onyxSales, tenX],
+  );
 
   // Re-filtering re-caps the table: a new query deserves its own first page,
   // and "show all" on 6,400 rows shouldn't silently persist into the next one.
@@ -191,6 +200,8 @@ export default function ExplorerPage() {
           </div>
         </div>
 
+        <TenXToggle on={tenX} onChange={setTenX} />
+
         <label className="search">
           Search
           {/* Names both things it matches, in the fewest words: the box spans
@@ -220,6 +231,16 @@ export default function ExplorerPage() {
           )}
         </span>
       </p>
+
+      {/* These are individual sale prices, so — unlike the Prices averages — the
+          ×10 is an estimate: the export records single-token prices and doesn't
+          say whether a given lot was a 10x chip. Only shown when Trade 1 rows can
+          actually appear. */}
+      {tenX && (filters.category === '' || filters.category === 'Trade 1') && (
+        <p className="meta-line tenx-note">
+          Trade 1 prices show the estimated 10x token cost (10× the single-token sale price).
+        </p>
+      )}
 
       {result.auctions.length === 0 && <p className="empty">No auctions match these filters.</p>}
 

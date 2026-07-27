@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { seasonsOf, groupedTimelines } from '../lib/data';
+import { seasonsOf, groupedTimelines, tenXTimelinePoints, TRADE_1, TENX_PREFIX } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { PriceTimeline } from '../components/PriceTimeline';
+import { TenXToggle } from '../components/TenXToggle';
+import { useTenX } from '../hooks/useTenX';
 import { PageIntro } from '../components/PageIntro';
 
 // Price Timelines (Phase 2). Every token's per-auction average price over a
@@ -14,16 +16,30 @@ import { PageIntro } from '../components/PageIntro';
 export default function TimelinesPage() {
   const { sales, meta, groupRows, loading, error } = useAuctionData();
   const [season, setSeason] = useState('');
+  // Show Trade 1 tokens as their "10x" bundle, matching the Prices page — see
+  // useTenX. Rescales the Trade 1 charts' axes ×10; other charts are untouched.
+  const [tenX, setTenX] = useTenX();
 
   const seasons = useMemo(() => seasonsOf(sales), [sales]);
   const activeSeason = season || seasons[0] || '';
 
-  const { groups, ungrouped, unmatched } = useMemo(
+  const { groups: rawGroups, ungrouped, unmatched } = useMemo(
     () => (activeSeason
       ? groupedTimelines(sales, meta, groupRows, activeSeason)
       : { groups: [], ungrouped: [], unmatched: [] }),
     [sales, meta, groupRows, activeSeason],
   );
+
+  // Rewrite Trade 1 series to their 10x bundle when the toggle is on. Every
+  // series in a Trade 1 group scales together, so the shared axis stays readable.
+  const groups = useMemo(() => (tenX
+    ? rawGroups.map((g) => ({
+      ...g,
+      series: g.series.map((s) => (s.category === TRADE_1
+        ? { ...s, displayName: `${TENX_PREFIX}${s.displayName}`, points: tenXTimelinePoints(s.points) }
+        : s)),
+    }))
+    : rawGroups), [rawGroups, tenX]);
 
   if (error) return <p className="err">Failed to load data: {error}</p>;
   if (loading) return <p className="empty">Loading auction data…</p>;
@@ -44,6 +60,7 @@ export default function TimelinesPage() {
             {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
+        <TenXToggle on={tenX} onChange={setTenX} />
       </div>
 
       {unmatched.length > 0 && (

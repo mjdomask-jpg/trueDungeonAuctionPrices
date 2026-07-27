@@ -209,6 +209,56 @@ export function lastFiveAuctionNumbers(sales: Sale[], season: string): number[] 
   return nums.slice(-5);
 }
 
+// --- Trade 1 "10x" bundle view -------------------------------------------
+// Trade 1 tokens sell both as single tokens and as "10x" bundles (ten of the
+// token mailed as one lot, to save space/weight). Most auctions now list the
+// bundle, so the Prices and Timelines pages can optionally show Trade 1 prices
+// as bundles: every price is ×10 and the name gains a "10x " prefix. It's a
+// pure display transform over already-aggregated rows/points — the underlying
+// per-single sale data is untouched, and only the Trade 1 category is affected.
+
+export const TRADE_1 = 'Trade 1';
+const TENX = 10;
+// The name prefix a 10x bundle carries (note the trailing space). Exported so the
+// explorer can tell a synthetic "10x <token>" name from a genuinely different
+// display name and not show the canonical name redundantly.
+export const TENX_PREFIX = '10x ';
+
+const tenXStats = (s: Stats): Stats => ({ n: s.n, min: s.min * TENX, max: s.max * TENX, avg: s.avg * TENX });
+
+// Rewrite Trade 1 rows to their 10x bundle (×10 stats, "10x " name); other
+// categories pass through. `on === false` returns the rows unchanged, so callers
+// can hand the toggle straight in. The "10x " prefix is uniform, so a category's
+// alphabetical row order is preserved.
+export function asTenXRows(rows: ItemRow[], on: boolean): ItemRow[] {
+  if (!on) return rows;
+  return rows.map((r) => (r.category === TRADE_1 ? {
+    ...r,
+    displayName: `${TENX_PREFIX}${r.displayName}`,
+    full: tenXStats(r.full),
+    last5: r.last5 ? tenXStats(r.last5) : null,
+  } : r));
+}
+
+// The timeline-point equivalent: ×10 every plotted price for a Trade 1 series.
+export function tenXTimelinePoints(points: TimelinePoint[]): TimelinePoint[] {
+  return points.map((p) => ({ ...p, avg: p.avg * TENX, min: p.min * TENX, max: p.max * TENX }));
+}
+
+// The raw-sale equivalent, for the Auction Data explorer: rewrite each Trade 1
+// sale to its 10x bundle before it's grouped/summed, so every number the
+// explorer derives (per-auction totals, min/max, the flat table) reflects the
+// bundle in one pass. These are single-token sale prices projected ×10, not
+// recorded 10x-lot sales — the export doesn't distinguish the two — so the
+// explorer frames the view as a bundle estimate (see ExplorerPage). Category
+// stays 'Trade 1', so the category filter and options are unaffected.
+export function asTenXSales(sales: Sale[], on: boolean): Sale[] {
+  if (!on) return sales;
+  return sales.map((s) => (s.category === TRADE_1
+    ? { ...s, price: s.price * TENX, displayName: `${TENX_PREFIX}${s.displayName}` }
+    : s));
+}
+
 // --- Price timelines (Phase 2) -------------------------------------------
 // One plotted point per auction in which a token sold. A token can sell more
 // than once in the same auction (multiple copies), so each point aggregates
@@ -303,7 +353,7 @@ export function parseGroups(text: string): GroupRow[] {
   return out;
 }
 
-export type TimelineSeries = { item: string; displayName: string; points: TimelinePoint[]; lineColor?: string };
+export type TimelineSeries = { item: string; displayName: string; category: string; points: TimelinePoint[]; lineColor?: string };
 export type TimelineGroup = { group: string; groupOrder: number; category: string; series: TimelineSeries[] };
 
 // A group's heading colour follows its dominant token category (a group may mix
@@ -355,7 +405,7 @@ export function groupedTimelines(
       if (!itemsInSeason.has(r.item)) continue;
       const points = itemTimeline(seasonSales, meta, r.item, season);
       if (points.length) {
-        series.push({ item: r.item, displayName: dispByItem.get(r.item) ?? r.item, points, lineColor: r.lineColor });
+        series.push({ item: r.item, displayName: dispByItem.get(r.item) ?? r.item, category: r.category, points, lineColor: r.lineColor });
       }
     }
     if (series.length) groups.push({ group, groupOrder: order, category: modeCategory(rows), series });
@@ -620,7 +670,9 @@ const ASCENDING: Record<SortKey, (a: FlatRow, b: FlatRow) => number> = {
   date: (a, b) => dateKey(a.meta.closeDate).localeCompare(dateKey(b.meta.closeDate)),
   auction: (a, b) => a.meta.name.localeCompare(b.meta.name),
   auctioneer: (a, b) => a.meta.auctioneer.localeCompare(b.meta.auctioneer),
-  token: (a, b) => a.row.displayName.localeCompare(b.row.displayName),
+  // Sort on the canonical Item, not the display name: a "10x " bundle prefix
+  // would otherwise pull every Trade 1 row to the front of a token sort.
+  token: (a, b) => a.row.item.localeCompare(b.row.item),
   category: (a, b) => compareCategories(a.row.category, b.row.category),
   price: (a, b) => a.row.price - b.row.price,
 };
@@ -631,7 +683,7 @@ const ASCENDING: Record<SortKey, (a: FlatRow, b: FlatRow) => number> = {
 function tiebreak(a: FlatRow, b: FlatRow): number {
   return Number(b.meta.season) - Number(a.meta.season) ||
     b.meta.auctionNumber - a.meta.auctionNumber ||
-    a.row.displayName.localeCompare(b.row.displayName);
+    a.row.item.localeCompare(b.row.item);
 }
 
 export function sortFlatRows(rows: FlatRow[], key: SortKey, dir: SortDir): FlatRow[] {

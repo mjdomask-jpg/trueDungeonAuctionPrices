@@ -1,4 +1,5 @@
 import { fmtCloseDate, money } from '../lib/format';
+import { TENX_PREFIX } from '../lib/data';
 import type { AuctionGroup } from '../lib/data';
 
 // One auction in the explorer: a header carrying the auction's metadata, and
@@ -93,9 +94,12 @@ export function AuctionCard({
                     <td className="left token">
                       {r.displayName}
                       {/* The canonical Item, shown only when the yearly display
-                          name differs — it's how the token lines up across
-                          seasons on the Compare and Timelines pages. */}
-                      {r.item !== r.displayName && <span className="alt"> · {r.item}</span>}
+                          name genuinely differs — it's how the token lines up
+                          across seasons on the Compare and Timelines pages. The
+                          synthetic "10x " bundle prefix isn't a real difference,
+                          so it's excluded or the name would just repeat. */}
+                      {r.item !== r.displayName && r.displayName !== `${TENX_PREFIX}${r.item}`
+                        && <span className="alt"> · {r.item}</span>}
                     </td>
                     <td className="left">{r.category}</td>
                     <td>{money(r.price)}</td>

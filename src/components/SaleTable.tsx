@@ -1,5 +1,5 @@
 import { fmtCloseDate, money } from '../lib/format';
-import { COMPACT_SORT_KEYS } from '../lib/data';
+import { COMPACT_SORT_KEYS, TENX_PREFIX } from '../lib/data';
 import type { FlatRow, SortKey, SortDir } from '../lib/data';
 
 // The explorer's flat view: every matching token-price in one sortable table,
@@ -88,10 +88,15 @@ export function SaleTable({
         </thead>
         <tbody>
           {rows.map(({ row, meta }) => {
+            // The canonical Item is only worth showing when it genuinely differs
+            // from the display name — not when the only difference is the "10x "
+            // bundle prefix we prepended, which would just repeat the name.
+            const showItem = row.item !== row.displayName
+              && row.displayName !== `${TENX_PREFIX}${row.item}`;
             const token = (
               <td className="left token">
                 {row.displayName}
-                {row.item !== row.displayName && <span className="alt"> · {row.item}</span>}
+                {showItem && <span className="alt"> · {row.item}</span>}
               </td>
             );
             return compact ? (

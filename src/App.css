@@ -183,6 +183,34 @@ header h1 {
 .controls .search { flex: 1; min-width: 200px; }
 .controls .search input { width: 100%; }
 
+/* The "Show Trade 1 as 10x" checkbox lives in .controls but is a checkbox, not a
+   stacked select — it opts out of the column label/input rules and bottom-aligns
+   with the sibling selects (whose label sits above them). */
+.controls .tenx-check {
+  flex-direction: row;
+  align-items: center;
+  align-self: flex-end;
+  gap: 8px;
+  height: var(--control-h);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.controls .tenx-check input {
+  width: 16px;
+  height: 16px;
+  min-width: 0;
+  padding: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* The explorer's 10x caveat: a subtle note that the ×10 on individual sales is
+   an estimate. Sits just under the results count, pulled tight to it. */
+.tenx-note { margin-top: -8px; font-style: italic; opacity: 0.85; }
+
 .meta-line {
   font-size: 13px;
   color: var(--text);

@@ -151,14 +151,16 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
     setHoverN(slots[Math.max(0, Math.min(slots.length - 1, raw))][0]);
   };
 
-  // Tooltip: every series that has a point at the hovered auction.
+  // Tooltip: every series that has a point at the hovered auction, ordered
+  // alphabetically by token name to match the legend (which sorts the same way).
   const tip = hoverN == null ? null : (() => {
     const rows = series
       .map((s, si) => {
         const p = s.points.find((pt) => pt.auctionNumber === hoverN);
         return p ? { label: s.label, color: strokeFor(si), p } : null;
       })
-      .filter((r): r is { label: string; color: string; p: TimelinePoint } => r !== null);
+      .filter((r): r is { label: string; color: string; p: TimelinePoint } => r !== null)
+      .sort((a, b) => a.label.localeCompare(b.label));
     if (!rows.length) return null;
     return { date: fmtCloseDate(slotDate.get(hoverN)!) ?? `#${hoverN}`, rows, leftPct: (x(hoverN) / W) * 100 };
   })();

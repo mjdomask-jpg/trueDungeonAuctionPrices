@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import {
-  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, type ItemRow,
+  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, type ItemRow,
 } from '../lib/data';
 import { fmtCloseDate } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
 import { CategoryTable } from '../components/CategoryTable';
+import { TenXToggle } from '../components/TenXToggle';
+import { useTenX } from '../hooks/useTenX';
 import { compareCategories } from '../lib/categories';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
@@ -18,6 +20,9 @@ export default function DashboardPage() {
   // no sale in that window.
   const narrow = useMediaQuery(NARROW);
   const [statGroup, setStatGroup] = useState<'last5' | 'full'>('last5');
+  // Show Trade 1 tokens as their "10x" bundle (×10 price, "10x " name). On by
+  // default and shared with the Timelines page — see useTenX.
+  const [tenX, setTenX] = useTenX();
   // The category picker is dropped on phones — the list is short enough to
   // scroll. Force the filter open so a category chosen on a wide screen can't
   // strand a narrow one with a filter it has no control to clear.
@@ -35,12 +40,15 @@ export default function DashboardPage() {
     () => (activeSeason ? lastFiveAuctionNumbers(sales, activeSeason) : []),
     [sales, activeSeason],
   );
+  // Trade 1 rows become their 10x bundle here when the toggle is on; every other
+  // category (and thus the category list) is unchanged.
+  const displayRows = useMemo(() => asTenXRows(rows, tenX), [rows, tenX]);
   const categories = useMemo(
-    () => ['All', ...[...new Set(rows.map((r) => r.category))].sort()],
-    [rows],
+    () => ['All', ...[...new Set(displayRows.map((r) => r.category))].sort()],
+    [displayRows],
   );
 
-  const filtered = rows.filter(
+  const filtered = displayRows.filter(
     (r) => effectiveCategory === 'All' || r.category === effectiveCategory,
   );
 
@@ -105,6 +113,7 @@ export default function DashboardPage() {
             </select>
           </label>
         )}
+        <TenXToggle on={tenX} onChange={setTenX} />
         {narrow && (
           <div className="toggle" role="group" aria-label="Stat group">
             <span className="toggle-label">Show</span>
