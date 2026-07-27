@@ -539,7 +539,7 @@ td.diff.down { color: var(--diff-down); }
 
 /* Tier chips. Each transmute tier has its OWN in-game colour (these mark
    transmutes apart from blind-pack tokens). Enhanced + Exalted share light
-   blue; Patron reuses the Ultra Rare purple and Omni the Trade brown, matching
+   blue; Ultra Rare reuses the Ultra Rare category purple and Omni the Trade brown, matching
    the dashboard. Filled pills so the chip *is* the tier colour. Light and dark
    are tuned separately for text contrast and edge visibility on each card.
    Mythic is "white" and Safehold "light gray" — kept apart by giving Mythic a

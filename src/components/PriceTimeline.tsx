@@ -226,7 +226,7 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
                   <span className="dot" style={{ background: r.color }} />
                   {r.label}
                   <span className="tt-val">
-                    {money(r.p.avg)}{r.p.n > 1 ? ` · ${r.p.n}×` : ''}
+                    {money(r.p.avg)}
                   </span>
                 </li>
               ))}

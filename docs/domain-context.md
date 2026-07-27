@@ -150,7 +150,7 @@ simple linear list. The power tiers, low to high (maintainer-confirmed):
 Four token types sit **outside** this ladder:
 - **Safehold** — a separate, self-contained upgrade chain numbered in descending Roman numerals
   (`Safehold V` → `IV` → `III` → `II` → `I`, where V is the entry level and I the top).
-- **Patron** and **Paragon** — concerned exclusively with the 8k-bonus tokens, intended as
+- **Ultra Rare** and **Paragon** — concerned exclusively with the 8k-bonus tokens, intended as
   rewards for the largest purchasers.
 - **Omni** — a "wildcard" transmute meant to soak up excess trade goods in the market; it has no
   in-game function of its own.
