@@ -34,8 +34,8 @@ export function CompareTable({
           <thead>
             <tr>
               <th className="left">Token</th>
-              <th>Avg {seasonA}</th>
-              <th className="sep">Avg {seasonB}</th>
+              <th className="stacked">Avg<br />{seasonA}</th>
+              <th className="sep stacked">Avg<br />{seasonB}</th>
               <th className="sep">Δ Avg</th>
             </tr>
           </thead>

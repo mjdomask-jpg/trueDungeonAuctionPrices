@@ -1255,6 +1255,12 @@ table.an-opens col.col-days { width: 16%; }
   table.compare-compact col.col-token { width: 36%; }
   table.compare-compact col.col-delta { width: 26%; }
 
+  /* "Avg 2025" is a touch wider than its ~76px column, so stack the year under
+     "Avg" — two short lines fit with room to spare down to 320px. Tight
+     line-height keeps the header row from growing much; single-line Token and
+     Δ Avg headers stay vertically centred against it. */
+  table.compare-compact th.stacked { line-height: 1.15; }
+
   /* --- Transmute rows -------------------------------------------------------
      The desktop row is one flex line where only .tx-name can shrink, so on a
      phone the name absorbs every deficit: measured at 375px it fell to 11.9px

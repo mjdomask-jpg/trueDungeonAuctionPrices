@@ -5,18 +5,23 @@ import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { sourceName, tierAbbrev, type BuildCost, type PricedLine } from '../lib/transmutes';
 
 // Friendly, non-camelCase label for where a line's price came from, plus the
-// season-mapped / ceiling qualifiers.
-function priceTag(l: PricedLine): string {
-  let base: string;
-  if (l.isSource) base = 'source · built';
-  else if (l.source === 'auction') base = 'auction';
-  else if (l.source === 'offAuction') base = 'non-auction item';
-  else if (l.source === 'derived') base = 'derived';
-  else if (l.source === 'build') base = 'built';
-  else base = 'no price';
-  if (l.seasonMapped) base += ` · from ${l.pricedYear}`;
-  if (l.bound === 'ceiling') base += ' · ceiling';
-  return base;
+// season-mapped / ceiling qualifiers. Leads with the ingredient's own season
+// when it differs from the recipe's: several recipes pull the same-named token
+// from multiple years (e.g. one Ultra Rare from each of 2023–2026), and without
+// the year those rows would be indistinguishable. Dot-separated, matching the
+// other flags.
+function priceTag(l: PricedLine, recipeYear: number): string {
+  const parts: string[] = [];
+  if (l.nominalYear !== recipeYear) parts.push(String(l.nominalYear));
+  if (l.isSource) parts.push('source · built');
+  else if (l.source === 'auction') parts.push('auction');
+  else if (l.source === 'offAuction') parts.push('non-auction item');
+  else if (l.source === 'derived') parts.push('derived');
+  else if (l.source === 'build') parts.push('built');
+  else parts.push('no price');
+  if (l.seasonMapped) parts.push(`from ${l.pricedYear}`);
+  if (l.bound === 'ceiling') parts.push('ceiling');
+  return parts.join(' · ');
 }
 
 // One transmute in the season list: a header line showing the build cost (and,
@@ -120,7 +125,7 @@ export function TransmuteRow({
             <div key={i} className={`tx-bom-row${l.isSource ? ' src' : ''}${banded && !l.isSource && i % 2 === 1 ? ' band' : ''}`}>
               <span className="tx-ing">
                 <span className="tx-good">{l.quantity} × {l.displayName}</span>
-                <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>{priceTag(l)}</span>
+                <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>{priceTag(l, cost.year)}</span>
               </span>
               <span>{money0(l.extAvg)}</span>
               <span>{money0(l.extMin)}</span>

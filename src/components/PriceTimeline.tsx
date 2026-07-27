@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { type TimelinePoint } from '../lib/data';
-import { money, fmtCloseDate } from '../lib/format';
+import { money, money0, fmtCloseDate } from '../lib/format';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { TOKEN_ABBREVIATIONS } from '../lib/tokenAbbreviations';
 
@@ -100,6 +100,12 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
   const allValues = series.flatMap((s) => s.points.map((p) => p.avg));
   const { lo, hi, ticks } = niceScale(Math.min(...allValues), Math.max(...allValues));
 
+  // Y-axis labels: drop the ".00" once every tick is a whole dollar, so wide
+  // labels like "$1,000.00" don't clip past the chart's left edge on narrow
+  // screens. Sub-dollar-step charts keep cents so ticks like $1.50 stay
+  // distinct — those values are small and never wide enough to clip.
+  const tickLabel = ticks.every(Number.isInteger) ? money0 : money;
+
   const x = (n: number) => slots.length === 1
     ? M.left + PLOT_W / 2
     : M.left + (slotIndex.get(n)! / (slots.length - 1)) * PLOT_W;
@@ -171,7 +177,7 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={1} />
-              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={axisFont} fill="var(--text)">{money(t)}</text>
+              <text x={M.left - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={axisFont} fill="var(--text)">{tickLabel(t)}</text>
             </g>
           ))}
 
