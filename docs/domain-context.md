@@ -163,7 +163,7 @@ pairs (source Relic immediately above the Legendary it feeds), since those are w
 most; `Mythic` is placed last despite its power because only the largest spenders craft them.
 The tier order lives as `TIER_ORDER` / `orderSeason` in `src/lib/transmutes.ts`.
 
-Some ingredients are **not sold at auction** at all (most notably **Fleece**) yet are still
+Some ingredients are **not sold at auction** at all (most notably **Golden Fleece**) yet are still
 required by recipes and still fluctuate in price year to year. These are tracked **manually**
 so build costs remain complete.
 
@@ -211,5 +211,5 @@ website is ultimately built to present.
 | **Source token** | A lower-tier token consumed as an ingredient when crafting a higher-tier one (e.g. a Relic inside a Legendary). |
 | **Tier / level** | A transmute's rank on the upgrade ladder (Relic, Legendary, Arcanum, …; Safehold V–I). |
 | **Onyx** | A special order that swaps part of the Ultra Rares for a fixed set of chase versions. |
-| **Fleece** | A recipe ingredient not sold at auction, whose price is tracked manually. |
+| **Golden Fleece** | A recipe ingredient not sold at auction, whose price is tracked manually. |
 | **Augment** | A prior-season transmute an auctioneer may bundle into an auction to help it fund. |

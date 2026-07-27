@@ -213,9 +213,9 @@ for (const y of [...trophyYears].sort()) {
   if (fleeceYears.has(y)) continue;
   const ps = pricingSeason(y);
   if (fleeceYears.has(String(ps.season)))
-    add('INFO', 'derived-fallback', `Monster Trophy @ ${y} prices off Fleece @ ${ps.season} (${ps.variant})`);
+    add('INFO', 'derived-fallback', `Monster Trophy @ ${y} prices off Golden Fleece @ ${ps.season} (${ps.variant})`);
   else
-    add('ERROR', 'derived-price', `Monster Trophy @ ${y}: neither Fleece @ ${y} nor fallback ${ps.season} exists`);
+    add('ERROR', 'derived-price', `Monster Trophy @ ${y}: neither Golden Fleece @ ${y} nor fallback ${ps.season} exists`);
 }
 
 // ---------- category agreement between metadata and the off-auction table ----------
@@ -224,7 +224,7 @@ for (const f of fleece) {
   const mc = metaCatByName.get(f.Item);
   if (mc && f.Category && mc !== f.Category && f.Category !== 'Transmute')
     add('WARN', 'category-mismatch', `"${f.Item}": tokenMetadata says "${mc}", pricesFleece says "${f.Category}"`);
-  if (!mc && f.Item !== 'Fleece')
+  if (!mc && f.Item !== 'Golden Fleece')
     add('WARN', 'off-auction-meta', `"${f.Item}" priced in pricesFleece but absent from tokenMetadata`);
   const expectKey = f.Year + f.Item;
   if (f.Key && f.Key !== expectKey)

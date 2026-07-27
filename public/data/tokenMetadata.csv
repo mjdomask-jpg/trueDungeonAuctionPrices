@@ -9,7 +9,7 @@ key,auctionSeason,Item,Display Name,Category
 2012Dwarven Steel,2012,Dwarven Steel,Dwarven Steel,Trade 1
 2012Elven Bismuth,2012,Elven Bismuth,Elven Bismuth,Trade 2
 2012Enchanter's Munition,2012,Enchanter's Munition,Enchanter's Munition,Trade 1
-2012Fleece,2012,Fleece,Golden Fleece,Fleece
+2012Golden Fleece,2012,Golden Fleece,Golden Fleece,Golden Fleece
 2012Adventurers' Guild Button,2012,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2012Minotaur Hide,2012,Minotaur Hide,Minotaur Hide,Trade 1
 2012Monster Trophy,2012,Monster Trophy,Monster Trophy,Treasure Chest
@@ -34,7 +34,7 @@ key,auctionSeason,Item,Display Name,Category
 2013Dwarven Steel,2013,Dwarven Steel,Dwarven Steel,Trade 1
 2013Elven Bismuth,2013,Elven Bismuth,Elven Bismuth,Trade 2
 2013Enchanter's Munition,2013,Enchanter's Munition,Enchanter's Munition,Trade 1
-2013Fleece,2013,Fleece,Golden Fleece,Fleece
+2013Golden Fleece,2013,Golden Fleece,Golden Fleece,Golden Fleece
 2013Adventurers' Guild Button,2013,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2013Minotaur Hide,2013,Minotaur Hide,Minotaur Hide,Trade 1
 2013Monster Trophy,2013,Monster Trophy,Monster Trophy,Treasure Chest
@@ -59,7 +59,7 @@ key,auctionSeason,Item,Display Name,Category
 2014Dwarven Steel,2014,Dwarven Steel,Dwarven Steel,Trade 1
 2014Elven Bismuth,2014,Elven Bismuth,Elven Bismuth,Trade 2
 2014Enchanter's Munition,2014,Enchanter's Munition,Enchanter's Munition,Trade 1
-2014Fleece,2014,Fleece,Golden Fleece,Fleece
+2014Golden Fleece,2014,Golden Fleece,Golden Fleece,Golden Fleece
 2014Adventurers' Guild Button,2014,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2014Minotaur Hide,2014,Minotaur Hide,Minotaur Hide,Trade 1
 2014Monster Trophy,2014,Monster Trophy,Monster Trophy,Treasure Chest
@@ -85,7 +85,7 @@ key,auctionSeason,Item,Display Name,Category
 2015Dwarven Steel,2015,Dwarven Steel,Dwarven Steel,Trade 1
 2015Elven Bismuth,2015,Elven Bismuth,Elven Bismuth,Trade 2
 2015Enchanter's Munition,2015,Enchanter's Munition,Enchanter's Munition,Trade 1
-2015Fleece,2015,Fleece,Golden Fleece,Fleece
+2015Golden Fleece,2015,Golden Fleece,Golden Fleece,Golden Fleece
 2015Adventurers' Guild Button,2015,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2015Minotaur Hide,2015,Minotaur Hide,Minotaur Hide,Trade 1
 2015Monster Trophy,2015,Monster Trophy,Monster Trophy,Treasure Chest
@@ -111,7 +111,7 @@ key,auctionSeason,Item,Display Name,Category
 2016Dwarven Steel,2016,Dwarven Steel,Dwarven Steel,Trade 1
 2016Elven Bismuth,2016,Elven Bismuth,Elven Bismuth,Trade 2
 2016Enchanter's Munition,2016,Enchanter's Munition,Enchanter's Munition,Trade 1
-2016Fleece,2016,Fleece,Golden Fleece,Fleece
+2016Golden Fleece,2016,Golden Fleece,Golden Fleece,Golden Fleece
 2016Adventurers' Guild Button,2016,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2016Minotaur Hide,2016,Minotaur Hide,Minotaur Hide,Trade 1
 2016Monster Trophy,2016,Monster Trophy,Monster Trophy,Treasure Chest
@@ -137,7 +137,7 @@ key,auctionSeason,Item,Display Name,Category
 2017Dwarven Steel,2017,Dwarven Steel,Dwarven Steel,Trade 1
 2017Elven Bismuth,2017,Elven Bismuth,Elven Bismuth,Trade 2
 2017Enchanter's Munition,2017,Enchanter's Munition,Enchanter's Munition,Trade 1
-2017Fleece,2017,Fleece,Golden Fleece,Fleece
+2017Golden Fleece,2017,Golden Fleece,Golden Fleece,Golden Fleece
 2017Adventurers' Guild Button,2017,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2017Minotaur Hide,2017,Minotaur Hide,Minotaur Hide,Trade 1
 2017Monster Trophy,2017,Monster Trophy,Monster Trophy,Treasure Chest
@@ -163,7 +163,7 @@ key,auctionSeason,Item,Display Name,Category
 2018Dwarven Steel,2018,Dwarven Steel,Dwarven Steel,Trade 1
 2018Elven Bismuth,2018,Elven Bismuth,Elven Bismuth,Trade 2
 2018Enchanter's Munition,2018,Enchanter's Munition,Enchanter's Munition,Trade 1
-2018Fleece,2018,Fleece,Golden Fleece,Fleece
+2018Golden Fleece,2018,Golden Fleece,Golden Fleece,Golden Fleece
 2018Adventurers' Guild Button,2018,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2018Minotaur Hide,2018,Minotaur Hide,Minotaur Hide,Trade 1
 2018Monster Trophy,2018,Monster Trophy,Monster Trophy,Treasure Chest
@@ -190,7 +190,7 @@ key,auctionSeason,Item,Display Name,Category
 2019Dwarven Steel,2019,Dwarven Steel,Dwarven Steel,Trade 1
 2019Elven Bismuth,2019,Elven Bismuth,Elven Bismuth,Trade 2
 2019Enchanter's Munition,2019,Enchanter's Munition,Enchanter's Munition,Trade 1
-2019Fleece,2019,Fleece,Golden Fleece,Fleece
+2019Golden Fleece,2019,Golden Fleece,Golden Fleece,Golden Fleece
 2019Adventurers' Guild Button,2019,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2019Minotaur Hide,2019,Minotaur Hide,Minotaur Hide,Trade 1
 2019Monster Trophy,2019,Monster Trophy,Monster Trophy,Treasure Chest
@@ -217,7 +217,7 @@ key,auctionSeason,Item,Display Name,Category
 2020Dwarven Steel,2020,Dwarven Steel,Dwarven Steel,Trade 1
 2020Elven Bismuth,2020,Elven Bismuth,Elven Bismuth,Trade 2
 2020Enchanter's Munition,2020,Enchanter's Munition,Enchanter's Munition,Trade 1
-2020Fleece,2020,Fleece,Golden Fleece,Fleece
+2020Golden Fleece,2020,Golden Fleece,Golden Fleece,Golden Fleece
 2020Adventurers' Guild Button,2020,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2020Minotaur Hide,2020,Minotaur Hide,Minotaur Hide,Trade 1
 2020Monster Trophy,2020,Monster Trophy,Monster Trophy,Treasure Chest
@@ -244,7 +244,7 @@ key,auctionSeason,Item,Display Name,Category
 2021Dwarven Steel,2021,Dwarven Steel,Dwarven Steel,Trade 1
 2021Elven Bismuth,2021,Elven Bismuth,Elven Bismuth,Trade 2
 2021Enchanter's Munition,2021,Enchanter's Munition,Enchanter's Munition,Trade 1
-2021Fleece,2021,Fleece,Golden Fleece,Fleece
+2021Golden Fleece,2021,Golden Fleece,Golden Fleece,Golden Fleece
 2021Adventurers' Guild Button,2021,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2021Minotaur Hide,2021,Minotaur Hide,Minotaur Hide,Trade 1
 2021Monster Trophy,2021,Monster Trophy,Monster Trophy,Treasure Chest
@@ -272,7 +272,7 @@ key,auctionSeason,Item,Display Name,Category
 2022Dwarven Steel,2022,Dwarven Steel,Dwarven Steel,Trade 1
 2022Elven Bismuth,2022,Elven Bismuth,Elven Bismuth,Trade 2
 2022Enchanter's Munition,2022,Enchanter's Munition,Enchanter's Munition,Trade 1
-2022Fleece,2022,Fleece,Golden Fleece,Fleece
+2022Golden Fleece,2022,Golden Fleece,Golden Fleece,Golden Fleece
 2022Adventurers' Guild Button,2022,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2022Minotaur Hide,2022,Minotaur Hide,Minotaur Hide,Trade 1
 2022Monster Trophy,2022,Monster Trophy,Monster Trophy,Treasure Chest
@@ -300,7 +300,7 @@ key,auctionSeason,Item,Display Name,Category
 2023Dwarven Steel,2023,Dwarven Steel,Dwarven Steel,Trade 1
 2023Elven Bismuth,2023,Elven Bismuth,Elven Bismuth,Trade 2
 2023Enchanter's Munition,2023,Enchanter's Munition,Enchanter's Munition,Trade 1
-2023Fleece,2023,Fleece,Golden Fleece,Fleece
+2023Golden Fleece,2023,Golden Fleece,Golden Fleece,Golden Fleece
 2023Adventurers' Guild Button,2023,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2023Minotaur Hide,2023,Minotaur Hide,Minotaur Hide,Trade 1
 2023Monster Trophy,2023,Monster Trophy,Monster Trophy,Treasure Chest
@@ -329,7 +329,7 @@ key,auctionSeason,Item,Display Name,Category
 2024Dwarven Steel,2024,Dwarven Steel,Dwarven Steel,Trade 1
 2024Elven Bismuth,2024,Elven Bismuth,Elven Bismuth,Trade 2
 2024Enchanter's Munition,2024,Enchanter's Munition,Enchanter's Munition,Trade 1
-2024Fleece,2024,Fleece,Golden Fleece,Fleece
+2024Golden Fleece,2024,Golden Fleece,Golden Fleece,Golden Fleece
 2024Adventurers' Guild Button,2024,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2024Minotaur Hide,2024,Minotaur Hide,Minotaur Hide,Trade 1
 2024Monster Trophy,2024,Monster Trophy,Monster Trophy,Treasure Chest
@@ -358,7 +358,7 @@ key,auctionSeason,Item,Display Name,Category
 2025Dwarven Steel,2025,Dwarven Steel,Dwarven Steel,Trade 1
 2025Elven Bismuth,2025,Elven Bismuth,Elven Bismuth,Trade 2
 2025Enchanter's Munition,2025,Enchanter's Munition,Enchanter's Munition,Trade 1
-2025Fleece,2025,Fleece,Golden Fleece,Fleece
+2025Golden Fleece,2025,Golden Fleece,Golden Fleece,Golden Fleece
 2025Golden Ticket,2025,Golden Ticket,Golden Ticket,Golden Ticket
 2025Adventurers' Guild Button,2025,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2025Minotaur Hide,2025,Minotaur Hide,Minotaur Hide,Trade 1
@@ -387,7 +387,7 @@ key,auctionSeason,Item,Display Name,Category
 2026Dwarven Steel,2026,Dwarven Steel,Dwarven Steel,Trade 1
 2026Elven Bismuth,2026,Elven Bismuth,Elven Bismuth,Trade 2
 2026Enchanter's Munition,2026,Enchanter's Munition,Enchanter's Munition,Trade 1
-2026Fleece,2026,Fleece,Golden Fleece,Fleece
+2026Golden Fleece,2026,Golden Fleece,Golden Fleece,Golden Fleece
 2026Golden Ticket,2026,Golden Ticket,Golden Ticket,Golden Ticket
 2026Adventurers' Guild Button,2026,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2026Herald Token (20 Unique),2026,Herald Token (20 Unique),Herald Token (20 Unique),Treasure Chest
@@ -413,7 +413,7 @@ key,auctionSeason,Item,Display Name,Category
 2027Dwarven Steel,2027,Dwarven Steel,Dwarven Steel,Trade 1
 2027Elven Bismuth,2027,Elven Bismuth,Elven Bismuth,Trade 2
 2027Enchanter's Munition,2027,Enchanter's Munition,Enchanter's Munition,Trade 1
-2027Fleece,2027,Fleece,Golden Fleece,Fleece
+2027Golden Fleece,2027,Golden Fleece,Golden Fleece,Golden Fleece
 2027Golden Ticket,2027,Golden Ticket,Golden Ticket,Golden Ticket
 2027Adventurers' Guild Button,2027,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2027Minotaur Hide,2027,Minotaur Hide,Minotaur Hide,Trade 1

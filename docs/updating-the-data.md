@@ -206,7 +206,7 @@ appear; a typo creates a new, unrecognised token rather than an error.
 
 **`Category` must be one of:** `Trade 1`, `Trade 2`, `Ultra Rare`, `Premium`,
 `Bonus`, `Preorder`, `Golden Ticket`, `Condensed`, `Safehold` — plus
-`Onyx Ultra Rare` (only in `onyx.csv`) and `Fleece` / `Treasure Chest` (only in
+`Onyx Ultra Rare` (only in `onyx.csv`) and `Golden Fleece` / `Treasure Chest` (only in
 `tokenMetadata.csv`, for tokens never sold at auction). `Trade Good` and `Patron`
 are retired — do not reintroduce them.
 
@@ -372,7 +372,7 @@ today.
 | `auctionSeason` | **Yes** | Four-digit year. Rows with a non-numeric value are dropped. |
 | `Item` | **Yes** | The stable internal name. Rows without it are dropped. |
 | `Display Name` | **Yes** | That season's public name. Falls back to `Item` if blank. |
-| `Category` | **Yes** | See the shared list. May also be `Fleece` or `Treasure Chest` here. |
+| `Category` | **Yes** | See the shared list. May also be `Golden Fleece` or `Treasure Chest` here. |
 
 ### Rules that matter
 
@@ -465,11 +465,11 @@ ingredient appears.
 
 | Column | Required | Notes |
 |---|---|---|
-| `Key` | For authoring | `Year` + `Item` concatenated: `2019Fleece`. |
+| `Key` | For authoring | `Year` + `Item` concatenated: `2019Golden Fleece`. |
 | `Year` | **Yes** | Four-digit season. |
-| `Category` | **Yes** | Note this table uses `Transmute` as a value for Fleece — it's a different vocabulary from the other files and is left alone deliberately. |
+| `Category` | **Yes** | The token's class; must match `tokenMetadata` for the same `Item` (e.g. `Golden Fleece`). |
 | `Item` | **Yes** | The token. Rows without it are dropped. |
-| `Display Name` | **Yes** | e.g. `Golden Fleece` for `Item` = `Fleece`. |
+| `Display Name` | **Yes** | The public name; falls back to `Item` if blank. |
 | `max Price` | Optional | Falls back to `avg Price` if blank. |
 | `avg Price` | **Yes** | Must be numeric — rows without it are dropped. |
 | `min Price` | Optional | Falls back to `avg Price` if blank. |
@@ -486,8 +486,8 @@ ingredient appears.
 
 ### Gotcha
 
-The `Item` here is `Fleece`, not `Golden Fleece` — that's the `Display Name`.
-Recipes must reference `Fleece`.
+The `Item` (canonical name) is `Golden Fleece`, matching the `Display Name`.
+Recipes must reference `Golden Fleece`.
 
 ---
 
@@ -508,8 +508,8 @@ Currently 28 rows.
 
 Rules for pricing a token off another token. Columns: `Token`, `DerivedFrom`,
 `Ratio`, `Year`, `Bound`, `Note`. One rule today: Monster Trophy is priced as
-Fleece ÷ 10, as a ceiling, because ten Trophies make one Fleece and Trophies are
-never sold.
+Golden Fleece ÷ 10, as a ceiling, because ten Trophies make one Golden Fleece and
+Trophies are never sold.
 
 ---
 

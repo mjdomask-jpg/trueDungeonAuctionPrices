@@ -306,7 +306,7 @@ offset. Retired spellings that must not come back: `year`, `canonicalName`,
 
 `Category` values are `Trade 1`, `Trade 2`, `Ultra Rare`, `Premium`, `Bonus`,
 `Preorder`, `Golden Ticket`, `Condensed`, `Safehold`; `Onyx Ultra Rare`, which
-appears only in `onyx.csv`; and `Fleece` and `Treasure Chest`, which appear only
+appears only in `onyx.csv`; and `Golden Fleece` and `Treasure Chest`, which appear only
 in `tokenMetadata` for never-auctioned tokens. `Trade Good` and `Patron` are
 retired.
 

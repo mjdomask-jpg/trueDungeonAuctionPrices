@@ -127,16 +127,16 @@ and out of the total, so the distinction has to be in the data.
 
 ## Golden Fleece ingredients — write the real token, integer quantity
 
-Golden Fleece is a transmute (10 **Monster Trophy** → 1 Fleece), and Monster Trophies are reward-only
-— never auctioned. **The old sheet wrote these as fractions of a Fleece** — 3 Trophies as
-`Golden Fleece × 0.3` — because `price(Fleece) ÷ 10` is a ceiling on each Trophy.
+Golden Fleece is a transmute (10 **Monster Trophy** → 1 Golden Fleece), and Monster Trophies are reward-only
+— never auctioned. **The old sheet wrote these as fractions of a Golden Fleece** — 3 Trophies as
+`Golden Fleece × 0.3` — because `price(Golden Fleece) ÷ 10` is a ceiling on each Trophy.
 
 **Don't do that here.** Write the ingredient itself, with a normal integer quantity:
 
 - ✅ `Monster Trophy` × `3`
 - ❌ `Golden Fleece` × `0.3`
 
-The Fleece-÷-10 pricing still happens — it just lives in
+The Golden Fleece ÷ 10 pricing still happens — it just lives in
 [`derived-prices-template.csv`](derived-prices-template.csv) as a rule, instead of being baked into
 every quantity. **You still maintain only the Golden Fleece price**; nothing new to track.
 
@@ -147,14 +147,14 @@ Two consequences for you as an author:
 - **`Monster Trophy` is not yet in `tokenMetadata`** — it appears nowhere in the current data. Add
   one row per season it exists in, or `Display Name` will show `⚠ check name` on every Trophy
   line. You'll need to pick its `Category`; none of the existing ones (`Trade 1`, `Trade 2`,
-  `Premium`, `Bonus`, `Preorder`, `Condensed`, `Ultra Rare`, `Patron`, `Golden Ticket`,
+  `Premium`, `Bonus`, `Preorder`, `Condensed`, `Ultra Rare`, `Golden Ticket`,
   `Safehold`) obviously covers a reward-only token, so a new category may be warranted.
 
 Rationale and the engine-side requirements are in [`expansion-plan.md`](expansion-plan.md) §4.3.
 
 ## Before importing
 
-- [ ] Every row has a non-zero, **whole-number** `Quantity` — no decimals, no fractions of a Fleece.
+- [ ] Every row has a non-zero, **whole-number** `Quantity` — no decimals, no fractions of a Golden Fleece.
 - [ ] No `⚠ check name` anywhere in `Display Name`.
 - [ ] `Monster Trophy` added to `tokenMetadata` (one row per season) with a chosen category.
 - [ ] `Golden Fleece` present in the manual off-auction price table for every season it's used in.
