@@ -65,10 +65,11 @@ export default function TransmutesPage() {
 
   return (
     <>
-      <PageIntro short="Estimated transmute costs if you bought ingredients from auctions.">
+      <PageIntro short="Estimated transmute costs, priced from each transmute's debut-year auction sales.">
         What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
-        building against buying from a reseller. Costs come from current auction prices — an{' '}
-        <strong>avg</strong> and a <strong>min</strong> total per recipe. Tokens with a source show
+        building against buying from a reseller. Each transmute is priced from auction sales in the{' '}
+        <strong>year it debuted</strong> — an <strong>avg</strong> and a <strong>min</strong> total
+        per recipe. Tokens with a source show
         both the full build and the cheaper cost if you already own that source. Expand any row for
         its full bill of materials. For single-token price history, see <Link to="/">Prices</Link>.
       </PageIntro>
