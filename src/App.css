@@ -207,6 +207,76 @@ header h1 {
   cursor: pointer;
 }
 
+/* --- Auction context layer: provenance badges + filter -------------------- */
+
+/* A second .controls row (the shared FilterBar) sits tight under a page's own
+   controls rather than opening its full top margin. */
+.controls.filterbar { margin: 4px 0 8px; }
+
+/* Inline provenance tag on a data row — same pill shape as the transmute badges.
+   Withheld reuses the neutral est. treatment; the real-sale provenances carry
+   their own hue. Colours are contrast-checked for both themes (≥4.5:1). */
+.prov-badge {
+  font-size: 10.5px;
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+.prov-badge.released-payment { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
+.prov-badge.augment { background: rgba(42, 120, 214, 0.14); color: #1d5fa8; }
+.prov-badge.grunnel { background: rgba(47, 125, 50, 0.15); color: #2f7d32; }
+.prov-badge.withheld { background: var(--band); color: var(--text); }
+:root[data-theme='dark'] .prov-badge.released-payment { background: rgba(240, 168, 60, 0.18); color: #f0a83c; }
+:root[data-theme='dark'] .prov-badge.augment { background: rgba(57, 135, 229, 0.20); color: #6aa8e6; }
+:root[data-theme='dark'] .prov-badge.grunnel { background: rgba(109, 187, 112, 0.18); color: #7cc47f; }
+
+/* The provenance filter: a labelled row of toggle chips in the FilterBar. */
+.prov-filter { display: flex; flex-direction: column; gap: 4px; align-self: flex-end; }
+.prov-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-height: var(--control-h); }
+.prov-chip {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.prov-chip.off:hover { border-color: var(--accent); color: var(--accent); }
+/* An "on" chip wears its provenance colour; "off" stays a neutral outline. */
+.prov-chip.on { border-color: transparent; }
+.prov-chip.released-payment.on { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
+.prov-chip.augment.on { background: rgba(42, 120, 214, 0.14); color: #1d5fa8; }
+.prov-chip.grunnel.on { background: rgba(47, 125, 50, 0.15); color: #2f7d32; }
+.prov-chip.withheld.on { background: var(--band); color: var(--text-h); }
+:root[data-theme='dark'] .prov-chip.released-payment.on { background: rgba(240, 168, 60, 0.18); color: #f0a83c; }
+:root[data-theme='dark'] .prov-chip.augment.on { background: rgba(57, 135, 229, 0.20); color: #6aa8e6; }
+:root[data-theme='dark'] .prov-chip.grunnel.on { background: rgba(109, 187, 112, 0.18); color: #7cc47f; }
+
+/* The "Auction context this season" section on the Prices page. */
+.ctx-section { margin-top: 28px; }
+.ctx-list { list-style: none; padding: 0; margin: 8px 0 0; }
+.ctx-row {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.ctx-row .ctx-name { flex: 1; color: var(--text-h); }
+.ctx-row .ctx-auction { color: var(--text); font-size: 12px; white-space: nowrap; }
+.ctx-row .ctx-value {
+  font-family: var(--sans); font-variant-numeric: tabular-nums;
+  min-width: 88px; text-align: right; color: var(--text-h);
+}
+/* Withheld values are negative — tint them like a subtraction (the diff-up hue). */
+.ctx-row .ctx-value.neg { color: var(--diff-up); }
+
+@media (max-width: 640px) {
+  .prov-chip { min-height: 44px; }
+}
+
 /* The explorer's 10x caveat: a subtle note that the ×10 on individual sales is
    an estimate. Sits just under the results count, pulled tight to it. */
 .tenx-note { margin-top: -8px; font-style: italic; opacity: 0.85; }

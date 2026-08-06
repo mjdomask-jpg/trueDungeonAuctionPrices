@@ -51,12 +51,13 @@ only this provider changes.
 
 ## Source data
 
-All data lives in `public/data/`. Six files are **exported from the spreadsheet**
+All data lives in `public/data/`. Seven files are **exported from the spreadsheet**
 straight into that directory — `prices.csv`, `auctionMetadata.csv`,
-`tokenMetadata.csv`, `transmuteRecipes.csv`, `offAuctionPrices.csv`, `onyx.csv`.
-Two are **hand-authored here** with no sheet behind them: `derivedPrices.csv` and
-`tokenGroups.csv`. There is no staging copy and no sync step; the file the sheet
-writes is the file the site serves and the file the validators check.
+`tokenMetadata.csv`, `transmuteRecipes.csv`, `offAuctionPrices.csv`, `onyx.csv`,
+`contextItems.csv`. Two are **hand-authored here** with no sheet behind them:
+`derivedPrices.csv` and `tokenGroups.csv`. There is no staging copy and no sync
+step; the file the sheet writes is the file the site serves and the file the
+validators check.
 
 The two below back the main dashboard. The rest are covered in
 [`expansion-plan.md`](expansion-plan.md) §3.
@@ -310,9 +311,32 @@ appears only in `onyx.csv`; and `Golden Fleece` and `Treasure Chest`, which appe
 in `tokenMetadata` for never-auctioned tokens. `Trade Good` and `Patron` are
 retired.
 
+## Auction context layer
+
+A layer *on top of* the core sales adds each auction's **context** — who ran it
+(Forum vs Trent), its funding target, and the items that were **withheld**,
+**augmented** (personal-collection or released auctioneer payment), or dropped in
+by **Grunnel**. It is exported as **`contextItems.csv`** (one row per context
+item: `auctionId, category, Item, quantity, priceAugmented`) and read alongside
+the existing auction-level columns already present in `auctionMetadata.csv`
+(`targetFunding`, `augmentated`, the `augment*` rollups, `fundingNoAugment`,
+`preorderTotal` — now parsed by `parseMeta`).
+
+The logic lives in [`src/lib/context.ts`](../src/lib/context.ts): it classifies
+each item's **provenance** (`withheld` / `augment` / `grunnel` / `released-payment`
+— a tag orthogonal to `Category`), and **recomputes every withheld value** as a
+same-season, close-date-ordered, point-in-time trailing average from live sales
+(withheld items never sold, so this is the only *estimated* price in the system —
+always flagged as such). Only **Closed** auctions contribute. Full rationale and
+the audited per-row recompute are in [`context-layer-design.md`](./context-layer-design.md),
+[`data-audit.md`](./data-audit.md), and [`withheld-recompute-preview.csv`](./withheld-recompute-preview.csv).
+Era boundaries and rates (Trent start, reward rate, Golden-Ticket-guarantee date,
+default funding target) are config in [`src/lib/eras.ts`](../src/lib/eras.ts), not
+hardcoded at call sites.
+
 ## Validation
 
-Three checks, each catching a different failure:
+Four checks, each catching a different failure:
 
 **`npm run validate`** (`scripts/validate-recipes.mjs`) cross-checks
 `transmuteRecipes` / `tokenMetadata` / `offAuctionPrices` / `prices` for duplicate
@@ -324,6 +348,16 @@ silently indexing every row under `undefined`. A schema failure aborts before th
 row checks — otherwise one bad header buries its own diagnosis under thousands of
 cascading errors. Near-misses in spacing or case (`DisplayName` for
 `Display Name`) are reported as such rather than as a missing column.
+
+**`npm run validate`** also runs `scripts/validate-context.mjs`, which mirrors
+`src/lib/context.ts` outside the browser. It reproduces the withheld point-in-time
+recompute from the CSVs and asserts it matches the audited
+`docs/withheld-recompute-preview.csv` to the cent (so a `prices.csv` change that
+would silently move an estimate is caught), then reports the context domain rules
+from `data-audit.md §5`: `targetFunding > $8,000` (a flagged **exception**, not
+fatal), Trent rows before season 2023, Golden-Ticket sales before the guarantee
+era, Closed auctions with no sales, and Ultra-Rare-looking augment names missing
+from the Random-UR list.
 
 **`npm run build`** runs `scripts/check-dist-data.mjs` as `postbuild`, comparing
 `public/data` to `dist/data` in both directions. Vite copies `public/` in but does

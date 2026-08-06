@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
-  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, type ItemRow,
+  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, type ItemRow, type Sale,
 } from '../lib/data';
-import { fmtCloseDate } from '../lib/format';
+import { fmtCloseDate, money } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useFilters } from '../data/filtersContext';
+import { ERAS } from '../lib/eras';
 import { CategoryTable } from '../components/CategoryTable';
+import { FilterBar } from '../components/FilterBar';
+import { ProvenanceBadge } from '../components/ProvenanceBadge';
 import { TenXToggle } from '../components/TenXToggle';
 import { useTenX } from '../hooks/useTenX';
 import { compareCategories } from '../lib/categories';
@@ -12,7 +16,8 @@ import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
 export default function DashboardPage() {
-  const { sales, meta, loading, error } = useAuctionData();
+  const { sales, meta, contextItems, loading, error } = useAuctionData();
+  const { filters } = useFilters();
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
   // Seven columns collide on a phone, so narrow screens show one stat group at
@@ -32,14 +37,46 @@ export default function DashboardPage() {
   // Default to the newest season once data has loaded.
   const activeSeason = season || seasons[0] || '';
 
+  const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
+
+  // Apply the shared Source / Trent-pricing filters to the sales BEFORE the
+  // per-token aggregation, so every stat on the page reflects the chosen source
+  // and (for Trent) the ~10% reward-adjusted effective price. Defaults ("All
+  // sources", "Nominal") leave the sales untouched, so the dashboard reads
+  // exactly as it did before the context layer.
+  const viewSales = useMemo(() => {
+    const rewardMultiplier = 1 - ERAS.trentRewardRate;
+    const out: Sale[] = [];
+    for (const s of sales) {
+      const src = metaById.get(s.auctionId)?.source;
+      if (filters.source !== 'all' && src !== filters.source) continue;
+      out.push(filters.trentPricing === 'reward-adjusted' && src === 'Trent'
+        ? { ...s, price: s.price * rewardMultiplier }
+        : s);
+    }
+    return out;
+  }, [sales, metaById, filters.source, filters.trentPricing]);
+
   const rows = useMemo(
-    () => (activeSeason ? aggregateSeason(sales, activeSeason) : []),
-    [sales, activeSeason],
+    () => (activeSeason ? aggregateSeason(viewSales, activeSeason) : []),
+    [viewSales, activeSeason],
   );
   const last5Nums = useMemo(
-    () => (activeSeason ? lastFiveAuctionNumbers(sales, activeSeason) : []),
-    [sales, activeSeason],
+    () => (activeSeason ? lastFiveAuctionNumbers(viewSales, activeSeason) : []),
+    [viewSales, activeSeason],
   );
+
+  // This season's context items (withheld / augment / grunnel / released),
+  // narrowed to the provenances the FilterBar has switched on. Ordered by auction,
+  // then item. Shown in a section separate from the per-token tables so the
+  // headline price stats stay unchanged (design §5.4).
+  const seasonContext = useMemo(() => {
+    return contextItems
+      .filter((it) => metaById.get(it.auctionId)?.season === activeSeason && filters.provenance.has(it.provenance))
+      .sort((a, b) =>
+        (metaById.get(a.auctionId)!.auctionNumber - metaById.get(b.auctionId)!.auctionNumber)
+        || a.name.localeCompare(b.name));
+  }, [contextItems, metaById, activeSeason, filters.provenance]);
   // Trade 1 rows become their 10x bundle here when the toggle is on; every other
   // category (and thus the category list) is unchanged.
   const displayRows = useMemo(() => asTenXRows(rows, tenX), [rows, tenX]);
@@ -69,7 +106,8 @@ export default function DashboardPage() {
   }, [filtered]);
 
   const closedAuctions = meta
-    .filter((m) => m.season === activeSeason && m.status === 'Closed')
+    .filter((m) => m.season === activeSeason && m.status === 'Closed'
+      && (filters.source === 'all' || m.source === filters.source))
     .length;
 
   // Global intro stats (across all seasons).
@@ -131,6 +169,8 @@ export default function DashboardPage() {
         )}
       </div>
 
+      <FilterBar controls={['source', 'trentPricing', 'provenance']} />
+
       <p className="meta-line stats">
         Season {activeSeason}: {closedAuctions} closed auctions ·
         {' '}"Last 5" = {last5Nums.map(last5Label).join(', ')}
@@ -145,6 +185,28 @@ export default function DashboardPage() {
           group={narrow ? statGroup : 'both'}
         />
       ))}
+
+      {seasonContext.length > 0 && (
+        <section className="ctx-section">
+          <h2>Auction context — {activeSeason}</h2>
+          <p className="meta-line">
+            Items withheld, augmented, or added outside the advertised order this season.
+            These are separate from the per-token prices above; withheld values are estimates.
+          </p>
+          <ul className="ctx-list">
+            {seasonContext.map((it, i) => (
+              <li className="ctx-row" key={`${it.auctionId}-${it.name}-${i}`}>
+                <ProvenanceBadge provenance={it.provenance} n={it.estimate ? it.n : undefined} />
+                <span className="ctx-name">
+                  {it.name}{it.quantity > 1 ? ` ×${it.quantity}` : ''}
+                </span>
+                <span className="ctx-auction">#{metaById.get(it.auctionId)?.auctionNumber}</span>
+                <span className={`ctx-value${it.value < 0 ? ' neg' : ''}`}>{money(it.value)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   );
 }

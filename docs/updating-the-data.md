@@ -175,6 +175,7 @@ open the live site and confirm your change is visible.
 | Price something never sold at auction (Golden Fleece, etc.) | [`offAuctionPrices.csv`](#offauctionpricescsv) |
 | Change chart groupings or line colours | [`tokenGroups.csv`](#hand-authored-files) |
 | Change how a reward-only token is priced | [`derivedPrices.csv`](#hand-authored-files) |
+| Record a withheld / augment / grunnel item for an auction | [`contextItems.csv`](#contextitemscsv) |
 
 A new auction with results typically means **two** files:
 `auctionMetadata.csv` (the auction itself) and `prices.csv` (what sold in it).
@@ -491,6 +492,45 @@ Recipes must reference `Golden Fleece`.
 
 ---
 
+## `contextItems.csv`
+
+**Export from:** the `augmentData` tab → save as **`contextItems.csv`** (note the
+name change). Only columns A–G are used.
+
+**Drives:** the auction context layer (item provenance + the withheld estimate).
+Loaded independently — if this file is missing or empty, the context layer is
+empty and nothing else is affected. See
+[`context-layer-design.md`](./context-layer-design.md).
+
+**Update when:** an auctioneer withholds, augments, or has Grunnel items in an
+auction. 575 rows today, seasons 2023–2026.
+
+### Columns
+
+| Column | Required | Notes |
+|---|---|---|
+| `auctionId` | **Yes** | Must match a `Closed` auction in `auctionMetadata.csv`. Rows for non-Closed auctions are ignored (a failed auction withheld nothing). |
+| `category` | **Yes** | One of `token`, `augment`, `grunnel`, `withheld`. `token`/`augment` are treated the same (personal-collection augment), except items named as a Random Ultra Rare become `released-payment`. |
+| `Item` | **Yes** | A **Display Name**, not the stable `Item` key — this is what the withheld estimate joins to `prices."Display Name"` on. Write it exactly as the token's public name appears in `prices.csv`. |
+| `quantity` | **Yes** | Lot size. `priceAugmented` is the lot total, already ×quantity. |
+| `priceAugmented` | **Yes** (except withheld) | Real value for `token`/`augment`/`grunnel`. For `withheld` it is **ignored** — the value is recomputed from live sales — so a stale or error value there is harmless. |
+
+### Rules that matter
+
+- **Random Ultra Rares must be named from the maintained list** in
+  `src/lib/eras.ts` (`Random Ultra Rare`, `Ultra Rare`, `2025 Ultra Rare Set`, …).
+  A new wording classifies as a personal augment until the list is updated; the
+  context validator warns on Ultra-Rare-looking names that aren't listed.
+- **`targetFunding` above $8,000** (in `auctionMetadata.csv`) is allowed but
+  flagged by the validator as an exception, not an error.
+
+### Gotcha
+
+The tab labels a column `Item` but fills it with **display names**. Don't "fix"
+that to canonical `Item` values — the join to sales is on the display name.
+
+---
+
 ## Hand-authored files
 
 These two have **no Google Sheet behind them**. Edit them directly in
@@ -608,7 +648,7 @@ implies a spreadsheet named `auctionData` with a tab named `tokenMetadata`). If
 you rename a tab, the download name changes but the required filename in
 `public/data/` does not — correct the "Export from" line here when that happens.
 
-Three files are already named differently from their tab, so the rename in step 2
+Four files are already named differently from their tab, so the rename in step 2
 is not optional:
 
 | Tab | Download | Must be saved as |
@@ -616,3 +656,4 @@ is not optional:
 | `auctionPrices` | `auctionData - auctionPrices.csv` | `prices.csv` |
 | `pricesOnyx` | `auctionData - pricesOnyx.csv` | `onyx.csv` |
 | `pricesFleece` | `auctionData - pricesFleece.csv` | `offAuctionPrices.csv` |
+| `augmentData` | `auctionData - augmentData.csv` | `contextItems.csv` |

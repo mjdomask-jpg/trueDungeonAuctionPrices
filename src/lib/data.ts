@@ -14,6 +14,11 @@ export type Sale = {
   category: string;
 };
 
+// Where an auction was run. Derived per-auction (see deriveSource), never from a
+// date cutoff — the first Trent auction closed Nov 2022 despite being season 2023
+// (docs/data-audit.md §3).
+export type AuctionSource = 'Forum' | 'Trent';
+
 export type AuctionMeta = {
   auctionId: string;
   season: string;
@@ -26,6 +31,25 @@ export type AuctionMeta = {
   link: string;
   closeDate: string;
   openDate: string;
+  // --- Context layer (docs/context-layer-design.md §3.1) ---------------------
+  // Forum vs Trent, derived from auctioneer/link. Not a stored column.
+  source: AuctionSource;
+  // Funding goal for the auction. null for the 92 auctions with no recorded
+  // target — the UI substitutes the $7,500 default as an explicit ASSUMPTION
+  // (see ERAS.defaultTargetFunding), never as a stored fact.
+  targetFunding: number | null;
+  // Whether the auctioneer augmented the auction. null before the augment era.
+  augmented: boolean | null;
+  // Auction-level augment rollups AS REPORTED BY THE SHEET. Kept for
+  // cross-checking; context.ts recomputes the authoritative totals after the
+  // token/augment merge and the withheld recompute, because the sheet rollup is
+  // stale/miscategorised (audit §4.3). Values are negative for withheld.
+  augmentTokens: number | null;
+  augmentGrunnel: number | null;
+  augmentWithheld: number | null;
+  augmentedTotal: number | null;
+  fundingNoAugment: number | null;
+  preorderTotal: number | null;
   // How long the auction ran. Recorded from 2022 on; null before that, and for
   // a handful of 2025/2026 rows the sheet left blank.
   daysToClose: number | null;
@@ -82,6 +106,17 @@ function toObjects(rows: string[][]): Record<string, string>[] {
   });
 }
 
+// Strip a spreadsheet formula-guard prefix from a token name. When a cell value
+// starts with + - = or @, editing it in a spreadsheet can prepend a ' or ` so it
+// isn't read as a formula; that guard leaks into the CSV export (e.g.
+// "`+3 Savage Sword"). Remove a single leading ' or ` ONLY when it guards one of
+// those characters, so a name that legitimately starts with an apostrophe is left
+// alone. Applied to every token name at parse time — the sheet keeps re-adding the
+// guard on each export, so fixing it here is idempotent and survives re-exports.
+export function cleanName(s: string): string {
+  return (s ?? '').replace(/^['`](?=[-+=@])/, '');
+}
+
 export function parseSales(text: string): Sale[] {
   const objs = toObjects(parseCSV(text));
   const out: Sale[] = [];
@@ -94,9 +129,9 @@ export function parseSales(text: string): Sale[] {
       auctionId: o['auctionId'],
       season: o['auctionSeason'],
       auctionNumber: parseInt(o['auctionNumber'], 10),
-      item: o['Item'],
+      item: cleanName(o['Item']),
       price,
-      displayName: o['Display Name'],
+      displayName: cleanName(o['Display Name']),
       category: o['Category'],
     });
   }
@@ -110,6 +145,33 @@ function intOrNull(raw: string | undefined): number | null {
   if (!s || s === 'n/a') return null;
   const n = parseInt(s, 10);
   return Number.isFinite(n) ? n : null;
+}
+
+// Like intOrNull but for money/decimal columns: strips the "$" and thousands
+// commas the export writes ("$0.00", "7,500") and keeps the sign (withheld
+// rollups are negative). Blank / "n/a" / unparseable ⇒ null.
+function moneyOrNull(raw: string | undefined): number | null {
+  const s = (raw ?? '').replace(/[$,]/g, '').trim();
+  if (!s || s === 'n/a') return null;
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+// A boolean column written as Yes/No; anything else (blank, "n/a") ⇒ null.
+function yesNoOrNull(raw: string | undefined): boolean | null {
+  const s = (raw ?? '').trim().toLowerCase();
+  if (s === 'yes') return true;
+  if (s === 'no') return false;
+  return null;
+}
+
+// Forum vs Trent, per auction. Trent auctions are marked by auctioneer "Trent"
+// and/or a trenttokens.com link; everything else (including the 92 link-less
+// pre-2023 forum auctions) is Forum. Never inferred from date (audit §3).
+export function deriveSource(auctioneer: string, link: string): AuctionSource {
+  if ((auctioneer ?? '').trim().toLowerCase() === 'trent') return 'Trent';
+  if (/trenttokens\.com/i.test(link ?? '')) return 'Trent';
+  return 'Forum';
 }
 
 export function parseMeta(text: string): AuctionMeta[] {
@@ -132,6 +194,15 @@ export function parseMeta(text: string): AuctionMeta[] {
       daysToClose: intOrNull(o['daysToClose']),
       openMonth: intOrNull(o['Open Month']),
       closeMonth: intOrNull(o['Close Month']),
+      source: deriveSource(o['auctioneer'], o['Link']),
+      targetFunding: moneyOrNull(o['targetFunding']),
+      augmented: yesNoOrNull(o['augmentated']), // sheet column is misspelled "augmentated"
+      augmentTokens: moneyOrNull(o['augmentTokens']),
+      augmentGrunnel: moneyOrNull(o['augmentGrunnel']),
+      augmentWithheld: moneyOrNull(o['augmentWithheld']),
+      augmentedTotal: moneyOrNull(o['augmentedTotal']),
+      fundingNoAugment: moneyOrNull(o['fundingNoAugment']),
+      preorderTotal: moneyOrNull(o['preorderTotal']),
     });
   }
   return out;
@@ -275,8 +346,9 @@ export type TimelinePoint = {
 
 // Sortable date key: real ISO dates compare lexically; anything else (missing/
 // 'n/a') collapses to '' so a season with no close dates falls back cleanly to
-// auction-number order.
-function dateKey(iso: string): string {
+// auction-number order. Exported so the context layer orders "prior auctions" by
+// the same rule (docs/context-layer-design.md §4).
+export function dateKey(iso: string): string {
   return /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10) : '';
 }
 
