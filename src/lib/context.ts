@@ -230,3 +230,85 @@ export function rollupByAuction(items: ContextItem[]): Map<string, AuctionContex
   }
   return byAuction;
 }
+
+// --- Shared view filters (design §5.2) -------------------------------------
+// The vocabulary and logic behind the FilterBar controls. Defined here (the
+// context-layer lib) rather than in the React data/ layer so the pure filtering
+// can be unit-tested and reused, and so filtersContext can import the types
+// without the types depending on React. See applyViewFilters for the one place
+// pages funnel their sale feed through.
+
+export type SourceFilter = 'all' | 'Forum' | 'Trent';
+export type TrentPricing = 'nominal' | 'reward-adjusted';
+export type AuctionTypeFilter = 'all' | 'augmented' | 'non-augmented' | 'golden-ticket';
+
+// The subset of filter state that selects/rescales sales. The FilterBar's
+// provenance chips act on the context-item list, not the core sales, so they are
+// deliberately not part of this shape.
+export type ViewFilter = {
+  source: SourceFilter;
+  trentPricing: TrentPricing;
+  auctionType: AuctionTypeFilter;
+};
+
+// Auctions that included a Golden Ticket, from EITHER feed: a GT sale in
+// prices.csv (13 auctions) or a GT released-payment context row (audit §5). Union
+// so the "With Golden Ticket" filter is complete regardless of which sheet
+// recorded it. Names match the classifier's (isReleasedPayment) exact 'golden
+// ticket'.
+export function findGoldenTicketAuctions(
+  sales: Sale[], context: RawContextItem[],
+): Set<string> {
+  const ids = new Set<string>();
+  const isGT = (name: string) => (name ?? '').trim().toLowerCase() === 'golden ticket';
+  for (const s of sales) if (isGT(s.displayName) || isGT(s.item)) ids.add(s.auctionId);
+  for (const c of context) if (isGT(c.name)) ids.add(c.auctionId);
+  return ids;
+}
+
+// Whether an auction matches the auction-type control. 'non-augmented' is the
+// complement of 'augmented' (augmented !== true), so the two partition every
+// auction — the 92 pre-augment-era auctions (augmented === null) read as
+// non-augmented, since the mechanic didn't exist and nothing was augmented.
+export function auctionTypeMatches(
+  m: AuctionMeta, type: AuctionTypeFilter, goldenTicketIds: Set<string>,
+): boolean {
+  switch (type) {
+    case 'augmented': return m.augmented === true;
+    case 'non-augmented': return m.augmented !== true;
+    case 'golden-ticket': return goldenTicketIds.has(m.auctionId);
+    default: return true; // 'all'
+  }
+}
+
+// Whether an auction passes the source + auction-type controls together — the
+// auction-level half of the shared filter, shared by the sale-feed helper below
+// and the explorer (which filters its meta list directly).
+export function passesAuctionFilters(
+  m: AuctionMeta, f: ViewFilter, goldenTicketIds: Set<string>,
+): boolean {
+  if (f.source !== 'all' && m.source !== f.source) return false;
+  return auctionTypeMatches(m, f.auctionType, goldenTicketIds);
+}
+
+// Apply the shared view filter to a raw sale feed: drop sales whose auction fails
+// the source / auction-type controls, and rescale Trent prices by the reward rate
+// when "Reward-adjusted" is chosen. This is the single funnel every pricing page
+// runs its sales through, so Source/Trent-pricing/Auction-type behave identically
+// on Prices, Onyx, Timelines and Compare. Defaults (All sources, Nominal, All
+// types) return the feed untouched, so each page reads exactly as it did before.
+export function applyViewFilters(
+  sales: Sale[], metaById: Map<string, AuctionMeta>,
+  goldenTicketIds: Set<string>, f: ViewFilter,
+): Sale[] {
+  const rewardMultiplier = 1 - ERAS.trentRewardRate;
+  const out: Sale[] = [];
+  for (const s of sales) {
+    const m = metaById.get(s.auctionId);
+    if (!m || !passesAuctionFilters(m, f, goldenTicketIds)) continue;
+    out.push(f.trentPricing === 'reward-adjusted' && m.source === 'Trent'
+      ? { ...s, price: s.price * rewardMultiplier }
+      : s);
+  }
+  return out;
+}

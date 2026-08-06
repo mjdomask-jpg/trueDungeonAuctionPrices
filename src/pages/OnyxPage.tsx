@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { seasonsOf, aggregateSeason, type ItemRow } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useFilters } from '../data/filtersContext';
+import { applyViewFilters } from '../lib/context';
 import { CategoryTable } from '../components/CategoryTable';
+import { FilterBar } from '../components/FilterBar';
 import { PageIntro } from '../components/PageIntro';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
@@ -12,17 +15,28 @@ import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 // is raw sales in the same schema as prices.csv, we reuse the exact dashboard
 // aggregation (full-season + last-5) and render with the same CategoryTable.
 export default function OnyxPage() {
-  const { onyxSales, loading, error } = useAuctionData();
+  const { onyxSales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
+  const { filters } = useFilters();
   const [season, setSeason] = useState('');
   const narrow = useMediaQuery(NARROW);
   const [statGroup, setStatGroup] = useState<'last5' | 'full'>('last5');
 
+  // Season list from the UNFILTERED feed, so a Source/Auction-type filter never
+  // makes the season dropdown lose options.
   const seasons = useMemo(() => seasonsOf(onyxSales), [onyxSales]);
   const activeSeason = season || seasons[0] || '';
 
+  // Onyx sales belong to auctions in the same metadata, so the shared Source /
+  // Trent-pricing / Auction-type filters apply exactly as on the Prices page.
+  const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
+  const viewSales = useMemo(
+    () => applyViewFilters(onyxSales, metaById, goldenTicketAuctions, filters),
+    [onyxSales, metaById, goldenTicketAuctions, filters],
+  );
+
   const rows = useMemo(
-    () => (activeSeason ? aggregateSeason(onyxSales, activeSeason) : []),
-    [onyxSales, activeSeason],
+    () => (activeSeason ? aggregateSeason(viewSales, activeSeason) : []),
+    [viewSales, activeSeason],
   );
 
   // Group into per-category tables (alphabetical); most Onyx lists are a single
@@ -82,6 +96,8 @@ export default function OnyxPage() {
               </div>
             )}
           </div>
+
+          <FilterBar controls={['source', 'trentPricing', 'auctionType']} />
 
           {groups.length === 0 && <p className="empty">No Onyx sales in {activeSeason}.</p>}
           {groups.map((g) => (

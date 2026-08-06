@@ -109,6 +109,36 @@ viewport. This is a browser threshold, not a taste call — the site's controls
 inherit 12px from their uppercase labels, so the override lives in the
 `max-width: 640px` block at the foot of `App.css`.
 
+## Shared filter bar & provenance badges
+
+**The context-layer filters are one component, dropped into every in-scope page.**
+Filter *state* lives in `FiltersProvider` (app-level, in `main.tsx`), read through
+`useFilters()`; a single `<FilterBar/>` renders the controls. A page shows only
+the controls it uses via the `controls` prop — `source`, `trentPricing`,
+`auctionType`, `provenance` — so the state shape and behaviour stay identical
+everywhere. Prices carries all four (it's the only page with the provenance
+context section); Onyx, Timelines, Compare and Auction Data carry
+`['source', 'trentPricing', 'auctionType']`. Transmutes is deliberately out of
+scope. See `docs/context-layer-design.md` §5.2.
+
+**Every pricing page funnels its sale feed through `applyViewFilters`** (in
+`lib/context.ts`) before aggregating, so Source / Trent-pricing / Auction-type
+behave the same across pages and the *defaults* (All sources, Nominal, All types)
+return the feed untouched — each page reads exactly as it did before the layer.
+The Auction Data page is the one exception: because it lists auctions rather than
+aggregating, it filters its **meta** list with `passesAuctionFilters` (so a
+narrowed auction disappears entirely instead of showing an empty card) and only
+rescales prices through the shared helper. The `auctionType` "With Golden Ticket"
+option reads a set memoised once in the provider (`goldenTicketAuctions`);
+"Non-augmented" is the complement of "Augmented", so the 92 pre-augment-era
+auctions read as non-augmented rather than vanishing from both.
+
+**Provenance badges reuse the popover-in-a-row pattern**, not a `title`: the
+`released` / `augment` / `grunnel` / withheld-`est.` badges are `HintPopover`s
+(see "Putting a popover inside a clickable row" above) so touch users get the
+explanation. Their colours have light + dark entries in `App.css`; `normal` rows
+carry no badge. Only the Prices page renders context items today.
+
 ## Tables
 
 **Wide stat tables show one group at a time on mobile.** Seven columns do not

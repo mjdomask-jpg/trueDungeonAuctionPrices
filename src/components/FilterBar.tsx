@@ -1,13 +1,16 @@
-import { useFilters, CONTEXT_PROVENANCES, PROVENANCE_NAME, type SourceFilter } from '../data/filtersContext';
+import {
+  useFilters, CONTEXT_PROVENANCES, PROVENANCE_NAME,
+  type SourceFilter, type AuctionTypeFilter,
+} from '../data/filtersContext';
 
 // The shared context-layer controls. One implementation, dropped into each page;
 // a page passes `controls` to show only the ones it uses, so the state shape and
 // behaviour stay identical everywhere (docs/context-layer-design.md §5.2).
-export type FilterControl = 'source' | 'trentPricing' | 'provenance';
-const DEFAULT_CONTROLS: FilterControl[] = ['source', 'trentPricing', 'provenance'];
+export type FilterControl = 'source' | 'trentPricing' | 'auctionType' | 'provenance';
+const DEFAULT_CONTROLS: FilterControl[] = ['source', 'trentPricing', 'auctionType', 'provenance'];
 
 export function FilterBar({ controls = DEFAULT_CONTROLS }: { controls?: FilterControl[] }) {
-  const { filters, setSource, setTrentPricing, toggleProvenance } = useFilters();
+  const { filters, setSource, setTrentPricing, setAuctionType, toggleProvenance } = useFilters();
   const show = (c: FilterControl) => controls.includes(c);
   // The Trent reward-adjust only makes sense when Trent sales are in view.
   const trentInView = filters.source !== 'Forum';
@@ -39,6 +42,19 @@ export function FilterBar({ controls = DEFAULT_CONTROLS }: { controls?: FilterCo
             </button>
           </div>
         </div>
+      )}
+
+      {show('auctionType') && (
+        <label>
+          Auction type
+          <select value={filters.auctionType}
+            onChange={(e) => setAuctionType(e.target.value as AuctionTypeFilter)}>
+            <option value="all">All auction types</option>
+            <option value="augmented">Augmented</option>
+            <option value="non-augmented">Non-augmented</option>
+            <option value="golden-ticket">With Golden Ticket</option>
+          </select>
+        </label>
       )}
 
       {show('provenance') && (

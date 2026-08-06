@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { parseSales, parseMeta, parseGroups, type Sale, type AuctionMeta, type GroupRow } from '../lib/data';
-import { parseContextItems, buildContextItems, rollupByAuction, type RawContextItem } from '../lib/context';
+import {
+  parseContextItems, buildContextItems, rollupByAuction, findGoldenTicketAuctions,
+  type RawContextItem,
+} from '../lib/context';
 import {
   parseRecipes, parseTokenMetadata, parseOffAuctionPrices, parseDerivedRules,
   type Recipe, type TokenMeta, type OffAuctionPrice, type DerivedRule,
@@ -93,11 +96,19 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
     [rawContext, sales, meta],
   );
   const auctionContext = useMemo(() => rollupByAuction(contextItems), [contextItems]);
+  // Golden-Ticket auctions span both the core sales and the context rows, so this
+  // recomputes when either settles. Cheap (a single pass over each) and shared by
+  // every page's FilterBar.
+  const goldenTicketAuctions = useMemo(
+    () => findGoldenTicketAuctions(sales, rawContext),
+    [sales, rawContext],
+  );
 
   return (
     <AuctionDataContext.Provider
       value={{
         sales, meta, onyxSales, groupRows, contextItems, auctionContext,
+        goldenTicketAuctions,
         recipes, tokenMeta, offAuctionPrices, derivedRules, loading, error,
       }}
     >

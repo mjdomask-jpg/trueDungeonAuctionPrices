@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { seasonsOf, compareSeasons, pctChange, type CompareRow, type StatKind } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useFilters } from '../data/filtersContext';
+import { applyViewFilters } from '../lib/context';
 import { CompareTable } from '../components/CompareTable';
+import { FilterBar } from '../components/FilterBar';
 import { compareCategories } from '../lib/categories';
 import { PageIntro } from '../components/PageIntro';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
@@ -20,10 +23,20 @@ const STAT_OPTIONS: { key: StatKind; label: string }[] = [
 // Item so a renamed token still lines up across years. Two views: grouped by
 // category (default) or a single table sorted by biggest average move.
 export default function ComparePage() {
-  const { sales, loading, error } = useAuctionData();
-  const seasons = useMemo(() => seasonsOf(sales), [sales]); // newest first
+  const { sales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
+  const { filters } = useFilters();
+  const seasons = useMemo(() => seasonsOf(sales), [sales]); // newest first, unfiltered
 
   const narrow = useMediaQuery(NARROW);
+
+  // Apply the shared Source / Trent-pricing / Auction-type filters before the
+  // year-over-year comparison, so both columns reflect the same lens. Defaults
+  // leave the feed untouched.
+  const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
+  const viewSales = useMemo(
+    () => applyViewFilters(sales, metaById, goldenTicketAuctions, filters),
+    [sales, metaById, goldenTicketAuctions, filters],
+  );
 
   // Default to the two most recent seasons: older on the left, newer on the right.
   const [seasonA, setSeasonA] = useState('');
@@ -38,8 +51,8 @@ export default function ComparePage() {
   const newerIsB = Number(b) >= Number(a);
 
   const rows = useMemo(
-    () => (a && b ? compareSeasons(sales, a, b) : []),
-    [sales, a, b],
+    () => (a && b ? compareSeasons(viewSales, a, b) : []),
+    [viewSales, a, b],
   );
 
   // The label used for sorting a row: the newer year's name, falling back to
@@ -154,6 +167,8 @@ export default function ComparePage() {
           </div>
         )}
       </div>
+
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} />
 
       <p className="meta-line stats compare-summary">
         {rows.length} token{rows.length === 1 ? '' : 's'} · {summary.rose} rose ·{' '}

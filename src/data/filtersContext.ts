@@ -1,5 +1,7 @@
 import { createContext, useContext } from 'react';
-import type { Provenance } from '../lib/context';
+import type {
+  Provenance, SourceFilter, TrentPricing, AuctionTypeFilter,
+} from '../lib/context';
 
 // Shared view-filter state for the context layer, read by every in-scope page
 // through one hook so the controls behave identically everywhere
@@ -7,9 +9,9 @@ import type { Provenance } from '../lib/context';
 // provider file stays component-only for React Fast Refresh — same split as
 // auctionDataContext.
 
-export type SourceFilter = 'all' | 'Forum' | 'Trent';
-export type TrentPricing = 'nominal' | 'reward-adjusted';
-export type AuctionTypeFilter = 'all' | 'augmented' | 'non-augmented' | 'golden-ticket';
+// The filter vocabulary lives in lib/context (with the pure filtering logic);
+// re-exported here so the UI layer keeps importing it from one place.
+export type { SourceFilter, TrentPricing, AuctionTypeFilter } from '../lib/context';
 
 // The toggleable item provenances (everything except the implicit 'normal', which
 // is always the core prices.csv sales). Order is display order in the FilterBar.

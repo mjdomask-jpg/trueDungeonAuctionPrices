@@ -17,6 +17,10 @@ export type AuctionData = {
   // contextItems.csv leaves both empty and no other view is affected.
   contextItems: ContextItem[];
   auctionContext: Map<string, AuctionContext>;
+  // Auctions that included a Golden Ticket (either feed) — the set behind the
+  // FilterBar's "With Golden Ticket" auction-type filter. Memoised once here so
+  // every page shares it. Empty until sales load.
+  goldenTicketAuctions: Set<string>;
   // Transmutes (Phase 4). All four are optional: a missing file leaves the
   // Transmutes page empty without affecting any other view.
   recipes: Recipe[]; // bills of materials, one per (season, transmute)

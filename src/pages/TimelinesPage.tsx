@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { seasonsOf, groupedTimelines, tenXTimelinePoints, TRADE_1, TENX_PREFIX } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useFilters } from '../data/filtersContext';
+import { applyViewFilters } from '../lib/context';
 import { PriceTimeline } from '../components/PriceTimeline';
+import { FilterBar } from '../components/FilterBar';
 import { TenXToggle } from '../components/TenXToggle';
 import { useTenX } from '../hooks/useTenX';
 import { PageIntro } from '../components/PageIntro';
@@ -14,20 +17,31 @@ import { PageIntro } from '../components/PageIntro';
 // may span categories, so the page is a flat ordered list, not category
 // sections. See docs/expansion-plan.md §6 / the grouping CSV for authoring.
 export default function TimelinesPage() {
-  const { sales, meta, groupRows, loading, error } = useAuctionData();
+  const { sales, meta, groupRows, goldenTicketAuctions, loading, error } = useAuctionData();
+  const { filters } = useFilters();
   const [season, setSeason] = useState('');
   // Show Trade 1 tokens as their "10x" bundle, matching the Prices page — see
   // useTenX. Rescales the Trade 1 charts' axes ×10; other charts are untouched.
   const [tenX, setTenX] = useTenX();
 
+  // Season list from the UNFILTERED feed, so filtering never empties the dropdown.
   const seasons = useMemo(() => seasonsOf(sales), [sales]);
   const activeSeason = season || seasons[0] || '';
 
+  // Apply the shared Source / Trent-pricing / Auction-type filters to the sales
+  // before charting, so a timeline reflects the chosen source (and reward-adjusted
+  // prices). Defaults leave the feed untouched.
+  const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
+  const viewSales = useMemo(
+    () => applyViewFilters(sales, metaById, goldenTicketAuctions, filters),
+    [sales, metaById, goldenTicketAuctions, filters],
+  );
+
   const { groups: rawGroups, ungrouped, unmatched } = useMemo(
     () => (activeSeason
-      ? groupedTimelines(sales, meta, groupRows, activeSeason)
+      ? groupedTimelines(viewSales, meta, groupRows, activeSeason)
       : { groups: [], ungrouped: [], unmatched: [] }),
-    [sales, meta, groupRows, activeSeason],
+    [viewSales, meta, groupRows, activeSeason],
   );
 
   // Rewrite Trade 1 series to their 10x bundle when the toggle is on. Every
@@ -62,6 +76,8 @@ export default function TimelinesPage() {
         </label>
         <TenXToggle on={tenX} onChange={setTenX} />
       </div>
+
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} />
 
       {unmatched.length > 0 && (
         <p className="err">

@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import {
-  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, type ItemRow, type Sale,
+  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, type ItemRow,
 } from '../lib/data';
 import { fmtCloseDate, money } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
 import { useFilters } from '../data/filtersContext';
-import { ERAS } from '../lib/eras';
+import { applyViewFilters, passesAuctionFilters } from '../lib/context';
 import { CategoryTable } from '../components/CategoryTable';
 import { FilterBar } from '../components/FilterBar';
 import { ProvenanceBadge } from '../components/ProvenanceBadge';
@@ -16,7 +16,7 @@ import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
 export default function DashboardPage() {
-  const { sales, meta, contextItems, loading, error } = useAuctionData();
+  const { sales, meta, contextItems, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters } = useFilters();
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
@@ -39,23 +39,16 @@ export default function DashboardPage() {
 
   const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
 
-  // Apply the shared Source / Trent-pricing filters to the sales BEFORE the
-  // per-token aggregation, so every stat on the page reflects the chosen source
-  // and (for Trent) the ~10% reward-adjusted effective price. Defaults ("All
-  // sources", "Nominal") leave the sales untouched, so the dashboard reads
-  // exactly as it did before the context layer.
-  const viewSales = useMemo(() => {
-    const rewardMultiplier = 1 - ERAS.trentRewardRate;
-    const out: Sale[] = [];
-    for (const s of sales) {
-      const src = metaById.get(s.auctionId)?.source;
-      if (filters.source !== 'all' && src !== filters.source) continue;
-      out.push(filters.trentPricing === 'reward-adjusted' && src === 'Trent'
-        ? { ...s, price: s.price * rewardMultiplier }
-        : s);
-    }
-    return out;
-  }, [sales, metaById, filters.source, filters.trentPricing]);
+  // Apply the shared Source / Trent-pricing / Auction-type filters to the sales
+  // BEFORE the per-token aggregation, so every stat on the page reflects the
+  // chosen source, (for Trent) the ~10% reward-adjusted effective price, and the
+  // auction-type narrowing. Defaults ("All sources", "Nominal", "All types")
+  // leave the sales untouched, so the dashboard reads exactly as it did before
+  // the context layer. Shared with every other pricing page (lib/context).
+  const viewSales = useMemo(
+    () => applyViewFilters(sales, metaById, goldenTicketAuctions, filters),
+    [sales, metaById, goldenTicketAuctions, filters],
+  );
 
   const rows = useMemo(
     () => (activeSeason ? aggregateSeason(viewSales, activeSeason) : []),
@@ -107,7 +100,7 @@ export default function DashboardPage() {
 
   const closedAuctions = meta
     .filter((m) => m.season === activeSeason && m.status === 'Closed'
-      && (filters.source === 'all' || m.source === filters.source))
+      && passesAuctionFilters(m, filters, goldenTicketAuctions))
     .length;
 
   // Global intro stats (across all seasons).
@@ -169,7 +162,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'provenance']} />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType', 'provenance']} />
 
       <p className="meta-line stats">
         Season {activeSeason}: {closedAuctions} closed auctions ·
