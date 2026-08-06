@@ -334,6 +334,39 @@ Era boundaries and rates (Trent start, reward rate, Golden-Ticket-guarantee date
 default funding target) are config in [`src/lib/eras.ts`](../src/lib/eras.ts), not
 hardcoded at call sites.
 
+### Shared view filters
+
+The same layer powers the **`<FilterBar/>`** on every pricing tab (Prices, Onyx,
+Timelines, Compare, Auction Data). The pure selectors live in `context.ts`:
+`applyViewFilters` funnels a sale feed through the Source / Trent-pricing /
+Auction-type controls (defaults return it untouched), and `passesAuctionFilters`
+is the auction-level half the Auction Data page uses to filter its meta list.
+"With Golden Ticket" reads `findGoldenTicketAuctions` (auctions with a GT in
+either the sales or the context rows); "Non-augmented" is the complement of
+"Augmented", so pre-augment-era auctions stay in view. See
+[`ui-conventions.md`](./ui-conventions.md) for the UI rules.
+
+### Context analytics
+
+[`src/lib/contextAnalytics.ts`](../src/lib/contextAnalytics.ts) turns the layer
+into the four analyses on the Analytics page's **Funding & Context** view
+(design §6), all pure over the parsed data:
+
+- **Auction ledger** (`auctionLedger`) — per auction, coverage = released +
+  personal-augments + funding-target reduction (`orderCost − targetFunding`) −
+  withheld; `≥ 0` ⇒ *Covered*. Grunnel is shown but excluded from the verdict (a
+  company drop, not the auctioneer's own offset), and an auction with no recorded
+  target contributes **$0** reduction, never the assumed default, so coverage is
+  never fabricated. Aggregated per auctioneer and overall.
+- **Grunnel vs preorder** (`grunnelVsPreorder`) — mean Grunnel item value vs mean
+  `Preorder`-category sale price, per season.
+- **Augmented vs non-augmented** (`augmentedVsNot`) — within one season, each
+  token's average price in augmented vs non-augmented auctions, over tokens sold
+  in **both** (holds the token constant instead of comparing group means).
+- **Trent vs Forum** (`trentVsForum`) — matched per token within each season and
+  restricted to seasons **both** sources ran, so neither token mix nor time
+  confounds the comparison; Trent shown nominal and reward-adjusted.
+
 ## Validation
 
 Four checks, each catching a different failure:

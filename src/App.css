@@ -1003,7 +1003,53 @@ td.strong { font-weight: 600; color: var(--text-h); }
 .an-table td.diff { font-weight: 600; }
 .an-table td.diff.up { color: var(--diff-up); }
 .an-table td.diff.down { color: var(--diff-down); }
+/* Withheld is a subtraction — the same red hue the dashboard tints it (see the
+   .ctx-value.neg note above). Note --diff-up is RED here, --diff-down GREEN. */
+.an-table td.num.neg { color: var(--diff-up); }
+/* Many-column analytics tables keep their natural column widths and let the
+   .an-scroll wrapper scroll sideways on a phone, rather than crushing 6–9
+   columns into ~335px. On desktop the container already exceeds this floor. */
+.an-table.an-wide { min-width: 680px; }
 .an-date { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Context analytics (docs/context-layer-design.md §6). Reuses the .an-* panel
+   and table furniture; these add only what those four views need. */
+.an-subhead {
+  font-family: var(--display);
+  font-size: 16px;
+  color: var(--text-h);
+  margin: 20px 0 8px;
+}
+.an-panel .muted { color: var(--text); opacity: 0.75; }
+/* Two-line auction cell in the ledger: name over season/number/source. */
+.an-lname { display: block; color: var(--text-h); }
+.an-lsub { display: block; font-size: 12px; color: var(--text); opacity: 0.8; }
+/* Covered / Short verdict chip — outline only, no fill, so it reads in both
+   themes without a tinted background. */
+.an-verdict {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+/* Covered is good → green (--diff-down); Short is bad → red (--diff-up). */
+.an-verdict.yes { color: var(--diff-down); }
+.an-verdict.no { color: var(--diff-up); }
+/* A structural-confound caveat that sits with the number it qualifies — dashed
+   so it reads as a caution, not an error. */
+.confound-note {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-left: 3px solid var(--diff-down);
+  border-radius: 0 8px 8px 0;
+  max-width: 78ch;
+}
 
 /* Month accordions (Current Year). Same chevron + header affordance as the
    Transmutes season accordions, so the two pages behave alike. */
@@ -1154,6 +1200,10 @@ td.strong { font-weight: 600; color: var(--text-h); }
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--text);
+  /* Cap at the container: an inline-flex label otherwise shrink-wraps to its
+     widest <option>, which pushes past a phone's width (the analysis picker has
+     long labels). max-width lets the select clamp and truncate instead. */
+  max-width: 100%;
 }
 .an-picker select {
   font: inherit;
