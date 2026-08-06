@@ -77,7 +77,7 @@ export default function TimelinesPage() {
         <TenXToggle on={tenX} onChange={setTenX} />
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType']} />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile />
 
       {unmatched.length > 0 && (
         <p className="err">

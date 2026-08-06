@@ -2,13 +2,12 @@ import { useMemo, useState } from 'react';
 import {
   seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, type ItemRow,
 } from '../lib/data';
-import { fmtCloseDate, money } from '../lib/format';
+import { fmtCloseDate } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
 import { useFilters } from '../data/filtersContext';
 import { applyViewFilters, passesAuctionFilters } from '../lib/context';
 import { CategoryTable } from '../components/CategoryTable';
 import { FilterBar } from '../components/FilterBar';
-import { ProvenanceBadge } from '../components/ProvenanceBadge';
 import { TenXToggle } from '../components/TenXToggle';
 import { useTenX } from '../hooks/useTenX';
 import { compareCategories } from '../lib/categories';
@@ -16,7 +15,7 @@ import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
 export default function DashboardPage() {
-  const { sales, meta, contextItems, goldenTicketAuctions, loading, error } = useAuctionData();
+  const { sales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters } = useFilters();
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
@@ -59,17 +58,6 @@ export default function DashboardPage() {
     [viewSales, activeSeason],
   );
 
-  // This season's context items (withheld / augment / grunnel / released),
-  // narrowed to the provenances the FilterBar has switched on. Ordered by auction,
-  // then item. Shown in a section separate from the per-token tables so the
-  // headline price stats stay unchanged (design §5.4).
-  const seasonContext = useMemo(() => {
-    return contextItems
-      .filter((it) => metaById.get(it.auctionId)?.season === activeSeason && filters.provenance.has(it.provenance))
-      .sort((a, b) =>
-        (metaById.get(a.auctionId)!.auctionNumber - metaById.get(b.auctionId)!.auctionNumber)
-        || a.name.localeCompare(b.name));
-  }, [contextItems, metaById, activeSeason, filters.provenance]);
   // Trade 1 rows become their 10x bundle here when the toggle is on; every other
   // category (and thus the category list) is unchanged.
   const displayRows = useMemo(() => asTenXRows(rows, tenX), [rows, tenX]);
@@ -162,7 +150,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType', 'provenance']} />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile />
 
       <p className="meta-line stats">
         Season {activeSeason}: {closedAuctions} closed auctions ·
@@ -178,28 +166,6 @@ export default function DashboardPage() {
           group={narrow ? statGroup : 'both'}
         />
       ))}
-
-      {seasonContext.length > 0 && (
-        <section className="ctx-section">
-          <h2>Auction context — {activeSeason}</h2>
-          <p className="meta-line">
-            Items withheld, augmented, or added outside the advertised order this season.
-            These are separate from the per-token prices above; withheld values are estimates.
-          </p>
-          <ul className="ctx-list">
-            {seasonContext.map((it, i) => (
-              <li className="ctx-row" key={`${it.auctionId}-${it.name}-${i}`}>
-                <ProvenanceBadge provenance={it.provenance} n={it.estimate ? it.n : undefined} />
-                <span className="ctx-name">
-                  {it.name}{it.quantity > 1 ? ` ×${it.quantity}` : ''}
-                </span>
-                <span className="ctx-auction">#{metaById.get(it.auctionId)?.auctionNumber}</span>
-                <span className={`ctx-value${it.value < 0 ? ' neg' : ''}`}>{money(it.value)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
     </>
   );
 }

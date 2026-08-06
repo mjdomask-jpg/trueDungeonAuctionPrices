@@ -97,7 +97,7 @@ export default function OnyxPage() {
             )}
           </div>
 
-          <FilterBar controls={['source', 'trentPricing', 'auctionType']} />
+          <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile />
 
           {groups.length === 0 && <p className="empty">No Onyx sales in {activeSeason}.</p>}
           {groups.map((g) => (

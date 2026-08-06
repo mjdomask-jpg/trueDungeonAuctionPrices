@@ -116,10 +116,24 @@ Filter *state* lives in `FiltersProvider` (app-level, in `main.tsx`), read throu
 `useFilters()`; a single `<FilterBar/>` renders the controls. A page shows only
 the controls it uses via the `controls` prop — `source`, `trentPricing`,
 `auctionType`, `provenance` — so the state shape and behaviour stay identical
-everywhere. Prices carries all four (it's the only page with the provenance
-context section); Onyx, Timelines, Compare and Auction Data carry
-`['source', 'trentPricing', 'auctionType']`. Transmutes is deliberately out of
+everywhere. Prices, Onyx, Timelines, Compare and Auction Data carry the three
+price-shaping controls `['source', 'trentPricing', 'auctionType']`; the
+**Context** page owns `provenance` alone. Transmutes is deliberately out of
 scope. See `docs/context-layer-design.md` §5.2.
+
+**The provenance filter lives with the thing it filters.** It used to sit on
+Prices alongside a separate "Auction context" list, but the chips were far from
+that list (so toggling had no visible effect) and the list made a casual-reader
+page long. Both moved to a dedicated **Context** page, where the "Show context"
+chips sit directly above the grouped item list they toggle. Prices keeps its
+price-shaping filters only, and its per-token tables are unchanged (§5.4).
+
+**On mobile the price-shaping bar folds behind a "Filters" disclosure**
+(`<FilterBar collapsibleOnMobile />`), so it costs one ~20px row instead of the
+~140px the expanded controls take above the data — reusing ExplorerPage's
+`.filterset` furniture, with a count badge when a filter is off-default. The
+Context page's provenance bar stays open (its effect is immediately below it, so
+hiding it would only add a tap).
 
 **Every pricing page funnels its sale feed through `applyViewFilters`** (in
 `lib/context.ts`) before aggregating, so Source / Trent-pricing / Auction-type
@@ -137,7 +151,7 @@ auctions read as non-augmented rather than vanishing from both.
 `released` / `augment` / `grunnel` / withheld-`est.` badges are `HintPopover`s
 (see "Putting a popover inside a clickable row" above) so touch users get the
 explanation. Their colours have light + dark entries in `App.css`; `normal` rows
-carry no badge. Only the Prices page renders context items today.
+carry no badge. The Context page renders the context items.
 
 ## Tables
 

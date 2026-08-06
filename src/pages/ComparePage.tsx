@@ -168,7 +168,7 @@ export default function ComparePage() {
         )}
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType']} />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile />
 
       <p className="meta-line stats compare-summary">
         {rows.length} token{rows.length === 1 ? '' : 's'} · {summary.rose} rose ·{' '}

@@ -212,6 +212,9 @@ header h1 {
 /* A second .controls row (the shared FilterBar) sits tight under a page's own
    controls rather than opening its full top margin. */
 .controls.filterbar { margin: 4px 0 8px; }
+/* The FilterBar folded behind a disclosure on mobile (collapsibleOnMobile).
+   Keeps the same rhythm as the inline bar it replaces. */
+.filterbar-collapse { margin: 4px 0 10px; }
 
 /* Inline provenance tag on a data row — same pill shape as the transmute badges.
    Withheld reuses the neutral est. treatment; the real-sale provenances carry
@@ -272,6 +275,17 @@ header h1 {
 }
 /* Withheld values are negative — tint them like a subtraction (the diff-up hue). */
 .ctx-row .ctx-value.neg { color: var(--diff-up); }
+/* Context page groups items under their auction. */
+.ctx-auc { margin-top: 20px; }
+.ctx-auc-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  font-family: var(--display); font-size: 18px; color: var(--text-h);
+  margin: 0 0 2px;
+}
+.ctx-auc-sub {
+  font-family: var(--sans); font-size: 12px; font-weight: 400;
+  text-transform: none; letter-spacing: 0; color: var(--text); white-space: nowrap;
+}
 
 @media (max-width: 640px) {
   .prov-chip { min-height: 44px; }

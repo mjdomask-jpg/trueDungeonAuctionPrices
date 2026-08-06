@@ -237,7 +237,7 @@ export default function ExplorerPage() {
         </label>
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType']} />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile mobileSummary="Source & type" />
 
       <p className="meta-line">
         {result.auctions.length.toLocaleString()} auction{result.auctions.length === 1 ? '' : 's'} ·{' '}
