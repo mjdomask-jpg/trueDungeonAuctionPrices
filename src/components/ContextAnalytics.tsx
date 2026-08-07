@@ -211,7 +211,7 @@ function GrunnelCard({ r }: { r: GrunnelAuctionRow }) {
     <div className="led-card">
       <div className="led-card-head">
         <span className="led-name">{r.name || `#${r.auctionNumber}`}</span>
-        <span className="led-sub">{r.season} · #{r.auctionNumber} · {r.items} item{r.items === 1 ? '' : 's'}</span>
+        <span className="led-sub">#{r.auctionNumber} · {r.items} item{r.items === 1 ? '' : 's'}</span>
       </div>
       <div className="led-figs">
         <div className="led-fig"><span className="led-fig-label">Grunnel</span><span className="led-fig-val">{money0(r.grunnelValue)}</span></div>
@@ -239,6 +239,14 @@ function GrunnelView({
     () => grunnelPerAuction(contextItems, sales, meta),
     [contextItems, sales, meta],
   );
+  // One table per season — mixing years in a single table made the per-season
+  // preorder benchmark read as if it varied auction to auction. rows are already
+  // sorted season-desc then auction-desc, so Map insertion order is season-desc.
+  const bySeason = useMemo(() => {
+    const m = new Map<string, GrunnelAuctionRow[]>();
+    for (const r of rows) (m.get(r.season) ?? m.set(r.season, []).get(r.season))!.push(r);
+    return [...m.entries()];
+  }, [rows]);
   // Oldest→newest for the chart, which reads left to right in time.
   const chartRows = useMemo(() => [...rows].reverse(), [rows]);
 
@@ -268,40 +276,45 @@ function GrunnelView({
         )}
       </p>
 
-      {narrow ? (
-        <div className="led-cards">
-          {rows.map((r) => <GrunnelCard key={r.auctionId} r={r} />)}
+      {bySeason.map(([season, seasonRows]) => (
+        <div key={season} className="gr-season">
+          <h3 className="an-subhead">{season}</h3>
+          {narrow ? (
+            <div className="led-cards">
+              {seasonRows.map((r) => <GrunnelCard key={r.auctionId} r={r} />)}
+            </div>
+          ) : (
+            <div className="an-scroll">
+              <table className={`an-table gr-table${seasonRows.length >= 4 ? ' banded' : ''}`}>
+                <thead>
+                  <tr>
+                    <th className="left">Auction</th>
+                    <th className="num">Grunnel</th>
+                    <th className="num">Preorder</th>
+                    <th className="num">Beyond</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {seasonRows.map((r) => (
+                    <tr key={r.auctionId}>
+                      <td className="left">
+                        <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
+                        <span className="an-lsub">#{r.auctionNumber} · {r.items} item{r.items === 1 ? '' : 's'}</span>
+                      </td>
+                      <td className="num">{money0(r.grunnelValue)}</td>
+                      <td className="num muted">{r.preorderBenchmark == null ? '—' : money0(r.preorderBenchmark)}</td>
+                      {/* up=red, down=green; a drop worth more than preorder (≥0) reads green. */}
+                      <td className={`num diff ${r.delta != null && r.delta >= 0 ? 'down' : 'up'}`}>
+                        {r.delta == null ? '—' : `${r.delta >= 0 ? '+' : ''}${money0(r.delta)}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="an-scroll">
-          <table className={`an-table gr-table${rows.length >= 4 ? ' banded' : ''}`}>
-            <thead>
-              <tr>
-                <th className="left">Auction</th>
-                <th className="num">Grunnel</th>
-                <th className="num">Preorder</th>
-                <th className="num">Beyond</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.auctionId}>
-                  <td className="left">
-                    <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
-                    <span className="an-lsub">{r.season} · #{r.auctionNumber} · {r.items} item{r.items === 1 ? '' : 's'}</span>
-                  </td>
-                  <td className="num">{money0(r.grunnelValue)}</td>
-                  <td className="num muted">{r.preorderBenchmark == null ? '—' : money0(r.preorderBenchmark)}</td>
-                  {/* up=red, down=green; a drop worth more than preorder (≥0) reads green. */}
-                  <td className={`num diff ${r.delta != null && r.delta >= 0 ? 'down' : 'up'}`}>
-                    {r.delta == null ? '—' : `${r.delta >= 0 ? '+' : ''}${money0(r.delta)}`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      ))}
 
       <div className="gr-chart">
         <BarChart
