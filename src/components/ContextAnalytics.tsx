@@ -466,7 +466,7 @@ function SourceView({
   const seasons = useMemo(() => sourceOverlapSeasons(sales, meta), [sales, meta]);
   const [picked, setPicked] = useState('');
   const season = picked && seasons.includes(picked) ? picked : (seasons[0] ?? '');
-  const [pricing, setPricing] = useState<Pricing>('adjusted');
+  const [pricing, setPricing] = useState<Pricing>('nominal');
 
   const rows = useMemo(
     () => (season ? trentVsForumSeason(sales, meta, season) : []),
@@ -517,8 +517,8 @@ function SourceView({
         <label className="an-picker">
           Trent pricing
           <select value={pricing} onChange={(e) => setPricing(e.target.value as Pricing)}>
-            <option value="adjusted">Reward-adjusted (−{REWARD_PCT}%)</option>
             <option value="nominal">Nominal</option>
+            <option value="adjusted">Reward-adjusted (−{REWARD_PCT}%)</option>
           </select>
         </label>
       </div>
