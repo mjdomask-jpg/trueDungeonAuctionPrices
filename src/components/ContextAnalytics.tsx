@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { AuctionMeta, Sale, GroupRow } from '../lib/data';
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
-  auctionLedger, ledgerOverall,
+  auctionLedger,
   grunnelPerAuction, augmentedVsNot,
   sourceOverlapSeasons, trentVsForumSeason,
   type LedgerRow, type GrunnelAuctionRow, type SourceTokenRow,
@@ -104,7 +104,7 @@ function LedgerCard({ r }: { r: LedgerRow }) {
     <div className="led-card">
       <div className="led-card-head">
         <span className="led-name">{r.name || `#${r.auctionNumber}`}</span>
-        <span className="led-sub">{r.season} · #{r.auctionNumber} · {r.auctioneer}</span>
+        <span className="led-sub">#{r.auctionNumber} · {r.auctioneer}</span>
       </div>
       <div className="led-figs">
         {fig('Withheld', r.withheld ? money0(r.withheld) : '—', 'neg')}
@@ -131,7 +131,13 @@ function LedgerView({
 }) {
   const narrow = useMediaQuery(NARROW);
   const rows = useMemo(() => auctionLedger(meta, auctionContext), [meta, auctionContext]);
-  const overall = useMemo(() => ledgerOverall(rows), [rows]);
+  // One table per season. rows are already sorted season-desc then auction-desc,
+  // so Map insertion order is season-desc.
+  const bySeason = useMemo(() => {
+    const m = new Map<string, LedgerRow[]>();
+    for (const r of rows) (m.get(r.season) ?? m.set(r.season, []).get(r.season))!.push(r);
+    return [...m.entries()];
+  }, [rows]);
 
   return (
     <section className="an-panel">
@@ -150,54 +156,48 @@ function LedgerView({
         )}
       </p>
 
-      {narrow ? (
-        <div className="led-cards">
-          {rows.map((r) => <LedgerCard key={r.auctionId} r={r} />)}
+      {bySeason.map(([season, seasonRows]) => (
+        <div key={season} className="led-season">
+          <h3 className="an-subhead">{season}</h3>
+          {narrow ? (
+            <div className="led-cards">
+              {seasonRows.map((r) => <LedgerCard key={r.auctionId} r={r} />)}
+            </div>
+          ) : (
+            <div className="an-scroll">
+              <table className={`an-table led-table${seasonRows.length >= 4 ? ' banded' : ''}`}>
+                <thead>
+                  <tr>
+                    <th className="left">Auction</th>
+                    <th className="num">Withheld</th>
+                    <th className="num">Included</th>
+                    <th className="num">Augments</th>
+                    <th className="num">Grunnel</th>
+                    <th className="num">Funding goal</th>
+                    <th className="num">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {seasonRows.map((r) => (
+                    <tr key={r.auctionId}>
+                      <td className="left">
+                        <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
+                        <span className="an-lsub">#{r.auctionNumber} · {r.auctioneer}</span>
+                      </td>
+                      <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
+                      <td className="num">{r.released ? money0(r.released) : '—'}</td>
+                      <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
+                      <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
+                      <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
+                      <td className={`num diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="an-scroll">
-          <table className={`an-table led-table${rows.length >= 4 ? ' banded' : ''}`}>
-            <thead>
-              <tr>
-                <th className="left">Auction</th>
-                <th className="num">Withheld</th>
-                <th className="num">Included</th>
-                <th className="num">Augments</th>
-                <th className="num">Grunnel</th>
-                <th className="num">Funding goal</th>
-                <th className="num">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.auctionId}>
-                  <td className="left">
-                    <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
-                    <span className="an-lsub">{r.season} · #{r.auctionNumber} · {r.auctioneer}</span>
-                  </td>
-                  <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
-                  <td className="num">{r.released ? money0(r.released) : '—'}</td>
-                  <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
-                  <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
-                  <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
-                  <td className={`num diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <th className="left">Overall ({overall.n})</th>
-                <th className="num">{money0(overall.withheld)}</th>
-                <th className="num">{money0(overall.released)}</th>
-                <th className="num">{money0(overall.augment)}</th>
-                <th className="num">{money0(overall.grunnel)}</th>
-                <th className="num" />
-                <th className="num">{money0(overall.balance)}</th>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      )}
+      ))}
     </section>
   );
 }
