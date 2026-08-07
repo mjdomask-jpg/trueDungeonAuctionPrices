@@ -247,8 +247,6 @@ function GrunnelView({
     for (const r of rows) (m.get(r.season) ?? m.set(r.season, []).get(r.season))!.push(r);
     return [...m.entries()];
   }, [rows]);
-  // Oldest→newest for the chart, which reads left to right in time.
-  const chartRows = useMemo(() => [...rows].reverse(), [rows]);
 
   if (!rows.length) {
     return (
@@ -276,7 +274,10 @@ function GrunnelView({
         )}
       </p>
 
-      {bySeason.map(([season, seasonRows]) => (
+      {bySeason.map(([season, seasonRows]) => {
+        // Oldest→newest within the season so the chart reads left to right in time.
+        const chartRows = [...seasonRows].reverse();
+        return (
         <div key={season} className="gr-season">
           <h3 className="an-subhead">{season}</h3>
           {narrow ? (
@@ -313,22 +314,23 @@ function GrunnelView({
               </table>
             </div>
           )}
-        </div>
-      ))}
 
-      <div className="gr-chart">
-        <BarChart
-          categories={chartRows.map((r) => `${r.season.slice(2)} #${r.auctionNumber}`)}
-          series={[
-            { label: 'Grunnel', color: GRUNNEL_COLOR, values: chartRows.map((r) => r.grunnelValue) },
-            { label: 'Preorder bonuses', color: PREORDER_COLOR, values: chartRows.map((r) => r.preorderBenchmark) },
-          ]}
-          hints={chartRows.map((r) => r.name || `#${r.auctionNumber}`)}
-          yLabel="Value" format={(n) => money0(n)}
-          ariaLabel="Each auction's Grunnel value versus its season's preorder benchmark"
-          maxLabels={22}
-        />
-      </div>
+          <div className="gr-chart">
+            <BarChart
+              categories={chartRows.map((r) => `#${r.auctionNumber}`)}
+              series={[
+                { label: 'Grunnel', color: GRUNNEL_COLOR, values: chartRows.map((r) => r.grunnelValue) },
+                { label: 'Preorder bonuses', color: PREORDER_COLOR, values: chartRows.map((r) => r.preorderBenchmark) },
+              ]}
+              hints={chartRows.map((r) => r.name || `#${r.auctionNumber}`)}
+              yLabel="Value" format={(n) => money0(n)}
+              ariaLabel={`Each ${season} auction's Grunnel value versus the season's preorder benchmark`}
+              maxLabels={22}
+            />
+          </div>
+        </div>
+        );
+      })}
     </section>
   );
 }
