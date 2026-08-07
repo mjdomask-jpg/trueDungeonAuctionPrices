@@ -529,6 +529,22 @@ auction. 575 rows today, seasons 2023–2026.
 The tab labels a column `Item` but fills it with **display names**. Don't "fix"
 that to canonical `Item` values — the join to sales is on the display name.
 
+### After any re-export: regenerate the withheld preview
+
+The withheld estimate is recomputed from live sales, so re-exporting
+`prices.csv`, `auctionMetadata.csv`, or `contextItems.csv` legitimately moves
+those figures. `docs/withheld-recompute-preview.csv` is the audited golden file
+`validate-context.mjs` checks the recompute against, so a stale preview makes
+`npm run validate` fail with a "row count differs" / "groups do not match"
+error. When the numbers really changed (not a code bug), rebuild it:
+
+```
+node scripts/gen-withheld-preview.mjs
+```
+
+Eyeball the diff (the `delta` column shows how each estimate moved), then
+`npm run validate` to confirm the recompute and the preview agree.
+
 ---
 
 ## Hand-authored files
