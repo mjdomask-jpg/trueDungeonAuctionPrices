@@ -20,7 +20,7 @@ import { PageIntro } from '../components/PageIntro';
 type View = 'current' | 'historical' | 'context';
 
 export default function AnalyticsPage() {
-  const { meta, sales, contextItems, auctionContext, loading, error } = useAuctionData();
+  const { meta, sales, contextItems, auctionContext, groupRows, loading, error } = useAuctionData();
   const [view, setView] = useState<View>('current');
   const [picked, setPicked] = useState<string>('');
 
@@ -98,6 +98,7 @@ export default function AnalyticsPage() {
         <ContextAnalytics
           meta={meta} sales={sales}
           contextItems={contextItems} auctionContext={auctionContext}
+          groupRows={groupRows}
         />
       )}
     </>

@@ -1031,7 +1031,9 @@ td.strong { font-weight: 600; color: var(--text-h); }
 .an-subhead {
   font-family: var(--display);
   font-size: 16px;
-  color: var(--text-h);
+  /* Category accent (like the Timelines group headings); neutral fallback when
+     the group has no assigned category colour. */
+  color: var(--cat-color, var(--text-h));
   margin: 20px 0 8px;
 }
 .an-panel .muted { color: var(--text); opacity: 0.75; }
@@ -1039,9 +1041,21 @@ td.strong { font-weight: 600; color: var(--text-h); }
 .an-lname { display: block; color: var(--text-h); }
 .an-lsub { display: block; font-size: 12px; color: var(--text); opacity: 0.8; }
 /* Ledger desktop table: size to content (override the global fixed layout) so a
-   long auction name wraps instead of overwriting the next column. */
-.led-table, .gr-table { table-layout: auto; }
-.led-table td.left, .gr-table td.left { white-space: normal; }
+   long auction name wraps instead of overwriting the next column. .an-auto gives
+   the augmented and source token tables the same treatment (the token column was
+   overrunning the next under the global table-layout:fixed + nowrap). */
+.led-table, .gr-table, .an-auto { table-layout: auto; }
+.led-table td.left, .gr-table td.left, .an-auto td.left { white-space: normal; }
+
+/* Season + Trent-pricing pickers on one row (Trent vs Forum), wrapping on a
+   phone so neither select is crushed. */
+.an-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; }
+
+/* Per-group grouped-bar charts under the Trent vs Forum table — a responsive
+   column of small multiples, one per Timelines token group. */
+.src-charts { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
+.src-chart { margin: 0; }
+.src-chart .an-subhead { margin-bottom: 4px; }
 .gr-chart { margin-top: 18px; }
 /* Ledger mobile: one stacked card per auction (no horizontal scroll). */
 .led-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }

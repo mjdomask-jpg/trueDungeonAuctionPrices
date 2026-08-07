@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import type { AuctionMeta, Sale } from '../lib/data';
+import type { AuctionMeta, Sale, GroupRow } from '../lib/data';
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
   auctionLedger, ledgerOverall,
-  grunnelPerAuction, augmentedVsNot, trentVsForum,
-  type LedgerRow, type GrunnelAuctionRow,
+  grunnelPerAuction, augmentedVsNot,
+  sourceOverlapSeasons, trentVsForumSeason,
+  type LedgerRow, type GrunnelAuctionRow, type SourceTokenRow,
 } from '../lib/contextAnalytics';
 import { ERAS } from '../lib/eras';
 import { money, money0 } from '../lib/format';
@@ -36,12 +37,13 @@ const FORUM_COLOR = 'var(--series-1)';
 const TRENT_COLOR = 'var(--series-2)';
 
 export function ContextAnalytics({
-  meta, sales, contextItems, auctionContext,
+  meta, sales, contextItems, auctionContext, groupRows,
 }: {
   meta: AuctionMeta[];
   sales: Sale[];
   contextItems: ContextItem[];
   auctionContext: Map<string, AuctionContext>;
+  groupRows: GroupRow[];
 }) {
   const [analysis, setAnalysis] = useState<Analysis>('ledger');
 
@@ -73,7 +75,7 @@ export function ContextAnalytics({
         <AugmentedView meta={meta} sales={sales} />
       )}
       {hasContext && analysis === 'source' && (
-        <SourceView meta={meta} sales={sales} />
+        <SourceView meta={meta} sales={sales} groupRows={groupRows} />
       )}
     </>
   );
@@ -321,6 +323,7 @@ function GrunnelView({
 // --- View 3: Augmented vs non-augmented ------------------------------------
 
 function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) {
+  const narrow = useMediaQuery(NARROW);
   // Seasons that actually have augmented auctions — the only ones with a
   // comparison to draw. Newest first.
   const augSeasons = useMemo(() => {
@@ -345,18 +348,20 @@ function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) 
     );
   }
 
-  const summaryDelta = result && result.augMean != null && result.nonAugMean != null
-    ? result.augMean - result.nonAugMean : null;
-
   return (
     <section className="an-panel">
       <h2>Augmented vs non-augmented prices</h2>
       <p className="an-lede">
-        Does adding supply to an auction depress its prices, or draw more bidders? For one season,
-        each token's average price in <strong>augmented</strong> auctions sits beside its average in{' '}
-        <strong>non-augmented</strong> ones. Only tokens sold in <em>both</em> appear, so the
-        comparison holds the token constant rather than reflecting which tokens each group happened
-        to contain.
+        {narrow ? (
+          <>Each token's average price in <strong>augmented</strong> auctions vs{' '}
+          <strong>non-augmented</strong> ones, same season. Only tokens sold in both appear.</>
+        ) : (
+          <>Does adding supply to an auction depress its prices, or draw more bidders? For one
+          season, each token's average price in <strong>augmented</strong> auctions sits beside its
+          average in <strong>non-augmented</strong> ones. Only tokens sold in <em>both</em> appear, so
+          the comparison holds the token constant rather than reflecting which tokens each group
+          happened to contain.</>
+        )}
       </p>
 
       <label className="an-picker">
@@ -378,45 +383,40 @@ function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) 
           {result.rows.length === 0 ? (
             <p className="empty">No token sold in both an augmented and a non-augmented auction this season.</p>
           ) : (
-            <>
-              {summaryDelta != null && (
-                <p className="an-note">
-                  Across the {result.rows.length} matched token{result.rows.length === 1 ? '' : 's'},
-                  the mean price was <strong>{money(result.augMean ?? undefined)}</strong> in augmented
-                  auctions vs <strong>{money(result.nonAugMean ?? undefined)}</strong> in
-                  non-augmented — a {summaryDelta >= 0 ? 'premium' : 'discount'} of{' '}
-                  {money(Math.abs(summaryDelta))}.
-                </p>
-              )}
-              <div className="an-scroll">
-                <table className={`an-table an-wide${result.rows.length >= 4 ? ' banded' : ''}`}>
-                  <thead>
-                    <tr>
-                      <th className="left">Token</th>
-                      <th className="left">Category</th>
-                      <th className="num">Augmented</th>
-                      <th className="num">Non-augmented</th>
-                      <th className="num">Δ</th>
-                      <th className="num">Δ %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.rows.map((r) => (
-                      <tr key={r.item}>
-                        <td className="left">{r.displayName}</td>
-                        <td className="left muted">{r.category}</td>
-                        <td className="num">{money(r.augAvg)}</td>
-                        <td className="num">{money(r.nonAugAvg)}</td>
-                        <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>{money(r.delta)}</td>
+            <div className="an-scroll">
+              <table className={`an-table an-auto${result.rows.length >= 4 ? ' banded' : ''}`}>
+                <thead>
+                  <tr>
+                    <th className="left">Token</th>
+                    {!narrow && <th className="left">Category</th>}
+                    <th className="num">Augmented</th>
+                    <th className="num">Non-augmented</th>
+                    <th className="num">Δ</th>
+                    {!narrow && <th className="num">Δ %</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.rows.map((r) => (
+                    <tr key={r.item}>
+                      <td className="left">
+                        {r.displayName}
+                        {/* On mobile the Category column is dropped; show it as subtext instead. */}
+                        {narrow && r.category && <span className="an-lsub">{r.category}</span>}
+                      </td>
+                      {!narrow && <td className="left muted">{r.category}</td>}
+                      <td className="num">{money(r.augAvg)}</td>
+                      <td className="num">{money(r.nonAugAvg)}</td>
+                      <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>{money(r.delta)}</td>
+                      {!narrow && (
                         <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>
                           {r.pct == null ? '—' : `${r.pct >= 0 ? '+' : ''}${(r.pct * 100).toFixed(0)}%`}
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}
@@ -426,64 +426,152 @@ function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) 
 
 // --- View 4: Trent vs Forum ------------------------------------------------
 
-function SourceView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) {
-  const rows = useMemo(() => trentVsForum(sales, meta), [sales, meta]);
+const REWARD_PCT = Math.round(ERAS.trentRewardRate * 100);
+
+// A token group for the per-group charts, built by folding the season's matched
+// tokens onto the Timelines grouping (tokenGroups.csv). Tokens outside any group
+// fall into "Other tokens", sorted last, so nothing is silently dropped.
+type SourceChartGroup = { group: string; order: number; category: string; rows: SourceTokenRow[] };
+
+function groupForCharts(rows: SourceTokenRow[], groupRows: GroupRow[]): SourceChartGroup[] {
+  const meta = new Map<string, { group: string; order: number; category: string }>();
+  for (const g of groupRows) if (!meta.has(g.item)) meta.set(g.item, { group: g.group, order: g.groupOrder, category: g.category });
+
+  const OTHER = 'Other tokens';
+  const byGroup = new Map<string, SourceChartGroup>();
+  for (const r of rows) {
+    const gm = meta.get(r.item);
+    const group = gm?.group ?? OTHER;
+    let cg = byGroup.get(group);
+    if (!cg) {
+      cg = { group, order: gm?.order ?? Number.MAX_SAFE_INTEGER, category: gm?.category ?? r.category, rows: [] };
+      byGroup.set(group, cg);
+    }
+    if (gm) cg.order = Math.min(cg.order, gm.order);
+    cg.rows.push(r);
+  }
+  return [...byGroup.values()].sort((a, b) => a.order - b.order || a.group.localeCompare(b.group));
+}
+
+type Pricing = 'adjusted' | 'nominal';
+
+function SourceView({
+  meta, sales, groupRows,
+}: {
+  meta: AuctionMeta[];
+  sales: Sale[];
+  groupRows: GroupRow[];
+}) {
+  const narrow = useMediaQuery(NARROW);
+  const seasons = useMemo(() => sourceOverlapSeasons(sales, meta), [sales, meta]);
+  const [picked, setPicked] = useState('');
+  const season = picked && seasons.includes(picked) ? picked : (seasons[0] ?? '');
+  const [pricing, setPricing] = useState<Pricing>('adjusted');
+
+  const rows = useMemo(
+    () => (season ? trentVsForumSeason(sales, meta, season) : []),
+    [sales, meta, season],
+  );
+  const chartGroups = useMemo(() => groupForCharts(rows, groupRows), [rows, groupRows]);
+
+  // The Trent price the reader sees: reward-adjusted (−10%) or nominal.
+  const adjusted = pricing === 'adjusted';
+  const trentOf = (r: SourceTokenRow) => (adjusted ? r.trentAvg * (1 - ERAS.trentRewardRate) : r.trentAvg);
+  const trentLabel = adjusted ? `Trent (−${REWARD_PCT}%)` : 'Trent';
+
+  if (!seasons.length) {
+    return (
+      <section className="an-panel">
+        <h2>Trent vs Forum prices</h2>
+        <p className="empty">No token sold under both sources in any season.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="an-panel">
       <h2>Trent vs Forum prices</h2>
       <p className="an-lede">
-        Where a token sold under <strong>both</strong> sources in a season, its Forum average sits
-        beside its Trent average — matched per token so token mix doesn't skew the comparison. Trent
-        is shown nominal and <strong>reward-adjusted</strong> (−{Math.round(ERAS.trentRewardRate * 100)}%,
-        the ~100 pt/$1 reward that lowers a Trent buyer's effective cost).
+        {narrow ? (
+          <>Per token, its <strong>Forum</strong> vs <strong>Trent</strong> average price in one
+          season — tokens sold under both only.</>
+        ) : (
+          <>For one season, each token that sold under <strong>both</strong> sources shows its Forum
+          average beside its Trent average — matched per token, so neither token mix nor time skews
+          the comparison. Trent can be shown nominal or <strong>reward-adjusted</strong> (−{REWARD_PCT}%,
+          the ~100 pt/$1 reward that lowers a Trent buyer's effective cost).</>
+        )}
       </p>
       <p className="confound-note">
-        Trent auctions exist only from season {ERAS.trentStartSeason} on, so this is restricted to
-        seasons both sources ran — comparing all-time would confound source with time.
+        Trent auctions exist only from season {ERAS.trentStartSeason} on, so only seasons both sources
+        ran appear{narrow ? '.' : ' — comparing all-time would confound source with time.'}
       </p>
 
-      {rows.length > 0 ? (
-        <div className="an-split">
-          <table className={`an-table an-narrow${rows.length >= 4 ? ' banded' : ''}`}>
-            <thead>
-              <tr>
-                <th className="left">Season</th>
-                <th className="num">Tokens</th>
-                <th className="num">Forum</th>
-                <th className="num">Trent</th>
-                <th className="num">Trent −{Math.round(ERAS.trentRewardRate * 100)}%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.season}>
-                  <td className="left">{r.season}</td>
-                  <td className="num muted">{r.n}</td>
-                  <td className="num">{money(r.forumMean)}</td>
-                  <td className="num">{money(r.trentMean)}</td>
-                  <td className="num">{money(r.trentAdjMean)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="an-controls">
+        <label className="an-picker">
+          Season
+          <select value={season} onChange={(e) => setPicked(e.target.value)}>
+            {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </label>
+        <label className="an-picker">
+          Trent pricing
+          <select value={pricing} onChange={(e) => setPricing(e.target.value as Pricing)}>
+            <option value="adjusted">Reward-adjusted (−{REWARD_PCT}%)</option>
+            <option value="nominal">Nominal</option>
+          </select>
+        </label>
+      </div>
 
-          <div className="an-chartcol">
-            <BarChart
-              categories={rows.map((r) => r.season)}
-              series={[
-                { label: 'Forum', color: FORUM_COLOR, values: rows.map((r) => r.forumMean) },
-                { label: 'Trent (−10%)', color: TRENT_COLOR, values: rows.map((r) => r.trentAdjMean) },
-              ]}
-              hints={rows.map((r) => `${r.n} matched tokens`)}
-              yLabel="Avg price" format={(n) => money0(n)}
-              ariaLabel="Mean matched-token price, Forum versus reward-adjusted Trent, per overlapping season"
-              maxLabels={12}
-            />
-          </div>
-        </div>
+      {rows.length === 0 ? (
+        <p className="empty">No token sold under both sources in {season}.</p>
       ) : (
-        <p className="empty">No token sold under both sources in any season.</p>
+        <>
+          <div className="an-scroll">
+            <table className={`an-table an-auto${rows.length >= 4 ? ' banded' : ''}`}>
+              <thead>
+                <tr>
+                  <th className="left">Token</th>
+                  {!narrow && <th className="left">Category</th>}
+                  <th className="num">Forum</th>
+                  <th className="num">{trentLabel}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.item}>
+                    <td className="left">
+                      {r.displayName}
+                      {narrow && r.category && <span className="an-lsub">{r.category}</span>}
+                    </td>
+                    {!narrow && <td className="left muted">{r.category}</td>}
+                    <td className="num">{money(r.forumAvg)}</td>
+                    <td className="num">{money(trentOf(r))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* One grouped-bar chart per Timelines token group, ordered by Group Order. */}
+          <div className="src-charts">
+            {chartGroups.map((cg) => (
+              <div key={cg.group} className="src-chart">
+                <h3 className="an-subhead" data-category={cg.category}>{cg.group}</h3>
+                <BarChart
+                  categories={cg.rows.map((r) => r.displayName)}
+                  series={[
+                    { label: 'Forum', color: FORUM_COLOR, values: cg.rows.map((r) => r.forumAvg) },
+                    { label: trentLabel, color: TRENT_COLOR, values: cg.rows.map((r) => trentOf(r)) },
+                  ]}
+                  yLabel="Avg price" format={(n) => money0(n)}
+                  ariaLabel={`Forum versus ${adjusted ? 'reward-adjusted ' : ''}Trent average price for ${cg.group} tokens in ${season}`}
+                  maxLabels={12}
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );

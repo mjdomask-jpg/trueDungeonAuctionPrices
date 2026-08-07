@@ -223,8 +223,6 @@ export type AugSplitResult = {
   augAuctions: number;
   nonAugAuctions: number;
   rows: TokenSplit[];
-  augMean: number | null;    // mean of matched tokens' augAvg
-  nonAugMean: number | null; // mean of matched tokens' nonAugAvg
 };
 
 export function augmentedVsNot(
@@ -270,59 +268,72 @@ export function augmentedVsNot(
     augAuctions: augAuctions.size,
     nonAugAuctions: nonAuctions.size,
     rows,
-    augMean: mean(rows.map((r) => r.augAvg)),
-    nonAugMean: mean(rows.map((r) => r.nonAugAvg)),
   };
 }
 
-// --- View 4: Trent vs Forum, overlapping seasons only ----------------------
-// Restricted to seasons BOTH sources ran, and matched per token within a season,
-// so neither time nor token mix confounds the source comparison (§5.5). For each
-// matched (season, token) we take each source's average, then average those
-// per-token means up to the season. Trent is shown nominal and reward-adjusted
-// (−10%, the ~100pt/$1 reward), since a Trent buyer's effective cost is lower.
+// --- View 4: Trent vs Forum, per season, per token -------------------------
+// One season at a time, matched per token: for each token sold under BOTH
+// sources that season we take each source's average price. Matching per token
+// within a season holds both token mix and time constant, so the remaining
+// difference is the source's own price level (§5.5). Trent is shown nominal or
+// reward-adjusted (−10%, the ~100 pt/$1 reward that lowers a Trent buyer's
+// effective cost) via a toggle in the view; the adjustment is applied there so
+// this stays a plain average.
 
-export type SourceCompareRow = {
-  season: string;
-  n: number;          // matched tokens
-  forumMean: number;
-  trentMean: number;
-  trentAdjMean: number;
+export type SourceTokenRow = {
+  item: string;
+  displayName: string;
+  category: string;
+  trentAvg: number;
+  forumAvg: number;
 };
 
-export function trentVsForum(sales: Sale[], meta: AuctionMeta[]): SourceCompareRow[] {
+// Seasons with at least one token sold under BOTH sources, newest first. These
+// are the only seasons with a within-token comparison to draw (Trent runs from
+// season 2023 on, so earlier seasons never overlap).
+export function sourceOverlapSeasons(sales: Sale[], meta: AuctionMeta[]): string[] {
   const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
-  // season -> item -> { forum prices, trent prices }
-  const bySeason = new Map<string, Map<string, { f: number[]; t: number[] }>>();
+  // season -> item -> which sources it sold under
+  const bySeason = new Map<string, Map<string, { f: boolean; t: boolean }>>();
   for (const s of sales) {
     const src = srcById.get(s.auctionId);
     if (src !== 'Forum' && src !== 'Trent') continue;
     let items = bySeason.get(s.season);
     if (!items) { items = new Map(); bySeason.set(s.season, items); }
     let e = items.get(s.item);
-    if (!e) { e = { f: [], t: [] }; items.set(s.item, e); }
+    if (!e) { e = { f: false, t: false }; items.set(s.item, e); }
+    if (src === 'Forum') e.f = true; else e.t = true;
+  }
+  const out: string[] = [];
+  for (const [season, items] of bySeason) {
+    if ([...items.values()].some((e) => e.f && e.t)) out.push(season);
+  }
+  return out.sort((a, b) => Number(b) - Number(a));
+}
+
+// Per-token Trent vs Forum averages for one season — tokens sold under both
+// sources only. Sorted by display name. Trent is left nominal (the view applies
+// the reward adjustment) so the caller controls that toggle.
+export function trentVsForumSeason(
+  sales: Sale[], meta: AuctionMeta[], season: string,
+): SourceTokenRow[] {
+  const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
+  const byItem = new Map<string, { f: number[]; t: number[]; displayName: string; category: string }>();
+  for (const s of sales) {
+    if (s.season !== season) continue;
+    const src = srcById.get(s.auctionId);
+    if (src !== 'Forum' && src !== 'Trent') continue;
+    let e = byItem.get(s.item);
+    if (!e) { e = { f: [], t: [], displayName: s.displayName, category: s.category }; byItem.set(s.item, e); }
     (src === 'Forum' ? e.f : e.t).push(s.price);
   }
-
-  const adj = 1 - ERAS.trentRewardRate;
-  const rows: SourceCompareRow[] = [];
-  for (const [season, items] of bySeason) {
-    const forumAvgs: number[] = [];
-    const trentAvgs: number[] = [];
-    for (const { f, t } of items.values()) {
-      if (!f.length || !t.length) continue; // token must have sold under both
-      forumAvgs.push(mean(f)!);
-      trentAvgs.push(mean(t)!);
-    }
-    if (!forumAvgs.length) continue; // no overlap this season → drop it
-    const trentMean = mean(trentAvgs)!;
+  const rows: SourceTokenRow[] = [];
+  for (const [item, e] of byItem) {
+    if (!e.f.length || !e.t.length) continue; // needs both sources
     rows.push({
-      season,
-      n: forumAvgs.length,
-      forumMean: mean(forumAvgs)!,
-      trentMean,
-      trentAdjMean: trentMean * adj,
+      item, displayName: e.displayName, category: e.category,
+      trentAvg: mean(e.t)!, forumAvg: mean(e.f)!,
     });
   }
-  return rows.sort((a, b) => Number(a.season) - Number(b.season));
+  return rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
