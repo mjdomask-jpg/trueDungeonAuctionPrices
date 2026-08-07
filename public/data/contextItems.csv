@@ -445,6 +445,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202545,2025,45,grunnel,Lady Darkhold's Baby Rattle/Ragdoll,1,$25.00
 202545,2025,45,withheld,Path to Enlightenment (Fragment 3),1,"-$1,330.89"
 20266,2026,6,withheld,Ring of the 1st Circle,4,-$458.45
+20266,2026,6,token,Golden Ticket,1,"$1,254.00"
 20264,2026,4,withheld,Ring of the 1st Circle,4,-$458.45
 20264,2026,4,withheld,Mark of the 1st Tenet,3,-$342.18
 20264,2026,4,augment,+3 Savage Sword,1,$110.00
@@ -530,6 +531,9 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202646,2026,46,token,Mark of the 3rd Tenet,1,$51.00
 202646,2026,46,token,Mark of the Tenets,1,$152.00
 202646,2026,46,token,Oil of Enchantment,10,$524.00
+202645,2026,45,token,Random Ultra Rare,6,$55.00
+202645,2026,45,token,Random Ultra Rare,2,$61.00
+202645,2026,45,token,Random Ultra Rare,1,$54.00
 202645,2026,45,token,+2 Staff of Power,1,$29.00
 202645,2026,45,token,Bead of Focus,1,$42.00
 202645,2026,45,token,Charm of Spell Storing,1,$71.00
@@ -539,6 +543,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202645,2026,45,token,Ioun Stone Platinum Nugget,1,$68.00
 202645,2026,45,token,Ioun Stone Gold Nugget,1,$124.00
 202645,2026,45,token,Elven Bismuth,2,$132.00
+202645,2026,45,token,Golden Ticket,1,$701.00
 202645,2026,45,grunnel,"""Dot"" the homeless tater",1,$46.00
 202645,2026,45,grunnel,Curse of Crimson Isle Coaching Room Banner,1,$126.00
 202645,2026,45,grunnel,Punch 4 times to open sign,1,$66.00
