@@ -428,6 +428,12 @@ function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) 
 
 const REWARD_PCT = Math.round(ERAS.trentRewardRate * 100);
 
+// Prices in this analysis span cents (Trade goods) to hundreds (Premiums). A
+// whole-dollar axis collapses the sub-$10 tokens to "$1"/"$0" — indistinguishable
+// — so show cents whenever a value is under $10. Drives both the chart's y-axis
+// tick labels and its tooltips (BarChart runs both through this one formatter).
+const sourcePrice = (n: number) => (Math.abs(n) < 10 ? money(n) : money0(n));
+
 // A token group for the per-group charts, built by folding the season's matched
 // tokens onto the Timelines grouping (tokenGroups.csv). Tokens outside any group
 // fall into "Other tokens", sorted last, so nothing is silently dropped.
@@ -564,7 +570,7 @@ function SourceView({
                     { label: 'Forum', color: FORUM_COLOR, values: cg.rows.map((r) => r.forumAvg) },
                     { label: trentLabel, color: TRENT_COLOR, values: cg.rows.map((r) => trentOf(r)) },
                   ]}
-                  yLabel="Avg price" format={(n) => money0(n)}
+                  yLabel="Avg price" format={sourcePrice}
                   ariaLabel={`Forum versus ${adjusted ? 'reward-adjusted ' : ''}Trent average price for ${cg.group} tokens in ${season}`}
                   maxLabels={12}
                 />
