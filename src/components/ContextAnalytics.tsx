@@ -8,7 +8,7 @@ import {
   type LedgerRow, type GrunnelAuctionRow, type SourceTokenRow,
 } from '../lib/contextAnalytics';
 import { ERAS } from '../lib/eras';
-import { money, money0 } from '../lib/format';
+import { money, money0, moneyTight } from '../lib/format';
 import { BarChart } from './BarChart';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
@@ -339,6 +339,9 @@ function GrunnelView({
 
 function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) {
   const narrow = useMediaQuery(NARROW);
+  // Full cents on desktop; the condensed standard (cents dropped at ≥$1,000) on
+  // a phone, where the four columns must share ~335px.
+  const price = (n: number) => (narrow ? moneyTight(n) : money(n));
   // Seasons that actually have augmented auctions — the only ones with a
   // comparison to draw. Newest first.
   const augSeasons = useMemo(() => {
@@ -404,8 +407,11 @@ function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) 
                   <tr>
                     <th className="left">Token</th>
                     {!narrow && <th className="left">Category</th>}
-                    <th className="num">Augmented</th>
-                    <th className="num">Non-augmented</th>
+                    {/* "Augmented" is a single unwrappable word; abbreviate both
+                        on a phone so all four columns fit without a sideways
+                        scroll (the analysis title above spells them out). */}
+                    <th className="num">{narrow ? 'Aug.' : 'Augmented'}</th>
+                    <th className="num">{narrow ? 'Non-aug.' : 'Non-augmented'}</th>
                     <th className="num">Δ</th>
                     {!narrow && <th className="num">Δ %</th>}
                   </tr>
@@ -419,9 +425,11 @@ function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) 
                         {narrow && r.category && <span className="an-lsub">{r.category}</span>}
                       </td>
                       {!narrow && <td className="left muted">{r.category}</td>}
-                      <td className="num">{money(r.augAvg)}</td>
-                      <td className="num">{money(r.nonAugAvg)}</td>
-                      <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>{money(r.delta)}</td>
+                      {/* Mobile drops cents at ≥$1,000 (moneyTight — the site's
+                          condensed standard) to keep all four columns on screen. */}
+                      <td className="num">{price(r.augAvg)}</td>
+                      <td className="num">{price(r.nonAugAvg)}</td>
+                      <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>{price(r.delta)}</td>
                       {!narrow && (
                         <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>
                           {r.pct == null ? '—' : `${r.pct >= 0 ? '+' : ''}${(r.pct * 100).toFixed(0)}%`}

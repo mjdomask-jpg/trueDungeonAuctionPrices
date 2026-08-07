@@ -1411,6 +1411,15 @@ table.an-opens col.col-days { width: 16%; }
   /* .an-picker sets its own height rather than using --control-h. */
   .an-picker select { height: 44px; }
 
+  /* Analytics token tables (Augmented, Trent vs Forum) on a phone: tighten the
+     horizontal padding and let a long numeric header wrap (e.g. Trent vs Forum's
+     reward-adjusted "Trent (−10%)") rather than forcing the table wider than the
+     screen — which pushed a column into a non-obvious sideways scroll. The
+     Augmented headers are also abbreviated in the markup, since "Augmented" is a
+     single word that can't wrap. */
+  .an-auto thead th { white-space: normal; }
+  .an-auto th, .an-auto td { padding-left: 8px; padding-right: 8px; }
+
   /* The Current Year "Jump to" nav is hidden on a phone: five wrapping pills
      pushed the first analytic well down the page, and on a phone you scroll to
      each section anyway. It stays on desktop, where it costs one tidy row. */
