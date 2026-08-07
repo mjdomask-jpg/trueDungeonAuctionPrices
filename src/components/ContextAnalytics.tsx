@@ -131,13 +131,22 @@ function LedgerView({
 }) {
   const narrow = useMediaQuery(NARROW);
   const rows = useMemo(() => auctionLedger(meta, auctionContext), [meta, auctionContext]);
-  // One table per season. rows are already sorted season-desc then auction-desc,
-  // so Map insertion order is season-desc.
+  // Grouped by season (newest first — rows are sorted season-desc). A season
+  // selector shows one year at a time: the ledger is per-auction bookkeeping with
+  // no cross-year story, so stacking every season just made a 40+ row page.
   const bySeason = useMemo(() => {
     const m = new Map<string, LedgerRow[]>();
     for (const r of rows) (m.get(r.season) ?? m.set(r.season, []).get(r.season))!.push(r);
     return [...m.entries()];
   }, [rows]);
+  const seasons = useMemo(() => bySeason.map(([s]) => s), [bySeason]);
+
+  const [picked, setPicked] = useState('');
+  const season = picked && seasons.includes(picked) ? picked : (seasons[0] ?? '');
+  const seasonRows = useMemo(
+    () => bySeason.find(([s]) => s === season)?.[1] ?? [],
+    [bySeason, season],
+  );
 
   return (
     <section className="an-panel">
@@ -156,48 +165,52 @@ function LedgerView({
         )}
       </p>
 
-      {bySeason.map(([season, seasonRows]) => (
-        <div key={season} className="led-season">
-          <h3 className="an-subhead">{season}</h3>
-          {narrow ? (
-            <div className="led-cards">
-              {seasonRows.map((r) => <LedgerCard key={r.auctionId} r={r} />)}
-            </div>
-          ) : (
-            <div className="an-scroll">
-              <table className={`an-table led-table${seasonRows.length >= 4 ? ' banded' : ''}`}>
-                <thead>
-                  <tr>
-                    <th className="left">Auction</th>
-                    <th className="num">Withheld</th>
-                    <th className="num">Included</th>
-                    <th className="num">Augments</th>
-                    <th className="num">Grunnel</th>
-                    <th className="num">Funding goal</th>
-                    <th className="num">Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {seasonRows.map((r) => (
-                    <tr key={r.auctionId}>
-                      <td className="left">
-                        <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
-                        <span className="an-lsub">#{r.auctionNumber} · {r.auctioneer}</span>
-                      </td>
-                      <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
-                      <td className="num">{r.released ? money0(r.released) : '—'}</td>
-                      <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
-                      <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
-                      <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
-                      <td className={`num diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {seasons.length > 0 && (
+        <label className="an-picker">
+          Season
+          <select value={season} onChange={(e) => setPicked(e.target.value)}>
+            {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </label>
+      )}
+
+      {narrow ? (
+        <div className="led-cards">
+          {seasonRows.map((r) => <LedgerCard key={r.auctionId} r={r} />)}
         </div>
-      ))}
+      ) : (
+        <div className="an-scroll">
+          <table className={`an-table led-table${seasonRows.length >= 4 ? ' banded' : ''}`}>
+            <thead>
+              <tr>
+                <th className="left">Auction</th>
+                <th className="num">Withheld</th>
+                <th className="num">Included</th>
+                <th className="num">Augments</th>
+                <th className="num">Grunnel</th>
+                <th className="num">Funding goal</th>
+                <th className="num">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {seasonRows.map((r) => (
+                <tr key={r.auctionId}>
+                  <td className="left">
+                    <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
+                    <span className="an-lsub">#{r.auctionNumber} · {r.auctioneer}</span>
+                  </td>
+                  <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
+                  <td className="num">{r.released ? money0(r.released) : '—'}</td>
+                  <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
+                  <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
+                  <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
+                  <td className={`num diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
@@ -247,6 +260,14 @@ function GrunnelView({
     for (const r of rows) (m.get(r.season) ?? m.set(r.season, []).get(r.season))!.push(r);
     return [...m.entries()];
   }, [rows]);
+  const seasons = useMemo(() => bySeason.map(([s]) => s), [bySeason]);
+
+  // Grunnel's finding is a cross-year trend (drops grew in 2025–26), so it keeps
+  // an "All years" default that stacks every season; the selector then focuses one
+  // year when the stacked page is more than you want.
+  const [picked, setPicked] = useState<'all' | string>('all');
+  const sel = picked === 'all' || seasons.includes(picked) ? picked : 'all';
+  const shown = sel === 'all' ? bySeason : bySeason.filter(([s]) => s === sel);
 
   if (!rows.length) {
     return (
@@ -274,12 +295,24 @@ function GrunnelView({
         )}
       </p>
 
-      {bySeason.map(([season, seasonRows]) => {
+      {seasons.length > 0 && (
+        <label className="an-picker">
+          Season
+          <select value={sel} onChange={(e) => setPicked(e.target.value)}>
+            <option value="all">All years</option>
+            {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </label>
+      )}
+
+      {shown.map(([season, seasonRows]) => {
         // Oldest→newest within the season so the chart reads left to right in time.
         const chartRows = [...seasonRows].reverse();
         return (
         <div key={season} className="gr-season">
-          <h3 className="an-subhead">{season}</h3>
+          {/* The season heading is only needed when several are stacked; a single
+              selected year is already named by the picker. */}
+          {sel === 'all' && <h3 className="an-subhead">{season}</h3>}
           {narrow ? (
             <div className="led-cards">
               {seasonRows.map((r) => <GrunnelCard key={r.auctionId} r={r} />)}
