@@ -6,10 +6,13 @@ import {
   type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useFilters } from '../data/filtersContext';
+import { applyViewFilters, passesAuctionFilters } from '../lib/context';
 import { useTenX } from '../hooks/useTenX';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { AuctionCard } from '../components/AuctionCard';
 import { SaleTable } from '../components/SaleTable';
+import { FilterBar } from '../components/FilterBar';
 import { TenXToggle } from '../components/TenXToggle';
 import { PageIntro } from '../components/PageIntro';
 
@@ -33,7 +36,8 @@ const FLAT_ROW_LIMIT = 1000;
 type View = 'grouped' | 'flat';
 
 export default function ExplorerPage() {
-  const { sales, onyxSales, meta, loading, error } = useAuctionData();
+  const { sales, onyxSales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
+  const { filters: viewFilter } = useFilters();
   const [filters, setFilters] = useState<ExplorerFilters>(EMPTY_FILTERS);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<View>('grouped');
@@ -54,6 +58,22 @@ export default function ExplorerPage() {
     [sales, onyxSales, tenX],
   );
 
+  // Apply the shared Source / Trent-pricing / Auction-type filters on top of the
+  // page's own season/category/auctioneer/search. Source and auction-type select
+  // whole auctions, so they narrow the META list (exploreAuctions only lists
+  // auctions present in the meta it's given); Trent-pricing rescales the sales.
+  // The two stay consistent because applyViewFilters drops the same auctions the
+  // meta filter removes. Defaults leave both untouched.
+  const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
+  const viewMeta = useMemo(
+    () => meta.filter((m) => passesAuctionFilters(m, viewFilter, goldenTicketAuctions)),
+    [meta, viewFilter, goldenTicketAuctions],
+  );
+  const viewSales = useMemo(
+    () => applyViewFilters(allSales, metaById, goldenTicketAuctions, viewFilter),
+    [allSales, metaById, goldenTicketAuctions, viewFilter],
+  );
+
   // Re-filtering re-caps the table: a new query deserves its own first page,
   // and "show all" on 6,400 rows shouldn't silently persist into the next one.
   const set = <K extends keyof ExplorerFilters>(key: K, value: ExplorerFilters[K]) => {
@@ -61,8 +81,8 @@ export default function ExplorerPage() {
     setShowAll(false);
   };
 
-  const options = useMemo(() => explorerOptions(allSales, meta), [allSales, meta]);
-  const result = useMemo(() => exploreAuctions(allSales, meta, filters), [allSales, meta, filters]);
+  const options = useMemo(() => explorerOptions(viewSales, viewMeta), [viewSales, viewMeta]);
+  const result = useMemo(() => exploreAuctions(viewSales, viewMeta, filters), [viewSales, viewMeta, filters]);
 
   // Phones get a three-column table (see SaleTable), so only those three keys
   // have a header to sort from. A sort picked on a wide screen — auctioneer,
@@ -216,6 +236,8 @@ export default function ExplorerPage() {
           />
         </label>
       </div>
+
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile mobileSummary="Source & type" />
 
       <p className="meta-line">
         {result.auctions.length.toLocaleString()} auction{result.auctions.length === 1 ? '' : 's'} ·{' '}

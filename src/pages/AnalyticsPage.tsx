@@ -5,6 +5,7 @@ import {
 } from '../lib/analytics';
 import { CurrentYearStats } from '../components/CurrentYearStats';
 import { HistoricalStats } from '../components/HistoricalStats';
+import { ContextAnalytics } from '../components/ContextAnalytics';
 import { PageIntro } from '../components/PageIntro';
 
 // Auction analytics (Phase 5). Two views behind a toggle, matching the two
@@ -16,10 +17,10 @@ import { PageIntro } from '../components/PageIntro';
 // metadata actually contains, and it opens on the newest season carrying
 // cadence data. When the sheet exports a 2027 season, this page follows.
 
-type View = 'current' | 'historical';
+type View = 'current' | 'historical' | 'context';
 
 export default function AnalyticsPage() {
-  const { meta, sales, loading, error } = useAuctionData();
+  const { meta, sales, contextItems, auctionContext, groupRows, loading, error } = useAuctionData();
   const [view, setView] = useState<View>('current');
   const [picked, setPicked] = useState<string>('');
 
@@ -57,6 +58,10 @@ export default function AnalyticsPage() {
               aria-pressed={view === 'historical'} onClick={() => setView('historical')}>
               Historical
             </button>
+            <button type="button" className={view === 'context' ? 'on' : undefined}
+              aria-pressed={view === 'context'} onClick={() => setView('context')}>
+              Funding &amp; Context
+            </button>
           </div>
         </div>
 
@@ -70,7 +75,7 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      {view === 'current' ? (
+      {view === 'current' && (
         !season ? (
           <p className="empty">
             No season has the open/close month and duration data these panels need.
@@ -87,8 +92,14 @@ export default function AnalyticsPage() {
             <CurrentYearStats meta={meta} season={season} prior={prior} />
           </>
         )
-      ) : (
-        <HistoricalStats meta={meta} sales={sales} />
+      )}
+      {view === 'historical' && <HistoricalStats meta={meta} sales={sales} />}
+      {view === 'context' && (
+        <ContextAnalytics
+          meta={meta} sales={sales}
+          contextItems={contextItems} auctionContext={auctionContext}
+          groupRows={groupRows}
+        />
       )}
     </>
   );

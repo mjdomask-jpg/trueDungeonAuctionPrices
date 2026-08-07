@@ -207,6 +207,75 @@ header h1 {
   cursor: pointer;
 }
 
+/* --- Auction context layer: provenance badges + filter -------------------- */
+
+/* A second .controls row (the shared FilterBar) sits tight under a page's own
+   controls rather than opening its full top margin. */
+.controls.filterbar { margin: 4px 0 8px; }
+/* The FilterBar folded behind a disclosure on mobile (collapsibleOnMobile).
+   Keeps the same rhythm as the inline bar it replaces. */
+.filterbar-collapse { margin: 4px 0 10px; }
+
+/* Inline provenance tag on a data row — same pill shape as the transmute badges.
+   Withheld reuses the neutral est. treatment; the real-sale provenances carry
+   their own hue. Colours are contrast-checked for both themes (≥4.5:1). */
+.prov-badge {
+  font-size: 10.5px;
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+.prov-badge.released-payment { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
+.prov-badge.augment { background: rgba(42, 120, 214, 0.14); color: #1d5fa8; }
+.prov-badge.grunnel { background: rgba(47, 125, 50, 0.15); color: #2f7d32; }
+.prov-badge.withheld { background: var(--band); color: var(--text); }
+:root[data-theme='dark'] .prov-badge.released-payment { background: rgba(240, 168, 60, 0.18); color: #f0a83c; }
+:root[data-theme='dark'] .prov-badge.augment { background: rgba(57, 135, 229, 0.20); color: #6aa8e6; }
+:root[data-theme='dark'] .prov-badge.grunnel { background: rgba(109, 187, 112, 0.18); color: #7cc47f; }
+
+/* The provenance filter: a labelled row of toggle chips in the FilterBar. */
+.prov-filter { display: flex; flex-direction: column; gap: 4px; align-self: flex-end; }
+.prov-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-height: var(--control-h); }
+.prov-chip {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.prov-chip.off:hover { border-color: var(--accent); color: var(--accent); }
+/* An "on" chip wears its provenance colour; "off" stays a neutral outline. */
+.prov-chip.on { border-color: transparent; }
+.prov-chip.released-payment.on { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
+.prov-chip.augment.on { background: rgba(42, 120, 214, 0.14); color: #1d5fa8; }
+.prov-chip.grunnel.on { background: rgba(47, 125, 50, 0.15); color: #2f7d32; }
+.prov-chip.withheld.on { background: var(--band); color: var(--text-h); }
+:root[data-theme='dark'] .prov-chip.released-payment.on { background: rgba(240, 168, 60, 0.18); color: #f0a83c; }
+:root[data-theme='dark'] .prov-chip.augment.on { background: rgba(57, 135, 229, 0.20); color: #6aa8e6; }
+:root[data-theme='dark'] .prov-chip.grunnel.on { background: rgba(109, 187, 112, 0.18); color: #7cc47f; }
+
+/* Augments & Withheld page: the value cell in each auction's item table.
+   Withheld values are negative — tint them like a subtraction (the diff-up hue,
+   which is red in this theme). */
+.ctx-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ctx-val.neg { color: var(--diff-up); }
+/* The provenance badge is far narrower than the token category this table's
+   middle column was sized for on the explorer, so override those widths — the
+   Type and Value columns hug their content and the Value stays on screen at
+   phone widths instead of scrolling out of view. */
+.auction-body table.ctx-items col:nth-child(2) { width: 96px; }
+.auction-body table.ctx-items col:nth-child(3) { width: 92px; }
+
+@media (max-width: 640px) {
+  .prov-chip { min-height: 44px; }
+}
+
 /* The explorer's 10x caveat: a subtle note that the ×10 on individual sales is
    an estimate. Sits just under the results count, pulled tight to it. */
 .tenx-note { margin-top: -8px; font-style: italic; opacity: 0.85; }
@@ -235,21 +304,36 @@ header h1 {
    lightened to stay readable (~4.5:1+) on the dark background. Preorder is the
    exception: its bright brand cyan (#00c7ff) is unreadable on white, so light
    mode uses a darkened cyan and dark mode uses the bright brand value. */
-.cat-section[data-category='Trade 1']    { --cat-color: #b45f06; }
-.cat-section[data-category='Trade 2']    { --cat-color: #b45f06; }
-.cat-section[data-category='Ultra Rare']    { --cat-color: #9900ff; }
-.cat-section[data-category='Premium']       { --cat-color: #ff0000; }
-.cat-section[data-category='Bonus']         { --cat-color: #34a853; }
-.cat-section[data-category='Preorder']      { --cat-color: #0e7490; }
-.cat-section[data-category='Golden Ticket'] { --cat-color: #8a6900; }
+[data-category='Trade 1']    { --cat-color: #b45f06; }
+[data-category='Trade 2']    { --cat-color: #b45f06; }
+[data-category='Ultra Rare']    { --cat-color: #9900ff; }
+[data-category='Premium']       { --cat-color: #ff0000; }
+[data-category='Bonus']         { --cat-color: #34a853; }
+[data-category='Preorder']      { --cat-color: #0e7490; }
+[data-category='Golden Ticket'] { --cat-color: #8a6900; }
 
-:root[data-theme='dark'] .cat-section[data-category='Trade 1']    { --cat-color: #e08b3e; }
-:root[data-theme='dark'] .cat-section[data-category='Trade 2']    { --cat-color: #e08b3e; }
-:root[data-theme='dark'] .cat-section[data-category='Ultra Rare']    { --cat-color: #c084fc; }
-:root[data-theme='dark'] .cat-section[data-category='Premium']       { --cat-color: #f87171; }
-:root[data-theme='dark'] .cat-section[data-category='Bonus']         { --cat-color: #4ade80; }
-:root[data-theme='dark'] .cat-section[data-category='Preorder']      { --cat-color: #00c7ff; }
-:root[data-theme='dark'] .cat-section[data-category='Golden Ticket'] { --cat-color: #facc15; }
+:root[data-theme='dark'] [data-category='Trade 1']    { --cat-color: #e08b3e; }
+:root[data-theme='dark'] [data-category='Trade 2']    { --cat-color: #e08b3e; }
+:root[data-theme='dark'] [data-category='Ultra Rare']    { --cat-color: #c084fc; }
+:root[data-theme='dark'] [data-category='Premium']       { --cat-color: #f87171; }
+:root[data-theme='dark'] [data-category='Bonus']         { --cat-color: #4ade80; }
+:root[data-theme='dark'] [data-category='Preorder']      { --cat-color: #00c7ff; }
+:root[data-theme='dark'] [data-category='Golden Ticket'] { --cat-color: #facc15; }
+
+/* Category as a coloured pill (Auction Data's Category column), so it reads as a
+   chip like the provenance "Type" on Augments & Withheld. Outlined in the
+   category colour — theme-safe without a tinted-fill dependency; falls back to
+   the body text colour for the few categories with no assigned hue. */
+.cat-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--cat-color, var(--text));
+  border: 1px solid var(--cat-color, var(--border));
+}
 
 .tablewrap {
   overflow-x: auto;
@@ -933,7 +1017,95 @@ td.strong { font-weight: 600; color: var(--text-h); }
 .an-table td.diff { font-weight: 600; }
 .an-table td.diff.up { color: var(--diff-up); }
 .an-table td.diff.down { color: var(--diff-down); }
+/* Withheld is a subtraction — the same red hue the dashboard tints it (see the
+   .ctx-value.neg note above). Note --diff-up is RED here, --diff-down GREEN. */
+.an-table td.num.neg { color: var(--diff-up); }
+/* Many-column analytics tables keep their natural column widths and let the
+   .an-scroll wrapper scroll sideways on a phone, rather than crushing 6–9
+   columns into ~335px. On desktop the container already exceeds this floor. */
+.an-table.an-wide { min-width: 680px; }
 .an-date { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Context analytics (docs/context-layer-design.md §6). Reuses the .an-* panel
+   and table furniture; these add only what those four views need. */
+.an-subhead {
+  font-family: var(--display);
+  font-size: 16px;
+  /* Category accent (like the Timelines group headings); neutral fallback when
+     the group has no assigned category colour. */
+  color: var(--cat-color, var(--text-h));
+  margin: 20px 0 8px;
+}
+.an-panel .muted { color: var(--text); opacity: 0.75; }
+/* Two-line auction cell in the ledger: name over season/number/auctioneer. */
+.an-lname { display: block; color: var(--text-h); }
+.an-lsub { display: block; font-size: 12px; color: var(--text); opacity: 0.8; }
+/* Ledger desktop table: size to content (override the global fixed layout) so a
+   long auction name wraps instead of overwriting the next column. .an-auto gives
+   the augmented and source token tables the same treatment (the token column was
+   overrunning the next under the global table-layout:fixed + nowrap). */
+.led-table, .gr-table, .an-auto { table-layout: auto; }
+.led-table td.left, .gr-table td.left, .an-auto td.left { white-space: normal; }
+
+/* Season + Trent-pricing pickers on one row (Trent vs Forum), wrapping on a
+   phone so neither select is crushed. */
+.an-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; }
+
+/* Per-group grouped-bar charts under the Trent vs Forum table — a responsive
+   column of small multiples, one per Timelines token group. */
+.src-charts { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
+.src-chart { margin: 0; }
+.src-chart .an-subhead { margin-bottom: 4px; }
+.gr-chart { margin-top: 18px; }
+/* Ledger mobile: one stacked card per auction (no horizontal scroll). */
+.led-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.led-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.led-card-head { margin-bottom: 10px; }
+.led-name { display: block; font-weight: 600; color: var(--text-h); }
+.led-sub { display: block; font-size: 12px; color: var(--text); }
+.led-figs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.led-fig { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; align-items: baseline; }
+.led-fig-label { color: var(--text); }
+.led-fig-val { font-variant-numeric: tabular-nums; color: var(--text-h); white-space: nowrap; }
+.led-fig-val.neg { color: var(--diff-up); }
+.led-fig-val.muted { color: var(--text); opacity: 0.7; }
+.led-balance-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+}
+.led-balance-row .led-fig-label { font-weight: 600; color: var(--text-h); }
+.led-balance-val { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+.led-balance-val.diff.up { color: var(--diff-up); }
+.led-balance-val.diff.down { color: var(--diff-down); }
+/* Covered / Short verdict chip — outline only, no fill, so it reads in both
+   themes without a tinted background. */
+.an-verdict {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+/* Covered is good → green (--diff-down); Short is bad → red (--diff-up). */
+.an-verdict.yes { color: var(--diff-down); }
+.an-verdict.no { color: var(--diff-up); }
+/* A structural-confound caveat that sits with the number it qualifies — dashed
+   so it reads as a caution, not an error. */
+.confound-note {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-left: 3px solid var(--diff-down);
+  border-radius: 0 8px 8px 0;
+  max-width: 78ch;
+}
 
 /* Month accordions (Current Year). Same chevron + header affordance as the
    Transmutes season accordions, so the two pages behave alike. */
@@ -1084,6 +1256,10 @@ td.strong { font-weight: 600; color: var(--text-h); }
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--text);
+  /* Cap at the container: an inline-flex label otherwise shrink-wraps to its
+     widest <option>, which pushes past a phone's width (the analysis picker has
+     long labels). max-width lets the select clamp and truncate instead. */
+  max-width: 100%;
 }
 .an-picker select {
   font: inherit;
@@ -1234,6 +1410,15 @@ table.an-opens col.col-days { width: 16%; }
   .an-picker select { font-size: 16px; }
   /* .an-picker sets its own height rather than using --control-h. */
   .an-picker select { height: 44px; }
+
+  /* Analytics token tables (Augmented, Trent vs Forum) on a phone: tighten the
+     horizontal padding and let a long numeric header wrap (e.g. Trent vs Forum's
+     reward-adjusted "Trent (−10%)") rather than forcing the table wider than the
+     screen — which pushed a column into a non-obvious sideways scroll. The
+     Augmented headers are also abbreviated in the markup, since "Augmented" is a
+     single word that can't wrap. */
+  .an-auto thead th { white-space: normal; }
+  .an-auto th, .an-auto td { padding-left: 8px; padding-right: 8px; }
 
   /* The Current Year "Jump to" nav is hidden on a phone: five wrapping pills
      pushed the first analytic well down the page, and on a phone you scroll to

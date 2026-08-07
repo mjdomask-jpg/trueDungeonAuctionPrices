@@ -4,7 +4,10 @@ import {
 } from '../lib/data';
 import { fmtCloseDate } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useFilters } from '../data/filtersContext';
+import { applyViewFilters, passesAuctionFilters } from '../lib/context';
 import { CategoryTable } from '../components/CategoryTable';
+import { FilterBar } from '../components/FilterBar';
 import { TenXToggle } from '../components/TenXToggle';
 import { useTenX } from '../hooks/useTenX';
 import { compareCategories } from '../lib/categories';
@@ -12,7 +15,8 @@ import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
 export default function DashboardPage() {
-  const { sales, meta, loading, error } = useAuctionData();
+  const { sales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
+  const { filters } = useFilters();
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
   // Seven columns collide on a phone, so narrow screens show one stat group at
@@ -32,14 +36,28 @@ export default function DashboardPage() {
   // Default to the newest season once data has loaded.
   const activeSeason = season || seasons[0] || '';
 
+  const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
+
+  // Apply the shared Source / Trent-pricing / Auction-type filters to the sales
+  // BEFORE the per-token aggregation, so every stat on the page reflects the
+  // chosen source, (for Trent) the ~10% reward-adjusted effective price, and the
+  // auction-type narrowing. Defaults ("All sources", "Nominal", "All types")
+  // leave the sales untouched, so the dashboard reads exactly as it did before
+  // the context layer. Shared with every other pricing page (lib/context).
+  const viewSales = useMemo(
+    () => applyViewFilters(sales, metaById, goldenTicketAuctions, filters),
+    [sales, metaById, goldenTicketAuctions, filters],
+  );
+
   const rows = useMemo(
-    () => (activeSeason ? aggregateSeason(sales, activeSeason) : []),
-    [sales, activeSeason],
+    () => (activeSeason ? aggregateSeason(viewSales, activeSeason) : []),
+    [viewSales, activeSeason],
   );
   const last5Nums = useMemo(
-    () => (activeSeason ? lastFiveAuctionNumbers(sales, activeSeason) : []),
-    [sales, activeSeason],
+    () => (activeSeason ? lastFiveAuctionNumbers(viewSales, activeSeason) : []),
+    [viewSales, activeSeason],
   );
+
   // Trade 1 rows become their 10x bundle here when the toggle is on; every other
   // category (and thus the category list) is unchanged.
   const displayRows = useMemo(() => asTenXRows(rows, tenX), [rows, tenX]);
@@ -69,7 +87,8 @@ export default function DashboardPage() {
   }, [filtered]);
 
   const closedAuctions = meta
-    .filter((m) => m.season === activeSeason && m.status === 'Closed')
+    .filter((m) => m.season === activeSeason && m.status === 'Closed'
+      && passesAuctionFilters(m, filters, goldenTicketAuctions))
     .length;
 
   // Global intro stats (across all seasons).
@@ -130,6 +149,8 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile />
 
       <p className="meta-line stats">
         Season {activeSeason}: {closedAuctions} closed auctions ·

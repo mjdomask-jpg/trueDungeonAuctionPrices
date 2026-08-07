@@ -9,8 +9,10 @@ import ComparePage from './pages/ComparePage.tsx'
 import TransmutesPage from './pages/TransmutesPage.tsx'
 import OnyxPage from './pages/OnyxPage.tsx'
 import ExplorerPage from './pages/ExplorerPage.tsx'
+import ContextPage from './pages/ContextPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import { AuctionDataProvider } from './data/AuctionDataProvider.tsx'
+import { FiltersProvider } from './data/FiltersProvider.tsx'
 
 // HashRouter keeps client-side routing working on any static host served from a
 // subpath (base: './') without server rewrites. Routes: App is the layout
@@ -19,17 +21,20 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
       <AuctionDataProvider>
-        <Routes>
-          <Route element={<App />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="timelines" element={<TimelinesPage />} />
-            <Route path="compare" element={<ComparePage />} />
-            <Route path="transmutes" element={<TransmutesPage />} />
-            <Route path="onyx" element={<OnyxPage />} />
-            <Route path="explorer" element={<ExplorerPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-          </Route>
-        </Routes>
+        <FiltersProvider>
+          <Routes>
+            <Route element={<App />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="timelines" element={<TimelinesPage />} />
+              <Route path="compare" element={<ComparePage />} />
+              <Route path="transmutes" element={<TransmutesPage />} />
+              <Route path="onyx" element={<OnyxPage />} />
+              <Route path="explorer" element={<ExplorerPage />} />
+              <Route path="augments" element={<ContextPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+            </Route>
+          </Routes>
+        </FiltersProvider>
       </AuctionDataProvider>
     </HashRouter>
   </StrictMode>,

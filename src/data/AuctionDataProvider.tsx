@@ -1,5 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { parseSales, parseMeta, parseGroups, type Sale, type AuctionMeta, type GroupRow } from '../lib/data';
+import {
+  parseContextItems, buildContextItems, rollupByAuction, findGoldenTicketAuctions,
+  type RawContextItem,
+} from '../lib/context';
 import {
   parseRecipes, parseTokenMetadata, parseOffAuctionPrices, parseDerivedRules,
   type Recipe, type TokenMeta, type OffAuctionPrice, type DerivedRule,
@@ -20,6 +24,7 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
   const [meta, setMeta] = useState<AuctionMeta[]>([]);
   const [onyxSales, setOnyxSales] = useState<Sale[]>([]);
   const [groupRows, setGroupRows] = useState<GroupRow[]>([]);
+  const [rawContext, setRawContext] = useState<RawContextItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [tokenMeta, setTokenMeta] = useState<TokenMeta[]>([]);
   const [offAuctionPrices, setOffAuctionPrices] = useState<OffAuctionPrice[]>([]);
@@ -54,6 +59,15 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
       .then((t) => setGroupRows(t ? parseGroups(t) : []))
       .catch(() => setGroupRows([]));
 
+    // Auction context items (withheld/augment/grunnel/released). Optional: a
+    // missing file leaves the context layer empty without touching the core
+    // dashboard. Classification + the withheld recompute run in useMemo below,
+    // where sales/meta are also available.
+    fetch(dataUrl('contextItems.csv'))
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((t) => setRawContext(t ? parseContextItems(t) : []))
+      .catch(() => setRawContext([]));
+
     // Transmute reference data, same optional pattern. These four are fetched
     // together because the cost engine needs all of them to price a recipe, but
     // each degrades independently: no recipes ⇒ empty page; no tokenMetadata ⇒
@@ -74,9 +88,29 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Classify + value context items and roll them up per auction. Depends on the
+  // raw context rows plus the core sales/meta the withheld estimate reads from,
+  // so it recomputes when any of the three settle. Empty until all are loaded.
+  const contextItems = useMemo(
+    () => buildContextItems(rawContext, sales, meta),
+    [rawContext, sales, meta],
+  );
+  const auctionContext = useMemo(() => rollupByAuction(contextItems), [contextItems]);
+  // Golden-Ticket auctions span both the core sales and the context rows, so this
+  // recomputes when either settles. Cheap (a single pass over each) and shared by
+  // every page's FilterBar.
+  const goldenTicketAuctions = useMemo(
+    () => findGoldenTicketAuctions(sales, rawContext),
+    [sales, rawContext],
+  );
+
   return (
     <AuctionDataContext.Provider
-      value={{ sales, meta, onyxSales, groupRows, recipes, tokenMeta, offAuctionPrices, derivedRules, loading, error }}
+      value={{
+        sales, meta, onyxSales, groupRows, contextItems, auctionContext,
+        goldenTicketAuctions,
+        recipes, tokenMeta, offAuctionPrices, derivedRules, loading, error,
+      }}
     >
       {children}
     </AuctionDataContext.Provider>

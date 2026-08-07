@@ -101,7 +101,9 @@ export function AuctionCard({
                       {r.item !== r.displayName && r.displayName !== `${TENX_PREFIX}${r.item}`
                         && <span className="alt"> · {r.item}</span>}
                     </td>
-                    <td className="left">{r.category}</td>
+                    <td className="left">
+                      {r.category && <span className="cat-chip" data-category={r.category}>{r.category}</span>}
+                    </td>
                     <td>{money(r.price)}</td>
                   </tr>
                 ))}
