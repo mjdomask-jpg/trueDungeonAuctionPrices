@@ -30,7 +30,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="transmutes" element={<TransmutesPage />} />
               <Route path="onyx" element={<OnyxPage />} />
               <Route path="explorer" element={<ExplorerPage />} />
-              <Route path="context" element={<ContextPage />} />
+              <Route path="augments" element={<ContextPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
             </Route>
           </Routes>

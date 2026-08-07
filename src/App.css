@@ -260,32 +260,17 @@ header h1 {
 :root[data-theme='dark'] .prov-chip.augment.on { background: rgba(57, 135, 229, 0.20); color: #6aa8e6; }
 :root[data-theme='dark'] .prov-chip.grunnel.on { background: rgba(109, 187, 112, 0.18); color: #7cc47f; }
 
-/* The "Auction context this season" section on the Prices page. */
-.ctx-section { margin-top: 28px; }
-.ctx-list { list-style: none; padding: 0; margin: 8px 0 0; }
-.ctx-row {
-  display: flex; align-items: baseline; gap: 10px;
-  padding: 6px 0; border-bottom: 1px solid var(--border);
-}
-.ctx-row .ctx-name { flex: 1; color: var(--text-h); }
-.ctx-row .ctx-auction { color: var(--text); font-size: 12px; white-space: nowrap; }
-.ctx-row .ctx-value {
-  font-family: var(--sans); font-variant-numeric: tabular-nums;
-  min-width: 88px; text-align: right; color: var(--text-h);
-}
-/* Withheld values are negative — tint them like a subtraction (the diff-up hue). */
-.ctx-row .ctx-value.neg { color: var(--diff-up); }
-/* Context page groups items under their auction. */
-.ctx-auc { margin-top: 20px; }
-.ctx-auc-head {
-  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-  font-family: var(--display); font-size: 18px; color: var(--text-h);
-  margin: 0 0 2px;
-}
-.ctx-auc-sub {
-  font-family: var(--sans); font-size: 12px; font-weight: 400;
-  text-transform: none; letter-spacing: 0; color: var(--text); white-space: nowrap;
-}
+/* Augments & Withheld page: the value cell in each auction's item table.
+   Withheld values are negative — tint them like a subtraction (the diff-up hue,
+   which is red in this theme). */
+.ctx-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ctx-val.neg { color: var(--diff-up); }
+/* The provenance badge is far narrower than the token category this table's
+   middle column was sized for on the explorer, so override those widths — the
+   Type and Value columns hug their content and the Value stays on screen at
+   phone widths instead of scrolling out of view. */
+.auction-body table.ctx-items col:nth-child(2) { width: 96px; }
+.auction-body table.ctx-items col:nth-child(3) { width: 92px; }
 
 @media (max-width: 640px) {
   .prov-chip { min-height: 44px; }
@@ -319,21 +304,36 @@ header h1 {
    lightened to stay readable (~4.5:1+) on the dark background. Preorder is the
    exception: its bright brand cyan (#00c7ff) is unreadable on white, so light
    mode uses a darkened cyan and dark mode uses the bright brand value. */
-.cat-section[data-category='Trade 1']    { --cat-color: #b45f06; }
-.cat-section[data-category='Trade 2']    { --cat-color: #b45f06; }
-.cat-section[data-category='Ultra Rare']    { --cat-color: #9900ff; }
-.cat-section[data-category='Premium']       { --cat-color: #ff0000; }
-.cat-section[data-category='Bonus']         { --cat-color: #34a853; }
-.cat-section[data-category='Preorder']      { --cat-color: #0e7490; }
-.cat-section[data-category='Golden Ticket'] { --cat-color: #8a6900; }
+[data-category='Trade 1']    { --cat-color: #b45f06; }
+[data-category='Trade 2']    { --cat-color: #b45f06; }
+[data-category='Ultra Rare']    { --cat-color: #9900ff; }
+[data-category='Premium']       { --cat-color: #ff0000; }
+[data-category='Bonus']         { --cat-color: #34a853; }
+[data-category='Preorder']      { --cat-color: #0e7490; }
+[data-category='Golden Ticket'] { --cat-color: #8a6900; }
 
-:root[data-theme='dark'] .cat-section[data-category='Trade 1']    { --cat-color: #e08b3e; }
-:root[data-theme='dark'] .cat-section[data-category='Trade 2']    { --cat-color: #e08b3e; }
-:root[data-theme='dark'] .cat-section[data-category='Ultra Rare']    { --cat-color: #c084fc; }
-:root[data-theme='dark'] .cat-section[data-category='Premium']       { --cat-color: #f87171; }
-:root[data-theme='dark'] .cat-section[data-category='Bonus']         { --cat-color: #4ade80; }
-:root[data-theme='dark'] .cat-section[data-category='Preorder']      { --cat-color: #00c7ff; }
-:root[data-theme='dark'] .cat-section[data-category='Golden Ticket'] { --cat-color: #facc15; }
+:root[data-theme='dark'] [data-category='Trade 1']    { --cat-color: #e08b3e; }
+:root[data-theme='dark'] [data-category='Trade 2']    { --cat-color: #e08b3e; }
+:root[data-theme='dark'] [data-category='Ultra Rare']    { --cat-color: #c084fc; }
+:root[data-theme='dark'] [data-category='Premium']       { --cat-color: #f87171; }
+:root[data-theme='dark'] [data-category='Bonus']         { --cat-color: #4ade80; }
+:root[data-theme='dark'] [data-category='Preorder']      { --cat-color: #00c7ff; }
+:root[data-theme='dark'] [data-category='Golden Ticket'] { --cat-color: #facc15; }
+
+/* Category as a coloured pill (Auction Data's Category column), so it reads as a
+   chip like the provenance "Type" on Augments & Withheld. Outlined in the
+   category colour — theme-safe without a tinted-fill dependency; falls back to
+   the body text colour for the few categories with no assigned hue. */
+.cat-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--cat-color, var(--text));
+  border: 1px solid var(--cat-color, var(--border));
+}
 
 .tablewrap {
   overflow-x: auto;
@@ -1035,9 +1035,37 @@ td.strong { font-weight: 600; color: var(--text-h); }
   margin: 20px 0 8px;
 }
 .an-panel .muted { color: var(--text); opacity: 0.75; }
-/* Two-line auction cell in the ledger: name over season/number/source. */
+/* Two-line auction cell in the ledger: name over season/number/auctioneer. */
 .an-lname { display: block; color: var(--text-h); }
 .an-lsub { display: block; font-size: 12px; color: var(--text); opacity: 0.8; }
+/* Ledger desktop table: size to content (override the global fixed layout) so a
+   long auction name wraps instead of overwriting the next column. */
+.led-table, .gr-table { table-layout: auto; }
+.led-table td.left, .gr-table td.left { white-space: normal; }
+.gr-chart { margin-top: 18px; }
+/* Ledger mobile: one stacked card per auction (no horizontal scroll). */
+.led-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.led-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.led-card-head { margin-bottom: 10px; }
+.led-name { display: block; font-weight: 600; color: var(--text-h); }
+.led-sub { display: block; font-size: 12px; color: var(--text); }
+.led-figs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.led-fig { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; align-items: baseline; }
+.led-fig-label { color: var(--text); }
+.led-fig-val { font-variant-numeric: tabular-nums; color: var(--text-h); white-space: nowrap; }
+.led-fig-val.neg { color: var(--diff-up); }
+.led-fig-val.muted { color: var(--text); opacity: 0.7; }
+.led-balance-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+}
+.led-balance-row .led-fig-label { font-weight: 600; color: var(--text-h); }
+.led-balance-val { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+.led-balance-val.diff.up { color: var(--diff-up); }
+.led-balance-val.diff.down { color: var(--diff-down); }
 /* Covered / Short verdict chip — outline only, no fill, so it reads in both
    themes without a tinted background. */
 .an-verdict {

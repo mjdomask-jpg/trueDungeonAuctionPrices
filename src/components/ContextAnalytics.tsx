@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react';
 import type { AuctionMeta, Sale } from '../lib/data';
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
-  auctionLedger, ledgerByAuctioneer, ledgerOverall,
-  grunnelVsPreorder, augmentedVsNot, trentVsForum,
-  type LedgerAgg,
+  auctionLedger, ledgerOverall,
+  grunnelPerAuction, augmentedVsNot, trentVsForum,
+  type LedgerRow, type GrunnelAuctionRow,
 } from '../lib/contextAnalytics';
 import { ERAS } from '../lib/eras';
 import { money, money0 } from '../lib/format';
 import { BarChart } from './BarChart';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 // The context-layer analytics (docs/context-layer-design.md §6), the fourth
 // increment of the layer. Four questions behind one picker, so the top-level
@@ -88,134 +89,141 @@ function coveredBadge(covered: boolean) {
   );
 }
 
+// One auction as a stacked card (mobile) — the wide ledger table can't fit a
+// phone, so each auction's figures sit in a small card instead of a scrolling row.
+function LedgerCard({ r }: { r: LedgerRow }) {
+  const fig = (label: string, val: string, cls = '') => (
+    <div className="led-fig">
+      <span className="led-fig-label">{label}</span>
+      <span className={`led-fig-val ${cls}`}>{val}</span>
+    </div>
+  );
+  return (
+    <div className="led-card">
+      <div className="led-card-head">
+        <span className="led-name">{r.name || `#${r.auctionNumber}`}</span>
+        <span className="led-sub">{r.season} · #{r.auctionNumber} · {r.auctioneer}</span>
+      </div>
+      <div className="led-figs">
+        {fig('Withheld', r.withheld ? money0(r.withheld) : '—', 'neg')}
+        {fig('Included', r.released ? money0(r.released) : '—')}
+        {fig('Augments', r.augment ? money0(r.augment) : '—')}
+        {fig('Grunnel', r.grunnel ? money0(r.grunnel) : '—', 'muted')}
+        {fig('Funding goal', r.fundingGoal == null ? 'n/a' : money0(r.fundingGoal))}
+      </div>
+      <div className="led-balance-row">
+        <span className="led-fig-label">Balance</span>
+        {/* up=red, down=green in this theme; a covered (≥0) balance reads green. */}
+        <span className={`led-balance-val diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</span>
+        {coveredBadge(r.covered)}
+      </div>
+    </div>
+  );
+}
+
 function LedgerView({
   meta, auctionContext,
 }: {
   meta: AuctionMeta[];
   auctionContext: Map<string, AuctionContext>;
 }) {
+  const narrow = useMediaQuery(NARROW);
   const rows = useMemo(() => auctionLedger(meta, auctionContext), [meta, auctionContext]);
-  const byWho = useMemo(() => ledgerByAuctioneer(rows), [rows]);
   const overall = useMemo(() => ledgerOverall(rows), [rows]);
-  const anyAssumed = rows.some((r) => r.assumedTarget);
-
-  const aggCells = (a: LedgerAgg) => (
-    <>
-      <td className="num">{a.n}</td>
-      <td className="num neg">{money0(a.withheld)}</td>
-      <td className="num">{money0(a.released)}</td>
-      <td className="num">{money0(a.augment)}</td>
-      <td className="num">{money0(a.targetReduction)}</td>
-      <td className="num muted">{money0(a.grunnel)}</td>
-      {/* up=red, down=green in this theme; covered (≥0) reads green. */}
-      <td className={`num diff ${a.coverage >= 0 ? 'down' : 'up'}`}>{money0(a.coverage)}</td>
-      <td className="num">{coveredBadge(a.covered)}</td>
-    </>
-  );
 
   return (
     <section className="an-panel">
       <h2>Auction ledger — did augments cover withholdings?</h2>
       <p className="an-lede">
-        For each auction with context, what the auctioneer <strong>withheld</strong> (an estimate,
-        negative) against what they put back: <strong>released</strong> payment, personal{' '}
-        <strong>augments</strong>, and the <strong>funding-target reduction</strong> (how far below
-        the ${ERAS.orderCost.toLocaleString()} order goal they set the target). <em>Coverage</em> is
-        released + augments + target reduction − withheld; a row is <strong>Covered</strong> when
-        that is ≥ 0. <strong>Grunnel</strong> drops are shown but not counted — they come from the
-        company, not the auctioneer offsetting their own withholding.
+        {narrow ? (
+          <>Per auction: what the auctioneer <strong>withheld</strong> (estimated, negative) vs what
+          they put back — bonuses <strong>included</strong> and personal <strong>augments</strong>. A{' '}
+          <strong>Balance</strong> ≥ 0 means they covered it.</>
+        ) : (
+          <>For each auction with context, what the auctioneer <strong>withheld</strong> (an estimate,
+          negative) against what they put back: bonus items <strong>included</strong> and personal{' '}
+          <strong>augments</strong>. <strong>Balance</strong> = included + augments − withheld, and a
+          row is covered (green) when it is ≥ 0. <strong>Grunnel</strong> (a company drop) and the{' '}
+          <strong>funding goal</strong> are shown for context, not counted in the balance.</>
+        )}
       </p>
-      {anyAssumed && (
-        <p className="an-note">
-          Auctions with no recorded funding target contribute $0 target reduction here (never the
-          assumed ${ERAS.defaultTargetFunding.toLocaleString()} default), so coverage is not
-          fabricated for them.
-        </p>
+
+      {narrow ? (
+        <div className="led-cards">
+          {rows.map((r) => <LedgerCard key={r.auctionId} r={r} />)}
+        </div>
+      ) : (
+        <div className="an-scroll">
+          <table className={`an-table led-table${rows.length >= 4 ? ' banded' : ''}`}>
+            <thead>
+              <tr>
+                <th className="left">Auction</th>
+                <th className="num">Withheld</th>
+                <th className="num">Included</th>
+                <th className="num">Augments</th>
+                <th className="num">Grunnel</th>
+                <th className="num">Funding goal</th>
+                <th className="num">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.auctionId}>
+                  <td className="left">
+                    <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
+                    <span className="an-lsub">{r.season} · #{r.auctionNumber} · {r.auctioneer}</span>
+                  </td>
+                  <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
+                  <td className="num">{r.released ? money0(r.released) : '—'}</td>
+                  <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
+                  <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
+                  <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
+                  <td className={`num diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th className="left">Overall ({overall.n})</th>
+                <th className="num">{money0(overall.withheld)}</th>
+                <th className="num">{money0(overall.released)}</th>
+                <th className="num">{money0(overall.augment)}</th>
+                <th className="num">{money0(overall.grunnel)}</th>
+                <th className="num" />
+                <th className="num">{money0(overall.balance)}</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       )}
-
-      <h3 className="an-subhead">By auctioneer</h3>
-      <div className="an-scroll">
-        <table className={`an-table an-wide${byWho.length >= 4 ? ' banded' : ''}`}>
-          <thead>
-            <tr>
-              <th className="left">Auctioneer</th>
-              <th className="num">Auctions</th>
-              <th className="num">Withheld</th>
-              <th className="num">Released</th>
-              <th className="num">Augments</th>
-              <th className="num">Target ↓</th>
-              <th className="num">Grunnel</th>
-              <th className="num">Coverage</th>
-              <th className="num">Verdict</th>
-            </tr>
-          </thead>
-          <tbody>
-            {byWho.map((a) => (
-              <tr key={a.key}>
-                <td className="left">{a.key}</td>
-                {aggCells(a)}
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <th className="left">Overall</th>
-              <th className="num">{overall.n}</th>
-              <th className="num">{money0(overall.withheld)}</th>
-              <th className="num">{money0(overall.released)}</th>
-              <th className="num">{money0(overall.augment)}</th>
-              <th className="num">{money0(overall.targetReduction)}</th>
-              <th className="num">{money0(overall.grunnel)}</th>
-              <th className="num">{money0(overall.coverage)}</th>
-              <th className="num">{coveredBadge(overall.covered)}</th>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <h3 className="an-subhead">Every auction, newest first</h3>
-      <div className="an-scroll">
-        <table className={`an-table an-wide${rows.length >= 4 ? ' banded' : ''}`}>
-          <thead>
-            <tr>
-              <th className="left">Auction</th>
-              <th className="left">Auctioneer</th>
-              <th className="num">Withheld</th>
-              <th className="num">Released</th>
-              <th className="num">Augments</th>
-              <th className="num">Target ↓</th>
-              <th className="num">Grunnel</th>
-              <th className="num">Coverage</th>
-              <th className="num">Verdict</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.auctionId}>
-                <td className="left">
-                  <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
-                  <span className="an-lsub">{r.season} · #{r.auctionNumber} · {r.source}</span>
-                </td>
-                <td className="left">{r.auctioneer}</td>
-                <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
-                <td className="num">{r.released ? money0(r.released) : '—'}</td>
-                <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
-                <td className="num">
-                  {r.targetReduction == null ? <span className="muted">n/a</span> : money0(r.targetReduction)}
-                </td>
-                <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
-                <td className={`num diff ${r.coverage >= 0 ? 'down' : 'up'}`}>{money0(r.coverage)}</td>
-                <td className="num">{coveredBadge(r.covered)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </section>
   );
 }
 
 // --- View 2: Grunnel vs preorder -------------------------------------------
+
+// One Grunnel auction as a stacked card (mobile) — mirrors the ledger card so the
+// two per-auction views read alike and neither needs a sideways scroll.
+function GrunnelCard({ r }: { r: GrunnelAuctionRow }) {
+  return (
+    <div className="led-card">
+      <div className="led-card-head">
+        <span className="led-name">{r.name || `#${r.auctionNumber}`}</span>
+        <span className="led-sub">{r.season} · #{r.auctionNumber} · {r.items} item{r.items === 1 ? '' : 's'}</span>
+      </div>
+      <div className="led-figs">
+        <div className="led-fig"><span className="led-fig-label">Grunnel</span><span className="led-fig-val">{money0(r.grunnelValue)}</span></div>
+        <div className="led-fig"><span className="led-fig-label">Preorder</span><span className="led-fig-val muted">{r.preorderBenchmark == null ? '—' : money0(r.preorderBenchmark)}</span></div>
+      </div>
+      <div className="led-balance-row">
+        <span className="led-fig-label">Beyond</span>
+        <span className={`led-balance-val diff ${r.delta != null && r.delta >= 0 ? 'down' : 'up'}`}>
+          {r.delta == null ? '—' : `${r.delta >= 0 ? '+' : ''}${money0(r.delta)}`}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function GrunnelView({
   meta, sales, contextItems,
@@ -224,64 +232,88 @@ function GrunnelView({
   sales: Sale[];
   contextItems: ContextItem[];
 }) {
+  const narrow = useMediaQuery(NARROW);
   const rows = useMemo(
-    () => grunnelVsPreorder(sales, contextItems, meta),
-    [sales, contextItems, meta],
+    () => grunnelPerAuction(contextItems, sales, meta),
+    [contextItems, sales, meta],
   );
-  const withGrunnel = rows.filter((r) => r.grunnelN > 0);
+  // Oldest→newest for the chart, which reads left to right in time.
+  const chartRows = useMemo(() => [...rows].reverse(), [rows]);
+
+  if (!rows.length) {
+    return (
+      <section className="an-panel">
+        <h2>Grunnel drops vs the preorder bonuses</h2>
+        <p className="empty">No Grunnel drops recorded.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="an-panel">
-      <h2>Grunnel drops vs the preorder benchmark</h2>
+      <h2>Grunnel drops vs the preorder bonuses</h2>
       <p className="an-lede">
-        Grunnel items are dropped in to offset expired <strong>preorder</strong> bonuses, so the
-        mean preorder-token sale price that season is the natural yardstick. Each season's mean
-        Grunnel item value sits beside its mean preorder value — Grunnel drops run far richer than
-        the roughly break-even preorder token.
+        {narrow ? (
+          <>Each auction's <strong>Grunnel</strong> drop against the <strong>preorder</strong> bonuses
+          a standard order includes that season. <strong>Beyond</strong> &gt; 0 (green) means the drop
+          was worth more than the expired preorder bonuses.</>
+        ) : (
+          <>Grunnel drops offset expired preorder bonuses. Per auction, the total{' '}
+          <strong>Grunnel</strong> value sits against the <strong>preorder</strong> value a standard
+          order includes that season (mean season price × fixed quantity — 32 Preorder Bonuses + 50
+          Treasure Chips). <strong>Beyond</strong> = Grunnel − preorder; positive (green) means the
+          drop subsidised the auction beyond what the preorder bonuses were worth.</>
+        )}
       </p>
 
-      {withGrunnel.length > 0 ? (
-        <div className="an-split">
-          <table className={`an-table an-narrow${withGrunnel.length >= 4 ? ' banded' : ''}`}>
+      {narrow ? (
+        <div className="led-cards">
+          {rows.map((r) => <GrunnelCard key={r.auctionId} r={r} />)}
+        </div>
+      ) : (
+        <div className="an-scroll">
+          <table className={`an-table gr-table${rows.length >= 4 ? ' banded' : ''}`}>
             <thead>
               <tr>
-                <th className="left">Season</th>
-                <th className="num">Grunnel avg</th>
-                <th className="num">n</th>
-                <th className="num">Preorder avg</th>
-                <th className="num">n</th>
+                <th className="left">Auction</th>
+                <th className="num">Grunnel</th>
+                <th className="num">Preorder</th>
+                <th className="num">Beyond</th>
               </tr>
             </thead>
             <tbody>
-              {withGrunnel.map((r) => (
-                <tr key={r.season}>
-                  <td className="left">{r.season}</td>
-                  <td className="num">{money(r.grunnelMean ?? undefined)}</td>
-                  <td className="num muted">{r.grunnelN}</td>
-                  <td className="num">{money(r.preorderMean ?? undefined)}</td>
-                  <td className="num muted">{r.preorderN || '—'}</td>
+              {rows.map((r) => (
+                <tr key={r.auctionId}>
+                  <td className="left">
+                    <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
+                    <span className="an-lsub">{r.season} · #{r.auctionNumber} · {r.items} item{r.items === 1 ? '' : 's'}</span>
+                  </td>
+                  <td className="num">{money0(r.grunnelValue)}</td>
+                  <td className="num muted">{r.preorderBenchmark == null ? '—' : money0(r.preorderBenchmark)}</td>
+                  {/* up=red, down=green; a drop worth more than preorder (≥0) reads green. */}
+                  <td className={`num diff ${r.delta != null && r.delta >= 0 ? 'down' : 'up'}`}>
+                    {r.delta == null ? '—' : `${r.delta >= 0 ? '+' : ''}${money0(r.delta)}`}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          <div className="an-chartcol">
-            <BarChart
-              categories={withGrunnel.map((r) => r.season)}
-              series={[
-                { label: 'Grunnel avg', color: GRUNNEL_COLOR, values: withGrunnel.map((r) => r.grunnelMean) },
-                { label: 'Preorder avg', color: PREORDER_COLOR, values: withGrunnel.map((r) => r.preorderMean) },
-              ]}
-              hints={withGrunnel.map((r) => `${r.grunnelN} grunnel · ${r.preorderN} preorder`)}
-              yLabel="Avg value" format={(n) => money0(n)}
-              ariaLabel="Mean Grunnel item value versus mean preorder token value, per season"
-              maxLabels={12}
-            />
-          </div>
         </div>
-      ) : (
-        <p className="empty">No Grunnel items recorded.</p>
       )}
+
+      <div className="gr-chart">
+        <BarChart
+          categories={chartRows.map((r) => `${r.season.slice(2)} #${r.auctionNumber}`)}
+          series={[
+            { label: 'Grunnel', color: GRUNNEL_COLOR, values: chartRows.map((r) => r.grunnelValue) },
+            { label: 'Preorder bonuses', color: PREORDER_COLOR, values: chartRows.map((r) => r.preorderBenchmark) },
+          ]}
+          hints={chartRows.map((r) => r.name || `#${r.auctionNumber}`)}
+          yLabel="Value" format={(n) => money0(n)}
+          ariaLabel="Each auction's Grunnel value versus its season's preorder benchmark"
+          maxLabels={22}
+        />
+      </div>
     </section>
   );
 }

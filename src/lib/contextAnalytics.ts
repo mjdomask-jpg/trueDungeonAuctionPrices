@@ -44,20 +44,21 @@ export type LedgerRow = {
   released: number;
   augment: number;
   grunnel: number;
-  // orderCost − targetFunding, i.e. how much the goal was lowered from $8k.
-  // null when the auction recorded no target (we do NOT invent one here — using
-  // the assumed default would fabricate coverage), and the row is flagged.
-  targetReduction: number | null;
-  assumedTarget: boolean;
-  // released + augment + targetReduction + withheld. ≥ 0 ⇒ the offsets covered
-  // the withholding. Grunnel is deliberately excluded (see above).
-  coverage: number;
+  // The auction's funding target (auctionMetadata column O, targetFunding). Shown
+  // as context — what the auctioneer asked bidders for — not a term in the balance.
+  // null when the auction recorded no target.
+  fundingGoal: number | null;
+  // released + augment + withheld. ≥ 0 ⇒ what the auctioneer put back (bonus-
+  // included items + personal augments) at least matched what they withheld.
+  // Grunnel is excluded (a company drop, not the auctioneer's own offset), and the
+  // funding goal is context, not part of this sum.
+  balance: number;
   covered: boolean;
 };
 
-function coverageOf(released: number, augment: number, targetReduction: number, withheld: number): number {
+function balanceOf(released: number, augment: number, withheld: number): number {
   // withheld is ≤ 0, so adding it subtracts the withheld magnitude.
-  return released + augment + targetReduction + withheld;
+  return released + augment + withheld;
 }
 
 export function auctionLedger(
@@ -69,8 +70,7 @@ export function auctionLedger(
   for (const [id, c] of ctx) {
     const m = byId.get(id);
     if (!m) continue;
-    const targetReduction = m.targetFunding != null ? ERAS.orderCost - m.targetFunding : null;
-    const coverage = coverageOf(c.released, c.augment, targetReduction ?? 0, c.withheld);
+    const balance = balanceOf(c.released, c.augment, c.withheld);
     rows.push({
       auctionId: id,
       season: m.season,
@@ -82,11 +82,10 @@ export function auctionLedger(
       released: c.released,
       augment: c.augment,
       grunnel: c.grunnel,
-      targetReduction,
-      assumedTarget: m.targetFunding == null,
-      coverage,
+      fundingGoal: m.targetFunding,
+      balance,
       // A rounding guard so a $0.00 net reads as covered rather than a penny short.
-      covered: coverage >= -0.005,
+      covered: balance >= -0.005,
     });
   }
   return rows.sort((a, b) =>
@@ -100,9 +99,7 @@ export type LedgerAgg = {
   released: number;
   augment: number;
   grunnel: number;
-  targetReduction: number;  // sum of KNOWN reductions only
-  assumedTargets: number;   // how many auctions had no recorded target
-  coverage: number;
+  balance: number;
   covered: boolean;
 };
 
@@ -112,13 +109,8 @@ function aggregate(key: string, rows: LedgerRow[]): LedgerAgg {
   const released = sum((r) => r.released);
   const augment = sum((r) => r.augment);
   const grunnel = sum((r) => r.grunnel);
-  const targetReduction = sum((r) => r.targetReduction ?? 0);
-  const coverage = coverageOf(released, augment, targetReduction, withheld);
-  return {
-    key, n: rows.length, withheld, released, augment, grunnel, targetReduction,
-    assumedTargets: rows.filter((r) => r.assumedTarget).length,
-    coverage, covered: coverage >= -0.005,
-  };
+  const balance = balanceOf(released, augment, withheld);
+  return { key, n: rows.length, withheld, released, augment, grunnel, balance, covered: balance >= -0.005 };
 }
 
 // One aggregate per auctioneer, most-withheld first (largest |withheld|).
@@ -135,42 +127,78 @@ export function ledgerByAuctioneer(rows: LedgerRow[]): LedgerAgg[] {
 
 export const ledgerOverall = (rows: LedgerRow[]): LedgerAgg => aggregate('Overall', rows);
 
-// --- View 2: Grunnel vs the preorder benchmark -----------------------------
-// Grunnel items offset expired preorder bonuses, so the mean preorder-token
-// sale price is the natural yardstick for what a Grunnel drop is worth. Per
-// season so the comparison is like-for-like in time.
+// --- View 2: Grunnel per auction vs the preorder benchmark -----------------
+// Grunnel drops offset expired preorder bonuses, so the question is whether a
+// drop was worth more than the preorder bonuses a standard order includes. What a
+// drop is worth varies wildly auction to auction, so this is PER AUCTION, not a
+// season average. The preorder side IS a season average (a standard order's fixed
+// bundle: mean season price × quantity), which is stable because it's dominated by
+// the Treasure Chip, whose price holds to ~10–15% within a season.
 
-export type GrunnelPreorderRow = {
+// The value of the preorder bonuses in a standard order, per season: for each
+// preorder token, its mean sale price that season × the fixed quantity a standard
+// order includes (ERAS.preorderQuantities). Keyed on the sale Item CODE.
+export function preorderBenchmarkBySeason(sales: Sale[]): Map<string, number> {
+  const pricesByItemSeason = new Map<string, number[]>();
+  for (const s of sales) {
+    if (s.category !== 'Preorder') continue;
+    if (!(s.item in ERAS.preorderQuantities)) continue;
+    bucket(pricesByItemSeason, `${s.season}|${s.item}`, s.price);
+  }
+  const bySeason = new Map<string, number>();
+  for (const [key, prices] of pricesByItemSeason) {
+    const [season, item] = key.split('|');
+    const m = mean(prices);
+    if (m == null) continue;
+    bySeason.set(season, (bySeason.get(season) ?? 0) + m * ERAS.preorderQuantities[item]);
+  }
+  return bySeason;
+}
+
+export type GrunnelAuctionRow = {
+  auctionId: string;
   season: string;
-  grunnelMean: number | null;
-  grunnelN: number;
-  preorderMean: number | null;
-  preorderN: number;
+  auctionNumber: number;
+  name: string;
+  grunnelValue: number;      // total value of this auction's Grunnel items
+  items: number;             // how many Grunnel items it dropped
+  preorderBenchmark: number | null; // the season's standard-order preorder value
+  delta: number | null;      // grunnelValue − benchmark (>0 ⇒ subsidised beyond preorder)
 };
 
-export function grunnelVsPreorder(
-  sales: Sale[], items: ContextItem[], meta: AuctionMeta[],
-): GrunnelPreorderRow[] {
-  const seasonById = new Map(meta.map((m) => [m.auctionId, m.season]));
-  const grunnel = new Map<string, number[]>();
+// One row per auction that received a Grunnel drop, most recent first. Each
+// carries its own total Grunnel value against its season's preorder benchmark.
+export function grunnelPerAuction(
+  items: ContextItem[], sales: Sale[], meta: AuctionMeta[],
+): GrunnelAuctionRow[] {
+  const byId = new Map(meta.map((m) => [m.auctionId, m]));
+  const benchmark = preorderBenchmarkBySeason(sales);
+  const totals = new Map<string, { value: number; n: number }>();
   for (const it of items) {
     if (it.provenance !== 'grunnel') continue;
-    const s = seasonById.get(it.auctionId);
-    if (s) bucket(grunnel, s, it.value);
+    const t = totals.get(it.auctionId) ?? { value: 0, n: 0 };
+    t.value += it.value;
+    t.n += 1;
+    totals.set(it.auctionId, t);
   }
-  const preorder = new Map<string, number[]>();
-  for (const sale of sales) {
-    if (sale.category === 'Preorder') bucket(preorder, sale.season, sale.price);
+  const rows: GrunnelAuctionRow[] = [];
+  for (const [id, t] of totals) {
+    const m = byId.get(id);
+    if (!m) continue;
+    const preorderBenchmark = benchmark.get(m.season) ?? null;
+    rows.push({
+      auctionId: id,
+      season: m.season,
+      auctionNumber: m.auctionNumber,
+      name: m.name,
+      grunnelValue: t.value,
+      items: t.n,
+      preorderBenchmark,
+      delta: preorderBenchmark == null ? null : t.value - preorderBenchmark,
+    });
   }
-  const seasons = [...new Set([...grunnel.keys(), ...preorder.keys()])]
-    .sort((a, b) => Number(a) - Number(b)); // oldest first — reads as a trend
-  return seasons.map((season) => ({
-    season,
-    grunnelMean: mean(grunnel.get(season) ?? []),
-    grunnelN: (grunnel.get(season) ?? []).length,
-    preorderMean: mean(preorder.get(season) ?? []),
-    preorderN: (preorder.get(season) ?? []).length,
-  }));
+  return rows.sort((a, b) =>
+    Number(b.season) - Number(a.season) || b.auctionNumber - a.auctionNumber);
 }
 
 // --- View 3: Augmented vs non-augmented, within one season -----------------

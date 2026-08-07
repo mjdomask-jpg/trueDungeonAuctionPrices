@@ -113,7 +113,9 @@ export function SaleTable({
                 <td className="left wrap-text">{meta.name}</td>
                 <td className="left wrap-text">{meta.auctioneer || '—'}</td>
                 {token}
-                <td className="left">{row.category}</td>
+                <td className="left">
+                  {row.category && <span className="cat-chip" data-category={row.category}>{row.category}</span>}
+                </td>
                 <td>{money(row.price)}</td>
               </tr>
             );

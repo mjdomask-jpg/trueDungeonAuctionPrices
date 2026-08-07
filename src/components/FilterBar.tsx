@@ -10,11 +10,10 @@ import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 export type FilterControl = 'source' | 'trentPricing' | 'auctionType' | 'provenance';
 const DEFAULT_CONTROLS: FilterControl[] = ['source', 'trentPricing', 'auctionType', 'provenance'];
 
-// The default provenance set (real-sale context on, withheld estimates off).
-// Used only to count "active" filters for the collapsed-menu badge.
+// Off-default check for the collapsed-menu badge: every provenance is on by
+// default, so any chip switched off counts as an active filter.
 const provenanceChanged = (set: Set<string>) =>
-  set.has('withheld')
-  || CONTEXT_PROVENANCES.some((p) => p !== 'withheld' && !set.has(p));
+  CONTEXT_PROVENANCES.some((p) => !set.has(p));
 
 export function FilterBar({
   controls = DEFAULT_CONTROLS,
@@ -107,13 +106,18 @@ export function FilterBar({
       + (show('auctionType') && filters.auctionType !== 'all' ? 1 : 0)
       + (show('provenance') && provenanceChanged(filters.provenance) ? 1 : 0);
     return (
-      <details className="filterset filterbar-collapse">
-        <summary>
-          {mobileSummary}
-          {activeCount > 0 && <span className="filterset-count">{activeCount}</span>}
-        </summary>
-        <div className="filterset-body">{inner}</div>
-      </details>
+      // Wrapped in .controls so the disclosure and its selects inherit the site's
+      // control sizing (44px tall, 16px selects on mobile) — a bare .filterset
+      // sits outside that cascade and renders unstyled, browser-default dropdowns.
+      <div className="controls filterbar-collapse">
+        <details className="filterset">
+          <summary>
+            {mobileSummary}
+            {activeCount > 0 && <span className="filterset-count">{activeCount}</span>}
+          </summary>
+          <div className="filterset-body">{inner}</div>
+        </details>
+      </div>
     );
   }
 

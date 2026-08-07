@@ -5,7 +5,7 @@ import type { Provenance } from '../lib/context';
 // The short text that rides on a data-row badge (the full names live in
 // PROVENANCE_NAME, shared with the FilterBar).
 const BADGE_TEXT: Record<Provenance, string> = {
-  'released-payment': 'released',
+  'released-payment': 'included',
   augment: 'augment',
   grunnel: 'grunnel',
   withheld: 'est.',

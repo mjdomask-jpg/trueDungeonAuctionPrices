@@ -21,7 +21,7 @@ export const CONTEXT_PROVENANCES: Provenance[] = ['released-payment', 'augment',
 // popover titles. Lives here (a non-component module) so both can import it
 // without tripping React Fast Refresh's "components only" rule.
 export const PROVENANCE_NAME: Record<Provenance, string> = {
-  'released-payment': 'Released payment',
+  'released-payment': 'Bonus included',
   augment: 'Augment',
   grunnel: 'Grunnel',
   withheld: 'Withheld (est.)',
@@ -37,11 +37,13 @@ export type FilterState = {
 };
 
 // Freshly clone the Set each time so no two providers share a mutable default.
+// All provenances start on, withheld estimates included: the provenance filter now
+// lives only on the Augments & Withheld page, whose whole point is to show them.
 export const makeDefaultFilters = (): FilterState => ({
   source: 'all',
   trentPricing: 'nominal',
   auctionType: 'all',
-  provenance: new Set<Provenance>(['released-payment', 'augment', 'grunnel']),
+  provenance: new Set<Provenance>(['released-payment', 'augment', 'grunnel', 'withheld']),
 });
 
 export type FiltersApi = {

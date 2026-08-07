@@ -34,6 +34,15 @@ export const ERAS = {
   // season prices. Mirrors the dashboard's "Last 5" recency window. (data-audit §6.1)
   withheldLookbackAuctions: 5,
 
+  // How many of each preorder token a standard order includes, for the Grunnel
+  // analysis's preorder benchmark (mean season price × quantity). Fixed year to
+  // year; keyed on the prices.csv Item CODE (not display name). Backfill here if a
+  // new preorder token appears. (Grunnel analysis: docs/context-layer-design.md §6.2)
+  preorderQuantities: {
+    'Preorder Bonus': 32,
+    'Treasure Chip': 50,
+  } as Record<string, number>,
+
   // Item names that denote RANDOM ULTRA RARES (released auctioneer payment) — the
   // 9–10 unchosen URs that ship with an $8k order. This is DISTINCT from an
   // "Ultra Rare Set" (e.g. "2024 Ultra Rare Set"), which is a curated set from the
