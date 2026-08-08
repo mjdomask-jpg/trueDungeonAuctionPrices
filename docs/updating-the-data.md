@@ -252,7 +252,7 @@ change.
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
-| `Link` | Optional | URL to the original forum thread. Shown as the "Auction link" on **open** auctions only — the banner and the Open auctions section; closed auctions no longer link out. Fill it in whenever `Status = Open`; it's the whole point of surfacing a live auction. |
+| `Link` | Optional | URL to the original forum thread; the "Auction link" on the explorer's expanded cards and, always visible, on the open-auctions banner/section. Fill it in especially for any `Open` auction — it's the whole point of surfacing a live auction. |
 | `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. Recorded from 2022 on; `n/a` earlier. |
 | `daysToClose` | Optional | Whole days the auction ran. The Analytics days-to-close chart and every "avg days to close" figure. An auction with this blank is **left out of those averages**, not counted as zero. |
 | `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. Recorded from 2022 on. |

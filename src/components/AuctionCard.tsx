@@ -36,10 +36,24 @@ export function AuctionCard({
           <span className="auction-name">{meta.name}</span>
         </span>
         {/* Only Closed auctions are listed, so the date is always a close
-            date — labelling it says which date it is without a status chip.
-            No auction link here: the forum thread of a closed auction is
-            archival, so the link is reserved for the open-auctions cards. */}
+            date — labelling it says which date it is without a status chip. */}
         <span className="auction-when">Closed: {date ?? 'unknown'}</span>
+        {/* Shown only once the card is open — on a list of 271 collapsed cards
+            it would be 271 outbound links competing with the disclosure. (Open
+            auctions differ: there are only a handful, so their card shows the
+            link collapsed too.) stopPropagation because a click inside a
+            <summary> would otherwise toggle the card shut on the way out. */}
+        {open && meta.link && (
+          <a
+            className="auction-link"
+            href={meta.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Auction link ↗
+          </a>
+        )}
       </summary>
 
       {/* Body is mounted only while open. With every auction listed that's the
