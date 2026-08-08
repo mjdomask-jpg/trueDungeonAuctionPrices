@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows, asTenXSales,
+  exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows, asTenXSales, openAuctions,
   EMPTY_FILTERS, DEFAULT_SORT, COMPACT_SORT_KEYS,
   type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
@@ -11,6 +11,7 @@ import { applyViewFilters, passesAuctionFilters } from '../lib/context';
 import { useTenX } from '../hooks/useTenX';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { AuctionCard } from '../components/AuctionCard';
+import { OpenAuctionCard } from '../components/OpenAuctionCard';
 import { SaleTable } from '../components/SaleTable';
 import { FilterBar } from '../components/FilterBar';
 import { TenXToggle } from '../components/TenXToggle';
@@ -83,6 +84,12 @@ export default function ExplorerPage() {
 
   const options = useMemo(() => explorerOptions(viewSales, viewMeta), [viewSales, viewMeta]);
   const result = useMemo(() => exploreAuctions(viewSales, viewMeta, filters), [viewSales, viewMeta, filters]);
+
+  // Currently-open auctions, shown in their own section at the top. Read from the
+  // UNFILTERED meta on purpose: it's a standalone "what's live right now" list,
+  // not part of the closed-sales explorer below, so the page's season/category/
+  // search and the shared Source/type filters must not hide a live auction.
+  const openList = useMemo(() => openAuctions(meta), [meta]);
 
   // Phones get a three-column table (see SaleTable), so only those three keys
   // have a header to sort from. A sort picked on a wide screen — auctioneer,
@@ -175,6 +182,19 @@ export default function ExplorerPage() {
 
   return (
     <>
+      {/* Live-ish "what's open right now" — sits above the closed-auction
+          explorer and always renders, carrying the quiet reassurance line when
+          nothing is open so the feature never looks broken/absent. */}
+      <section className="open-section" aria-labelledby="open-heading">
+        <h2 id="open-heading" className="section-heading">Open auctions</h2>
+        {openList.length === 0 ? (
+          <p className="empty open-empty">No auctions currently open — check back soon.</p>
+        ) : (
+          openList.map((m) => <OpenAuctionCard key={m.auctionId} meta={m} />)
+        )}
+      </section>
+
+      <h2 className="section-heading">Historical auctions</h2>
       <PageIntro short="What every token went for in every closed auction.">
         What every token went for in every closed auction — the rows behind the
         averages on <Link to="/">Prices</Link>, including the{' '}

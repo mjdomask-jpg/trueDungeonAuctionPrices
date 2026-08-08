@@ -217,6 +217,29 @@ export function seasonsOf(sales: Sale[]): string[] {
   return [...new Set(sales.map((s) => s.season))].sort((a, b) => Number(b) - Number(a));
 }
 
+// Auctions currently accepting bids: Status is "Open" in auctionMetadata. Rare —
+// usually 0-3 run at once, and most of the season none do. Sorted most-recently-
+// opened first (openDate desc, then auction number as a tiebreak for same-day
+// opens). This is "live-ish": it's only as current as the last data export, so
+// the UI shows how long ago each opened rather than implying real time.
+export function openAuctions(meta: AuctionMeta[]): AuctionMeta[] {
+  return meta
+    .filter((m) => m.status === 'Open')
+    .sort((a, b) => b.openDate.localeCompare(a.openDate) || b.auctionNumber - a.auctionNumber);
+}
+
+// Whole days between an ISO date-only string ("YYYY-MM-DD") and today, compared
+// on calendar dates (so "opened yesterday" reads as 1 regardless of the clock
+// time). Null when the date is missing/unparseable; never negative. Powers the
+// "opened N days ago" line on open auctions.
+export function daysSince(iso: string, now: Date = new Date()): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
+  if (!m) return null;
+  const then = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.max(0, Math.round((today - then) / 86_400_000));
+}
+
 export type PricedAuction = {
   season: string;
   auctionNumber: number;

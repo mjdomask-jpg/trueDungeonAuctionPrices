@@ -252,8 +252,8 @@ change.
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
-| `Link` | Optional | URL to the original forum thread; the explorer's "Auction link". |
-| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it. Recorded from 2022 on; `n/a` earlier. |
+| `Link` | Optional | URL to the original forum thread; the "Auction link" on the explorer's expanded cards and, always visible, on the open-auctions banner/section. Fill it in especially for any `Open` auction — it's the whole point of surfacing a live auction. |
+| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. Recorded from 2022 on; `n/a` earlier. |
 | `daysToClose` | Optional | Whole days the auction ran. The Analytics days-to-close chart and every "avg days to close" figure. An auction with this blank is **left out of those averages**, not counted as zero. |
 | `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. Recorded from 2022 on. |
 | `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced. Recorded from 2023 on. Reserved for a future "augmented auctions" view. |
@@ -261,8 +261,14 @@ change.
 ### Rules that matter
 
 - **Only `Status = Closed` auctions are counted.** `Failed` and `Open` auctions
-  are loaded but excluded from every count and statistic. Currently 271 of 276
-  rows are `Closed`.
+  are loaded but excluded from every count and statistic. The vast majority of
+  rows are `Closed`; a handful are `Failed`, and any currently-live auctions are
+  `Open`.
+- **`Open` auctions are surfaced separately** by the live "open auctions" banner
+  (top of Prices) and the "Open auctions" section (top of Auction Data). Both
+  read `Status = Open` directly and are independent of every page filter, so a
+  live auction must be marked `Open` to appear — and switched back to `Closed`
+  (or `Failed`) when it ends, or it keeps showing as open.
 - **`closeDate` drives the "Last 5" labels.** The Prices page shows the five most
   recent auctions in a season by date. A missing or wrong `closeDate` puts the
   window in the wrong place.
@@ -279,6 +285,12 @@ change.
 
 Marking an auction closed is **two** edits: set `Status` to `Closed` *and* fill
 in `closeDate`. Setting only one leaves the auction uncounted or unlabelled.
+
+Listing a **live** auction is the mirror: set `Status` to `Open` and fill in
+`Link` and `openDate`. The open-auctions banner/section shows the name as a link
+and an "opened N days ago" line, so both fields are what make a live listing
+useful. When it ends, switch `Status` back to `Closed`/`Failed` (and add
+`closeDate`) or it will keep showing as open.
 
 ---
 

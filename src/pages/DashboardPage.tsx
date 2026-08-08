@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, type ItemRow,
+  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, openAuctions, type ItemRow,
 } from '../lib/data';
 import { fmtCloseDate } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
@@ -9,6 +9,7 @@ import { applyViewFilters, passesAuctionFilters } from '../lib/context';
 import { CategoryTable } from '../components/CategoryTable';
 import { FilterBar } from '../components/FilterBar';
 import { TenXToggle } from '../components/TenXToggle';
+import { OpenAuctionsBanner } from '../components/OpenAuctionsBanner';
 import { useTenX } from '../hooks/useTenX';
 import { compareCategories } from '../lib/categories';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
@@ -91,6 +92,10 @@ export default function DashboardPage() {
       && passesAuctionFilters(m, filters, goldenTicketAuctions))
     .length;
 
+  // Auctions live right now, across all seasons — the banner is season-agnostic
+  // (an open auction is worth surfacing whatever season you're viewing).
+  const openList = useMemo(() => openAuctions(meta), [meta]);
+
   // Global intro stats (across all seasons).
   const totalClosedAuctions = meta.filter((m) => m.status === 'Closed').length;
   const firstYear = seasons[seasons.length - 1];
@@ -111,6 +116,7 @@ export default function DashboardPage() {
 
   return (
     <>
+      <OpenAuctionsBanner open={openList} />
       <PageIntro short="Welcome to the True Dungeon Auction Analysis">
         Welcome to the True Dungeon auction analysis! These statistics are calculated
         live from {totalClosedAuctions.toLocaleString()} auctions from {firstYear} to {lastYear}.

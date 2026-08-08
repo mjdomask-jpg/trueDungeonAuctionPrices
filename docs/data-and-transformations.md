@@ -92,7 +92,7 @@ is back-office information retained for reference.
 | `Link` | Optional | URL to view the original auction. |
 | `closeDate` | Yes | Date the auction closed, ISO `YYYY-MM-DD`. Used to label the "Last 5" window in the season stats line. Blank for still-open auctions; older seasons store `n/a`. |
 | `openDate`, `daysToClose` | Optional | Other timing fields. Older seasons store `n/a`. |
-| `Status` | Yes (filter) | Auction outcome: `Closed` (completed), `Failed` (did not fund/complete), `Open` (in progress). The site's auction counts include **only `Closed`**. |
+| `Status` | Yes (filter) | Auction outcome: `Closed` (completed), `Failed` (did not fund/complete), `Open` (in progress). Auction **counts and statistics** include only `Closed`; `Open` rows drive the live open-auctions banner (Prices) and section (Auction Data). |
 | `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal`, month fields | No | Financial/back-office fields not surfaced publicly. |
 
 ### The relationship between the two files

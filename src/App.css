@@ -813,6 +813,56 @@ td.diff.down { color: var(--diff-down); }
 .auction-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .auction-none { margin: 0; font-size: 13px; color: var(--text); }
 
+/* --- Open auctions ("live-ish") ------------------------------------------- */
+
+/* Home-page callout: shown only when something is open (see OpenAuctionsBanner).
+   Red "live" accent so it reads as happening-now, not as an error. The top
+   margin separates it from the nav rule it would otherwise sit tight against. */
+.open-banner {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 24px 0 20px;
+  padding: 12px 14px;
+  background: var(--live-bg);
+  border: 1px solid var(--live);
+  border-radius: 10px;
+  font-size: 15px;
+}
+.open-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px; /* nudge onto the text baseline */
+  border-radius: 50%;
+  background: var(--live);
+}
+.open-banner-text strong { color: var(--text-h); }
+.open-banner-text a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.open-banner-text a:hover { text-decoration: underline; }
+
+/* Section headings on the Auction Data page ("Open auctions", "Historical
+   auctions"). The top margin gives separation from the nav rule / the section
+   above; the Historical heading's own margin sets the gap to the open list. */
+.section-heading {
+  margin: 24px 0 12px;
+  font-size: 18px;
+  color: var(--text-h);
+}
+.open-section { margin-bottom: 0; }
+.open-empty {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14px;
+}
+/* An open card carries only a chip row (no sales table), so the facts row's
+   bottom margin — sized for the gap before a table on closed cards — is dead
+   space here. */
+.open-auction .auction-facts { margin-bottom: 0; }
+
 /* Sortable column headers in the explorer's flat view. The <th> keeps its
    alignment; the button fills it so the whole header cell is the hit target. */
 thead th.sortable { padding: 0; }
@@ -1565,6 +1615,10 @@ table.an-opens col.col-days { width: 16%; }
      lets it carry a height without becoming a block and breaking the header
      line it shares with the close date. */
   .auction-link { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* Open-auctions banner tightens on a phone. Its top margin already clears the
+     mobile nav dropdown, so no separate mobile margin is needed. */
+  .open-banner { font-size: 14px; }
 
   /* --- Expanded auction card table ------------------------------------------
      Token held 32% (96px of 300px) while Category and Price split the rest at
