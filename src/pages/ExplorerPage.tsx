@@ -186,7 +186,7 @@ export default function ExplorerPage() {
           explorer and always renders, carrying the quiet reassurance line when
           nothing is open so the feature never looks broken/absent. */}
       <section className="open-section" aria-labelledby="open-heading">
-        <h2 id="open-heading" className="open-heading">Open auctions</h2>
+        <h2 id="open-heading" className="section-heading">Open auctions</h2>
         {openList.length === 0 ? (
           <p className="empty open-empty">No auctions currently open — check back soon.</p>
         ) : (
@@ -194,6 +194,7 @@ export default function ExplorerPage() {
         )}
       </section>
 
+      <h2 className="section-heading">Historical auctions</h2>
       <PageIntro short="What every token went for in every closed auction.">
         What every token went for in every closed auction — the rows behind the
         averages on <Link to="/">Prices</Link>, including the{' '}

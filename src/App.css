@@ -816,12 +816,13 @@ td.diff.down { color: var(--diff-down); }
 /* --- Open auctions ("live-ish") ------------------------------------------- */
 
 /* Home-page callout: shown only when something is open (see OpenAuctionsBanner).
-   Red "live" accent so it reads as happening-now, not as an error. */
+   Red "live" accent so it reads as happening-now, not as an error. The top
+   margin separates it from the nav rule it would otherwise sit tight against. */
 .open-banner {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin: 0 0 20px;
+  margin: 24px 0 20px;
   padding: 12px 14px;
   background: var(--live-bg);
   border: 1px solid var(--live);
@@ -840,13 +841,15 @@ td.diff.down { color: var(--diff-down); }
 .open-banner-text a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .open-banner-text a:hover { text-decoration: underline; }
 
-/* The "Open auctions" section at the top of the Auction Data page. */
-.open-section { margin-bottom: 28px; }
-.open-heading {
-  margin: 0 0 10px;
+/* Section headings on the Auction Data page ("Open auctions", "Historical
+   auctions"). The top margin gives separation from the nav rule / the section
+   above; the Historical heading's own margin sets the gap to the open list. */
+.section-heading {
+  margin: 24px 0 12px;
   font-size: 18px;
   color: var(--text-h);
 }
+.open-section { margin-bottom: 0; }
 .open-empty {
   margin: 0;
   padding: 14px 16px;
@@ -855,18 +858,10 @@ td.diff.down { color: var(--diff-down); }
   color: var(--text);
   font-size: 14px;
 }
-
-/* Per-auction fact list inside an open card. Plain key/value rows (no chips) —
-   label muted, value in the heading colour, aligned in a two-column grid. */
-.open-facts { margin: 0; font-size: 14px; }
-.open-fact {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  column-gap: 12px;
-  padding: 3px 0;
-}
-.open-fact dt { color: var(--text); }
-.open-fact dd { margin: 0; color: var(--text-h); }
+/* An open card carries only a chip row (no sales table), so the facts row's
+   bottom margin — sized for the gap before a table on closed cards — is dead
+   space here. */
+.open-auction .auction-facts { margin-bottom: 0; }
 
 /* Sortable column headers in the explorer's flat view. The <th> keeps its
    alignment; the button fills it so the whole header cell is the hit target. */
@@ -1621,10 +1616,9 @@ table.an-opens col.col-days { width: 16%; }
      line it shares with the close date. */
   .auction-link { display: inline-flex; align-items: center; min-height: 44px; }
 
-  /* Open-auctions banner + fact list tighten on a phone: smaller banner text,
-     narrower label column so the values keep room at 320px. */
+  /* Open-auctions banner tightens on a phone. Its top margin already clears the
+     mobile nav dropdown, so no separate mobile margin is needed. */
   .open-banner { font-size: 14px; }
-  .open-fact { grid-template-columns: 92px 1fr; }
 
   /* --- Expanded auction card table ------------------------------------------
      Token held 32% (96px of 300px) while Category and Price split the rest at

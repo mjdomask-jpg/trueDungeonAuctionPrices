@@ -1,13 +1,12 @@
-import { fmtCloseDateFull, money0 } from '../lib/format';
+import { fmtDateLong, money0 } from '../lib/format';
 import { daysSince, type AuctionMeta } from '../lib/data';
 
-// One currently-open auction, as a <details> card. Reuses the .auction card
-// styling from the Auction Data explorer: collapsed it shows only the number,
-// name and a link straight to the auction (the primary need — get me there);
-// the secondary detail (auctioneer, funding goal, style…) lives behind the
-// disclosure. Unlike the explorer's AuctionCard the body is cheap (six fact
-// rows, no sales table), so it's a plain uncontrolled <details> — no page-level
-// open state, defaults collapsed.
+// One currently-open auction, styled to match the explorer's AuctionCard so the
+// two read as one family: collapsed shows season · number · name with the open
+// date right-aligned and a link straight to the auction (open auctions get the
+// link; closed ones don't); expanded shows the auction's facts as chips. The
+// body is cheap (a chip row, no sales table), so it's a plain uncontrolled
+// <details> — no page-level open state, defaults collapsed.
 
 // "opened today" / "1 day ago" / "N days ago".
 function agoLabel(n: number): string {
@@ -15,19 +14,20 @@ function agoLabel(n: number): string {
 }
 
 export function OpenAuctionCard({ meta }: { meta: AuctionMeta }) {
-  const openedDate = fmtCloseDateFull(meta.openDate);
+  const date = fmtDateLong(meta.openDate);
   const days = daysSince(meta.openDate);
-  const opened = openedDate && (days == null ? openedDate : `${openedDate} · ${agoLabel(days)}`);
+  const opened = date && (days == null ? date : `${date} · ${agoLabel(days)}`);
 
-  // Key/value facts, all plain text for consistency (no chips). Each is dropped
-  // when its source value is missing/'n/a' so the list never shows an empty row.
-  const facts: [string, string][] = [];
-  if (meta.auctioneer && meta.auctioneer !== 'n/a') facts.push(['Auctioneer', meta.auctioneer]);
-  if (opened) facts.push(['Opened', opened]);
-  if (meta.targetFunding != null) facts.push(['Funding goal', money0(meta.targetFunding)]);
-  if (meta.augmented != null) facts.push(['Augmented', meta.augmented ? 'Yes' : 'No']);
-  if (meta.style && meta.style !== 'n/a') facts.push(['Style', meta.style]);
-  if (meta.completionStyle && meta.completionStyle !== 'n/a') facts.push(['Completion', meta.completionStyle]);
+  // Fact chips, same style as AuctionCard's. Style / completion / auctioneer
+  // match the closed cards; funding goal and augmented are the open-only extras.
+  // 'n/a'/blank values are dropped, and Augmented shows only when the auction
+  // actually is augmented (never a "No" chip).
+  const chips: string[] = [];
+  if (meta.style && meta.style !== 'n/a') chips.push(meta.style);
+  if (meta.completionStyle && meta.completionStyle !== 'n/a') chips.push(meta.completionStyle);
+  if (meta.auctioneer && meta.auctioneer !== 'n/a') chips.push(meta.auctioneer);
+  if (meta.targetFunding != null) chips.push(`Goal: ${money0(meta.targetFunding)}`);
+  if (meta.augmented) chips.push('Augmented');
 
   return (
     <details className="auction open-auction">
@@ -36,10 +36,10 @@ export function OpenAuctionCard({ meta }: { meta: AuctionMeta }) {
           <span className="auction-num">{meta.season} · #{meta.auctionNumber}</span>
           <span className="auction-name">{meta.name}</span>
         </span>
-        {/* Shown on the collapsed card too — with only a handful open at a time
-            this isn't the 271-link problem the explorer has, and one tap to the
-            auction is the whole point. stopPropagation so following the link
-            doesn't also toggle the card. */}
+        {opened && <span className="auction-when">Opened: {opened}</span>}
+        {/* Shown on the collapsed card too — only a handful are ever open at
+            once, and one tap to the auction is the whole point. stopPropagation
+            so following the link doesn't also toggle the card. */}
         {meta.link && (
           <a
             className="auction-link"
@@ -53,16 +53,11 @@ export function OpenAuctionCard({ meta }: { meta: AuctionMeta }) {
         )}
       </summary>
 
-      {facts.length > 0 && (
+      {chips.length > 0 && (
         <div className="auction-body">
-          <dl className="open-facts">
-            {facts.map(([k, v]) => (
-              <div key={k} className="open-fact">
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
-          </dl>
+          <p className="auction-facts">
+            {chips.map((c) => <span key={c} className="cat">{c}</span>)}
+          </p>
         </div>
       )}
     </details>

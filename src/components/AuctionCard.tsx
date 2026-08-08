@@ -1,4 +1,4 @@
-import { fmtCloseDate, money } from '../lib/format';
+import { fmtDateLong, money } from '../lib/format';
 import { TENX_PREFIX } from '../lib/data';
 import type { AuctionGroup } from '../lib/data';
 
@@ -6,14 +6,8 @@ import type { AuctionGroup } from '../lib/data';
 // the individual sales that happened in it. Rendered as a native <details> so
 // the disclosure is keyboard-accessible for free, but the open state is
 // controlled by the page so "expand all" can drive every card at once.
-
-// The close date rendered long-form. The dashboard's fmtCloseDate gives "Oct
-// 16"; here the auctions span eight seasons in one list, so the year matters.
-function longDate(iso: string): string | null {
-  const short = fmtCloseDate(iso);
-  const year = /^(\d{4})-/.exec(iso)?.[1];
-  return short && year ? `${short}, ${year}` : short;
-}
+// Shares its header layout with OpenAuctionCard; the auction link is the one
+// difference — only open auctions carry it (a closed thread is archival).
 
 export function AuctionCard({
   group, open, onToggle,
@@ -23,7 +17,7 @@ export function AuctionCard({
   onToggle: (auctionId: string, open: boolean) => void;
 }) {
   const { meta, rows } = group;
-  const date = longDate(meta.closeDate);
+  const date = fmtDateLong(meta.closeDate);
 
   // Metadata worth showing as chips. 'n/a' and blanks are dropped rather than
   // rendered as empty chips — 42 auctions carry no style or auctioneer at all.
@@ -42,24 +36,10 @@ export function AuctionCard({
           <span className="auction-name">{meta.name}</span>
         </span>
         {/* Only Closed auctions are listed, so the date is always a close
-            date — labelling it says which date it is without a status chip. */}
+            date — labelling it says which date it is without a status chip.
+            No auction link here: the forum thread of a closed auction is
+            archival, so the link is reserved for the open-auctions cards. */}
         <span className="auction-when">Closed: {date ?? 'unknown'}</span>
-        {/* Shares the date's line rather than sitting alone above the table,
-            and only once the card is open — on a list of 271 collapsed cards
-            it would be 271 outbound links competing with the disclosure.
-            stopPropagation because a click inside a <summary> would otherwise
-            toggle the card shut on the way out. */}
-        {open && meta.link && (
-          <a
-            className="auction-link"
-            href={meta.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-          >
-            Auction link ↗
-          </a>
-        )}
       </summary>
 
       {/* Body is mounted only while open. With every auction listed that's the

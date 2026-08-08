@@ -34,6 +34,14 @@ export const fmtCloseDateFull = (iso: string | undefined): string | null => {
   return base && m ? `${base} ${m[1]}` : base;
 };
 
+// "Mon DD, YYYY" — long date with a comma, shared by the auction cards (open and
+// closed) so their header dates read identically. Null when missing/unparseable.
+export const fmtDateLong = (iso: string | undefined): string | null => {
+  const base = fmtCloseDate(iso);
+  const m = /^(\d{4})-/.exec(iso ?? '');
+  return base && m ? `${base}, ${m[1]}` : base;
+};
+
 // Render an absolute instant (an ISO-8601 string with offset, e.g. git's %cI)
 // in US Central time — DST-correct via the IANA zone, so it shows CDT in summer
 // and CST in winter regardless of where the commit was made. Output pairs an
