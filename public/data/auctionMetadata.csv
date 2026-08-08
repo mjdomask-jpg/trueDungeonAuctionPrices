@@ -234,7 +234,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 20263,2026,3,2026 8k Super Condensed Lightning Auction!,Super Condensed,Lightning,Ralykam,https://truedungeon.com/forum?view=topic&catid=584&id=259037#469285,2025-09-25,2025-10-09,14,Failed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$0.00
 20264,2026,4,Flik's 2026 Onyx Augmented Auction,Super Condensed,Lightning,Flik,https://truedungeon.com/forum?view=topic&catid=584&id=259039#469291,2025-09-25,2025-10-16,21,Closed,1,1,"$8,000.00",No,,,-$800.63,-$800.63,"$8,800.63",$181.00
 20265,2026,5,Trent Auction 2,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2025-09-25,2025-09-25,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$197.08
-20266,2026,6,Mike's $8K Golden Ticket ONYX Auction!,Super Condensed,Lightning,Mike Steele,https://truedungeon.com/forum?view=topic&catid=584&id=259041#469300,2025-09-25,2025-09-29,4,Closed,1,1,"$8,000.00",No,,,-$458.45,-$458.45,"$8,458.45",$169.84
+20266,2026,6,Mike's $8K Golden Ticket ONYX Auction!,Super Condensed,Lightning,Mike Steele,https://truedungeon.com/forum?view=topic&catid=584&id=259041#469300,2025-09-25,2025-09-29,4,Closed,1,1,"$8,000.00",Yes,"$1,254.00",,-$458.45,$795.55,"$7,204.45",$169.84
 20267,2026,7,Trent Auction 3,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2025-09-25,2025-09-25,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$173.12
 20268,2026,8,Trent Auction 4,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2025-09-25,2025-09-25,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$162.62
 20269,2026,9,Trent Auction 5,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2025-09-25,2025-09-25,1,Closed,1,1,"$7,500.00",No,,,,$0.00,"$7,500.00",$186.66
@@ -273,7 +273,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 202642,2026,42,Trent Auction 32,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2026-02-22,2026-03-28,34,Closed,5,7,"$7,500.00",No,,,,$0.00,"$7,500.00",$0.00
 202643,2026,43,Trent Auction 33,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2026-03-28,2026-04-09,12,Closed,7,7,"$7,500.00",No,,,,$0.00,"$7,500.00",$0.00
 202644,2026,44,Alesiev's 8K 2026 Super Condensed Augmented Auction,Ultra Condensed,Lightning,alesiev,https://truedungeon.com/forum?view=topic&catid=602&id=259475,2026-04-03,2026-04-11,8,Closed,7,7,"$8,000.00",No,,,,$0.00,"$8,000.00",$0.00
-202645,2026,45,Mike's $8K Augmented Auction w/ GT!,Ultra Condensed,Lightning,Mike Steele,https://truedungeon.com/forum?view=topic&catid=584&id=259482#474119,2026-04-11,2026-06-28,78,Closed,7,10,"$8,000.00",Yes,$596.00,$360.00,-$916.91,$39.09,"$7,960.91",$0.00
+202645,2026,45,Mike's $8K Augmented Auction w/ GT!,Ultra Condensed,Lightning,Mike Steele,https://truedungeon.com/forum?view=topic&catid=584&id=259482#474119,2026-04-11,2026-06-28,78,Closed,7,10,"$8,000.00",Yes,"$1,467.00",$360.00,-$916.91,$910.09,"$7,089.91",$0.00
 202646,2026,46,Alesiev's Pre-GenCon 8K Auction - With Augments - Ends 7/17,Ultra Condensed,Fixed Date,alesiev,https://truedungeon.com/forum?view=topic&catid=602&id=259691,2026-06-17,2026-07-17,30,Closed,9,10,"$8,000.00",Yes,"$1,909.04",,,"$1,909.04","$6,090.96",$0.00
-,,,,,,,,,,,,#NUM!,,"$7,500.00",No,,,,$0.00,"$7,500.00",$0.00
+202647,2026,47,Alesiev's FINAL 2026 Token Auction - With Augments!,Ultra Condensed,Lightning,alesiev,https://truedungeon.com/forum?view=topic&catid=584&id=259798,2026-08-07,,,Open,11,,"$8,000.00",Yes,$10.00,$178.00,,$188.00,"$7,812.00",$0.00
 ,,,,,,,,,,,,#NUM!,,"$7,500.00",No,,,,$0.00,"$7,500.00",$0.00
