@@ -45,6 +45,11 @@
   --diff-up: #b91c1c;
   --diff-down: #15803d;
 
+  /* "Live" accent for the open-auctions banner + status dot. A REC-style red
+     that reads as "happening now"; dark step below. */
+  --live: #b91c1c;
+  --live-bg: rgba(185, 28, 28, 0.08);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --serif: Georgia, 'Times New Roman', serif;
   --display: 'Caslon Antique', Georgia, serif;
@@ -93,6 +98,9 @@
 
   --diff-up: #f87171;
   --diff-down: #4ade80;
+
+  --live: #f87171;
+  --live-bg: rgba(248, 113, 113, 0.12);
 }
 
 * { box-sizing: border-box; }
