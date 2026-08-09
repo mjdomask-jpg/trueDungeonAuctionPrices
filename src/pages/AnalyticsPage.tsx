@@ -5,6 +5,7 @@ import {
 } from '../lib/analytics';
 import { CurrentYearStats } from '../components/CurrentYearStats';
 import { HistoricalStats } from '../components/HistoricalStats';
+import { QuartileStats } from '../components/QuartileStats';
 import { ContextAnalytics } from '../components/ContextAnalytics';
 import { PageIntro } from '../components/PageIntro';
 
@@ -17,7 +18,7 @@ import { PageIntro } from '../components/PageIntro';
 // metadata actually contains, and it opens on the newest season carrying
 // cadence data. When the sheet exports a 2027 season, this page follows.
 
-type View = 'current' | 'historical' | 'context';
+type View = 'current' | 'historical' | 'quartiles' | 'context';
 
 export default function AnalyticsPage() {
   const { meta, sales, contextItems, auctionContext, groupRows, loading, error } = useAuctionData();
@@ -41,9 +42,10 @@ export default function AnalyticsPage() {
 
   return (
     <>
-      <PageIntro className="lede" short="Statistics about the auctions themselves.">
+      <PageIntro className="lede" short="Statistics about the auctions, and how token prices were distributed.">
         Statistics about the auctions themselves — who ran them, when they opened, and how long
-        they took to close — rather than what the tokens sold for.
+        they took to close — plus, under Quartiles, how each token's sale prices were distributed
+        within a year.
       </PageIntro>
 
       <div className="controls">
@@ -57,6 +59,10 @@ export default function AnalyticsPage() {
             <button type="button" className={view === 'historical' ? 'on' : undefined}
               aria-pressed={view === 'historical'} onClick={() => setView('historical')}>
               Historical
+            </button>
+            <button type="button" className={view === 'quartiles' ? 'on' : undefined}
+              aria-pressed={view === 'quartiles'} onClick={() => setView('quartiles')}>
+              Quartiles
             </button>
             <button type="button" className={view === 'context' ? 'on' : undefined}
               aria-pressed={view === 'context'} onClick={() => setView('context')}>
@@ -94,6 +100,7 @@ export default function AnalyticsPage() {
         )
       )}
       {view === 'historical' && <HistoricalStats meta={meta} sales={sales} />}
+      {view === 'quartiles' && <QuartileStats sales={sales} groupRows={groupRows} />}
       {view === 'context' && (
         <ContextAnalytics
           meta={meta} sales={sales}

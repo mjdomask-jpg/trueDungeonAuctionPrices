@@ -516,6 +516,79 @@ td.diff.down { color: var(--diff-down); }
   flex: none;
 }
 
+/* --- Quartiles (Analytics → box plots + quartile tables) ----------------
+   Reuses the Timelines .chartwrap / .chart-legend / .chart-tooltip furniture;
+   these add only what the box plot's stat read-out and the quartile table need. */
+
+/* The box-plot read-out lists a token's five-number summary top-down (Max→Min),
+   so it reads the same direction as the box it points at. The header dot is not
+   in a flex row (unlike the timeline tooltip's list items), so give it a box. */
+.chart-tooltip .tt-date .dot { display: inline-block; vertical-align: baseline; }
+.chart-tooltip .tt-stats .tt-sep {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+/* Desktop quartile table sits under its box plot in the same .cat-section. */
+.qt-table { margin-top: 12px; }
+.qt-table td.token .swatch,
+.qt-cards .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 7px;
+  vertical-align: baseline;
+  flex: none;
+}
+
+/* Phone layout: one card per token instead of an eight-column table, so nothing
+   clips and the page never scrolls sideways. */
+.qt-cards {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.qt-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.qt-cardhead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  font-family: var(--sans);
+  font-weight: 600;
+  color: var(--text-h);
+}
+.qt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 10px;
+  margin: 0;
+}
+.qt-grid > div { display: flex; flex-direction: column; }
+.qt-grid dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text);
+}
+.qt-grid dd {
+  margin: 0;
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
 /* --- Transmutes / build-vs-buy (Phase 4) ------------------------------- */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -1607,8 +1680,11 @@ table.an-opens col.col-days { width: 16%; }
 
   /* The segmented control sets its height on the wrapper, so its 1px borders
      came off the buttons inside and left them 42.5px. Let the wrapper size to
-     its content and put the 44px on the buttons themselves. */
-  .toggle-buttons { height: auto; }
+     its content and put the 44px on the buttons themselves. Cap it at the
+     viewport and let the buttons wrap to a second row: four Analytics views
+     ("…Quartiles…Funding & Context") no longer fit one 375px line, and without
+     the wrap the too-wide control scrolls the whole page sideways. */
+  .toggle-buttons { height: auto; flex-wrap: wrap; max-width: 100%; }
   .toggle-buttons button { min-height: 44px; }
 
   /* An inline anchor is only as tall as its text — 19.5px here. inline-flex
