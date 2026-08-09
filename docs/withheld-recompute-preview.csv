@@ -1,17 +1,17 @@
 auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT_value,delta,status
-202350,Path to Enlightenment (Fragment 1),1,5,-541.64,-615.4,-73.76,recomputed
-202349,Ultra Rare,2,5,-184.41,-174.76,9.65,recomputed
-202334,Patron Pin,1,5,-350.57,-449.2,-98.63,recomputed
-202331,Patron Pin,1,5,-350.57,-488.29,-137.72,recomputed
-202327,Patron Pin,1,5,-336.33,-501.09,-164.76,recomputed
-202327,Path to Enlightenment (Fragment 1),1,5,-541.64,-533.6,8.04,recomputed
-202312,Patron Pin,1,5,-336.33,-434.0,-97.67,recomputed
 20236,Ring of the 4th Circle,2,5,-169.6,-164.0,5.6,recomputed
 20236,Ring of the 4th Circle,1,5,-84.8,-82.0,2.8,recomputed
 20236,Ultra Rare,4,5,-316.76,-384.0,-67.24,recomputed
 20236,Adventurers' Guild Button,2,5,-10.5,-2.0,8.5,recomputed
 20236,Amulet of Magnifying,1,5,-0.51,-0.8,-0.29,recomputed
 20236,Amulet of Magnifying,1,5,-0.51,-0.8,-0.29,recomputed
+202312,Patron Pin,1,5,-336.33,-434.0,-97.67,recomputed
+202327,Patron Pin,1,5,-336.33,-501.09,-164.76,recomputed
+202327,Path to Enlightenment (Fragment 1),1,5,-541.64,-533.6,8.04,recomputed
+202331,Patron Pin,1,5,-350.57,-488.29,-137.72,recomputed
+202334,Patron Pin,1,5,-350.57,-449.2,-98.63,recomputed
+202349,Ultra Rare,2,5,-184.41,-174.76,9.65,recomputed
+202350,Path to Enlightenment (Fragment 1),1,5,-541.64,-615.4,-73.76,recomputed
 202351,Path to Enlightenment (Fragment 1),1,5,-541.64,-615.4,-73.76,recomputed
 20242,Ring of the 3rd Circle,1,10,-104.21,-108.6,-4.39,recomputed
 20242,Ring of the 3rd Circle,1,10,-104.21,-108.6,-4.39,recomputed
@@ -58,9 +58,9 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20255,Mark of the 2nd Tenet,2,8,-161.54,-161.94,-0.4,recomputed
 202520,Ring of the 2nd Circle,4,8,-315.43,-307.5,7.93,recomputed
 202545,Path to Enlightenment (Fragment 3),1,5,-1330.89,-1174.0,156.89,recomputed
-20266,Ring of the 1st Circle,4,10,-458.45,-448.2,10.25,recomputed
 20264,Ring of the 1st Circle,4,10,-458.45,-467.48,-9.03,recomputed
 20264,Mark of the 1st Tenet,3,10,-342.18,-364.95,-22.77,recomputed
+20266,Ring of the 1st Circle,4,10,-458.45,-448.2,10.25,recomputed
 202632,Patron Pin,1,5,-383.44,-369.0,14.44,recomputed
 202634,Oil of Enchantment,2,8,-84.28,-87.67,-3.39,recomputed
 202634,Elven Bismuth,2,8,-59.76,-65.28,-5.52,recomputed
