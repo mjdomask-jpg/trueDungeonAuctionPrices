@@ -1,9 +1,11 @@
 # Updating the data — the full runbook
 
-Everything on the live site is computed from eight CSV files in `public/data/`.
-Six of them are exported from the Google Sheet; two are edited by hand. Nothing
-is precomputed and nothing is stored in a database — change a CSV, and every
-number, chart and table recomputes itself.
+Everything on the live site is computed from the CSV files in `public/data/`.
+Most are exported from the Google Sheet, a few are edited by hand, and one —
+`rawPricesData.csv` — is the per-lot sales export (Trent auctions only) that
+drives the Analytics → **Quartiles** view. Nothing is precomputed and nothing is
+stored in a database — change a CSV, and every number, chart and table
+recomputes itself.
 
 This document assumes no prior knowledge. Work top to bottom the first time.
 
@@ -176,6 +178,7 @@ open the live site and confirm your change is visible.
 | Change chart groupings or line colours | [`tokenGroups.csv`](#hand-authored-files) |
 | Change how a reward-only token is priced | [`derivedPrices.csv`](#hand-authored-files) |
 | Record a withheld / augment / grunnel item for an auction | [`contextItems.csv`](#contextitemscsv) |
+| Refresh the per-lot sale data behind the Quartiles view | [`rawPricesData.csv`](#rawpricesdatacsv) |
 
 A new auction with results typically means **two** files:
 `auctionMetadata.csv` (the auction itself) and `prices.csv` (what sold in it).
@@ -330,6 +333,49 @@ the Transmutes page. This is the single most important file.
 
 Adding sales for a brand-new token means updating `tokenMetadata.csv` too, or
 the Transmutes page can't resolve it. The validator will tell you.
+
+---
+
+## `rawPricesData.csv`
+
+**Export from:** Trent's per-lot sales spreadsheet (the Excel file behind the
+max/min pivots that feed `prices.csv`) → save the flat sheet as
+**`rawPricesData.csv`**.
+
+**Drives:** the Analytics → **Quartiles** view *only*. Nothing else reads it, so
+a stale or missing file affects that one view and no other page.
+
+**Update when:** you have refreshed per-lot Trent results. ~18,000 rows today.
+Unlike `prices.csv` (which keeps only each auction's high/low points), this is
+**every individual lot**, which is what makes the box plots and quartile tables
+possible. Trent auctions only, 2023 on.
+
+### Columns
+
+| Column | Required | Notes |
+|---|---|---|
+| `auctionSeason` | **Yes** | Four-digit year. Drives the Quartiles year selector. |
+| `Item` | **Yes** | The stable internal name — must match the `Item` spelling used in `prices.csv` / `tokenGroups.csv`, or the token won't join a chart group. |
+| `Price` | **Yes** | The **per-unit** sale price (a 10× lot's `trentPrice` ÷ 10). `$` and commas are stripped; `$0.00` and non-numeric rows are dropped as unsold/placeholder. |
+| `Category` | **Yes** | See the shared list above. |
+| `auctionId`, `auctionNumber`, `trentName`, `trentPrice` | No | Present for the sheet's own max/min pivots; the site ignores them. |
+
+### Rules that matter
+
+- **One row per lot.** A token sold 40 times in an auction is 40 rows — that
+  volume is the point. The Quartiles view summarises each year's lots per token.
+- **`Item` must match `tokenGroups.csv`.** Tokens are grouped exactly as on
+  Timelines. A token present here but absent from the grouping file falls under
+  the view's "not charted" note; a typo'd grouping entry whose category *is* in
+  this file shows a red "unmatched" warning.
+- **`$0.00` lots are excluded** from the quartile math (unsold/placeholder lots);
+  keeping them would pin every whisker to $0.
+
+### Gotcha
+
+The `Category` values `Golden Ticket`, `Condensed`, and `Safehold` never appear
+in this file (Trent doesn't auction those per-lot), so grouped tokens in those
+categories are silently skipped here — that is expected, not an error.
 
 ---
 
