@@ -187,7 +187,6 @@ export default function DashboardPage() {
             </select>
           </label>
         )}
-        {!onyxView && <TenXToggle on={tenX} onChange={setTenX} label="Show 10x" />}
         {narrow && (
           <div className="toggle" role="group" aria-label="Stat group">
             <span className="toggle-label">Show</span>
@@ -202,6 +201,13 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+        )}
+        {/* On a phone this drops onto its own line below the Season row
+            (.tenx-own-line); on desktop there's room for it to sit inline on the
+            Season/Category line. Sits last so the phone order is Season,
+            (Show Last 5/Full Season), then this checkbox. */}
+        {!onyxView && (
+          <TenXToggle on={tenX} onChange={setTenX} className="tenx-own-line" />
         )}
       </div>
 
