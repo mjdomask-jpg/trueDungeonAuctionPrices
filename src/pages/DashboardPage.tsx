@@ -15,13 +15,14 @@ import { compareCategories } from '../lib/categories';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
-// Which sale feed the Prices page shows, chosen by the view toggle. 'standard'
-// is the main list; 'all' also appends the Onyx chase set; 'onyx' is that set
-// alone. The Onyx page folded in here (it was the same aggregation on onyxSales),
-// so /onyx now deep-links this page with the Onyx view preselected.
+// Which sale feed the Prices page shows, chosen by the view toggle. 'all' is the
+// default — the main list plus the Onyx chase set; 'standard' is the main list
+// alone; 'onyx' is that set alone. The Onyx page folded in here (it was the same
+// aggregation on onyxSales), so /onyx now deep-links this page with the Onyx view
+// preselected.
 export type PriceView = 'standard' | 'all' | 'onyx';
 
-export default function DashboardPage({ initialView = 'standard' }: { initialView?: PriceView }) {
+export default function DashboardPage({ initialView = 'all' }: { initialView?: PriceView }) {
   const { sales, onyxSales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters } = useFilters();
   const [view, setView] = useState<PriceView>(initialView);
@@ -148,13 +149,13 @@ export default function DashboardPage({ initialView = 'standard' }: { initialVie
         <div className="toggle" role="group" aria-label="Price view">
           <span className="toggle-label">View</span>
           <div className="toggle-buttons">
-            <button type="button" className={view === 'standard' ? 'on' : undefined}
-              aria-pressed={view === 'standard'} onClick={() => setView('standard')}>
-              Standard
-            </button>
             <button type="button" className={view === 'all' ? 'on' : undefined}
               aria-pressed={view === 'all'} onClick={() => setView('all')}>
               All
+            </button>
+            <button type="button" className={view === 'standard' ? 'on' : undefined}
+              aria-pressed={view === 'standard'} onClick={() => setView('standard')}>
+              Standard
             </button>
             <button type="button" className={onyxView ? 'on' : undefined}
               aria-pressed={onyxView} onClick={() => setView('onyx')}>
