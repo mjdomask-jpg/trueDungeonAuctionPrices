@@ -187,7 +187,6 @@ export default function DashboardPage() {
             </select>
           </label>
         )}
-        {!onyxView && <TenXToggle on={tenX} onChange={setTenX} label="Show 10x" />}
         {narrow && (
           <div className="toggle" role="group" aria-label="Stat group">
             <span className="toggle-label">Show</span>
@@ -202,6 +201,13 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+        )}
+        {/* Full phrasing on desktop (matching the other pages); the shorter
+            "Show 10x" only where the row is tight, on phones. Sits last so the
+            order reads Season, (Show Last 5/Full Season), then this checkbox. */}
+        {!onyxView && (
+          <TenXToggle on={tenX} onChange={setTenX}
+            label={narrow ? 'Show 10x' : 'Show Trade 1 as 10x'} />
         )}
       </div>
 
