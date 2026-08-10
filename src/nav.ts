@@ -6,8 +6,7 @@ export type NavItem = { path: string; label: string };
 
 export const navItems: NavItem[] = [
   { path: '/', label: 'Prices' },
-  { path: '/timelines', label: 'Timelines' },
-  { path: '/compare', label: 'Compare Years' },
+  { path: '/trends', label: 'Trends' },
   { path: '/transmutes', label: 'Transmutes' },
   { path: '/explorer', label: 'Auction Data' },
   { path: '/analytics', label: 'Analytics' },

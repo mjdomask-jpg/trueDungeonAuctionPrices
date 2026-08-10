@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { seasonsOf, groupedTimelines, tenXTimelinePoints, TRADE_1, TENX_PREFIX } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { useFilters } from '../data/filtersContext';
@@ -8,15 +7,15 @@ import { PriceTimeline } from '../components/PriceTimeline';
 import { FilterBar } from '../components/FilterBar';
 import { TenXToggle } from '../components/TenXToggle';
 import { useTenX } from '../hooks/useTenX';
-import { PageIntro } from '../components/PageIntro';
 
-// Price Timelines (Phase 2). Every token's per-auction average price over a
-// season, shown at once as a stack of charts. Tokens are grouped (via
-// public/data/tokenGroups.csv) so each chart holds similarly-priced tokens on a
-// readable linear axis; charts are ordered by the file's Group Order. A group
-// may span categories, so the page is a flat ordered list, not category
-// sections. See docs/expansion-plan.md §6 / the grouping CSV for authoring.
-export default function TimelinesPage() {
+// The "Over a season" lens of the Trends page (Phase 2). Every token's
+// per-auction average price over a season, shown at once as a stack of charts.
+// Tokens are grouped (via public/data/tokenGroups.csv) so each chart holds
+// similarly-priced tokens on a readable linear axis; charts are ordered by the
+// file's Group Order. A group may span categories, so this is a flat ordered
+// list, not category sections. See the grouping CSV for authoring. Rendered by
+// TrendsPage, which owns the intro and the view toggle.
+export function TimelineTrends() {
   const { sales, meta, groupRows, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters } = useFilters();
   const [season, setSeason] = useState('');
@@ -60,13 +59,6 @@ export default function TimelinesPage() {
 
   return (
     <>
-      <PageIntro short="Track how each token's auction price moved across a season.">
-        How each token's auction price moved across a season. Every point is one auction's{' '}
-        <strong>average</strong> sale price, ordered by close date; tokens are grouped so
-        similarly-priced ones share a chart. For per-season min/max/avg tables, see{' '}
-        <Link to="/">Prices</Link>.
-      </PageIntro>
-
       <div className="controls">
         <label>
           Season

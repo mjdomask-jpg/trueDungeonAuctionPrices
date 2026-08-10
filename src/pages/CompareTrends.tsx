@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { seasonsOf, compareSeasons, pctChange, type CompareRow, type StatKind } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { useFilters } from '../data/filtersContext';
@@ -7,7 +6,6 @@ import { applyViewFilters } from '../lib/context';
 import { CompareTable } from '../components/CompareTable';
 import { FilterBar } from '../components/FilterBar';
 import { compareCategories } from '../lib/categories';
-import { PageIntro } from '../components/PageIntro';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 type SortMode = 'category' | 'movers';
@@ -18,11 +16,13 @@ const STAT_OPTIONS: { key: StatKind; label: string }[] = [
   { key: 'min', label: 'Min' },
 ];
 
-// Compare Years (Phase 3). Pick two seasons; see each token's full-season
-// Max/Avg/Min side by side plus the % change in average, keyed on the canonical
-// Item so a renamed token still lines up across years. Two views: grouped by
-// category (default) or a single table sorted by biggest average move.
-export default function ComparePage() {
+// The "Year over year" lens of the Trends page (Phase 3). Pick two seasons; see
+// each token's full-season Max/Avg/Min side by side plus the % change in
+// average, keyed on the canonical Item so a renamed token still lines up across
+// years. Two sub-views: grouped by category (default) or a single table sorted
+// by biggest average move. Rendered by TrendsPage, which owns the intro and the
+// view toggle.
+export function CompareTrends() {
   const { sales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters } = useFilters();
   const seasons = useMemo(() => seasonsOf(sales), [sales]); // newest first, unfiltered
@@ -117,21 +117,6 @@ export default function ComparePage() {
 
   return (
     <>
-      <PageIntro short="How each token's full-season price changed between two years.">
-        How each token's full-season price changed between two years.{' '}
-        {narrow ? (
-          <>Pick <strong>Avg</strong>, <strong>Max</strong>, or <strong>Min</strong> to see
-          that full-season value for each year; <strong>Δ</strong> is its change from the
-          left year to the right.</>
-        ) : (
-          <>Values are Max / Avg / Min for the whole season; <strong>Δ Avg</strong> is the
-          change in average from the left year to the right.</>
-        )}{' '}
-        Tokens are matched across years by their role, so a renamed token still lines
-        up — <em>{newer} name / {older} name</em> when it changed. For a single season's
-        detail, see <Link to="/">Prices</Link>.
-      </PageIntro>
-
       <div className="controls">
         <label>
           Season A
