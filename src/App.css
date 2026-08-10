@@ -206,12 +206,16 @@ header h1 {
   accent-color: var(--accent);
   cursor: pointer;
 }
-/* Prices forces the 10x checkbox onto its own line beneath the Season row (see
-   DashboardPage): a full-width basis wraps it clear of the sibling selects, and
-   it left-aligns since it no longer bottom-aligns against them. */
-.controls .tenx-check.tenx-own-line {
-  flex-basis: 100%;
-  align-self: flex-start;
+/* On a phone, Prices drops the 10x checkbox onto its own line beneath the Season
+   row (see DashboardPage): a full-width basis wraps it clear of the sibling
+   selects, left-aligned since it no longer bottom-aligns against them. On desktop
+   there's room for it to sit inline on the Season/Category line, so this is
+   scoped to the narrow breakpoint. */
+@media (max-width: 640px) {
+  .controls .tenx-check.tenx-own-line {
+    flex-basis: 100%;
+    align-self: flex-start;
+  }
 }
 
 /* --- Auction context layer: provenance badges + filter -------------------- */

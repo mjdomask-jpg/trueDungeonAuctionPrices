@@ -202,10 +202,10 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        {/* Forced onto its own line (.tenx-own-line) below the Season row: the
-            full "Show Trade 1 as 10x" label wraps there on a phone anyway, and
-            keeping it there on desktop too reads consistently. Sits last so the
-            order is Season, (Show Last 5/Full Season), then this checkbox. */}
+        {/* On a phone this drops onto its own line below the Season row
+            (.tenx-own-line); on desktop there's room for it to sit inline on the
+            Season/Category line. Sits last so the phone order is Season,
+            (Show Last 5/Full Season), then this checkbox. */}
         {!onyxView && (
           <TenXToggle on={tenX} onChange={setTenX} className="tenx-own-line" />
         )}
