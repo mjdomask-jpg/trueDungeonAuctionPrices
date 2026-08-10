@@ -63,3 +63,23 @@ export function useFilters(): FiltersApi {
   if (!v) throw new Error('useFilters must be used within a FiltersProvider');
   return v;
 }
+
+// Which context-layer controls a page shows in its FilterBar. Lives here with
+// the filter state so the count helper below can too — both stay in this
+// component-free module, out of FilterBar's Fast-Refresh "components only" file.
+export type FilterControl = 'source' | 'trentPricing' | 'auctionType' | 'provenance';
+
+// How many of the given controls are set away from their default — for a folded
+// panel's "N active" badge (the FilterBar's own collapsed button, and Auction
+// Data's unified Filters disclosure, which counts these alongside its pickers).
+// Provenance defaults to all-on, so any chip switched off counts; Trent pricing
+// only counts when Trent sales are actually in view.
+export function activeFilterCount(filters: FilterState, controls: FilterControl[]): number {
+  const show = (c: FilterControl) => controls.includes(c);
+  const trentInView = filters.source !== 'Forum';
+  const provenanceChanged = CONTEXT_PROVENANCES.some((p) => !filters.provenance.has(p));
+  return (show('source') && filters.source !== 'all' ? 1 : 0)
+    + (show('trentPricing') && trentInView && filters.trentPricing !== 'nominal' ? 1 : 0)
+    + (show('auctionType') && filters.auctionType !== 'all' ? 1 : 0)
+    + (show('provenance') && provenanceChanged ? 1 : 0);
+}
