@@ -1131,6 +1131,11 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
   font-weight: 600;
   pointer-events: none;
 }
+/* Two toggle labels ("Current Year", "Funding & Context") carry a shorter
+   mobile form in a second <span>; the full label shows by default and the
+   short one is swapped in at phone widths (see the max-width: 640px block). */
+.toggle-buttons .lbl-full { display: inline; }
+.toggle-buttons .lbl-short { display: none; }
 .toggle-buttons button + button { border-left: 1px solid var(--border); }
 .toggle-buttons button:hover { color: var(--accent); }
 .toggle-buttons button.on {
@@ -1785,14 +1790,21 @@ table.an-opens col.col-days { width: 16%; }
   .explorer-actions { gap: 10px; flex-wrap: wrap; }
   .explorer-actions button { min-height: 44px; padding: 0 14px; font-size: 13px; }
 
-  /* The segmented control sets its height on the wrapper, so its 1px borders
-     came off the buttons inside and left them 42.5px. Let the wrapper size to
-     its content and put the 44px on the buttons themselves. Cap it at the
-     viewport and let the buttons wrap to a second row: four Analytics views
-     ("…Quartiles…Funding & Context") no longer fit one 375px line, and without
-     the wrap the too-wide control scrolls the whole page sideways. */
-  .toggle-buttons { height: auto; flex-wrap: wrap; max-width: 100%; }
-  .toggle-buttons button { min-height: 44px; }
+  /* Keep the four Analytics views on ONE line at phone widths. The wrapper
+     fills the control row and the buttons share it evenly (flex: 1) so they fit
+     any iPhone from 375px up without wrapping. The two longest labels swap to a
+     shorter mobile form (below) so none of them clip. Notes on the overrides:
+     - the base `height: 100%` becomes an auto height + 44px min so each button
+       keeps a tall touch target without depending on the wrapper's height;
+     - `min-width: 0` lets the flex buttons shrink below their content width
+       instead of overflowing the row and scrolling the page sideways;
+     - the ::after width-reservation ghost is dropped — flex fixes each button's
+       width, so the bold-state jitter it guards against can't happen here. */
+  .toggle-buttons { height: auto; width: 100%; flex-wrap: nowrap; max-width: 100%; }
+  .toggle-buttons button { flex: 1 1 0; min-width: 0; padding: 0 8px; height: auto; min-height: 44px; }
+  .toggle-buttons button::after { display: none; }
+  .toggle-buttons .lbl-full { display: none; }
+  .toggle-buttons .lbl-short { display: inline; }
 
   /* An inline anchor is only as tall as its text — 19.5px here. inline-flex
      lets it carry a height without becoming a block and breaking the header
