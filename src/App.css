@@ -964,7 +964,33 @@ td.diff.down { color: var(--diff-down); }
   font-size: 18px;
   color: var(--text-h);
 }
-.open-section { margin-bottom: 0; }
+/* No standalone "Open auctions" heading any more (Option B) — the section's own
+   top margin supplies the gap the heading used to, for both the strip and the
+   empty line. The Historical heading below sets the gap beneath. */
+.open-section { margin: 24px 0 0; }
+
+/* The open list folded to a one-line strip so the historical data leads the
+   page. Reuses the live banner's colours + dot so "N auctions open now" reads as
+   a status, and the .filterset caret so it reads as expandable. */
+.open-disclosure { margin: 0; }
+.open-disclosure > summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--live); border-radius: 10px; background: var(--live-bg);
+  color: var(--text-h); cursor: pointer;
+  font-size: 15px;
+  list-style: none; /* the default triangle is replaced by ::after below */
+}
+.open-disclosure > summary::-webkit-details-marker { display: none; }
+.open-disclosure > summary .open-dot { margin-top: 0; } /* centred, not baseline-nudged */
+.open-disclosure > summary::after {
+  content: '▸'; margin-left: auto; color: var(--accent);
+  transition: transform 0.12s ease;
+}
+.open-disclosure[open] > summary::after { transform: rotate(90deg); }
+.open-disclosure > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.open-disclosure-body { padding-top: 12px; }
+
 .open-empty {
   margin: 0;
   padding: 14px 16px;
@@ -1043,6 +1069,20 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
    control (season, category, 10x, search) to wrap onto the row beneath it. The
    buttons keep their intrinsic width — only the flex line is full-width. */
 .controls .toggle.view-toggle { flex-basis: 100%; align-items: flex-start; }
+
+/* Auction Data folds its result count + row actions onto the View line: the row
+   spans full width, the toggle sizes to content on the left, the meta-line rides
+   at the right (dropping under the toggle when a phone runs out of room). */
+.controls-top {
+  flex: 1 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.controls .controls-top .toggle.view-toggle { flex-basis: auto; }
+.controls-top .meta-line { margin: 0; }
 .toggle-label {
   font-size: 12px;
   font-weight: 600;

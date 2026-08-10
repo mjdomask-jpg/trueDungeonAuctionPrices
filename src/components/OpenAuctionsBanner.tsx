@@ -31,7 +31,10 @@ export function OpenAuctionsBanner({ open }: { open: AuctionMeta[] }) {
           ))}
         </>}
         {' · '}
-        <Link to="/explorer">see all open →</Link>
+        {/* Link straight to the canonical grouped view (not the bare /explorer,
+            whose router-level redirect would drop the #open fragment) so Auction
+            Data opens with the open list expanded — see ExplorerPage's wantOpen. */}
+        <Link to="/explorer/grouped#open">see all open →</Link>
       </span>
     </div>
   );
