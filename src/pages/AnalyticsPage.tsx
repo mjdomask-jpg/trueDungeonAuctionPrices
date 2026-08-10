@@ -59,7 +59,8 @@ export default function AnalyticsPage() {
           <div className="toggle-buttons">
             <button type="button" data-label="Current Year" className={view === 'current' ? 'on' : undefined}
               aria-pressed={view === 'current'} onClick={() => setView('current')}>
-              Current Year
+              <span className="lbl-full">Current Year</span>
+              <span className="lbl-short">Current</span>
             </button>
             <button type="button" data-label="Historical" className={view === 'historical' ? 'on' : undefined}
               aria-pressed={view === 'historical'} onClick={() => setView('historical')}>
@@ -71,7 +72,8 @@ export default function AnalyticsPage() {
             </button>
             <button type="button" data-label="Funding & Context" className={view === 'context' ? 'on' : undefined}
               aria-pressed={view === 'context'} onClick={() => setView('context')}>
-              Funding &amp; Context
+              <span className="lbl-full">Funding &amp; Context</span>
+              <span className="lbl-short">Funding</span>
             </button>
           </div>
         </div>
