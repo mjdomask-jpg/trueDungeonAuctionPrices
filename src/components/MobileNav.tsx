@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { navItems } from '../nav';
+import { Link, useLocation } from 'react-router-dom';
+import { navItems, navMatch } from '../nav';
 
 // Below 640px the seven-tab strip wraps to three rows and eats a quarter of the
 // viewport before any data shows. On phones we swap it for a single-row menu: a
@@ -11,12 +11,10 @@ export function MobileNav() {
   const location = useLocation();
   const ref = useRef<HTMLDivElement>(null);
 
-  // The current page's label for the closed button. Mirror the tab strip's
-  // matching: exact for '/', longest-prefix for the rest (no path is a prefix
-  // of another, so a plain startsWith is unambiguous).
-  const current = navItems.find((i) =>
-    i.path === '/' ? location.pathname === '/' : location.pathname.startsWith(i.path),
-  );
+  // The current page's label for the closed button. Same matching as the tab
+  // strip (navMatch): a tab owns its whole view subtree, and Prices owns / and
+  // /prices/*.
+  const current = navItems.find((i) => navMatch(i.path, location.pathname));
   const label = current?.label ?? 'Menu';
 
   // Any navigation closes the menu (covers taps on the already-current item too).
@@ -51,13 +49,18 @@ export function MobileNav() {
       </button>
       {open && (
         <ul className="mobile-nav-menu" role="menu">
-          {navItems.map((item) => (
-            <li key={item.path} role="none">
-              <NavLink role="menuitem" to={item.path} end={item.path === '/'}>
-                {item.label}
-              </NavLink>
-            </li>
-          ))}
+          {navItems.map((item) => {
+            const active = navMatch(item.path, location.pathname);
+            return (
+              <li key={item.path} role="none">
+                <Link role="menuitem" to={item.path}
+                  className={active ? 'active' : undefined}
+                  aria-current={active ? 'page' : undefined}>
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

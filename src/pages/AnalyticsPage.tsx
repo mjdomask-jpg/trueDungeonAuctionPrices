@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAuctionData } from '../data/auctionDataContext';
+import { useRoutedView } from '../hooks/useRoutedView';
 import {
   seasonsWithCadence, currentSeason, priorSeason, metaSeasons,
 } from '../lib/analytics';
@@ -22,7 +23,11 @@ type View = 'current' | 'historical' | 'quartiles' | 'context';
 
 export default function AnalyticsPage() {
   const { meta, sales, contextItems, auctionContext, groupRows, loading, error } = useAuctionData();
-  const [view, setView] = useState<View>('current');
+  const [view, setView] = useRoutedView<View>({
+    views: ['current', 'historical', 'quartiles', 'context'],
+    fallback: 'current',
+    pathFor: (v) => `/analytics/${v}`,
+  });
   const [picked, setPicked] = useState<string>('');
 
   // Only seasons with open/close month and duration data can drive the Current
@@ -52,19 +57,19 @@ export default function AnalyticsPage() {
         <div className="toggle" role="group" aria-label="Analytics view">
           <span className="toggle-label">View</span>
           <div className="toggle-buttons">
-            <button type="button" className={view === 'current' ? 'on' : undefined}
+            <button type="button" data-label="Current Year" className={view === 'current' ? 'on' : undefined}
               aria-pressed={view === 'current'} onClick={() => setView('current')}>
               Current Year
             </button>
-            <button type="button" className={view === 'historical' ? 'on' : undefined}
+            <button type="button" data-label="Historical" className={view === 'historical' ? 'on' : undefined}
               aria-pressed={view === 'historical'} onClick={() => setView('historical')}>
               Historical
             </button>
-            <button type="button" className={view === 'quartiles' ? 'on' : undefined}
+            <button type="button" data-label="Quartiles" className={view === 'quartiles' ? 'on' : undefined}
               aria-pressed={view === 'quartiles'} onClick={() => setView('quartiles')}>
               Quartiles
             </button>
-            <button type="button" className={view === 'context' ? 'on' : undefined}
+            <button type="button" data-label="Funding & Context" className={view === 'context' ? 'on' : undefined}
               aria-pressed={view === 'context'} onClick={() => setView('context')}>
               Funding &amp; Context
             </button>

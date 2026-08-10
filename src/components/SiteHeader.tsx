@@ -1,9 +1,9 @@
-import { NavLink } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import type { Theme } from '../hooks/useTheme';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileNav } from './MobileNav';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
-import { navItems } from '../nav';
+import { navItems, navMatch } from '../nav';
 
 // Global site header: title, theme toggle, and (once there's more than one
 // destination) the top-level nav. The desktop tab strip wraps to three rows on
@@ -11,6 +11,7 @@ import { navItems } from '../nav';
 // Page-specific intro text lives on each page.
 export function SiteHeader({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
   const narrow = useMediaQuery(NARROW);
+  const { pathname } = useLocation();
   return (
     <header>
       <ThemeToggle theme={theme} onToggle={onToggleTheme} />
@@ -19,11 +20,18 @@ export function SiteHeader({ theme, onToggleTheme }: { theme: Theme; onToggleThe
         <MobileNav />
       ) : (
         <nav className="site-nav">
-          {navItems.map((item) => (
-            <NavLink key={item.path} to={item.path} end={item.path === '/'}>
-              {item.label}
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            // navMatch, not NavLink's own end/prefix logic: a tab stays active
+            // across its view sub-routes, and Prices owns both / and /prices/*.
+            const active = navMatch(item.path, pathname);
+            return (
+              <Link key={item.path} to={item.path}
+                className={active ? 'active' : undefined}
+                aria-current={active ? 'page' : undefined}>
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       ))}
     </header>

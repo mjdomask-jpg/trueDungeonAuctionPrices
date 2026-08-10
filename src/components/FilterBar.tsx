@@ -52,11 +52,11 @@ export function FilterBar({
         <div className="toggle" role="group" aria-label="Trent pricing">
           <span className="toggle-label">Trent pricing</span>
           <div className="toggle-buttons">
-            <button type="button" className={filters.trentPricing === 'nominal' ? 'on' : undefined}
+            <button type="button" data-label="Nominal" className={filters.trentPricing === 'nominal' ? 'on' : undefined}
               aria-pressed={filters.trentPricing === 'nominal'} onClick={() => setTrentPricing('nominal')}>
               Nominal
             </button>
-            <button type="button" className={filters.trentPricing === 'reward-adjusted' ? 'on' : undefined}
+            <button type="button" data-label="Reward-adj." className={filters.trentPricing === 'reward-adjusted' ? 'on' : undefined}
               aria-pressed={filters.trentPricing === 'reward-adjusted'} onClick={() => setTrentPricing('reward-adjusted')}>
               Reward-adj.
             </button>

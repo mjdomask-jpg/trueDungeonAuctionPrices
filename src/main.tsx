@@ -12,8 +12,14 @@ import { AuctionDataProvider } from './data/AuctionDataProvider.tsx'
 import { FiltersProvider } from './data/FiltersProvider.tsx'
 
 // HashRouter keeps client-side routing working on any static host served from a
-// subpath (base: './') without server rewrites. Routes: App is the layout
-// shell; pages render into its <Outlet/>. Add new pages as sibling <Route>s.
+// subpath (base: './') without server rewrites. App is the layout shell; pages
+// render into its <Outlet/>.
+//
+// Views are routable: each page's view lives in a `:view` path segment
+// (/#/page/view), so every view is a shareable link (see useRoutedView). A bare
+// page path redirects to its default view; legacy single-purpose routes redirect
+// to their new home. Prices is the exception — its All view is the site home at
+// `/`, so it has no /prices/all in the URL (the page canonicalises there).
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
@@ -21,26 +27,35 @@ createRoot(document.getElementById('root')!).render(
         <FiltersProvider>
           <Routes>
             <Route element={<App />}>
-              <Route index element={<DashboardPage key="prices" />} />
-              {/* Timelines + Compare Years merged into Trends behind a view
-                  toggle. The old routes redirect, deep-linking their lens; the
-                  distinct keys force a remount so initialView wins over a reused
-                  TrendsPage instance's view state. */}
-              <Route path="trends" element={<TrendsPage key="trends" />} />
-              <Route path="timelines" element={<TrendsPage key="trends-season" initialView="season" />} />
-              <Route path="compare" element={<TrendsPage key="trends-year" initialView="year" />} />
-              <Route path="transmutes" element={<TransmutesPage />} />
-              {/* Onyx folded into Prices as a view; /onyx deep-links it with the
-                  Onyx view preselected so old bookmarks (and the Auction Data
-                  link) still land on Onyx. The distinct key forces a remount when
-                  crossing between this and the index route, so initialView is
-                  honoured instead of the reused instance's stale view state. */}
-              <Route path="onyx" element={<DashboardPage key="onyx" initialView="onyx" />} />
-              <Route path="explorer" element={<ExplorerPage />} />
-              {/* Augments & Withheld folded into Auction Data (the explorer);
-                  redirect old bookmarks rather than 404 them. */}
-              <Route path="augments" element={<Navigate to="/explorer" replace />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
+              {/* Prices — All is the site home (special-cased); Standard/Onyx
+                  are /prices/:view. An unknown or /prices/all slug canonicalises
+                  back to `/` inside the page. */}
+              <Route index element={<DashboardPage />} />
+              <Route path="prices" element={<Navigate to="/" replace />} />
+              <Route path="prices/:view" element={<DashboardPage />} />
+              <Route path="onyx" element={<Navigate to="/prices/onyx" replace />} />
+
+              {/* Trends — season (default) | yoy. /timelines and /compare were
+                  the two lenses before they merged; keep them as deep-links. */}
+              <Route path="trends" element={<Navigate to="/trends/season" replace />} />
+              <Route path="trends/:view" element={<TrendsPage />} />
+              <Route path="timelines" element={<Navigate to="/trends/season" replace />} />
+              <Route path="compare" element={<Navigate to="/trends/yoy" replace />} />
+
+              {/* Transmutes — one view today; /transmutes/recipes leaves room to
+                  grow without moving the page later. */}
+              <Route path="transmutes" element={<Navigate to="/transmutes/recipes" replace />} />
+              <Route path="transmutes/recipes" element={<TransmutesPage />} />
+
+              {/* Auction Data (explorer) — grouped (default) | full. /augments
+                  folded in here; redirect old bookmarks rather than 404 them. */}
+              <Route path="explorer" element={<Navigate to="/explorer/grouped" replace />} />
+              <Route path="explorer/:view" element={<ExplorerPage />} />
+              <Route path="augments" element={<Navigate to="/explorer/grouped" replace />} />
+
+              {/* Analytics — current (default) | historical | quartiles | context. */}
+              <Route path="analytics" element={<Navigate to="/analytics/current" replace />} />
+              <Route path="analytics/:view" element={<AnalyticsPage />} />
             </Route>
           </Routes>
         </FiltersProvider>
