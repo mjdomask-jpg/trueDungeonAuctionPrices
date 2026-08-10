@@ -1027,6 +1027,11 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
 /* Two-state view toggle. Styled as one segmented control so the pair reads as
    a single choice rather than two independent buttons. */
 .toggle { display: flex; flex-direction: column; gap: 4px; }
+/* Views are a routable, shareable feature now, so the View selector leads on its
+   own line inside .controls: a full-basis flex item forces every following
+   control (season, category, 10x, search) to wrap onto the row beneath it. The
+   buttons keep their intrinsic width — only the flex line is full-width. */
+.controls .toggle.view-toggle { flex-basis: 100%; align-items: flex-start; }
 .toggle-label {
   font-size: 12px;
   font-weight: 600;
@@ -1054,6 +1059,26 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
   background: var(--card);
   border: 0;
   white-space: nowrap;
+  /* Column-stack the real label over an invisible bold ghost of itself (see
+     ::after) so the button reserves its active (bold) width in every state. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+/* The active button bolds its label; without reserving that width the 600-weight
+   label is a touch wider than the 400 inactive one, so the button — and the
+   whole segmented control — grew and shrank as the selection moved, nudging the
+   controls beside it left and right. This ghost carries the bold label at zero
+   height, fixing each button's width to its widest (bold) state. `data-label`
+   mirrors the visible text on every toggle button. */
+.toggle-buttons button::after {
+  content: attr(data-label);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: 600;
+  pointer-events: none;
 }
 .toggle-buttons button + button { border-left: 1px solid var(--border); }
 .toggle-buttons button:hover { color: var(--accent); }

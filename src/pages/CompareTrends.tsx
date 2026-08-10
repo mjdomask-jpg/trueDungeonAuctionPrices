@@ -142,7 +142,7 @@ export function CompareTrends() {
             <span className="toggle-label">Show</span>
             <div className="toggle-buttons">
               {STAT_OPTIONS.map((o) => (
-                <button key={o.key} type="button"
+                <button key={o.key} type="button" data-label={o.label}
                   className={stat === o.key ? 'on' : undefined}
                   aria-pressed={stat === o.key} onClick={() => setStat(o.key)}>
                   {o.label}

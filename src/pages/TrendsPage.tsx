@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageIntro } from '../components/PageIntro';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { useRoutedView } from '../hooks/useRoutedView';
 import { TimelineTrends } from './TimelineTrends';
 import { CompareTrends } from './CompareTrends';
 
@@ -9,12 +9,16 @@ import { CompareTrends } from './CompareTrends';
 // price-over-time behind one view toggle (the pattern Analytics and Auction Data
 // use): "Over a season" is the per-auction chart stack; "Year over year" is the
 // two-season comparison table. Each lens keeps its own controls; this shell owns
-// the intro and the toggle. /timelines and /compare redirect here, deep-linking
-// their lens via initialView.
-export type TrendView = 'season' | 'year';
+// the intro and the toggle. The view is the URL: /trends/season (default) and
+// /trends/yoy; /timelines and /compare redirect to those.
+export type TrendView = 'season' | 'yoy';
 
-export default function TrendsPage({ initialView = 'season' }: { initialView?: TrendView }) {
-  const [view, setView] = useState<TrendView>(initialView);
+export default function TrendsPage() {
+  const [view, setView] = useRoutedView<TrendView>({
+    views: ['season', 'yoy'],
+    fallback: 'season',
+    pathFor: (v) => `/trends/${v}`,
+  });
   const narrow = useMediaQuery(NARROW);
 
   return (
@@ -42,12 +46,12 @@ export default function TrendsPage({ initialView = 'season' }: { initialView?: T
         <div className="toggle" role="group" aria-label="Trend view">
           <span className="toggle-label">View</span>
           <div className="toggle-buttons">
-            <button type="button" className={view === 'season' ? 'on' : undefined}
+            <button type="button" data-label="Over a season" className={view === 'season' ? 'on' : undefined}
               aria-pressed={view === 'season'} onClick={() => setView('season')}>
               Over a season
             </button>
-            <button type="button" className={view === 'year' ? 'on' : undefined}
-              aria-pressed={view === 'year'} onClick={() => setView('year')}>
+            <button type="button" data-label="Year over year" className={view === 'yoy' ? 'on' : undefined}
+              aria-pressed={view === 'yoy'} onClick={() => setView('yoy')}>
               Year over year
             </button>
           </div>

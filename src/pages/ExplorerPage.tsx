@@ -9,6 +9,7 @@ import { useAuctionData } from '../data/auctionDataContext';
 import { useFilters } from '../data/filtersContext';
 import { applyViewFilters, passesAuctionFilters, type ContextItem } from '../lib/context';
 import { useTenX } from '../hooks/useTenX';
+import { useRoutedView } from '../hooks/useRoutedView';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { AuctionCard } from '../components/AuctionCard';
 import { OpenAuctionCard } from '../components/OpenAuctionCard';
@@ -34,14 +35,19 @@ const AUTO_EXPAND_LIMIT = 5;
 // the genuine top of the data even before the cap is lifted.
 const FLAT_ROW_LIMIT = 1000;
 
-type View = 'grouped' | 'flat';
+type View = 'grouped' | 'full';
 
 export default function ExplorerPage() {
   const { sales, onyxSales, meta, contextItems, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters: viewFilter } = useFilters();
   const [filters, setFilters] = useState<ExplorerFilters>(EMPTY_FILTERS);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
-  const [view, setView] = useState<View>('grouped');
+  // View is the URL: /explorer/grouped (default) | /explorer/full.
+  const [view, setView] = useRoutedView<View>({
+    views: ['grouped', 'full'],
+    fallback: 'grouped',
+    pathFor: (v) => `/explorer/${v}`,
+  });
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDir, setSortDir] = useState<SortDir>(DEFAULT_SORT.dir);
   const [showAll, setShowAll] = useState(false);
@@ -119,7 +125,7 @@ export default function ExplorerPage() {
   // The flat view is the same result set, flattened and re-sorted — never a
   // second query, so the two views can't disagree.
   const flatRows = useMemo(
-    () => (view === 'flat' ? sortFlatRows(flattenAuctions(result.auctions), activeKey, activeDir) : []),
+    () => (view === 'full' ? sortFlatRows(flattenAuctions(result.auctions), activeKey, activeDir) : []),
     [view, result, activeKey, activeDir],
   );
 
@@ -213,7 +219,7 @@ export default function ExplorerPage() {
       <PageIntro short="What every token went for in every closed auction.">
         What every token went for in every closed auction — the rows behind the
         averages on <Link to="/">Prices</Link>, including the{' '}
-        <Link to="/onyx">Onyx</Link> chase set. Each auction also lists anything
+        <Link to="/prices/onyx">Onyx</Link> chase set. Each auction also lists anything
         that entered outside the standard $8,000 order — items{' '}
         <strong>withheld</strong>, <strong>augmented</strong>, or dropped in — with
         withheld values shown as negative estimates. Search for a token or an
@@ -221,8 +227,39 @@ export default function ExplorerPage() {
       </PageIntro>
 
       <div className="controls">
+        {/* View leads on its own line (flex-basis:100% via .view-toggle), then
+            10x, the pickers and search wrap onto the row below it — above the
+            shared Filters panel, matching the Prices layout. A two-state toggle
+            rather than a dropdown: with only two choices the select hid one of
+            them behind a click. */}
+        <div className="toggle view-toggle" role="group" aria-label="View">
+          <span className="toggle-label">View</span>
+          <div className="toggle-buttons">
+            <button
+              type="button"
+              data-label="Group by auction"
+              className={view === 'grouped' ? 'on' : undefined}
+              aria-pressed={view === 'grouped'}
+              onClick={() => setView('grouped')}
+            >
+              Group by auction
+            </button>
+            <button
+              type="button"
+              data-label="See full list"
+              className={view === 'full' ? 'on' : undefined}
+              aria-pressed={view === 'full'}
+              onClick={() => setView('full')}
+            >
+              See full list
+            </button>
+          </div>
+        </div>
+
+        <TenXToggle on={tenX} onChange={setTenX} />
+
         {/* Three stacked pickers cost 124px on a phone and pushed the first
-            auction to y=533. Behind a disclosure they cost one 44px row, and
+            auction down the page. Behind a disclosure they cost one 44px row, and
             the badge keeps a narrowed result from looking like the whole set.
             Desktop has the width, so it renders them inline as before. */}
         {narrow ? (
@@ -234,31 +271,6 @@ export default function ExplorerPage() {
             <div className="filterset-body">{pickers}</div>
           </details>
         ) : pickers}
-        {/* A two-state toggle rather than a dropdown: with only two choices the
-            select hid one of them behind a click. */}
-        <div className="toggle" role="group" aria-label="View">
-          <span className="toggle-label">View</span>
-          <div className="toggle-buttons">
-            <button
-              type="button"
-              className={view === 'grouped' ? 'on' : undefined}
-              aria-pressed={view === 'grouped'}
-              onClick={() => setView('grouped')}
-            >
-              Group by auction
-            </button>
-            <button
-              type="button"
-              className={view === 'flat' ? 'on' : undefined}
-              aria-pressed={view === 'flat'}
-              onClick={() => setView('flat')}
-            >
-              See full list
-            </button>
-          </div>
-        </div>
-
-        <TenXToggle on={tenX} onChange={setTenX} />
 
         <label className="search">
           Search
@@ -314,7 +326,7 @@ export default function ExplorerPage() {
         />
       ))}
 
-      {view === 'flat' && result.auctions.length > 0 && (() => {
+      {view === 'full' && result.auctions.length > 0 && (() => {
         const capped = !showAll && flatRows.length > FLAT_ROW_LIMIT;
         return (
           <>

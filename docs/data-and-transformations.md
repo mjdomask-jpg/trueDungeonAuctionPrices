@@ -36,12 +36,21 @@ The app is a small React + Vite single-page app with client-side routing
 | `src/lib/data.ts` | Pure parse/filter/join/aggregate logic (below). |
 | `src/lib/format.ts` | Presentation helpers `money` and `fmtCloseDate`. |
 | `src/data/AuctionDataProvider.tsx` + `auctionDataContext.ts` | Load-once shared data, exposed via `useAuctionData()`. |
-| `src/nav.ts` | Top-level nav entries; the nav bar stays hidden until there is more than one. |
+| `src/nav.ts` | Top-level nav entries + `navMatch` (which tab owns the current path, views included). |
+| `src/hooks/useRoutedView.ts` | Makes a page's view its URL: reads the `:view` route param, canonicalises unknown/legacy slugs, and navigates on toggle. |
 
 **Routing uses HashRouter deliberately.** `vite.config.ts` sets `base: './'` for GitHub
 Pages subpath hosting; hash-based routing then works from any subpath with no server
 rewrites and no asset-path breakage on deep links. (Switching to clean URLs later would
 require a host with an SPA fallback and an absolute `base`.)
+
+**Views are routable.** Each page's view lives in a `/#/page/view` path segment
+(`/#/prices/standard`, `/#/trends/yoy`, `/#/explorer/full`, `/#/analytics/quartiles`, …),
+so every view is a shareable link and Back/Forward move between them. Pages read their view
+from the `:view` param via `useRoutedView` rather than local state; a toggle button
+navigates. A bare page path redirects to its default view; unknown or legacy slugs
+canonicalise to it. Prices is the exception — its **All** view is the site home at `/`
+(no `/prices/all` in the bar), and the Prices tab owns both `/` and `/prices/*` (`navMatch`).
 
 **Data loading is centralized.** The fetch/parse no longer lives in a page:
 `AuctionDataProvider` fetches and parses both CSVs **once** and exposes

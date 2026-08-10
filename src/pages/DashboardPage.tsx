@@ -11,21 +11,27 @@ import { FilterBar } from '../components/FilterBar';
 import { TenXToggle } from '../components/TenXToggle';
 import { OpenAuctionsBanner } from '../components/OpenAuctionsBanner';
 import { useTenX } from '../hooks/useTenX';
+import { useRoutedView } from '../hooks/useRoutedView';
 import { compareCategories } from '../lib/categories';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
 // Which sale feed the Prices page shows, chosen by the view toggle. 'all' is the
 // default — the main list plus the Onyx chase set; 'standard' is the main list
-// alone; 'onyx' is that set alone. The Onyx page folded in here (it was the same
-// aggregation on onyxSales), so /onyx now deep-links this page with the Onyx view
-// preselected.
+// alone; 'onyx' is that set alone. The view is the URL: 'all' is the site home
+// at `/` (special-cased), the others are /prices/standard and /prices/onyx.
 export type PriceView = 'standard' | 'all' | 'onyx';
 
-export default function DashboardPage({ initialView = 'all' }: { initialView?: PriceView }) {
+export default function DashboardPage() {
   const { sales, onyxSales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters } = useFilters();
-  const [view, setView] = useState<PriceView>(initialView);
+  // View is read from and written to the URL. All is the home page, so it maps
+  // to `/` rather than /prices/all; anything unknown canonicalises there too.
+  const [view, setView] = useRoutedView<PriceView>({
+    views: ['all', 'standard', 'onyx'],
+    fallback: 'all',
+    pathFor: (v) => (v === 'all' ? '/' : `/prices/${v}`),
+  });
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
   // Seven columns collide on a phone, so narrow screens show one stat group at
@@ -146,18 +152,20 @@ export default function DashboardPage({ initialView = 'all' }: { initialView?: P
       </PageIntro>
 
       <div className="controls">
-        <div className="toggle" role="group" aria-label="Price view">
+        {/* View gets its own line (flex-basis:100% via .view-toggle), then the
+            Season/Category/10x controls wrap onto the row below it. */}
+        <div className="toggle view-toggle" role="group" aria-label="Price view">
           <span className="toggle-label">View</span>
           <div className="toggle-buttons">
-            <button type="button" className={view === 'all' ? 'on' : undefined}
+            <button type="button" data-label="All" className={view === 'all' ? 'on' : undefined}
               aria-pressed={view === 'all'} onClick={() => setView('all')}>
               All
             </button>
-            <button type="button" className={view === 'standard' ? 'on' : undefined}
+            <button type="button" data-label="Standard" className={view === 'standard' ? 'on' : undefined}
               aria-pressed={view === 'standard'} onClick={() => setView('standard')}>
               Standard
             </button>
-            <button type="button" className={onyxView ? 'on' : undefined}
+            <button type="button" data-label="Onyx" className={onyxView ? 'on' : undefined}
               aria-pressed={onyxView} onClick={() => setView('onyx')}>
               Onyx
             </button>
@@ -179,16 +187,16 @@ export default function DashboardPage({ initialView = 'all' }: { initialView?: P
             </select>
           </label>
         )}
-        {!onyxView && <TenXToggle on={tenX} onChange={setTenX} />}
+        {!onyxView && <TenXToggle on={tenX} onChange={setTenX} label="Show 10x" />}
         {narrow && (
           <div className="toggle" role="group" aria-label="Stat group">
             <span className="toggle-label">Show</span>
             <div className="toggle-buttons">
-              <button type="button" className={statGroup === 'last5' ? 'on' : undefined}
+              <button type="button" data-label="Last 5" className={statGroup === 'last5' ? 'on' : undefined}
                 aria-pressed={statGroup === 'last5'} onClick={() => setStatGroup('last5')}>
                 Last 5
               </button>
-              <button type="button" className={statGroup === 'full' ? 'on' : undefined}
+              <button type="button" data-label="Full Season" className={statGroup === 'full' ? 'on' : undefined}
                 aria-pressed={statGroup === 'full'} onClick={() => setStatGroup('full')}>
                 Full Season
               </button>
