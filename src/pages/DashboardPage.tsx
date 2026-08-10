@@ -202,12 +202,12 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        {/* Full phrasing on desktop (matching the other pages); the shorter
-            "Show 10x" only where the row is tight, on phones. Sits last so the
-            order reads Season, (Show Last 5/Full Season), then this checkbox. */}
+        {/* Forced onto its own line (.tenx-own-line) below the Season row: the
+            full "Show Trade 1 as 10x" label wraps there on a phone anyway, and
+            keeping it there on desktop too reads consistently. Sits last so the
+            order is Season, (Show Last 5/Full Season), then this checkbox. */}
         {!onyxView && (
-          <TenXToggle on={tenX} onChange={setTenX}
-            label={narrow ? 'Show 10x' : 'Show Trade 1 as 10x'} />
+          <TenXToggle on={tenX} onChange={setTenX} className="tenx-own-line" />
         )}
       </div>
 

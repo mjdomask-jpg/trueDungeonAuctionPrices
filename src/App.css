@@ -206,6 +206,13 @@ header h1 {
   accent-color: var(--accent);
   cursor: pointer;
 }
+/* Prices forces the 10x checkbox onto its own line beneath the Season row (see
+   DashboardPage): a full-width basis wraps it clear of the sibling selects, and
+   it left-aligns since it no longer bottom-aligns against them. */
+.controls .tenx-check.tenx-own-line {
+  flex-basis: 100%;
+  align-self: flex-start;
+}
 
 /* --- Auction context layer: provenance badges + filter -------------------- */
 
