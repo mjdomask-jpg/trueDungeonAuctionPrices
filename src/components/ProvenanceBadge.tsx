@@ -35,3 +35,18 @@ export function ProvenanceBadge({ provenance, n }: { provenance: Provenance; n?:
     </HintPopover>
   );
 }
+
+// Rides on a real sale row (Golden Ticket / Random Ultra Rare) in the Auction
+// Data cards to mark it as a released auctioneer payment. Reuses the
+// released-payment tint and help text; reads "released" rather than the ledger's
+// "included" because on a sale row the item plainly did sell.
+export function ReleasedBadge() {
+  return (
+    <HintPopover
+      label={PROVENANCE_NAME['released-payment']}
+      trigger={<span className="prov-badge released-payment">released</span>}
+    >
+      {HELP['released-payment']}
+    </HintPopover>
+  );
+}

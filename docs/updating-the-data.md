@@ -581,6 +581,15 @@ auction. 575 rows today, seasons 2023–2026.
   context validator warns on Ultra-Rare-looking names that aren't listed.
 - **`targetFunding` above $8,000** (in `auctionMetadata.csv`) is allowed but
   flagged by the validator as an exception, not an error.
+- **A Golden Ticket recorded in both sheets is expected.** A released Golden
+  Ticket (or Random Ultra Rare) sometimes appears both as a real sale in
+  `prices.csv` and as a `released-payment` row here — it was the auctioneer's to
+  keep, then sold. The Auction Data cards show it **once**: the real sale row
+  wins (it carries the realised price and gets a "released" badge), and the
+  duplicate context row is dropped from that card's Withheld & augmented list.
+  This dedup is presentation-only — the Analytics *Funding & Context* ledger
+  still counts the full context feed — so nothing here needs de-duplicating by
+  hand.
 
 ### Gotcha
 

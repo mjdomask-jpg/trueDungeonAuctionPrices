@@ -1,6 +1,8 @@
 import { fmtCloseDate, money } from '../lib/format';
 import { COMPACT_SORT_KEYS, TENX_PREFIX } from '../lib/data';
 import type { FlatRow, SortKey, SortDir } from '../lib/data';
+import { isReleasedPayment } from '../lib/context';
+import { ReleasedBadge } from './ProvenanceBadge';
 
 // The explorer's flat view: every matching token-price in one sortable table,
 // with its auction broken out into its own columns. Same rows as the grouped
@@ -97,6 +99,9 @@ export function SaleTable({
               <td className="left token">
                 {row.displayName}
                 {showItem && <span className="alt"> · {row.item}</span>}
+                {/* Released-payment mark on the Token name — the Category column
+                    is too narrow to hold it beside the category chip. */}
+                {(isReleasedPayment(row.displayName) || isReleasedPayment(row.item)) && <ReleasedBadge />}
               </td>
             );
             return compact ? (
