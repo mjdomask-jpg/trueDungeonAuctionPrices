@@ -15,9 +15,16 @@ import { compareCategories } from '../lib/categories';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
-export default function DashboardPage() {
-  const { sales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
+// Which sale feed the Prices page shows, chosen by the view toggle. 'standard'
+// is the main list; 'all' also appends the Onyx chase set; 'onyx' is that set
+// alone. The Onyx page folded in here (it was the same aggregation on onyxSales),
+// so /onyx now deep-links this page with the Onyx view preselected.
+export type PriceView = 'standard' | 'all' | 'onyx';
+
+export default function DashboardPage({ initialView = 'standard' }: { initialView?: PriceView }) {
+  const { sales, onyxSales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters } = useFilters();
+  const [view, setView] = useState<PriceView>(initialView);
   const [season, setSeason] = useState<string>('');
   const [category, setCategory] = useState('All');
   // Seven columns collide on a phone, so narrow screens show one stat group at
@@ -28,14 +35,24 @@ export default function DashboardPage() {
   // Show Trade 1 tokens as their "10x" bundle (×10 price, "10x " name). On by
   // default and shared with the Timelines page — see useTenX.
   const [tenX, setTenX] = useTenX();
+  const onyxView = view === 'onyx';
   // The category picker is dropped on phones — the list is short enough to
   // scroll. Force the filter open so a category chosen on a wide screen can't
-  // strand a narrow one with a filter it has no control to clear.
-  const effectiveCategory = narrow ? 'All' : category;
+  // strand a narrow one with a filter it has no control to clear. Onyx is a
+  // single category, so its view forces 'All' too.
+  const effectiveCategory = narrow || onyxView ? 'All' : category;
 
-  const seasons = useMemo(() => seasonsOf(sales), [sales]);
-  // Default to the newest season once data has loaded.
-  const activeSeason = season || seasons[0] || '';
+  // The sale feed the whole page reads. Onyx sales share prices.csv's schema and
+  // don't collide with it (see the explorer), so 'all' is a plain concatenation.
+  const feed = useMemo(
+    () => (view === 'onyx' ? onyxSales : view === 'all' ? [...sales, ...onyxSales] : sales),
+    [view, sales, onyxSales],
+  );
+
+  const seasons = useMemo(() => seasonsOf(feed), [feed]);
+  // Default to the newest season; if a season picked in one view isn't in the
+  // other's feed, fall back rather than leave the dropdown on a missing option.
+  const activeSeason = season && seasons.includes(season) ? season : seasons[0] || '';
 
   const metaById = useMemo(() => new Map(meta.map((m) => [m.auctionId, m])), [meta]);
 
@@ -46,8 +63,8 @@ export default function DashboardPage() {
   // leave the sales untouched, so the dashboard reads exactly as it did before
   // the context layer. Shared with every other pricing page (lib/context).
   const viewSales = useMemo(
-    () => applyViewFilters(sales, metaById, goldenTicketAuctions, filters),
-    [sales, metaById, goldenTicketAuctions, filters],
+    () => applyViewFilters(feed, metaById, goldenTicketAuctions, filters),
+    [feed, metaById, goldenTicketAuctions, filters],
   );
 
   const rows = useMemo(
@@ -96,10 +113,12 @@ export default function DashboardPage() {
   // (an open auction is worth surfacing whatever season you're viewing).
   const openList = useMemo(() => openAuctions(meta), [meta]);
 
-  // Global intro stats (across all seasons).
+  // Global intro stats (across all seasons) — always the full main list, so the
+  // welcome line reads the same whichever view is active.
+  const allSeasons = useMemo(() => seasonsOf(sales), [sales]);
   const totalClosedAuctions = meta.filter((m) => m.status === 'Closed').length;
-  const firstYear = seasons[seasons.length - 1];
-  const lastYear = seasons[0];
+  const firstYear = allSeasons[allSeasons.length - 1];
+  const lastYear = allSeasons[0];
 
   // Close dates for the "Last 5" window, looked up from metadata by auction
   // number. Falls back to "#N" if a close date is missing.
@@ -120,17 +139,38 @@ export default function DashboardPage() {
       <PageIntro short="Welcome to the True Dungeon Auction Analysis">
         Welcome to the True Dungeon auction analysis! These statistics are calculated
         live from {totalClosedAuctions.toLocaleString()} auctions from {firstYear} to {lastYear}.
-        This covers {sales.length.toLocaleString()} items sold!
+        This covers {sales.length.toLocaleString()} items sold! Use <strong>View</strong> to add
+        or isolate the <strong>Onyx</strong> chase set — a fixed set of chase Ultra Rares (plus a
+        C/UC/R set) sold with their own price history.
       </PageIntro>
 
       <div className="controls">
+        <div className="toggle" role="group" aria-label="Price view">
+          <span className="toggle-label">View</span>
+          <div className="toggle-buttons">
+            <button type="button" className={view === 'standard' ? 'on' : undefined}
+              aria-pressed={view === 'standard'} onClick={() => setView('standard')}>
+              Standard
+            </button>
+            <button type="button" className={view === 'all' ? 'on' : undefined}
+              aria-pressed={view === 'all'} onClick={() => setView('all')}>
+              All
+            </button>
+            <button type="button" className={onyxView ? 'on' : undefined}
+              aria-pressed={onyxView} onClick={() => setView('onyx')}>
+              Onyx
+            </button>
+          </div>
+        </div>
         <label>
           Season
           <select value={activeSeason} onChange={(e) => setSeason(e.target.value)}>
             {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
-        {!narrow && (
+        {/* Category picker and the 10x bundle are meaningless for the single-
+            category Onyx set, so the Onyx view drops both. */}
+        {!narrow && !onyxView && (
           <label>
             Category
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -138,7 +178,7 @@ export default function DashboardPage() {
             </select>
           </label>
         )}
-        <TenXToggle on={tenX} onChange={setTenX} />
+        {!onyxView && <TenXToggle on={tenX} onChange={setTenX} />}
         {narrow && (
           <div className="toggle" role="group" aria-label="Stat group">
             <span className="toggle-label">Show</span>
@@ -163,7 +203,11 @@ export default function DashboardPage() {
         {' '}"Last 5" = {last5Nums.map(last5Label).join(', ')}
       </p>
 
-      {groups.length === 0 && <p className="empty">No matching items.</p>}
+      {groups.length === 0 && (
+        <p className="empty">
+          {onyxView ? `No Onyx sales in ${activeSeason}.` : 'No matching items.'}
+        </p>
+      )}
       {groups.map((g) => (
         <CategoryTable
           key={g.category}

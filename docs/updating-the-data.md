@@ -384,8 +384,9 @@ categories are silently skipped here — that is expected, not an error.
 **Export from:** the `pricesOnyx` tab → save as **`onyx.csv`** (note the name
 change)
 
-**Drives:** the Onyx page only. It is loaded independently — if this file is
-missing or empty, the Onyx page is blank and nothing else is affected.
+**Drives:** the **Onyx** and **All** views of the Prices page (toggle at the top).
+It is loaded independently — if this file is missing or empty, those views are
+blank and nothing else is affected.
 
 **Update when:** an Onyx chase token sells. About 844 rows today, seasons
 2022–2026.
