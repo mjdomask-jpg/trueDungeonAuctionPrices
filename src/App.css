@@ -219,12 +219,41 @@ header h1 {
 /* Inline provenance tag on a data row — same pill shape as the transmute badges.
    Withheld reuses the neutral est. treatment; the real-sale provenances carry
    their own hue. Colours are contrast-checked for both themes (≥4.5:1). */
+/* Shares .cat-chip's geometry (size, padding, radius, weight) so the two chip
+   families read as one in the Auction Data cards, where a category chip and a
+   provenance/released badge can sit in the same cell. Colour is the only thing
+   that differs: .cat-chip is outlined in its tier colour, .prov-badge filled
+   with its provenance tint. */
 .prov-badge {
-  font-size: 10.5px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
   padding: 1px 8px;
-  border-radius: 20px;
+  border-radius: 999px;
   font-family: var(--sans);
   white-space: nowrap;
+  vertical-align: middle;
+  /* A transparent border matches .cat-chip's 1px outline so the two chips are
+     the exact same height when they sit side by side. */
+  border: 1px solid transparent;
+}
+/* On released Golden Ticket / Random UR rows a "released" badge trails the token
+   name (the Category column is too narrow for a second chip). td.token already
+   wraps on words, so the badge flows onto the next line when it doesn't fit. */
+td.token .hint-wrap { margin-left: 5px; }
+
+/* The withheld/augmented context folded under an auction's sales in the Auction
+   Data cards. A quiet divider and label separate it from the sale table above. */
+.ctx-section { margin-top: 14px; }
+.ctx-subhead {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text);
+  opacity: 0.7;
 }
 .prov-badge.released-payment { background: rgba(186, 117, 23, 0.16); color: #8a5a0b; }
 .prov-badge.augment { background: rgba(42, 120, 214, 0.14); color: #1d5fa8; }
@@ -260,9 +289,9 @@ header h1 {
 :root[data-theme='dark'] .prov-chip.augment.on { background: rgba(57, 135, 229, 0.20); color: #6aa8e6; }
 :root[data-theme='dark'] .prov-chip.grunnel.on { background: rgba(109, 187, 112, 0.18); color: #7cc47f; }
 
-/* Augments & Withheld page: the value cell in each auction's item table.
-   Withheld values are negative — tint them like a subtraction (the diff-up hue,
-   which is red in this theme). */
+/* The Withheld & augmented context table folded under each Auction Data card:
+   the value cell in the item table. Withheld values are negative — tint them
+   like a subtraction (the diff-up hue, which is red in this theme). */
 .ctx-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ctx-val.neg { color: var(--diff-up); }
 /* The provenance badge is far narrower than the token category this table's
@@ -321,16 +350,18 @@ header h1 {
 :root[data-theme='dark'] [data-category='Golden Ticket'] { --cat-color: #facc15; }
 
 /* Category as a coloured pill (Auction Data's Category column), so it reads as a
-   chip like the provenance "Type" on Augments & Withheld. Outlined in the
-   category colour — theme-safe without a tinted-fill dependency; falls back to
-   the body text colour for the few categories with no assigned hue. */
+   chip like the provenance "Type" in the same card's Withheld & augmented table.
+   Outlined in the category colour — theme-safe without a tinted-fill dependency;
+   falls back to the body text colour for the few categories with no assigned hue. */
 .cat-chip {
   display: inline-block;
   padding: 1px 8px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.4;
   white-space: nowrap;
+  vertical-align: middle;
   color: var(--cat-color, var(--text));
   border: 1px solid var(--cat-color, var(--border));
 }

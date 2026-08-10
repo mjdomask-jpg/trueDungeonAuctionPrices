@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import DashboardPage from './pages/DashboardPage.tsx'
@@ -9,7 +9,6 @@ import ComparePage from './pages/ComparePage.tsx'
 import TransmutesPage from './pages/TransmutesPage.tsx'
 import OnyxPage from './pages/OnyxPage.tsx'
 import ExplorerPage from './pages/ExplorerPage.tsx'
-import ContextPage from './pages/ContextPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import { AuctionDataProvider } from './data/AuctionDataProvider.tsx'
 import { FiltersProvider } from './data/FiltersProvider.tsx'
@@ -30,7 +29,9 @@ createRoot(document.getElementById('root')!).render(
               <Route path="transmutes" element={<TransmutesPage />} />
               <Route path="onyx" element={<OnyxPage />} />
               <Route path="explorer" element={<ExplorerPage />} />
-              <Route path="augments" element={<ContextPage />} />
+              {/* Augments & Withheld folded into Auction Data (the explorer);
+                  redirect old bookmarks rather than 404 them. */}
+              <Route path="augments" element={<Navigate to="/explorer" replace />} />
               <Route path="analytics" element={<AnalyticsPage />} />
             </Route>
           </Routes>

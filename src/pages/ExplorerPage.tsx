@@ -7,7 +7,7 @@ import {
 } from '../lib/data';
 import { useAuctionData } from '../data/auctionDataContext';
 import { useFilters } from '../data/filtersContext';
-import { applyViewFilters, passesAuctionFilters } from '../lib/context';
+import { applyViewFilters, passesAuctionFilters, type ContextItem } from '../lib/context';
 import { useTenX } from '../hooks/useTenX';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { AuctionCard } from '../components/AuctionCard';
@@ -37,7 +37,7 @@ const FLAT_ROW_LIMIT = 1000;
 type View = 'grouped' | 'flat';
 
 export default function ExplorerPage() {
-  const { sales, onyxSales, meta, goldenTicketAuctions, loading, error } = useAuctionData();
+  const { sales, onyxSales, meta, contextItems, goldenTicketAuctions, loading, error } = useAuctionData();
   const { filters: viewFilter } = useFilters();
   const [filters, setFilters] = useState<ExplorerFilters>(EMPTY_FILTERS);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
@@ -90,6 +90,21 @@ export default function ExplorerPage() {
   // not part of the closed-sales explorer below, so the page's season/category/
   // search and the shared Source/type filters must not hide a live auction.
   const openList = useMemo(() => openAuctions(meta), [meta]);
+
+  // Context items (withheld / augmented / grunnel / released) grouped by auction,
+  // so each card can show its own below the sales. The provenance chips select
+  // which kinds show — they act on this list, not the core sales (design §5.2).
+  // Season/search narrowing is implicit: only auctions the query lists get a card.
+  const contextByAuction = useMemo(() => {
+    const by = new Map<string, ContextItem[]>();
+    for (const it of contextItems) {
+      if (!viewFilter.provenance.has(it.provenance)) continue;
+      let bucket = by.get(it.auctionId);
+      if (!bucket) { bucket = []; by.set(it.auctionId, bucket); }
+      bucket.push(it);
+    }
+    return by;
+  }, [contextItems, viewFilter.provenance]);
 
   // Phones get a three-column table (see SaleTable), so only those three keys
   // have a header to sort from. A sort picked on a wide screen — auctioneer,
@@ -198,8 +213,11 @@ export default function ExplorerPage() {
       <PageIntro short="What every token went for in every closed auction.">
         What every token went for in every closed auction — the rows behind the
         averages on <Link to="/">Prices</Link>, including the{' '}
-        <Link to="/onyx">Onyx</Link> chase set. Search for a token or an auction,
-        or narrow by season, category and auctioneer.
+        <Link to="/onyx">Onyx</Link> chase set. Each auction also lists anything
+        that entered outside the standard $8,000 order — items{' '}
+        <strong>withheld</strong>, <strong>augmented</strong>, or dropped in — with
+        withheld values shown as negative estimates. Search for a token or an
+        auction, or narrow by season, category and auctioneer.
       </PageIntro>
 
       <div className="controls">
@@ -257,7 +275,7 @@ export default function ExplorerPage() {
         </label>
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile mobileSummary="Source & type" />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType', 'provenance']} collapsibleOnMobile mobileSummary="Source & type" />
 
       <p className="meta-line">
         {result.auctions.length.toLocaleString()} auction{result.auctions.length === 1 ? '' : 's'} ·{' '}
@@ -290,6 +308,7 @@ export default function ExplorerPage() {
         <AuctionCard
           key={g.meta.auctionId}
           group={g}
+          context={contextByAuction.get(g.meta.auctionId)}
           open={openIds.has(g.meta.auctionId)}
           onToggle={toggle}
         />

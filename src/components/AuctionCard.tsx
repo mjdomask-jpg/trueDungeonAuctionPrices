@@ -1,6 +1,8 @@
 import { fmtDateLong, money } from '../lib/format';
 import { TENX_PREFIX } from '../lib/data';
 import type { AuctionGroup } from '../lib/data';
+import { isReleasedPayment, type ContextItem } from '../lib/context';
+import { ProvenanceBadge, ReleasedBadge } from './ProvenanceBadge';
 
 // One auction in the explorer: a header carrying the auction's metadata, and
 // the individual sales that happened in it. Rendered as a native <details> so
@@ -10,9 +12,13 @@ import type { AuctionGroup } from '../lib/data';
 // difference — only open auctions carry it (a closed thread is archival).
 
 export function AuctionCard({
-  group, open, onToggle,
+  group, context = [], open, onToggle,
 }: {
   group: AuctionGroup;
+  // The auction's withheld / augmented / grunnel / released-payment context
+  // items (already season- and provenance-filtered by the page). Absorbed here
+  // so one card is the whole picture of an auction; empty for most auctions.
+  context?: ContextItem[];
   open: boolean;
   onToggle: (auctionId: string, open: boolean) => void;
 }) {
@@ -21,8 +27,22 @@ export function AuctionCard({
 
   // Metadata worth showing as chips. 'n/a' and blanks are dropped rather than
   // rendered as empty chips — 42 auctions carry no style or auctioneer at all.
-  const facts = [meta.style, meta.completionStyle, meta.auctioneer]
+  // Source (Forum/Trent) rides along so the card says where the auction ran,
+  // matching what the former Augments & Withheld cards showed.
+  const facts = [meta.style, meta.completionStyle, meta.auctioneer, meta.source]
     .filter((v) => v && v !== 'n/a');
+
+  // A released Golden Ticket / Random Ultra Rare is inconsistently recorded as
+  // BOTH a real sale and an "included" context row (see lib/context
+  // isReleasedPayment). The sale row is canonical — it carries the realised
+  // price and gets a "released" badge below — so drop the context duplicate to
+  // keep the item from appearing twice in one card. Purely presentational: the
+  // shared context feed (and the Analytics ledger built on it) is untouched.
+  const saleNames = new Set<string>();
+  for (const r of rows) { saleNames.add(r.displayName.toLowerCase()); saleNames.add(r.item.toLowerCase()); }
+  const ctxItems = context.filter(
+    (it) => !(it.provenance === 'released-payment' && saleNames.has(it.name.toLowerCase())),
+  );
 
   return (
     <details
@@ -94,6 +114,10 @@ export function AuctionCard({
                           so it's excluded or the name would just repeat. */}
                       {r.item !== r.displayName && r.displayName !== `${TENX_PREFIX}${r.item}`
                         && <span className="alt"> · {r.item}</span>}
+                      {/* The released-payment mark rides the Token name, not the
+                          Category cell — that column is too narrow for a second
+                          chip, and this one wraps with the name instead. */}
+                      {(isReleasedPayment(r.displayName) || isReleasedPayment(r.item)) && <ReleasedBadge />}
                     </td>
                     <td className="left">
                       {r.category && <span className="cat-chip" data-category={r.category}>{r.category}</span>}
@@ -103,6 +127,42 @@ export function AuctionCard({
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Withheld / augmented / released context for this auction — the former
+            standalone Augments & Withheld page, folded in so a single card is
+            the whole auction. Withheld values are negative estimates (never
+            sold); the est. badge explains. Only rendered when this auction has
+            context left after the released-payment dedup above. */}
+        {ctxItems.length > 0 && (
+          <div className="ctx-section">
+            <h4 className="ctx-subhead">Withheld &amp; augmented</h4>
+            <div className="tablewrap">
+              <table className={`ctx-items${ctxItems.length >= 4 ? ' banded' : ''}`}>
+                <colgroup><col className="col-token" /><col /><col /></colgroup>
+                <thead>
+                  <tr>
+                    <th className="left">Item</th>
+                    <th className="left">Type</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ctxItems.map((it, i) => (
+                    <tr key={`${it.name}-${i}`}>
+                      <td className="left token">
+                        {it.name}{it.quantity > 1 ? ` ×${it.quantity}` : ''}
+                      </td>
+                      <td className="left">
+                        <ProvenanceBadge provenance={it.provenance} n={it.estimate ? it.n : undefined} />
+                      </td>
+                      <td className={`ctx-val${it.value < 0 ? ' neg' : ''}`}>{money(it.value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>}

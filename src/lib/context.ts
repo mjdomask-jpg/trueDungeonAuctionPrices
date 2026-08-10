@@ -81,8 +81,9 @@ export function isRandomUltraRare(name: string): boolean {
 // Formerly-retained auctioneer payment now released to bidders: Random Ultra
 // Rares and Golden Tickets. A Golden Ticket added via the augment sheet is the
 // same thing as a Golden Ticket in the normal sales (both were the auctioneer's
-// to keep), so both classify as released-payment (design §2).
-function isReleasedPayment(name: string): boolean {
+// to keep), so both classify as released-payment (design §2). Exported so the
+// Auction Data cards can badge these rows and drop the context-sheet duplicate.
+export function isReleasedPayment(name: string): boolean {
   return isRandomUltraRare(name) || (name ?? '').trim().toLowerCase() === 'golden ticket';
 }
 

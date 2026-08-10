@@ -37,8 +37,9 @@ export type FilterState = {
 };
 
 // Freshly clone the Set each time so no two providers share a mutable default.
-// All provenances start on, withheld estimates included: the provenance filter now
-// lives only on the Augments & Withheld page, whose whole point is to show them.
+// All provenances start on, withheld estimates included: the provenance filter
+// selects which context items show under each Auction Data card, and by default
+// the cards show them all.
 export const makeDefaultFilters = (): FilterState => ({
   source: 'all',
   trentPricing: 'nominal',
