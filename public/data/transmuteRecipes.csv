@@ -1,4 +1,18 @@
 Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSource
+"2012|Ring of Improved Evasion|1,000 GP Gold Bar||FALSE",2012,Relic,Ring of Improved Evasion,"1,000 GP Gold Bar",,2012,"1,000 GP Gold Bar",5,FALSE
+2012|Ring of Improved Evasion|Alchemist's Ink||FALSE,2012,Relic,Ring of Improved Evasion,Alchemist's Ink,,2012,Alchemist's Ink,2,FALSE
+2012|Ring of Improved Evasion|Alchemist's Parchment||FALSE,2012,Relic,Ring of Improved Evasion,Alchemist's Parchment,,2012,Alchemist's Parchment,4,FALSE
+2012|Ring of Improved Evasion|Aragonite||FALSE,2012,Relic,Ring of Improved Evasion,Aragonite,,2012,Aragonite,1,FALSE
+2012|Ring of Improved Evasion|Darkwood Plank||FALSE,2012,Relic,Ring of Improved Evasion,Darkwood Plank,,2012,Darkwood Plank,8,FALSE
+2012|Ring of Improved Evasion|Dwarven Steel||FALSE,2012,Relic,Ring of Improved Evasion,Dwarven Steel,,2012,Dwarven Steel,10,FALSE
+2012|Ring of Improved Evasion|Elven Bismuth||FALSE,2012,Relic,Ring of Improved Evasion,Elven Bismuth,,2012,Elven Bismuth,1,FALSE
+2012|Ring of Improved Evasion|Enchanter's Munition||FALSE,2012,Relic,Ring of Improved Evasion,Enchanter's Munition,,2012,Enchanter's Munition,3,FALSE
+2012|Ring of Improved Evasion|Minotaur Hide||FALSE,2012,Relic,Ring of Improved Evasion,Minotaur Hide,,2012,Minotaur Hide,5,FALSE
+2012|Ring of Improved Evasion|Mystic Silk||FALSE,2012,Relic,Ring of Improved Evasion,Mystic Silk,,2012,Mystic Silk,5,FALSE
+2012|Ring of Improved Evasion|Oil of Enchantment||FALSE,2012,Relic,Ring of Improved Evasion,Oil of Enchantment,,2012,Oil of Enchantment,2,FALSE
+2012|Ring of Improved Evasion|Philosopher's Stone||FALSE,2012,Relic,Ring of Improved Evasion,Philosopher's Stone,,2012,Philosopher's Stone,2,FALSE
+2012|Ring of Improved Evasion|Ultra Rare||FALSE,2012,Relic,Ring of Improved Evasion,Ultra Rare,,2012,Ultra Rare,1,FALSE
+2012|Khing's Ring of Supreme Evasion|Ring of Improved Evasion||TRUE,2012,Legendary,Khing's Ring of Supreme Evasion,Ring of Improved Evasion,,2012,Ring of Improved Evasion (transmute),1,TRUE
 "2012|Khing's Ring of Supreme Evasion|1,000 GP Gold Bar||FALSE",2012,Legendary,Khing's Ring of Supreme Evasion,"1,000 GP Gold Bar",,2012,"1,000 GP Gold Bar",25,FALSE
 2012|Khing's Ring of Supreme Evasion|Alchemist's Ink||FALSE,2012,Legendary,Khing's Ring of Supreme Evasion,Alchemist's Ink,,2012,Alchemist's Ink,4,FALSE
 2012|Khing's Ring of Supreme Evasion|Alchemist's Parchment||FALSE,2012,Legendary,Khing's Ring of Supreme Evasion,Alchemist's Parchment,,2012,Alchemist's Parchment,12,FALSE
@@ -13,6 +27,20 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2012|Khing's Ring of Supreme Evasion|Oil of Enchantment||FALSE,2012,Legendary,Khing's Ring of Supreme Evasion,Oil of Enchantment,,2012,Oil of Enchantment,2,FALSE
 2012|Khing's Ring of Supreme Evasion|Philosopher's Stone||FALSE,2012,Legendary,Khing's Ring of Supreme Evasion,Philosopher's Stone,,2012,Philosopher's Stone,4,FALSE
 2012|Khing's Ring of Supreme Evasion|Wish Ring||FALSE,2012,Legendary,Khing's Ring of Supreme Evasion,Wish Ring,,2012,Wish Ring,1,FALSE
+"2012|Girdle of Frost Giant Strength|1,000 GP Gold Bar||FALSE",2012,Relic,Girdle of Frost Giant Strength,"1,000 GP Gold Bar",,2012,"1,000 GP Gold Bar",2,FALSE
+2012|Girdle of Frost Giant Strength|Alchemist's Ink||FALSE,2012,Relic,Girdle of Frost Giant Strength,Alchemist's Ink,,2012,Alchemist's Ink,2,FALSE
+2012|Girdle of Frost Giant Strength|Alchemist's Parchment||FALSE,2012,Relic,Girdle of Frost Giant Strength,Alchemist's Parchment,,2012,Alchemist's Parchment,4,FALSE
+2012|Girdle of Frost Giant Strength|Aragonite||FALSE,2012,Relic,Girdle of Frost Giant Strength,Aragonite,,2012,Aragonite,2,FALSE
+2012|Girdle of Frost Giant Strength|Darkwood Plank||FALSE,2012,Relic,Girdle of Frost Giant Strength,Darkwood Plank,,2012,Darkwood Plank,8,FALSE
+2012|Girdle of Frost Giant Strength|Dwarven Steel||FALSE,2012,Relic,Girdle of Frost Giant Strength,Dwarven Steel,,2012,Dwarven Steel,8,FALSE
+2012|Girdle of Frost Giant Strength|Elven Bismuth||FALSE,2012,Relic,Girdle of Frost Giant Strength,Elven Bismuth,,2012,Elven Bismuth,1,FALSE
+2012|Girdle of Frost Giant Strength|Enchanter's Munition||FALSE,2012,Relic,Girdle of Frost Giant Strength,Enchanter's Munition,,2012,Enchanter's Munition,4,FALSE
+2012|Girdle of Frost Giant Strength|Minotaur Hide||FALSE,2012,Relic,Girdle of Frost Giant Strength,Minotaur Hide,,2012,Minotaur Hide,8,FALSE
+2012|Girdle of Frost Giant Strength|Mystic Silk||FALSE,2012,Relic,Girdle of Frost Giant Strength,Mystic Silk,,2012,Mystic Silk,8,FALSE
+2012|Girdle of Frost Giant Strength|Oil of Enchantment||FALSE,2012,Relic,Girdle of Frost Giant Strength,Oil of Enchantment,,2012,Oil of Enchantment,2,FALSE
+2012|Girdle of Frost Giant Strength|Philosopher's Stone||FALSE,2012,Relic,Girdle of Frost Giant Strength,Philosopher's Stone,,2012,Philosopher's Stone,2,FALSE
+2012|Girdle of Frost Giant Strength|Ultra Rare||FALSE,2012,Relic,Girdle of Frost Giant Strength,Ultra Rare,,2012,Ultra Rare,1,FALSE
+2012|Surtr's Girdle of Fire Giant Strength|Girdle of Frost Giant Strength||TRUE,2012,Legendary,Surtr's Girdle of Fire Giant Strength,Girdle of Frost Giant Strength,,2012,Girdle of Frost Giant Strength (transmute),1,TRUE
 "2012|Surtr's Girdle of Fire Giant Strength|1,000 GP Gold Bar||FALSE",2012,Legendary,Surtr's Girdle of Fire Giant Strength,"1,000 GP Gold Bar",,2012,"1,000 GP Gold Bar",25,FALSE
 2012|Surtr's Girdle of Fire Giant Strength|Alchemist's Ink||FALSE,2012,Legendary,Surtr's Girdle of Fire Giant Strength,Alchemist's Ink,,2012,Alchemist's Ink,5,FALSE
 2012|Surtr's Girdle of Fire Giant Strength|Alchemist's Parchment||FALSE,2012,Legendary,Surtr's Girdle of Fire Giant Strength,Alchemist's Parchment,,2012,Alchemist's Parchment,12,FALSE
@@ -27,6 +55,20 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2012|Surtr's Girdle of Fire Giant Strength|Oil of Enchantment||FALSE,2012,Legendary,Surtr's Girdle of Fire Giant Strength,Oil of Enchantment,,2012,Oil of Enchantment,3,FALSE
 2012|Surtr's Girdle of Fire Giant Strength|Philosopher's Stone||FALSE,2012,Legendary,Surtr's Girdle of Fire Giant Strength,Philosopher's Stone,,2012,Philosopher's Stone,4,FALSE
 2012|Surtr's Girdle of Fire Giant Strength|Wish Ring||FALSE,2012,Legendary,Surtr's Girdle of Fire Giant Strength,Wish Ring,,2012,Wish Ring,1,FALSE
+"2012|+3 Mithral Bracers|1,000 GP Gold Bar||FALSE",2012,Relic,+3 Mithral Bracers,"1,000 GP Gold Bar",,2012,"1,000 GP Gold Bar",3,FALSE
+2012|+3 Mithral Bracers|Alchemist's Ink||FALSE,2012,Relic,+3 Mithral Bracers,Alchemist's Ink,,2012,Alchemist's Ink,2,FALSE
+2012|+3 Mithral Bracers|Alchemist's Parchment||FALSE,2012,Relic,+3 Mithral Bracers,Alchemist's Parchment,,2012,Alchemist's Parchment,6,FALSE
+2012|+3 Mithral Bracers|Aragonite||FALSE,2012,Relic,+3 Mithral Bracers,Aragonite,,2012,Aragonite,1,FALSE
+2012|+3 Mithral Bracers|Darkwood Plank||FALSE,2012,Relic,+3 Mithral Bracers,Darkwood Plank,,2012,Darkwood Plank,10,FALSE
+2012|+3 Mithral Bracers|Dwarven Steel||FALSE,2012,Relic,+3 Mithral Bracers,Dwarven Steel,,2012,Dwarven Steel,8,FALSE
+2012|+3 Mithral Bracers|Elven Bismuth||FALSE,2012,Relic,+3 Mithral Bracers,Elven Bismuth,,2012,Elven Bismuth,2,FALSE
+2012|+3 Mithral Bracers|Enchanter's Munition||FALSE,2012,Relic,+3 Mithral Bracers,Enchanter's Munition,,2012,Enchanter's Munition,5,FALSE
+2012|+3 Mithral Bracers|Minotaur Hide||FALSE,2012,Relic,+3 Mithral Bracers,Minotaur Hide,,2012,Minotaur Hide,5,FALSE
+2012|+3 Mithral Bracers|Mystic Silk||FALSE,2012,Relic,+3 Mithral Bracers,Mystic Silk,,2012,Mystic Silk,4,FALSE
+2012|+3 Mithral Bracers|Oil of Enchantment||FALSE,2012,Relic,+3 Mithral Bracers,Oil of Enchantment,,2012,Oil of Enchantment,1,FALSE
+2012|+3 Mithral Bracers|Philosopher's Stone||FALSE,2012,Relic,+3 Mithral Bracers,Philosopher's Stone,,2012,Philosopher's Stone,2,FALSE
+2012|+3 Mithral Bracers|Ultra Rare||FALSE,2012,Relic,+3 Mithral Bracers,Ultra Rare,,2012,Ultra Rare,1,FALSE
+2012|TaMor's +4 Mithral Bracers|+3 Mithral Bracers||TRUE,2012,Legendary,TaMor's +4 Mithral Bracers,+3 Mithral Bracers,,2012,+3 Mithral Bracers (transmute),1,TRUE
 "2012|TaMor's +4 Mithral Bracers|1,000 GP Gold Bar||FALSE",2012,Legendary,TaMor's +4 Mithral Bracers,"1,000 GP Gold Bar",,2012,"1,000 GP Gold Bar",25,FALSE
 2012|TaMor's +4 Mithral Bracers|Alchemist's Ink||FALSE,2012,Legendary,TaMor's +4 Mithral Bracers,Alchemist's Ink,,2012,Alchemist's Ink,2,FALSE
 2012|TaMor's +4 Mithral Bracers|Alchemist's Parchment||FALSE,2012,Legendary,TaMor's +4 Mithral Bracers,Alchemist's Parchment,,2012,Alchemist's Parchment,8,FALSE
@@ -41,6 +83,16 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2012|TaMor's +4 Mithral Bracers|Oil of Enchantment||FALSE,2012,Legendary,TaMor's +4 Mithral Bracers,Oil of Enchantment,,2012,Oil of Enchantment,3,FALSE
 2012|TaMor's +4 Mithral Bracers|Philosopher's Stone||FALSE,2012,Legendary,TaMor's +4 Mithral Bracers,Philosopher's Stone,,2012,Philosopher's Stone,4,FALSE
 2012|TaMor's +4 Mithral Bracers|Wish Ring||FALSE,2012,Legendary,TaMor's +4 Mithral Bracers,Wish Ring,,2012,Wish Ring,1,FALSE
+"2013|Greater Cloak of Destiny|1,000 GP Gold Bar||FALSE",2013,Relic,Greater Cloak of Destiny,"1,000 GP Gold Bar",,2013,"1,000 GP Gold Bar",2,FALSE
+2013|Greater Cloak of Destiny|Aragonite||FALSE,2013,Relic,Greater Cloak of Destiny,Aragonite,,2013,Aragonite,1,FALSE
+2013|Greater Cloak of Destiny|Elven Bismuth||FALSE,2013,Relic,Greater Cloak of Destiny,Elven Bismuth,,2013,Elven Bismuth,1,FALSE
+2013|Greater Cloak of Destiny|Enchanter's Munition||FALSE,2013,Relic,Greater Cloak of Destiny,Enchanter's Munition,,2013,Enchanter's Munition,4,FALSE
+2013|Greater Cloak of Destiny|Minotaur Hide||FALSE,2013,Relic,Greater Cloak of Destiny,Minotaur Hide,,2013,Minotaur Hide,3,FALSE
+2013|Greater Cloak of Destiny|Mystic Silk||FALSE,2013,Relic,Greater Cloak of Destiny,Mystic Silk,,2013,Mystic Silk,12,FALSE
+2013|Greater Cloak of Destiny|Oil of Enchantment||FALSE,2013,Relic,Greater Cloak of Destiny,Oil of Enchantment,,2013,Oil of Enchantment,2,FALSE
+2013|Greater Cloak of Destiny|Philosopher's Stone||FALSE,2013,Relic,Greater Cloak of Destiny,Philosopher's Stone,,2013,Philosopher's Stone,4,FALSE
+2013|Greater Cloak of Destiny|Ultra Rare||FALSE,2013,Relic,Greater Cloak of Destiny,Ultra Rare,,2013,Ultra Rare,1,FALSE
+2013|Pharacus' Greater Cloak of Destiny|Greater Cloak of Destiny||TRUE,2013,Legendary,Pharacus' Greater Cloak of Destiny,Greater Cloak of Destiny,,2013,Greater Cloak of Destiny (transmute),1,TRUE
 "2013|Pharacus' Greater Cloak of Destiny|1,000 GP Gold Bar||FALSE",2013,Legendary,Pharacus' Greater Cloak of Destiny,"1,000 GP Gold Bar",,2013,"1,000 GP Gold Bar",25,FALSE
 2013|Pharacus' Greater Cloak of Destiny|Alchemist's Ink||FALSE,2013,Legendary,Pharacus' Greater Cloak of Destiny,Alchemist's Ink,,2013,Alchemist's Ink,4,FALSE
 2013|Pharacus' Greater Cloak of Destiny|Alchemist's Parchment||FALSE,2013,Legendary,Pharacus' Greater Cloak of Destiny,Alchemist's Parchment,,2013,Alchemist's Parchment,8,FALSE
@@ -70,6 +122,18 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2014|Asher's +5 Viper Strike Fang|Philosopher's Stone||FALSE,2014,Legendary,Asher's +5 Viper Strike Fang,Philosopher's Stone,,2014,Philosopher's Stone,6,FALSE
 2014|Asher's +5 Viper Strike Fang|Ultra Rare||FALSE,2014,Legendary,Asher's +5 Viper Strike Fang,Ultra Rare,,2014,Ultra Rare,2,FALSE
 2014|Asher's +5 Viper Strike Fang|Wish Ring||FALSE,2014,Legendary,Asher's +5 Viper Strike Fang,Wish Ring,,2014,Wish Ring,1,FALSE
+2014|Asher's +5 Viper Strike Fang|+3 Viper Strike Fang||TRUE,2014,Legendary,Asher's +5 Viper Strike Fang,+3 Viper Strike Fang,,2014,+3 Viper Strike Fang (transmute),1,TRUE
+"2014|+3 Viper Strike Fang|1,000 GP Gold Bar||FALSE",2014,Relic,+3 Viper Strike Fang,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",3,FALSE
+2014|+3 Viper Strike Fang|Alchemist's Ink||FALSE,2014,Relic,+3 Viper Strike Fang,Alchemist's Ink,,2014,Alchemist's Ink,2,FALSE
+2014|+3 Viper Strike Fang|Alchemist's Parchment||FALSE,2014,Relic,+3 Viper Strike Fang,Alchemist's Parchment,,2014,Alchemist's Parchment,6,FALSE
+2014|+3 Viper Strike Fang|Aragonite||FALSE,2014,Relic,+3 Viper Strike Fang,Aragonite,,2014,Aragonite,2,FALSE
+2014|+3 Viper Strike Fang|Darkwood Plank||FALSE,2014,Relic,+3 Viper Strike Fang,Darkwood Plank,,2014,Darkwood Plank,10,FALSE
+2014|+3 Viper Strike Fang|Dwarven Steel||FALSE,2014,Relic,+3 Viper Strike Fang,Dwarven Steel,,2014,Dwarven Steel,12,FALSE
+2014|+3 Viper Strike Fang|Elven Bismuth||FALSE,2014,Relic,+3 Viper Strike Fang,Elven Bismuth,,2014,Elven Bismuth,2,FALSE
+2014|+3 Viper Strike Fang|Minotaur Hide||FALSE,2014,Relic,+3 Viper Strike Fang,Minotaur Hide,,2014,Minotaur Hide,2,FALSE
+2014|+3 Viper Strike Fang|Mystic Silk||FALSE,2014,Relic,+3 Viper Strike Fang,Mystic Silk,,2014,Mystic Silk,2,FALSE
+2014|+3 Viper Strike Fang|Philosopher's Stone||FALSE,2014,Relic,+3 Viper Strike Fang,Philosopher's Stone,,2014,Philosopher's Stone,2,FALSE
+2014|+3 Viper Strike Fang|Ultra Rare||FALSE,2014,Relic,+3 Viper Strike Fang,Ultra Rare,,2014,Ultra Rare,1,FALSE
 "2014|Io's +4 Ultra Keen Slayer Bow|1,000 GP Gold Bar||FALSE",2014,Legendary,Io's +4 Ultra Keen Slayer Bow,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",25,FALSE
 2014|Io's +4 Ultra Keen Slayer Bow|Alchemist's Ink||FALSE,2014,Legendary,Io's +4 Ultra Keen Slayer Bow,Alchemist's Ink,,2014,Alchemist's Ink,2,FALSE
 2014|Io's +4 Ultra Keen Slayer Bow|Alchemist's Parchment||FALSE,2014,Legendary,Io's +4 Ultra Keen Slayer Bow,Alchemist's Parchment,,2014,Alchemist's Parchment,8,FALSE
@@ -85,6 +149,18 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2014|Io's +4 Ultra Keen Slayer Bow|Philosopher's Stone||FALSE,2014,Legendary,Io's +4 Ultra Keen Slayer Bow,Philosopher's Stone,,2014,Philosopher's Stone,4,FALSE
 2014|Io's +4 Ultra Keen Slayer Bow|Ultra Rare||FALSE,2014,Legendary,Io's +4 Ultra Keen Slayer Bow,Ultra Rare,,2014,Ultra Rare,1,FALSE
 2014|Io's +4 Ultra Keen Slayer Bow|Wish Ring||FALSE,2014,Legendary,Io's +4 Ultra Keen Slayer Bow,Wish Ring,,2014,Wish Ring,1,FALSE
+2014|Io's +4 Ultra Keen Slayer Bow|+2 Keen Slayer Bow||TRUE,2014,Legendary,Io's +4 Ultra Keen Slayer Bow,+2 Keen Slayer Bow,,2014,+2 Keen Slayer Bow (transmute),1,TRUE
+"2014|+2 Keen Slayer Bow|1,000 GP Gold Bar||FALSE",2014,Relic,+2 Keen Slayer Bow,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",5,FALSE
+2014|+2 Keen Slayer Bow|Alchemist's Parchment||FALSE,2014,Relic,+2 Keen Slayer Bow,Alchemist's Parchment,,2014,Alchemist's Parchment,5,FALSE
+2014|+2 Keen Slayer Bow|Aragonite||FALSE,2014,Relic,+2 Keen Slayer Bow,Aragonite,,2014,Aragonite,2,FALSE
+2014|+2 Keen Slayer Bow|Darkwood Plank||FALSE,2014,Relic,+2 Keen Slayer Bow,Darkwood Plank,,2014,Darkwood Plank,16,FALSE
+2014|+2 Keen Slayer Bow|Dwarven Steel||FALSE,2014,Relic,+2 Keen Slayer Bow,Dwarven Steel,,2014,Dwarven Steel,8,FALSE
+2014|+2 Keen Slayer Bow|Elven Bismuth||FALSE,2014,Relic,+2 Keen Slayer Bow,Elven Bismuth,,2014,Elven Bismuth,2,FALSE
+2014|+2 Keen Slayer Bow|Enchanter's Munition||FALSE,2014,Relic,+2 Keen Slayer Bow,Enchanter's Munition,,2014,Enchanter's Munition,2,FALSE
+2014|+2 Keen Slayer Bow|Minotaur Hide||FALSE,2014,Relic,+2 Keen Slayer Bow,Minotaur Hide,,2014,Minotaur Hide,4,FALSE
+2014|+2 Keen Slayer Bow|Mystic Silk||FALSE,2014,Relic,+2 Keen Slayer Bow,Mystic Silk,,2014,Mystic Silk,1,FALSE
+2014|+2 Keen Slayer Bow|Oil of Enchantment||FALSE,2014,Relic,+2 Keen Slayer Bow,Oil of Enchantment,,2014,Oil of Enchantment,2,FALSE
+2014|+2 Keen Slayer Bow|Ultra Rare||FALSE,2014,Relic,+2 Keen Slayer Bow,Ultra Rare,,2014,Ultra Rare,1,FALSE
 "2014|Relsa's Ring of Supreme Focus|1,000 GP Gold Bar||FALSE",2014,Legendary,Relsa's Ring of Supreme Focus,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",25,FALSE
 2014|Relsa's Ring of Supreme Focus|Alchemist's Ink||FALSE,2014,Legendary,Relsa's Ring of Supreme Focus,Alchemist's Ink,,2014,Alchemist's Ink,8,FALSE
 2014|Relsa's Ring of Supreme Focus|Alchemist's Parchment||FALSE,2014,Legendary,Relsa's Ring of Supreme Focus,Alchemist's Parchment,,2014,Alchemist's Parchment,14,FALSE
@@ -99,6 +175,15 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2014|Relsa's Ring of Supreme Focus|Oil of Enchantment||FALSE,2014,Legendary,Relsa's Ring of Supreme Focus,Oil of Enchantment,,2014,Oil of Enchantment,1,FALSE
 2014|Relsa's Ring of Supreme Focus|Philosopher's Stone||FALSE,2014,Legendary,Relsa's Ring of Supreme Focus,Philosopher's Stone,,2014,Philosopher's Stone,16,FALSE
 2014|Relsa's Ring of Supreme Focus|Wish Ring||FALSE,2014,Legendary,Relsa's Ring of Supreme Focus,Wish Ring,,2014,Wish Ring,1,FALSE
+2014|Relsa's Ring of Supreme Focus|Ring of Greater Focus||TRUE,2014,Legendary,Relsa's Ring of Supreme Focus,Ring of Greater Focus,,2014,Ring of Greater Focus (transmute),1,TRUE
+"2014|Ring of Greater Focus|1,000 GP Gold Bar||FALSE",2014,Relic,Ring of Greater Focus,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",3,FALSE
+2014|Ring of Greater Focus|Alchemist's Ink||FALSE,2014,Relic,Ring of Greater Focus,Alchemist's Ink,,2014,Alchemist's Ink,4,FALSE
+2014|Ring of Greater Focus|Alchemist's Parchment||FALSE,2014,Relic,Ring of Greater Focus,Alchemist's Parchment,,2014,Alchemist's Parchment,6,FALSE
+2014|Ring of Greater Focus|Darkwood Plank||FALSE,2014,Relic,Ring of Greater Focus,Darkwood Plank,,2014,Darkwood Plank,10,FALSE
+2014|Ring of Greater Focus|Dwarven Steel||FALSE,2014,Relic,Ring of Greater Focus,Dwarven Steel,,2014,Dwarven Steel,4,FALSE
+2014|Ring of Greater Focus|Mystic Silk||FALSE,2014,Relic,Ring of Greater Focus,Mystic Silk,,2014,Mystic Silk,2,FALSE
+2014|Ring of Greater Focus|Oil of Enchantment||FALSE,2014,Relic,Ring of Greater Focus,Oil of Enchantment,,2014,Oil of Enchantment,2,FALSE
+2014|Ring of Greater Focus|Philosopher's Stone||FALSE,2014,Relic,Ring of Greater Focus,Philosopher's Stone,,2014,Philosopher's Stone,8,FALSE
 "2014|Rolland's Ring of Protection +6|1,000 GP Gold Bar||FALSE",2014,Legendary,Rolland's Ring of Protection +6,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",25,FALSE
 2014|Rolland's Ring of Protection +6|Alchemist's Ink||FALSE,2014,Legendary,Rolland's Ring of Protection +6,Alchemist's Ink,,2014,Alchemist's Ink,6,FALSE
 2014|Rolland's Ring of Protection +6|Alchemist's Parchment||FALSE,2014,Legendary,Rolland's Ring of Protection +6,Alchemist's Parchment,,2014,Alchemist's Parchment,15,FALSE
@@ -113,6 +198,26 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2014|Rolland's Ring of Protection +6|Oil of Enchantment||FALSE,2014,Legendary,Rolland's Ring of Protection +6,Oil of Enchantment,,2014,Oil of Enchantment,2,FALSE
 2014|Rolland's Ring of Protection +6|Philosopher's Stone||FALSE,2014,Legendary,Rolland's Ring of Protection +6,Philosopher's Stone,,2014,Philosopher's Stone,16,FALSE
 2014|Rolland's Ring of Protection +6|Wish Ring||FALSE,2014,Legendary,Rolland's Ring of Protection +6,Wish Ring,,2014,Wish Ring,1,FALSE
+2014|Rolland's Ring of Protection +6|Ring of Protection +4||TRUE,2014,Legendary,Rolland's Ring of Protection +6,Ring of Protection +4,,2014,Ring of Protection +4 (transmute),1,TRUE
+"2014|Ring of Protection +4|1,000 GP Gold Bar||FALSE",2014,Relic,Ring of Protection +4,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",2,FALSE
+2014|Ring of Protection +4|Alchemist's Ink||FALSE,2014,Relic,Ring of Protection +4,Alchemist's Ink,,2014,Alchemist's Ink,2,FALSE
+2014|Ring of Protection +4|Alchemist's Parchment||FALSE,2014,Relic,Ring of Protection +4,Alchemist's Parchment,,2014,Alchemist's Parchment,5,FALSE
+2014|Ring of Protection +4|Darkwood Plank||FALSE,2014,Relic,Ring of Protection +4,Darkwood Plank,,2014,Darkwood Plank,8,FALSE
+2014|Ring of Protection +4|Dwarven Steel||FALSE,2014,Relic,Ring of Protection +4,Dwarven Steel,,2014,Dwarven Steel,4,FALSE
+2014|Ring of Protection +4|Oil of Enchantment||FALSE,2014,Relic,Ring of Protection +4,Oil of Enchantment,,2014,Oil of Enchantment,1,FALSE
+2014|Ring of Protection +4|Philosopher's Stone||FALSE,2014,Relic,Ring of Protection +4,Philosopher's Stone,,2014,Philosopher's Stone,8,FALSE
+"2014|+3 Slayer Sword|1,000 GP Gold Bar||FALSE",2014,Relic,+3 Slayer Sword,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",3,FALSE
+2014|+3 Slayer Sword|Alchemist's Ink||FALSE,2014,Relic,+3 Slayer Sword,Alchemist's Ink,,2014,Alchemist's Ink,1,FALSE
+2014|+3 Slayer Sword|Alchemist's Parchment||FALSE,2014,Relic,+3 Slayer Sword,Alchemist's Parchment,,2014,Alchemist's Parchment,6,FALSE
+2014|+3 Slayer Sword|Aragonite||FALSE,2014,Relic,+3 Slayer Sword,Aragonite,,2014,Aragonite,2,FALSE
+2014|+3 Slayer Sword|Darkwood Plank||FALSE,2014,Relic,+3 Slayer Sword,Darkwood Plank,,2014,Darkwood Plank,6,FALSE
+2014|+3 Slayer Sword|Dwarven Steel||FALSE,2014,Relic,+3 Slayer Sword,Dwarven Steel,,2014,Dwarven Steel,14,FALSE
+2014|+3 Slayer Sword|Elven Bismuth||FALSE,2014,Relic,+3 Slayer Sword,Elven Bismuth,,2014,Elven Bismuth,2,FALSE
+2014|+3 Slayer Sword|Minotaur Hide||FALSE,2014,Relic,+3 Slayer Sword,Minotaur Hide,,2014,Minotaur Hide,8,FALSE
+2014|+3 Slayer Sword|Mystic Silk||FALSE,2014,Relic,+3 Slayer Sword,Mystic Silk,,2014,Mystic Silk,1,FALSE
+2014|+3 Slayer Sword|Philosopher's Stone||FALSE,2014,Relic,+3 Slayer Sword,Philosopher's Stone,,2014,Philosopher's Stone,1,FALSE
+2014|+3 Slayer Sword|Ultra Rare||FALSE,2014,Relic,+3 Slayer Sword,Ultra Rare,,2014,Ultra Rare,1,FALSE
+2014|Welfor's +5 Slayer Sword|+3 Slayer Sword||TRUE,2014,Legendary,Welfor's +5 Slayer Sword,+3 Slayer Sword,,2014,+3 Slayer Sword (transmute),1,TRUE
 "2014|Welfor's +5 Slayer Sword|1,000 GP Gold Bar||FALSE",2014,Legendary,Welfor's +5 Slayer Sword,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",25,FALSE
 2014|Welfor's +5 Slayer Sword|Alchemist's Ink||FALSE,2014,Legendary,Welfor's +5 Slayer Sword,Alchemist's Ink,,2014,Alchemist's Ink,4,FALSE
 2014|Welfor's +5 Slayer Sword|Alchemist's Parchment||FALSE,2014,Legendary,Welfor's +5 Slayer Sword,Alchemist's Parchment,,2014,Alchemist's Parchment,10,FALSE
@@ -128,6 +233,18 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2014|Welfor's +5 Slayer Sword|Philosopher's Stone||FALSE,2014,Legendary,Welfor's +5 Slayer Sword,Philosopher's Stone,,2014,Philosopher's Stone,6,FALSE
 2014|Welfor's +5 Slayer Sword|Ultra Rare||FALSE,2014,Legendary,Welfor's +5 Slayer Sword,Ultra Rare,,2014,Ultra Rare,1,FALSE
 2014|Welfor's +5 Slayer Sword|Wish Ring||FALSE,2014,Legendary,Welfor's +5 Slayer Sword,Wish Ring,,2014,Wish Ring,1,FALSE
+"2014|+3 Deathcleaver|1,000 GP Gold Bar||FALSE",2014,Relic,+3 Deathcleaver,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",5,FALSE
+2014|+3 Deathcleaver|Alchemist's Ink||FALSE,2014,Relic,+3 Deathcleaver,Alchemist's Ink,,2014,Alchemist's Ink,2,FALSE
+2014|+3 Deathcleaver|Alchemist's Parchment||FALSE,2014,Relic,+3 Deathcleaver,Alchemist's Parchment,,2014,Alchemist's Parchment,6,FALSE
+2014|+3 Deathcleaver|Aragonite||FALSE,2014,Relic,+3 Deathcleaver,Aragonite,,2014,Aragonite,2,FALSE
+2014|+3 Deathcleaver|Darkwood Plank||FALSE,2014,Relic,+3 Deathcleaver,Darkwood Plank,,2014,Darkwood Plank,11,FALSE
+2014|+3 Deathcleaver|Dwarven Steel||FALSE,2014,Relic,+3 Deathcleaver,Dwarven Steel,,2014,Dwarven Steel,11,FALSE
+2014|+3 Deathcleaver|Elven Bismuth||FALSE,2014,Relic,+3 Deathcleaver,Elven Bismuth,,2014,Elven Bismuth,1,FALSE
+2014|+3 Deathcleaver|Minotaur Hide||FALSE,2014,Relic,+3 Deathcleaver,Minotaur Hide,,2014,Minotaur Hide,3,FALSE
+2014|+3 Deathcleaver|Mystic Silk||FALSE,2014,Relic,+3 Deathcleaver,Mystic Silk,,2014,Mystic Silk,2,FALSE
+2014|+3 Deathcleaver|Philosopher's Stone||FALSE,2014,Relic,+3 Deathcleaver,Philosopher's Stone,,2014,Philosopher's Stone,2,FALSE
+2014|+3 Deathcleaver|Ultra Rare||FALSE,2014,Relic,+3 Deathcleaver,Ultra Rare,,2014,Ultra Rare,1,FALSE
+2015|Averon's +5 Deathcleaver|+3 Deathcleaver||TRUE,2015,Legendary,Averon's +5 Deathcleaver,+3 Deathcleaver,,2015,+3 Deathcleaver (transmute),1,TRUE
 "2015|Averon's +5 Deathcleaver|1,000 GP Gold Bar||FALSE",2015,Legendary,Averon's +5 Deathcleaver,"1,000 GP Gold Bar",,2015,"1,000 GP Gold Bar",25,FALSE
 2015|Averon's +5 Deathcleaver|Alchemist's Ink||FALSE,2015,Legendary,Averon's +5 Deathcleaver,Alchemist's Ink,,2015,Alchemist's Ink,4,FALSE
 2015|Averon's +5 Deathcleaver|Alchemist's Parchment||FALSE,2015,Legendary,Averon's +5 Deathcleaver,Alchemist's Parchment,,2015,Alchemist's Parchment,12,FALSE
@@ -143,6 +260,16 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2015|Averon's +5 Deathcleaver|Philosopher's Stone||FALSE,2015,Legendary,Averon's +5 Deathcleaver,Philosopher's Stone,,2015,Philosopher's Stone,6,FALSE
 2015|Averon's +5 Deathcleaver|Ultra Rare||FALSE,2015,Legendary,Averon's +5 Deathcleaver,Ultra Rare,,2015,Ultra Rare,2,FALSE
 2015|Averon's +5 Deathcleaver|Wish Ring||FALSE,2015,Legendary,Averon's +5 Deathcleaver,Wish Ring,,2015,Wish Ring,1,FALSE
+"2015|+3 Staff of Focus|1,000 GP Gold Bar||FALSE",2015,Relic,+3 Staff of Focus,"1,000 GP Gold Bar",,2015,"1,000 GP Gold Bar",4,FALSE
+2015|+3 Staff of Focus|Alchemist's Ink||FALSE,2015,Relic,+3 Staff of Focus,Alchemist's Ink,,2015,Alchemist's Ink,4,FALSE
+2015|+3 Staff of Focus|Alchemist's Parchment||FALSE,2015,Relic,+3 Staff of Focus,Alchemist's Parchment,,2015,Alchemist's Parchment,12,FALSE
+2015|+3 Staff of Focus|Darkwood Plank||FALSE,2015,Relic,+3 Staff of Focus,Darkwood Plank,,2015,Darkwood Plank,8,FALSE
+2015|+3 Staff of Focus|Dwarven Steel||FALSE,2015,Relic,+3 Staff of Focus,Dwarven Steel,,2015,Dwarven Steel,12,FALSE
+2015|+3 Staff of Focus|Mystic Silk||FALSE,2015,Relic,+3 Staff of Focus,Mystic Silk,,2015,Mystic Silk,6,FALSE
+2015|+3 Staff of Focus|Oil of Enchantment||FALSE,2015,Relic,+3 Staff of Focus,Oil of Enchantment,,2015,Oil of Enchantment,2,FALSE
+2015|+3 Staff of Focus|Philosopher's Stone||FALSE,2015,Relic,+3 Staff of Focus,Philosopher's Stone,,2015,Philosopher's Stone,6,FALSE
+2015|+3 Staff of Focus|Ultra Rare||FALSE,2015,Relic,+3 Staff of Focus,Ultra Rare,,2015,Ultra Rare,1,FALSE
+2015|Drake's +5 Staff of Focus|+3 Staff of Focus||TRUE,2015,Legendary,Drake's +5 Staff of Focus,+3 Staff of Focus,,2015,+3 Staff of Focus (transmute),1,TRUE
 "2015|Drake's +5 Staff of Focus|1,000 GP Gold Bar||FALSE",2015,Legendary,Drake's +5 Staff of Focus,"1,000 GP Gold Bar",,2015,"1,000 GP Gold Bar",25,FALSE
 2015|Drake's +5 Staff of Focus|Alchemist's Ink||FALSE,2015,Legendary,Drake's +5 Staff of Focus,Alchemist's Ink,,2015,Alchemist's Ink,8,FALSE
 2015|Drake's +5 Staff of Focus|Alchemist's Parchment||FALSE,2015,Legendary,Drake's +5 Staff of Focus,Alchemist's Parchment,,2015,Alchemist's Parchment,20,FALSE
@@ -173,6 +300,20 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2016|Byr's Anointed Redoubt Plate|Philosopher's Stone||FALSE,2016,Legendary,Byr's Anointed Redoubt Plate,Philosopher's Stone,,2016,Philosopher's Stone,10,FALSE
 2016|Byr's Anointed Redoubt Plate|Ultra Rare||FALSE,2016,Legendary,Byr's Anointed Redoubt Plate,Ultra Rare,,2016,Ultra Rare,2,FALSE
 2016|Byr's Anointed Redoubt Plate|Wish Ring||FALSE,2016,Legendary,Byr's Anointed Redoubt Plate,Wish Ring,,2016,Wish Ring,1,FALSE
+2016|Byr's Anointed Redoubt Plate|Blessed Redoubt Plate||TRUE,2016,Legendary,Byr's Anointed Redoubt Plate,Blessed Redoubt Plate,,2016,Blessed Redoubt Plate (transmute),1,TRUE
+"2016|Blessed Redoubt Plate|1,000 GP Gold Bar||FALSE",2016,Relic,Blessed Redoubt Plate,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",4,FALSE
+2016|Blessed Redoubt Plate|Alchemist's Ink||FALSE,2016,Relic,Blessed Redoubt Plate,Alchemist's Ink,,2016,Alchemist's Ink,3,FALSE
+2016|Blessed Redoubt Plate|Alchemist's Parchment||FALSE,2016,Relic,Blessed Redoubt Plate,Alchemist's Parchment,,2016,Alchemist's Parchment,6,FALSE
+2016|Blessed Redoubt Plate|Aragonite||FALSE,2016,Relic,Blessed Redoubt Plate,Aragonite,,2016,Aragonite,2,FALSE
+2016|Blessed Redoubt Plate|Darkwood Plank||FALSE,2016,Relic,Blessed Redoubt Plate,Darkwood Plank,,2016,Darkwood Plank,8,FALSE
+2016|Blessed Redoubt Plate|Dwarven Steel||FALSE,2016,Relic,Blessed Redoubt Plate,Dwarven Steel,,2016,Dwarven Steel,10,FALSE
+2016|Blessed Redoubt Plate|Elven Bismuth||FALSE,2016,Relic,Blessed Redoubt Plate,Elven Bismuth,,2016,Elven Bismuth,1,FALSE
+2016|Blessed Redoubt Plate|Enchanter's Munition||FALSE,2016,Relic,Blessed Redoubt Plate,Enchanter's Munition,,2016,Enchanter's Munition,2,FALSE
+2016|Blessed Redoubt Plate|Minotaur Hide||FALSE,2016,Relic,Blessed Redoubt Plate,Minotaur Hide,,2016,Minotaur Hide,6,FALSE
+2016|Blessed Redoubt Plate|Mystic Silk||FALSE,2016,Relic,Blessed Redoubt Plate,Mystic Silk,,2016,Mystic Silk,18,FALSE
+2016|Blessed Redoubt Plate|Oil of Enchantment||FALSE,2016,Relic,Blessed Redoubt Plate,Oil of Enchantment,,2016,Oil of Enchantment,1,FALSE
+2016|Blessed Redoubt Plate|Philosopher's Stone||FALSE,2016,Relic,Blessed Redoubt Plate,Philosopher's Stone,,2016,Philosopher's Stone,5,FALSE
+2016|Blessed Redoubt Plate|Ultra Rare||FALSE,2016,Relic,Blessed Redoubt Plate,Ultra Rare,,2016,Ultra Rare,1,FALSE
 "2016|Drue's +5 Baton of Focus|1,000 GP Gold Bar||FALSE",2016,Legendary,Drue's +5 Baton of Focus,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",25,FALSE
 2016|Drue's +5 Baton of Focus|Alchemist's Ink||FALSE,2016,Legendary,Drue's +5 Baton of Focus,Alchemist's Ink,,2016,Alchemist's Ink,8,FALSE
 2016|Drue's +5 Baton of Focus|Alchemist's Parchment||FALSE,2016,Legendary,Drue's +5 Baton of Focus,Alchemist's Parchment,,2016,Alchemist's Parchment,10,FALSE
@@ -188,6 +329,20 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2016|Drue's +5 Baton of Focus|Philosopher's Stone||FALSE,2016,Legendary,Drue's +5 Baton of Focus,Philosopher's Stone,,2016,Philosopher's Stone,8,FALSE
 2016|Drue's +5 Baton of Focus|Ultra Rare||FALSE,2016,Legendary,Drue's +5 Baton of Focus,Ultra Rare,,2016,Ultra Rare,2,FALSE
 2016|Drue's +5 Baton of Focus|Wish Ring||FALSE,2016,Legendary,Drue's +5 Baton of Focus,Wish Ring,,2016,Wish Ring,1,FALSE
+2016|Drue's +5 Baton of Focus|+3 Baton of Focus||TRUE,2016,Legendary,Drue's +5 Baton of Focus,+3 Baton of Focus,,2016,+3 Baton of Focus (transmute),1,TRUE
+"2016|+3 Baton of Focus|1,000 GP Gold Bar||FALSE",2016,Relic,+3 Baton of Focus,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",4,FALSE
+2016|+3 Baton of Focus|Alchemist's Ink||FALSE,2016,Relic,+3 Baton of Focus,Alchemist's Ink,,2016,Alchemist's Ink,2,FALSE
+2016|+3 Baton of Focus|Alchemist's Parchment||FALSE,2016,Relic,+3 Baton of Focus,Alchemist's Parchment,,2016,Alchemist's Parchment,8,FALSE
+2016|+3 Baton of Focus|Aragonite||FALSE,2016,Relic,+3 Baton of Focus,Aragonite,,2016,Aragonite,2,FALSE
+2016|+3 Baton of Focus|Darkwood Plank||FALSE,2016,Relic,+3 Baton of Focus,Darkwood Plank,,2016,Darkwood Plank,7,FALSE
+2016|+3 Baton of Focus|Dwarven Steel||FALSE,2016,Relic,+3 Baton of Focus,Dwarven Steel,,2016,Dwarven Steel,10,FALSE
+2016|+3 Baton of Focus|Elven Bismuth||FALSE,2016,Relic,+3 Baton of Focus,Elven Bismuth,,2016,Elven Bismuth,1,FALSE
+2016|+3 Baton of Focus|Enchanter's Munition||FALSE,2016,Relic,+3 Baton of Focus,Enchanter's Munition,,2016,Enchanter's Munition,4,FALSE
+2016|+3 Baton of Focus|Minotaur Hide||FALSE,2016,Relic,+3 Baton of Focus,Minotaur Hide,,2016,Minotaur Hide,1,FALSE
+2016|+3 Baton of Focus|Mystic Silk||FALSE,2016,Relic,+3 Baton of Focus,Mystic Silk,,2016,Mystic Silk,12,FALSE
+2016|+3 Baton of Focus|Oil of Enchantment||FALSE,2016,Relic,+3 Baton of Focus,Oil of Enchantment,,2016,Oil of Enchantment,1,FALSE
+2016|+3 Baton of Focus|Philosopher's Stone||FALSE,2016,Relic,+3 Baton of Focus,Philosopher's Stone,,2016,Philosopher's Stone,8,FALSE
+2016|+3 Baton of Focus|Ultra Rare||FALSE,2016,Relic,+3 Baton of Focus,Ultra Rare,,2016,Ultra Rare,1,FALSE
 "2016|Sill's Anointed Redoubt Mail|1,000 GP Gold Bar||FALSE",2016,Legendary,Sill's Anointed Redoubt Mail,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",25,FALSE
 2016|Sill's Anointed Redoubt Mail|Alchemist's Ink||FALSE,2016,Legendary,Sill's Anointed Redoubt Mail,Alchemist's Ink,,2016,Alchemist's Ink,4,FALSE
 2016|Sill's Anointed Redoubt Mail|Alchemist's Parchment||FALSE,2016,Legendary,Sill's Anointed Redoubt Mail,Alchemist's Parchment,,2016,Alchemist's Parchment,12,FALSE
@@ -203,6 +358,33 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2016|Sill's Anointed Redoubt Mail|Philosopher's Stone||FALSE,2016,Legendary,Sill's Anointed Redoubt Mail,Philosopher's Stone,,2016,Philosopher's Stone,10,FALSE
 2016|Sill's Anointed Redoubt Mail|Ultra Rare||FALSE,2016,Legendary,Sill's Anointed Redoubt Mail,Ultra Rare,,2016,Ultra Rare,2,FALSE
 2016|Sill's Anointed Redoubt Mail|Wish Ring||FALSE,2016,Legendary,Sill's Anointed Redoubt Mail,Wish Ring,,2016,Wish Ring,1,FALSE
+2016|Sill's Anointed Redoubt Mail|Blessed Redoubt Mail||TRUE,2016,Legendary,Sill's Anointed Redoubt Mail,Blessed Redoubt Mail,,2016,Blessed Redoubt Mail (transmute),1,TRUE
+"2016|Blessed Redoubt Mail|1,000 GP Gold Bar||FALSE",2016,Relic,Blessed Redoubt Mail,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",1,FALSE
+2016|Blessed Redoubt Mail|Alchemist's Ink||FALSE,2016,Relic,Blessed Redoubt Mail,Alchemist's Ink,,2016,Alchemist's Ink,3,FALSE
+2016|Blessed Redoubt Mail|Alchemist's Parchment||FALSE,2016,Relic,Blessed Redoubt Mail,Alchemist's Parchment,,2016,Alchemist's Parchment,6,FALSE
+2016|Blessed Redoubt Mail|Aragonite||FALSE,2016,Relic,Blessed Redoubt Mail,Aragonite,,2016,Aragonite,1,FALSE
+2016|Blessed Redoubt Mail|Darkwood Plank||FALSE,2016,Relic,Blessed Redoubt Mail,Darkwood Plank,,2016,Darkwood Plank,8,FALSE
+2016|Blessed Redoubt Mail|Dwarven Steel||FALSE,2016,Relic,Blessed Redoubt Mail,Dwarven Steel,,2016,Dwarven Steel,12,FALSE
+2016|Blessed Redoubt Mail|Elven Bismuth||FALSE,2016,Relic,Blessed Redoubt Mail,Elven Bismuth,,2016,Elven Bismuth,1,FALSE
+2016|Blessed Redoubt Mail|Enchanter's Munition||FALSE,2016,Relic,Blessed Redoubt Mail,Enchanter's Munition,,2016,Enchanter's Munition,2,FALSE
+2016|Blessed Redoubt Mail|Minotaur Hide||FALSE,2016,Relic,Blessed Redoubt Mail,Minotaur Hide,,2016,Minotaur Hide,6,FALSE
+2016|Blessed Redoubt Mail|Mystic Silk||FALSE,2016,Relic,Blessed Redoubt Mail,Mystic Silk,,2016,Mystic Silk,18,FALSE
+2016|Blessed Redoubt Mail|Oil of Enchantment||FALSE,2016,Relic,Blessed Redoubt Mail,Oil of Enchantment,,2016,Oil of Enchantment,1,FALSE
+2016|Blessed Redoubt Mail|Philosopher's Stone||FALSE,2016,Relic,Blessed Redoubt Mail,Philosopher's Stone,,2016,Philosopher's Stone,5,FALSE
+2016|Blessed Redoubt Mail|Ultra Rare||FALSE,2016,Relic,Blessed Redoubt Mail,Ultra Rare,,2016,Ultra Rare,1,FALSE
+"2017|Starhide Robe|1,000 GP Gold Bar||FALSE",2017,Relic,Starhide Robe,"1,000 GP Gold Bar",,2017,"1,000 GP Gold Bar",4,FALSE
+2017|Starhide Robe|Alchemist's Ink||FALSE,2017,Relic,Starhide Robe,Alchemist's Ink,,2017,Alchemist's Ink,9,FALSE
+2017|Starhide Robe|Alchemist's Parchment||FALSE,2017,Relic,Starhide Robe,Alchemist's Parchment,,2017,Alchemist's Parchment,12,FALSE
+2017|Starhide Robe|Aragonite||FALSE,2017,Relic,Starhide Robe,Aragonite,,2017,Aragonite,1,FALSE
+2017|Starhide Robe|Darkwood Plank||FALSE,2017,Relic,Starhide Robe,Darkwood Plank,,2017,Darkwood Plank,7,FALSE
+2017|Starhide Robe|Dwarven Steel||FALSE,2017,Relic,Starhide Robe,Dwarven Steel,,2017,Dwarven Steel,5,FALSE
+2017|Starhide Robe|Elven Bismuth||FALSE,2017,Relic,Starhide Robe,Elven Bismuth,,2017,Elven Bismuth,1,FALSE
+2017|Starhide Robe|Minotaur Hide||FALSE,2017,Relic,Starhide Robe,Minotaur Hide,,2017,Minotaur Hide,1,FALSE
+2017|Starhide Robe|Mystic Silk||FALSE,2017,Relic,Starhide Robe,Mystic Silk,,2017,Mystic Silk,12,FALSE
+2017|Starhide Robe|Oil of Enchantment||FALSE,2017,Relic,Starhide Robe,Oil of Enchantment,,2017,Oil of Enchantment,1,FALSE
+2017|Starhide Robe|Philosopher's Stone||FALSE,2017,Relic,Starhide Robe,Philosopher's Stone,,2017,Philosopher's Stone,15,FALSE
+2017|Starhide Robe|Ultra Rare||FALSE,2017,Relic,Starhide Robe,Ultra Rare,,2017,Ultra Rare,1,FALSE
+2017|Aron's Sunhide Robe|Starhide Robe||TRUE,2017,Legendary,Aron's Sunhide Robe,Starhide Robe,,2017,Starhide Robe (transmute),1,TRUE
 "2017|Aron's Sunhide Robe|1,000 GP Gold Bar||FALSE",2017,Legendary,Aron's Sunhide Robe,"1,000 GP Gold Bar",,2017,"1,000 GP Gold Bar",25,FALSE
 2017|Aron's Sunhide Robe|Alchemist's Ink||FALSE,2017,Legendary,Aron's Sunhide Robe,Alchemist's Ink,,2017,Alchemist's Ink,10,FALSE
 2017|Aron's Sunhide Robe|Alchemist's Parchment||FALSE,2017,Legendary,Aron's Sunhide Robe,Alchemist's Parchment,,2017,Alchemist's Parchment,16,FALSE
@@ -218,6 +400,20 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2017|Aron's Sunhide Robe|Philosopher's Stone||FALSE,2017,Legendary,Aron's Sunhide Robe,Philosopher's Stone,,2017,Philosopher's Stone,13,FALSE
 2017|Aron's Sunhide Robe|Ultra Rare||FALSE,2017,Legendary,Aron's Sunhide Robe,Ultra Rare,,2017,Ultra Rare,1,FALSE
 2017|Aron's Sunhide Robe|Wish Ring||FALSE,2017,Legendary,Aron's Sunhide Robe,Wish Ring,,2017,Wish Ring,1,FALSE
+"2017|Blessed Redoubt Shield|1,000 GP Gold Bar||FALSE",2017,Relic,Blessed Redoubt Shield,"1,000 GP Gold Bar",,2017,"1,000 GP Gold Bar",4,FALSE
+2017|Blessed Redoubt Shield|Alchemist's Ink||FALSE,2017,Relic,Blessed Redoubt Shield,Alchemist's Ink,,2017,Alchemist's Ink,3,FALSE
+2017|Blessed Redoubt Shield|Alchemist's Parchment||FALSE,2017,Relic,Blessed Redoubt Shield,Alchemist's Parchment,,2017,Alchemist's Parchment,6,FALSE
+2017|Blessed Redoubt Shield|Aragonite||FALSE,2017,Relic,Blessed Redoubt Shield,Aragonite,,2017,Aragonite,1,FALSE
+2017|Blessed Redoubt Shield|Darkwood Plank||FALSE,2017,Relic,Blessed Redoubt Shield,Darkwood Plank,,2017,Darkwood Plank,7,FALSE
+2017|Blessed Redoubt Shield|Dwarven Steel||FALSE,2017,Relic,Blessed Redoubt Shield,Dwarven Steel,,2017,Dwarven Steel,10,FALSE
+2017|Blessed Redoubt Shield|Elven Bismuth||FALSE,2017,Relic,Blessed Redoubt Shield,Elven Bismuth,,2017,Elven Bismuth,1,FALSE
+2017|Blessed Redoubt Shield|Enchanter's Munition||FALSE,2017,Relic,Blessed Redoubt Shield,Enchanter's Munition,,2017,Enchanter's Munition,2,FALSE
+2017|Blessed Redoubt Shield|Minotaur Hide||FALSE,2017,Relic,Blessed Redoubt Shield,Minotaur Hide,,2017,Minotaur Hide,6,FALSE
+2017|Blessed Redoubt Shield|Mystic Silk||FALSE,2017,Relic,Blessed Redoubt Shield,Mystic Silk,,2017,Mystic Silk,6,FALSE
+2017|Blessed Redoubt Shield|Oil of Enchantment||FALSE,2017,Relic,Blessed Redoubt Shield,Oil of Enchantment,,2017,Oil of Enchantment,1,FALSE
+2017|Blessed Redoubt Shield|Philosopher's Stone||FALSE,2017,Relic,Blessed Redoubt Shield,Philosopher's Stone,,2017,Philosopher's Stone,8,FALSE
+2017|Blessed Redoubt Shield|Ultra Rare||FALSE,2017,Relic,Blessed Redoubt Shield,Ultra Rare,,2017,Ultra Rare,1,FALSE
+2017|Giln's Redoubt Shield|Blessed Redoubt Shield||TRUE,2017,Legendary,Giln's Redoubt Shield,Blessed Redoubt Shield,,2017,Blessed Redoubt Shield (transmute),1,TRUE
 "2017|Giln's Redoubt Shield|1,000 GP Gold Bar||FALSE",2017,Legendary,Giln's Redoubt Shield,"1,000 GP Gold Bar",,2017,"1,000 GP Gold Bar",25,FALSE
 2017|Giln's Redoubt Shield|Alchemist's Ink||FALSE,2017,Legendary,Giln's Redoubt Shield,Alchemist's Ink,,2017,Alchemist's Ink,4,FALSE
 2017|Giln's Redoubt Shield|Alchemist's Parchment||FALSE,2017,Legendary,Giln's Redoubt Shield,Alchemist's Parchment,,2017,Alchemist's Parchment,10,FALSE
@@ -233,6 +429,20 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2017|Giln's Redoubt Shield|Philosopher's Stone||FALSE,2017,Legendary,Giln's Redoubt Shield,Philosopher's Stone,,2017,Philosopher's Stone,10,FALSE
 2017|Giln's Redoubt Shield|Ultra Rare||FALSE,2017,Legendary,Giln's Redoubt Shield,Ultra Rare,,2017,Ultra Rare,2,FALSE
 2017|Giln's Redoubt Shield|Wish Ring||FALSE,2017,Legendary,Giln's Redoubt Shield,Wish Ring,,2017,Wish Ring,1,FALSE
+"2018|Blessed Redoubt Helm|1,000 GP Gold Bar||FALSE",2018,Relic,Blessed Redoubt Helm,"1,000 GP Gold Bar",,2018,"1,000 GP Gold Bar",5,FALSE
+2018|Blessed Redoubt Helm|Alchemist's Ink||FALSE,2018,Relic,Blessed Redoubt Helm,Alchemist's Ink,,2018,Alchemist's Ink,3,FALSE
+2018|Blessed Redoubt Helm|Alchemist's Parchment||FALSE,2018,Relic,Blessed Redoubt Helm,Alchemist's Parchment,,2018,Alchemist's Parchment,4,FALSE
+2018|Blessed Redoubt Helm|Aragonite||FALSE,2018,Relic,Blessed Redoubt Helm,Aragonite,,2018,Aragonite,1,FALSE
+2018|Blessed Redoubt Helm|Darkwood Plank||FALSE,2018,Relic,Blessed Redoubt Helm,Darkwood Plank,,2018,Darkwood Plank,5,FALSE
+2018|Blessed Redoubt Helm|Dwarven Steel||FALSE,2018,Relic,Blessed Redoubt Helm,Dwarven Steel,,2018,Dwarven Steel,15,FALSE
+2018|Blessed Redoubt Helm|Elven Bismuth||FALSE,2018,Relic,Blessed Redoubt Helm,Elven Bismuth,,2018,Elven Bismuth,1,FALSE
+2018|Blessed Redoubt Helm|Enchanter's Munition||FALSE,2018,Relic,Blessed Redoubt Helm,Enchanter's Munition,,2018,Enchanter's Munition,1,FALSE
+2018|Blessed Redoubt Helm|Minotaur Hide||FALSE,2018,Relic,Blessed Redoubt Helm,Minotaur Hide,,2018,Minotaur Hide,12,FALSE
+2018|Blessed Redoubt Helm|Mystic Silk||FALSE,2018,Relic,Blessed Redoubt Helm,Mystic Silk,,2018,Mystic Silk,8,FALSE
+2018|Blessed Redoubt Helm|Oil of Enchantment||FALSE,2018,Relic,Blessed Redoubt Helm,Oil of Enchantment,,2018,Oil of Enchantment,1,FALSE
+2018|Blessed Redoubt Helm|Philosopher's Stone||FALSE,2018,Relic,Blessed Redoubt Helm,Philosopher's Stone,,2018,Philosopher's Stone,8,FALSE
+2018|Blessed Redoubt Helm|Ultra Rare||FALSE,2018,Relic,Blessed Redoubt Helm,Ultra Rare,,2018,Ultra Rare,1,FALSE
+2018|Pern's Redoubt Helm|Blessed Redoubt Helm||TRUE,2018,Legendary,Pern's Redoubt Helm,Blessed Redoubt Helm,,2018,Blessed Redoubt Helm (transmute),1,TRUE
 "2018|Pern's Redoubt Helm|1,000 GP Gold Bar||FALSE",2018,Legendary,Pern's Redoubt Helm,"1,000 GP Gold Bar",,2018,"1,000 GP Gold Bar",25,FALSE
 2018|Pern's Redoubt Helm|Alchemist's Ink||FALSE,2018,Legendary,Pern's Redoubt Helm,Alchemist's Ink,,2018,Alchemist's Ink,4,FALSE
 2018|Pern's Redoubt Helm|Alchemist's Parchment||FALSE,2018,Legendary,Pern's Redoubt Helm,Alchemist's Parchment,,2018,Alchemist's Parchment,10,FALSE
@@ -248,6 +458,19 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2018|Pern's Redoubt Helm|Philosopher's Stone||FALSE,2018,Legendary,Pern's Redoubt Helm,Philosopher's Stone,,2018,Philosopher's Stone,10,FALSE
 2018|Pern's Redoubt Helm|Ultra Rare||FALSE,2018,Legendary,Pern's Redoubt Helm,Ultra Rare,,2018,Ultra Rare,2,FALSE
 2018|Pern's Redoubt Helm|Wish Ring||FALSE,2018,Legendary,Pern's Redoubt Helm,Wish Ring,,2018,Wish Ring,1,FALSE
+"2018|+3 Throwing Hammer of Smiting|1,000 GP Gold Bar||FALSE",2018,Relic,+3 Throwing Hammer of Smiting,"1,000 GP Gold Bar",,2018,"1,000 GP Gold Bar",5,FALSE
+2018|+3 Throwing Hammer of Smiting|Alchemist's Ink||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Alchemist's Ink,,2018,Alchemist's Ink,8,FALSE
+2018|+3 Throwing Hammer of Smiting|Alchemist's Parchment||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Alchemist's Parchment,,2018,Alchemist's Parchment,12,FALSE
+2018|+3 Throwing Hammer of Smiting|Aragonite||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Aragonite,,2018,Aragonite,1,FALSE
+2018|+3 Throwing Hammer of Smiting|Darkwood Plank||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Darkwood Plank,,2018,Darkwood Plank,7,FALSE
+2018|+3 Throwing Hammer of Smiting|Dwarven Steel||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Dwarven Steel,,2018,Dwarven Steel,5,FALSE
+2018|+3 Throwing Hammer of Smiting|Elven Bismuth||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Elven Bismuth,,2018,Elven Bismuth,1,FALSE
+2018|+3 Throwing Hammer of Smiting|Minotaur Hide||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Minotaur Hide,,2018,Minotaur Hide,1,FALSE
+2018|+3 Throwing Hammer of Smiting|Mystic Silk||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Mystic Silk,,2018,Mystic Silk,8,FALSE
+2018|+3 Throwing Hammer of Smiting|Oil of Enchantment||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Oil of Enchantment,,2018,Oil of Enchantment,1,FALSE
+2018|+3 Throwing Hammer of Smiting|Philosopher's Stone||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Philosopher's Stone,,2018,Philosopher's Stone,12,FALSE
+2018|+3 Throwing Hammer of Smiting|Ultra Rare||FALSE,2018,Relic,+3 Throwing Hammer of Smiting,Ultra Rare,,2018,Ultra Rare,1,FALSE
+2018|Thor's +5 Returning Hammer of Smiting|+3 Throwing Hammer of Smiting||TRUE,2018,Legendary,Thor's +5 Returning Hammer of Smiting,+3 Throwing Hammer of Smiting,,2018,+3 Throwing Hammer of Smiting (transmute),1,TRUE
 "2018|Thor's +5 Returning Hammer of Smiting|1,000 GP Gold Bar||FALSE",2018,Legendary,Thor's +5 Returning Hammer of Smiting,"1,000 GP Gold Bar",,2018,"1,000 GP Gold Bar",25,FALSE
 2018|Thor's +5 Returning Hammer of Smiting|Alchemist's Ink||FALSE,2018,Legendary,Thor's +5 Returning Hammer of Smiting,Alchemist's Ink,,2018,Alchemist's Ink,4,FALSE
 2018|Thor's +5 Returning Hammer of Smiting|Alchemist's Parchment||FALSE,2018,Legendary,Thor's +5 Returning Hammer of Smiting,Alchemist's Parchment,,2018,Alchemist's Parchment,12,FALSE

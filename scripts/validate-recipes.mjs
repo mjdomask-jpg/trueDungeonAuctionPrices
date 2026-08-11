@@ -249,6 +249,30 @@ for (const r of recipes) {
   add('WARN', 'source-flag', `${r.Year} ${r.Transmute} consumes transmute "${r.Item}" @${r.ResolvedYear} with IsSource=FALSE — should this be TRUE?`);
 }
 
+// Every Legendary is forged by upgrading a relic, so it should carry exactly one
+// IsSource line naming that relic. `multi-source` above catches the >1 case; this
+// catches the 0 case. Phase 1b back-populated the 18 pre-2019 Legendaries that
+// were missing theirs — this guard makes a re-export that drops one loud, because
+// losing the source relic silently deletes a recipe's single biggest cost line.
+// A handful of Legendaries are genuinely built from raw materials with no
+// upgrade-from token (alternate "Recipe N" variants, the Golem-piece totem); they
+// are listed explicitly so the clean state stays at zero errors and only a real
+// regression fires. Add to this list when a new raw-built Legendary is authored.
+const RAW_BUILT_LEGENDARIES = new Set([
+  '2023|Charm of Avarice Recipe 3',            // alternate recipe: raw materials + Ultra Rare
+  "2024|Kilgor's +4 Savage Sword (Recipe 2)",  // alternate recipe: no upgrade-from token
+  '2026|Gear Golem Totem',                     // forged from Golem Pieces, no source relic
+]);
+const legendarySources = new Map();   // "Year|Transmute" -> count of IsSource rows
+for (const r of recipes) if (r.Level === 'Legendary') {
+  const k = r.Year + '|' + r.Transmute;
+  legendarySources.set(k, (legendarySources.get(k) ?? 0) + (r.IsSource.toUpperCase() === 'TRUE' ? 1 : 0));
+}
+for (const [k, n] of legendarySources) {
+  if (n === 0 && !RAW_BUILT_LEGENDARIES.has(k))
+    add('ERROR', 'legendary-source', `Legendary ${k} has no IsSource line — a Legendary upgrades from a relic. Add its source-relic line, or list it in RAW_BUILT_LEGENDARIES if it is genuinely built from raw materials.`);
+}
+
 // cycle detection over source edges within a season
 const edges = new Map();
 for (const r of recipes) if (r.IsSource.toUpperCase() === 'TRUE' && transmuteNames.has(r.Item))

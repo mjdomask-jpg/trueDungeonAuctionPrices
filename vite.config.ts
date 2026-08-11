@@ -38,6 +38,10 @@ function pricesUpdatedISO(): string {
 // GitHub Pages serves it from https://<user>.github.io/<repo>/ (a subpath).
 export default defineConfig({
   base: './',
+  // Honour a PORT from the environment when one is set (e.g. a preview harness
+  // assigning a free port so two dev servers can run side by side); otherwise
+  // fall through to Vite's default 5173.
+  server: { port: Number(process.env.PORT) || undefined },
   plugins: [react()],
   define: {
     __PRICES_UPDATED__: JSON.stringify(pricesUpdatedISO()),
