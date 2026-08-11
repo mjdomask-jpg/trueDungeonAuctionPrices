@@ -945,7 +945,15 @@ td.diff.down { color: var(--diff-down); }
 .calc-dx:hover { color: var(--accent); }
 .calc-dbody { padding: 12px 14px; overflow: auto; }
 .calc-dbody .search { display: block; margin-bottom: 10px; }
-.calc-dbody .search input { width: 100%; }
+/* Match the site's other search fields (see .controls input, and its 44px
+   touch height at ≤640px): same height, radius, border, surface and font, so
+   the drawer doesn't read as a foreign control. */
+.calc-dbody .search input {
+  width: 100%; font: inherit; font-size: 16px; height: 32px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--card); color: var(--text-h);
+}
+.calc-dbody .search input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 .calc-tiers { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px; }
 .calc-tchip { font: inherit; font-size: 11px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); cursor: pointer; color: var(--text); }
 .calc-tchip:hover { border-color: var(--accent); color: var(--accent); }
@@ -970,6 +978,7 @@ td.diff.down { color: var(--diff-down); }
 /* Two-line rows on phones: ingredient up top, controls below — no side-scroll. */
 @media (max-width: 640px) {
   .calc-lhead { display: none; }
+  .calc-dbody .search input { height: 44px; }
   .cl-main { grid-template-columns: auto 1fr auto; grid-template-areas: "name name name" "hand buy fin"; row-gap: 9px; }
   .cl-name { grid-area: name; }
   .cl-hand { grid-area: hand; justify-self: start; }
