@@ -32,9 +32,36 @@ type PickItem =
 // Tier display order for the drawer's filter chips (game power ladder).
 const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic', 'Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
 
-// Seed the override inputs with at most two decimals — raw auction averages carry
-// a long fractional tail nobody wants to edit against.
-const round2 = (n: number | null) => (n == null ? '' : Math.round(n * 100) / 100);
+// Money always shows both cents digits ($10.60, not $10.6); parsing rounds to
+// cents so a stored override never carries a longer tail than it displays.
+const fmt2 = (n: number | null | undefined) => (n == null ? '' : n.toFixed(2));
+const parsePrice = (s: string): number | null => {
+  const t = s.trim();
+  if (t === '') return null;
+  const n = Number(t);
+  return isFinite(n) ? Math.round(n * 100) / 100 : null;
+};
+
+// A price entry box that displays two decimals ($4.80) but lets you type freely
+// while focused (4.8) — a plain number input drops trailing zeros, so this holds
+// its own text and reformats from the value on blur.
+function PriceInput({ value, onChange, ariaLabel }: {
+  value: number | null;
+  onChange: (n: number | null) => void;
+  ariaLabel: string;
+}) {
+  const [text, setText] = useState(() => fmt2(value));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setText(fmt2(value)); }, [value, focused]);
+  return (
+    <input
+      type="text" inputMode="decimal" aria-label={ariaLabel} value={text}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => { setText(e.target.value); onChange(parsePrice(e.target.value)); }}
+    />
+  );
+}
 
 // Compact provenance for one ingredient: its own season when it differs from the
 // recipe's, then where the price came from. Mirrors TransmuteRow's priceTag.
@@ -157,12 +184,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const setHave = (key: string, req: number, v: number) =>
     setOnHand((p) => ({ ...p, [key]: Math.min(Math.max(0, v), req) }));
   const toggleAll = (key: string, req: number, have: number) => setHave(key, req, have >= req ? 0 : req);
-  const setOv = (key: string, line: PricedLine, field: keyof Override, valueStr: string) =>
+  const setOv = (key: string, line: PricedLine, field: keyof Override, num: number | null) =>
     setOverrides((p) => {
       const cur = p[key] ?? { avg: line.unitAvg, min: line.unitMin };
-      const t = valueStr.trim();
-      const num = t === '' ? null : Number(t);
-      return { ...p, [key]: { ...cur, [field]: num != null && isFinite(num) ? num : null } };
+      return { ...p, [key]: { ...cur, [field]: num } };
     });
   const clearOv = (key: string) =>
     setOverrides((p) => {
@@ -292,13 +317,13 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                   <span className="cl-editor-hint">Your price:</span>
                   <label>avg
                     <span className="cl-money-in"><span className="cl-dollar">$</span>
-                      <input type="number" min={0} step="0.01" inputMode="decimal" value={round2(r.unitAvg)}
-                        onChange={(e) => setOv(r.key, r.line, 'avg', e.target.value)} /></span>
+                      <PriceInput ariaLabel={`Your avg price: ${r.line.displayName}`} value={r.unitAvg}
+                        onChange={(n) => setOv(r.key, r.line, 'avg', n)} /></span>
                   </label>
                   <label>min
                     <span className="cl-money-in"><span className="cl-dollar">$</span>
-                      <input type="number" min={0} step="0.01" inputMode="decimal" value={round2(r.unitMin)}
-                        onChange={(e) => setOv(r.key, r.line, 'min', e.target.value)} /></span>
+                      <PriceInput ariaLabel={`Your min price: ${r.line.displayName}`} value={r.unitMin}
+                        onChange={(n) => setOv(r.key, r.line, 'min', n)} /></span>
                   </label>
                   {r.overridden && (
                     <button type="button" className="cl-reset" onClick={() => clearOv(r.key)}>
