@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
       </PageIntro>
 
       <div className="controls">
-        <div className="toggle" role="group" aria-label="Analytics view">
+        <div className="toggle view-toggle" role="group" aria-label="Analytics view">
           <span className="toggle-label">View</span>
           <div className="toggle-buttons">
             <button type="button" data-label="Current Year" className={view === 'current' ? 'on' : undefined}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
@@ -56,7 +56,7 @@ function PriceInput({ value, onChange, ariaLabel }: {
   return (
     <input
       type="text" inputMode="decimal" aria-label={ariaLabel} value={text}
-      onFocus={() => setFocused(true)}
+      onFocus={(e) => { setFocused(true); e.currentTarget.select(); }}
       onBlur={() => setFocused(false)}
       onChange={(e) => { setText(e.target.value); onChange(parsePrice(e.target.value)); }}
     />
@@ -195,6 +195,20 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       return rest;
     });
 
+  // Field-to-field navigation. iOS draws its own prev/next arrows over standard
+  // inputs; this wires Enter — and Android's "next" key, hinted by enterKeyHint
+  // — to jump to the following on-hand box so a whole build can be filled from
+  // the keyboard without reaching for each field.
+  const focusNextHand = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const inputs = Array.from(
+      e.currentTarget.closest('.calc-panel')?.querySelectorAll<HTMLInputElement>('.cl-hand input') ?? [],
+    );
+    const next = inputs[inputs.indexOf(e.currentTarget) + 1];
+    if (next) { next.focus(); next.select(); }
+  };
+
   // Master on-hand control: set every priced line to fully-owned in one tap
   // (fast when you have most of the materials and only lack a few), or clear all.
   const pricedRows = rows.filter((r) => r.priced);
@@ -283,9 +297,24 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                         aria-pressed={r.have >= r.req} onClick={() => toggleAll(r.key, r.req, r.have)}>
                         {r.have >= r.req ? 'None' : 'All'}
                       </button>
-                      <input type="number" min={0} max={r.req} inputMode="numeric"
-                        aria-label={`On hand: ${r.line.displayName}`} value={r.have}
-                        onChange={(e) => setHave(r.key, r.req, e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0)} />
+                      {/* −/+ stepper (all widths) — the type=text field has no
+                          native spinner; these replace it. */}
+                      <span className="cl-stepper">
+                        <button type="button" className="cl-step" aria-label={`One fewer on hand: ${r.line.displayName}`}
+                          disabled={r.have <= 0} onClick={() => setHave(r.key, r.req, r.have - 1)}>−</button>
+                        {/* type=text (not number): number inputs don't support
+                            select() — worst on iOS, where a tap drops the cursor
+                            before the 0 and "2" becomes "20". inputMode keeps the
+                            numeric keypad; select-on-focus makes the first digit
+                            replace the value. */}
+                        <input type="text" inputMode="numeric" pattern="[0-9]*" enterKeyHint="next"
+                          aria-label={`On hand: ${r.line.displayName}`} value={r.have}
+                          onFocus={(e) => e.currentTarget.select()}
+                          onKeyDown={focusNextHand}
+                          onChange={(e) => setHave(r.key, r.req, e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0)} />
+                        <button type="button" className="cl-step" aria-label={`One more on hand: ${r.line.displayName}`}
+                          disabled={r.have >= r.req} onClick={() => setHave(r.key, r.req, r.have + 1)}>+</button>
+                      </span>
                     </>
                   ) : (
                     <span className="cl-dash">—</span>
