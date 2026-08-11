@@ -922,8 +922,12 @@ td.diff.down { color: var(--diff-down); }
 .cl-editor { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 6px 10px; border-top: 1px dashed var(--border); }
 .cl-editor-hint { font-size: 12px; color: var(--text); }
 .cl-editor label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
-.cl-editor input { width: 84px; font: inherit; font-size: 14px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-h); font-variant-numeric: tabular-nums; }
-.cl-editor input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+/* $-prefixed money field: the box carries the border, a leading $ sits inside it. */
+.cl-money-in { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+.cl-money-in:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
+.cl-dollar { padding-left: 8px; color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
+.cl-editor input { width: 78px; font: inherit; font-size: 14px; padding: 5px 8px 5px 3px; border: none; background: transparent; color: var(--text-h); font-variant-numeric: tabular-nums; }
+.cl-editor input:focus-visible { outline: none; }
 .cl-reset { font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 999px; color: var(--text-h); }
 .cl-reset:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -941,7 +945,7 @@ td.diff.down { color: var(--diff-down); }
 .calc-scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 40; }
 .calc-scrim.on { opacity: 1; pointer-events: auto; }
 .calc-drawer {
-  position: fixed; top: 0; bottom: 0; left: 0; width: 330px; max-width: 88vw;
+  position: fixed; top: 0; bottom: 0; left: 0; width: 384px; max-width: 92vw;
   background: var(--card); border-right: 1px solid var(--border); box-shadow: var(--shadow);
   transform: translateX(-104%); transition: transform 0.22s ease; z-index: 41;
   display: flex; flex-direction: column;
@@ -978,7 +982,9 @@ td.diff.down { color: var(--diff-down); }
 .calc-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .calc-opt.sel { background: var(--accent-bg); border-color: var(--accent); }
 .calc-opt-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
-.calc-opt-up { display: block; font-size: 10px; color: var(--text); }
+/* The recipe name (the nm text node) stays one ellipsized line; its "upgrades
+   from" subline wraps so long source names show in full. */
+.calc-opt-up { display: block; font-size: 10px; color: var(--text); white-space: normal; line-height: 1.25; margin-top: 1px; }
 .calc-opt-c { font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; flex: none; }
 .calc-pair { border-left: 2px solid var(--accent); margin: 4px 0 4px 4px; padding-left: 3px; }
 .calc-pair .calc-opt.leg { margin-left: 14px; }
@@ -993,8 +999,10 @@ td.diff.down { color: var(--diff-down); }
   .cl-buy { grid-area: buy; align-self: center; }
   .cl-unit { display: none; }
   .cl-fin { grid-area: fin; align-self: center; }
-  .cl-price-m { display: inline; background: none; border: none; padding: 0; cursor: pointer; color: var(--text); font: inherit; font-size: 10.5px; text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 2px; }
+  .cl-price-m { display: inline-block; background: none; border: none; padding: 4px 4px; cursor: pointer; color: var(--text); font: inherit; font-size: 11px; text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 2px; }
   .cl-price-m:hover { color: var(--accent); }
+  /* Bigger, easier-to-tap edit pen on phones. */
+  .cl-price-m .cl-edit-i { font-size: 16px; margin-left: 7px; vertical-align: -2px; opacity: 0.9; }
 }
 
 /* Inline text-button that reads like a link, for prose cross-references. */

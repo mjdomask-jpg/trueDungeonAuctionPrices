@@ -32,6 +32,10 @@ type PickItem =
 // Tier display order for the drawer's filter chips (game power ladder).
 const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic', 'Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
 
+// Seed the override inputs with at most two decimals — raw auction averages carry
+// a long fractional tail nobody wants to edit against.
+const round2 = (n: number | null) => (n == null ? '' : Math.round(n * 100) / 100);
+
 // Compact provenance for one ingredient: its own season when it differs from the
 // recipe's, then where the price came from. Mirrors TransmuteRow's priceTag.
 function lineTag(l: PricedLine, recipeYear: number): string {
@@ -286,10 +290,16 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               {editing === r.key && (
                 <div className="cl-editor">
                   <span className="cl-editor-hint">Your price:</span>
-                  <label>avg <input type="number" min={0} inputMode="decimal" value={r.unitAvg ?? ''}
-                    onChange={(e) => setOv(r.key, r.line, 'avg', e.target.value)} /></label>
-                  <label>min <input type="number" min={0} inputMode="decimal" value={r.unitMin ?? ''}
-                    onChange={(e) => setOv(r.key, r.line, 'min', e.target.value)} /></label>
+                  <label>avg
+                    <span className="cl-money-in"><span className="cl-dollar">$</span>
+                      <input type="number" min={0} step="0.01" inputMode="decimal" value={round2(r.unitAvg)}
+                        onChange={(e) => setOv(r.key, r.line, 'avg', e.target.value)} /></span>
+                  </label>
+                  <label>min
+                    <span className="cl-money-in"><span className="cl-dollar">$</span>
+                      <input type="number" min={0} step="0.01" inputMode="decimal" value={round2(r.unitMin)}
+                        onChange={(e) => setOv(r.key, r.line, 'min', e.target.value)} /></span>
+                  </label>
                   {r.overridden && (
                     <button type="button" className="cl-reset" onClick={() => clearOv(r.key)}>
                       Reset to {moneyCalc(r.line.unitAvg)}
