@@ -2,13 +2,15 @@
 // auction stats, explorer — see docs/expansion-plan.md §6), add them here and
 // the header nav renders them automatically. The nav bar stays hidden while
 // there's only one destination.
-export type NavItem = { path: string; label: string };
+// `short` is an optional phone-width label: the tab strip shows it below 640px,
+// where the full label would push the five tabs onto a second row.
+export type NavItem = { path: string; label: string; short?: string };
 
 export const navItems: NavItem[] = [
   { path: '/', label: 'Prices' },
   { path: '/trends', label: 'Trends' },
   { path: '/transmutes', label: 'Transmutes' },
-  { path: '/explorer', label: 'Auction Data' },
+  { path: '/explorer', label: 'Auction Data', short: 'Data' },
   { path: '/analytics', label: 'Analytics' },
 ];
 

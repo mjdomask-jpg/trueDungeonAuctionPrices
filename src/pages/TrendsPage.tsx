@@ -43,7 +43,7 @@ export default function TrendsPage() {
       </PageIntro>
 
       <div className="controls">
-        <div className="toggle" role="group" aria-label="Trend view">
+        <div className="toggle view-toggle" role="group" aria-label="Trend view">
           <span className="toggle-label">View</span>
           <div className="toggle-buttons">
             <button type="button" data-label="Over a season" className={view === 'season' ? 'on' : undefined}

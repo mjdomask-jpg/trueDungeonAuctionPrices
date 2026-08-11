@@ -48,6 +48,7 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
 
   return (
     <>
+      <h2 className="an-viewhead">Quartiles</h2>
       <p className="an-lede">
         Every sale price of a token in one year, summarised as a box-and-whisker plot and a
         quartile table. The box spans the middle half of sales (Q1–Q3), the line is the median,
@@ -60,7 +61,7 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
       <div className="controls">
         {seasons.length > 1 && (
           <label>
-            Year
+            Season
             <select value={season} onChange={(e) => setPicked(e.target.value)}>
               {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
