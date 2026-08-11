@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { money0 } from '../lib/format';
+import { Money } from './Money';
 import { HintPopover } from './HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { sourceName, tierAbbrev, type BuildCost, type PricedLine } from '../lib/transmutes';
@@ -106,11 +107,11 @@ export function TransmuteRow({
           <span className="tx-cost">
             {cost.hasSource ? (
               <>
-                <span className="tx-line"><span className="tx-lab">Build</span> <b>{money0(cost.fullAvg)}</b> <span className="tx-min">min {money0(cost.fullMin)}</span></span>
-                <span className="tx-line up"><span className="tx-lab">Upgrade</span> <b>{money0(cost.ownAvg)}</b> <span className="tx-min">min {money0(cost.ownMin)}</span></span>
+                <span className="tx-line"><span className="tx-lab">Build</span> <b><Money value={cost.fullAvg} /></b> <span className="tx-min">min <Money value={cost.fullMin} /></span></span>
+                <span className="tx-line up"><span className="tx-lab">Upgrade</span> <b><Money value={cost.ownAvg} /></b> <span className="tx-min">min <Money value={cost.ownMin} /></span></span>
               </>
             ) : (
-              <span className="tx-line"><b>{money0(cost.fullAvg)}</b> <span className="tx-min">min {money0(cost.fullMin)}</span></span>
+              <span className="tx-line"><b><Money value={cost.fullAvg} /></b> <span className="tx-min">min <Money value={cost.fullMin} /></span></span>
             )}
           </span>
         </span>
@@ -127,25 +128,25 @@ export function TransmuteRow({
                 <span className="tx-good">{l.quantity} × {l.displayName}</span>
                 <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>{priceTag(l, cost.year)}</span>
               </span>
-              <span>{money0(l.extAvg)}</span>
-              <span>{money0(l.extMin)}</span>
+              <span><Money value={l.extAvg} /></span>
+              <span><Money value={l.extMin} /></span>
             </div>
           ))}
           {cost.hasSource ? (
             <>
               <div className="tx-bom-row foot">
                 <span>Upgrade step <em>— if you own the {src}</em></span>
-                <span>{money0(cost.ownAvg)}</span><span>{money0(cost.ownMin)}</span>
+                <span><Money value={cost.ownAvg} /></span><span><Money value={cost.ownMin} /></span>
               </div>
               <div className="tx-bom-row foot total">
                 <span>Full build <em>— from scratch</em></span>
-                <span>{money0(cost.fullAvg)}</span><span>{money0(cost.fullMin)}</span>
+                <span><Money value={cost.fullAvg} /></span><span><Money value={cost.fullMin} /></span>
               </div>
             </>
           ) : (
             <div className="tx-bom-row foot total">
               <span>Build total</span>
-              <span>{money0(cost.fullAvg)}</span><span>{money0(cost.fullMin)}</span>
+              <span><Money value={cost.fullAvg} /></span><span><Money value={cost.fullMin} /></span>
             </div>
           )}
           {cost.marketAvg != null && (

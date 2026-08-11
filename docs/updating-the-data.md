@@ -461,7 +461,7 @@ sales.
 **Export from:** the `transmuteRecipes` tab → save as `transmuteRecipes.csv`
 
 **Drives:** the entire Transmutes page — every bill of materials and build cost.
-1,607 rows covering 146 recipes across 16 seasons.
+1,904 rows covering 171 recipes across 16 seasons.
 
 **Update when:** a new transmute is announced, or a recipe changes.
 
@@ -501,6 +501,13 @@ sales.
   filled down.
 - **`Display Name` showing `⚠ check name`** means the `Item` doesn't resolve.
   Fix it before exporting.
+- **Every Legendary needs exactly one source line.** A Legendary is forged by
+  upgrading a relic, so it must carry one `IsSource=TRUE` row naming that relic
+  (its build cost is dominated by it). The validator errors (`legendary-source`)
+  if a Legendary has none. The rare Legendary genuinely built from raw materials
+  — an alternate `Recipe N` variant, or the Golem-piece totem — is exempted by an
+  explicit allowlist (`RAW_BUILT_LEGENDARIES`) in `scripts/validate-recipes.mjs`;
+  add to it when you author another raw-built Legendary.
 
 ### Gotcha
 
@@ -668,6 +675,15 @@ for that season. Add the row or fix the spelling.
 
 A sheet formula didn't fill down, or two rows produced the same key. Check the
 `Key` column formula covers every row.
+
+### `[ERROR] legendary-source: Legendary 2018|Pern's Redoubt Helm has no IsSource line`
+
+A Legendary recipe is missing the `IsSource=TRUE` row that names the relic it
+upgrades from — usually a re-export dropped the line, or its `IsSource` flag got
+flipped to `FALSE` (which also shows as a `source-flag` warning). Add the source
+line back, or set its flag to `TRUE`. If the Legendary is genuinely built from
+raw materials with no upgrade-from token, add its `Year|Transmute` key to
+`RAW_BUILT_LEGENDARIES` in `scripts/validate-recipes.mjs`.
 
 ### `[WARN] display-name: … != tokenMetadata …`
 
