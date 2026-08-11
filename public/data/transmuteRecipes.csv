@@ -176,14 +176,14 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2014|Relsa's Ring of Supreme Focus|Philosopher's Stone||FALSE,2014,Legendary,Relsa's Ring of Supreme Focus,Philosopher's Stone,,2014,Philosopher's Stone,16,FALSE
 2014|Relsa's Ring of Supreme Focus|Wish Ring||FALSE,2014,Legendary,Relsa's Ring of Supreme Focus,Wish Ring,,2014,Wish Ring,1,FALSE
 2014|Relsa's Ring of Supreme Focus|Ring of Greater Focus||TRUE,2014,Legendary,Relsa's Ring of Supreme Focus,Ring of Greater Focus,,2014,Ring of Greater Focus (transmute),1,TRUE
-"2014|Ring of Greater Focus|1,000 GP Gold Bar||FALSE",2014,Relic,Ring of Greater Focus,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",3,FALSE
-2014|Ring of Greater Focus|Alchemist's Ink||FALSE,2014,Relic,Ring of Greater Focus,Alchemist's Ink,,2014,Alchemist's Ink,4,FALSE
-2014|Ring of Greater Focus|Alchemist's Parchment||FALSE,2014,Relic,Ring of Greater Focus,Alchemist's Parchment,,2014,Alchemist's Parchment,6,FALSE
-2014|Ring of Greater Focus|Darkwood Plank||FALSE,2014,Relic,Ring of Greater Focus,Darkwood Plank,,2014,Darkwood Plank,10,FALSE
-2014|Ring of Greater Focus|Dwarven Steel||FALSE,2014,Relic,Ring of Greater Focus,Dwarven Steel,,2014,Dwarven Steel,4,FALSE
-2014|Ring of Greater Focus|Mystic Silk||FALSE,2014,Relic,Ring of Greater Focus,Mystic Silk,,2014,Mystic Silk,2,FALSE
-2014|Ring of Greater Focus|Oil of Enchantment||FALSE,2014,Relic,Ring of Greater Focus,Oil of Enchantment,,2014,Oil of Enchantment,2,FALSE
-2014|Ring of Greater Focus|Philosopher's Stone||FALSE,2014,Relic,Ring of Greater Focus,Philosopher's Stone,,2014,Philosopher's Stone,8,FALSE
+"2014|Ring of Greater Focus|1,000 GP Gold Bar||TRUE",2014,Relic,Ring of Greater Focus,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",3,TRUE
+2014|Ring of Greater Focus|Alchemist's Ink||TRUE,2014,Relic,Ring of Greater Focus,Alchemist's Ink,,2014,Alchemist's Ink,4,TRUE
+2014|Ring of Greater Focus|Alchemist's Parchment||TRUE,2014,Relic,Ring of Greater Focus,Alchemist's Parchment,,2014,Alchemist's Parchment,6,TRUE
+2014|Ring of Greater Focus|Darkwood Plank||TRUE,2014,Relic,Ring of Greater Focus,Darkwood Plank,,2014,Darkwood Plank,10,TRUE
+2014|Ring of Greater Focus|Dwarven Steel||TRUE,2014,Relic,Ring of Greater Focus,Dwarven Steel,,2014,Dwarven Steel,4,TRUE
+2014|Ring of Greater Focus|Mystic Silk||TRUE,2014,Relic,Ring of Greater Focus,Mystic Silk,,2014,Mystic Silk,2,TRUE
+2014|Ring of Greater Focus|Oil of Enchantment||TRUE,2014,Relic,Ring of Greater Focus,Oil of Enchantment,,2014,Oil of Enchantment,2,TRUE
+2014|Ring of Greater Focus|Philosopher's Stone||TRUE,2014,Relic,Ring of Greater Focus,Philosopher's Stone,,2014,Philosopher's Stone,8,TRUE
 "2014|Rolland's Ring of Protection +6|1,000 GP Gold Bar||FALSE",2014,Legendary,Rolland's Ring of Protection +6,"1,000 GP Gold Bar",,2014,"1,000 GP Gold Bar",25,FALSE
 2014|Rolland's Ring of Protection +6|Alchemist's Ink||FALSE,2014,Legendary,Rolland's Ring of Protection +6,Alchemist's Ink,,2014,Alchemist's Ink,6,FALSE
 2014|Rolland's Ring of Protection +6|Alchemist's Parchment||FALSE,2014,Legendary,Rolland's Ring of Protection +6,Alchemist's Parchment,,2014,Alchemist's Parchment,15,FALSE
@@ -301,19 +301,19 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2016|Byr's Anointed Redoubt Plate|Ultra Rare||FALSE,2016,Legendary,Byr's Anointed Redoubt Plate,Ultra Rare,,2016,Ultra Rare,2,FALSE
 2016|Byr's Anointed Redoubt Plate|Wish Ring||FALSE,2016,Legendary,Byr's Anointed Redoubt Plate,Wish Ring,,2016,Wish Ring,1,FALSE
 2016|Byr's Anointed Redoubt Plate|Blessed Redoubt Plate||TRUE,2016,Legendary,Byr's Anointed Redoubt Plate,Blessed Redoubt Plate,,2016,Blessed Redoubt Plate (transmute),1,TRUE
-"2016|Blessed Redoubt Plate|1,000 GP Gold Bar||FALSE",2016,Relic,Blessed Redoubt Plate,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",4,FALSE
-2016|Blessed Redoubt Plate|Alchemist's Ink||FALSE,2016,Relic,Blessed Redoubt Plate,Alchemist's Ink,,2016,Alchemist's Ink,3,FALSE
-2016|Blessed Redoubt Plate|Alchemist's Parchment||FALSE,2016,Relic,Blessed Redoubt Plate,Alchemist's Parchment,,2016,Alchemist's Parchment,6,FALSE
-2016|Blessed Redoubt Plate|Aragonite||FALSE,2016,Relic,Blessed Redoubt Plate,Aragonite,,2016,Aragonite,2,FALSE
-2016|Blessed Redoubt Plate|Darkwood Plank||FALSE,2016,Relic,Blessed Redoubt Plate,Darkwood Plank,,2016,Darkwood Plank,8,FALSE
-2016|Blessed Redoubt Plate|Dwarven Steel||FALSE,2016,Relic,Blessed Redoubt Plate,Dwarven Steel,,2016,Dwarven Steel,10,FALSE
-2016|Blessed Redoubt Plate|Elven Bismuth||FALSE,2016,Relic,Blessed Redoubt Plate,Elven Bismuth,,2016,Elven Bismuth,1,FALSE
-2016|Blessed Redoubt Plate|Enchanter's Munition||FALSE,2016,Relic,Blessed Redoubt Plate,Enchanter's Munition,,2016,Enchanter's Munition,2,FALSE
-2016|Blessed Redoubt Plate|Minotaur Hide||FALSE,2016,Relic,Blessed Redoubt Plate,Minotaur Hide,,2016,Minotaur Hide,6,FALSE
-2016|Blessed Redoubt Plate|Mystic Silk||FALSE,2016,Relic,Blessed Redoubt Plate,Mystic Silk,,2016,Mystic Silk,18,FALSE
-2016|Blessed Redoubt Plate|Oil of Enchantment||FALSE,2016,Relic,Blessed Redoubt Plate,Oil of Enchantment,,2016,Oil of Enchantment,1,FALSE
-2016|Blessed Redoubt Plate|Philosopher's Stone||FALSE,2016,Relic,Blessed Redoubt Plate,Philosopher's Stone,,2016,Philosopher's Stone,5,FALSE
-2016|Blessed Redoubt Plate|Ultra Rare||FALSE,2016,Relic,Blessed Redoubt Plate,Ultra Rare,,2016,Ultra Rare,1,FALSE
+"2016|Blessed Redoubt Plate|1,000 GP Gold Bar||TRUE",2016,Relic,Blessed Redoubt Plate,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",4,TRUE
+2016|Blessed Redoubt Plate|Alchemist's Ink||TRUE,2016,Relic,Blessed Redoubt Plate,Alchemist's Ink,,2016,Alchemist's Ink,3,TRUE
+2016|Blessed Redoubt Plate|Alchemist's Parchment||TRUE,2016,Relic,Blessed Redoubt Plate,Alchemist's Parchment,,2016,Alchemist's Parchment,6,TRUE
+2016|Blessed Redoubt Plate|Aragonite||TRUE,2016,Relic,Blessed Redoubt Plate,Aragonite,,2016,Aragonite,2,TRUE
+2016|Blessed Redoubt Plate|Darkwood Plank||TRUE,2016,Relic,Blessed Redoubt Plate,Darkwood Plank,,2016,Darkwood Plank,8,TRUE
+2016|Blessed Redoubt Plate|Dwarven Steel||TRUE,2016,Relic,Blessed Redoubt Plate,Dwarven Steel,,2016,Dwarven Steel,10,TRUE
+2016|Blessed Redoubt Plate|Elven Bismuth||TRUE,2016,Relic,Blessed Redoubt Plate,Elven Bismuth,,2016,Elven Bismuth,1,TRUE
+2016|Blessed Redoubt Plate|Enchanter's Munition||TRUE,2016,Relic,Blessed Redoubt Plate,Enchanter's Munition,,2016,Enchanter's Munition,2,TRUE
+2016|Blessed Redoubt Plate|Minotaur Hide||TRUE,2016,Relic,Blessed Redoubt Plate,Minotaur Hide,,2016,Minotaur Hide,6,TRUE
+2016|Blessed Redoubt Plate|Mystic Silk||TRUE,2016,Relic,Blessed Redoubt Plate,Mystic Silk,,2016,Mystic Silk,18,TRUE
+2016|Blessed Redoubt Plate|Oil of Enchantment||TRUE,2016,Relic,Blessed Redoubt Plate,Oil of Enchantment,,2016,Oil of Enchantment,1,TRUE
+2016|Blessed Redoubt Plate|Philosopher's Stone||TRUE,2016,Relic,Blessed Redoubt Plate,Philosopher's Stone,,2016,Philosopher's Stone,5,TRUE
+2016|Blessed Redoubt Plate|Ultra Rare||TRUE,2016,Relic,Blessed Redoubt Plate,Ultra Rare,,2016,Ultra Rare,1,TRUE
 "2016|Drue's +5 Baton of Focus|1,000 GP Gold Bar||FALSE",2016,Legendary,Drue's +5 Baton of Focus,"1,000 GP Gold Bar",,2016,"1,000 GP Gold Bar",25,FALSE
 2016|Drue's +5 Baton of Focus|Alchemist's Ink||FALSE,2016,Legendary,Drue's +5 Baton of Focus,Alchemist's Ink,,2016,Alchemist's Ink,8,FALSE
 2016|Drue's +5 Baton of Focus|Alchemist's Parchment||FALSE,2016,Legendary,Drue's +5 Baton of Focus,Alchemist's Parchment,,2016,Alchemist's Parchment,10,FALSE
@@ -1603,62 +1603,62 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 "2026|Val's +4 Keen Fellbane Crossbow|1,000 GP Gold Bar||FALSE",2026,Legendary,Val's +4 Keen Fellbane Crossbow,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
 2026|Val's +4 Keen Fellbane Crossbow|Wish Ring||FALSE,2026,Legendary,Val's +4 Keen Fellbane Crossbow,Wish Ring,,2026,Wish Ring,1,FALSE
 2026|Val's +4 Keen Fellbane Crossbow|+3 Fellbane Crossbow||TRUE,2026,Legendary,Val's +4 Keen Fellbane Crossbow,+3 Fellbane Crossbow,,2026,+3 Fellbane Crossbow (transmute),1,TRUE
-2026|Mythic Ioun Stone of Judgment|Alchemist's Ink||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
-2026|Mythic Ioun Stone of Judgment|Alchemist's Parchment||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
-2026|Mythic Ioun Stone of Judgment|Aragonite||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Aragonite,,2026,Aragonite,10,FALSE
-2026|Mythic Ioun Stone of Judgment|Darkwood Plank||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
-2026|Mythic Ioun Stone of Judgment|Dwarven Steel||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
-2026|Mythic Ioun Stone of Judgment|Elven Bismuth||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
-2026|Mythic Ioun Stone of Judgment|Enchanter's Munition||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
-2026|Mythic Ioun Stone of Judgment|Golden Fleece||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Golden Fleece,,2026,Golden Fleece,10,FALSE
-2026|Mythic Ioun Stone of Judgment|Minotaur Hide||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
-2026|Mythic Ioun Stone of Judgment|Mystic Silk||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Mystic Silk,,2026,Mystic Silk,60,FALSE
-2026|Mythic Ioun Stone of Judgment|Oil of Enchantment||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
-2026|Mythic Ioun Stone of Judgment|Philosopher's Stone||FALSE,2026,Mythic,Mythic Ioun Stone of Judgment,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
-"2026|Mythic Ioun Stone of Judgment|1,000 GP Gold Bar||FALSE",2026,Mythic,Mythic Ioun Stone of Judgment,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
-2026|Mythic Ioun Stone of Judgment|Omni Orb|2025|TRUE,2026,Mythic,Mythic Ioun Stone of Judgment,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
-2026|Mythic Ettin Ring|Alchemist's Ink||FALSE,2026,Mythic,Mythic Ettin Ring,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
-2026|Mythic Ettin Ring|Alchemist's Parchment||FALSE,2026,Mythic,Mythic Ettin Ring,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
-2026|Mythic Ettin Ring|Aragonite||FALSE,2026,Mythic,Mythic Ettin Ring,Aragonite,,2026,Aragonite,10,FALSE
-2026|Mythic Ettin Ring|Darkwood Plank||FALSE,2026,Mythic,Mythic Ettin Ring,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
-2026|Mythic Ettin Ring|Dwarven Steel||FALSE,2026,Mythic,Mythic Ettin Ring,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
-2026|Mythic Ettin Ring|Elven Bismuth||FALSE,2026,Mythic,Mythic Ettin Ring,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
-2026|Mythic Ettin Ring|Enchanter's Munition||FALSE,2026,Mythic,Mythic Ettin Ring,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
-2026|Mythic Ettin Ring|Golden Fleece||FALSE,2026,Mythic,Mythic Ettin Ring,Golden Fleece,,2026,Golden Fleece,10,FALSE
-2026|Mythic Ettin Ring|Minotaur Hide||FALSE,2026,Mythic,Mythic Ettin Ring,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
-2026|Mythic Ettin Ring|Mystic Silk||FALSE,2026,Mythic,Mythic Ettin Ring,Mystic Silk,,2026,Mystic Silk,60,FALSE
-2026|Mythic Ettin Ring|Oil of Enchantment||FALSE,2026,Mythic,Mythic Ettin Ring,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
-2026|Mythic Ettin Ring|Philosopher's Stone||FALSE,2026,Mythic,Mythic Ettin Ring,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
-"2026|Mythic Ettin Ring|1,000 GP Gold Bar||FALSE",2026,Mythic,Mythic Ettin Ring,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
-2026|Mythic Ettin Ring|Omni Orb|2025|TRUE,2026,Mythic,Mythic Ettin Ring,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
-2026|Mythic Charm of Fate|Alchemist's Ink||FALSE,2026,Mythic,Mythic Charm of Fate,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
-2026|Mythic Charm of Fate|Alchemist's Parchment||FALSE,2026,Mythic,Mythic Charm of Fate,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
-2026|Mythic Charm of Fate|Aragonite||FALSE,2026,Mythic,Mythic Charm of Fate,Aragonite,,2026,Aragonite,10,FALSE
-2026|Mythic Charm of Fate|Darkwood Plank||FALSE,2026,Mythic,Mythic Charm of Fate,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
-2026|Mythic Charm of Fate|Dwarven Steel||FALSE,2026,Mythic,Mythic Charm of Fate,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
-2026|Mythic Charm of Fate|Elven Bismuth||FALSE,2026,Mythic,Mythic Charm of Fate,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
-2026|Mythic Charm of Fate|Enchanter's Munition||FALSE,2026,Mythic,Mythic Charm of Fate,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
-2026|Mythic Charm of Fate|Golden Fleece||FALSE,2026,Mythic,Mythic Charm of Fate,Golden Fleece,,2026,Golden Fleece,10,FALSE
-2026|Mythic Charm of Fate|Minotaur Hide||FALSE,2026,Mythic,Mythic Charm of Fate,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
-2026|Mythic Charm of Fate|Mystic Silk||FALSE,2026,Mythic,Mythic Charm of Fate,Mystic Silk,,2026,Mystic Silk,60,FALSE
-2026|Mythic Charm of Fate|Oil of Enchantment||FALSE,2026,Mythic,Mythic Charm of Fate,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
-2026|Mythic Charm of Fate|Philosopher's Stone||FALSE,2026,Mythic,Mythic Charm of Fate,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
-"2026|Mythic Charm of Fate|1,000 GP Gold Bar||FALSE",2026,Mythic,Mythic Charm of Fate,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
-2026|Mythic Charm of Fate|Omni Orb|2025|TRUE,2026,Mythic,Mythic Charm of Fate,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
-2026|Mythic Bead of Defiance|Alchemist's Ink||FALSE,2026,Mythic,Mythic Bead of Defiance,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
-2026|Mythic Bead of Defiance|Alchemist's Parchment||FALSE,2026,Mythic,Mythic Bead of Defiance,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
-2026|Mythic Bead of Defiance|Aragonite||FALSE,2026,Mythic,Mythic Bead of Defiance,Aragonite,,2026,Aragonite,10,FALSE
-2026|Mythic Bead of Defiance|Darkwood Plank||FALSE,2026,Mythic,Mythic Bead of Defiance,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
-2026|Mythic Bead of Defiance|Dwarven Steel||FALSE,2026,Mythic,Mythic Bead of Defiance,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
-2026|Mythic Bead of Defiance|Elven Bismuth||FALSE,2026,Mythic,Mythic Bead of Defiance,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
-2026|Mythic Bead of Defiance|Enchanter's Munition||FALSE,2026,Mythic,Mythic Bead of Defiance,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
-2026|Mythic Bead of Defiance|Golden Fleece||FALSE,2026,Mythic,Mythic Bead of Defiance,Golden Fleece,,2026,Golden Fleece,10,FALSE
-2026|Mythic Bead of Defiance|Minotaur Hide||FALSE,2026,Mythic,Mythic Bead of Defiance,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
-2026|Mythic Bead of Defiance|Mystic Silk||FALSE,2026,Mythic,Mythic Bead of Defiance,Mystic Silk,,2026,Mystic Silk,60,FALSE
-2026|Mythic Bead of Defiance|Oil of Enchantment||FALSE,2026,Mythic,Mythic Bead of Defiance,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
-2026|Mythic Bead of Defiance|Philosopher's Stone||FALSE,2026,Mythic,Mythic Bead of Defiance,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
-"2026|Mythic Bead of Defiance|1,000 GP Gold Bar||FALSE",2026,Mythic,Mythic Bead of Defiance,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
-2026|Mythic Bead of Defiance|Omni Orb|2025|TRUE,2026,Mythic,Mythic Bead of Defiance,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
+2026|Ioun Stone of Judgment|Alchemist's Ink||FALSE,2026,Mythic,Ioun Stone of Judgment,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
+2026|Ioun Stone of Judgment|Alchemist's Parchment||FALSE,2026,Mythic,Ioun Stone of Judgment,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
+2026|Ioun Stone of Judgment|Aragonite||FALSE,2026,Mythic,Ioun Stone of Judgment,Aragonite,,2026,Aragonite,10,FALSE
+2026|Ioun Stone of Judgment|Darkwood Plank||FALSE,2026,Mythic,Ioun Stone of Judgment,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
+2026|Ioun Stone of Judgment|Dwarven Steel||FALSE,2026,Mythic,Ioun Stone of Judgment,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
+2026|Ioun Stone of Judgment|Elven Bismuth||FALSE,2026,Mythic,Ioun Stone of Judgment,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
+2026|Ioun Stone of Judgment|Enchanter's Munition||FALSE,2026,Mythic,Ioun Stone of Judgment,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
+2026|Ioun Stone of Judgment|Golden Fleece||FALSE,2026,Mythic,Ioun Stone of Judgment,Golden Fleece,,2026,Golden Fleece,10,FALSE
+2026|Ioun Stone of Judgment|Minotaur Hide||FALSE,2026,Mythic,Ioun Stone of Judgment,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
+2026|Ioun Stone of Judgment|Mystic Silk||FALSE,2026,Mythic,Ioun Stone of Judgment,Mystic Silk,,2026,Mystic Silk,60,FALSE
+2026|Ioun Stone of Judgment|Oil of Enchantment||FALSE,2026,Mythic,Ioun Stone of Judgment,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
+2026|Ioun Stone of Judgment|Philosopher's Stone||FALSE,2026,Mythic,Ioun Stone of Judgment,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
+"2026|Ioun Stone of Judgment|1,000 GP Gold Bar||FALSE",2026,Mythic,Ioun Stone of Judgment,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
+2026|Ioun Stone of Judgment|Omni Orb|2025|TRUE,2026,Mythic,Ioun Stone of Judgment,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
+2026|Ettin Ring|Alchemist's Ink||FALSE,2026,Mythic,Ettin Ring,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
+2026|Ettin Ring|Alchemist's Parchment||FALSE,2026,Mythic,Ettin Ring,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
+2026|Ettin Ring|Aragonite||FALSE,2026,Mythic,Ettin Ring,Aragonite,,2026,Aragonite,10,FALSE
+2026|Ettin Ring|Darkwood Plank||FALSE,2026,Mythic,Ettin Ring,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
+2026|Ettin Ring|Dwarven Steel||FALSE,2026,Mythic,Ettin Ring,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
+2026|Ettin Ring|Elven Bismuth||FALSE,2026,Mythic,Ettin Ring,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
+2026|Ettin Ring|Enchanter's Munition||FALSE,2026,Mythic,Ettin Ring,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
+2026|Ettin Ring|Golden Fleece||FALSE,2026,Mythic,Ettin Ring,Golden Fleece,,2026,Golden Fleece,10,FALSE
+2026|Ettin Ring|Minotaur Hide||FALSE,2026,Mythic,Ettin Ring,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
+2026|Ettin Ring|Mystic Silk||FALSE,2026,Mythic,Ettin Ring,Mystic Silk,,2026,Mystic Silk,60,FALSE
+2026|Ettin Ring|Oil of Enchantment||FALSE,2026,Mythic,Ettin Ring,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
+2026|Ettin Ring|Philosopher's Stone||FALSE,2026,Mythic,Ettin Ring,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
+"2026|Ettin Ring|1,000 GP Gold Bar||FALSE",2026,Mythic,Ettin Ring,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
+2026|Ettin Ring|Omni Orb|2025|TRUE,2026,Mythic,Ettin Ring,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
+2026|Charm of Fate|Alchemist's Ink||FALSE,2026,Mythic,Charm of Fate,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
+2026|Charm of Fate|Alchemist's Parchment||FALSE,2026,Mythic,Charm of Fate,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
+2026|Charm of Fate|Aragonite||FALSE,2026,Mythic,Charm of Fate,Aragonite,,2026,Aragonite,10,FALSE
+2026|Charm of Fate|Darkwood Plank||FALSE,2026,Mythic,Charm of Fate,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
+2026|Charm of Fate|Dwarven Steel||FALSE,2026,Mythic,Charm of Fate,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
+2026|Charm of Fate|Elven Bismuth||FALSE,2026,Mythic,Charm of Fate,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
+2026|Charm of Fate|Enchanter's Munition||FALSE,2026,Mythic,Charm of Fate,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
+2026|Charm of Fate|Golden Fleece||FALSE,2026,Mythic,Charm of Fate,Golden Fleece,,2026,Golden Fleece,10,FALSE
+2026|Charm of Fate|Minotaur Hide||FALSE,2026,Mythic,Charm of Fate,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
+2026|Charm of Fate|Mystic Silk||FALSE,2026,Mythic,Charm of Fate,Mystic Silk,,2026,Mystic Silk,60,FALSE
+2026|Charm of Fate|Oil of Enchantment||FALSE,2026,Mythic,Charm of Fate,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
+2026|Charm of Fate|Philosopher's Stone||FALSE,2026,Mythic,Charm of Fate,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
+"2026|Charm of Fate|1,000 GP Gold Bar||FALSE",2026,Mythic,Charm of Fate,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
+2026|Charm of Fate|Omni Orb|2025|TRUE,2026,Mythic,Charm of Fate,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
+2026|Bead of Defiance|Alchemist's Ink||FALSE,2026,Mythic,Bead of Defiance,Alchemist's Ink,,2026,Alchemist's Ink,30,FALSE
+2026|Bead of Defiance|Alchemist's Parchment||FALSE,2026,Mythic,Bead of Defiance,Alchemist's Parchment,,2026,Alchemist's Parchment,30,FALSE
+2026|Bead of Defiance|Aragonite||FALSE,2026,Mythic,Bead of Defiance,Aragonite,,2026,Aragonite,10,FALSE
+2026|Bead of Defiance|Darkwood Plank||FALSE,2026,Mythic,Bead of Defiance,Darkwood Plank,,2026,Darkwood Plank,60,FALSE
+2026|Bead of Defiance|Dwarven Steel||FALSE,2026,Mythic,Bead of Defiance,Dwarven Steel,,2026,Dwarven Steel,40,FALSE
+2026|Bead of Defiance|Elven Bismuth||FALSE,2026,Mythic,Bead of Defiance,Elven Bismuth,,2026,Elven Bismuth,10,FALSE
+2026|Bead of Defiance|Enchanter's Munition||FALSE,2026,Mythic,Bead of Defiance,Enchanter's Munition,,2026,Enchanter's Munition,10,FALSE
+2026|Bead of Defiance|Golden Fleece||FALSE,2026,Mythic,Bead of Defiance,Golden Fleece,,2026,Golden Fleece,10,FALSE
+2026|Bead of Defiance|Minotaur Hide||FALSE,2026,Mythic,Bead of Defiance,Minotaur Hide,,2026,Minotaur Hide,30,FALSE
+2026|Bead of Defiance|Mystic Silk||FALSE,2026,Mythic,Bead of Defiance,Mystic Silk,,2026,Mystic Silk,60,FALSE
+2026|Bead of Defiance|Oil of Enchantment||FALSE,2026,Mythic,Bead of Defiance,Oil of Enchantment,,2026,Oil of Enchantment,10,FALSE
+2026|Bead of Defiance|Philosopher's Stone||FALSE,2026,Mythic,Bead of Defiance,Philosopher's Stone,,2026,Philosopher's Stone,60,FALSE
+"2026|Bead of Defiance|1,000 GP Gold Bar||FALSE",2026,Mythic,Bead of Defiance,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",25,FALSE
+2026|Bead of Defiance|Omni Orb|2025|TRUE,2026,Mythic,Bead of Defiance,Omni Orb,2025,2025,Omni Orb (transmute),2,TRUE
 2026|+3 Fellbane Crossbow|Ultra Rare||FALSE,2026,Relic,+3 Fellbane Crossbow,Ultra Rare,,2026,Ultra Rare,1,FALSE
 2026|+3 Fellbane Crossbow|Alchemist's Ink||FALSE,2026,Relic,+3 Fellbane Crossbow,Alchemist's Ink,,2026,Alchemist's Ink,5,FALSE
 2026|+3 Fellbane Crossbow|Alchemist's Parchment||FALSE,2026,Relic,+3 Fellbane Crossbow,Alchemist's Parchment,,2026,Alchemist's Parchment,5,FALSE
@@ -1902,4 +1902,21 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2026|Gear Golem Totem|Minotaur Hide||FALSE,2026,Legendary,Gear Golem Totem,Minotaur Hide,,2026,Minotaur Hide,3,FALSE
 2026|Gear Golem Totem|Mystic Silk||FALSE,2026,Legendary,Gear Golem Totem,Mystic Silk,,2026,Mystic Silk,3,FALSE
 2026|Gear Golem Totem|Philosopher's Stone||FALSE,2026,Legendary,Gear Golem Totem,Philosopher's Stone,,2026,Philosopher's Stone,3,FALSE
-2026|Gear Golem Totem|Golem Piece (40 Unique)||FALSE,2026,Legendary,Gear Golem Totem,Golem Piece (40 Unique),,2026,Golem Piece (40 Unique),40,FALSE
+2026|Gear Golem Totem|Golem Piece (40 Unique)||FALSE,2026,Legendary,Gear Golem Totem,Golem Piece (40 Unique),,2026,Golem Piece (40 Unique),1,FALSE
+2027|Coin of Wealth|Alchemist's Ink||FALSE,2027,Mythic,Coin of Wealth,Alchemist's Ink,,2027,Alchemist's Ink,40,FALSE
+2027|Coin of Wealth|Alchemist's Parchment||FALSE,2027,Mythic,Coin of Wealth,Alchemist's Parchment,,2027,Alchemist's Parchment,40,FALSE
+2027|Coin of Wealth|Aragonite||FALSE,2027,Mythic,Coin of Wealth,Aragonite,,2027,Aragonite,10,FALSE
+2027|Coin of Wealth|Darkwood Plank||FALSE,2027,Mythic,Coin of Wealth,Darkwood Plank,,2027,Darkwood Plank,100,FALSE
+2027|Coin of Wealth|Dwarven Steel||FALSE,2027,Mythic,Coin of Wealth,Dwarven Steel,,2027,Dwarven Steel,50,FALSE
+2027|Coin of Wealth|Elven Bismuth||FALSE,2027,Mythic,Coin of Wealth,Elven Bismuth,,2027,Elven Bismuth,10,FALSE
+2027|Coin of Wealth|Enchanter's Munition||FALSE,2027,Mythic,Coin of Wealth,Enchanter's Munition,,2027,Enchanter's Munition,15,FALSE
+2027|Coin of Wealth|Golden Fleece||FALSE,2027,Mythic,Coin of Wealth,Golden Fleece,,2027,Golden Fleece,10,FALSE
+2027|Coin of Wealth|Minotaur Hide||FALSE,2027,Mythic,Coin of Wealth,Minotaur Hide,,2027,Minotaur Hide,30,FALSE
+2027|Coin of Wealth|Mystic Silk||FALSE,2027,Mythic,Coin of Wealth,Mystic Silk,,2027,Mystic Silk,100,FALSE
+2027|Coin of Wealth|Oil of Enchantment||FALSE,2027,Mythic,Coin of Wealth,Oil of Enchantment,,2027,Oil of Enchantment,10,FALSE
+2027|Coin of Wealth|Philosopher's Stone||FALSE,2027,Mythic,Coin of Wealth,Philosopher's Stone,,2027,Philosopher's Stone,100,FALSE
+"2027|Coin of Wealth|1,000 GP Gold Bar||FALSE",2027,Mythic,Coin of Wealth,"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",100,FALSE
+2027|Coin of Wealth|Ultra Rare|2023|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2023,2023,Ultra Rare,1,FALSE
+2027|Coin of Wealth|Ultra Rare|2025|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2025,2025,Ultra Rare,1,FALSE
+2027|Coin of Wealth|Ultra Rare|2027|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2027,2027,Ultra Rare,1,FALSE
+2027|Coin of Wealth|Charm of Avarice|2015|TRUE,2027,Mythic,Coin of Wealth,Charm of Avarice,2015,2015,Charm of Avarice,1,TRUE
