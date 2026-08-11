@@ -298,14 +298,25 @@ Have-all), difference calc. Per-line **price override** built here too (§3.2/3.
 it's cheap and unlocks several later concerns.
 
 **Shipped as:** `src/components/BuildCalculator.tsx`, a new view behind the
-`/transmutes/:view` toggle (Recipes | Build Calculator). Notes on the built design:
+`/transmutes/:view` toggle (Recipes | Build Calculator). The first cut was rejected
+(a full-page recipe list + tall one-card-per-ingredient detail that lost context and
+broke Back); **redesigned to a compact, single-screen tool** after iterating on
+mockups with the maintainer. Notes on the shipped design:
+- **Slide-in drawer picker** (never a page swap, so Back/context are never lost):
+  search + tier-filter chips + collapsible year sections; the current recipe's year
+  is expanded by default (others collapsed), matching the Recipes view; source Relics
+  stay paired with the Legendary they upgrade into (reuses `orderSeason`).
+- **Dense table** — one row per ingredient (req / on-hand / buy / $/ea / to-finish),
+  the whole recipe visible at once. Two-line rows on phones (≤640px), no side-scroll.
+- **On-hand entry** = an `All`/`None` pill (fixed width) before a fixed-width number
+  box; covered lines dim in place so the row order never jumps.
 - Every line is treated uniformly, **source included** — "if you already own the
-  source" is just setting that line to Have-all, so the Recipes view's build/upgrade
-  split falls out of the on-hand math rather than being a separate mode.
+  source" is just setting that line to All, so the Recipes view's build/upgrade split
+  falls out of the on-hand math rather than being a separate mode.
 - State is ephemeral (Q4): on-hand counts + overrides live in React state keyed by
   line index, reset when the recipe changes. No `localStorage` yet.
-- Per-line price override is a small inline avg/min editor with a Reset; overridden
-  lines carry a "your price" tag. This is the general tool §3.2/§3.4 call for.
+- Per-line price override is an inline avg/min editor on the $/ea cell with a Reset;
+  overridden lines carry a "your price" tag. This is the general tool §3.2/§3.4 want.
 - Headline is **"Cost to finish"** (avg + min) with a **"You're providing $Z of
   materials"** secondary and a "full build from scratch" reference; unpriced-but-
   needed lines are excluded from the total and called out.
