@@ -13,6 +13,12 @@ export const money0 = (n: number | null | undefined) =>
 export const moneyTight = (n: number | null | undefined) =>
   n == null ? '—' : Math.abs(n) >= 1000 ? money0(n) : money(n);
 
+// Currency for the build calculator: full dollars-and-cents under $100 (unit
+// prices are small and their cents matter), whole dollars at $100+ (where cents
+// are just noise). Mirrors how the rest of the site treats small vs large sums.
+export const moneyCalc = (n: number | null | undefined) =>
+  n == null ? '—' : Math.abs(n) < 100 ? money(n) : money0(n);
+
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',

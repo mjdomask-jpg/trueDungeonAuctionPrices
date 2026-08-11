@@ -1,14 +1,27 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCostEngine } from '../hooks/useCostEngine';
+import { useRoutedView } from '../hooks/useRoutedView';
 import { TransmuteSeason } from '../components/TransmuteSeason';
+import { BuildCalculator } from '../components/BuildCalculator';
 import { PageIntro } from '../components/PageIntro';
 
-// Transmutes / build-vs-buy (Phase 4). Every craftable token's estimated build
-// cost, computed from current auction prices via the cost engine. Seasons are
-// collapsible; the current one opens by default. Within a season, Relics are
-// paired with the Legendaries they upgrade into (see lib/transmutes.orderSeason).
+// Transmutes / build-vs-buy. Two views behind a toggle:
+//   Recipes (Phase 4) — every craftable token's estimated build cost, priced
+//     from its debut-year auction sales, seasons collapsible.
+//   Build Calculator (Phase 2 of the expansion plan) — pick one recipe, enter
+//     what you already own, and see what finishing the craft still costs.
+// Both read the same cost engine; the toggle is the URL (/transmutes/:view) so
+// each view is a shareable link and the top-level nav stays at five entries.
+
+type View = 'recipes' | 'calculator';
+
 export default function TransmutesPage() {
+  const [view, setView] = useRoutedView<View>({
+    views: ['recipes', 'calculator'],
+    fallback: 'recipes',
+    pathFor: (v) => `/transmutes/${v}`,
+  });
   const [recentPrices, setRecentPrices] = useState(false);
   const [search, setSearch] = useState('');
   // null = default view (newest season open); a Set once the user toggles one.
@@ -63,54 +76,93 @@ export default function TransmutesPage() {
   if (loading) return <p className="empty">Loading auction data…</p>;
   if (!ready) return <p className="empty">No transmute recipe data loaded.</p>;
 
+  const calculator = view === 'calculator';
+
   return (
     <>
-      <PageIntro short="Estimated transmute costs, priced from each transmute's debut-year auction sales.">
-        What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
-        building against buying from a reseller. Each transmute is priced from auction sales in the{' '}
-        <strong>year it debuted</strong> — an <strong>avg</strong> and a <strong>min</strong> total
-        per recipe. Tokens with a source show
-        both the full build and the cheaper cost if you already own that source. Expand any row for
-        its full bill of materials. For single-token price history, see <Link to="/">Prices</Link>.
-      </PageIntro>
+      {calculator ? (
+        <PageIntro short="Pick a recipe, enter what you already own, and see what finishing the craft costs.">
+          Open <strong>Browse recipes</strong> to pick one, then enter{' '}
+          <strong>how many of each ingredient you already have</strong> — the calculator subtracts
+          them and shows what <strong>finishing the craft</strong> still costs, as an{' '}
+          <strong>avg</strong> and a <strong>min</strong>. Tap <strong>All</strong> on a row (or{' '}
+          <strong>Set all on hand</strong>) to mark it fully owned; set a source token to{' '}
+          <strong>All</strong> to price just the upgrade step. Tap any <strong>$/ea</strong> price
+          to use your own number when the market differs from our estimate. For the full recipe
+          list, switch to{' '}
+          <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>.
+        </PageIntro>
+      ) : (
+        <PageIntro short="Estimated transmute costs, priced from each transmute's debut-year auction sales.">
+          What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
+          building against buying from a reseller. Each transmute is priced from auction sales in the{' '}
+          <strong>year it debuted</strong> — an <strong>avg</strong> and a <strong>min</strong> total
+          per recipe. Tokens with a source show
+          both the full build and the cheaper cost if you already own that source. Expand any row for
+          its full bill of materials. For single-token price history, see <Link to="/">Prices</Link>.
+        </PageIntro>
+      )}
 
       <div className="controls">
-        <label className="search">
-          <span className="sr-only">Search transmutes</span>
-          <input
-            type="text"
-            placeholder="Search transmutes…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
+        <div className="toggle view-toggle" role="group" aria-label="Transmutes view">
+          <span className="toggle-label">View</span>
+          <div className="toggle-buttons">
+            <button type="button" data-label="Recipes" className={view === 'recipes' ? 'on' : undefined}
+              aria-pressed={view === 'recipes'} onClick={() => setView('recipes')}>
+              Recipes
+            </button>
+            <button type="button" data-label="Build Calculator" className={view === 'calculator' ? 'on' : undefined}
+              aria-pressed={view === 'calculator'} onClick={() => setView('calculator')}>
+              <span className="lbl-full">Build Calculator</span>
+              <span className="lbl-short">Calculator</span>
+            </button>
+          </div>
+        </div>
+
+        {!calculator && (
+          <label className="search">
+            <span className="sr-only">Search transmutes</span>
+            <input
+              type="text"
+              placeholder="Search transmutes…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+        )}
       </div>
 
-      {/* A bare count while idle, so it earns `.stats` and drops on phones to get
-          the seasons above the fold. Searching changes its job — the match tally
-          is the only confirmation the query hit anything — so the class comes off
-          and the line stays. */}
-      <p className={`meta-line${searching ? '' : ' stats'}`}>
-        {total} transmute{total === 1 ? '' : 's'} across {seasons.length} seasons
-        {searching && ` · ${shown.length} season${shown.length === 1 ? '' : 's'} with matches`}
-      </p>
+      {calculator ? (
+        <BuildCalculator engine={engine!} />
+      ) : (
+        <>
+          {/* A bare count while idle, so it earns `.stats` and drops on phones to
+              get the seasons above the fold. Searching changes its job — the match
+              tally is the only confirmation the query hit anything — so the class
+              comes off and the line stays. */}
+          <p className={`meta-line${searching ? '' : ' stats'}`}>
+            {total} transmute{total === 1 ? '' : 's'} across {seasons.length} seasons
+            {searching && ` · ${shown.length} season${shown.length === 1 ? '' : 's'} with matches`}
+          </p>
 
-      {searching && shown.length === 0 && <p className="empty">No transmutes match “{search}”.</p>}
+          {searching && shown.length === 0 && <p className="empty">No transmutes match “{search}”.</p>}
 
-      {shown.map(({ year, costs }) => (
-        <TransmuteSeason
-          key={year}
-          year={year}
-          costs={costs}
-          open={isOpen(year)}
-          onToggle={() => toggle(year)}
-          note={noteFor(year)}
-          // "Recent prices" only moves the current season's numbers (past seasons
-          // are closed; the preview already prices off recent sales), so the
-          // toggle lives inside that one season rather than floating globally.
-          recentToggle={engine != null && year === engine.prices.latestPriced ? { on: recentPrices, onChange: setRecentPrices } : undefined}
-        />
-      ))}
+          {shown.map(({ year, costs }) => (
+            <TransmuteSeason
+              key={year}
+              year={year}
+              costs={costs}
+              open={isOpen(year)}
+              onToggle={() => toggle(year)}
+              note={noteFor(year)}
+              // "Recent prices" only moves the current season's numbers (past
+              // seasons are closed; the preview already prices off recent sales),
+              // so the toggle lives inside that one season, not floating globally.
+              recentToggle={engine != null && year === engine.prices.latestPriced ? { on: recentPrices, onChange: setRecentPrices } : undefined}
+            />
+          ))}
+        </>
+      )}
     </>
   );
 }
