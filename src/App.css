@@ -820,6 +820,127 @@ td.diff.down { color: var(--diff-down); }
 :root[data-theme='dark'] .tchip[data-tier='Paragon']   { background: #cf3a3a; color: #fff; }
 :root[data-theme='dark'] .tchip[data-tier='Omni']      { background: #e08b3e; color: #3a1f04; }
 
+/* --- Build Calculator (transmutes expansion, Phase 2) ------------------- */
+/* Pick a recipe, enter what you own, see what finishing the craft costs. Shares
+   the tier chips and Money-pulse with the Recipes view; everything else is its
+   own layout. Cards on every width — the on-hand controls don't tabulate well. */
+
+.calc { font-family: var(--sans); }
+.calc-search { margin: 4px 0 12px; display: block; }
+.calc-search input { width: 100%; }
+
+/* Recipe picker (shown until one is chosen). */
+.calc-picker { display: flex; flex-direction: column; gap: 14px; }
+.calc-pgroup { }
+.calc-pyear {
+  font-size: 13px; font-weight: 600; font-family: var(--display);
+  color: var(--text-h); padding: 2px 4px 6px;
+}
+.calc-plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.calc-pick {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; cursor: pointer; text-align: left; color: var(--text-h);
+  font: inherit; font-size: 15px;
+}
+.calc-pick:hover { border-color: var(--accent); background: var(--row-hover); }
+.calc-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.calc-pname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.calc-pcost { display: flex; flex-direction: column; align-items: flex-end; flex: none; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.calc-pcost b { font-size: 14px; }
+.calc-min { font-size: 11px; color: var(--text); }
+
+/* Selected recipe header + headline result. */
+.calc-head {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow); padding: 14px 16px; margin-top: 4px;
+}
+.calc-recipe { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.calc-title { font-size: 18px; font-weight: 600; font-family: var(--display); color: var(--text-h); }
+.calc-year { font-size: 13px; color: var(--text); }
+.calc-change {
+  margin-left: auto; font: inherit; font-size: 12px; padding: 3px 10px; cursor: pointer;
+  color: var(--text-h); background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+}
+.calc-change:hover { border-color: var(--accent); color: var(--accent); }
+.calc-change:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.calc-result { margin-top: 12px; }
+.calc-headline { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.calc-hlab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text); }
+.calc-hval b { font-size: 30px; font-family: var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.calc-hmin { font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums; }
+.calc-sub { font-size: 13px; color: var(--text); margin-top: 4px; }
+.calc-sub b { color: var(--text-h); }
+.calc-warn { font-size: 12px; color: #8a5a0b; margin: 8px 0 0; }
+:root[data-theme='dark'] .calc-warn { color: #e0a94a; }
+.calc-buy { font-size: 12px; color: var(--text); margin: 6px 0 0; font-style: italic; }
+
+/* Ingredient lines. */
+.calc-lines { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.calc-line {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+}
+.calc-line.src { border-color: var(--accent); background: var(--accent-bg); }
+.calc-line.covered { opacity: 0.72; }
+.calc-line-top { display: flex; align-items: baseline; gap: 12px; }
+.calc-ing { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.calc-good { color: var(--text-h); font-size: 15px; }
+.calc-tag { font-size: 10.5px; color: var(--text); margin-top: 1px; }
+.calc-fin { display: flex; align-items: baseline; gap: 8px; flex: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.calc-fin b { font-size: 15px; color: var(--text-h); }
+.calc-buyn { font-size: 11px; color: var(--text); }
+.calc-covered { font-size: 13px; color: var(--accent); }
+.calc-nostat { font-size: 12px; color: var(--text); font-style: italic; }
+
+.calc-line-ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.stepper { display: inline-flex; align-items: stretch; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.stepper button {
+  font: inherit; font-size: 18px; line-height: 1; width: 34px; cursor: pointer;
+  background: var(--card); border: none; color: var(--text-h); display: flex; align-items: center; justify-content: center;
+}
+.stepper button:hover:not(:disabled) { background: var(--row-hover); color: var(--accent); }
+.stepper button:disabled { opacity: 0.4; cursor: default; }
+.stepper input {
+  width: 48px; text-align: center; font: inherit; font-size: 15px; border: none;
+  border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  background: var(--bg); color: var(--text-h); font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.calc-of { font-size: 12px; color: var(--text); }
+.calc-haveall {
+  font: inherit; font-size: 12px; padding: 5px 12px; cursor: pointer; border-radius: 999px;
+  color: var(--text-h); background: var(--card); border: 1px solid var(--border);
+}
+.calc-haveall:hover { border-color: var(--accent); color: var(--accent); }
+.calc-haveall.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.calc-haveall:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.calc-unit { margin-left: auto; font-size: 12px; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.calc-edit {
+  font: inherit; font-size: 11px; margin-left: 6px; padding: 0; cursor: pointer;
+  background: none; border: none; color: var(--accent); text-decoration: underline;
+}
+.calc-edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+.calc-override { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.calc-override label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
+.calc-override input { width: 90px; font: inherit; font-size: 14px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-h); font-variant-numeric: tabular-nums; }
+.calc-override input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+.calc-reset { font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 999px; color: var(--text-h); }
+.calc-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+.calc-foot { font-size: 12px; color: var(--text); margin: 12px 0 0; }
+.calc-foot-trig { text-decoration: underline dotted; cursor: pointer; }
+
+/* Inline text-button that reads like a link, for prose cross-references. */
+.linklike {
+  font: inherit; background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); text-decoration: underline;
+}
+.linklike:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
 /* --- Detailed Auction Data explorer (Phase 5) ---------------------------- */
 /* Each auction is a <details> card. The summary is the always-visible header;
    the body (metadata chips + the sales table) mounts only while open. */

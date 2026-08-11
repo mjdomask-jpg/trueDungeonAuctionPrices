@@ -291,11 +291,26 @@ convention.
 *Ship first: both are cheap, isolated, and 1b improves the numbers the calculator
 will later show.*
 
-### Phase 2 — Build calculator MVP (Must-haves) — **highest value**
+### Phase 2 — Build calculator MVP (Must-haves) — **highest value** — ✅ SHIPPED
 Everything in §2.1. New Recipes | Build Calculator toggle + route, recipe picker
 (all recipes for now), BOM, per-line + total avg/min, on-hand entry (manual / ± /
 Have-all), difference calc. Per-line **price override** built here too (§3.2/3.4) —
 it's cheap and unlocks several later concerns.
+
+**Shipped as:** `src/components/BuildCalculator.tsx`, a new view behind the
+`/transmutes/:view` toggle (Recipes | Build Calculator). Notes on the built design:
+- Every line is treated uniformly, **source included** — "if you already own the
+  source" is just setting that line to Have-all, so the Recipes view's build/upgrade
+  split falls out of the on-hand math rather than being a separate mode.
+- State is ephemeral (Q4): on-hand counts + overrides live in React state keyed by
+  line index, reset when the recipe changes. No `localStorage` yet.
+- Per-line price override is a small inline avg/min editor with a Reset; overridden
+  lines carry a "your price" tag. This is the general tool §3.2/§3.4 call for.
+- Headline is **"Cost to finish"** (avg + min) with a **"You're providing $Z of
+  materials"** secondary and a "full build from scratch" reference; unpriced-but-
+  needed lines are excluded from the total and called out.
+- Still deferred to **Phase 3**: secondary-price box, resale value, three-way
+  recommendation (§2.2).
 
 ### Phase 3 — Calculator Should-haves
 §2.2: secondary-price box, resale value (20%/10%), the three-way recommendation with

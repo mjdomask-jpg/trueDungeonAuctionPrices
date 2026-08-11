@@ -42,10 +42,10 @@ createRoot(document.getElementById('root')!).render(
               <Route path="timelines" element={<Navigate to="/trends/season" replace />} />
               <Route path="compare" element={<Navigate to="/trends/yoy" replace />} />
 
-              {/* Transmutes — one view today; /transmutes/recipes leaves room to
-                  grow without moving the page later. */}
+              {/* Transmutes — Recipes (default) | Build Calculator, both behind
+                  the in-page view toggle so the top-level nav stays at five. */}
               <Route path="transmutes" element={<Navigate to="/transmutes/recipes" replace />} />
-              <Route path="transmutes/recipes" element={<TransmutesPage />} />
+              <Route path="transmutes/:view" element={<TransmutesPage />} />
 
               {/* Auction Data (explorer) — grouped (default) | full. /augments
                   folded in here; redirect old bookmarks rather than 404 them. */}
