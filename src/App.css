@@ -861,16 +861,22 @@ td.diff.down { color: var(--diff-down); }
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;
   box-shadow: var(--shadow); margin-top: 10px; padding: 4px 12px 12px;
 }
+/* Master on-hand actions — a small header strip above the table, visible on
+   every width (the column header below it is desktop-only). */
+.calc-tools { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding: 6px 6px 2px; }
+.calc-tools-lab { margin-right: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text); }
+
 .calc-lhead {
-  display: grid; grid-template-columns: 1fr 132px 40px 58px 78px; gap: 8px;
-  padding: 10px 6px 6px; font-size: 10.5px; text-transform: uppercase;
+  display: grid; grid-template-columns: 1fr 138px 40px 58px 78px; gap: 8px;
+  padding: 8px 6px 6px; font-size: 10.5px; text-transform: uppercase;
   letter-spacing: 0.04em; color: var(--text); border-bottom: 1px solid var(--border);
 }
 .calc-lhead span:not(:first-child) { text-align: right; }
 .calc-lhead .h-hand { text-align: center; }
+.cl-edit-i { font-style: normal; font-size: 11px; color: var(--text); margin-left: 5px; opacity: 0.75; }
 
 .calc-line { border-bottom: 1px solid var(--border); }
-.cl-main { display: grid; grid-template-columns: 1fr 132px 40px 58px 78px; gap: 8px; align-items: center; padding: 7px 6px; }
+.cl-main { display: grid; grid-template-columns: 1fr 138px 40px 58px 78px; gap: 8px; align-items: center; padding: 7px 6px; }
 .calc-line.src .cl-main { background: var(--accent-bg); border-radius: 6px; }
 .calc-line.done .cl-good, .calc-line.done .cl-meta { opacity: 0.5; }
 .cl-name { min-width: 0; }
@@ -887,13 +893,13 @@ td.diff.down { color: var(--diff-down); }
 .calc-all:hover { border-color: var(--accent); color: var(--accent); }
 .calc-all.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .calc-all:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Native spinner arrows are kept (increment/decrement on hover/focus); the field
+   is wide enough that a two-digit value and the spinner never collide. */
 .cl-hand input {
-  box-sizing: border-box; flex: 0 0 56px; width: 56px; height: 34px; text-align: center;
-  padding: 0 2px; font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
+  box-sizing: border-box; flex: 0 0 66px; width: 66px; height: 34px; text-align: center;
+  padding: 0 2px 0 8px; font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
   border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-h);
-  -moz-appearance: textfield; appearance: textfield;
 }
-.cl-hand input::-webkit-outer-spin-button, .cl-hand input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .cl-hand input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 .cl-dash { color: var(--text); }
 .cl-buy { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
@@ -902,8 +908,10 @@ td.diff.down { color: var(--diff-down); }
 .cl-price-d {
   font: inherit; font-size: 13px; background: none; border: none; cursor: pointer;
   color: var(--text-h); font-variant-numeric: tabular-nums; padding: 2px 4px; border-radius: 4px;
+  text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 3px;
 }
-.cl-price-d:hover { background: var(--row-hover); color: var(--accent); }
+.cl-price-d:hover { background: var(--row-hover); color: var(--accent); text-decoration-color: var(--accent); }
+.cl-price-d:hover .cl-edit-i, .cl-price-m:hover .cl-edit-i { color: var(--accent); opacity: 1; }
 .cl-price-d:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
 .cl-ovdot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-left: 4px; vertical-align: middle; }
 .cl-fin { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; text-align: right; font-variant-numeric: tabular-nums; }
@@ -985,7 +993,7 @@ td.diff.down { color: var(--diff-down); }
   .cl-buy { grid-area: buy; align-self: center; }
   .cl-unit { display: none; }
   .cl-fin { grid-area: fin; align-self: center; }
-  .cl-price-m { display: inline; background: none; border: none; padding: 0; cursor: pointer; color: var(--text); font: inherit; font-size: 10.5px; }
+  .cl-price-m { display: inline; background: none; border: none; padding: 0; cursor: pointer; color: var(--text); font: inherit; font-size: 10.5px; text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 2px; }
   .cl-price-m:hover { color: var(--accent); }
 }
 

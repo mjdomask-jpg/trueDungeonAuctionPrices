@@ -82,11 +82,14 @@ export default function TransmutesPage() {
     <>
       {calculator ? (
         <PageIntro short="Pick a recipe, enter what you already own, and see what finishing the craft costs.">
-          Pick any recipe, then enter <strong>how many of each ingredient you already have</strong> —
-          the calculator subtracts them and shows what <strong>finishing the craft</strong> still
-          costs, as an <strong>avg</strong> and a <strong>min</strong>. Set a source token to
-          &ldquo;Have all&rdquo; to price the upgrade step alone, or override any unit price with your
-          own number when the market differs from our estimate. For the full recipe list, switch to{' '}
+          Open <strong>Browse recipes</strong> to pick one, then enter{' '}
+          <strong>how many of each ingredient you already have</strong> — the calculator subtracts
+          them and shows what <strong>finishing the craft</strong> still costs, as an{' '}
+          <strong>avg</strong> and a <strong>min</strong>. Tap <strong>All</strong> on a row (or{' '}
+          <strong>Set all on hand</strong>) to mark it fully owned; set a source token to{' '}
+          <strong>All</strong> to price just the upgrade step. Tap any <strong>$/ea</strong> price
+          to use your own number when the market differs from our estimate. For the full recipe
+          list, switch to{' '}
           <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>.
         </PageIntro>
       ) : (

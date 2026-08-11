@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { money0 } from '../lib/format';
+import { moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
@@ -166,6 +166,17 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       return rest;
     });
 
+  // Master on-hand control: set every priced line to fully-owned in one tap
+  // (fast when you have most of the materials and only lack a few), or clear all.
+  const pricedRows = rows.filter((r) => r.priced);
+  const allOwned = pricedRows.length > 0 && pricedRows.every((r) => r.have >= r.req);
+  const setAllHand = (full: boolean) =>
+    setOnHand(() => {
+      const next: Record<string, number> = {};
+      rows.forEach((r) => { if (r.priced) next[r.key] = full ? r.req : 0; });
+      return next;
+    });
+
   // --- Drawer option row -------------------------------------------------
   const optRow = (c: BuildCost, opts: { indented?: boolean; from?: string | null } = {}) => (
     <button
@@ -179,7 +190,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
         {c.displayName}
         {opts.from && <span className="calc-opt-up">↳ upgrades from {opts.from}</span>}
       </span>
-      <span className="calc-opt-c">{money0(c.fullAvg)}</span>
+      <span className="calc-opt-c">{moneyCalc(c.fullAvg)}</span>
     </button>
   );
 
@@ -202,7 +213,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
             <span className="calc-spend">
               <span className="calc-spend-lab">Cost to finish</span>
               <span className="calc-spend-val">
-                <b><Money value={finAvg} /></b> <span className="calc-min">min <Money value={finMin} /></span>
+                <b><Money format={moneyCalc} value={finAvg} /></b> <span className="calc-min">min <Money format={moneyCalc} value={finMin} /></span>
               </span>
             </span>
           </>
@@ -211,8 +222,15 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
 
       {cost ? (
         <div className="calc-panel">
+          <div className="calc-tools">
+            <span className="calc-tools-lab">Set all on hand</span>
+            <button type="button" className={`calc-all${allOwned ? ' on' : ''}`} aria-pressed={allOwned}
+              onClick={() => setAllHand(true)}>All</button>
+            <button type="button" className="calc-all" onClick={() => setAllHand(false)}>None</button>
+          </div>
           <div className="calc-lhead">
-            <span>Ingredient</span><span className="h-hand">on hand</span><span>buy</span><span>$/ea</span><span>to finish</span>
+            <span>Ingredient</span><span className="h-hand">on hand</span><span>buy</span>
+            <span>$/ea <i className="cl-edit-i" aria-hidden="true">✎</i></span><span>to finish</span>
           </div>
           {rows.map((r) => (
             <div key={r.key} className={`calc-line${r.line.isSource ? ' src' : ''}${r.need === 0 && r.priced ? ' done' : ''}`}>
@@ -222,8 +240,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                   <span className="cl-meta">
                     {lineTag(r.line, cost.year)}
                     <button type="button" className="cl-price-m" aria-expanded={editing === r.key}
+                      aria-label={`Edit unit price: ${r.line.displayName}`}
                       onClick={() => setEditing((e) => (e === r.key ? null : r.key))}>
-                      {' · '}{r.priced ? money0(r.unitAvg) : 'no price'} ea{r.overridden ? ' · your price' : ''}
+                      {' · '}{r.priced ? moneyCalc(r.unitAvg) : 'no price'} ea{r.overridden ? ' · your price' : ''}
+                      <i className="cl-edit-i" aria-hidden="true">✎</i>
                     </button>
                   </span>
                 </span>
@@ -245,15 +265,16 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 <span className="cl-buy">{r.priced ? (r.need > 0 ? r.need : <span className="cl-check" aria-label="covered">✓</span>) : ''}</span>
                 <span className="cl-unit">
                   <button type="button" className="cl-price-d" aria-expanded={editing === r.key}
-                    aria-label={`Unit price ${r.priced ? money0(r.unitAvg) : 'unpriced'} — edit`}
+                    aria-label={`Unit price ${r.priced ? moneyCalc(r.unitAvg) : 'unpriced'} — edit`}
                     onClick={() => setEditing((e) => (e === r.key ? null : r.key))}>
-                    {r.priced ? money0(r.unitAvg) : '—'}{r.overridden && <i className="cl-ovdot" aria-hidden="true" />}
+                    {r.priced ? moneyCalc(r.unitAvg) : '—'}{r.overridden && <i className="cl-ovdot" aria-hidden="true" />}
+                    <i className="cl-edit-i" aria-hidden="true">✎</i>
                   </button>
                 </span>
                 <span className="cl-fin">
                   {r.priced ? (
                     r.need > 0 ? (
-                      <><b><Money value={r.finAvg} /></b><span className="calc-min">min <Money value={r.finMin} /></span></>
+                      <><b><Money format={moneyCalc} value={r.finAvg} /></b><span className="calc-min">min <Money format={moneyCalc} value={r.finMin} /></span></>
                     ) : (
                       <span className="cl-covered">covered</span>
                     )
@@ -271,7 +292,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                     onChange={(e) => setOv(r.key, r.line, 'min', e.target.value)} /></label>
                   {r.overridden && (
                     <button type="button" className="cl-reset" onClick={() => clearOv(r.key)}>
-                      Reset to {money0(r.line.unitAvg)}
+                      Reset to {moneyCalc(r.line.unitAvg)}
                     </button>
                   )}
                 </div>
@@ -282,14 +303,14 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
           <div className="calc-foot">
             <div className="calc-foot-row total">
               <span>Cost to finish</span>
-              <span><b><Money value={finAvg} /></b> <span className="calc-min">min <Money value={finMin} /></span></span>
+              <span><b><Money format={moneyCalc} value={finAvg} /></b> <span className="calc-min">min <Money format={moneyCalc} value={finMin} /></span></span>
             </div>
             <div className="calc-foot-row">
               <span>You're providing</span>
-              <span>{money0(provideAvg)} of materials</span>
+              <span>{moneyCalc(provideAvg)} of materials</span>
             </div>
             <p className="calc-foot-note">
-              Full build from scratch {money0(fullAvg)} (min {money0(fullMin)}).
+              Full build from scratch {moneyCalc(fullAvg)} (min {moneyCalc(fullMin)}).
               {src && <> Own the {src.displayName}? Hit <b>All</b> on its row for the upgrade-only price.</>}
             </p>
             {unpricedNeeded > 0 && (
@@ -300,10 +321,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
             )}
             {cost.marketAvg != null && (
               <p className="calc-buy-note">
-                This token also sells at auction for about {money0(cost.marketAvg)}
+                This token also sells at auction for about {moneyCalc(cost.marketAvg)}
                 {finAvg <= cost.marketAvg
-                  ? ` — finishing the craft (${money0(finAvg)}) is cheaper.`
-                  : ` — cheaper than the ${money0(finAvg)} left to build.`}
+                  ? ` — finishing the craft (${moneyCalc(finAvg)}) is cheaper.`
+                  : ` — cheaper than the ${moneyCalc(finAvg)} left to build.`}
               </p>
             )}
           </div>
