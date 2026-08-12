@@ -340,9 +340,45 @@ mockups with the maintainer. Notes on the shipped design:
 - Still deferred to **Phase 3**: secondary-price box, resale value, three-way
   recommendation (§2.2).
 
-### Phase 3 — Calculator Should-haves
+### Phase 3 — Calculator Should-haves — ✅ SHIPPED
 §2.2: secondary-price box, resale value (20%/10%), the three-way recommendation with
 clear wording.
+
+**Shipped as:** a new `src/lib/buildCalc.ts` (pure decision math — `RESALE` rates,
+`quickSaleValue`, `comparePaths`) plus a "buy it instead" block at the foot of
+`BuildCalculator`. Notes on what the implementation settled:
+
+- **The buy-it price pre-fills from the token's own auction sales** where it has any,
+  with a Reset back to it once you type over. In practice this fires for exactly one
+  recipe — **Safehold III (2024) is the only transmute of 170 that is itself sold at
+  auction** — so manual entry is the real path, as §9 Q3 assumed. The box is
+  tri-state (`'auto' | number | null`) so clearing it stays cleared instead of
+  snapping back to the auction price.
+- **Quick-sale value is a single number, not an avg/min pair.** The 20%-off-avg and
+  10%-off-min figures are *not* a range: when a token's min and avg are close (common
+  — hand-maintained and single-sale prices have min == avg), the 10% haircut yields a
+  **larger** number than the 20% one, so a "min $X" label under a smaller "avg" figure
+  would read as a bug. The UI leads with the avg-basis figure and puts the min-basis
+  one in the HintPopover. Both rates stay in `RESALE` (plan §7).
+- **The comparison is in avg terms only.** Adding a min column would have meant
+  showing a "min" cost for the sell path that can land either side of the avg one
+  (the resale term inverts the direction of "min"), which makes the verdict harder to
+  read rather than easier. Cost-to-finish keeps its avg/min pair directly above.
+- **"Just buy it" can never win, and that is a result, not a simplification.** It
+  costs exactly the quick-sale value more than "sell and buy", always, because the
+  only difference between them is whether you sell the pile. So the verdict is drawn
+  from **build vs sell-and-buy**, and "just buy it" renders with its total but marked
+  non-candidate, with a line explaining that the gap is what holding your materials
+  costs. When you hold nothing there is nothing to sell, the sell row is dropped, and
+  "just buy it" becomes the second candidate.
+- Ties under **$1** (`WASH_THRESHOLD`) report as a wash rather than crowning a winner
+  by pennies — every input here is an estimate.
+- A caveat fires when a needed ingredient has no price: cost-to-finish is understated,
+  so the comparison leans toward building.
+- Drive-by fixes: the money field's styling moved from `.cl-editor input` to
+  `.cl-money-in input` so the per-line override editor and the new buy box are one
+  control; and `.cl-hand input` / `.cl-money-in input` now hit 16px below 640px —
+  both sat under the iOS zoom threshold that `docs/ui-conventions.md` mandates.
 
 ### Phase 4 — Active recipe windows (accuracy) — broad blast radius
 §3.1: `Expires` column + parser, **date-windowed pricing** (aggregate each recipe over
@@ -386,8 +422,8 @@ last; re-confirm appetite for the infra first.
 |---|---|---|---|
 | 1a flash | Med (delight) | **XS** | do immediately |
 | 1b back-populate relics | Med | S | data entry |
-| 2 calculator MVP | **High (user #1 ask)** | M–L | first per-user state |
-| 3 calculator should-haves | High | M | needs #2 |
+| 2 calculator MVP | **High (user #1 ask)** | M–L | first per-user state — ✅ shipped |
+| 3 calculator should-haves | High | M | needs #2 — ✅ shipped |
 | 4 active windows | High (accuracy) | L | date-windowed pricing; moves existing numbers |
 | 5 UR specificity | Med | M | needs data authoring |
 | 6 Omni substitution | Med–High (interesting) | L | most complex engine bit |

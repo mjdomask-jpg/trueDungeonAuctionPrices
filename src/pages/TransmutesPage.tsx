@@ -88,8 +88,9 @@ export default function TransmutesPage() {
           <strong>avg</strong> and a <strong>min</strong>. Tap <strong>All</strong> on a row (or{' '}
           <strong>Set all on hand</strong>) to mark it fully owned; set a source token to{' '}
           <strong>All</strong> to price just the upgrade step. Tap any <strong>$/ea</strong> price
-          to use your own number when the market differs from our estimate. For the full recipe
-          list, switch to{' '}
+          to use your own number when the market differs from our estimate. Enter what the finished
+          token <strong>sells for</strong> and it compares building it, buying it, and selling your
+          materials to buy it. For the full recipe list, switch to{' '}
           <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>.
         </PageIntro>
       ) : (
