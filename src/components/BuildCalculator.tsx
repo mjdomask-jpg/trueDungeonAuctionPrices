@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { moneyCalc } from '../lib/format';
+import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
@@ -51,7 +51,7 @@ const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Ex
 // The two paths that compete. "Buy it" names what you keep when you hold
 // something, since that retained pile is the whole reason it beats selling up.
 const pathName = (key: PathKey, holdsGoods: boolean) =>
-  key === 'build' ? 'Finish the craft' : holdsGoods ? 'Buy it, keep your goods' : 'Just buy it';
+  key === 'build' ? 'Complete the transmute' : holdsGoods ? 'Buy it, keep your goods' : 'Just buy it';
 
 // A configured rate as prose ("20%"). The rates live in RESALE, so the help
 // text can't drift from the math the way a hardcoded "20%" would.
@@ -60,8 +60,11 @@ const pct = (rate: number) => `${Math.round(rate * 100)}%`;
 // Money always shows both cents digits ($10.60, not $10.6); parsing rounds to
 // cents so a stored override never carries a longer tail than it displays.
 const fmt2 = (n: number | null | undefined) => (n == null ? '' : n.toFixed(2));
+// `$` and thousands separators are stripped rather than rejected: prices get
+// pasted in from listings and reseller pages as "$1,500.00", and Number() reads
+// that as NaN. The box re-displays the bare number.
 const parsePrice = (s: string): number | null => {
-  const t = s.trim();
+  const t = s.replace(/[$,\s]/g, '');
   if (t === '') return null;
   const n = Number(t);
   return isFinite(n) ? Math.round(n * 100) / 100 : null;
@@ -207,10 +210,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const fullAvg = sum((r) => (r.unitAvg == null ? null : r.req * r.unitAvg));
   const fullMin = sum((r) => (r.unitMin == null ? null : r.req * r.unitMin));
   const unpricedNeeded = rows.filter((r) => r.need > 0 && !r.priced).length;
-  // Lines still short, not units short: this reads next to the table, where a
-  // line is a row. "105 ingredients" (the unit count) doesn't match anything
-  // the user can see.
-  const needLines = rows.filter((r) => r.need > 0).length;
+  // Individual goods still to buy, summed across lines — 15 Mystic Silk + 6
+  // Dwarven Steel + 3 Elven Bismuth reads as 24, not 3. It is the pile you have
+  // to go and find, which is what the player is sizing up.
+  const needUnits = rows.reduce((n, r) => n + r.need, 0);
   const src = cost?.lines.find((l) => l.isSource);
 
   // --- Phase 3: quick sale + the build-vs-buy call ------------------------
@@ -502,19 +505,19 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 <p className="cbuy-verdict">
                   {plans.wash ? (
                     <>
-                      <b>It's a wash.</b> Finishing and buying land within{' '}
+                      <b>It's a wash.</b> Completing the transmute and buying land within{' '}
                       {moneyCalc(WASH_THRESHOLD)} of each other
                       {holdsGoods ? ' — buying gets you the token today and keeps your goods.' : '.'}
                     </>
                   ) : plans.best === 'build' ? (
                     <>
-                      <b>Finish the craft.</b> The {moneyCalc(finAvg)} left to buy is about{' '}
-                      {moneyCalc(plans.delta)} under the {moneyCalc(market)} asking price.
+                      <b>Complete the transmute.</b> The {moneyCalc(finAvg)} left to buy is about{' '}
+                      {money0(plans.delta)} under the {moneyCalc(market)} asking price.
                     </>
                   ) : (
                     <>
-                      <b>Buy it.</b> At {moneyCalc(market)} it's about {moneyCalc(plans.delta)} under the{' '}
-                      {moneyCalc(finAvg)} left to finish
+                      <b>Buy it.</b> At {moneyCalc(market)} it's about {money0(plans.delta)} under the{' '}
+                      {moneyCalc(finAvg)} left to complete
                       {holdsGoods ? ', and your trade goods stay in the drawer for the next craft.' : '.'}
                     </>
                   )}
@@ -527,8 +530,8 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                       <span className="cbo-cost">{moneyCalc(p.cost)}</span>
                       <span className="cbo-how">
                         {p.key === 'build'
-                          ? needLines > 0
-                            ? `buy the ${needLines} ingredient${needLines === 1 ? '' : 's'} you're still short`
+                          ? needUnits > 0
+                            ? `buy the ${needUnits} ingredient${needUnits === 1 ? '' : 's'} you're still short`
                             : 'you already hold everything it takes'
                           : holdsGoods
                             ? 'and your trade goods stay yours'
@@ -542,33 +545,46 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                     "to go" figure is the same magnitude as the gap above, but
                     it answers a different question — keep playing, or buy the
                     rest now — and the bar makes "am I close?" readable at a
-                    glance. */}
+                    glance. Whole dollars throughout: these are estimates of a
+                    target, and "about $10.11" argues with itself. */}
                 {gapWorthShowing && (
                   <div className="cbuy-gap">
                     <p className="cbuy-gap-lead">
-                      About {moneyCalc(toGo)} of trade goods to go
+                      About {money0(toGo)} of trade goods to go
                     </p>
-                    <div
-                      className="cbuy-bar"
-                      role="img"
-                      aria-label={`Holding ${moneyCalc(provideAvg)} of the ${moneyCalc(breakEven)} needed before finishing beats buying`}
-                    >
-                      <span style={{ width: `${Math.round(Math.min(1, provideAvg / breakEven) * 100)}%` }} />
-                    </div>
+                    {/* An empty bar says nothing a "you're at $0" doesn't; it
+                        appears once there is progress to draw. */}
+                    {holdsGoods && (
+                      <div
+                        className="cbuy-bar"
+                        role="img"
+                        aria-label={`Holding ${money0(provideAvg)} of the ${money0(breakEven)} needed before completing the transmute beats buying`}
+                      >
+                        <span style={{ width: `${Math.round(Math.min(1, provideAvg / breakEven) * 100)}%` }} />
+                      </div>
+                    )}
                     <p className="cbuy-gap-note">
-                      Finishing gets cheaper than buying once you're holding about{' '}
-                      {moneyCalc(breakEven)} of this recipe — you're at {moneyCalc(provideAvg)}.
-                      Pulls from loot close that gap for free.
+                      Completing the transmute gets cheaper than buying once you're holding about{' '}
+                      {money0(breakEven)} of this recipe — you're at {money0(provideAvg)}.
+                      Loot can close that gap for free.
                     </p>
                   </div>
                 )}
 
                 {plans.sellAndBuyNet != null && (
                   <p className="cbuy-note">
-                    <b>Selling instead?</b> Your goods would fetch about {moneyCalc(quick.value)},
-                    bringing the buy down to {moneyCalc(plans.sellAndBuyNet)} — but that's hours of
-                    listing, haggling and post-office trips, with no promise the whole pile moves,
-                    and the goods are gone when you want them for the next recipe.
+                    <b>Selling instead?</b> Your goods would fetch about {moneyCalc(quick.value)},{' '}
+                    {plans.sellAndBuyNet < 0 ? (
+                      // The pile is worth more than the token: selling covers the
+                      // purchase outright and leaves change. A negative "cost"
+                      // reads as an error, so it becomes a profit and takes the
+                      // same green the comparison tables use for money saved.
+                      <>netting a <span className="cbuy-profit">{moneyCalc(-plans.sellAndBuyNet)} profit</span></>
+                    ) : (
+                      <>bringing the buy down to {moneyCalc(plans.sellAndBuyNet)}</>
+                    )}{' '}
+                    — but they could take a lot of time and effort to sell, with no promise they all
+                    move. Plus, then you don't have them for a different recipe.
                   </p>
                 )}
 
@@ -584,13 +600,13 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                   {minWorthSaying ? (
                     minBeatsVerdict ? (
                       <>
-                        Compared at average prices — but at <b>minimum</b> prices finishing the craft
-                        costs {moneyCalc(finMin)}, which beats every option here.
+                        Compared at average prices — but at <b>minimum</b> prices completing the
+                        transmute costs {moneyCalc(finMin)}, which beats every option here.
                       </>
                     ) : (
                       <>
-                        Compared at average prices. At <b>minimum</b> prices finishing the craft
-                        costs {moneyCalc(finMin)}.
+                        Compared at average prices. At <b>minimum</b> prices completing the
+                        transmute costs {moneyCalc(finMin)}.
                       </>
                     )
                   ) : (
@@ -607,8 +623,8 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               </div>
             ) : (
               <p className="cbuy-hint">
-                Enter what the finished token sells for and we'll weigh finishing the craft against
-                just buying it — and show how much more loot it takes before crafting wins.
+                Enter what the finished token sells for and we'll weigh completing the transmute
+                against just buying it — and show how much more loot it takes before crafting wins.
               </p>
             )}
           </div>

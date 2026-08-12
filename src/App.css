@@ -961,6 +961,10 @@ td.diff.down { color: var(--diff-down); }
 .cbuy-bar { display: block; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
 .cbuy-bar span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
 .cbuy-note { font-size: 11.5px; color: var(--text); margin: 9px 2px 0; line-height: 1.45; }
+/* Selling the pile covers the token and leaves change. --diff-down is the
+   GREEN of the comparison tables (up is red here — prices you pay), so money
+   ahead reads the same way it does everywhere else on the site. */
+.cbuy-profit { color: var(--diff-down); font-weight: 600; }
 /* The basis caveat when shopping at minimum prices would change the answer —
    not a warning (nothing is wrong), just a step louder than the fine print,
    because it contradicts the verdict directly above it. */
