@@ -36,10 +36,18 @@ everything the calculator consumes (`BuildCost.lines[]` with `unitAvg`, `unitMin
 
 **1b. "Active windows" change the numbers on the existing Recipes view, not just the
 calculator.** Today a recipe is priced from one season (its debut). Pricing across a
-two-year active window re-aggregates from a *date range that spans two seasons*. That
-is a real engine change with broad blast radius — it moves every currently-active
+recipe's true active window re-aggregates from an *explicit date range* — from the
+recipe's debut through its exact expiration, minus the 7-day shipping cutoff. That is
+a real engine change with broad blast radius — it moves every currently-active
 recipe's displayed cost. It deserves its own phase and careful before/after
 validation, and it's the main sequencing question (§9, Q1).
+
+We deliberately do **not** approximate this with coarse two-season pooling. The
+maintainer's 2025–2026 data shows a **sharp price spike immediately after the Dec 1
+cutoff** for several goods (Oil of Enchantment, Elven Bismuth), so lumping the debut
+season together with the whole following season would drag a recipe's cost toward
+post-deactivation prices that a real buyer racing the cutoff never actually paid.
+Date-windowed pricing is the only way to keep the number honest. (This is Q2.)
 
 **1c. Scraping trenttokens.com is constrained by the static-hosting model.** The site
 is a client-side SPA on GitHub Pages with no server. A browser `fetch` to
@@ -148,15 +156,22 @@ Storing the date **explicitly rather than deriving it** keeps the exceptions in 
 data (where the maintainer can see and edit them) instead of as special-cases in
 code, and it's future-proof. A validator rule can fill/verify the standard case.
 
-**Engine change — two cost tiers, ship the cheap one first:**
-- **Cheap first cut:** price a recipe by **pooling both active seasons'** auctions
-  (debut season ∪ following season) instead of just the debut season. Reuses the
-  existing per-season aggregation; small change to which seasons feed a recipe.
-- **Precise later:** a **date-windowed aggregation** that respects the exact
-  `Expires` date and the 7-day shipping cutoff. This needs a per-sale date, which is
-  available by joining `prices.csv` → `auctionMetadata` on `auctionId` (the Analytics
-  and context layers already read close dates). More work; do it only if the cheap
-  cut proves too coarse. (This is Q2.)
+**Engine change — date-windowed aggregation (the accurate computation):**
+Price each recipe over the **exact date range it was craftable**: from its debut
+through its `Expires` date, minus the **7-day shipping cutoff** (exclude auctions
+closing within 7 days of deactivation, since a win that late couldn't ship in time to
+craft). This needs a per-sale date, which is available by joining `prices.csv` →
+`auctionMetadata` on `auctionId` (the Analytics and context layers already read close
+dates). It replaces the per-season aggregation for active-window recipes with a
+range-filtered aggregation.
+
+**We are not shipping the coarse two-season pooling** that an earlier draft proposed
+as a cheap first cut (debut season ∪ following season). The maintainer's 2025–2026
+data shows a **clear price spike right after the Dec 1 cutoff** for Oil of Enchantment
+and Elven Bismuth — proof that pooling the following season wholesale would fold in
+post-deactivation prices and systematically overstate what a buyer racing the cutoff
+paid. The extra cost of the date join is worth it; accuracy is the whole point of this
+phase. (This was Q2; resolved to date-windowed — see §9.)
 
 **Downstream, once active windows exist (all cheap):**
 - **Recent-prices checkbox for every active year**, not just the latest priced
@@ -209,10 +224,12 @@ want to see the explicit UR so they know what to buy/trade."
 
 **(c) Two-year UR availability.** A UR won in season N can be redeemed for a UR from
 N or N−1; equivalently a recipe-N UR requirement can be met by a UR bought in N or
-N+1. This is **already subsumed by the active-window pooling in 3.1** — if a recipe is
-active in seasons N and N+1, its UR line is priced from both seasons' PYP auctions.
-So no separate mechanism is needed *if* 3.1 lands first; if it doesn't, add a small
-"UR lines price from `nominalYear` ∪ `nominalYear+1`" rule.
+N+1. This is **already subsumed by the date-windowed pricing in 3.1** — a recipe's UR
+line is priced over the recipe's full active date range (debut through `Expires` minus
+the 7-day cutoff), which naturally spans into the following season's auctions where
+the UR is still redeemable. So no separate mechanism is needed *if* 3.1 lands first; if
+it doesn't, add a small "UR lines price over `nominalYear`'s debut through
+`nominalYear+1`'s cutoff" rule.
 
 **(d) Secondary-market caveat.** For non-expiring Legendaries a scarce specific UR
 can cost **more** than auction PYP. Handle via the per-line override (3.2) + a note
@@ -328,9 +345,13 @@ mockups with the maintainer. Notes on the shipped design:
 clear wording.
 
 ### Phase 4 — Active recipe windows (accuracy) — broad blast radius
-§3.1: `Expires` column + parser, cheap two-season pooling, "is active" computation,
-recent-prices for all active years, active-only default filter on both the Recipes
-view and the calculator picker, and expired/uncraftable-relic marking (§3.2). Needs a
+§3.1: `Expires` column + parser, **date-windowed pricing** (aggregate each recipe over
+its exact debut→`Expires` range minus the 7-day shipping cutoff, via the
+`prices.csv` → `auctionMetadata` join), "is active" computation, recent-prices for all
+active years, active-only default filter on both the Recipes view and the calculator
+picker, and expired/uncraftable-relic marking (§3.2). The coarse two-season pooling an
+earlier draft floated is **dropped** — the post-Dec-1 price spikes in the 2025–2026
+data (Oil of Enchantment, Elven Bismuth) prove it would be too inaccurate. Needs a
 before/after cost diff to validate the numbers moved as intended. *(If Q1 says
 accuracy-first, this becomes Phase 2 and the calculator shifts back.)*
 
@@ -351,8 +372,10 @@ suggestion box, optional Recipes-view badge.
 last; re-confirm appetite for the infra first.
 
 ### Later / precision follow-ups
-- Date-windowed pricing with the 7-day shipping cutoff and non-standard expirations
-  (the precise version of §3.1), if the cheap two-season pooling proves too coarse.
+- Non-standard `Expires` dates beyond the standard rule (Ioun Stone Mystic Orb's March
+  expiry, Mark of Enlightenment's 1-year window) — author these into the `Expires`
+  column as Phase 4's date-windowed engine already reads them; verify each against the
+  data as it's entered.
 - Optional `localStorage` persistence of calculator inputs.
 
 ---
@@ -365,7 +388,7 @@ last; re-confirm appetite for the infra first.
 | 1b back-populate relics | Med | S | data entry |
 | 2 calculator MVP | **High (user #1 ask)** | M–L | first per-user state |
 | 3 calculator should-haves | High | M | needs #2 |
-| 4 active windows | High (accuracy) | M–L | moves existing numbers |
+| 4 active windows | High (accuracy) | L | date-windowed pricing; moves existing numbers |
 | 5 UR specificity | Med | M | needs data authoring |
 | 6 Omni substitution | Med–High (interesting) | L | most complex engine bit |
 | 7 price-as-of-year | Low–Med (1 user) | M | global selector |
@@ -405,17 +428,21 @@ last; re-confirm appetite for the infra first.
 
 ---
 
-## 9. Decisions — RESOLVED (maintainer, 2026-08-10)
+## 9. Decisions — RESOLVED (maintainer, 2026-08-10; Q2 revised 2026-08-11)
 
 All four resolved in favor of the recommendation; the phase order in §5 stands.
 
 1. **Sequencing → calculator first.** Build calculator (Phase 2) ships on today's
    debut-year pricing; active windows (Phase 4) land under it later. The pricing
    basis is a swappable input the calculator reads.
-2. **Active-window precision → two-season pooling first.** Reuse per-season
-   aggregation over debut ∪ following season. The date-precise version (7-day
-   shipping cutoff, non-standard expirations like Ioun Stone's March) is a later
-   follow-up, only if pooling proves too coarse.
+2. **Active-window precision → date-windowed pricing (revised 2026-08-11).** Phase 4
+   prices each recipe over its exact debut→`Expires` range minus the 7-day shipping
+   cutoff, via the `prices.csv` → `auctionMetadata` join. The originally-planned coarse
+   two-season pooling (debut ∪ following season) is **dropped**: the 2025–2026 data
+   shows a sharp post-Dec-1 price spike for Oil of Enchantment and Elven Bismuth, which
+   pooling would fold into the cost and overstate it. Accuracy is the point of the
+   phase, so we pay the date-join cost up front rather than shipping a coarse pass we'd
+   have to redo.
 3. **Scraping → manual entry only for now.** Ship the manual secondary-price box;
    Phase 8 (trenttokens snapshot / proxy) is deferred until appetite is reconfirmed.
 4. **Calculator input persistence → ephemeral for v1.** On-hand quantities live in
