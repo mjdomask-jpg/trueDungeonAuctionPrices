@@ -954,6 +954,10 @@ td.diff.down { color: var(--diff-down); }
 .cbuy-opts li.alt .cbo-cost { color: var(--text); }
 .cbo-how { grid-column: 1 / -1; font-size: 11.5px; color: var(--text); }
 .cbuy-note { font-size: 11.5px; color: var(--text); margin: 9px 2px 0; line-height: 1.45; }
+/* The basis caveat when shopping at minimum prices would change the answer —
+   not a warning (nothing is wrong), just a step louder than the fine print,
+   because it contradicts the verdict directly above it. */
+.cbuy-note.flag { color: var(--text-h); }
 
 /* Slide-in recipe picker (drawer). */
 .calc-scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 40; }

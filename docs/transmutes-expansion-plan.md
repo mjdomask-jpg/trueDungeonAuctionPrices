@@ -364,6 +364,14 @@ clear wording.
   showing a "min" cost for the sell path that can land either side of the avg one
   (the resale term inverts the direction of "min"), which makes the verdict harder to
   read rather than easier. Cost-to-finish keeps its avg/min pair directly above.
+  Because the min build can be far cheaper — Val's +4 Keen Fellbane Crossbow is
+  $1,510 avg against $925 min — the panel **states its basis** rather than leaving it
+  implicit: "Compared at average prices. At minimum prices finishing the craft costs
+  $925." When that min build would beat the path we just crowned, the line says so
+  outright ("…which beats every option here") and lifts to `--text-h`, since it
+  contradicts the verdict directly above it. A basis *toggle* (recompute the whole
+  comparison at min prices) was considered and deferred — revisit if min-price
+  shopping proves to be what players actually do. (Maintainer decision, 2026-08-12.)
 - **"Just buy it" can never win, and that is a result, not a simplification.** It
   costs exactly the quick-sale value more than "sell and buy", always, because the
   only difference between them is whether you sell the pile. So the verdict is drawn

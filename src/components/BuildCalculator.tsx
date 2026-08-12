@@ -227,6 +227,13 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   // costs to buy, so it appears with that number and not before (plan §2.2).
   const plans = market == null ? null : comparePaths(finAvg, market, quick.value);
   const planCost = (k: PathKey) => plans?.paths.find((p) => p.key === k)?.cost ?? 0;
+  // The comparison runs on average prices, but the min column right above it can
+  // be far cheaper — and a buyer who actually shops the low end may face a
+  // different answer entirely. Say so, and say it louder when building at min
+  // prices would beat the path we just crowned.
+  const minWorthSaying = finAvg > 0 && finMin < finAvg - 0.005;
+  const minBeatsVerdict =
+    plans != null && plans.best !== 'build' && finMin < planCost(plans.best) - WASH_THRESHOLD;
 
   const setHave = (key: string, req: number, v: number) =>
     setOnHand((p) => ({ ...p, [key]: Math.min(Math.max(0, v), req) }));
@@ -537,6 +544,23 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                     ))}
                 </ul>
 
+                <p className={`cbuy-note${minBeatsVerdict ? ' flag' : ''}`}>
+                  {minWorthSaying ? (
+                    minBeatsVerdict ? (
+                      <>
+                        Compared at average prices — but at <b>minimum</b> prices finishing the craft
+                        costs {moneyCalc(finMin)}, which beats every option here.
+                      </>
+                    ) : (
+                      <>
+                        Compared at average prices. At <b>minimum</b> prices finishing the craft
+                        costs {moneyCalc(finMin)}.
+                      </>
+                    )
+                  ) : (
+                    <>Compared at average prices.</>
+                  )}
+                </p>
                 {quick.value > 0 && (
                   <p className="cbuy-note">
                     Keeping your materials always costs the quick-sale value (~{moneyCalc(quick.value)})
