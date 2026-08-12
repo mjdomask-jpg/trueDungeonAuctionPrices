@@ -448,10 +448,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                     at {pct(RESALE.offAvg)} below their average price, since moving a pile fast
                     means undercutting the market. Off minimum prices instead
                     ({pct(RESALE.offMin)} below, because the minimum is already the low end) it
-                    comes to about {moneyCalc(quick.fromMin)}. Both are estimates, not offers.
+                    comes to about {money0(quick.fromMin)}. Both are estimates, not offers.
                   </HintPopover>
                 </span>
-                <span>~{moneyCalc(quick.value)} if you sold them</span>
+                <span>~{money0(quick.value)} if you sold them</span>
               </div>
             )}
             <p className="calc-foot-note">
@@ -573,15 +573,19 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
 
                 {plans.sellAndBuyNet != null && (
                   <p className="cbuy-note">
-                    <b>Selling instead?</b> Your goods would fetch about {moneyCalc(quick.value)},{' '}
+                    {/* Whole dollars throughout the sentence: mixing moneyCalc's
+                        cents-under-$100 rule with its no-cents-above leaves three
+                        figures that don't reconcile on screen ($106 less $80
+                        showing as $25.71). */}
+                    <b>Selling instead?</b> Your goods would fetch about {money0(quick.value)},{' '}
                     {plans.sellAndBuyNet < 0 ? (
                       // The pile is worth more than the token: selling covers the
                       // purchase outright and leaves change. A negative "cost"
                       // reads as an error, so it becomes a profit and takes the
                       // same green the comparison tables use for money saved.
-                      <>netting a <span className="cbuy-profit">{moneyCalc(-plans.sellAndBuyNet)} profit</span></>
+                      <>netting a <span className="cbuy-profit">{money0(-plans.sellAndBuyNet)} profit</span></>
                     ) : (
-                      <>bringing the buy down to {moneyCalc(plans.sellAndBuyNet)}</>
+                      <>bringing the buy down to {money0(plans.sellAndBuyNet)}</>
                     )}{' '}
                     — but they could take a lot of time and effort to sell, with no promise they all
                     move. Plus, then you don't have them for a different recipe.
