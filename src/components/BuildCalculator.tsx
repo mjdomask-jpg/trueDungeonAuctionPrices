@@ -4,7 +4,9 @@ import { Money } from './Money';
 import { HintPopover } from './HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
-import { RESALE, WASH_THRESHOLD, comparePaths, quickSaleValue, type PathKey } from '../lib/buildCalc';
+import {
+  RESALE, WASH_THRESHOLD, breakEvenHoldings, comparePaths, quickSaleValue, type PathKey,
+} from '../lib/buildCalc';
 
 // Build Calculator (Phase 2 of the transmutes expansion plan) — compact redesign.
 //
@@ -46,12 +48,10 @@ type PickItem =
 // Tier display order for the drawer's filter chips (game power ladder).
 const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic', 'Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
 
-// The three ways to end up holding the finished token, in display order.
-const PATH_NAME: Record<PathKey, string> = {
-  build: 'Finish the craft',
-  sellAndBuy: 'Sell your materials, buy it',
-  buy: 'Just buy it',
-};
+// The two paths that compete. "Buy it" names what you keep when you hold
+// something, since that retained pile is the whole reason it beats selling up.
+const pathName = (key: PathKey, holdsGoods: boolean) =>
+  key === 'build' ? 'Finish the craft' : holdsGoods ? 'Buy it, keep your goods' : 'Just buy it';
 
 // A configured rate as prose ("20%"). The rates live in RESALE, so the help
 // text can't drift from the math the way a hardcoded "20%" would.
@@ -227,6 +227,15 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   // costs to buy, so it appears with that number and not before (plan §2.2).
   const plans = market == null ? null : comparePaths(finAvg, market, quick.value);
   const planCost = (k: PathKey) => plans?.paths.find((p) => p.key === k)?.cost ?? 0;
+  const holdsGoods = provideAvg > 0;
+  // How much of the recipe you need in the drawer before finishing overtakes
+  // buying, and how far short of that you are. Same magnitude as the build-vs-
+  // buy gap — cost to finish is fullAvg minus what you hold — but a different
+  // question: not "which is cheaper today" but "how much more loot until
+  // crafting wins", which is the one a player with a growing stash is asking.
+  const breakEven = market == null ? 0 : breakEvenHoldings(fullAvg, market);
+  const toGo = Math.max(0, breakEven - provideAvg);
+  const gapWorthShowing = toGo > 0.005 && breakEven > 0;
   // The comparison runs on average prices, but the min column right above it can
   // be far cheaper — and a buyer who actually shops the low end may face a
   // different answer entirely. Say so, and say it louder when building at min
@@ -493,56 +502,83 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 <p className="cbuy-verdict">
                   {plans.wash ? (
                     <>
-                      <b>It's a wash.</b> Finishing the craft and buying land within{' '}
-                      {moneyCalc(WASH_THRESHOLD)} of each other — take whichever you'd rather deal
-                      with.
+                      <b>It's a wash.</b> Finishing and buying land within{' '}
+                      {moneyCalc(WASH_THRESHOLD)} of each other
+                      {holdsGoods ? ' — buying gets you the token today and keeps your goods.' : '.'}
                     </>
                   ) : plans.best === 'build' ? (
                     <>
-                      <b>Build it.</b> Finishing the craft costs {moneyCalc(finAvg)} — about{' '}
-                      {moneyCalc(plans.delta)} less than {quick.value > 0 ? 'selling up and buying' : 'buying'}.
-                    </>
-                  ) : plans.best === 'sellAndBuy' ? (
-                    <>
-                      <b>Sell and buy.</b> Selling your materials (~{moneyCalc(quick.value)}) and buying
-                      at {moneyCalc(market)} nets {moneyCalc(planCost('sellAndBuy'))} — about{' '}
-                      {moneyCalc(plans.delta)} less than finishing the craft.
+                      <b>Finish the craft.</b> The {moneyCalc(finAvg)} left to buy is about{' '}
+                      {moneyCalc(plans.delta)} under the {moneyCalc(market)} asking price.
                     </>
                   ) : (
                     <>
-                      <b>Buy it.</b> At {moneyCalc(market)} the finished token is about{' '}
-                      {moneyCalc(plans.delta)} less than the {moneyCalc(finAvg)} of materials you'd
-                      still need.
+                      <b>Buy it.</b> At {moneyCalc(market)} it's about {moneyCalc(plans.delta)} under the{' '}
+                      {moneyCalc(finAvg)} left to finish
+                      {holdsGoods ? ', and your trade goods stay in the drawer for the next craft.' : '.'}
                     </>
                   )}
                 </p>
 
                 <ul className="cbuy-opts">
-                  {plans.paths
-                    // With nothing on hand there is nothing to sell, so the sell
-                    // path would just restate "buy it" at the same price.
-                    .filter((p) => p.key !== 'sellAndBuy' || quick.value > 0)
-                    .map((p) => (
-                      <li
-                        key={p.key}
-                        className={[p.key === plans.best && !plans.wash ? 'win' : '', p.candidate ? '' : 'alt'].filter(Boolean).join(' ')}
-                      >
-                        <span className="cbo-name">{PATH_NAME[p.key]}</span>
-                        <span className="cbo-cost">{moneyCalc(p.cost)}</span>
-                        <span className="cbo-how">
-                          {p.key === 'build'
-                            ? needLines > 0
-                              ? `buy the ${needLines} ingredient${needLines === 1 ? '' : 's'} you're still short`
-                              : 'you already hold everything it takes'
-                            : p.key === 'sellAndBuy'
-                              ? `${moneyCalc(market)} less the ~${moneyCalc(quick.value)} your pile fetches`
-                              : quick.value > 0
-                                ? 'and your materials stay yours'
-                                : 'straight off the secondary market'}
-                        </span>
-                      </li>
-                    ))}
+                  {plans.paths.map((p) => (
+                    <li key={p.key} className={p.key === plans.best && !plans.wash ? 'win' : ''}>
+                      <span className="cbo-name">{pathName(p.key, holdsGoods)}</span>
+                      <span className="cbo-cost">{moneyCalc(p.cost)}</span>
+                      <span className="cbo-how">
+                        {p.key === 'build'
+                          ? needLines > 0
+                            ? `buy the ${needLines} ingredient${needLines === 1 ? '' : 's'} you're still short`
+                            : 'you already hold everything it takes'
+                          : holdsGoods
+                            ? 'and your trade goods stay yours'
+                            : 'straight off the secondary market'}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
+
+                {/* How much more loot until crafting overtakes buying. The
+                    "to go" figure is the same magnitude as the gap above, but
+                    it answers a different question — keep playing, or buy the
+                    rest now — and the bar makes "am I close?" readable at a
+                    glance. */}
+                {gapWorthShowing && (
+                  <div className="cbuy-gap">
+                    <p className="cbuy-gap-lead">
+                      About {moneyCalc(toGo)} of trade goods to go
+                    </p>
+                    <div
+                      className="cbuy-bar"
+                      role="img"
+                      aria-label={`Holding ${moneyCalc(provideAvg)} of the ${moneyCalc(breakEven)} needed before finishing beats buying`}
+                    >
+                      <span style={{ width: `${Math.round(Math.min(1, provideAvg / breakEven) * 100)}%` }} />
+                    </div>
+                    <p className="cbuy-gap-note">
+                      Finishing gets cheaper than buying once you're holding about{' '}
+                      {moneyCalc(breakEven)} of this recipe — you're at {moneyCalc(provideAvg)}.
+                      Pulls from loot close that gap for free.
+                    </p>
+                  </div>
+                )}
+
+                {plans.sellAndBuyNet != null && (
+                  <p className="cbuy-note">
+                    <b>Selling instead?</b> Your goods would fetch about {moneyCalc(quick.value)},
+                    bringing the buy down to {moneyCalc(plans.sellAndBuyNet)} — but that's hours of
+                    listing, haggling and post-office trips, with no promise the whole pile moves,
+                    and the goods are gone when you want them for the next recipe.
+                  </p>
+                )}
+
+                {!holdsGoods && (
+                  <p className="cbuy-note">
+                    From scratch, buying almost always beats crafting — crafted tokens rarely sell
+                    for more than their materials cost. This gets interesting once you're holding
+                    trade goods: mark what you've pulled and watch the gap close.
+                  </p>
+                )}
 
                 <p className={`cbuy-note${minBeatsVerdict ? ' flag' : ''}`}>
                   {minWorthSaying ? (
@@ -561,13 +597,6 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                     <>Compared at average prices.</>
                   )}
                 </p>
-                {quick.value > 0 && (
-                  <p className="cbuy-note">
-                    Keeping your materials always costs the quick-sale value (~{moneyCalc(quick.value)})
-                    more than selling them first, so it never wins on price — it's here for when
-                    you'd rather hold the pile.
-                  </p>
-                )}
                 {unpricedNeeded > 0 && (
                   <p className="calc-warn">
                     {unpricedNeeded} needed ingredient{unpricedNeeded === 1 ? '' : 's'}{' '}
@@ -578,8 +607,8 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               </div>
             ) : (
               <p className="cbuy-hint">
-                Enter what the finished token sells for and we'll compare building it, buying it,
-                and selling what you have to buy it.
+                Enter what the finished token sells for and we'll weigh finishing the craft against
+                just buying it — and show how much more loot it takes before crafting wins.
               </p>
             )}
           </div>

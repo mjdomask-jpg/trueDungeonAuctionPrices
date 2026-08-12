@@ -62,63 +62,74 @@ export type Path = {
   key: PathKey;
   /** Cash out of pocket to end up holding the finished token. */
   cost: number;
-  /** Whether this path competes for the verdict. `buy` does not — see below. */
-  candidate: boolean;
 };
 
 export type Comparison = {
-  paths: Path[]; // display order: build, sell-and-buy, buy
-  best: PathKey; // cheapest among the candidates
-  /** How much the winner beats the other candidate by. */
+  paths: Path[]; // the two that compete, in display order: build, buy
+  best: PathKey;
+  /** How much the winner beats the other by. */
   delta: number;
   /** True when `delta` is too small to call. Every number feeding this is an
    *  estimate, so declaring a winner by pennies would read as false precision. */
   wash: boolean;
-  /** The quick-sale value the sell path is priced from, echoed for display. */
+  /** The quick-sale value the sell aside is priced from, echoed for display. */
   quickSale: number;
+  /** What selling the pile first and then buying nets. Null when there is
+   *  nothing on hand to sell. Reported for the aside, never as a contender —
+   *  see below. */
+  sellAndBuyNet: number | null;
 };
 
 /** Below this the two paths are reported as level rather than one "winning". */
 export const WASH_THRESHOLD = 1;
 
-/** Compare the ways of ending up with the finished token, given a secondary
- *  price `market` for it and `costToFinish` for buying the rest of the BOM.
+/** Compare the two ways a player actually chooses between, given a secondary
+ *  price `market` for the finished token and `costToFinish` for the rest of
+ *  the bill of materials:
  *
- *  Three paths, but only two of them can win, and that is a real result rather
- *  than a simplification:
+ *    build   spend costToFinish   your trade goods are consumed
+ *    buy     spend market         your trade goods stay yours
  *
- *    build       spend costToFinish        materials consumed
- *    sellAndBuy  spend market − quickSale  materials sold
- *    buy         spend market              materials KEPT
+ *  A third path exists — sell the goods, then buy — and it is always the
+ *  cheapest on paper, since it nets `market − quickSale`. It is deliberately
+ *  NOT a contender, because the money model cannot see what it really costs.
+ *  In this game trade goods arrive free as loot and keep their use for the next
+ *  recipe, while selling a pile means hours of listing, haggling and posting,
+ *  with no guarantee the lot moves. So its edge is not a saving — it is the
+ *  wage for those hours, and only the player can price their own time. The UI
+ *  reports the number as an aside and says as much.
  *
- *  `buy` costs exactly `quickSale` more than `sellAndBuy`, always, because the
- *  only difference between them is whether you sell the pile. So it can never
- *  be strictly cheapest, and offering it as a third contender would be theatre.
- *  It is shown with its total — the verdict has to stay auditable (plan §7) —
- *  but marked non-candidate, and the UI explains that the gap buys you the
- *  choice to keep your materials.
- *
- *  When you hold nothing, quickSale is 0, there is nothing to sell, and `buy`
- *  becomes the candidate in the sell path's place. */
+ *  That leaves build vs buy, which are genuinely comparable: both take ten
+ *  minutes, and the goods are free either way — sunk if you craft, retained if
+ *  you buy. */
 export function comparePaths(
   costToFinish: number,
   market: number,
   quickSale: number,
 ): Comparison {
-  const holdsMaterials = quickSale > 0;
   const paths: Path[] = [
-    { key: 'build', cost: costToFinish, candidate: true },
-    { key: 'sellAndBuy', cost: market - quickSale, candidate: holdsMaterials },
-    { key: 'buy', cost: market, candidate: !holdsMaterials },
+    { key: 'build', cost: costToFinish },
+    { key: 'buy', cost: market },
   ];
-  const [a, b] = paths.filter((p) => p.candidate);
-  const best = a.cost <= b.cost ? a : b;
-  const delta = Math.abs(a.cost - b.cost);
+  const delta = Math.abs(costToFinish - market);
   return {
     paths,
-    best: best.key,
+    best: costToFinish <= market ? 'build' : 'buy',
     delta,
     wash: delta < WASH_THRESHOLD,
     quickSale,
+    sellAndBuyNet: quickSale > 0 ? market - quickSale : null,
   };
+}
+
+/** How much of a recipe you need to be holding, at market value, before
+ *  finishing the craft costs less than buying the finished token.
+ *
+ *  Cost to finish is just `fullCost − what you hold`, so finishing takes the
+ *  lead the moment your holdings pass `fullCost − market`. That turns the
+ *  build-vs-buy gap into an inventory target — how much more loot you need —
+ *  which is the question a player with a growing stash is actually asking.
+ *  Zero means you are already past it with an empty drawer. */
+export function breakEvenHoldings(fullCost: number, market: number): number {
+  return Math.max(0, fullCost - market);
 }

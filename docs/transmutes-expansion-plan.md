@@ -372,13 +372,37 @@ clear wording.
   contradicts the verdict directly above it. A basis *toggle* (recompute the whole
   comparison at min prices) was considered and deferred — revisit if min-price
   shopping proves to be what players actually do. (Maintainer decision, 2026-08-12.)
-- **"Just buy it" can never win, and that is a result, not a simplification.** It
-  costs exactly the quick-sale value more than "sell and buy", always, because the
-  only difference between them is whether you sell the pile. So the verdict is drawn
-  from **build vs sell-and-buy**, and "just buy it" renders with its total but marked
-  non-candidate, with a line explaining that the gap is what holding your materials
-  costs. When you hold nothing there is nothing to sell, the sell row is dropped, and
-  "just buy it" becomes the second candidate.
+- **The contenders are "finish the craft" vs "buy it and keep your goods"; selling
+  is an aside.** The first cut made *sell-and-buy* a contender, since it always wins
+  on paper (`market − quickSale` is unbeatable by construction). The maintainer's
+  domain context, 2026-08-12, showed why that is the wrong answer in this game:
+  - **Buying beats crafting almost always.** Crafted tokens rarely sell above their
+    material cost, so a from-scratch verdict is near-universally "buy" and carries
+    little information.
+  - **Trade goods arrive free as loot**, and keep their use for the next recipe. A
+    market valuation of the pile is not a cost the player ever paid.
+  - **Selling is the expensive path in the currency that matters** — hours of
+    listing, haggling, packing and posting, with no promise the lot moves. The
+    players skew mid/late-career with families; time has a real price.
+  - **The token pays off the moment you hold it** (in-game benefit), so delay costs
+    something too.
+
+  So sell-and-buy's edge is not a saving, it is the **wage for those hours**, and only
+  the player can price their own time. It is reported in prose with its number and
+  that framing, never crowned. `comparePaths` now returns just the two comparable
+  paths — both take ten minutes, and the goods are free either way, sunk if you craft
+  and retained if you buy.
+- **`breakEvenHoldings(fullCost, market)` = the inventory target.** Cost to finish is
+  `fullCost − what you hold`, so finishing overtakes buying once holdings pass
+  `fullCost − market`. On Val's that is `$1,642 − $1,500 = $142` against $132 held —
+  rendered as "about $10 of trade goods to go" with a progress bar. Same magnitude as
+  the build-vs-buy gap, but a different question: not which is cheaper today, but how
+  much more loot until crafting wins — which is what a player with a growing stash is
+  actually asking, and it distinguishes "wait for drops" from "buy the rest now".
+  Hidden once the gap closes, since the verdict then says it outright.
+- **With an empty stash the panel says so**, rather than repeating an uninformative
+  "buy it": crafted tokens rarely beat their material cost from scratch, and the tool
+  earns its keep once goods are marked on hand.
 - Ties under **$1** (`WASH_THRESHOLD`) report as a wash rather than crowning a winner
   by pennies — every input here is an estimate.
 - A caveat fires when a needed ingredient has no price: cost-to-finish is understated,
