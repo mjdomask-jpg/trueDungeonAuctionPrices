@@ -1836,22 +1836,54 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 "2027|Aron's Arcane Necklace of Baubles|1,000 GP Gold Bar||FALSE",2027,Legendary,Aron's Arcane Necklace of Baubles,"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",25,FALSE
 2027|Aron's Arcane Necklace of Baubles|Wish Ring||FALSE,2027,Legendary,Aron's Arcane Necklace of Baubles,Wish Ring,,2027,Wish Ring,1,FALSE
 2027|Aron's Arcane Necklace of Baubles|Greater Arcane Necklace of Baubles||TRUE,2027,Legendary,Aron's Arcane Necklace of Baubles,Greater Arcane Necklace of Baubles,,2027,Greater Arcane Necklace of Baubles (transmute),1,TRUE
-2027|Smith's Charm of Unified Synergy|Ultra Rare||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Ultra Rare,,2027,Ultra Rare,2,FALSE
-2027|Smith's Charm of Unified Synergy|Alchemist's Ink||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Alchemist's Ink,,2027,Alchemist's Ink,15,FALSE
-2027|Smith's Charm of Unified Synergy|Alchemist's Parchment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Alchemist's Parchment,,2027,Alchemist's Parchment,15,FALSE
-2027|Smith's Charm of Unified Synergy|Aragonite||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Aragonite,,2027,Aragonite,3,FALSE
-2027|Smith's Charm of Unified Synergy|Darkwood Plank||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Darkwood Plank,,2027,Darkwood Plank,25,FALSE
-2027|Smith's Charm of Unified Synergy|Dwarven Steel||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Dwarven Steel,,2027,Dwarven Steel,10,FALSE
-2027|Smith's Charm of Unified Synergy|Elven Bismuth||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Elven Bismuth,,2027,Elven Bismuth,3,FALSE
-2027|Smith's Charm of Unified Synergy|Enchanter's Munition||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Enchanter's Munition,,2027,Enchanter's Munition,2,FALSE
-2027|Smith's Charm of Unified Synergy|Golden Fleece||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Golden Fleece,,2027,Golden Fleece,2,FALSE
-2027|Smith's Charm of Unified Synergy|Minotaur Hide||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Minotaur Hide,,2027,Minotaur Hide,10,FALSE
-2027|Smith's Charm of Unified Synergy|Mystic Silk||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Mystic Silk,,2027,Mystic Silk,20,FALSE
-2027|Smith's Charm of Unified Synergy|Oil of Enchantment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Oil of Enchantment,,2027,Oil of Enchantment,3,FALSE
-2027|Smith's Charm of Unified Synergy|Philosopher's Stone||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Philosopher's Stone,,2027,Philosopher's Stone,15,FALSE
-"2027|Smith's Charm of Unified Synergy|1,000 GP Gold Bar||FALSE",2027,Legendary,Smith's Charm of Unified Synergy,"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",25,FALSE
-2027|Smith's Charm of Unified Synergy|Wish Ring||FALSE,2027,Legendary,Smith's Charm of Unified Synergy,Wish Ring,,2027,Wish Ring,1,FALSE
-2027|Smith's Charm of Unified Synergy|Charm of Unity||TRUE,2027,Legendary,Smith's Charm of Unified Synergy,Charm of Unity,,2027,Charm of Unity (transmute),1,TRUE
+2027|Smith's Charm of Unified Synergy (Set 3)|Ultra Rare||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Ultra Rare,,2027,Ultra Rare,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Alchemist's Ink||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Alchemist's Ink,,2027,Alchemist's Ink,15,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Alchemist's Parchment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Alchemist's Parchment,,2027,Alchemist's Parchment,15,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Aragonite||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Aragonite,,2027,Aragonite,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Darkwood Plank||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Darkwood Plank,,2027,Darkwood Plank,25,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Dwarven Steel||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Dwarven Steel,,2027,Dwarven Steel,10,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Elven Bismuth||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Elven Bismuth,,2027,Elven Bismuth,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Enchanter's Munition||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Enchanter's Munition,,2027,Enchanter's Munition,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Golden Fleece||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Golden Fleece,,2027,Golden Fleece,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Minotaur Hide||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Minotaur Hide,,2027,Minotaur Hide,10,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Mystic Silk||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Mystic Silk,,2027,Mystic Silk,20,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Oil of Enchantment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Oil of Enchantment,,2027,Oil of Enchantment,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Philosopher's Stone||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Philosopher's Stone,,2027,Philosopher's Stone,15,FALSE
+"2027|Smith's Charm of Unified Synergy (Set 3)|1,000 GP Gold Bar||FALSE",2027,Legendary,Smith's Charm of Unified Synergy (Set 3),"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",25,FALSE
+2027|Smith's Charm of Unified Synergy (Set 3)|Wish Ring||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 3),Wish Ring,,2027,Wish Ring,1,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Charm of Unity||TRUE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Charm of Unity,,2027,Charm of Unity (transmute),1,TRUE
+2027|Smith's Charm of Unified Synergy (Set 2)|Charm of Awareness|2018|FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Charm of Awareness,2018,2018,Charm of Awareness,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Alchemist's Ink||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Alchemist's Ink,,2027,Alchemist's Ink,15,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Alchemist's Parchment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Alchemist's Parchment,,2027,Alchemist's Parchment,15,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Aragonite||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Aragonite,,2027,Aragonite,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Darkwood Plank||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Darkwood Plank,,2027,Darkwood Plank,25,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Dwarven Steel||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Dwarven Steel,,2027,Dwarven Steel,10,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Elven Bismuth||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Elven Bismuth,,2027,Elven Bismuth,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Enchanter's Munition||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Enchanter's Munition,,2027,Enchanter's Munition,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Golden Fleece||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Golden Fleece,,2027,Golden Fleece,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Minotaur Hide||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Minotaur Hide,,2027,Minotaur Hide,10,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Mystic Silk||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Mystic Silk,,2027,Mystic Silk,20,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Oil of Enchantment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Oil of Enchantment,,2027,Oil of Enchantment,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Philosopher's Stone||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Philosopher's Stone,,2027,Philosopher's Stone,15,FALSE
+"2027|Smith's Charm of Unified Synergy (Set 2)|1,000 GP Gold Bar||FALSE",2027,Legendary,Smith's Charm of Unified Synergy (Set 2),"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",25,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Wish Ring||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Wish Ring,,2027,Wish Ring,1,FALSE
+2027|Smith's Charm of Unified Synergy (Set 2)|Charm of Unity||TRUE,2027,Legendary,Smith's Charm of Unified Synergy (Set 2),Charm of Unity,,2027,Charm of Unity (transmute),1,TRUE
+2027|Smith's Charm of Unified Synergy (Set 1)|Charm of Awareness|2018|FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Charm of Awareness,2018,2018,Charm of Awareness,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Alchemist's Ink||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Alchemist's Ink,,2027,Alchemist's Ink,15,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Alchemist's Parchment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Alchemist's Parchment,,2027,Alchemist's Parchment,15,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Aragonite||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Aragonite,,2027,Aragonite,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Darkwood Plank||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Darkwood Plank,,2027,Darkwood Plank,25,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Dwarven Steel||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Dwarven Steel,,2027,Dwarven Steel,10,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Elven Bismuth||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Elven Bismuth,,2027,Elven Bismuth,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Enchanter's Munition||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Enchanter's Munition,,2027,Enchanter's Munition,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Golden Fleece||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Golden Fleece,,2027,Golden Fleece,2,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Minotaur Hide||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Minotaur Hide,,2027,Minotaur Hide,10,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Mystic Silk||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Mystic Silk,,2027,Mystic Silk,20,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Oil of Enchantment||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Oil of Enchantment,,2027,Oil of Enchantment,3,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Philosopher's Stone||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Philosopher's Stone,,2027,Philosopher's Stone,15,FALSE
+"2027|Smith's Charm of Unified Synergy (Set 1)|1,000 GP Gold Bar||FALSE",2027,Legendary,Smith's Charm of Unified Synergy (Set 1),"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",25,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Wish Ring||FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Wish Ring,,2027,Wish Ring,1,FALSE
+2027|Smith's Charm of Unified Synergy (Set 1)|Charm of Awakened Synergy|2018|FALSE,2027,Legendary,Smith's Charm of Unified Synergy (Set 1),Charm of Awakened Synergy,2018,2018,Charm of Awakened Synergy,1,FALSE
 2027|Greater Arcane Necklace of Baubles|Ultra Rare||FALSE,2027,Relic,Greater Arcane Necklace of Baubles,Ultra Rare,,2027,Ultra Rare,1,FALSE
 2027|Greater Arcane Necklace of Baubles|Alchemist's Ink||FALSE,2027,Relic,Greater Arcane Necklace of Baubles,Alchemist's Ink,,2027,Alchemist's Ink,5,FALSE
 2027|Greater Arcane Necklace of Baubles|Alchemist's Parchment||FALSE,2027,Relic,Greater Arcane Necklace of Baubles,Alchemist's Parchment,,2027,Alchemist's Parchment,10,FALSE
