@@ -274,6 +274,98 @@ panel), and, better, **pulse the specific price cells that changed** (diff the b
 / after `extAvg` per line and add a transient `.changed` class). Respect
 `prefers-reduced-motion`. Phase 1.
 
+### 3.8 Alternative ingredients — Wish Ring ⇄ 15,000 GP (added 2026-08-13)
+
+The company's Legendary recipes accept **1 Wish Ring OR 15,000 GP** for that line —
+15,000 GP being **15 additional 1,000 GP Gold Bars**. The site currently models only
+the Wish Ring, so every Legendary's build cost is quoted on one of two legal paths
+without saying so, and without letting the player price the other.
+
+**Why players care (maintainer, 2026-08-13):** Wish Rings come **1 per $8,000 order**
+or very rarely as loot; Gold Bars are ordinary trade goods. So a player is far more
+likely to be *holding* 15 bars than a ring, and does this arithmetic in their head
+every time — buy the ring, spend GP already on hand, or buy GP when 15 bars come in
+under a ring.
+
+**Grounding (checked against the live CSVs, 2026-08-13):**
+
+- **43 of 46 Legendary recipes carry exactly one `Wish Ring` line, quantity 1**, in
+  every debut year 2012–2027. The three without are `Charm of Avarice Recipe 3`
+  (2023), `Kilgor's +4 Savage Sword (Recipe 2)` (2024), and `Gear Golem Totem` (2026).
+  No non-Legendary recipe uses a Wish Ring anywhere.
+- **Every one of those 43 already carries a `1,000 GP Gold Bar` line** (25× in 43 of
+  the 44 Legendary bar lines; one at 10×). So the GP path does **not** add a line —
+  it **merges into an existing one**, 25 → 40 bars. Any UI has to decide whether that
+  reads as one line changing quantity or as two competing lines.
+- Both goods are richly priced (Wish Ring: 268 sales; Gold Bar: more), so neither side
+  of the comparison leans on the estimate/fallback machinery.
+
+**The two paths are close, and the winner flips** — which is the whole argument for
+surfacing the choice rather than hard-coding one side (15 × bar vs 1 ring, per season):
+
+| Season | 15 bars (avg) | Wish Ring (avg) | Cheaper (avg) | 15 bars (min) | Ring (min) | Cheaper (min) |
+|---|---|---|---|---|---|---|
+| 2019 | $232.50 | $226.67 | ring −$5.83 | $210.00 | $205.00 | ring −$5.00 |
+| 2020 | $217.20 | $204.49 | ring −$12.71 | $195.00 | $185.00 | ring −$10.00 |
+| 2021 | $202.65 | $192.80 | ring −$9.85 | $180.00 | $175.00 | ring −$5.00 |
+| 2022 | $187.05 | $185.68 | ring −$1.37 | $150.00 | $151.00 | **GP −$1.00** |
+| 2023 | $188.85 | $191.61 | **GP −$2.76** | $150.00 | $160.00 | **GP −$10.00** |
+| 2024 | $148.50 | $156.88 | **GP −$8.38** | $78.75 | $115.00 | **GP −$36.25** |
+| 2025 | $143.10 | $130.86 | ring −$12.24 | $115.50 | $95.00 | ring −$20.50 |
+| 2026 | $132.90 | $113.97 | ring −$18.93 | $93.75 | $86.00 | ring −$7.75 |
+
+GP wins **2 of 8 seasons on avg and 3 of 8 on min**, the two bases disagree in 2022,
+and several seasons land inside the existing `WASH_THRESHOLD` neighbourhood. A static
+"always price the ring" (today's behavior) is wrong in a quarter of seasons and by up
+to $36.
+
+**And price is only half of it.** Because the calculator's subject is *what you
+already hold*, the substitution can flip on inventory even when it loses on price:
+a player sitting on 40 bars finishes for $0 on the GP path while the ring path leaves
+a ~$114 buy. Whatever shape this takes has to compose with on-hand quantities, not
+just with unit prices.
+
+**Design questions to settle at implementation time (NOT decided here):**
+
+*(a) Toggle between the two, or show both?* A toggle keeps one honest headline number
+and one BOM, at the cost of hiding the alternative behind an interaction; showing both
+makes the comparison visible and auditable (the house style for the Phase 3 verdict
+panel) but doubles a line in a table already 1,955px tall on a phone, and raises the
+question of what the headline total means while both are on screen. A third shape
+worth weighing: **auto-pick the cheaper path and annotate it** ("using 15,000 GP —
+$19 less than a Wish Ring, tap to switch"), which mirrors how §3.5 proposes to surface
+Omni substitution as an opt-in suggestion rather than a silent swap.
+
+> **RESOLVED 2026-08-13 → a real toggle** (§10.3 D8). The Omni-style opt-in suggestion
+> was rejected for this substitution: Omni Cubes are not things players hold, so a Cube
+> is a comparison against a possible secondary-market purchase, whereas Gold Bars and
+> Wish Rings are both held — GP more commonly, rings via community trade — making the
+> two genuine peer paths. Same engine (D6), deliberately different presentation.
+
+*(b) Future-proofing a Wish-Ring-exclusive recipe.* No such recipe exists in the data
+today, but the plan should not assume none ever will. The maintainer's suggested
+shape — **default = substitution allowed, explicit override to opt out** — has direct
+precedent in this schema: `ItemYear` is blank by default and falls back to the
+recipe's year via `ResolvedYear`, with an explicit value overriding. Candidate
+encodings, all deferred:
+- a per-line **`NoSubstitute`** (or `Exclusive`) boolean, blank = substitution allowed;
+- a per-line **`AltItem` / `AltQuantity`** pair, so the alternative is data rather than
+  a code rule (blank = no alternative, which *inverts* the default — Wish Ring lines
+  would each need authoring, 43 rows, but arbitrary future substitutions cost nothing);
+- a **code config** in the §3.5 Omni style (`WishRing → 15 × 1,000 GP Gold Bar`, with
+  an allowlist/denylist), on the grounds that this is a fixed game rule, not editable
+  content — matching how the Omni rules are proposed to live.
+
+The choice between them is really the choice of where substitution rules live in
+general, so **§3.5 (Omni) and §3.8 should be decided together** — they are the same
+shape of problem (a line with a legal alternative path) and should not end up with two
+unrelated mechanisms. Whichever lands first sets the pattern.
+
+**Also to resolve at implementation:** whether a Wish Ring already on hand and the
+15-bar path can be mixed (they cannot — it is one line, one path); how the substitution
+interacts with the per-line price override (§3.2) and with `breakEvenHoldings`; and
+whether the Recipes view shows the alternative at all or it stays calculator-only.
+
 ---
 
 ## 4. Summary of proposed data changes
@@ -284,6 +376,7 @@ panel), and, better, **pulse the specific price cells that changed** (diff the b
 | Back-populate 18 pre-2019 source relics | `transmuteRecipes.csv` | moderate (author) | §3.3 |
 | Add `IngredientType` column + name specific URs | `transmuteRecipes.csv` | moderate (author) | §3.4 |
 | Omni substitution rules | new code config (`eras`-style) | small (code) | §3.5 |
+| Wish Ring ⇄ 15,000 GP substitution — encoding TBD (`NoSubstitute` flag / `AltItem`+`AltQuantity` columns / code config) | `transmuteRecipes.csv` **or** new code config | small–moderate (depends which; the `AltItem` shape needs 43 rows authored) | §3.8 |
 | (Optional) trenttokens snapshot | new `scripts/` + JSON in `public/data/` | medium (code) | Phase 8 |
 
 Every data change must land with matching **validator** updates
@@ -493,6 +586,12 @@ data (Oil of Enchantment, Elven Bismuth) prove it would be too inaccurate. Needs
 before/after cost diff to validate the numbers moved as intended. *(If Q1 says
 accuracy-first, this becomes Phase 2 and the calculator shifts back.)*
 
+> **REVISED 2026-08-13 — read §10 before implementing.** Date-windowed pricing now
+> applies to **expired** recipes only; **active** recipes price at today's prices,
+> because a player crafting something still craftable pays today's prices by
+> definition. Phase 4 also no longer ships alone: it is bundled with Phases 5, 6 and 9
+> as one accuracy release. §10 is authoritative where it and this section differ.
+
 ### Phase 5 — Ingredient specificity & Ultra Rare modeling
 §3.4: `IngredientType` column, show specific URs with generic-tier fallback,
 "any UR from year/set" notes, secondary-market caveat notes. UR two-year pricing
@@ -508,6 +607,15 @@ suggestion box, optional Recipes-view badge.
 ### Phase 8 — Could-haves: third-party prices (deferred)
 §2.3 + §1c: trenttokens build-time snapshot, auto-fill lowest price, buy link. Do
 last; re-confirm appetite for the infra first.
+
+### Phase 9 — Alternative ingredients: Wish Ring ⇄ 15,000 GP (added 2026-08-13)
+§3.8: model the Wish-Ring-or-15,000-GP choice on the 43 Legendary recipes that have
+it, so both legal paths are priced and the player can pick the one matching what they
+hold. Includes the exclusivity encoding for a hypothetical future Wish-Ring-only
+recipe. **Sequencing is open** (§9 Q7): it is calculator-adjacent, cheap next to
+Phases 4–8, and corrects a number that is wrong in ~25% of seasons, which argues for
+pulling it ahead of Phase 4 — but it should probably be decided *with* Phase 6, since
+both are line-level substitution and shouldn't grow two mechanisms.
 
 ### Later / precision follow-ups
 - Non-standard `Expires` dates beyond the standard rule (Ioun Stone Mystic Orb's March
@@ -531,6 +639,7 @@ last; re-confirm appetite for the infra first.
 | 6 Omni substitution | Med–High (interesting) | L | most complex engine bit |
 | 7 price-as-of-year | Low–Med (1 user) | M | global selector |
 | 8 scraping | Low–Med | L + infra | architectural risk |
+| 9 Wish Ring ⇄ 15,000 GP | Med–High (accuracy + a call players make by hand) | S–M | 43 Legendaries; shares a mechanism with 6 |
 
 ---
 
@@ -562,11 +671,27 @@ last; re-confirm appetite for the infra first.
 6  ─ needs Omni recipes (exist); independent of 4/5
 7  ─ independent (global selector)
 8  ─ needs infra decision (§1c)
+9  ─ independent of 4/5/7; couple to 6 (both are line-level substitution).
+     Touches 2/3's math (on-hand, cost-to-finish, break-even) but needs no new engine
+```
+
+**Superseded 2026-08-13 for 4/5/6/9 — see §10.** Those four are no longer independently
+shippable: 4 without 5 misprices Ultra Rares, 4 without 6 leaves era-mixed upgrade
+pairs with no substitution path, and 9 shares 6's engine. They ship as one release.
+None of them blocks on sheet authoring — every new column is optional with a default:
+
+```
+4+5+6+9 ─ one branch, one release
+          data authoring (Expires exceptions, IngredientType, specific UR names)
+          lands whenever; the engine is correct without it
+          2019-21 date backfill improves 4 automatically, blocks nothing (§10.5)
 ```
 
 ---
 
-## 9. Decisions — RESOLVED (maintainer, 2026-08-10; Q2 revised 2026-08-11)
+## 9. Decisions
+
+### Resolved (maintainer, 2026-08-10; Q2 revised 2026-08-11)
 
 All four resolved in favor of the recommendation; the phase order in §5 stands.
 
@@ -585,3 +710,278 @@ All four resolved in favor of the recommendation; the phase order in §5 stands.
    Phase 8 (trenttokens snapshot / proxy) is deferred until appetite is reconfirmed.
 4. **Calculator input persistence → ephemeral for v1.** On-hand quantities live in
    React state only; `localStorage` persistence is a fast follow if wanted.
+
+### Resolved 2026-08-13 (Q6, Q7 — see §10 for the full decision record)
+
+6. **Exclusivity / substitution encoding → CODE CONFIG ONLY.** (§3.8b) One
+   substitution engine in the §3.5 Omni style, holding both the Omni rules and the
+   Wish Ring ⇄ 15,000 GP rule; **no new data columns**. There is no live
+   Wish-Ring-only recipe, so `AltItem`/`AltQuantity` would mean authoring 43 rows just
+   to preserve today's behavior. A per-line `NoSubstitute` stays a documented seam, to
+   be added only when a real exception appears. See §10.3 D6.
+7. **Phase 9 sequencing → bundled, not sequenced.** Phases 4, 5, 6 and 9 ship as one
+   accuracy release on one branch. See §10.
+
+5. **Wish Ring ⇄ 15,000 GP presentation → A REAL TOGGLE.** (§3.8a) Not the §3.5
+   opt-in-suggestion pattern used for Omni. The separating rule is **on-hand
+   likelihood**: nobody holds a spare Omni Cube, so a Cube is a price comparison
+   against a potential secondary-market purchase; Gold Bars and (via community trade)
+   Wish Rings are both things players actually hold, so the two are peer paths. See
+   §10.3 D8.
+
+*(§9 has no open questions left; the one remaining implementation detail is in §10.4.)*
+
+---
+
+## 10. The accuracy release — Phases 4 + 5 + 6 + 9 bundled (decided 2026-08-13)
+
+**Status: DESIGN ONLY. No code has been written.** This section is authoritative
+wherever it differs from §3.1, §3.4, §3.5 or §5, all of which predate it.
+
+### 10.0 Why these four ship together
+
+The maintainer's framing, which is what reorganised the phase:
+
+> Someone trying to build a recipe that is active **today** will need to use today's
+> prices by definition. Right now we're providing a distorted view of what it would
+> cost to make a Legendary token, which is a primary question people want to answer.
+
+That single sentence collapses the three questions Phase 4 was stuck on (§10.1) into
+one rule — but it only holds up with the other three phases attached:
+
+- **Ultra Rares are the exception to "float to today."** A recipe's URs are only
+  available in their two-year window; after that their price comes from the secondary
+  market, with the auction price as a *baseline*. So URs must hold their era while
+  trade goods float. Phase 5 is what makes that precise (naming the specific UR), and
+  the two-year pool (D4) is what makes it correct in the meantime.
+- **Era-mixed Relic → Legendary pairs are tolerable only because of Phase 6.** A
+  2014 Legendary priced at today's prices sits above a source Relic priced in its own
+  expired window. That is acceptable because (a) source Relics are among the tokens
+  players most often already hold or can buy on an active secondary market — and the
+  Phase 3 per-line price override covers the rest — and (b) **Omni substitution was
+  introduced in-game for exactly these older relics**, so Phase 6 is the real answer,
+  not a nice-to-have.
+- **Phase 9 shares Phase 6's mechanism.** One substitution engine, two configs (D6).
+
+Consequence: **one branch, one release, no piecemeal deploys.** Individual phases
+would each ship a number that only makes sense once the next one lands.
+
+**Nothing here blocks on sheet authoring.** Every new column is optional with a
+sensible default, so the engine is correct before the maintainer authors anything, and
+authoring improves precision whenever it lands.
+
+### 10.1 Grounding (measured against the live CSVs, 2026-08-13)
+
+Every number below came from reading `public/data/*.csv` directly, per
+`verify-claims-against-project-data`. Three of them changed the design.
+
+**Close-date coverage — the join Phase 4 depends on does not exist before 2022:**
+
+| Season | Auctions | With a parseable `closeDate` | Date range |
+|---|---|---|---|
+| 2019 | 6 | **0** | — |
+| 2020 | 15 | **0** | — |
+| 2021 | 20 | **0** | — |
+| 2022 | 51 | 51 | 2021-11-06 → 2022-09-21 |
+| 2023 | 51 | 51 | 2022-10-04 → 2023-09-15 |
+| 2024 | 41 | 41 | 2023-09-26 → 2024-08-21 |
+| 2025 | 46 | 45 | 2024-09-18 → 2025-09-18 |
+| 2026 | 47 | 45 | 2025-09-25 → 2026-07-17 |
+
+41 dateless auctions carrying 842 sales. This forced D5.
+
+**A season's auctions mostly close in the PREVIOUS calendar year.** Season 2026 ran
+from 2025-09-12; **1,075 of its 1,480 sales (73%) closed in 2025**. Season 2023: 794
+of 1,136 (70%) closed in 2022. Season 2025: 64% closed in 2024. §3.1's literal "active
+from Jan 1 of the debut year" would therefore have **discarded ~70% of each debut
+season's own sales** — the pre-release auctions where players actually stock up on the
+new set — and replaced them with the following season's auctions. This forced D2.
+
+**Recipe status today (2026-08-13), under D1:** 174 recipes → **91 active**
+(42 Legendary, 13 Relic, 11 Exalted, 9 Safehold, 5 Enhanced, 4 Mythic, 3 Omni,
+2 Arcanum, 1 Paragon, 1 Ultra Rare), **71 expired** (41 Relic, 20 Exalted, 4 Enhanced,
+2 Eldritch, 2 Omni, 1 Paragon, 1 Ultra Rare), **12 future** (the 2027 preview).
+
+**`ItemYear` is blank almost everywhere:** 1,920 of 1,954 lines. Only 34 carry a pin
+or offset. So "blank floats, explicit pins hold" decides the behavior of 98% of the
+table, which is why D4 matters as much as it does.
+
+**Ultra Rare lines:** 93 lines across 85 recipes, all named exactly `Ultra Rare`;
+**84 of the 93 have a blank `ItemYear`**. Under a naive float every one of them —
+including a 2014 Legendary's — would re-price at 2026 PYP. This forced D4.
+
+**Float safety — the feared failure mode does not exist.** Repricing every leaf line
+on all 91 active recipes at 2026 costs **0 lines their price**: every ingredient name
+still prices in the current season (or via the existing season clamp). Floating cannot
+turn a priced line into an unpriced one in today's data. *(A defensive fallback to the
+line's nominal year is still worth building, since the data changes yearly.)*
+
+**Magnitude of the correction** (leaf lines only; source/transmute lines excluded):
+
+| Recipe | Now | At today's prices | Δ |
+|---|---|---|---|
+| 2024 Safehold *Follower* | $503 | $900 | **+79%** |
+| 2025 Safehold *Sidekick* | $627 | $911 | **+45%** |
+| 2014 Legendary *Relsa's Ring of Supreme Focus* | $947 | $637 | −33% |
+| 2014 Legendary *Rolland's Ring of Protection +6* | $993 | $689 | −31% |
+| 2017 Legendary *Aron's Sunhide Robe* | $1,116 | $822 | −26% |
+| 2018 Legendary *Thor's +5 Returning Hammer* | $1,364 | $1,084 | −21% |
+
+Across the 18 pre-2019 recipes the average move is **−23.7%** (today's trade goods are
+cheaper than 2019's), and it runs the other way for the never-expiring Safehold
+recipes. This is a large, visible, defensible correction — not a rounding change — and
+it is the before/after diff §5 asked Phase 4 to produce.
+
+### 10.2 The pricing rule
+
+**Recipe status** is computed against today from an `Expires` value:
+
+- `Expires` blank → standard rule, **Dec 1 of Year+1**;
+- `Expires` = `never` → non-expiring;
+- `Expires` = `YYYY-MM-DD` → explicit override (Ioun Stone Mystic Orb, Mark of
+  Enlightenment).
+
+**Code defaults Legendary / Mythic / Safehold to `never`** so the site is correct
+before the column is authored at all; an authored value always overrides the default.
+
+Status is then `future` (today < debut) / `active` / `expired`, and drives the basis:
+
+| Status | Basis |
+|---|---|
+| **Active** | **Today's prices** — the latest priced season; the existing recent-prices toggle applies |
+| **Expired** | Its **historical window**: first auction of the debut season → `Expires` − 7 days |
+| **Future** | Today's prices (unchanged from the current 2027-preview behavior) |
+
+The 7-day subtraction is the shipping cutoff from §3.1: an auction won inside the last
+week could not ship in time to craft. Note the arithmetic — a standard window ends
+**Nov 24 of Y+1**, which lands ~2 months *into season Y+2*, so a standard window spans
+all of season Y, all of Y+1, and the head of Y+2.
+
+**Per-line rules layered on the recipe's basis:**
+
+1. **An explicit `ItemYear`** (34 lines) is a pin and never floats. Unchanged behavior.
+2. **A blank `Ultra Rare` line pools its recipe year ∪ year+1** (D4).
+3. **On an expired recipe the date window governs every line.** Because the window
+   already spans Y → Y+1, the UR two-year availability rule is satisfied by the window
+   itself — §3.4(c) predicted exactly this ("UR two-year pricing folds in free if
+   Phase 4 shipped"). The pool in rule 2 is what a UR resolves to when the basis is
+   "today", not a second mechanism competing with the window.
+4. **Transmute lines recurse** into their own recipe, which carries its own status and
+   basis. This is what produces era-mixed upgrade pairs (§10.0).
+5. **Dateless auctions contribute via their season**, decided per auction row (D5).
+
+### 10.3 Decisions
+
+**D1 — Status is `active` / `expired` / `future`, not expiring / non-expiring.**
+The maintainer's reframing. "Never-expiring" is not a pricing category; it just means
+a recipe is permanently `active`. This is what collapsed three open questions into one
+rule, and it is why the Phase 4 §5 blurb is now marked revised.
+
+**D2 — The pricing window starts at the beginning of the debut auction SEASON**, not
+Jan 1 of the debut year. §3.1's Jan-1 rule describes *craftability*; the pricing
+window has to describe *when you could buy the ingredients*, and 70%+ of a season's
+auctions close before Jan 1 (§10.1). The 7-day shipping cutoff still trims the end.
+*(Rejected: literal Jan 1, which discards ~70% of the debut season's sales; and
+debut-season-only with no forward spill, which would drop the two-year UR overlap that
+§3.4(c) depends on.)*
+
+**D3 — Active recipes price at today's prices.** By definition of the question being
+asked. Old Legendaries stop being quoted at their debut-year cost and start answering
+"what would this cost me to build now."
+
+**D4 — A blank `Ultra Rare` line pools its recipe year ∪ year+1.** URs are only
+available in that two-year window; afterwards the secondary market prices them, with
+the auction price as the *baseline* the site is entitled to report. Pooling holds that
+baseline while trade goods float (D3). Costs zero authoring — it is the default
+behavior of a blank cell — so Phase 5's authoring becomes precision work rather than a
+prerequisite. *(Rejected: floating URs like trade goods, which would have re-priced 84
+of 93 UR lines at 2026 PYP and made Phase 5 a hard blocker; and pinning URs to the
+recipe year alone, which ignores the second year of availability.)*
+**Open sub-question for implementation:** whether the pool is a straight union of both
+seasons' sales or an average of the two seasons' aggregates. Decide it by measuring;
+prefer whichever is stable when one of the two seasons has very few sales.
+
+**D5 — Dateless auctions fall back to season aggregation, decided PER AUCTION ROW,
+and the line is marked.** Not per season, and not a hardcoded "2022+ only" gate. Keyed
+on "does this auction row have a parseable `closeDate`", the fallback **self-heals**:
+as the maintainer backfills dates, windowed pricing switches on incrementally with no
+code change, and a partially-backfilled season uses windows for the auctions that have
+dates and pooling for the rest. The line carries the existing estimate marking with a
+note saying why. *(Rejected: a silent fallback, which would leave the page mixing two
+pricing methods with nothing on screen saying so; and gating windowed pricing to
+2022+, which hardcodes a boundary that goes wrong the moment one 2021 date lands.)*
+
+**D6 — Substitution is CODE CONFIG ONLY; no new data columns.** One engine in the
+§3.5 Omni style holds both rule sets: Omni Cube → any Relic and Omni Orb → any
+UR/Exalted/Rare/Enhanced/Uncommon in any Legendary recipe except Charm of Avarice; and
+Wish Ring ⇄ 15,000 GP (= 15 additional 1,000 GP Gold Bars, merging into the existing
+25× bar line rather than adding a line). Both are fixed game rules, not editable
+content. A per-line `NoSubstitute` remains a **documented seam**, added only if a real
+Wish-Ring-only recipe ever appears. Resolves §9 Q6. *(Rejected: `AltItem` /
+`AltQuantity` columns, which would require authoring 43 Wish Ring rows purely to
+preserve today's behavior, and invert the blank-cell default.)*
+*Corroborating detail:* **Charm of Avarice is both the Omni exception and one of the
+only 3 Legendaries with no Wish Ring line** — the two exception sets already agree,
+which is a point in favor of one engine.
+
+**D7 — Phases 4 + 5 + 6 + 9 ship as one release on one branch.** Resolves §9 Q7. The
+reasoning is §10.0; the practical consequence is that no intermediate state gets
+deployed to Pages, and the branch carries per-phase commits for reviewability.
+
+**D8 — Wish Ring ⇄ 15,000 GP is a REAL TOGGLE, not a suggestion box.** Resolves §9 Q5
+and §3.8(a). One engine (D6), but deliberately **two different presentations**, and the
+rule that separates them is *how likely the player is to be holding the thing*:
+
+| Substitution | Held by players? | Presentation |
+|---|---|---|
+| Omni Orb / Cube (Phase 6) | **Unlikely.** Nobody has a spare Cube sitting in a drawer. | **Opt-in suggestion** (§3.5) — a reference point for a potential secondary-market purchase, never folded into the headline |
+| Wish Ring ⇄ 15,000 GP (Phase 9) | **Yes, both.** GP more commonly; Wish Rings are actively traded in the community | **Real toggle** — two peer paths, either of which the player may already hold |
+
+So the earlier "one interaction pattern for consistency" argument is **rejected**: the
+two substitutions are not the same kind of thing to a player. An Omni Cube is a price
+*comparison*; 15,000 GP is a path you might already be standing on. Presenting the GP
+path as an optimization tip would bury a choice that ~43 Legendary recipes force, that
+the player already does in their head, and that **on-hand quantities can flip even when
+price does not** — a player sitting on 40 Gold Bars finishes for $0 on the GP path
+while the ring path still leaves a ~$114 buy.
+
+Implementation constraints carried over from §3.8: the GP path **merges into the
+recipe's existing 25× Gold Bar line (25 → 40)** rather than adding a line, so the
+toggle changes a quantity rather than swapping rows; the headline total must follow the
+selected path; and the phone BOM is already ~1,955px tall, so the toggle has to be a
+control, not a second rendered line. The toggle composes with on-hand quantities and
+per-line price overrides, since both paths' components are ordinary BOM lines.
+
+### 10.4 Still open
+
+**Every phase-level fork is now settled (D1–D8).** One implementation-time detail
+remains, deliberately left to be decided by measurement rather than guessed:
+
+- **D4's pool shape** — whether a blank Ultra Rare line's two-year pool is a straight
+  union of both seasons' *sales* or an average of the two seasons' *aggregates*. The
+  two diverge when one of the seasons has very few sales; prefer whichever is stable
+  in that case.
+
+### 10.5 Backfilling the 2019–2021 auction dates
+
+**Decided: the maintainer researches the threads manually.** ~40 auctions is small
+enough that assisted lookup beats building a crawler, and D5 means this is **not a
+blocker** — the site improves automatically as dates land.
+
+What the data says if it is ever automated:
+
+- **There are no links to follow.** 0 of the 42 pre-2022 metadata rows carry a `Link`
+  (vs 185 of 236 from 2022 on), so it would be forum search by auctioneer name and
+  thread title, not fetching a known URL. Matching "Hayward 3" to a specific 2020
+  thread is exactly the ambiguous judgment a script does badly.
+- **14 of the 41 need no crawling at all.** Every 2021 auction from #7 on encodes the
+  date in its own name — `Miathin March 14`, `Wade Apr 25`, `Matt Oct 21` — so those
+  are recoverable from `auctionMetadata.csv` as it stands. Caveats: the name gives one
+  date (presumably close, not open), and the year comes from the ordering rather than
+  the string.
+- The real crawl target is therefore **27 auctions** (2019 ×6, 2020 ×15, 2021 ×6),
+  the oldest and thinnest-documented, where thread start ≈ open and last post ≈ close.
+- Conditions if automated: emit a **reviewable CSV patch with the source thread URL
+  per row** rather than writing directly; land it in the **sheet**, not `public/data`,
+  per `td-data-pipeline`; and confirm up front that fetching truedungeon.com's forum
+  at that volume is acceptable.
