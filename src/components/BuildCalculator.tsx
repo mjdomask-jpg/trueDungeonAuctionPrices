@@ -13,7 +13,7 @@ import {
 // One screen, no page swaps. A slide-in drawer picks the recipe (years collapse,
 // source Relics stay paired with the Legendary they upgrade into — same ordering
 // as the Recipes view); the chosen recipe fills a dense table where you enter what
-// you already own and read what finishing the craft still costs. Nothing ever
+// you already own and read what completing the transmute still costs. Nothing ever
 // navigates away, so context and the Back button are never lost.
 //
 // Two design choices worth stating:

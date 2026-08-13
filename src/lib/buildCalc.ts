@@ -136,7 +136,7 @@ export function comparePaths(
 }
 
 /** How much of a recipe you need to be holding, at market value, before
- *  finishing the craft costs less than buying the finished token.
+ *  completing the transmute costs less than buying the finished token.
  *
  *  Cost to finish is just `fullCost − what you hold`, so finishing takes the
  *  lead the moment your holdings pass `fullCost − market`. That turns the

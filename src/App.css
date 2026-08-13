@@ -775,7 +775,7 @@ td.diff.down { color: var(--diff-down); }
 
 /* --- Build Calculator (transmutes expansion, Phase 2) ------------------- */
 /* Compact single-screen redesign: a slide-in drawer picks the recipe; a dense
-   table takes on-hand entry and shows what finishing the craft costs. Shares the
+   table takes on-hand entry and shows what completing the transmute costs. Shares the
    tier chips and Money-pulse with the Recipes view. Two-line rows on phones. */
 
 .calc { font-family: var(--sans); }
