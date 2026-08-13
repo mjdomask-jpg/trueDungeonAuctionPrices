@@ -417,6 +417,22 @@ clear wording.
 - **With an empty stash the panel says so**, rather than repeating an uninformative
   "buy it": crafted tokens rarely beat their material cost from scratch, and the tool
   earns its keep once goods are marked on hand.
+- **A pinned summary strip carries the verdict across the table** (`.calc-strip`).
+  The decision panel was measured at **y = 2,498 on a 375px screen — 3.1 screens
+  down**, because the ingredient table is 1,955px tall; a player could miss the
+  feature entirely. Moving the block *above* the table was considered and rejected:
+  it is computed from on-hand quantities entered in the table, so it would render its
+  least informative state (empty stash always says "buy it") in prime position, and
+  the break-even bar would be off-screen while you do the thing that moves it.
+  Instead the existing `.calc-bar` — already **158px at 375px**, wrapping to three
+  rows, far too tall to pin — stays in flow, and a **60px condensed copy** (41px on
+  desktop) fixes to the top once the bar scrolls away. It **releases as soon as
+  `.calc-foot` is properly on screen** (an 80px bottom `rootMargin`, so the handoff
+  waits until the real total is readable rather than a sliver at the edge), which is
+  why the same "cost to finish" figure is never visible twice. Two
+  `IntersectionObserver`s, no scroll listener. The strip **reports only** — tapping
+  the price scrolls to the real field rather than duplicating the input, which would
+  be a second source of truth and would push the at-rest bar past 158px.
 - Ties under **$1** (`WASH_THRESHOLD`) report as a wash rather than crowning a winner
   by pennies — every input here is an estimate.
 - A caveat fires when a needed ingredient has no price: cost-to-finish is understated,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
@@ -128,6 +128,13 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [marketInput, setMarketInput] = useState<MarketInput>('auto');
+  // The pinned summary strip: on while the ingredient table fills the screen and
+  // nothing else is telling you where you stand.
+  const barRef = useRef<HTMLDivElement>(null);
+  const footRef = useRef<HTMLDivElement>(null);
+  const buyRef = useRef<HTMLDivElement>(null);
+  const [pastBar, setPastBar] = useState(false);
+  const [footInView, setFootInView] = useState(false);
 
   const all = useMemo(() => engine.allCosts(), [engine]);
   const cost = useMemo(
@@ -148,6 +155,42 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     setEditing(null);
     setMarketInput('auto');
   }, [selectedKey]);
+
+  // Two observers rather than a scroll listener: one says the top bar has left
+  // the screen, the other says the totals have arrived. The strip lives in the
+  // gap between them, so its copy of "cost to finish" is never on screen at the
+  // same time as the real one. Re-runs when a recipe is picked, since the panel
+  // (and so the footer) only exists then.
+  useEffect(() => {
+    const bar = barRef.current;
+    const foot = footRef.current;
+    if (!bar || !foot) {
+      setPastBar(false);
+      setFootInView(false);
+      return;
+    }
+    const gone = new IntersectionObserver(([e]) => setPastBar(!e.isIntersecting));
+    // Shrink the root's bottom edge so the footer has to be properly on screen,
+    // not merely touching it, before the strip stands down — otherwise the real
+    // "cost to finish" takes over while it is still a sliver at the very bottom.
+    const arrived = new IntersectionObserver(([e]) => setFootInView(e.isIntersecting), {
+      rootMargin: '0px 0px -80px 0px',
+    });
+    gone.observe(bar);
+    arrived.observe(foot);
+    return () => { gone.disconnect(); arrived.disconnect(); };
+  }, [cost]);
+
+  const stripOn = cost != null && pastBar && !footInView;
+
+  // Send the reader to the price field the strip is reporting on. The strip
+  // never holds an input of its own — two boxes for one value is a bug waiting
+  // to happen, and it would push the at-rest bar past its already-tall 158px.
+  const jumpToPrice = () => {
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    buyRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+    buyRef.current?.querySelector('input')?.focus({ preventScroll: true });
+  };
 
   // The drawer opens on the current recipe's year (or the latest priced season
   // before anything is picked), like the Recipes view; other years collapse.
@@ -314,7 +357,37 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
 
   return (
     <div className="calc">
-      <div className="calc-bar">
+      {/* Pinned only across the table, released the moment the totals show. It
+          reports; it never takes input (see jumpToPrice). */}
+      {stripOn && cost && (
+        <div className="calc-strip">
+          <span className="cs-name">{cost.displayName}</span>
+          <span className="cs-fin">
+            to finish <b>{moneyCalc(finAvg)}</b>
+          </span>
+          <span className="cs-line">
+            {plans && market != null ? (
+              <>
+                <button type="button" className="cs-jump" aria-label="Go to the buy price"
+                  onClick={jumpToPrice}>
+                  buy {moneyCalc(market)}
+                </button>
+                <span className={`cs-verdict${plans.wash ? '' : ' on'}`}>
+                  {plans.wash
+                    ? 'about even'
+                    : `${plans.best === 'build' ? 'Complete it' : 'Buy it'} · ${money0(plans.delta)} cheaper`}
+                </span>
+              </>
+            ) : (
+              <button type="button" className="cs-jump prompt" onClick={jumpToPrice}>
+                Set a buy price to compare
+              </button>
+            )}
+          </span>
+        </div>
+      )}
+
+      <div className="calc-bar" ref={barRef}>
         <button type="button" className="calc-browse" onClick={() => setDrawerOpen(true)}>
           <i className="calc-browse-i" aria-hidden="true">≡</i> Browse recipes
         </button>
@@ -439,7 +512,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
             </div>
           ))}
 
-          <div className="calc-foot">
+          <div className="calc-foot" ref={footRef}>
             <div className="calc-foot-row total">
               <span>Cost to finish</span>
               <span><b><Money format={moneyCalc} value={finAvg} /></b> <span className="calc-min">min <Money format={moneyCalc} value={finMin} /></span></span>
@@ -478,7 +551,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
           {/* Phase 3: buy-instead price, and the three ways to end up holding
               the token. Every total is shown, not just the verdict, so the
               call can be audited rather than taken on trust (plan §7). */}
-          <div className="cbuy">
+          <div className="cbuy" ref={buyRef}>
             <div className="cbuy-head">
               <label className="cbuy-price">
                 <span className="cbuy-lab">
