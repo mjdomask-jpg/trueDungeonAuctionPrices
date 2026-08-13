@@ -597,7 +597,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
             )}
             <p className="calc-foot-note">
               Full build from scratch {moneyCalc(fullAvg)} (min {moneyCalc(fullMin)}).
-              {src && <> Own the {src.displayName}? Hit <b>All</b> on its row for the upgrade-only price.</>}
+              {src && <> Own the {src.displayName}? Hit <b>All</b> on the top row for the upgrade-only price.</>}
             </p>
             {unpricedNeeded > 0 && (
               <p className="calc-warn">

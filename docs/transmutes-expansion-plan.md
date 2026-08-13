@@ -465,6 +465,14 @@ clear wording.
   Phones take a **shorter verdict** (`Buy · $21 less`, not `Buy it · $21 cheaper`)
   because the right column is sized by its widest line — a long verdict would narrow
   the name column and could add a line the moment a price is typed.
+- **Source lines sort to the top of every bill of materials.** The sheet authors them
+  last, but the source is the token being *upgraded*, not fuel poured in beside the
+  rest — it is what a reader looks for first, and in the calculator it is usually the
+  first thing marked on hand (setting it to `All` is what yields the upgrade-only
+  price). Sorted once in `CostEngine.cost()` rather than in either view, so the
+  Recipes BOM and the calculator cannot disagree about the order; `sort()` is stable,
+  so every other line keeps its authored sequence. Totals are untouched — they are
+  accumulated before the sort.
 - Ties under **$1** (`WASH_THRESHOLD`) report as a wash rather than crowning a winner
   by pennies — every input here is an estimate.
 - A caveat fires when a needed ingredient has no price: cost-to-finish is understated,
