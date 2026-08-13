@@ -53,6 +53,11 @@ const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Ex
 const pathName = (key: PathKey, holdsGoods: boolean) =>
   key === 'build' ? 'Complete the transmute' : holdsGoods ? 'Buy it, keep your goods' : 'Just buy it';
 
+// How far the totals must be into the viewport before the pinned strip stands
+// down. One constant so the observer's rootMargin and the "is pinning worth it"
+// measurement can't drift apart — they describe the same handoff.
+const FOOT_REVEAL = 80;
+
 // A configured rate as prose ("20%"). The rate lives in RESALE, so the help
 // text can't drift from the math the way a hardcoded "20%" would.
 const pct = (rate: number) => `${Math.round(rate * 100)}%`;
@@ -133,8 +138,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const barRef = useRef<HTMLDivElement>(null);
   const footRef = useRef<HTMLDivElement>(null);
   const buyRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [pastBar, setPastBar] = useState(false);
   const [footInView, setFootInView] = useState(false);
+  const [roomToPin, setRoomToPin] = useState(false);
 
   const all = useMemo(() => engine.allCosts(), [engine]);
   const cost = useMemo(
@@ -164,24 +171,52 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   useEffect(() => {
     const bar = barRef.current;
     const foot = footRef.current;
-    if (!bar || !foot) {
+    const panel = panelRef.current;
+    if (!bar || !foot || !panel) {
       setPastBar(false);
       setFootInView(false);
+      setRoomToPin(false);
       return;
     }
+
+    // Is there enough table for a pinned copy to earn its keep? The strip is on
+    // between "the bar has left" and "the totals have arrived", and that window
+    // measures 1,210px at 375px but only 231px at 1000px — about two wheel
+    // notches, where it reads as a flicker rather than a fixture. Require a full
+    // screen of it. Measured rather than gated on a breakpoint: the real
+    // variable is how much table there is, so this also covers short recipes,
+    // short browser windows and zoom, which a media query would only guess at.
+    const measure = () => {
+      const onAt = bar.getBoundingClientRect().bottom + window.scrollY;
+      const offAt = foot.getBoundingClientRect().top + window.scrollY - window.innerHeight + FOOT_REVEAL;
+      setRoomToPin(offAt - onAt >= window.innerHeight);
+    };
+    measure();
+    // The panel changes height when an inline price editor opens, which moves
+    // the footer and so the window — cheaper and more reliable to observe it
+    // than to enumerate everything that resizes it.
+    const resized = new ResizeObserver(measure);
+    resized.observe(panel);
+    window.addEventListener('resize', measure);
+
     const gone = new IntersectionObserver(([e]) => setPastBar(!e.isIntersecting));
     // Shrink the root's bottom edge so the footer has to be properly on screen,
     // not merely touching it, before the strip stands down — otherwise the real
     // "cost to finish" takes over while it is still a sliver at the very bottom.
     const arrived = new IntersectionObserver(([e]) => setFootInView(e.isIntersecting), {
-      rootMargin: '0px 0px -80px 0px',
+      rootMargin: `0px 0px -${FOOT_REVEAL}px 0px`,
     });
     gone.observe(bar);
     arrived.observe(foot);
-    return () => { gone.disconnect(); arrived.disconnect(); };
+    return () => {
+      resized.disconnect();
+      window.removeEventListener('resize', measure);
+      gone.disconnect();
+      arrived.disconnect();
+    };
   }, [cost]);
 
-  const stripOn = cost != null && pastBar && !footInView;
+  const stripOn = cost != null && roomToPin && pastBar && !footInView;
 
   // Send the reader to the price field the strip is reporting on. The strip
   // never holds an input of its own — two boxes for one value is a bug waiting
@@ -412,7 +447,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       </div>
 
       {cost ? (
-        <div className="calc-panel">
+        <div className="calc-panel" ref={panelRef}>
           <div className="calc-tools">
             <span className="calc-tools-lab">Set all on hand</span>
             <button type="button" className={`calc-all${allOwned ? ' on' : ''}`} aria-pressed={allOwned}

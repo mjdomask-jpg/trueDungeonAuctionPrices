@@ -433,6 +433,15 @@ clear wording.
   `IntersectionObserver`s, no scroll listener. The strip **reports only** — tapping
   the price scrolls to the real field rather than duplicating the input, which would
   be a second source of truth and would push the at-rest bar past 158px.
+
+  It is **gated on a measurement, not a breakpoint**: the on-window is
+  `(footTop − viewportHeight + 80) − barBottom`, and the strip appears only when that
+  is at least one full screen. Measured on Val's: **1,210px (1.49 screens) at 375px**
+  versus **231px (0.28 screens) at 1000px** — about two wheel notches on desktop,
+  where it read as a flicker rather than a fixture. A `max-width: 640px` gate would
+  have fixed desktop while still guessing at short recipes, short browser windows and
+  zoom; the measurement covers all of them, and a `ResizeObserver` on `.calc-panel`
+  keeps it honest when an inline price editor opens and moves the footer.
 - Ties under **$1** (`WASH_THRESHOLD`) report as a wash rather than crowning a winner
   by pennies — every input here is an estimate.
 - A caveat fires when a needed ingredient has no price: cost-to-finish is understated,
