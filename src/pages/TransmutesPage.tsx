@@ -10,7 +10,7 @@ import { PageIntro } from '../components/PageIntro';
 //   Recipes (Phase 4) — every craftable token's estimated build cost, priced
 //     from its debut-year auction sales, seasons collapsible.
 //   Build Calculator (Phase 2 of the expansion plan) — pick one recipe, enter
-//     what you already own, and see what finishing the craft still costs.
+//     what you already own, and see what completing the transmute still costs.
 // Both read the same cost engine; the toggle is the URL (/transmutes/:view) so
 // each view is a shareable link and the top-level nav stays at five entries.
 
@@ -81,14 +81,16 @@ export default function TransmutesPage() {
   return (
     <>
       {calculator ? (
-        <PageIntro short="Pick a recipe, enter what you already own, and see what finishing the craft costs.">
+        <PageIntro short="Pick a recipe, enter what you already own, and see what completing the transmute costs.">
           Open <strong>Browse recipes</strong> to pick one, then enter{' '}
           <strong>how many of each ingredient you already have</strong> — the calculator subtracts
-          them and shows what <strong>finishing the craft</strong> still costs, as an{' '}
+          them and shows what <strong>completing the transmute</strong> still costs, as an{' '}
           <strong>avg</strong> and a <strong>min</strong>. Tap <strong>All</strong> on a row (or{' '}
           <strong>Set all on hand</strong>) to mark it fully owned; set a source token to{' '}
           <strong>All</strong> to price just the upgrade step. Tap any <strong>$/ea</strong> price
-          to use your own number when the market differs from our estimate. For the full recipe
+          to use your own number when the market differs from our estimate. Enter what the finished
+          token <strong>sells for</strong> and it weighs completing the transmute against buying it
+          outright, and shows how much more loot it takes before crafting wins. For the full recipe
           list, switch to{' '}
           <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>.
         </PageIntro>

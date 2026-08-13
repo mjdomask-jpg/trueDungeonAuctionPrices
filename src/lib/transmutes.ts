@@ -491,6 +491,14 @@ export class CostEngine {
       lines.push(base);
     }
 
+    // Source lines lead. The sheet authors them last, but the source is the token
+    // being upgraded rather than fuel poured in alongside the rest: it is what a
+    // reader looks for first, and in the calculator it is usually the first thing
+    // marked on hand. Sorted here rather than in a view so the Recipes bill of
+    // materials and the calculator can't disagree about the order. sort() is
+    // stable, so everything else keeps its authored sequence.
+    const ordered = [...lines].sort((a, b) => Number(b.isSource) - Number(a.isSource));
+
     const market = this.prices.leafPrice(recipe.transmute, recipe.year, this.variantFor(recipe.year));
     const out: BuildCost = {
       key: memoKey,
@@ -498,7 +506,7 @@ export class CostEngine {
       displayName: this.prices.displayName(recipe.transmute, recipe.year),
       year: recipe.year,
       level: recipe.level,
-      lines,
+      lines: ordered,
       ownAvg, ownMin,
       sourceAvg, sourceMin,
       fullAvg: ownAvg + sourceAvg,

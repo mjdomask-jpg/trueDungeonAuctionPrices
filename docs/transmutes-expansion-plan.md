@@ -36,10 +36,18 @@ everything the calculator consumes (`BuildCost.lines[]` with `unitAvg`, `unitMin
 
 **1b. "Active windows" change the numbers on the existing Recipes view, not just the
 calculator.** Today a recipe is priced from one season (its debut). Pricing across a
-two-year active window re-aggregates from a *date range that spans two seasons*. That
-is a real engine change with broad blast radius — it moves every currently-active
+recipe's true active window re-aggregates from an *explicit date range* — from the
+recipe's debut through its exact expiration, minus the 7-day shipping cutoff. That is
+a real engine change with broad blast radius — it moves every currently-active
 recipe's displayed cost. It deserves its own phase and careful before/after
 validation, and it's the main sequencing question (§9, Q1).
+
+We deliberately do **not** approximate this with coarse two-season pooling. The
+maintainer's 2025–2026 data shows a **sharp price spike immediately after the Dec 1
+cutoff** for several goods (Oil of Enchantment, Elven Bismuth), so lumping the debut
+season together with the whole following season would drag a recipe's cost toward
+post-deactivation prices that a real buyer racing the cutoff never actually paid.
+Date-windowed pricing is the only way to keep the number honest. (This is Q2.)
 
 **1c. Scraping trenttokens.com is constrained by the static-hosting model.** The site
 is a client-side SPA on GitHub Pages with no server. A browser `fetch` to
@@ -148,15 +156,22 @@ Storing the date **explicitly rather than deriving it** keeps the exceptions in 
 data (where the maintainer can see and edit them) instead of as special-cases in
 code, and it's future-proof. A validator rule can fill/verify the standard case.
 
-**Engine change — two cost tiers, ship the cheap one first:**
-- **Cheap first cut:** price a recipe by **pooling both active seasons'** auctions
-  (debut season ∪ following season) instead of just the debut season. Reuses the
-  existing per-season aggregation; small change to which seasons feed a recipe.
-- **Precise later:** a **date-windowed aggregation** that respects the exact
-  `Expires` date and the 7-day shipping cutoff. This needs a per-sale date, which is
-  available by joining `prices.csv` → `auctionMetadata` on `auctionId` (the Analytics
-  and context layers already read close dates). More work; do it only if the cheap
-  cut proves too coarse. (This is Q2.)
+**Engine change — date-windowed aggregation (the accurate computation):**
+Price each recipe over the **exact date range it was craftable**: from its debut
+through its `Expires` date, minus the **7-day shipping cutoff** (exclude auctions
+closing within 7 days of deactivation, since a win that late couldn't ship in time to
+craft). This needs a per-sale date, which is available by joining `prices.csv` →
+`auctionMetadata` on `auctionId` (the Analytics and context layers already read close
+dates). It replaces the per-season aggregation for active-window recipes with a
+range-filtered aggregation.
+
+**We are not shipping the coarse two-season pooling** that an earlier draft proposed
+as a cheap first cut (debut season ∪ following season). The maintainer's 2025–2026
+data shows a **clear price spike right after the Dec 1 cutoff** for Oil of Enchantment
+and Elven Bismuth — proof that pooling the following season wholesale would fold in
+post-deactivation prices and systematically overstate what a buyer racing the cutoff
+paid. The extra cost of the date join is worth it; accuracy is the whole point of this
+phase. (This was Q2; resolved to date-windowed — see §9.)
 
 **Downstream, once active windows exist (all cheap):**
 - **Recent-prices checkbox for every active year**, not just the latest priced
@@ -209,10 +224,12 @@ want to see the explicit UR so they know what to buy/trade."
 
 **(c) Two-year UR availability.** A UR won in season N can be redeemed for a UR from
 N or N−1; equivalently a recipe-N UR requirement can be met by a UR bought in N or
-N+1. This is **already subsumed by the active-window pooling in 3.1** — if a recipe is
-active in seasons N and N+1, its UR line is priced from both seasons' PYP auctions.
-So no separate mechanism is needed *if* 3.1 lands first; if it doesn't, add a small
-"UR lines price from `nominalYear` ∪ `nominalYear+1`" rule.
+N+1. This is **already subsumed by the date-windowed pricing in 3.1** — a recipe's UR
+line is priced over the recipe's full active date range (debut through `Expires` minus
+the 7-day cutoff), which naturally spans into the following season's auctions where
+the UR is still redeemable. So no separate mechanism is needed *if* 3.1 lands first; if
+it doesn't, add a small "UR lines price over `nominalYear`'s debut through
+`nominalYear+1`'s cutoff" rule.
 
 **(d) Secondary-market caveat.** For non-expiring Legendaries a scarce specific UR
 can cost **more** than auction PYP. Handle via the per-line override (3.2) + a note
@@ -323,14 +340,156 @@ mockups with the maintainer. Notes on the shipped design:
 - Still deferred to **Phase 3**: secondary-price box, resale value, three-way
   recommendation (§2.2).
 
-### Phase 3 — Calculator Should-haves
+### Phase 3 — Calculator Should-haves — ✅ SHIPPED
 §2.2: secondary-price box, resale value (20%/10%), the three-way recommendation with
 clear wording.
 
+**Shipped as:** a new `src/lib/buildCalc.ts` (pure decision math — `RESALE` rates,
+`quickSaleValue`, `comparePaths`) plus a "buy it instead" block at the foot of
+`BuildCalculator`. Notes on what the implementation settled:
+
+- **The buy-it price pre-fills from the token's own auction sales** where it has any,
+  with a Reset back to it once you type over. In practice this fires for exactly one
+  recipe — **Safehold III (2024) is the only transmute of 170 that is itself sold at
+  auction** — so manual entry is the real path, as §9 Q3 assumed. The box is
+  tri-state (`'auto' | number | null`) so clearing it stays cleared instead of
+  snapping back to the auction price.
+- **Quick-sale value is a RANGE off ONE rate: `RESALE.off` = 20%, taken off both the
+  season minimum and the season average.** Low end = a fire sale (20% under the
+  lowest price the market ever paid), high end = a patient sale (20% under the going
+  rate). On Val's, holding 2× Ultra Rare and 5× Alchemist's Ink: **$71–$106**.
+
+  The first cut used **20% off avg but 10% off min**, reasoning that the minimum is
+  already low, and showed only the avg figure because the pair "would commonly
+  invert". Measured against the data (2026-08-12), that reasoning was wrong twice
+  over:
+  - Inversion (`0.9 × min > 0.8 × avg`) hits **15 of 208** priced (season, item)
+    groups — **7.2%**, not "commonly". Only **3** groups have min == avg at all.
+  - Min sits a **median 0.613** of avg, so `0.9 × min` is not a near-twin of the avg
+    figure; it is a genuinely lower number that was being hidden in a popover.
+
+  A single rate **cannot** invert, since `min ≤ avg` always: 0 of 208, by
+  construction. It also costs nothing in expressiveness — the two ends stop being
+  "two data bases" and start being *fast sale* vs *patient sale*, which is the
+  effort trade-off the maintainer's domain context says players actually weigh.
+  One constant to explain and one to retune. Ranges collapse to a single figure when
+  both ends round the same (3 single-sale items), so nothing ever renders "$45–$45".
+- **The comparison is in avg terms only.** Adding a min column would have meant
+  showing a "min" cost for the sell path that can land either side of the avg one
+  (the resale term inverts the direction of "min"), which makes the verdict harder to
+  read rather than easier. Cost-to-finish keeps its avg/min pair directly above.
+  Because the min build can be far cheaper — Val's +4 Keen Fellbane Crossbow is
+  $1,510 avg against $925 min — the panel **states its basis** rather than leaving it
+  implicit: "Compared at average prices. At minimum prices finishing the craft costs
+  $925." When that min build would beat the path we just crowned, the line says so
+  outright ("…which beats every option here") and lifts to `--text-h`, since it
+  contradicts the verdict directly above it. A basis *toggle* (recompute the whole
+  comparison at min prices) was considered and deferred — revisit if min-price
+  shopping proves to be what players actually do. (Maintainer decision, 2026-08-12.)
+- **The contenders are "finish the craft" vs "buy it and keep your goods"; selling
+  is an aside.** The first cut made *sell-and-buy* a contender, since it always wins
+  on paper (`market − quickSale` is unbeatable by construction). The maintainer's
+  domain context, 2026-08-12, showed why that is the wrong answer in this game:
+  - **Buying beats crafting almost always.** Crafted tokens rarely sell above their
+    material cost, so a from-scratch verdict is near-universally "buy" and carries
+    little information.
+  - **Trade goods arrive free as loot**, and keep their use for the next recipe. A
+    market valuation of the pile is not a cost the player ever paid.
+  - **Selling is the expensive path in the currency that matters** — hours of
+    listing, haggling, packing and posting, with no promise the lot moves. The
+    players skew mid/late-career with families; time has a real price.
+  - **The token pays off the moment you hold it** (in-game benefit), so delay costs
+    something too.
+
+  So sell-and-buy's edge is not a saving, it is the **wage for those hours**, and only
+  the player can price their own time. It is reported in prose with its number and
+  that framing, never crowned. `comparePaths` now returns just the two comparable
+  paths — both take ten minutes, and the goods are free either way, sunk if you craft
+  and retained if you buy.
+- **`breakEvenHoldings(fullCost, market)` = the inventory target.** Cost to finish is
+  `fullCost − what you hold`, so finishing overtakes buying once holdings pass
+  `fullCost − market`. On Val's that is `$1,642 − $1,500 = $142` against $132 held —
+  rendered as "about $10 of trade goods to go" with a progress bar. Same magnitude as
+  the build-vs-buy gap, but a different question: not which is cheaper today, but how
+  much more loot until crafting wins — which is what a player with a growing stash is
+  actually asking, and it distinguishes "wait for drops" from "buy the rest now".
+  Hidden once the gap closes, since the verdict then says it outright.
+- **With an empty stash the panel says so**, rather than repeating an uninformative
+  "buy it": crafted tokens rarely beat their material cost from scratch, and the tool
+  earns its keep once goods are marked on hand.
+- **A pinned summary strip carries the verdict across the table** (`.calc-strip`).
+  The decision panel was measured at **y = 2,498 on a 375px screen — 3.1 screens
+  down**, because the ingredient table is 1,955px tall; a player could miss the
+  feature entirely. Moving the block *above* the table was considered and rejected:
+  it is computed from on-hand quantities entered in the table, so it would render its
+  least informative state (empty stash always says "buy it") in prime position, and
+  the break-even bar would be off-screen while you do the thing that moves it.
+  Instead the existing `.calc-bar` — already **158px at 375px**, wrapping to three
+  rows, far too tall to pin — stays in flow, and a **60px condensed copy** (41px on
+  desktop) fixes to the top once the bar scrolls away. It **releases as soon as
+  `.calc-foot` is properly on screen** (an 80px bottom `rootMargin`, so the handoff
+  waits until the real total is readable rather than a sliver at the edge), which is
+  why the same "cost to finish" figure is never visible twice. Two
+  `IntersectionObserver`s, no scroll listener. The strip **reports only** — tapping
+  the price scrolls to the real field rather than duplicating the input, which would
+  be a second source of truth and would push the at-rest bar past 158px.
+
+  It is **gated on a measurement, not a breakpoint**: the on-window is
+  `(footTop − viewportHeight + 80) − barBottom`, and the strip appears only when that
+  is at least one full screen. Measured on Val's: **1,210px (1.49 screens) at 375px**
+  versus **231px (0.28 screens) at 1000px** — about two wheel notches on desktop,
+  where it read as a flicker rather than a fixture. A `max-width: 640px` gate would
+  have fixed desktop while still guessing at short recipes, short browser windows and
+  zoom; the measurement covers all of them, and a `ResizeObserver` on `.calc-panel`
+  keeps it honest when an inline price editor opens and moves the footer.
+- **`.calc-bar` carries the verdict, and became a two-column grid on phones.** With
+  the strip gone from desktop, the bar needed the discoverability itself, so
+  `.calc-spend` gained a third line under the figure — `Set buy price` before one is
+  entered, `Buy · $21 less` after — always a button that scrolls to the real field.
+  Cost and verdict are one element by construction, so no later layout change can
+  separate the comparison from what it compares against.
+
+  Placing it exposed a **pre-existing reflow bug**. The bar was a wrapping flex row,
+  so the *recipe name's length* decided the layout: measured at 440px,
+  `Odin's Eye Patch` put the name beside Browse with the cost alone below, while
+  `Greater Eye Patch of the Aesir` pushed the name down onto the cost's row leaving
+  23px. Those two are a Legendary and its source Relic — the pair you flip between
+  most — so the name jumped between lines as you switched. Below 640px the bar is now
+  `grid-template-columns: minmax(0, 1fr) auto`: Browse and the name down the left, the
+  cost/verdict block spanning both rows on the right. `.calc-cur` switches to plain
+  inline flow so chip, name and year wrap as one run of text. A long name now adds a
+  line and the bar *grows* instead of reshuffling — verified identical grid placement
+  for both recipes at 440, 375 and 320px. Heights: **95px (440), 95–121px (375),
+  121px (320)** against 123px before; desktop 72 → 92px for the extra line.
+
+  Phones take a **shorter verdict** (`Buy · $21 less`, not `Buy it · $21 cheaper`)
+  because the right column is sized by its widest line — a long verdict would narrow
+  the name column and could add a line the moment a price is typed.
+- **Source lines sort to the top of every bill of materials.** The sheet authors them
+  last, but the source is the token being *upgraded*, not fuel poured in beside the
+  rest — it is what a reader looks for first, and in the calculator it is usually the
+  first thing marked on hand (setting it to `All` is what yields the upgrade-only
+  price). Sorted once in `CostEngine.cost()` rather than in either view, so the
+  Recipes BOM and the calculator cannot disagree about the order; `sort()` is stable,
+  so every other line keeps its authored sequence. Totals are untouched — they are
+  accumulated before the sort.
+- Ties under **$1** (`WASH_THRESHOLD`) report as a wash rather than crowning a winner
+  by pennies — every input here is an estimate.
+- A caveat fires when a needed ingredient has no price: cost-to-finish is understated,
+  so the comparison leans toward building.
+- Drive-by fixes: the money field's styling moved from `.cl-editor input` to
+  `.cl-money-in input` so the per-line override editor and the new buy box are one
+  control; and `.cl-hand input` / `.cl-money-in input` now hit 16px below 640px —
+  both sat under the iOS zoom threshold that `docs/ui-conventions.md` mandates.
+
 ### Phase 4 — Active recipe windows (accuracy) — broad blast radius
-§3.1: `Expires` column + parser, cheap two-season pooling, "is active" computation,
-recent-prices for all active years, active-only default filter on both the Recipes
-view and the calculator picker, and expired/uncraftable-relic marking (§3.2). Needs a
+§3.1: `Expires` column + parser, **date-windowed pricing** (aggregate each recipe over
+its exact debut→`Expires` range minus the 7-day shipping cutoff, via the
+`prices.csv` → `auctionMetadata` join), "is active" computation, recent-prices for all
+active years, active-only default filter on both the Recipes view and the calculator
+picker, and expired/uncraftable-relic marking (§3.2). The coarse two-season pooling an
+earlier draft floated is **dropped** — the post-Dec-1 price spikes in the 2025–2026
+data (Oil of Enchantment, Elven Bismuth) prove it would be too inaccurate. Needs a
 before/after cost diff to validate the numbers moved as intended. *(If Q1 says
 accuracy-first, this becomes Phase 2 and the calculator shifts back.)*
 
@@ -351,8 +510,10 @@ suggestion box, optional Recipes-view badge.
 last; re-confirm appetite for the infra first.
 
 ### Later / precision follow-ups
-- Date-windowed pricing with the 7-day shipping cutoff and non-standard expirations
-  (the precise version of §3.1), if the cheap two-season pooling proves too coarse.
+- Non-standard `Expires` dates beyond the standard rule (Ioun Stone Mystic Orb's March
+  expiry, Mark of Enlightenment's 1-year window) — author these into the `Expires`
+  column as Phase 4's date-windowed engine already reads them; verify each against the
+  data as it's entered.
 - Optional `localStorage` persistence of calculator inputs.
 
 ---
@@ -363,9 +524,9 @@ last; re-confirm appetite for the infra first.
 |---|---|---|---|
 | 1a flash | Med (delight) | **XS** | do immediately |
 | 1b back-populate relics | Med | S | data entry |
-| 2 calculator MVP | **High (user #1 ask)** | M–L | first per-user state |
-| 3 calculator should-haves | High | M | needs #2 |
-| 4 active windows | High (accuracy) | M–L | moves existing numbers |
+| 2 calculator MVP | **High (user #1 ask)** | M–L | first per-user state — ✅ shipped |
+| 3 calculator should-haves | High | M | needs #2 — ✅ shipped |
+| 4 active windows | High (accuracy) | L | date-windowed pricing; moves existing numbers |
 | 5 UR specificity | Med | M | needs data authoring |
 | 6 Omni substitution | Med–High (interesting) | L | most complex engine bit |
 | 7 price-as-of-year | Low–Med (1 user) | M | global selector |
@@ -405,17 +566,21 @@ last; re-confirm appetite for the infra first.
 
 ---
 
-## 9. Decisions — RESOLVED (maintainer, 2026-08-10)
+## 9. Decisions — RESOLVED (maintainer, 2026-08-10; Q2 revised 2026-08-11)
 
 All four resolved in favor of the recommendation; the phase order in §5 stands.
 
 1. **Sequencing → calculator first.** Build calculator (Phase 2) ships on today's
    debut-year pricing; active windows (Phase 4) land under it later. The pricing
    basis is a swappable input the calculator reads.
-2. **Active-window precision → two-season pooling first.** Reuse per-season
-   aggregation over debut ∪ following season. The date-precise version (7-day
-   shipping cutoff, non-standard expirations like Ioun Stone's March) is a later
-   follow-up, only if pooling proves too coarse.
+2. **Active-window precision → date-windowed pricing (revised 2026-08-11).** Phase 4
+   prices each recipe over its exact debut→`Expires` range minus the 7-day shipping
+   cutoff, via the `prices.csv` → `auctionMetadata` join. The originally-planned coarse
+   two-season pooling (debut ∪ following season) is **dropped**: the 2025–2026 data
+   shows a sharp post-Dec-1 price spike for Oil of Enchantment and Elven Bismuth, which
+   pooling would fold into the cost and overstate it. Accuracy is the point of the
+   phase, so we pay the date-join cost up front rather than shipping a coarse pass we'd
+   have to redo.
 3. **Scraping → manual entry only for now.** Ship the manual secondary-price box;
    Phase 8 (trenttokens snapshot / proxy) is deferred until appetite is reconfirmed.
 4. **Calculator input persistence → ephemeral for v1.** On-hand quantities live in

@@ -775,11 +775,50 @@ td.diff.down { color: var(--diff-down); }
 
 /* --- Build Calculator (transmutes expansion, Phase 2) ------------------- */
 /* Compact single-screen redesign: a slide-in drawer picks the recipe; a dense
-   table takes on-hand entry and shows what finishing the craft costs. Shares the
+   table takes on-hand entry and shows what completing the transmute costs. Shares the
    tier chips and Money-pulse with the Recipes view. Two-line rows on phones. */
 
 .calc { font-family: var(--sans); }
 .calc-min { font-size: 11px; color: var(--text); }
+
+/* Pinned summary strip. The full .calc-bar is 158px at 375px (it wraps to three
+   rows), which is a fifth of a phone screen — far too much to hold open. So the
+   bar stays in flow and this condensed copy takes over across the ingredient
+   table, then releases as soon as .calc-foot scrolls in, which is why the same
+   "cost to finish" figure is never on screen twice. Two lines on phones, one on
+   desktop. Sits below the drawer scrim (z 40) so browsing dims it like the rest
+   of the page. */
+.calc-strip {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px;
+  padding: 8px 14px; font-family: var(--sans);
+  background: var(--card); border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(16, 24, 40, 0.1);
+}
+.cs-name {
+  font-size: 12px; color: var(--text-h); font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cs-fin { font-size: 12px; color: var(--text); white-space: nowrap; text-align: right; }
+.cs-fin b { color: var(--text-h); font-variant-numeric: tabular-nums; }
+.cs-line { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cs-jump {
+  font: inherit; font-size: 12px; padding: 2px 4px; margin-left: -4px; cursor: pointer;
+  background: none; border: none; color: var(--text); border-radius: 4px;
+  text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 3px;
+}
+.cs-jump:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.cs-jump:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cs-jump.prompt { color: var(--accent); }
+.cs-verdict { font-size: 12px; color: var(--text); white-space: nowrap; }
+.cs-verdict.on { color: var(--accent); font-weight: 600; }
+
+@media (min-width: 641px) {
+  .calc-strip { display: flex; align-items: center; gap: 14px; padding: 9px 18px; }
+  .cs-name { flex: 0 1 auto; }
+  .cs-fin { margin-left: auto; }
+  .cs-line { flex: 0 0 auto; gap: 14px; }
+}
 
 /* Top bar: Browse button, current recipe, and the headline cost-to-finish. */
 .calc-bar {
@@ -804,6 +843,18 @@ td.diff.down { color: var(--diff-down); }
 .calc-spend { margin-left: auto; text-align: right; white-space: nowrap; }
 .calc-spend-lab { display: block; font-size: 11px; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; }
 .calc-spend-val b { font-size: 22px; font-family: var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
+/* The bar's one-line answer, under the figure it compares against. Always a
+   button: with no price it invites one, with a price it goes back to change it.
+   Dotted underline in both states so it never stops reading as tappable. */
+.calc-spend-buy {
+  display: block; margin-left: auto; padding: 2px 0 0;
+  font: inherit; font-size: 12px; cursor: pointer;
+  background: none; border: none; color: var(--text);
+  text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 3px;
+}
+.calc-spend-buy:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.calc-spend-buy.on { color: var(--accent); font-weight: 600; }
+.calc-spend-buy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 .calc-empty {
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;
@@ -899,12 +950,15 @@ td.diff.down { color: var(--diff-down); }
 .cl-editor { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 6px 10px; border-top: 1px dashed var(--border); }
 .cl-editor-hint { font-size: 12px; color: var(--text); }
 .cl-editor label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
-/* $-prefixed money field: the box carries the border, a leading $ sits inside it. */
+/* $-prefixed money field: the box carries the border, a leading $ sits inside
+   it. Styled on .cl-money-in rather than .cl-editor so the per-line override
+   editor and the Phase 3 buy-it box are the same control, not two that have to
+   be kept looking alike. */
 .cl-money-in { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
 .cl-money-in:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
 .cl-dollar { padding-left: 8px; color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
-.cl-editor input { width: 78px; font: inherit; font-size: 14px; padding: 5px 8px 5px 3px; border: none; background: transparent; color: var(--text-h); font-variant-numeric: tabular-nums; }
-.cl-editor input:focus-visible { outline: none; }
+.cl-money-in input { width: 78px; font: inherit; font-size: 14px; padding: 5px 8px 5px 3px; border: none; background: transparent; color: var(--text-h); font-variant-numeric: tabular-nums; }
+.cl-money-in input:focus-visible { outline: none; }
 .cl-reset { font: inherit; font-size: 12px; padding: 4px 10px; cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 999px; color: var(--text-h); }
 .cl-reset:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -916,7 +970,56 @@ td.diff.down { color: var(--diff-down); }
 .calc-foot-note { font-size: 12px; color: var(--text); margin: 8px 6px 0; }
 .calc-warn { font-size: 12px; color: #8a5a0b; margin: 6px 6px 0; }
 :root[data-theme='dark'] .calc-warn { color: #e0a94a; }
-.calc-buy-note { font-size: 12px; color: var(--text); margin: 6px 6px 0; font-style: italic; }
+
+/* Phase 3 — the buy-instead price and the three-way comparison. Set apart from
+   the build totals above by a rule and its own tinted surface: the table above
+   answers "what does finishing cost", this answers "should you finish at all". */
+.cbuy { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.cbuy-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 0 6px; }
+.cbuy-price { display: inline-flex; align-items: center; gap: 8px; }
+.cbuy-lab { font-size: 13px; color: var(--text-h); }
+.cbuy-src { font-size: 12px; color: var(--text); }
+.cbuy-hint { font-size: 12px; color: var(--text); margin: 8px 6px 0; }
+
+.cbuy-plans { margin-top: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.cbuy-verdict { margin: 0 0 9px; font-size: 13.5px; line-height: 1.45; color: var(--text-h); }
+.cbuy-verdict b { color: var(--accent); }
+
+/* One row per option: name, total, and how that total is reached. The "how"
+   column is what makes the verdict auditable, so it is never dropped — on
+   phones it wraps to its own line instead. */
+.cbuy-opts { list-style: none; margin: 0; padding: 0; }
+.cbuy-opts li {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 10px;
+  padding: 7px 8px; border-radius: 8px; border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+.cbuy-opts li + li { margin-top: 3px; }
+.cbuy-opts li.win { background: var(--accent-bg); border-color: var(--accent); }
+.cbo-name { font-size: 13px; color: var(--text-h); }
+.cbuy-opts li.win .cbo-name { font-weight: 600; }
+.cbo-cost { font-size: 15px; font-family: var(--display); color: var(--text-h); text-align: right; }
+.cbuy-opts li.win .cbo-cost { color: var(--accent); }
+.cbo-how { grid-column: 1 / -1; font-size: 11.5px; color: var(--text); }
+
+/* "How much more loot until crafting wins" — the inventory target behind the
+   build-vs-buy gap. Its own tinted block because it answers a different
+   question from the two rows above it: not which is cheaper today, but whether
+   to keep playing or buy the rest now. */
+.cbuy-gap { margin-top: 10px; padding: 9px 11px; background: var(--card); border-radius: 8px; }
+.cbuy-gap-lead { margin: 0 0 7px; font-size: 12.5px; color: var(--text-h); }
+.cbuy-gap-note { margin: 7px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--text); }
+.cbuy-bar { display: block; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.cbuy-bar span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.cbuy-note { font-size: 11.5px; color: var(--text); margin: 9px 2px 0; line-height: 1.45; }
+/* Selling the pile covers the token and leaves change. --diff-down is the
+   GREEN of the comparison tables (up is red here — prices you pay), so money
+   ahead reads the same way it does everywhere else on the site. */
+.cbuy-profit { color: var(--diff-down); font-weight: 600; }
+/* The basis caveat when shopping at minimum prices would change the answer —
+   not a warning (nothing is wrong), just a step louder than the fine print,
+   because it contradicts the verdict directly above it. */
+.cbuy-note.flag { color: var(--text-h); }
 
 /* Slide-in recipe picker (drawer). */
 .calc-scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 40; }
@@ -968,6 +1071,35 @@ td.diff.down { color: var(--diff-down); }
 
 /* Two-line rows on phones: ingredient up top, controls below — no side-scroll. */
 @media (max-width: 640px) {
+  /* The bar becomes a two-column grid: actions and identity down the left,
+     cost-to-finish and its verdict stacked down the right.
+
+     As a wrapping flex row it reflowed on the recipe NAME's length — measured at
+     440px, "Odin's Eye Patch" put the name beside Browse with the cost alone
+     below it, while "Greater Eye Patch of the Aesir" pushed the name down onto
+     the cost's row with 23px to spare. Flipping between a Legendary and its
+     source Relic therefore moved the name between lines. A grid fixes where
+     everything lives; a long name now wraps and the bar simply grows, which it
+     can afford — 88px for a short name, 103px wrapped, against 123px before. */
+  .calc-bar {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px; row-gap: 8px; align-items: start;
+  }
+  .calc-browse { grid-column: 1; grid-row: 1; justify-self: start; }
+  .calc-cur { grid-column: 1; grid-row: 2; }
+  .calc-spend { grid-column: 2; grid-row: 1 / span 2; margin-left: 0; }
+  /* Plain inline flow rather than flex, so chip, name and year wrap together as
+     one run of text and the chip stays on the first line. */
+  .calc-cur { display: block; }
+  .calc-cur .tchip { margin-right: 6px; vertical-align: 1px; }
+  .calc-cur-name { display: inline; white-space: normal; overflow: visible; text-overflow: clip; }
+  .calc-cur-year { margin-left: 5px; }
+  /* 12px of text is far under a thumb; grow the hit area by overlay, not
+     padding, so the line keeps its place in the stack (docs/ui-conventions.md).
+     Nothing above it is interactive, so reaching up into the figure is safe. */
+  .calc-spend-buy { position: relative; }
+  .calc-spend-buy::after { content: ''; position: absolute; inset: -12px -6px; }
+
   .calc-lhead { display: none; }
   .calc-dbody .search input { height: 44px; }
   .cl-main { grid-template-columns: auto 1fr auto; grid-template-areas: "name name name" "hand buy fin"; row-gap: 9px; }
@@ -987,6 +1119,15 @@ td.diff.down { color: var(--diff-down); }
   .cl-price-m:hover { color: var(--accent); }
   /* Bigger, easier-to-tap edit pen on phones. */
   .cl-price-m .cl-edit-i { font-size: 16px; margin-left: 7px; vertical-align: -2px; opacity: 0.9; }
+  /* iOS zooms the page in on any focused control under 16px and never zooms
+     back out (see the note above the narrow-screen block). The calculator's
+     two money fields and its on-hand box all sat under the threshold. */
+  .cl-hand input, .cl-money-in input { font-size: 16px; }
+  .cl-money-in input { width: 84px; padding-top: 7px; padding-bottom: 7px; }
+  /* The buy-it price and its "from auction sales" tag stack rather than
+     squeezing the field; the label keeps the popover beside it. */
+  .cbuy-head { gap: 8px 10px; }
+  .cbuy-verdict { font-size: 14px; }
 }
 
 /* On the very narrowest phones the [All/None] pill + −/+ stepper + cost column

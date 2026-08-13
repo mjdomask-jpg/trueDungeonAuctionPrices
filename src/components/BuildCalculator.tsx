@@ -1,15 +1,19 @@
-import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { moneyCalc } from '../lib/format';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
+import { HintPopover } from './HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
+import {
+  RESALE, WASH_THRESHOLD, breakEvenHoldings, comparePaths, quickSaleValue, type PathKey,
+} from '../lib/buildCalc';
 
 // Build Calculator (Phase 2 of the transmutes expansion plan) — compact redesign.
 //
 // One screen, no page swaps. A slide-in drawer picks the recipe (years collapse,
 // source Relics stay paired with the Legendary they upgrade into — same ordering
 // as the Recipes view); the chosen recipe fills a dense table where you enter what
-// you already own and read what finishing the craft still costs. Nothing ever
+// you already own and read what completing the transmute still costs. Nothing ever
 // navigates away, so context and the Back button are never lost.
 //
 // Two design choices worth stating:
@@ -23,8 +27,20 @@ import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLi
 //
 // State is ephemeral (plan Q4): on-hand counts and overrides live in React state
 // keyed by line index, reset when the recipe changes.
+//
+// Phase 3 adds the decision layer on top: what the finished token sells for
+// (pre-filled from its own auction price where it has one, editable otherwise),
+// what your on-hand pile would fetch in a quick sale, and which of the three
+// ways to end up holding the token is cheapest. That math is pure and lives in
+// lib/buildCalc.ts; this file only formats it.
 
 type Override = { avg: number | null; min: number | null };
+
+// The secondary price is tri-state: 'auto' follows the token's own auction
+// price (when it has one), a number is the user's, and null means they cleared
+// the box — which has to be distinguishable from 'auto', or clearing the field
+// would snap it straight back to the auction price.
+type MarketInput = 'auto' | number | null;
 type PickItem =
   | { type: 'pair'; source: BuildCost; upgrade: BuildCost }
   | { type: 'single'; cost: BuildCost };
@@ -32,11 +48,37 @@ type PickItem =
 // Tier display order for the drawer's filter chips (game power ladder).
 const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic', 'Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
 
+// The two paths that compete. "Buy it" names what you keep when you hold
+// something, since that retained pile is the whole reason it beats selling up.
+const pathName = (key: PathKey, holdsGoods: boolean) =>
+  key === 'build' ? 'Complete the transmute' : holdsGoods ? 'Buy it, keep your goods' : 'Just buy it';
+
+// How far the totals must be into the viewport before the pinned strip stands
+// down. One constant so the observer's rootMargin and the "is pinning worth it"
+// measurement can't drift apart — they describe the same handoff.
+const FOOT_REVEAL = 80;
+
+// A configured rate as prose ("20%"). The rate lives in RESALE, so the help
+// text can't drift from the math the way a hardcoded "20%" would.
+const pct = (rate: number) => `${Math.round(rate * 100)}%`;
+
+// A money range in whole dollars, collapsing to one figure when both ends round
+// the same — "$71–$106", but "$45" rather than "$45–$45". Compares the rendered
+// strings, not the numbers, so $70.60 and $71.40 don't print as "$71–$71".
+const range = (lo: number, hi: number) => {
+  const a = money0(lo);
+  const b = money0(hi);
+  return a === b ? a : `${a}–${b}`;
+};
+
 // Money always shows both cents digits ($10.60, not $10.6); parsing rounds to
 // cents so a stored override never carries a longer tail than it displays.
 const fmt2 = (n: number | null | undefined) => (n == null ? '' : n.toFixed(2));
+// `$` and thousands separators are stripped rather than rejected: prices get
+// pasted in from listings and reseller pages as "$1,500.00", and Number() reads
+// that as NaN. The box re-displays the bare number.
 const parsePrice = (s: string): number | null => {
-  const t = s.trim();
+  const t = s.replace(/[$,\s]/g, '');
   if (t === '') return null;
   const n = Number(t);
   return isFinite(n) ? Math.round(n * 100) / 100 : null;
@@ -90,6 +132,16 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const [onHand, setOnHand] = useState<Record<string, number>>({});
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
   const [editing, setEditing] = useState<string | null>(null);
+  const [marketInput, setMarketInput] = useState<MarketInput>('auto');
+  // The pinned summary strip: on while the ingredient table fills the screen and
+  // nothing else is telling you where you stand.
+  const barRef = useRef<HTMLDivElement>(null);
+  const footRef = useRef<HTMLDivElement>(null);
+  const buyRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pastBar, setPastBar] = useState(false);
+  const [footInView, setFootInView] = useState(false);
+  const [roomToPin, setRoomToPin] = useState(false);
 
   const all = useMemo(() => engine.allCosts(), [engine]);
   const cost = useMemo(
@@ -102,12 +154,78 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     return ['All', ...TIER_ORDER.filter((t) => present.has(t)), ...[...present].filter((t) => !TIER_ORDER.includes(t))];
   }, [all]);
 
-  // A fresh recipe starts clean — no on-hand carried over, no stale overrides.
+  // A fresh recipe starts clean — no on-hand carried over, no stale overrides,
+  // and the buy price back to whatever the new token's own auction sales say.
   useEffect(() => {
     setOnHand({});
     setOverrides({});
     setEditing(null);
+    setMarketInput('auto');
   }, [selectedKey]);
+
+  // Two observers rather than a scroll listener: one says the top bar has left
+  // the screen, the other says the totals have arrived. The strip lives in the
+  // gap between them, so its copy of "cost to finish" is never on screen at the
+  // same time as the real one. Re-runs when a recipe is picked, since the panel
+  // (and so the footer) only exists then.
+  useEffect(() => {
+    const bar = barRef.current;
+    const foot = footRef.current;
+    const panel = panelRef.current;
+    if (!bar || !foot || !panel) {
+      setPastBar(false);
+      setFootInView(false);
+      setRoomToPin(false);
+      return;
+    }
+
+    // Is there enough table for a pinned copy to earn its keep? The strip is on
+    // between "the bar has left" and "the totals have arrived", and that window
+    // measures 1,210px at 375px but only 231px at 1000px — about two wheel
+    // notches, where it reads as a flicker rather than a fixture. Require a full
+    // screen of it. Measured rather than gated on a breakpoint: the real
+    // variable is how much table there is, so this also covers short recipes,
+    // short browser windows and zoom, which a media query would only guess at.
+    const measure = () => {
+      const onAt = bar.getBoundingClientRect().bottom + window.scrollY;
+      const offAt = foot.getBoundingClientRect().top + window.scrollY - window.innerHeight + FOOT_REVEAL;
+      setRoomToPin(offAt - onAt >= window.innerHeight);
+    };
+    measure();
+    // The panel changes height when an inline price editor opens, which moves
+    // the footer and so the window — cheaper and more reliable to observe it
+    // than to enumerate everything that resizes it.
+    const resized = new ResizeObserver(measure);
+    resized.observe(panel);
+    window.addEventListener('resize', measure);
+
+    const gone = new IntersectionObserver(([e]) => setPastBar(!e.isIntersecting));
+    // Shrink the root's bottom edge so the footer has to be properly on screen,
+    // not merely touching it, before the strip stands down — otherwise the real
+    // "cost to finish" takes over while it is still a sliver at the very bottom.
+    const arrived = new IntersectionObserver(([e]) => setFootInView(e.isIntersecting), {
+      rootMargin: `0px 0px -${FOOT_REVEAL}px 0px`,
+    });
+    gone.observe(bar);
+    arrived.observe(foot);
+    return () => {
+      resized.disconnect();
+      window.removeEventListener('resize', measure);
+      gone.disconnect();
+      arrived.disconnect();
+    };
+  }, [cost]);
+
+  const stripOn = cost != null && roomToPin && pastBar && !footInView;
+
+  // Send the reader to the price field the strip is reporting on. The strip
+  // never holds an input of its own — two boxes for one value is a bug waiting
+  // to happen, and it would push the at-rest bar past its already-tall 158px.
+  const jumpToPrice = () => {
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    buyRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+    buyRef.current?.querySelector('input')?.focus({ preventScroll: true });
+  };
 
   // The drawer opens on the current recipe's year (or the latest priced season
   // before anything is picked), like the Recipes view; other years collapse.
@@ -179,7 +297,55 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const fullAvg = sum((r) => (r.unitAvg == null ? null : r.req * r.unitAvg));
   const fullMin = sum((r) => (r.unitMin == null ? null : r.req * r.unitMin));
   const unpricedNeeded = rows.filter((r) => r.need > 0 && !r.priced).length;
+  // Individual goods still to buy, summed across lines — 15 Mystic Silk + 6
+  // Dwarven Steel + 3 Elven Bismuth reads as 24, not 3. It is the pile you have
+  // to go and find, which is what the player is sizing up.
+  const needUnits = rows.reduce((n, r) => n + r.need, 0);
   const src = cost?.lines.find((l) => l.isSource);
+
+  // --- Phase 3: quick sale + the build-vs-buy call ------------------------
+  // Both read the EFFECTIVE unit prices, so a per-line override moves what your
+  // pile is worth as well as what the rest costs — an override means "the real
+  // market is this", and that cuts both ways.
+  const quick = quickSaleValue(rows.map((r) => ({
+    quantity: r.req, onHand: r.have, unitAvg: r.unitAvg, unitMin: r.unitMin,
+  })));
+  const autoMarket = cost?.marketAvg ?? null;
+  const market = marketInput === 'auto' ? autoMarket : marketInput;
+  const marketIsAuto = marketInput === 'auto' && autoMarket != null;
+  // The comparison is only meaningful once we know what the finished token
+  // costs to buy, so it appears with that number and not before (plan §2.2).
+  const plans = market == null ? null : comparePaths(finAvg, market, quick);
+  const planCost = (k: PathKey) => plans?.paths.find((p) => p.key === k)?.cost ?? 0;
+  const holdsGoods = provideAvg > 0;
+  // How much of the recipe you need in the drawer before finishing overtakes
+  // buying, and how far short of that you are. Same magnitude as the build-vs-
+  // buy gap — cost to finish is fullAvg minus what you hold — but a different
+  // question: not "which is cheaper today" but "how much more loot until
+  // crafting wins", which is the one a player with a growing stash is asking.
+  const breakEven = market == null ? 0 : breakEvenHoldings(fullAvg, market);
+  const toGo = Math.max(0, breakEven - provideAvg);
+  const gapWorthShowing = toGo > 0.005 && breakEven > 0;
+  // The comparison runs on average prices, but the min column right above it can
+  // be far cheaper — and a buyer who actually shops the low end may face a
+  // different answer entirely. Say so, and say it louder when building at min
+  // prices would beat the path we just crowned.
+  const minWorthSaying = finAvg > 0 && finMin < finAvg - 0.005;
+  const minBeatsVerdict =
+    plans != null && plans.best !== 'build' && finMin < planCost(plans.best) - WASH_THRESHOLD;
+
+  // The bar's one-line answer, sat under the cost-to-finish figure. Phones take
+  // a shorter wording on purpose: the right-hand column is sized by whichever of
+  // its three lines is widest, so a long verdict would squeeze the recipe name
+  // beside it and could push it onto another line the moment a price is typed.
+  // Clamping the copy keeps that column near 130px whatever the verdict says.
+  const verdictLine =
+    plans == null || market == null
+      ? narrow ? 'Set buy price' : 'Set buy price to compare'
+      : plans.wash
+        ? 'About even'
+        : `${plans.best === 'build' ? (narrow ? 'Complete' : 'Complete it') : (narrow ? 'Buy' : 'Buy it')}`
+          + ` · ${money0(plans.delta)} ${narrow ? 'less' : 'cheaper'}`;
 
   const setHave = (key: string, req: number, v: number) =>
     setOnHand((p) => ({ ...p, [key]: Math.min(Math.max(0, v), req) }));
@@ -239,7 +405,37 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
 
   return (
     <div className="calc">
-      <div className="calc-bar">
+      {/* Pinned only across the table, released the moment the totals show. It
+          reports; it never takes input (see jumpToPrice). */}
+      {stripOn && cost && (
+        <div className="calc-strip">
+          <span className="cs-name">{cost.displayName}</span>
+          <span className="cs-fin">
+            to finish <b>{moneyCalc(finAvg)}</b>
+          </span>
+          <span className="cs-line">
+            {plans && market != null ? (
+              <>
+                <button type="button" className="cs-jump" aria-label="Go to the buy price"
+                  onClick={jumpToPrice}>
+                  buy {moneyCalc(market)}
+                </button>
+                <span className={`cs-verdict${plans.wash ? '' : ' on'}`}>
+                  {plans.wash
+                    ? 'about even'
+                    : `${plans.best === 'build' ? 'Complete it' : 'Buy it'} · ${money0(plans.delta)} cheaper`}
+                </span>
+              </>
+            ) : (
+              <button type="button" className="cs-jump prompt" onClick={jumpToPrice}>
+                Set a buy price to compare
+              </button>
+            )}
+          </span>
+        </div>
+      )}
+
+      <div className="calc-bar" ref={barRef}>
         <button type="button" className="calc-browse" onClick={() => setDrawerOpen(true)}>
           <i className="calc-browse-i" aria-hidden="true">≡</i> Browse recipes
         </button>
@@ -253,18 +449,29 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               <span className="calc-cur-name">{cost.displayName}</span>
               <span className="calc-cur-year">{cost.year}</span>
             </span>
+            {/* Cost to finish and the buy-it answer are one block, so no future
+                layout change can put the comparison somewhere other than beside
+                the number it compares against. */}
             <span className="calc-spend">
               <span className="calc-spend-lab">Cost to finish</span>
               <span className="calc-spend-val">
                 <b><Money format={moneyCalc} value={finAvg} /></b> <span className="calc-min">min <Money format={moneyCalc} value={finMin} /></span>
               </span>
+              <button
+                type="button"
+                className={`calc-spend-buy${plans && market != null && !plans.wash ? ' on' : ''}`}
+                aria-label={plans && market != null ? 'Change the buy price' : 'Set a buy price to compare'}
+                onClick={jumpToPrice}
+              >
+                {verdictLine}
+              </button>
             </span>
           </>
         )}
       </div>
 
       {cost ? (
-        <div className="calc-panel">
+        <div className="calc-panel" ref={panelRef}>
           <div className="calc-tools">
             <span className="calc-tools-lab">Set all on hand</span>
             <button type="button" className={`calc-all${allOwned ? ' on' : ''}`} aria-pressed={allOwned}
@@ -364,7 +571,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
             </div>
           ))}
 
-          <div className="calc-foot">
+          <div className="calc-foot" ref={footRef}>
             <div className="calc-foot-row total">
               <span>Cost to finish</span>
               <span><b><Money format={moneyCalc} value={finAvg} /></b> <span className="calc-min">min <Money format={moneyCalc} value={finMin} /></span></span>
@@ -373,9 +580,24 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               <span>You're providing</span>
               <span>{moneyCalc(provideAvg)} of materials</span>
             </div>
+            {quick.high > 0 && (
+              <div className="calc-foot-row">
+                <span>
+                  Quick-sale value
+                  <HintPopover label="How quick-sale value is worked out">
+                    What your on-hand goods would fetch if you sold them, knocking{' '}
+                    {pct(RESALE.off)} off to move them. The low end takes that off the season's
+                    <b> lowest</b> price — a fire sale, everything gone fast. The high end takes it
+                    off the <b>going rate</b> — a patient sale, worked for what it's worth. Both
+                    are estimates, not offers.
+                  </HintPopover>
+                </span>
+                <span>~{range(quick.low, quick.high)} if you sold them</span>
+              </div>
+            )}
             <p className="calc-foot-note">
               Full build from scratch {moneyCalc(fullAvg)} (min {moneyCalc(fullMin)}).
-              {src && <> Own the {src.displayName}? Hit <b>All</b> on its row for the upgrade-only price.</>}
+              {src && <> Own the {src.displayName}? Hit <b>All</b> on the top row for the upgrade-only price.</>}
             </p>
             {unpricedNeeded > 0 && (
               <p className="calc-warn">
@@ -383,12 +605,186 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 {unpricedNeeded === 1 ? ' has' : ' have'} no price and {unpricedNeeded === 1 ? "isn't" : "aren't"} in the total.
               </p>
             )}
-            {cost.marketAvg != null && (
-              <p className="calc-buy-note">
-                This token also sells at auction for about {moneyCalc(cost.marketAvg)}
-                {finAvg <= cost.marketAvg
-                  ? ` — finishing the craft (${moneyCalc(finAvg)}) is cheaper.`
-                  : ` — cheaper than the ${moneyCalc(finAvg)} left to build.`}
+          </div>
+
+          {/* Phase 3: buy-instead price, and the three ways to end up holding
+              the token. Every total is shown, not just the verdict, so the
+              call can be audited rather than taken on trust (plan §7). */}
+          <div className="cbuy" ref={buyRef}>
+            <div className="cbuy-head">
+              <label className="cbuy-price">
+                <span className="cbuy-lab">
+                  Buy it instead for
+                  <HintPopover label="About the buy-it price">
+                    What the finished token would cost you to buy outright — from a reseller,
+                    the secondary market, or another player. Where the token has its own auction
+                    sales we start from those; type over it with any price you've actually seen.
+                  </HintPopover>
+                </span>
+                <span className="cl-money-in">
+                  <span className="cl-dollar">$</span>
+                  <PriceInput
+                    ariaLabel="Price to buy the finished token"
+                    value={market}
+                    onChange={(n) => setMarketInput(n)}
+                  />
+                </span>
+              </label>
+              {marketIsAuto ? (
+                <span className="cbuy-src">from {cost.year} auction sales</span>
+              ) : (
+                autoMarket != null && (
+                  <button type="button" className="cl-reset" onClick={() => setMarketInput('auto')}>
+                    Reset to {moneyCalc(autoMarket)}
+                  </button>
+                )
+              )}
+            </div>
+
+            {plans && market != null ? (
+              <div className="cbuy-plans">
+                <p className="cbuy-verdict">
+                  {plans.wash ? (
+                    <>
+                      <b>It's a wash.</b> Completing the transmute and buying land within{' '}
+                      {moneyCalc(WASH_THRESHOLD)} of each other
+                      {holdsGoods ? ' — buying gets you the token today and keeps your goods.' : '.'}
+                    </>
+                  ) : plans.best === 'build' ? (
+                    <>
+                      <b>Complete the transmute.</b> The {moneyCalc(finAvg)} left to buy is about{' '}
+                      {money0(plans.delta)} under the {moneyCalc(market)} asking price.
+                    </>
+                  ) : (
+                    <>
+                      <b>Buy it.</b> At {moneyCalc(market)} it's about {money0(plans.delta)} under the{' '}
+                      {moneyCalc(finAvg)} left to complete
+                      {holdsGoods ? ', and your trade goods stay in the drawer for the next craft.' : '.'}
+                    </>
+                  )}
+                </p>
+
+                <ul className="cbuy-opts">
+                  {plans.paths.map((p) => (
+                    <li key={p.key} className={p.key === plans.best && !plans.wash ? 'win' : ''}>
+                      <span className="cbo-name">{pathName(p.key, holdsGoods)}</span>
+                      <span className="cbo-cost">{moneyCalc(p.cost)}</span>
+                      <span className="cbo-how">
+                        {p.key === 'build'
+                          ? needUnits > 0
+                            ? `buy the ${needUnits} ingredient${needUnits === 1 ? '' : 's'} you're still short`
+                            : 'you already hold everything it takes'
+                          : holdsGoods
+                            ? 'and your trade goods stay yours'
+                            : 'straight off the secondary market'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* How much more loot until crafting overtakes buying. The
+                    "to go" figure is the same magnitude as the gap above, but
+                    it answers a different question — keep playing, or buy the
+                    rest now — and the bar makes "am I close?" readable at a
+                    glance. Whole dollars throughout: these are estimates of a
+                    target, and "about $10.11" argues with itself. */}
+                {gapWorthShowing && (
+                  <div className="cbuy-gap">
+                    <p className="cbuy-gap-lead">
+                      About {money0(toGo)} of trade goods to go
+                    </p>
+                    {/* An empty bar says nothing a "you're at $0" doesn't; it
+                        appears once there is progress to draw. */}
+                    {holdsGoods && (
+                      <div
+                        className="cbuy-bar"
+                        role="img"
+                        aria-label={`Holding ${money0(provideAvg)} of the ${money0(breakEven)} needed before completing the transmute beats buying`}
+                      >
+                        <span style={{ width: `${Math.round(Math.min(1, provideAvg / breakEven) * 100)}%` }} />
+                      </div>
+                    )}
+                    <p className="cbuy-gap-note">
+                      Completing the transmute gets cheaper than buying once you're holding about{' '}
+                      {money0(breakEven)} of this recipe — you're at {money0(provideAvg)}.
+                      Loot can close that gap for free.
+                    </p>
+                  </div>
+                )}
+
+                {plans.sellAndBuyNet != null && (
+                  <p className="cbuy-note">
+                    {/* Whole dollars throughout the sentence: mixing moneyCalc's
+                        cents-under-$100 rule with its no-cents-above leaves
+                        figures that don't reconcile on screen. */}
+                    <b>Selling instead?</b> Your goods would fetch about{' '}
+                    {range(quick.low, quick.high)},{' '}
+                    {plans.sellAndBuyNet.high <= 0 ? (
+                      // Worth more than the token even at fire-sale prices:
+                      // selling covers the purchase outright and leaves change.
+                      // A negative "cost" reads as an error, so it becomes a
+                      // profit in the green the comparison tables use.
+                      <>
+                        netting a{' '}
+                        <span className="cbuy-profit">
+                          {range(-plans.sellAndBuyNet.high, -plans.sellAndBuyNet.low)} profit
+                        </span>
+                      </>
+                    ) : plans.sellAndBuyNet.low >= 0 ? (
+                      <>bringing the buy down to {range(plans.sellAndBuyNet.low, plans.sellAndBuyNet.high)}</>
+                    ) : (
+                      // The range straddles the asking price — a good sale clears
+                      // it with change, a poor one leaves a bill.
+                      <>
+                        leaving {money0(plans.sellAndBuyNet.high)} to pay if they go cheap, or a{' '}
+                        <span className="cbuy-profit">
+                          {money0(-plans.sellAndBuyNet.low)} profit
+                        </span>{' '}
+                        if they sell well
+                      </>
+                    )}{' '}
+                    — but they could take a lot of time and effort to sell, with no promise they all
+                    move. Plus, then you don't have them for a different recipe.
+                  </p>
+                )}
+
+                {!holdsGoods && (
+                  <p className="cbuy-note">
+                    From scratch, buying almost always beats crafting — crafted tokens rarely sell
+                    for more than their materials cost. This gets interesting once you're holding
+                    trade goods: mark what you've pulled and watch the gap close.
+                  </p>
+                )}
+
+                <p className={`cbuy-note${minBeatsVerdict ? ' flag' : ''}`}>
+                  {minWorthSaying ? (
+                    minBeatsVerdict ? (
+                      <>
+                        Compared at average prices — but at <b>minimum</b> prices completing the
+                        transmute costs {moneyCalc(finMin)}, which beats every option here.
+                      </>
+                    ) : (
+                      <>
+                        Compared at average prices. At <b>minimum</b> prices completing the
+                        transmute costs {moneyCalc(finMin)}.
+                      </>
+                    )
+                  ) : (
+                    <>Compared at average prices.</>
+                  )}
+                </p>
+                {unpricedNeeded > 0 && (
+                  <p className="calc-warn">
+                    {unpricedNeeded} needed ingredient{unpricedNeeded === 1 ? '' : 's'}{' '}
+                    {unpricedNeeded === 1 ? 'has' : 'have'} no price, so cost to finish is
+                    understated and this comparison leans toward building.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="cbuy-hint">
+                Enter what the finished token sells for and we'll weigh completing the transmute
+                against just buying it — and show how much more loot it takes before crafting wins.
               </p>
             )}
           </div>
