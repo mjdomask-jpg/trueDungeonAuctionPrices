@@ -334,6 +334,19 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const minBeatsVerdict =
     plans != null && plans.best !== 'build' && finMin < planCost(plans.best) - WASH_THRESHOLD;
 
+  // The bar's one-line answer, sat under the cost-to-finish figure. Phones take
+  // a shorter wording on purpose: the right-hand column is sized by whichever of
+  // its three lines is widest, so a long verdict would squeeze the recipe name
+  // beside it and could push it onto another line the moment a price is typed.
+  // Clamping the copy keeps that column near 130px whatever the verdict says.
+  const verdictLine =
+    plans == null || market == null
+      ? narrow ? 'Set buy price' : 'Set buy price to compare'
+      : plans.wash
+        ? 'About even'
+        : `${plans.best === 'build' ? (narrow ? 'Complete' : 'Complete it') : (narrow ? 'Buy' : 'Buy it')}`
+          + ` · ${money0(plans.delta)} ${narrow ? 'less' : 'cheaper'}`;
+
   const setHave = (key: string, req: number, v: number) =>
     setOnHand((p) => ({ ...p, [key]: Math.min(Math.max(0, v), req) }));
   const toggleAll = (key: string, req: number, have: number) => setHave(key, req, have >= req ? 0 : req);
@@ -436,11 +449,22 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               <span className="calc-cur-name">{cost.displayName}</span>
               <span className="calc-cur-year">{cost.year}</span>
             </span>
+            {/* Cost to finish and the buy-it answer are one block, so no future
+                layout change can put the comparison somewhere other than beside
+                the number it compares against. */}
             <span className="calc-spend">
               <span className="calc-spend-lab">Cost to finish</span>
               <span className="calc-spend-val">
                 <b><Money format={moneyCalc} value={finAvg} /></b> <span className="calc-min">min <Money format={moneyCalc} value={finMin} /></span>
               </span>
+              <button
+                type="button"
+                className={`calc-spend-buy${plans && market != null && !plans.wash ? ' on' : ''}`}
+                aria-label={plans && market != null ? 'Change the buy price' : 'Set a buy price to compare'}
+                onClick={jumpToPrice}
+              >
+                {verdictLine}
+              </button>
             </span>
           </>
         )}

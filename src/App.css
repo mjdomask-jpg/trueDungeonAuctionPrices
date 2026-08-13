@@ -843,6 +843,18 @@ td.diff.down { color: var(--diff-down); }
 .calc-spend { margin-left: auto; text-align: right; white-space: nowrap; }
 .calc-spend-lab { display: block; font-size: 11px; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; }
 .calc-spend-val b { font-size: 22px; font-family: var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
+/* The bar's one-line answer, under the figure it compares against. Always a
+   button: with no price it invites one, with a price it goes back to change it.
+   Dotted underline in both states so it never stops reading as tappable. */
+.calc-spend-buy {
+  display: block; margin-left: auto; padding: 2px 0 0;
+  font: inherit; font-size: 12px; cursor: pointer;
+  background: none; border: none; color: var(--text);
+  text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 3px;
+}
+.calc-spend-buy:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.calc-spend-buy.on { color: var(--accent); font-weight: 600; }
+.calc-spend-buy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 .calc-empty {
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;
@@ -1059,6 +1071,35 @@ td.diff.down { color: var(--diff-down); }
 
 /* Two-line rows on phones: ingredient up top, controls below — no side-scroll. */
 @media (max-width: 640px) {
+  /* The bar becomes a two-column grid: actions and identity down the left,
+     cost-to-finish and its verdict stacked down the right.
+
+     As a wrapping flex row it reflowed on the recipe NAME's length — measured at
+     440px, "Odin's Eye Patch" put the name beside Browse with the cost alone
+     below it, while "Greater Eye Patch of the Aesir" pushed the name down onto
+     the cost's row with 23px to spare. Flipping between a Legendary and its
+     source Relic therefore moved the name between lines. A grid fixes where
+     everything lives; a long name now wraps and the bar simply grows, which it
+     can afford — 88px for a short name, 103px wrapped, against 123px before. */
+  .calc-bar {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px; row-gap: 8px; align-items: start;
+  }
+  .calc-browse { grid-column: 1; grid-row: 1; justify-self: start; }
+  .calc-cur { grid-column: 1; grid-row: 2; }
+  .calc-spend { grid-column: 2; grid-row: 1 / span 2; margin-left: 0; }
+  /* Plain inline flow rather than flex, so chip, name and year wrap together as
+     one run of text and the chip stays on the first line. */
+  .calc-cur { display: block; }
+  .calc-cur .tchip { margin-right: 6px; vertical-align: 1px; }
+  .calc-cur-name { display: inline; white-space: normal; overflow: visible; text-overflow: clip; }
+  .calc-cur-year { margin-left: 5px; }
+  /* 12px of text is far under a thumb; grow the hit area by overlay, not
+     padding, so the line keeps its place in the stack (docs/ui-conventions.md).
+     Nothing above it is interactive, so reaching up into the figure is safe. */
+  .calc-spend-buy { position: relative; }
+  .calc-spend-buy::after { content: ''; position: absolute; inset: -12px -6px; }
+
   .calc-lhead { display: none; }
   .calc-dbody .search input { height: 44px; }
   .cl-main { grid-template-columns: auto 1fr auto; grid-template-areas: "name name name" "hand buy fin"; row-gap: 9px; }

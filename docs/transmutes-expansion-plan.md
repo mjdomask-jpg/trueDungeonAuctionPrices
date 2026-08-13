@@ -442,6 +442,29 @@ clear wording.
   have fixed desktop while still guessing at short recipes, short browser windows and
   zoom; the measurement covers all of them, and a `ResizeObserver` on `.calc-panel`
   keeps it honest when an inline price editor opens and moves the footer.
+- **`.calc-bar` carries the verdict, and became a two-column grid on phones.** With
+  the strip gone from desktop, the bar needed the discoverability itself, so
+  `.calc-spend` gained a third line under the figure — `Set buy price` before one is
+  entered, `Buy · $21 less` after — always a button that scrolls to the real field.
+  Cost and verdict are one element by construction, so no later layout change can
+  separate the comparison from what it compares against.
+
+  Placing it exposed a **pre-existing reflow bug**. The bar was a wrapping flex row,
+  so the *recipe name's length* decided the layout: measured at 440px,
+  `Odin's Eye Patch` put the name beside Browse with the cost alone below, while
+  `Greater Eye Patch of the Aesir` pushed the name down onto the cost's row leaving
+  23px. Those two are a Legendary and its source Relic — the pair you flip between
+  most — so the name jumped between lines as you switched. Below 640px the bar is now
+  `grid-template-columns: minmax(0, 1fr) auto`: Browse and the name down the left, the
+  cost/verdict block spanning both rows on the right. `.calc-cur` switches to plain
+  inline flow so chip, name and year wrap as one run of text. A long name now adds a
+  line and the bar *grows* instead of reshuffling — verified identical grid placement
+  for both recipes at 440, 375 and 320px. Heights: **95px (440), 95–121px (375),
+  121px (320)** against 123px before; desktop 72 → 92px for the extra line.
+
+  Phones take a **shorter verdict** (`Buy · $21 less`, not `Buy it · $21 cheaper`)
+  because the right column is sized by its widest line — a long verdict would narrow
+  the name column and could add a line the moment a price is typed.
 - Ties under **$1** (`WASH_THRESHOLD`) report as a wash rather than crowning a winner
   by pennies — every input here is an estimate.
 - A caveat fires when a needed ingredient has no price: cost-to-finish is understated,
