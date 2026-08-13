@@ -354,12 +354,26 @@ clear wording.
   auction** — so manual entry is the real path, as §9 Q3 assumed. The box is
   tri-state (`'auto' | number | null`) so clearing it stays cleared instead of
   snapping back to the auction price.
-- **Quick-sale value is a single number, not an avg/min pair.** The 20%-off-avg and
-  10%-off-min figures are *not* a range: when a token's min and avg are close (common
-  — hand-maintained and single-sale prices have min == avg), the 10% haircut yields a
-  **larger** number than the 20% one, so a "min $X" label under a smaller "avg" figure
-  would read as a bug. The UI leads with the avg-basis figure and puts the min-basis
-  one in the HintPopover. Both rates stay in `RESALE` (plan §7).
+- **Quick-sale value is a RANGE off ONE rate: `RESALE.off` = 20%, taken off both the
+  season minimum and the season average.** Low end = a fire sale (20% under the
+  lowest price the market ever paid), high end = a patient sale (20% under the going
+  rate). On Val's, holding 2× Ultra Rare and 5× Alchemist's Ink: **$71–$106**.
+
+  The first cut used **20% off avg but 10% off min**, reasoning that the minimum is
+  already low, and showed only the avg figure because the pair "would commonly
+  invert". Measured against the data (2026-08-12), that reasoning was wrong twice
+  over:
+  - Inversion (`0.9 × min > 0.8 × avg`) hits **15 of 208** priced (season, item)
+    groups — **7.2%**, not "commonly". Only **3** groups have min == avg at all.
+  - Min sits a **median 0.613** of avg, so `0.9 × min` is not a near-twin of the avg
+    figure; it is a genuinely lower number that was being hidden in a popover.
+
+  A single rate **cannot** invert, since `min ≤ avg` always: 0 of 208, by
+  construction. It also costs nothing in expressiveness — the two ends stop being
+  "two data bases" and start being *fast sale* vs *patient sale*, which is the
+  effort trade-off the maintainer's domain context says players actually weigh.
+  One constant to explain and one to retune. Ranges collapse to a single figure when
+  both ends round the same (3 single-sale items), so nothing ever renders "$45–$45".
 - **The comparison is in avg terms only.** Adding a min column would have meant
   showing a "min" cost for the sell path that can land either side of the avg one
   (the resale term inverts the direction of "min"), which makes the verdict harder to

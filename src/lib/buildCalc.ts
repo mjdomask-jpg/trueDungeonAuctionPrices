@@ -8,18 +8,23 @@
 //
 // Design: docs/transmutes-expansion-plan.md §2.2.
 
-// Quick-sale haircuts. Selling a pile of materials fast means undercutting the
+// The quick-sale haircut. Selling a pile of goods means undercutting the
 // market, so on-hand value is discounted off the reference price.
 //
-// The two rates model the same fast sale from the two prices we hold. They are
-// config, not literals at the call site, so the maintainer can retune the model
-// in one place (plan §7).
+// ONE rate, applied to both the season minimum and the season average, which is
+// what makes the result a range rather than two unrelated estimates:
+//
+//   low  = 20% under the lowest price the market ever paid — a fire sale
+//   high = 20% under the going rate — a patient sale
+//
+// An earlier cut used 20% off avg but only 10% off min, on the reasoning that
+// the minimum is already low. Measured against the real data that inverted the
+// pair in 15 of 208 priced (season, item) groups — the "min" figure came out
+// LARGER — because min sits a median 0.613 of avg, not just below it. A single
+// rate cannot invert, since min <= avg always. Config, not literals at the call
+// site, so the model retunes in one place (plan §7).
 export const RESALE = {
-  // Off the average price — the reference the whole calculator leads with.
-  offAvg: 0.2,
-  // Off the minimum price. Smaller, because the minimum is already the low end
-  // of what the token traded for; haircutting it twice would double-count.
-  offMin: 0.1,
+  off: 0.2,
 } as const;
 
 /** One recipe line, reduced to what the decision math needs. Unit prices are
@@ -32,28 +37,29 @@ export type CalcLine = {
 };
 
 export type QuickSale = {
-  /** What a fast sale of your on-hand materials nets, off average prices.
-   *  This is the figure the UI and the comparison both use. */
-  value: number;
-  /** The same sale valued off minimum prices. Shown only as supporting detail:
-   *  because the two haircuts differ, this can land either side of `value`, so
-   *  it reads as a second estimate rather than a bound. Never a "min" column —
-   *  a larger number under a "min" label reads as a bug. */
-  fromMin: number;
+  /** Fire sale — the haircut off the season's lowest price. */
+  low: number;
+  /** Patient sale — the haircut off the going rate. */
+  high: number;
 };
 
-/** What a fast sale of the on-hand materials is worth. Unpriced lines
- *  contribute nothing — we have no basis to value them. */
+/** What selling the on-hand goods is worth, as a range from a fire sale to a
+ *  patient one. Unpriced lines contribute nothing — we have no basis to value
+ *  them. `low <= high` always holds: one rate off two prices, and the minimum
+ *  never exceeds the average. */
 export function quickSaleValue(lines: CalcLine[]): QuickSale {
-  let value = 0;
-  let fromMin = 0;
+  let low = 0;
+  let high = 0;
   for (const l of lines) {
     const held = Math.min(Math.max(0, l.onHand), l.quantity);
     if (held === 0) continue;
-    if (l.unitAvg != null) value += held * l.unitAvg * (1 - RESALE.offAvg);
-    if (l.unitMin != null) fromMin += held * l.unitMin * (1 - RESALE.offMin);
+    // A line always carries both prices or neither, but fall back rather than
+    // silently undercount the low end if that ever stops being true.
+    const min = l.unitMin ?? l.unitAvg;
+    if (min != null) low += held * min * (1 - RESALE.off);
+    if (l.unitAvg != null) high += held * l.unitAvg * (1 - RESALE.off);
   }
-  return { value, fromMin };
+  return { low, high };
 }
 
 export type PathKey = 'build' | 'sellAndBuy' | 'buy';
@@ -72,12 +78,14 @@ export type Comparison = {
   /** True when `delta` is too small to call. Every number feeding this is an
    *  estimate, so declaring a winner by pennies would read as false precision. */
   wash: boolean;
-  /** The quick-sale value the sell aside is priced from, echoed for display. */
-  quickSale: number;
-  /** What selling the pile first and then buying nets. Null when there is
-   *  nothing on hand to sell. Reported for the aside, never as a contender —
-   *  see below. */
-  sellAndBuyNet: number | null;
+  /** The quick-sale range the sell aside is priced from, echoed for display. */
+  quickSale: QuickSale;
+  /** What is left to pay after selling the pile first, as a range. NEGATIVE
+   *  means the goods more than cover the token and you come out ahead. `low` is
+   *  the best outcome for the buyer (the goods sold well), `high` the worst.
+   *  Null when there is nothing on hand to sell. Reported for the aside, never
+   *  as a contender — see below. */
+  sellAndBuyNet: { low: number; high: number } | null;
 };
 
 /** Below this the two paths are reported as level rather than one "winning". */
@@ -105,7 +113,7 @@ export const WASH_THRESHOLD = 1;
 export function comparePaths(
   costToFinish: number,
   market: number,
-  quickSale: number,
+  quickSale: QuickSale,
 ): Comparison {
   const paths: Path[] = [
     { key: 'build', cost: costToFinish },
@@ -118,7 +126,12 @@ export function comparePaths(
     delta,
     wash: delta < WASH_THRESHOLD,
     quickSale,
-    sellAndBuyNet: quickSale > 0 ? market - quickSale : null,
+    // Selling well leaves the least to pay, so the high end of the proceeds
+    // maps to the low end of what is still owed.
+    sellAndBuyNet:
+      quickSale.high > 0
+        ? { low: market - quickSale.high, high: market - quickSale.low }
+        : null,
   };
 }
 

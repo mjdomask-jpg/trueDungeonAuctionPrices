@@ -53,9 +53,18 @@ const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Ex
 const pathName = (key: PathKey, holdsGoods: boolean) =>
   key === 'build' ? 'Complete the transmute' : holdsGoods ? 'Buy it, keep your goods' : 'Just buy it';
 
-// A configured rate as prose ("20%"). The rates live in RESALE, so the help
+// A configured rate as prose ("20%"). The rate lives in RESALE, so the help
 // text can't drift from the math the way a hardcoded "20%" would.
 const pct = (rate: number) => `${Math.round(rate * 100)}%`;
+
+// A money range in whole dollars, collapsing to one figure when both ends round
+// the same — "$71–$106", but "$45" rather than "$45–$45". Compares the rendered
+// strings, not the numbers, so $70.60 and $71.40 don't print as "$71–$71".
+const range = (lo: number, hi: number) => {
+  const a = money0(lo);
+  const b = money0(hi);
+  return a === b ? a : `${a}–${b}`;
+};
 
 // Money always shows both cents digits ($10.60, not $10.6); parsing rounds to
 // cents so a stored override never carries a longer tail than it displays.
@@ -228,7 +237,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const marketIsAuto = marketInput === 'auto' && autoMarket != null;
   // The comparison is only meaningful once we know what the finished token
   // costs to buy, so it appears with that number and not before (plan §2.2).
-  const plans = market == null ? null : comparePaths(finAvg, market, quick.value);
+  const plans = market == null ? null : comparePaths(finAvg, market, quick);
   const planCost = (k: PathKey) => plans?.paths.find((p) => p.key === k)?.cost ?? 0;
   const holdsGoods = provideAvg > 0;
   // How much of the recipe you need in the drawer before finishing overtakes
@@ -439,19 +448,19 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               <span>You're providing</span>
               <span>{moneyCalc(provideAvg)} of materials</span>
             </div>
-            {quick.value > 0 && (
+            {quick.high > 0 && (
               <div className="calc-foot-row">
                 <span>
                   Quick-sale value
                   <HintPopover label="How quick-sale value is worked out">
-                    What your on-hand materials would fetch if you sold them in a hurry — priced
-                    at {pct(RESALE.offAvg)} below their average price, since moving a pile fast
-                    means undercutting the market. Off minimum prices instead
-                    ({pct(RESALE.offMin)} below, because the minimum is already the low end) it
-                    comes to about {money0(quick.fromMin)}. Both are estimates, not offers.
+                    What your on-hand goods would fetch if you sold them, knocking{' '}
+                    {pct(RESALE.off)} off to move them. The low end takes that off the season's
+                    <b> lowest</b> price — a fire sale, everything gone fast. The high end takes it
+                    off the <b>going rate</b> — a patient sale, worked for what it's worth. Both
+                    are estimates, not offers.
                   </HintPopover>
                 </span>
-                <span>~{money0(quick.value)} if you sold them</span>
+                <span>~{range(quick.low, quick.high)} if you sold them</span>
               </div>
             )}
             <p className="calc-foot-note">
@@ -574,18 +583,33 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 {plans.sellAndBuyNet != null && (
                   <p className="cbuy-note">
                     {/* Whole dollars throughout the sentence: mixing moneyCalc's
-                        cents-under-$100 rule with its no-cents-above leaves three
-                        figures that don't reconcile on screen ($106 less $80
-                        showing as $25.71). */}
-                    <b>Selling instead?</b> Your goods would fetch about {money0(quick.value)},{' '}
-                    {plans.sellAndBuyNet < 0 ? (
-                      // The pile is worth more than the token: selling covers the
-                      // purchase outright and leaves change. A negative "cost"
-                      // reads as an error, so it becomes a profit and takes the
-                      // same green the comparison tables use for money saved.
-                      <>netting a <span className="cbuy-profit">{money0(-plans.sellAndBuyNet)} profit</span></>
+                        cents-under-$100 rule with its no-cents-above leaves
+                        figures that don't reconcile on screen. */}
+                    <b>Selling instead?</b> Your goods would fetch about{' '}
+                    {range(quick.low, quick.high)},{' '}
+                    {plans.sellAndBuyNet.high <= 0 ? (
+                      // Worth more than the token even at fire-sale prices:
+                      // selling covers the purchase outright and leaves change.
+                      // A negative "cost" reads as an error, so it becomes a
+                      // profit in the green the comparison tables use.
+                      <>
+                        netting a{' '}
+                        <span className="cbuy-profit">
+                          {range(-plans.sellAndBuyNet.high, -plans.sellAndBuyNet.low)} profit
+                        </span>
+                      </>
+                    ) : plans.sellAndBuyNet.low >= 0 ? (
+                      <>bringing the buy down to {range(plans.sellAndBuyNet.low, plans.sellAndBuyNet.high)}</>
                     ) : (
-                      <>bringing the buy down to {money0(plans.sellAndBuyNet)}</>
+                      // The range straddles the asking price — a good sale clears
+                      // it with change, a poor one leaves a bill.
+                      <>
+                        leaving {money0(plans.sellAndBuyNet.high)} to pay if they go cheap, or a{' '}
+                        <span className="cbuy-profit">
+                          {money0(-plans.sellAndBuyNet.low)} profit
+                        </span>{' '}
+                        if they sell well
+                      </>
                     )}{' '}
                     — but they could take a lot of time and effort to sell, with no promise they all
                     move. Plus, then you don't have them for a different recipe.
