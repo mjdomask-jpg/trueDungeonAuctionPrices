@@ -1,4 +1,6 @@
 auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
+202121,2021,21,token,Random Ultra Rare,9,$720.00
+202122,2021,22,token,Shaman's Belt,1,$60.00
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Earcuff of Freedom,1,$5.00
@@ -555,8 +557,6 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202647,2026,47,grunnel,Green Key,1,$102.00
 202647,2026,47,token,Censer and 2 of each incense,1,$5.00
 202647,2026,47,token,4x Baby Potatoes,1,$5.00
-202121,2021,21,token,Random Ultra Rare,9,$720.00
-202122,2021,22,token,Shaman's Belt,1,$60.00
 202122,2021,22,token,Figurine of Power: Reaver,2,$100.00
 202122,2021,22,token,Figurine of Power: Horror,2,$40.00
 202122,2021,22,token,Charm of the Faerie,1,$85.00
@@ -605,3 +605,36 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202124,2021,24,token,Darkrift Ingot,3,$14.25
 202124,2021,24,token,Death Cloak Fabric,3,$14.25
 202124,2021,24,token,Semi-Lich Dust,3,$14.25
+202018,2020,18,token,Bead of the Lucky Traveler,1,$145.00
+202018,2020,18,token,Kilt of Dungeonbane,1,$450.00
+202018,2020,18,token,Ioun Stone Gold Nugget,1,$104.00
+202018,2020,18,token,Kilt of Tavernbane,1,$110.00
+202018,2020,18,token,4th Tooth of Cavadar,1,$70.00
+202018,2020,18,token,5th Tooth of Cavadar,1,$55.00
+202018,2020,18,token,Set of all 6 2019 Relic Fragments,1,$75.00
+202018,2020,18,token,Set of 2018 Monster Trophies,1,$26.00
+202018,2020,18,token,Set of 2017 Monster Trophies,1,$30.00
+202018,2020,18,token,Set of 2016 Monster Trophies,1,$27.00
+202018,2020,18,token,Soul Coffer,1,$70.00
+202018,2020,18,token,Shirt of the Fae,1,$35.00
+202018,2020,18,token,Ioun Stone Fluorite Cube,1,$55.00
+202018,2020,18,token,+2 Hammer of Smiting,1,$65.00
+202018,2020,18,token,Dark Disciple's Shirt,1,$80.00
+202018,2020,18,token,Ring of Regeneration (2007 version),1,$200.00
+202019,2020,19,token,Earcuff of the Phalanx,1,$75.00
+202019,2020,19,token,Ioun Stone Fluorite Cube,1,$40.00
+202019,2020,19,token,Crown of Elemental Mastery (Onyx),1,$50.00
+202019,2020,19,token,Figurine of Power: Pixie,1,$30.00
+202019,2020,19,token,4th Tooth of Cavadar,1,$76.00
+202019,2020,19,token,Kilt of Tavernbane,1,$110.00
+202019,2020,19,token,Kilt of Fatherbane,1,$100.00
+202019,2020,19,token,Charm of Synergy,1,$86.00
+202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00
+202019,2020,19,token,Shirt of Blessed Strength,1,$36.00
+202019,2020,19,token,Redoubt Mail,1,$40.00
+202020,2020,20,token,Lute of Free Fury,1,$180.00
+202020,2020,20,token,Earcuff of the Phalanx,1,$180.00
+202020,2020,20,token,Charm of Quick Strike,1,$65.00
+202020,2020,20,token,Kilt of Dungeonbane,1,$405.00
+202021,2020,21,token,Shirt of Focus,1,$93.00
+202021,2020,21,token,Boots of the South Wind,1,$93.00
