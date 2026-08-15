@@ -151,7 +151,21 @@ Four token types sit **outside** this ladder:
 - **Safehold** — a separate, self-contained upgrade chain numbered in descending Roman numerals
   (`Safehold V` → `IV` → `III` → `II` → `I`, where V is the entry level and I the top).
 - **Ultra Rare** and **Paragon** — concerned exclusively with the 8k-bonus tokens, intended as
-  rewards for the largest purchasers.
+  rewards for the largest purchasers. The 8k-bonus tokens of consecutive seasons form a **named
+  set** that eventually transmutes into that reward, and the company **renames the set every few
+  years** when one is completed and a new one opens. So unlike every other grouping the site
+  charts, this one's heading is a function of the season:
+
+  | Seasons | Set name |
+  |---|---|
+  | 2015–2022 | Orb of Dragonkind |
+  | 2023–2026 | Path to Enlightenment |
+  | 2027–2029 | Codex of the Familiar |
+
+  The site keeps the *grouping* stable (`8k Bonus Set` in `tokenGroups.csv`) and resolves the
+  *heading* per season from `GROUP_SEASON_LABELS` in `src/lib/eras.ts`, so a 2019 chart reads
+  "Orb of Dragonkind" while a 2026 chart reads "Path to Enlightenment". Add the next range there
+  when the following set is announced — see `docs/updating-the-data.md`.
 - **Omni** — a "wildcard" transmute meant to soak up excess trade goods in the market; it has no
   in-game function of its own.
 
