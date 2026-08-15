@@ -3,6 +3,15 @@
 **Status:** Phase 1 (audit only). No raw data was modified. This report is the
 checkpoint deliverable; implementation waits for sign-off.
 
+> **Historical record — the counts below are as of the audit (2026-08).** The data
+> has grown since: 294 auctions over seasons **2018**–2026, 7,721 sales rows, 641
+> context rows, and every season now carries `openDate`/`closeDate`/`daysToClose`/
+> month columns (the 2026-08-14 backfill), so the "no calendar dates before 2023"
+> findings here no longer describe the file. Current shape lives in
+> [`updating-the-data.md`](./updating-the-data.md). The *methodology* findings —
+> the join-key check, the withheld-estimate method, Trent's start date — still
+> stand.
+
 **Source workbook:** `C:\claude\Auction Data for Website - EDIT HERE FIRST.xlsx`
 (read with values *and* formulas). Row counts and every claim below were computed
 directly from the sheet, not assumed.

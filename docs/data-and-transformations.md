@@ -99,10 +99,11 @@ is back-office information retained for reference.
 | `auctioneer` | Optional | Who ran the auction. |
 | `auctionStyle`, `completionStyle` | Optional | How the auction was run/closed. |
 | `Link` | Optional | URL to view the original auction. |
-| `closeDate` | Yes | Date the auction closed, ISO `YYYY-MM-DD`. Used to label the "Last 5" window in the season stats line. Blank for still-open auctions; older seasons store `n/a`. |
-| `openDate`, `daysToClose` | Optional | Other timing fields. Older seasons store `n/a`. |
+| `closeDate` | Yes | Date the auction closed, ISO `YYYY-MM-DD`. Used to label the "Last 5" window in the season stats line. Blank only for a still-open auction and one `Failed` row; the `n/a` placeholder older seasons used is gone as of the 2026-08-14 backfill. |
+| `openDate`, `daysToClose` | Optional | Other timing fields, backfilled to every season (2018 on). `openDate` is populated on all 294 auctions; `daysToClose` is blank on 6 `Failed`/`Open` rows and those are excluded from averages, never read as zero. |
 | `Status` | Yes (filter) | Auction outcome: `Closed` (completed), `Failed` (did not fund/complete), `Open` (in progress). Auction **counts and statistics** include only `Closed`; `Open` rows drive the live open-auctions banner (Prices) and section (Auction Data). |
-| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal`, month fields | No | Financial/back-office fields not surfaced publicly. |
+| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | Indirectly | Back-office financials; the Analytics → Funding & Context views are built on them. Present for 2018–2021 and 2023–2026 — the 2022 season is blank throughout. |
+| `Open Month`, `Close Month` | Yes (Analytics) | **Season** months (1–13), derived from the dates, not calendar months. Populated on every season since the 2026-08-14 backfill. |
 
 ### The relationship between the two files
 
@@ -316,7 +317,8 @@ offset. Retired spellings that must not come back: `year`, `canonicalName`,
 
 `Category` values are `Trade 1`, `Trade 2`, `Ultra Rare`, `Premium`, `Bonus`,
 `Preorder`, `Golden Ticket`, `Condensed`, `Safehold`; `Onyx Ultra Rare`, which
-appears only in `onyx.csv`; and `Golden Fleece` and `Treasure Chest`, which appear only
+appears only in `onyx.csv`; and `Golden Fleece`, `Treasure Chest`,
+`Participation`, `Silver Ship Games`, `Legendary` and `Relic`, which appear only
 in `tokenMetadata` for never-auctioned tokens. `Trade Good` and `Patron` are
 retired.
 
@@ -414,6 +416,16 @@ the logic or data changes.
 
 ## Known gaps
 
+- **Two `auctionMetadata.csv` rows are dirty** (both pre-date the 2026-08-14
+  backfill and neither is caught by a validator). Auction **202112** has
+  `openDate 2025-05-26` in a 2021 season, which the sheet turns into
+  `Open Month 56` — a bogus month bucket in Analytics now that 2021 has cadence
+  data. And the file ends with a **blank row carrying only `#NUM!` and funding
+  formulas**; `parseMeta` drops it because it has no `auctionId`, so it is
+  harmless today, but it will confuse any consumer that keys on something else.
+- **The 2022 season has no funding data.** `targetFunding` and the augment
+  rollups are populated for 2018–2021 and 2023–2026 but blank for all 50 of
+  2022's auctions, so that season is a hole in Funding & Context.
 - **CI does not run `npm run validate`.** `deploy.yml` runs `npm run build`, so
   the `postbuild` data check gates a deploy but the recipe/schema validator does
   not. A bad export can reach production if nobody runs it locally.

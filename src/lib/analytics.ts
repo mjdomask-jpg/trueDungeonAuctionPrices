@@ -7,10 +7,11 @@
 //     (never a hardcoded year), compared against the season before it.
 //   - Historical: every season for which the underlying column exists.
 //
-// Coverage is uneven and that is load-bearing. daysToClose / Open Month /
-// Close Month were only recorded from 2022 on, so anything built on them must
-// exclude earlier seasons rather than plot them as zero. seasonsWithCadence()
-// is the single place that decides which seasons qualify.
+// Coverage is read from the data, never assumed. daysToClose / Open Month /
+// Close Month used to start at 2022; the 2026-08-14 backfill filled every season
+// back to 2018, so seasonsWithCadence() now admits all of them. It stays as the
+// single gate anyway — a future season can arrive undated, and anything built on
+// those columns must exclude such a season rather than plot it as zero.
 //
 // Pure functions over AuctionMeta[] / Sale[]; no React, no fetching.
 
@@ -64,8 +65,10 @@ export function metaSeasons(meta: AuctionMeta[]): string[] {
 }
 
 // Seasons that actually carry cadence data (open/close month, days to close).
-// Anything built on those columns iterates this, not metaSeasons, so 2019–21
-// drop out instead of rendering as empty months.
+// Anything built on those columns iterates this, not metaSeasons, so an undated
+// season drops out instead of rendering as empty months. Since the backfill this
+// returns every season (2018–2026); it is a guard, not a filter with known work
+// to do.
 export function seasonsWithCadence(meta: AuctionMeta[]): string[] {
   const ok = new Set<string>();
   for (const m of closedOnly(meta)) {

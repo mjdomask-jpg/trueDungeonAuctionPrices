@@ -51,14 +51,17 @@ export type AuctionMeta = {
   augmentedTotal: number | null;
   fundingNoAugment: number | null;
   preorderTotal: number | null;
-  // How long the auction ran. Recorded from 2022 on; null before that, and for
-  // a handful of 2025/2026 rows the sheet left blank.
+  // How long the auction ran. Backfilled to every season (2018 on) as of
+  // 2026-08-14; still null for the 6 Failed/Open rows the sheet left blank.
   daysToClose: number | null;
   // SEASON months, not calendar months: month 1 is the season's first month
   // (≈ September of the previous calendar year), so a "2026" auction opening
   // 2025-09-25 is openMonth 1. The calendar month each season-month lands on
   // drifts by ±1 year to year, which is exactly why the analytics compare
-  // seasons on this ordinal rather than on the date. Null before 2022.
+  // seasons on this ordinal rather than on the date. Populated on every season
+  // since the backfill. The sheet derives it from the date, so a wrong year in
+  // openDate surfaces here as an out-of-range month — auction 202112 is dated
+  // 2025 in a 2021 season and reads openMonth 56.
   openMonth: number | null;
   closeMonth: number | null;
 };
@@ -139,8 +142,10 @@ export function parseSales(text: string): Sale[] {
   return out;
 }
 
-// The metadata export writes "n/a" (not blank) for values that don't apply —
-// most of the pre-2022 date columns. Both read as "no value".
+// The metadata export writes "n/a" (not blank) for values that don't apply. The
+// date columns no longer use it (backfilled 2026-08-14), but the sheet can still
+// emit it and a stray "#NUM!" appears on one trailing junk row. Anything
+// unparseable reads as "no value".
 function intOrNull(raw: string | undefined): number | null {
   const s = (raw ?? '').trim();
   if (!s || s === 'n/a') return null;
@@ -167,8 +172,10 @@ function yesNoOrNull(raw: string | undefined): boolean | null {
 }
 
 // Forum vs Trent, per auction. Trent auctions are marked by auctioneer "Trent"
-// and/or a trenttokens.com link; everything else (including the 92 link-less
-// pre-2023 forum auctions) is Forum. Never inferred from date (audit §3).
+// and/or a trenttokens.com link; everything else is Forum. Never inferred from
+// date (audit §3). Every auction now carries a Link (the pre-2023 forum threads
+// were backfilled 2026-08-14) and none of them is a trenttokens.com URL, so the
+// split is unchanged: Trent starts in 2023.
 export function deriveSource(auctioneer: string, link: string): AuctionSource {
   if ((auctioneer ?? '').trim().toLowerCase() === 'trent') return 'Trent';
   if (/trenttokens\.com/i.test(link ?? '')) return 'Trent';
@@ -592,7 +599,7 @@ export function compareSeasons(sales: Sale[], seasonA: string, seasonB: string):
 // not just labels.
 //
 // Grain: ONE PRICE PER TOKEN PER AUCTION. A token can sell more than once in
-// the same auction (1,707 such pairs in prices.csv, 20 in onyx.csv); those
+// the same auction (1,708 such pairs in prices.csv, 20 in onyx.csv); those
 // duplicates collapse to their average, which is the single number the auction
 // is treated as having produced for that token. Deliberately not labelled as an
 // average in the UI — from the reader's side it is just that auction's price.

@@ -211,7 +211,8 @@ appear; a typo creates a new, unrecognised token rather than an error.
 
 **`Category` must be one of:** `Trade 1`, `Trade 2`, `Ultra Rare`, `Premium`,
 `Bonus`, `Preorder`, `Golden Ticket`, `Condensed`, `Safehold` — plus
-`Onyx Ultra Rare` (only in `onyx.csv`) and `Golden Fleece` / `Treasure Chest` (only in
+`Onyx Ultra Rare` (only in `onyx.csv`) and `Golden Fleece`, `Treasure Chest`,
+`Participation`, `Silver Ship Games`, `Legendary`, `Relic` (only in
 `tokenMetadata.csv`, for tokens never sold at auction). `Trade Good` and `Patron`
 are retired — do not reintroduce them.
 
@@ -252,15 +253,15 @@ change.
 | `auctionNumber` | **Yes** | Sequence within the season, e.g. `47`. |
 | `auctionName` | **Yes** | Free text, shown to users. May contain commas — the sheet quotes them correctly on export. |
 | `Status` | **Yes** | One of `Closed`, `Failed`, `Open`. |
-| `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Blank for still-open auctions; older seasons use `n/a`. See the padding warning below. |
+| `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated for every season back to 2018 (the 2026-08-14 backfill; `n/a` no longer appears). Blank only for a still-open auction and one 2025 `Failed` row. See the padding warning below. |
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
 | `Link` | Optional | URL to the original forum thread; the "Auction link" on the explorer's expanded cards and, always visible, on the open-auctions banner/section. Fill it in especially for any `Open` auction — it's the whole point of surfacing a live auction. |
-| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. Recorded from 2022 on; `n/a` earlier. |
-| `daysToClose` | Optional | Whole days the auction ran. The Analytics days-to-close chart and every "avg days to close" figure. An auction with this blank is **left out of those averages**, not counted as zero. |
-| `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. Recorded from 2022 on. |
-| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced. Recorded from 2023 on. Reserved for a future "augmented auctions" view. |
+| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. **Populated on all 294 auctions** since the backfill. |
+| `daysToClose` | Optional | Whole days the auction ran. The Analytics days-to-close chart and every "avg days to close" figure. An auction with this blank is **left out of those averages**, not counted as zero. Populated back to 2018; 6 rows are still blank (2025 ×4, 2026 ×2, all `Failed`/`Open`). |
+| `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. **Populated on every season back to 2018.** They are derived from `openDate`/`closeDate`, so a wrong date shows up here as an out-of-range month — see the gotcha below. |
+| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced directly (they feed Analytics → Funding & Context). Present for 2018–2021 and 2023–2026; **the whole 2022 season is still blank**. |
 
 ### Rules that matter
 
@@ -284,11 +285,21 @@ change.
   padding before assuming the cell is empty.
 - **`auctionId` is the join key** to `prices.csv` and `onyx.csv`. A sale whose
   `auctionId` has no row here still loads, but the auction has no name or date.
+- **Every season now carries dates.** Before 2026-08-14 the timing columns only
+  existed from 2022 on, and the Analytics Current Year view excluded the earlier
+  seasons for that reason. All nine seasons (2018–2026) are now dated, so
+  `seasonsWithCadence()` admits every one of them.
 
 ### Gotcha
 
 Marking an auction closed is **two** edits: set `Status` to `Closed` *and* fill
 in `closeDate`. Setting only one leaves the auction uncounted or unlabelled.
+
+**A wrong year in `openDate` hides as a huge `Open Month`.** Season months are
+computed from the date, so a 2021 auction dated `2025-05-26` becomes
+`Open Month 56` and renders as its own bogus accordion group in Analytics.
+Auction **202112** is in exactly this state today. Anything outside `1`–`13` is a
+typo in the date, not a real month.
 
 Listing a **live** auction is the mirror: set `Status` to `Open` and fill in
 `Link` and `openDate`. The open-auctions banner/section shows the name as a link
@@ -306,7 +317,9 @@ name change)
 **Drives:** the Prices page, Timelines, Compare Years, and every build cost on
 the Transmutes page. This is the single most important file.
 
-**Update when:** an auction closes and you have its results. 7,349 rows today.
+**Update when:** an auction closes and you have its results. 7,721 rows today,
+seasons 2018–2026 (2018 arrived with the 2026-08-14 backfill and is now the
+earliest priced season — every pre-2018 recipe falls back to it).
 
 ### Columns
 
@@ -389,8 +402,9 @@ change)
 It is loaded independently — if this file is missing or empty, those views are
 blank and nothing else is affected.
 
-**Update when:** an Onyx chase token sells. About 844 rows today, seasons
-2022–2026.
+**Update when:** an Onyx chase token sells. 844 rows today, seasons 2022–2026,
+across 38 auctions and 101 chase tokens. 42 of those rows (all 2026) have a blank
+`Price` — unsold lots, dropped at parse time, so 802 actually price.
 
 ### Columns
 
@@ -418,12 +432,13 @@ double-counts them.
 
 **Drives:** the Transmutes page — it's how a recipe ingredient resolves to a real
 token with a name, a class and a price. It also covers seasons that have no
-auction data at all (2012–2018, 2027), which is why it has rows `prices.csv`
+auction data at all (2012–2017, 2027), which is why it has rows `prices.csv`
 doesn't.
 
 **Update when:** a new season's tokens are announced, a token's display name or
-class changes, or the validator reports an unresolvable ingredient. 427 rows
-today.
+class changes, or the validator reports an unresolvable ingredient. 443 rows
+today, seasons 2012–2027 — one row per (season, token), no duplicates (25
+duplicated 2027 keys were removed on 2026-08-14).
 
 ### Columns
 
@@ -433,7 +448,7 @@ today.
 | `auctionSeason` | **Yes** | Four-digit year. Rows with a non-numeric value are dropped. |
 | `Item` | **Yes** | The stable internal name. Rows without it are dropped. |
 | `Display Name` | **Yes** | That season's public name. Falls back to `Item` if blank. |
-| `Category` | **Yes** | See the shared list. May also be `Golden Fleece` or `Treasure Chest` here. |
+| `Category` | **Yes** | See the shared list. This file also carries classes that never appear in `prices.csv`, for never-auctioned or reward-only tokens: `Golden Fleece`, `Treasure Chest`, `Participation`, `Silver Ship Games`, `Legendary`, `Relic`. |
 
 ### Rules that matter
 
@@ -462,7 +477,8 @@ sales.
 **Export from:** the `transmuteRecipes` tab → save as `transmuteRecipes.csv`
 
 **Drives:** the entire Transmutes page — every bill of materials and build cost.
-1,904 rows covering 171 recipes across 16 seasons.
+1,954 rows covering 174 recipes across 16 seasons (2012–2027), 53 of them
+`IsSource` lines.
 
 **Update when:** a new transmute is announced, or a recipe changes.
 
@@ -509,6 +525,11 @@ sales.
   — an alternate `Recipe N` variant, or the Golem-piece totem — is exempted by an
   explicit allowlist (`RAW_BUILT_LEGENDARIES`) in `scripts/validate-recipes.mjs`;
   add to it when you author another raw-built Legendary.
+- **At most one `IsSource=TRUE` per recipe.** Filling the column down a whole
+  recipe marks every ingredient as the upgrade-from token, which wrecks the
+  Build-vs-Upgrade split on that row. The validator's `multi-source` WARN catches
+  it — this is exactly what caught `2014 Ring of Greater Focus` (8 source lines)
+  and `2016 Blessed Redoubt Plate` (13), both fixed 2026-08-14.
 
 ### Gotcha
 
@@ -570,7 +591,10 @@ empty and nothing else is affected. See
 [`context-layer-design.md`](./context-layer-design.md).
 
 **Update when:** an auctioneer withholds, augments, or has Grunnel items in an
-auction. 575 rows today, seasons 2023–2026.
+auction. 641 rows today across 61 auctions. Coverage is **not** contiguous:
+seasons 2023–2026 are the fully-recorded ones, plus a backfilled tail —
+2018 (2 `withheld`), 2020 (33 `token`), 2021 (50 `token`). 2019 and 2022 have no
+rows at all. `augment`-category rows exist only in 2026.
 
 ### Columns
 

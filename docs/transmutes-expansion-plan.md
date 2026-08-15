@@ -17,6 +17,16 @@ suggestions are real, not guessed):
 - **All 18 pre-2019 recipes are Legendary and all 18 lack a source-relic line** —
   exactly the gap the prompt describes. Only 31 of 153 recipes carry any source
   line today.
+
+> **Grounding refreshed 2026-08-14** (the figures above are as-of 2026-08-10 and
+> are kept because the plan's reasoning rests on them). Current: **174 recipes,
+> 1,954 rows**, by level Relic 56, Legendary 46, Exalted 33, Enhanced 12,
+> Safehold 9, Omni 5, Mythic 5, Eldritch 2, Paragon 2, Ultra Rare 2, Arcanum 2.
+> **93** generic `"Ultra Rare"` lines. **53** recipes now carry a source line, and
+> the pre-2019 gap is **closed** — all 18 pre-2019 Legendaries have their source
+> relic (§3.3 / Phase 1b, shipped in `51b4aea`); the 18 pre-2019 recipes with no
+> source line are Relics, which correctly have none. Auction prices now start at
+> **2018**, not 2019, so pre-2018 recipes fall back to 2018.
 - Engine facts (`src/lib/transmutes.ts`): pricing is **per-season aggregation**;
   each recipe prices from its **debut year** with a season-fallback clamp; the
   `recentPrices` toggle only affects the latest priced season; costs already split
@@ -197,7 +207,12 @@ robust answer to every "our estimate may be off" concern in the prompt and also
 serves 3.3 and 3.4. Recommend building a generic **per-line price override** in the
 calculator rather than topic-specific hacks.
 
-### 3.3 Back-populate 2012–2018 Legendary source relics
+### 3.3 Back-populate 2012–2018 Legendary source relics — ✅ SHIPPED
+
+> Done in `51b4aea` (Phase 1b): all 18 pre-2019 Legendaries carry exactly one
+> `IsSource=TRUE` line, and `validate-recipes.mjs` gained both the
+> `legendary-source` ERROR and the `multi-source` WARN. The season fallback those
+> relics ride now lands on **2018**, not 2019.
 
 Pure **data-entry task** (no engine change): add the missing source-relic line
 (`IsSource=TRUE`) to each of the **18** pre-2019 Legendary recipes (list verified;
@@ -393,7 +408,7 @@ pulling the high-value build calculator forward.** Phases are independently
 shippable; each is one branch → PR, verified in-browser + validators, per project
 convention.
 
-### Phase 1 — Quick wins (low cost)
+### Phase 1 — Quick wins (low cost) — ✅ SHIPPED (`51b4aea`)
 - **1a. Recent-Prices flash/highlight** (§3.7). Pure UI. High delight, zero data.
 - **1b. Back-populate 18 pre-2019 Legendary source relics** (§3.3). Data + validator
   rule. No engine change.
@@ -684,7 +699,8 @@ None of them blocks on sheet authoring — every new column is optional with a d
 4+5+6+9 ─ one branch, one release
           data authoring (Expires exceptions, IngredientType, specific UR names)
           lands whenever; the engine is correct without it
-          2019-21 date backfill improves 4 automatically, blocks nothing (§10.5)
+          2019-21 date backfill LANDED 2026-08-14 — phase 4 gets full date
+          precision on every season from the start (§10.5)
 ```
 
 ---
@@ -964,11 +980,20 @@ remains, deliberately left to be decided by measurement rather than guessed:
 
 ### 10.5 Backfilling the 2019–2021 auction dates
 
+> **DONE — 2026-08-14.** The maintainer completed the manual backfill and went
+> further than this section scoped: **every season now has `openDate`,
+> `closeDate`, `daysToClose`, `Open Month` and `Close Month`**, a 2018 season was
+> added (6 auctions, 118 sales), and all 294 auctions now carry a `Link`. Phase 4
+> gets the date precision it wanted for free. Two leftovers, both recorded in
+> `data-and-transformations.md` → Known gaps: auction 202112's `openDate` is
+> typed as 2025 in a 2021 season (→ `Open Month 56`), and 2022 has no funding
+> data. The rest of this section is kept as the record of the decision.
+
 **Decided: the maintainer researches the threads manually.** ~40 auctions is small
 enough that assisted lookup beats building a crawler, and D5 means this is **not a
 blocker** — the site improves automatically as dates land.
 
-What the data says if it is ever automated:
+What the data said at the time, if it were ever automated:
 
 - **There are no links to follow.** 0 of the 42 pre-2022 metadata rows carry a `Link`
   (vs 185 of 236 from 2022 on), so it would be forum search by auctioneer name and
