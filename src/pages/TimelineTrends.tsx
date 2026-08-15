@@ -91,10 +91,10 @@ export function TimelineTrends() {
 
       {groups.map((g) => (
         <section key={g.group} className="cat-section" data-category={g.category}>
-          <h2 className="cat-header">{g.group}</h2>
+          <h2 className="cat-header">{g.label}</h2>
           <PriceTimeline
             series={g.series.map((s) => ({ label: s.displayName, points: s.points, lineColor: s.lineColor }))}
-            title={g.group}
+            title={g.label}
           />
         </section>
       ))}

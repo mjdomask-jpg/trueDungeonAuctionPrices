@@ -176,6 +176,7 @@ open the live site and confirm your change is visible.
 | Add or change a transmute recipe | [`transmuteRecipes.csv`](#transmuterecipescsv) |
 | Price something never sold at auction (Golden Fleece, etc.) | [`offAuctionPrices.csv`](#offauctionpricescsv) |
 | Change chart groupings or line colours | [`tokenGroups.csv`](#hand-authored-files) |
+| Rename the 8k bonus set for a new run of seasons | [`src/lib/eras.ts`](#tokengroupscsv) (not a data file) |
 | Change how a reward-only token is priced | [`derivedPrices.csv`](#hand-authored-files) |
 | Record a withheld / augment / grunnel item for an auction | [`contextItems.csv`](#contextitemscsv) |
 | Refresh the per-lot sale data behind the Quartiles view | [`rawPricesData.csv`](#rawpricesdatacsv) |
@@ -634,6 +635,27 @@ colours. Columns: `Category`, `Item`, `Display Name`, `Group`, `Group Order`,
 `Line Color`. Keyed on `Item`; `Display Name` here is an authoring aid the site
 ignores. A group may span categories, so ordering uses the global `Group Order`.
 Currently 28 rows.
+
+**`Group` is a stable key, not the heading.** It joins tokens to a chart and
+orders the charts; the heading a reader actually sees is resolved per season. Most
+groups are named the same every year, so their key *is* their heading — but the 8k
+bonus group (`8k Bonus Set`) is renamed every few years, because its tokens form a
+set that later transmutes into a reward for the biggest spenders. Those names live
+in `GROUP_SEASON_LABELS` in [`src/lib/eras.ts`](../src/lib/eras.ts):
+
+| Seasons | Heading |
+|---|---|
+| 2015–2022 | Orb of Dragonkind |
+| 2023–2026 | Path to Enlightenment |
+| 2027–2029 | Codex of the Familiar |
+
+Every page built on the grouping (Trends → Over a season, Analytics → Quartiles,
+Analytics → Trent vs Forum) reads the resolved heading, so adding the next range
+there updates them all at once. Rename the `Group` key in this CSV and the
+per-season headings stop applying — the raw key shows instead, which is the signal
+that the two need re-linking. A season past the last range falls back to the key
+the same way, on purpose: it prompts someone to add the new name rather than
+quietly showing a stale one.
 
 ### `derivedPrices.csv`
 

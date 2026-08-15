@@ -92,8 +92,8 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
         const boxes: Box[] = g.items.map((it) => ({ label: it.displayName, stats: it.stats, lineColor: it.lineColor }));
         return (
           <section key={g.group} className="cat-section" data-category={g.category}>
-            <h2 className="cat-header">{g.group}</h2>
-            <BoxPlot boxes={boxes} title={g.group} />
+            <h2 className="cat-header">{g.label}</h2>
+            <BoxPlot boxes={boxes} title={g.label} />
             <QuartileTable items={g.items} boxes={boxes} narrow={narrow} />
           </section>
         );

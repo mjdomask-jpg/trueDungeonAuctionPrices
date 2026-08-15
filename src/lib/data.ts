@@ -3,6 +3,7 @@
 // auctions in the season overall (confirmed definition).
 
 import { compareCategories } from './categories';
+import { groupLabel } from './eras';
 
 export type Sale = {
   auctionId: string;
@@ -449,7 +450,13 @@ export function parseGroups(text: string): GroupRow[] {
 }
 
 export type TimelineSeries = { item: string; displayName: string; category: string; points: TimelinePoint[]; lineColor?: string };
-export type TimelineGroup = { group: string; groupOrder: number; category: string; series: TimelineSeries[] };
+export type TimelineGroup = {
+  group: string;      // stable key from tokenGroups.csv — joins tokens, orders charts, React key
+  label: string;      // what the heading reads THIS season (see groupLabel in eras.ts)
+  groupOrder: number;
+  category: string;
+  series: TimelineSeries[];
+};
 
 // A group's heading colour follows its dominant token category (a group may mix
 // categories — e.g. Bonus + Preorder — so we take the most common, first-seen
@@ -472,8 +479,10 @@ export type GroupedTimelines = {
 
 // Build every group's per-token timelines for one season. Display names are
 // resolved from that season's own sales, so legends always show the right
-// year's name. Tokens that didn't sell this season are simply absent; empty
-// groups are dropped. Groups are ordered by Group Order (name as tiebreak).
+// year's name — and so is each group's heading (`label`), since a few groups are
+// renamed from year to year. Tokens that didn't sell this season are simply
+// absent; empty groups are dropped. Groups are ordered by Group Order (name as
+// tiebreak).
 export function groupedTimelines(
   sales: Sale[], meta: AuctionMeta[], groupRows: GroupRow[], season: string,
 ): GroupedTimelines {
@@ -503,7 +512,9 @@ export function groupedTimelines(
         series.push({ item: r.item, displayName: dispByItem.get(r.item) ?? r.item, category: r.category, points, lineColor: r.lineColor });
       }
     }
-    if (series.length) groups.push({ group, groupOrder: order, category: modeCategory(rows), series });
+    if (series.length) {
+      groups.push({ group, label: groupLabel(group, season), groupOrder: order, category: modeCategory(rows), series });
+    }
   }
   groups.sort((a, b) => a.groupOrder - b.groupOrder || a.group.localeCompare(b.group));
 
