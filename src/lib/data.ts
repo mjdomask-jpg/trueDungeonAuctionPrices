@@ -59,9 +59,10 @@ export type AuctionMeta = {
   // 2025-09-25 is openMonth 1. The calendar month each season-month lands on
   // drifts by ±1 year to year, which is exactly why the analytics compare
   // seasons on this ordinal rather than on the date. Populated on every season
-  // since the backfill. The sheet derives it from the date, so a wrong year in
-  // openDate surfaces here as an out-of-range month — auction 202112 is dated
-  // 2025 in a 2021 season and reads openMonth 56.
+  // since the backfill, and every value is in 1..13. The sheet derives it from
+  // the date, so a wrong year in openDate surfaces here as an out-of-range month
+  // (202112 read 56 until its 2025-for-2021 typo was fixed) — treat anything
+  // outside that range as a bad date, not a real month.
   openMonth: number | null;
   closeMonth: number | null;
 };
@@ -143,9 +144,9 @@ export function parseSales(text: string): Sale[] {
 }
 
 // The metadata export writes "n/a" (not blank) for values that don't apply. The
-// date columns no longer use it (backfilled 2026-08-14), but the sheet can still
-// emit it and a stray "#NUM!" appears on one trailing junk row. Anything
-// unparseable reads as "no value".
+// date columns no longer use it (backfilled 2026-08-14) and the sheet has also
+// emitted "#NUM!" on a trailing formula row. Anything unparseable reads as
+// "no value", so a new spreadsheet error string needs no code change here.
 function intOrNull(raw: string | undefined): number | null {
   const s = (raw ?? '').trim();
   if (!s || s === 'n/a') return null;

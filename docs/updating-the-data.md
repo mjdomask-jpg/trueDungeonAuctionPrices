@@ -253,7 +253,7 @@ change.
 | `auctionNumber` | **Yes** | Sequence within the season, e.g. `47`. |
 | `auctionName` | **Yes** | Free text, shown to users. May contain commas — the sheet quotes them correctly on export. |
 | `Status` | **Yes** | One of `Closed`, `Failed`, `Open`. |
-| `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated for every season back to 2018 (the 2026-08-14 backfill; `n/a` no longer appears). Blank only for a still-open auction and one 2025 `Failed` row. See the padding warning below. |
+| `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated for every season back to 2018 (the 2026-08-14 backfill; `n/a` no longer appears). Blank only for the one `Open` auction and one 2025 `Failed` row. See the padding warning below. |
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
@@ -261,7 +261,7 @@ change.
 | `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. **Populated on all 294 auctions** since the backfill. |
 | `daysToClose` | Optional | Whole days the auction ran. The Analytics days-to-close chart and every "avg days to close" figure. An auction with this blank is **left out of those averages**, not counted as zero. Populated back to 2018; 6 rows are still blank (2025 ×4, 2026 ×2, all `Failed`/`Open`). |
 | `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. **Populated on every season back to 2018.** They are derived from `openDate`/`closeDate`, so a wrong date shows up here as an out-of-range month — see the gotcha below. |
-| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced directly (they feed Analytics → Funding & Context). Present for 2018–2021 and 2023–2026; **the whole 2022 season is still blank**. |
+| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced directly (they feed Analytics → Funding & Context). Present for 2018–2021 and 2023–2026; **the whole 2022 season is still blank — backfill queued for the next round of updates.** |
 
 ### Rules that matter
 
@@ -298,8 +298,9 @@ in `closeDate`. Setting only one leaves the auction uncounted or unlabelled.
 **A wrong year in `openDate` hides as a huge `Open Month`.** Season months are
 computed from the date, so a 2021 auction dated `2025-05-26` becomes
 `Open Month 56` and renders as its own bogus accordion group in Analytics.
-Auction **202112** is in exactly this state today. Anything outside `1`–`13` is a
-typo in the date, not a real month.
+Auction 202112 was in exactly this state until 2026-08-14. **Anything outside
+`1`–`13` is a typo in the date, not a real month** — scan that column after any
+date edit, since nothing validates this file.
 
 Listing a **live** auction is the mirror: set `Status` to `Open` and fill in
 `Link` and `openDate`. The open-auctions banner/section shows the name as a link

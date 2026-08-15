@@ -416,16 +416,18 @@ the logic or data changes.
 
 ## Known gaps
 
-- **Two `auctionMetadata.csv` rows are dirty** (both pre-date the 2026-08-14
-  backfill and neither is caught by a validator). Auction **202112** has
-  `openDate 2025-05-26` in a 2021 season, which the sheet turns into
-  `Open Month 56` — a bogus month bucket in Analytics now that 2021 has cadence
-  data. And the file ends with a **blank row carrying only `#NUM!` and funding
-  formulas**; `parseMeta` drops it because it has no `auctionId`, so it is
-  harmless today, but it will confuse any consumer that keys on something else.
-- **The 2022 season has no funding data.** `targetFunding` and the augment
-  rollups are populated for 2018–2021 and 2023–2026 but blank for all 50 of
-  2022's auctions, so that season is a hole in Funding & Context.
+- **The 2022 season has no funding data — backfill queued.** `targetFunding` and
+  the augment rollups are populated for 2018–2021 and 2023–2026 but blank for all
+  50 of 2022's auctions, so that season is a hole in Funding & Context. The
+  maintainer is filling it in the next round of sheet updates; it is known and
+  scheduled, not a defect to chase.
+- **Nothing validates `auctionMetadata.csv`.** `validate-recipes.mjs` and
+  `validate-context.mjs` cover the recipe and context feeds; the auction log is
+  unguarded. Three dirty rows found by hand on 2026-08-14 — an `openDate` typed
+  with the wrong year (→ a season month of 56), a casing variant of
+  `auctionStyle`, and a trailing junk row of spreadsheet formulas — were all
+  fixed in `72972d1`, but only because someone looked. A season-month range check
+  (1–13) and a "row has an `auctionId`" check would have caught all three.
 - **CI does not run `npm run validate`.** `deploy.yml` runs `npm run build`, so
   the `postbuild` data check gates a deploy but the recipe/schema validator does
   not. A bad export can reach production if nobody runs it locally.

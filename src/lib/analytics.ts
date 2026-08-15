@@ -20,11 +20,13 @@ import type { AuctionMeta, Sale } from './data';
 // --- Auctioneer identity -----------------------------------------------
 
 // The auctioneer column is free text and has drifted: "Edwin"/"edwin" and
-// "Ralykam"/"ralykam" are the same person typed twice, and one 2021 row is
-// blank. We fold case (safe — a pure case difference is never two people) and
-// label the blank, but deliberately do NOT merge similar-but-distinct names
-// like "Wade"/"Wade S" or "Casey Wren"/"Casey": that is a judgement about who
-// people are, and it belongs in the sheet, not in a display-time heuristic.
+// "Ralykam"/"ralykam" are the same person typed twice. We fold case (safe — a
+// pure case difference is never two people), which takes 41 raw names to 39, but
+// deliberately do NOT merge similar-but-distinct names like "Edwin" and
+// "Starkhound (Edwin)": that is a judgement about who people are, and it belongs
+// in the sheet, not in a display-time heuristic. The blank-auctioneer row this
+// once had to label was fixed in the sheet on 2026-08-14; UNKNOWN_AUCTIONEER now
+// has no live case and stays only as a guard.
 export const UNKNOWN_AUCTIONEER = 'Unknown';
 
 export function auctioneerKey(raw: string | undefined): string {
