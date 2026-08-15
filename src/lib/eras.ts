@@ -55,6 +55,38 @@ export const ERAS = {
   ],
 } as const;
 
+// --- Season-varying chart-group headings -----------------------------------
+// A chart group's name in tokenGroups.csv is a STABLE KEY (it joins tokens to a
+// chart and orders the charts); the heading a reader sees is resolved here, per
+// season. Most groups are named the same every year and need no entry — their
+// key is their heading. The 8k bonus group is the exception: its tokens form a
+// set that later transmutes into a reward for the biggest spenders, and the
+// company renames the set every few years, so a 2019 chart must read "Orb of
+// Dragonkind" while a 2026 chart reads "Path to Enlightenment".
+//
+// Ranges are inclusive and keyed on the group's CSV name. A season outside every
+// range falls back to the key itself — deliberately visible, so a year past the
+// last range prompts someone to add the next name rather than silently showing a
+// stale one. Add future names here as they're announced.
+export const GROUP_SEASON_LABELS: Record<string, { from: number; to: number; label: string }[]> = {
+  '8k Bonus Set': [
+    { from: 2015, to: 2022, label: 'Orb of Dragonkind' },
+    { from: 2023, to: 2026, label: 'Path to Enlightenment' },
+    { from: 2027, to: 2029, label: 'Codex of the Familiar' },
+  ],
+};
+
+// The heading to show for a chart group in a given season. Falls back to the
+// group key for groups with no season-varying names (the common case) and for
+// seasons no range covers.
+export function groupLabel(group: string, season: string | number): string {
+  const ranges = GROUP_SEASON_LABELS[group];
+  if (!ranges) return group;
+  const year = typeof season === 'number' ? season : parseInt(season, 10);
+  if (!Number.isFinite(year)) return group;
+  return ranges.find((r) => year >= r.from && year <= r.to)?.label ?? group;
+}
+
 // The reward rate in effect for a given auction. A function (not a bare constant)
 // so a future dated-rate table slots in here alone.
 export function trentRewardRate(_auctionId?: string): number {

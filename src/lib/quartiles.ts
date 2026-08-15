@@ -6,10 +6,11 @@
 // The breakdown mirrors Price Timelines exactly: tokens are grouped via
 // tokenGroups.csv (Group Order, per-token line colours) so each group holds
 // similarly-priced tokens on one readable axis. That grouping is also what tames
-// the Premium category's huge internal spread — the $1,000+ Path to Enlightenment
-// fragment sits in its own group, away from the sub-$150 Patron Pin / Wish Ring.
+// the Premium category's huge internal spread — the $1,000+ 8k bonus fragment
+// sits in its own group, away from the sub-$150 Patron Pin / Wish Ring.
 
 import { parseCSV, cleanName, TRADE_1, TENX_PREFIX, type Sale, type GroupRow } from './data';
+import { groupLabel } from './eras';
 
 // A raw per-lot sale, normalised from rawPricesData.csv. Only the four fields the
 // quartile math needs are kept; trentName/trentPrice (the lot total, used for the
@@ -113,7 +114,8 @@ export type QuartileItem = {
   stats: BoxStats;
 };
 export type QuartileGroup = {
-  group: string;
+  group: string;     // stable key from tokenGroups.csv (see TimelineGroup)
+  label: string;     // heading for the chosen year (see groupLabel in eras.ts)
   groupOrder: number;
   category: string; // heading colour (dominant token category in the group)
   items: QuartileItem[];
@@ -194,7 +196,7 @@ export function quartilesByGroup(
       // Boxes read left→right cheapest median first, so a group's axis rises with
       // the boxes — easier to scan than the grouping file's authoring order.
       items.sort((a, b) => a.stats.median - b.stats.median || a.displayName.localeCompare(b.displayName));
-      groups.push({ group, groupOrder: order, category: modeCategory(rows), items });
+      groups.push({ group, label: groupLabel(group, year), groupOrder: order, category: modeCategory(rows), items });
     }
   }
   groups.sort((a, b) => a.groupOrder - b.groupOrder || a.group.localeCompare(b.group));

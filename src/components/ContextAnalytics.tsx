@@ -7,7 +7,7 @@ import {
   sourceOverlapSeasons, trentVsForumSeason,
   type LedgerRow, type GrunnelAuctionRow, type SourceTokenRow,
 } from '../lib/contextAnalytics';
-import { ERAS } from '../lib/eras';
+import { ERAS, groupLabel } from '../lib/eras';
 import { money, money0, moneyTight } from '../lib/format';
 import { BarChart } from './BarChart';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
@@ -493,9 +493,11 @@ const sourcePrice = (n: number) => (Math.abs(n) < 10 ? money(n) : money0(n));
 // A token group for the per-group charts, built by folding the season's matched
 // tokens onto the Timelines grouping (tokenGroups.csv). Tokens outside any group
 // fall into "Other tokens", sorted last, so nothing is silently dropped.
-type SourceChartGroup = { group: string; order: number; category: string; rows: SourceTokenRow[] };
+// `group` is the stable CSV key (ordering, React key); `label` is its heading for
+// this season, since a few groups are renamed year to year (see eras.groupLabel).
+type SourceChartGroup = { group: string; label: string; order: number; category: string; rows: SourceTokenRow[] };
 
-function groupForCharts(rows: SourceTokenRow[], groupRows: GroupRow[]): SourceChartGroup[] {
+function groupForCharts(rows: SourceTokenRow[], groupRows: GroupRow[], season: string): SourceChartGroup[] {
   const meta = new Map<string, { group: string; order: number; category: string }>();
   for (const g of groupRows) if (!meta.has(g.item)) meta.set(g.item, { group: g.group, order: g.groupOrder, category: g.category });
 
@@ -506,7 +508,10 @@ function groupForCharts(rows: SourceTokenRow[], groupRows: GroupRow[]): SourceCh
     const group = gm?.group ?? OTHER;
     let cg = byGroup.get(group);
     if (!cg) {
-      cg = { group, order: gm?.order ?? Number.MAX_SAFE_INTEGER, category: gm?.category ?? r.category, rows: [] };
+      cg = {
+        group, label: groupLabel(group, season),
+        order: gm?.order ?? Number.MAX_SAFE_INTEGER, category: gm?.category ?? r.category, rows: [],
+      };
       byGroup.set(group, cg);
     }
     if (gm) cg.order = Math.min(cg.order, gm.order);
@@ -534,7 +539,7 @@ function SourceView({
     () => (season ? trentVsForumSeason(sales, meta, season) : []),
     [sales, meta, season],
   );
-  const chartGroups = useMemo(() => groupForCharts(rows, groupRows), [rows, groupRows]);
+  const chartGroups = useMemo(() => groupForCharts(rows, groupRows, season), [rows, groupRows, season]);
 
   // The Trent price the reader sees: reward-adjusted (−10%) or nominal.
   const adjusted = pricing === 'adjusted';
@@ -619,7 +624,7 @@ function SourceView({
           <div className="src-charts">
             {chartGroups.map((cg) => (
               <div key={cg.group} className="src-chart">
-                <h3 className="an-subhead" data-category={cg.category}>{cg.group}</h3>
+                <h3 className="an-subhead" data-category={cg.category}>{cg.label}</h3>
                 <BarChart
                   categories={cg.rows.map((r) => r.displayName)}
                   series={[
@@ -627,7 +632,7 @@ function SourceView({
                     { label: trentLabel, color: TRENT_COLOR, values: cg.rows.map((r) => trentOf(r)) },
                   ]}
                   yLabel="Avg price" format={sourcePrice}
-                  ariaLabel={`Forum versus ${adjusted ? 'reward-adjusted ' : ''}Trent average price for ${cg.group} tokens in ${season}`}
+                  ariaLabel={`Forum versus ${adjusted ? 'reward-adjusted ' : ''}Trent average price for ${cg.label} tokens in ${season}`}
                   maxLabels={12}
                 />
               </div>
