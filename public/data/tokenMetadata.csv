@@ -100,6 +100,7 @@ key,auctionSeason,Item,Display Name,Category
 2015Treasure Chip,2015,Treasure Chip,Treasure Chip (each),Preorder
 2015Uncommon Bag,2015,Uncommon Bag,Uncommon Bag,Condensed
 2015Wish Ring,2015,Wish Ring,Wish Ring,Premium
+2015Charm of Avarice,2015,Charm of Avarice,Charm of Avarice,Legendary
 "20161,000 GP Gold Bar",2016,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20161k Bonus,2016,1k Bonus,2nd Tooth of Cavadar,Premium
 20163 Star,2016,3 Star,Canteen of Quaffing,Bonus
@@ -152,8 +153,10 @@ key,auctionSeason,Item,Display Name,Category
 2017Treasure Chip,2017,Treasure Chip,Treasure Chip (each),Preorder
 2017Uncommon Bag,2017,Uncommon Bag,Uncommon Bag,Condensed
 2017Wish Ring,2017,Wish Ring,Wish Ring,Premium
+2017Charm of Synergy,2017,Charm of Synergy,Charm of Synergy,Ultra Rare
 "20181,000 GP Gold Bar",2018,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20181k Bonus,2018,1k Bonus,4th Tooth of Cavadar,Premium
+20182k Bonus,2018,2k Bonus,Adventurers' Guild Token,Bonus
 20183 Star,2018,3 Star,Canteen of Quaffing,Bonus
 20188k Bonus,2018,8k Bonus,Orb of Dragonkind (Dragon),Premium
 2018Alchemist's Ink,2018,Alchemist's Ink,Alchemist's Ink,Trade 1
@@ -170,14 +173,15 @@ key,auctionSeason,Item,Display Name,Category
 2018Mystic Silk,2018,Mystic Silk,Mystic Silk,Trade 1
 2018Oil of Enchantment,2018,Oil of Enchantment,Oil of Enchantment,Trade 2
 2018Patron Pin,2018,Patron Pin,Patron Pin,Premium
-2018PCH,2018,PCH,Potion Condensed Healing,Bonus
+2018PCH,2018,PCH,Potion Distilled Healing,Bonus
 2018Philosopher's Stone,2018,Philosopher's Stone,Philosopher's Stone,Trade 1
-2018Preorder Bonus,2018,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
+2018Preorder Bonus,2018,Preorder Bonus,Avernons +5 Healing Cherry ,Preorder
 2018Ultra Rare,2018,Ultra Rare,Ultra Rare,Ultra Rare
 2018Rare Bag,2018,Rare Bag,Rare Bag,Condensed
 2018Treasure Chip,2018,Treasure Chip,Treasure Chip (each),Preorder
 2018Uncommon Bag,2018,Uncommon Bag,Uncommon Bag,Condensed
 2018Wish Ring,2018,Wish Ring,Wish Ring,Premium
+2018Charm of Awakened Synergy,2018,Charm of Awakened Synergy,Charm of Awakened Synergy,Relic
 "20191,000 GP Gold Bar",2019,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20191k Bonus,2019,1k Bonus,5th Tooth of Cavadar,Premium
 20192k Bonus,2019,2k Bonus,Mask of Mayhem,Premium
@@ -232,6 +236,8 @@ key,auctionSeason,Item,Display Name,Category
 2020Treasure Chip,2020,Treasure Chip,Treasure Chip (each),Preorder
 2020Uncommon Bag,2020,Uncommon Bag,Uncommon Bag,Condensed
 2020Wish Ring,2020,Wish Ring,Wish Ring,Premium
+2020Rare Bag,2020,Rare Bag,Rare Bag,Condensed
+2020Uncommon Bag,2020,Uncommon Bag,Uncommon Bag,Condensed
 "20211,000 GP Gold Bar",2021,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20211k Bonus,2021,1k Bonus,7th Tooth of Cavadar,Premium
 20212k Bonus,2021,2k Bonus,Goggles of Ethereal Vision,Premium
@@ -401,6 +407,18 @@ key,auctionSeason,Item,Display Name,Category
 2026Ultra Rare,2026,Ultra Rare,Ultra Rare,Ultra Rare
 2026Treasure Chip,2026,Treasure Chip,Treasure Chip (each),Preorder
 2026Wish Ring,2026,Wish Ring,Wish Ring,Premium
+2026Melonbrant Concentrate,2026,Melonbrant Concentrate,Melonbrant Concentrate,Silver Ship Games
+2026Mirthwood Bliss Blossom,2026,Mirthwood Bliss Blossom,Mirthwood Bliss Blossom,Silver Ship Games
+2026Nil Crystal,2026,Nil Crystal,Nil Crystal,Silver Ship Games
+2026Pemberton Pain Extract,2026,Pemberton Pain Extract,Pemberton Pain Extract,Silver Ship Games
+2026Golem Piece (40 Unique),2026,Golem Piece (40 Unique),Golem Piece (40 Unique),Treasure Chest
+2026Ioun Stone of Envy,2026,Ioun Stone of Envy,Ioun Stone of Envy,Participation
+2026Ioun Stone of Pride,2026,Ioun Stone of Pride,Ioun Stone of Pride,Participation
+2026Ioun Stone of the Dead,2026,Ioun Stone of the Dead,Ioun Stone of the Dead,Participation
+2026Ioun Stone of the Grave,2026,Ioun Stone of the Grave,Ioun Stone of the Grave,Participation
+2026Ioun Stone of the Night,2026,Ioun Stone of the Night,Ioun Stone of the Night,Participation
+2026Ioun Stone of Wrath,2026,Ioun Stone of Wrath,Ioun Stone of Wrath,Participation
+2026Ioun Stone Rock Candy,2026,Ioun Stone Rock Candy,Ioun Stone Rock Candy,Participation
 "20271,000 GP Gold Bar",2027,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 202710x Treasure Chip,2027,10x Treasure Chip,Treasure Chip (each),Preorder
 20271k Bonus,2027,1k Bonus,Ring of the 1st Circle,Premium
@@ -426,19 +444,6 @@ key,auctionSeason,Item,Display Name,Category
 2027Ultra Rare,2027,Ultra Rare,Ultra Rare,Ultra Rare
 2027Treasure Chip,2027,Treasure Chip,Treasure Chip (each),Preorder
 2027Wish Ring,2027,Wish Ring,Wish Ring,Premium
-2026Melonbrant Concentrate,2026,Melonbrant Concentrate,Melonbrant Concentrate,Silver Ship Games
-2026Mirthwood Bliss Blossom,2026,Mirthwood Bliss Blossom,Mirthwood Bliss Blossom,Silver Ship Games
-2026Nil Crystal,2026,Nil Crystal,Nil Crystal,Silver Ship Games
-2026Pemberton Pain Extract,2026,Pemberton Pain Extract,Pemberton Pain Extract,Silver Ship Games
-2026Golem Piece (40 Unique),2026,Golem Piece (40 Unique),Golem Piece (40 Unique),Treasure Chest
-2026Ioun Stone of Envy,2026,Ioun Stone of Envy,Ioun Stone of Envy,Participation
-2026Ioun Stone of Pride,2026,Ioun Stone of Pride,Ioun Stone of Pride,Participation
-2026Ioun Stone of the Dead,2026,Ioun Stone of the Dead,Ioun Stone of the Dead,Participation
-2026Ioun Stone of the Grave,2026,Ioun Stone of the Grave,Ioun Stone of the Grave,Participation
-2026Ioun Stone of the Night,2026,Ioun Stone of the Night,Ioun Stone of the Night,Participation
-2026Ioun Stone of Wrath,2026,Ioun Stone of Wrath,Ioun Stone of Wrath,Participation
-2026Ioun Stone Rock Candy,2026,Ioun Stone Rock Candy,Ioun Stone Rock Candy,Participation
-2015Charm of Avarice,2015,Charm of Avarice,Charm of Avarice,Legendary
 "20271,000 GP Gold Bar",2027,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 202710x Treasure Chip,2027,10x Treasure Chip,Treasure Chip (each),Preorder
 20271k Bonus,2027,1k Bonus,Ioun Stone Warden Wrath,Premium
@@ -464,5 +469,3 @@ key,auctionSeason,Item,Display Name,Category
 2027Ultra Rare,2027,Ultra Rare,Ultra Rare,Ultra Rare
 2027Treasure Chip,2027,Treasure Chip,Treasure Chip (each),Preorder
 2027Wish Ring,2027,Wish Ring,Wish Ring,Premium
-2017Charm of Synergy,2017,Charm of Synergy,Charm of Synergy,Ultra Rare
-2018Charm of Awakened Synergy,2018,Charm of Awakened Synergy,Charm of Awakened Synergy,Relic

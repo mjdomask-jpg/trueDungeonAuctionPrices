@@ -1,4 +1,122 @@
 auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
+20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
+20181,2018,1,1k Bonus,86,4th Tooth of Cavadar,Premium
+20181,2018,1,2k Bonus,3.25,Adventurers' Guild Token,Bonus
+20181,2018,1,8k Bonus,570,Orb of Dragonkind (Dragon),Premium
+20181,2018,1,Alchemist's Ink,2.5,Alchemist's Ink,Trade 1
+20181,2018,1,Alchemist's Parchment,4.5,Alchemist's Parchment,Trade 1
+20181,2018,1,Aragonite,26,Aragonite,Trade 2
+20181,2018,1,Darkwood Plank,1,Darkwood Plank,Trade 1
+20181,2018,1,Dwarven Steel,2.75,Dwarven Steel,Trade 1
+20181,2018,1,Elven Bismuth,14,Elven Bismuth,Trade 2
+20181,2018,1,Enchanter's Munition,2,Enchanter's Munition,Trade 1
+20181,2018,1,Minotaur Hide,2.5,Minotaur Hide,Trade 1
+20181,2018,1,Mystic Silk,1,Mystic Silk,Trade 1
+20181,2018,1,Oil of Enchantment,14,Oil of Enchantment,Trade 2
+20181,2018,1,Patron Pin,1.25,Patron Pin,Premium
+20181,2018,1,PCH,3.25,Potion Distilled Healing,Bonus
+20181,2018,1,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
+20181,2018,1,Ultra Rare,120,Ultra Rare,Ultra Rare
+20181,2018,1,Wish Ring,220,Wish Ring,Premium
+20182,2018,2,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
+20182,2018,2,1k Bonus,95,4th Tooth of Cavadar,Premium
+20182,2018,2,2k Bonus,2.5,Adventurers' Guild Token,Bonus
+20182,2018,2,8k Bonus,525,Orb of Dragonkind (Dragon),Premium
+20182,2018,2,Adventurers' Guild Button,8.25,Adventurers' Guild Button,Bonus
+20182,2018,2,Alchemist's Ink,3.5,Alchemist's Ink,Trade 1
+20182,2018,2,Alchemist's Parchment,4,Alchemist's Parchment,Trade 1
+20182,2018,2,Darkwood Plank,2.25,Darkwood Plank,Trade 1
+20182,2018,2,Dwarven Steel,2.5,Dwarven Steel,Trade 1
+20182,2018,2,Enchanter's Munition,2.25,Enchanter's Munition,Trade 1
+20182,2018,2,Minotaur Hide,2.5,Minotaur Hide,Trade 1
+20182,2018,2,Mystic Silk,2.5,Mystic Silk,Trade 1
+20182,2018,2,Patron Pin,365,Patron Pin,Premium
+20182,2018,2,PCH,1.5,Potion Distilled Healing,Bonus
+20182,2018,2,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
+20182,2018,2,Ultra Rare,99,Ultra Rare,Ultra Rare
+20182,2018,2,Wish Ring,250,Wish Ring,Premium
+20182,2018,2,Preorder Bonus,2,Avernons +5 Healing Cherry ,Preorder
+20182,2018,2,Treasure Chip,2.66,Treasure Chip (each),Preorder
+20182,2018,2,Uncommon Bag,77,Uncommon Bag,Condensed
+20182,2018,2,Rare Bag,70,Rare Bag,Condensed
+20183,2018,3,"1,000 GP Gold Bar",18,"1,000 GP Gold Bar",Trade 2
+20183,2018,3,1k Bonus,98.5,4th Tooth of Cavadar,Premium
+20183,2018,3,2k Bonus,3.25,Adventurers' Guild Token,Bonus
+20183,2018,3,8k Bonus,525,Orb of Dragonkind (Dragon),Premium
+20183,2018,3,Adventurers' Guild Button,8.11,Adventurers' Guild Button,Bonus
+20183,2018,3,Alchemist's Ink,3.6,Alchemist's Ink,Trade 1
+20183,2018,3,Alchemist's Parchment,3.6,Alchemist's Parchment,Trade 1
+20183,2018,3,Darkwood Plank,2,Darkwood Plank,Trade 1
+20183,2018,3,Dwarven Steel,3,Dwarven Steel,Trade 1
+20183,2018,3,Enchanter's Munition,2.25,Enchanter's Munition,Trade 1
+20183,2018,3,Minotaur Hide,2.75,Minotaur Hide,Trade 1
+20183,2018,3,Mystic Silk,2.5,Mystic Silk,Trade 1
+20183,2018,3,PCH,2.5,Potion Distilled Healing,Bonus
+20183,2018,3,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
+20183,2018,3,Ultra Rare,100,Ultra Rare,Ultra Rare
+20183,2018,3,Wish Ring,230,Wish Ring,Premium
+20183,2018,3,Preorder Bonus,2.25,Avernons +5 Healing Cherry ,Preorder
+20183,2018,3,Treasure Chip,3.17,Treasure Chip (each),Preorder
+20183,2018,3,Uncommon Bag,57,Uncommon Bag,Condensed
+20183,2018,3,Rare Bag,70,Rare Bag,Condensed
+20184,2018,4,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
+20184,2018,4,1k Bonus,100,4th Tooth of Cavadar,Premium
+20184,2018,4,2k Bonus,5,Adventurers' Guild Token,Bonus
+20184,2018,4,8k Bonus,465,Orb of Dragonkind (Dragon),Premium
+20184,2018,4,Adventurers' Guild Button,10,Adventurers' Guild Button,Bonus
+20184,2018,4,Alchemist's Parchment,5,Alchemist's Parchment,Trade 1
+20184,2018,4,Darkwood Plank,1.25,Darkwood Plank,Trade 1
+20184,2018,4,Dwarven Steel,1.75,Dwarven Steel,Trade 1
+20184,2018,4,Enchanter's Munition,2,Enchanter's Munition,Trade 1
+20184,2018,4,Minotaur Hide,1.75,Minotaur Hide,Trade 1
+20184,2018,4,Mystic Silk,2,Mystic Silk,Trade 1
+20184,2018,4,Patron Pin,200,Patron Pin,Premium
+20184,2018,4,PCH,0.75,Potion Distilled Healing,Bonus
+20184,2018,4,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
+20184,2018,4,Ultra Rare,100,Ultra Rare,Ultra Rare
+20184,2018,4,Wish Ring,230,Wish Ring,Premium
+20184,2018,4,Uncommon Bag,41,Uncommon Bag,Condensed
+20184,2018,4,Rare Bag,60,Rare Bag,Condensed
+20185,2018,5,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
+20185,2018,5,1k Bonus,94,4th Tooth of Cavadar,Premium
+20185,2018,5,2k Bonus,2,Adventurers' Guild Token,Bonus
+20185,2018,5,8k Bonus,911,Orb of Dragonkind (Dragon),Premium
+20185,2018,5,Adventurers' Guild Button,0.25,Adventurers' Guild Button,Bonus
+20185,2018,5,Alchemist's Ink,3.5,Alchemist's Ink,Trade 1
+20185,2018,5,Alchemist's Parchment,6,Alchemist's Parchment,Trade 1
+20185,2018,5,Aragonite,31,Aragonite,Trade 2
+20185,2018,5,Darkwood Plank,1.25,Darkwood Plank,Trade 1
+20185,2018,5,Dwarven Steel,5,Dwarven Steel,Trade 1
+20185,2018,5,Elven Bismuth,14.5,Elven Bismuth,Trade 2
+20185,2018,5,Enchanter's Munition,2.25,Enchanter's Munition,Trade 1
+20185,2018,5,Minotaur Hide,3,Minotaur Hide,Trade 1
+20185,2018,5,Mystic Silk,1.5,Mystic Silk,Trade 1
+20185,2018,5,Oil of Enchantment,18,Oil of Enchantment,Trade 2
+20185,2018,5,Patron Pin,3.25,Patron Pin,Premium
+20185,2018,5,PCH,3.75,Potion Distilled Healing,Bonus
+20185,2018,5,Philosopher's Stone,2,Philosopher's Stone,Trade 1
+20185,2018,5,Ultra Rare,125,Ultra Rare,Ultra Rare
+20185,2018,5,Wish Ring,265,Wish Ring,Premium
+20186,2018,6,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
+20186,2018,6,1k Bonus,80,4th Tooth of Cavadar,Premium
+20186,2018,6,2k Bonus,3,Adventurers' Guild Token,Bonus
+20186,2018,6,8k Bonus,565,Orb of Dragonkind (Dragon),Premium
+20186,2018,6,Adventurers' Guild Button,0.25,Adventurers' Guild Button,Bonus
+20186,2018,6,Alchemist's Ink,3.25,Alchemist's Ink,Trade 1
+20186,2018,6,Alchemist's Parchment,4,Alchemist's Parchment,Trade 1
+20186,2018,6,Aragonite,25.5,Aragonite,Trade 2
+20186,2018,6,Darkwood Plank,1,Darkwood Plank,Trade 1
+20186,2018,6,Dwarven Steel,3,Dwarven Steel,Trade 1
+20186,2018,6,Elven Bismuth,12,Elven Bismuth,Trade 2
+20186,2018,6,Enchanter's Munition,2.5,Enchanter's Munition,Trade 1
+20186,2018,6,Minotaur Hide,3,Minotaur Hide,Trade 1
+20186,2018,6,Mystic Silk,1,Mystic Silk,Trade 1
+20186,2018,6,Oil of Enchantment,15.5,Oil of Enchantment,Trade 2
+20186,2018,6,Patron Pin,2,Patron Pin,Premium
+20186,2018,6,PCH,2.5,Potion Distilled Healing,Bonus
+20186,2018,6,Philosopher's Stone,1,Philosopher's Stone,Trade 1
+20186,2018,6,Ultra Rare,125,Ultra Rare,Ultra Rare
+20186,2018,6,Wish Ring,210,Wish Ring,Premium
 20191,2019,1,1k Bonus,75,5th Tooth of Cavadar,Premium
 20191,2019,1,2k Bonus,2.25,Mask of Mayhem,Premium
 20191,2019,1,3 Star,3.25,Canteen of Quaffing,Bonus

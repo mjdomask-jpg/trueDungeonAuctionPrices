@@ -14,7 +14,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20233,2023,3,token,Random Ultra Rare,9,$675.00
 20236,2023,6,withheld,Ring of the 4th Circle,2,-$169.60
 20236,2023,6,withheld,Ring of the 4th Circle,1,-$84.80
-20236,2023,6,withheld,Ultra Rare,4,-$316.76
+20236,2023,6,withheld,Ultra Rare,4,-$321.37
 20236,2023,6,withheld,Adventurers' Guild Button,2,-$10.50
 20236,2023,6,withheld,Amulet of Magnifying,1,-$0.51
 20236,2023,6,withheld,Amulet of Magnifying,1,-$0.51
@@ -46,7 +46,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202312,2023,12,token,Redoubt Helm,1,$100.00
 202312,2023,12,token,Butterfly Cloak,1,$41.00
 202312,2023,12,token,Ring of Heroism,1,$150.00
-202312,2023,12,withheld,Patron Pin,1,-$336.33
+202312,2023,12,withheld,Patron Pin,1,-$319.46
 202321,2023,21,token,Golden Ticket Chance,1,$335.00
 202321,2023,21,token,Random Ultra Rare,9,$675.00
 202321,2023,21,token,Trick Bag,1,$155.00
@@ -74,7 +74,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202327,2023,27,token,Axe of the Dwarvish Kings,1,$100.00
 202327,2023,27,token,Shield of the Scholar (Onyx),1,$45.00
 202327,2023,27,token,Cook's Hat,1,$65.00
-202327,2023,27,withheld,Patron Pin,1,-$336.33
+202327,2023,27,withheld,Patron Pin,1,-$319.46
 202327,2023,27,withheld,Path to Enlightenment (Fragment 1),1,-$541.64
 202331,2023,31,withheld,Patron Pin,1,-$350.57
 202331,2023,31,token,Greater Ring of Havoc,1,$265.00
@@ -174,7 +174,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20244,2024,4,token,Pudnort's Scroll of Demonic Deeds,1,$110.00
 20244,2024,4,withheld,Ring of the 3rd Circle,1,-$104.21
 20244,2024,4,withheld,Mark of the 3rd Tenet,1,-$98.07
-20244,2024,4,withheld,Treasure Chip (each),1,-$132.87
+20244,2024,4,withheld,Treasure Chip (each),1,-$132.86
 20244,2024,4,token,Totem of Heroism,1,$505.00
 20244,2024,4,grunnel,Small Favor Scroll,1,$70.00
 20244,2024,4,token,Auri's Candle,1,$115.00
@@ -359,20 +359,20 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20251,2025,1,withheld,Mark of the 2nd Tenet,2,-$161.54
 20251,2025,1,withheld,Patron Pin,1,-$310.52
 20251,2025,1,withheld,Path to Enlightenment (Fragment 3),1,"-$1,330.89"
-20251,2025,1,withheld,Wish Ring,1,#N/A
+20251,2025,1,withheld,Wish Ring,1,-$167.56
 20251,2025,1,withheld,Aragonite,78,-$761.77
-20251,2025,1,withheld,Alchemist's Ink,78,-$234.03
-20251,2025,1,withheld,Alchemist's Parchment,106,-$245.41
-20251,2025,1,withheld,Darkwood Plank,226,-$309.67
+20251,2025,1,withheld,Alchemist's Ink,78,-$234.02
+20251,2025,1,withheld,Alchemist's Parchment,106,-$245.40
+20251,2025,1,withheld,Darkwood Plank,226,-$309.74
 20251,2025,1,withheld,Dwarven Steel,80,-$231.02
 20251,2025,1,withheld,Elven Bismuth,24,-$277.54
-20251,2025,1,withheld,Enchanter's Munition,40,-$263.59
-20251,2025,1,withheld,Minotaur Hide,96,-$410.03
-20251,2025,1,withheld,Mystic Silk,230,-$320.43
+20251,2025,1,withheld,Enchanter's Munition,40,-$263.61
+20251,2025,1,withheld,Minotaur Hide,96,-$410.06
+20251,2025,1,withheld,Mystic Silk,230,-$320.44
 20251,2025,1,withheld,Oil of Enchantment,20,-$346.21
-20251,2025,1,withheld,Philosopher's Stone,220,-$509.65
-20251,2025,1,withheld,"1,000 GP Gold Bar",90,-$858.51
-20251,2025,1,withheld,Wish Ring,2,#N/A
+20251,2025,1,withheld,Philosopher's Stone,220,-$509.73
+20251,2025,1,withheld,"1,000 GP Gold Bar",90,-$858.49
+20251,2025,1,withheld,Wish Ring,2,-$261.72
 20251,2025,1,withheld,Ultra Rare,15,"-$1,049.49"
 20251,2025,1,token,Random Ultra Rare,18,$900.00
 20255,2025,5,withheld,Ring of the 2nd Circle,4,-$315.43
@@ -400,7 +400,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202518,2025,18,withheld,Alchemist's Ink,9,-$27.00
 202518,2025,18,withheld,Alchemist's Parchment,3,-$6.95
 202518,2025,18,withheld,Aragonite,3,-$29.30
-202518,2025,18,withheld,Darkwood Plank,13,-$17.81
+202518,2025,18,withheld,Darkwood Plank,13,-$17.82
 202518,2025,18,withheld,Dwarven Steel,10,-$28.88
 202518,2025,18,withheld,Elven Bismuth,3,-$34.69
 202518,2025,18,withheld,Minotaur Hide,8,-$34.17
@@ -453,8 +453,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20262,2026,2,augment,Ring of the 3rd Circle,1,$70.00
 20262,2026,2,augment,Mark of the 3rd Tenet,1,$90.00
 20262,2026,2,augment,"Orion's Belt, Bead of the Lucky Traveler and Icecrag Hero Earcuff",1,$160.00
-20264,2026,4,withheld,Ring of the 1st Circle,4,-$458.45
-20264,2026,4,withheld,Mark of the 1st Tenet,3,-$342.18
+20264,2026,4,withheld,Ring of the 1st Circle,4,-$454.73
+20264,2026,4,withheld,Mark of the 1st Tenet,3,-$340.90
 20264,2026,4,augment,+3 Savage Sword,1,$110.00
 20264,2026,4,augment,Boots of Protection,1,$50.00
 20264,2026,4,augment,Blessed Redoubt Mail,1,$100.00
@@ -471,9 +471,9 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20264,2026,4,augment,Ring of Expertise,1,$40.00
 20264,2026,4,augment,Ring of the Siren,1,$21.00
 20264,2026,4,augment,Random Ultra Rare,9,$369.00
-20266,2026,6,withheld,Ring of the 1st Circle,4,-$458.45
+20266,2026,6,withheld,Ring of the 1st Circle,4,-$454.73
 20266,2026,6,token,Golden Ticket,1,"$1,254.00"
-202632,2026,32,withheld,Patron Pin,1,-$383.44
+202632,2026,32,withheld,Patron Pin,1,-$375.16
 202632,2026,32,augment,Random Ultra Rare,9,$310.50
 202632,2026,32,augment,D&D for up to 6 players,1,$155.00
 202632,2026,32,grunnel,Ring of Direction Prop,1,$31.00
@@ -486,8 +486,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202633,2026,33,grunnel,Raven's Head,1,$70.00
 202633,2026,33,grunnel,Auto-Succeed Arrow,1,$85.00
 202633,2026,33,grunnel,10 Potatoes,1,$111.00
-202634,2026,34,withheld,Oil of Enchantment,2,-$84.28
-202634,2026,34,withheld,Elven Bismuth,2,-$59.76
+202634,2026,34,withheld,Oil of Enchantment,2,-$85.54
+202634,2026,34,withheld,Elven Bismuth,2,-$61.31
 202634,2026,34,token,Ioun Stone Sapphire Trilliant,1,$175.00
 202634,2026,34,token,Silver Ship Passage Mirthwood,1,$45.00
 202634,2026,34,token,Ring of the 3rd Circle,1,$40.00
@@ -535,7 +535,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202645,2026,45,grunnel,Punch 4 times to open sign,1,$66.00
 202645,2026,45,grunnel,Portal Viewer #1,1,$66.00
 202645,2026,45,grunnel,Tabor's Onyx Dagger #3,1,$56.00
-202645,2026,45,withheld,Ring of the 1st Circle,8,-$916.91
+202645,2026,45,withheld,Ring of the 1st Circle,8,-$909.46
 202646,2026,46,token,Random Ultra Rare,9,$392.04
 202646,2026,46,token,Grind Spinning Timer,1,$127.00
 202646,2026,46,token,Bead of Greed,1,$82.00
@@ -638,3 +638,5 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202020,2020,20,token,Kilt of Dungeonbane,1,$405.00
 202021,2020,21,token,Shirt of Focus,1,$93.00
 202021,2020,21,token,Boots of the South Wind,1,$93.00
+20183,2018,3,withheld,Patron Pin,1,-$114.30
+20183,2018,3,withheld,4th Tooth of Cavadar,1,-$92.25
