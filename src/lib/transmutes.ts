@@ -10,6 +10,7 @@
 // React and no fetching, matching the data.ts seam.
 
 import { parseCSV, aggregateSeason, seasonsOf, dateKey, type Sale, type ItemRow, type Stats, type AuctionMeta } from './data';
+import type { PricingWindow } from './recipeWindows';
 
 // --- Types ---------------------------------------------------------------
 
@@ -178,6 +179,13 @@ export function parseDerivedRules(text: string): DerivedRule[] {
 
 export type PriceSource = 'auction' | 'offAuction' | 'derived' | 'build';
 
+/** How the stats behind a price were aggregated (§10.2):
+ *  - `season` — one season's sales, the original behaviour and what every
+ *    ACTIVE recipe uses, since it prices at today's prices (D3);
+ *  - `window` — the exact date range an EXPIRED recipe could be built in;
+ *  - `pool` — two seasons unioned, for a blank Ultra Rare line (D4). */
+export type PriceBasis = 'season' | 'window' | 'pool';
+
 export type LeafPrice = {
   stats: Stats;
   source: PriceSource;
@@ -185,9 +193,25 @@ export type LeafPrice = {
   variant: 'full' | 'last5';
   seasonMapped: boolean; // priced from a different season than asked for
   bound: string; // 'ceiling' when the value is an upper bound (§4.3)
+  basis: PriceBasis;
+  window?: PricingWindow; // set when basis is 'window'
+  datelessSales: number; // sales admitted by the D5 season fallback, not a date
 };
 
 export type SeasonMapping = { season: number; variant: 'full' | 'last5'; mapped: boolean };
+
+/** One item's aggregate inside a date window. `dateless` counts the sales that
+ *  got in through D5's season fallback rather than a real close date. */
+type WindowRow = { stats: Stats; dateless: number };
+
+/** Straight union of sales — E1's decision for the D4 pool, and the same
+ *  aggregation a window uses. Measured before choosing: a union and a mean of
+ *  season aggregates differ by at most 3.4% and typically under 1%, and the
+ *  union is one code path rather than two. */
+function statsOf(prices: number[]): Stats {
+  const sum = prices.reduce((a, b) => a + b, 0);
+  return { n: prices.length, min: Math.min(...prices), max: Math.max(...prices), avg: sum / prices.length };
+}
 
 export class PriceIndex {
   private auction = new Map<string, ItemRow>(); // `${year}|${item}`
@@ -197,6 +221,8 @@ export class PriceIndex {
   private goodYears = new Map<string, number[]>(); // good -> seasons that price it
   private closeByAuction = new Map<string, string>(); // auctionId -> ISO close date
   private seasonStarts = new Map<number, string>(); // season -> its first close date
+  private sales: Sale[]; // kept for the date-windowed aggregation below
+  private windowCache = new Map<string, Map<string, WindowRow>>(); // `from|to` -> item -> row
   readonly pricedSeasons: number[];
   readonly earliestPriced: number;
   readonly latestPriced: number;
@@ -211,6 +237,7 @@ export class PriceIndex {
     // is what the page did before the accuracy release.
     auctions: AuctionMeta[] = [],
   ) {
+    this.sales = sales;
     const seasons = seasonsOf(sales).map(Number).sort((a, b) => a - b);
     this.pricedSeasons = seasons;
     this.earliestPriced = seasons[0];
@@ -273,6 +300,52 @@ export class PriceIndex {
       ?? '';
   }
 
+  /** Every sale of every item inside a date window, aggregated once and
+   *  memoized BY WINDOW — not by recipe. The 71 expired recipes share only 13
+   *  distinct windows (recipes of the same year and expiry rule produce the
+   *  same range), so this runs a handful of times rather than once per recipe. */
+  private rowsInWindow(w: PricingWindow): Map<string, WindowRow> {
+    const key = `${w.from}|${w.to}`;
+    const hit = this.windowCache.get(key);
+    if (hit) return hit;
+
+    const byItem = new Map<string, { prices: number[]; dateless: number }>();
+    for (const sale of this.sales) {
+      const date = this.saleDate(sale);
+      let dateless = false;
+      if (date) {
+        if (date < w.from || date > w.to) continue;
+      } else {
+        // D5: an auction with no close date contributes through its SEASON,
+        // decided per auction row rather than per season or by a hardcoded
+        // year gate. The 2026-08-14 date backfill left this with no live case
+        // (0 of 7,721 sales), but a future season can still arrive undated,
+        // and keeping the fallback means windowed pricing self-heals.
+        if (!this.seasonInWindow(Number(sale.season), w)) continue;
+        dateless = true;
+      }
+      let bucket = byItem.get(sale.item);
+      if (!bucket) { bucket = { prices: [], dateless: 0 }; byItem.set(sale.item, bucket); }
+      bucket.prices.push(sale.price);
+      if (dateless) bucket.dateless++;
+    }
+
+    const rows = new Map<string, WindowRow>();
+    for (const [item, b] of byItem) rows.set(item, { stats: statsOf(b.prices), dateless: b.dateless });
+    this.windowCache.set(key, rows);
+    return rows;
+  }
+
+  /** Whether an UNDATED auction's season counts as inside a window. Uses the
+   *  season's own first close date when its dated siblings supply one, and
+   *  falls back to comparing calendar years when the whole season is undated. */
+  private seasonInWindow(season: number, w: PricingWindow): boolean {
+    if (!isFinite(season)) return false;
+    const start = this.seasonStarts.get(season);
+    if (start) return start >= w.from && start <= w.to;
+    return season >= Number(w.from.slice(0, 4)) && season <= Number(w.to.slice(0, 4));
+  }
+
   private pick(row: ItemRow, variant: 'full' | 'last5'): { stats: Stats; variant: 'full' | 'last5' } {
     // last5 is null when the item had no sales in the season's final five
     // auctions — fall back to full-year rather than reporting no price.
@@ -284,22 +357,33 @@ export class PriceIndex {
   // hand-maintained off-auction table → derived rule. NOTE this puts
   // off-auction AHEAD of derived, so that adding real Monster Trophy rows to
   // the off-auction table automatically supersedes the Fleece÷10 ceiling.
-  private directLookup(good: string, year: number, variant: 'full' | 'last5'): LeafPrice | null {
+  private directLookup(good: string, year: number, variant: 'full' | 'last5', window?: PricingWindow): LeafPrice | null {
+    // A window, when one applies, is consulted before the season tables: it is
+    // a strictly more precise aggregation of the same auction sales.
+    if (window) {
+      const row = this.rowsInWindow(window).get(good);
+      if (row) {
+        return {
+          stats: row.stats, source: 'auction', pricedYear: year, variant: 'full',
+          seasonMapped: false, bound: '', basis: 'window', window, datelessSales: row.dateless,
+        };
+      }
+    }
     const a = this.auction.get(`${year}|${good}`);
     if (a) {
       const p = this.pick(a, variant);
-      return { stats: p.stats, source: 'auction', pricedYear: year, variant: p.variant, seasonMapped: false, bound: '' };
+      return { stats: p.stats, source: 'auction', pricedYear: year, variant: p.variant, seasonMapped: false, bound: '', basis: 'season', datelessSales: 0 };
     }
     const o = this.offAuction.get(`${year}|${good}`);
     if (o) {
-      return { stats: o.stats, source: 'offAuction', pricedYear: year, variant: 'full', seasonMapped: false, bound: '' };
+      return { stats: o.stats, source: 'offAuction', pricedYear: year, variant: 'full', seasonMapped: false, bound: '', basis: 'season', datelessSales: 0 };
     }
     const rule = this.derived.get(`${good}|${year}`) ?? this.derived.get(good);
     if (rule) {
       // CYCLE GUARD (§4.3): a derived price reads the parent's MARKET price and
       // must never call buildCost(parent). Fleece's own recipe is 10 × Monster
       // Trophy while a Trophy prices off Fleece — recursion here would loop.
-      const parent = this.leafPrice(rule.derivedFrom, year, variant);
+      const parent = this.leafPrice(rule.derivedFrom, year, variant, window);
       if (!parent) return null;
       const s = parent.stats;
       return {
@@ -309,6 +393,9 @@ export class PriceIndex {
         variant: parent.variant,
         seasonMapped: parent.seasonMapped,
         bound: rule.bound || parent.bound,
+        basis: parent.basis,
+        window: parent.window,
+        datelessSales: parent.datelessSales,
       };
     }
     return null;
@@ -345,9 +432,20 @@ export class PriceIndex {
     }
     return best;
   }
-  leafPrice(good: string, nominalYear: number, variant: 'full' | 'last5' = 'full'): LeafPrice | null {
-    const direct = this.directLookup(good, nominalYear, variant);
+  leafPrice(
+    good: string,
+    nominalYear: number,
+    variant: 'full' | 'last5' = 'full',
+    window?: PricingWindow,
+  ): LeafPrice | null {
+    const direct = this.directLookup(good, nominalYear, variant, window);
     if (direct) return direct;
+
+    // Past here a window, if there was one, found nothing and the line falls
+    // back to the season basis. That is the defensive fallback §10.1 asked
+    // for, and it has a real case: the 12 pre-2018 expired recipes have
+    // windows (2012-01-01 .. 2013-11-24 and friends) holding no auctions at
+    // all, because auction data starts in 2018.
 
     const mapped = this.pricingSeason(nominalYear);
     if (mapped.season !== nominalYear) {
