@@ -186,6 +186,7 @@ export class PriceIndex {
   private offAuction = new Map<string, OffAuctionPrice>();
   private derived = new Map<string, DerivedRule>(); // token, and `${token}|${year}`
   private meta = new Map<string, TokenMeta>();
+  private goodYears = new Map<string, number[]>(); // good -> seasons that price it
   readonly pricedSeasons: number[];
   readonly earliestPriced: number;
   readonly latestPriced: number;
@@ -281,15 +282,57 @@ export class PriceIndex {
   // Price a leaf token for a nominal season. The season clamp is consulted only
   // when the direct lookup misses (§4.4), so real data always wins — a 2027
   // recipe can mix a real 2027 Fleece price with 2026-last5 trade goods.
+  // Every season this good is priced in, from any table, ascending. Built
+  // lazily because only the last-resort fallback below needs it.
+  private yearsPricing(good: string): number[] {
+    const cached = this.goodYears.get(good);
+    if (cached) return cached;
+    const years = new Set<number>();
+    for (const map of [this.auction, this.offAuction] as Map<string, unknown>[]) {
+      for (const key of map.keys()) {
+        const bar = key.indexOf('|');
+        if (key.slice(bar + 1) === good) years.add(Number(key.slice(0, bar)));
+      }
+    }
+    const sorted = [...years].sort((a, b) => a - b);
+    this.goodYears.set(good, sorted);
+    return sorted;
+  }
+
+  // Nearest season that actually prices THIS good. Ties go to the later
+  // season, matching pricingSeason's view that recent auctions predict best.
+  private nearestPricedYear(good: string, target: number): number | null {
+    let best: number | null = null;
+    let bestDist = Infinity;
+    for (const y of this.yearsPricing(good)) {
+      const d = Math.abs(y - target);
+      if (d < bestDist || (d === bestDist && best !== null && y > best)) { best = y; bestDist = d; }
+    }
+    return best;
+  }
   leafPrice(good: string, nominalYear: number, variant: 'full' | 'last5' = 'full'): LeafPrice | null {
     const direct = this.directLookup(good, nominalYear, variant);
     if (direct) return direct;
 
     const mapped = this.pricingSeason(nominalYear);
-    if (mapped.season === nominalYear) return null; // in range and genuinely absent
-    const fallback = this.directLookup(good, mapped.season, mapped.variant);
-    if (!fallback) return null;
-    return { ...fallback, seasonMapped: true };
+    if (mapped.season !== nominalYear) {
+      const fallback = this.directLookup(good, mapped.season, mapped.variant);
+      if (fallback) return { ...fallback, seasonMapped: true };
+    }
+
+    // Last resort: PER-GOOD year coverage, which is narrower than the season
+    // coverage the clamp above reasons about. The hand-maintained off-auction
+    // table starts at its own year per token, so a season can carry plenty of
+    // auction data and still price nothing for this good. That is how adding
+    // the 2018 auction season silently unpriced Golden Fleece on the 18
+    // pre-2019 Legendaries: it moved earliestPriced 2019 -> 2018, and the
+    // off-auction table's first Fleece row is 2019. Walking to the nearest
+    // season that prices the good keeps those lines estimated-but-priced
+    // instead of dropping them out of the total entirely.
+    const nearest = this.nearestPricedYear(good, nominalYear);
+    if (nearest === null || nearest === nominalYear) return null;
+    const near = this.directLookup(good, nearest, 'full');
+    return near ? { ...near, seasonMapped: true } : null;
   }
 }
 
