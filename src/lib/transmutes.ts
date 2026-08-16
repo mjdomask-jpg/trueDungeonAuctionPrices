@@ -9,7 +9,7 @@
 // This module is pure: it takes parsed rows in and returns numbers out, with no
 // React and no fetching, matching the data.ts seam.
 
-import { parseCSV, aggregateSeason, seasonsOf, type Sale, type ItemRow, type Stats } from './data';
+import { parseCSV, aggregateSeason, seasonsOf, dateKey, type Sale, type ItemRow, type Stats, type AuctionMeta } from './data';
 
 // --- Types ---------------------------------------------------------------
 
@@ -26,6 +26,10 @@ export type Recipe = {
   year: number;
   level: string;
   transmute: string;
+  // Raw authored `Expires` value, one per recipe: '' | 'never' | 'YYYY-MM-DD'.
+  // Optional column — blank means the standard rule for the level, so the
+  // engine is correct before the sheet is touched (see recipeWindows.ts).
+  expires: string;
   lines: RecipeLine[];
 };
 
@@ -90,9 +94,13 @@ export function parseRecipes(text: string): Recipe[] {
     const key = `${year}|${transmute}`;
     let recipe = byKey.get(key);
     if (!recipe) {
-      recipe = { key, year, level: o['Level'], transmute, lines: [] };
+      recipe = { key, year, level: o['Level'], transmute, expires: '', lines: [] };
       byKey.set(key, recipe);
     }
+    // `Expires` is a per-recipe value living on recipe rows. Taking the first
+    // non-blank one tolerates the sheet's usual habits (authored on the first
+    // line, or filled down the block); the validator flags disagreement.
+    if (!recipe.expires) recipe.expires = (o['Expires'] ?? '').trim();
     const goodYear = o['ItemYear'] ?? '';
     recipe.lines.push({
       good,
@@ -187,6 +195,8 @@ export class PriceIndex {
   private derived = new Map<string, DerivedRule>(); // token, and `${token}|${year}`
   private meta = new Map<string, TokenMeta>();
   private goodYears = new Map<string, number[]>(); // good -> seasons that price it
+  private closeByAuction = new Map<string, string>(); // auctionId -> ISO close date
+  private seasonStarts = new Map<number, string>(); // season -> its first close date
   readonly pricedSeasons: number[];
   readonly earliestPriced: number;
   readonly latestPriced: number;
@@ -196,6 +206,10 @@ export class PriceIndex {
     offAuction: OffAuctionPrice[] = [],
     derived: DerivedRule[] = [],
     meta: TokenMeta[] = [],
+    // Auction close dates, for the date-windowed pricing expired recipes use
+    // (§10.2). Optional: without it every recipe simply prices by season, which
+    // is what the page did before the accuracy release.
+    auctions: AuctionMeta[] = [],
   ) {
     const seasons = seasonsOf(sales).map(Number).sort((a, b) => a - b);
     this.pricedSeasons = seasons;
@@ -209,6 +223,27 @@ export class PriceIndex {
     for (const p of offAuction) this.offAuction.set(`${p.year}|${p.good}`, p);
     for (const d of derived) this.derived.set(d.year === null ? d.token : `${d.token}|${d.year}`, d);
     for (const m of meta) this.meta.set(`${m.year}|${m.canonicalName}`, m);
+
+    // A season's window starts at its FIRST AUCTION, not Jan 1 (D2): season
+    // 2026 opened 2025-09-25 and 73% of its sales closed in 2025. Keyed off
+    // close dates because that is what a sale is dated by.
+    for (const a of auctions) {
+      const close = dateKey(a.closeDate);
+      if (!close) continue;
+      this.closeByAuction.set(a.auctionId, close);
+      const season = Number(a.season);
+      const known = this.seasonStarts.get(season);
+      if (!known || close < known) this.seasonStarts.set(season, close);
+    }
+  }
+
+  /** First auction close date of a season, or null when it has no dated
+   *  auctions. Bound as a SeasonStart for recipeWindows.ts. */
+  seasonStart = (season: number): string | null => this.seasonStarts.get(season) ?? null;
+
+  /** Close date of the auction a sale belongs to, '' when undated (D5). */
+  saleDate(sale: Sale): string {
+    return this.closeByAuction.get(sale.auctionId) ?? '';
   }
 
   // Season fallback (§4.4). Clamps a nominal season into the range that has

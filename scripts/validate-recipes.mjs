@@ -54,6 +54,10 @@ const SCHEMA = {
   },
   'transmuteRecipes.csv': {
     required: ['Key', 'Year', 'Level', 'Transmute', 'Item', 'ItemYear', 'ResolvedYear', 'Display Name', 'Quantity', 'IsSource'],
+    // Optional by design: the engine defaults every one of these, so the site
+    // is correct before the sheet is touched and authoring only adds precision.
+    // Listed here for documentation; absence is never an error.
+    optional: ['Expires'],
     renamed: { Good: 'Item', GoodYear: 'ItemYear', GoodDisplayName: 'Display Name' },
   },
   'offAuctionPrices.csv': {
@@ -262,6 +266,43 @@ for (const f of fleece) {
   const expectKey = f.Year + f.Item;
   if (f.Key && f.Key !== expectKey)
     add('WARN', 'fleece-key', `pricesFleece Key "${f.Key}" != auctionSeason+Item "${expectKey}"`);
+}
+
+// ---------- Expires (optional column, accuracy release) ----------
+// One value per recipe: blank = the standard rule for the level, `never`, or an
+// explicit YYYY-MM-DD exception. Blank is the overwhelming default, so these
+// rules exist to catch a typo turning into a silently wrong pricing basis.
+const NEVER_LEVELS = new Set(['Legendary', 'Mythic', 'Safehold']);
+const expiresByRecipe = new Map(); // `${Year}|${Transmute}` -> Set of authored values
+for (const r of recipes) {
+  const v = (r.Expires ?? '').trim();
+  if (!v) continue;
+  const k = `${r.Year}|${r.Transmute}`;
+  if (!expiresByRecipe.has(k)) expiresByRecipe.set(k, new Map());
+  expiresByRecipe.get(k).set(v, (expiresByRecipe.get(k).get(v) ?? 0) + 1);
+}
+for (const [k, values] of expiresByRecipe) {
+  const [year, transmute] = k.split('|');
+  if (values.size > 1)
+    add('ERROR', 'expires-conflict', `${k}: rows disagree on Expires (${[...values.keys()].map(v => `"${v}"`).join(' vs ')}) -- it is one value per recipe`);
+  for (const v of values.keys()) {
+    if (v.toLowerCase() === 'never') {
+      const level = recipes.find(r => r.Year === year && r.Transmute === transmute)?.Level;
+      if (NEVER_LEVELS.has(level))
+        add('INFO', 'expires', `${k}: Expires=never restates the default for ${level}`);
+      continue;
+    }
+    if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(v)) {
+      add('ERROR', 'expires-format', `${k}: Expires "${v}" is neither blank, "never", nor YYYY-MM-DD`);
+      continue;
+    }
+    if (Number.isNaN(Date.parse(v + 'T00:00:00Z')))
+      add('ERROR', 'expires-format', `${k}: Expires "${v}" is not a real date`);
+    else if (v < `${year}-01-01`)
+      add('ERROR', 'expires-range', `${k}: Expires ${v} precedes the recipe's own season`);
+    else
+      add('INFO', 'expires', `${k}: non-standard expiry ${v} (standard would be ${Number(year) + 1}-12-01)`);
+  }
 }
 
 // ---------- source / recursion checks ----------
