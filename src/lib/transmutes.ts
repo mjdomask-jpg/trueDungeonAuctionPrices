@@ -555,6 +555,11 @@ export type PricedLine = {
   // was priced as its tier instead — the site is reporting the tier's auction
   // average, and a specific token on the secondary market may cost more.
   pricedAs?: string;
+  // Set when an ingredient path other than the authored one is selected:
+  // 'replaced' is a line the path zeroes out (the Wish Ring), 'boosted' one
+  // whose quantity it raises (the Gold Bars). The row stays in place either
+  // way — see applyGoldPath in substitutions.ts for why.
+  substituted?: 'replaced' | 'boosted';
   note?: string;
 };
 
@@ -625,6 +630,14 @@ export class CostEngine {
 
   isTransmute(good: string): boolean {
     return this.byName.has(good);
+  }
+
+  /** Most recent season with a recipe for this transmute, or null. Omni
+   *  substitution needs it: a 2014 Legendary's Omni Cube suggestion has to
+   *  price TODAY's Omni recipe, since Omni tokens were introduced in 2024 to
+   *  make exactly those older Relics obtainable again. */
+  latestYear(transmute: string): number | null {
+    return this.byName.get(transmute)?.[0] ?? null; // years are sorted descending
   }
 
   /** Resolve a transmute to a recipe at or before `year`. A source line can
