@@ -3,6 +3,7 @@ import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
 import { OmniSuggestions } from './OmniSuggestions';
+import { BARS_PER_WISH_RING, DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
 import { PriceInput } from './PriceInput';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
@@ -102,6 +103,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [marketInput, setMarketInput] = useState<MarketInput>('auto');
+  const [path, setPath] = useState<IngredientPath>(DEFAULT_PATH);
   // The pinned summary strip: on while the ingredient table fills the screen and
   // nothing else is telling you where you stand.
   const barRef = useRef<HTMLDivElement>(null);
@@ -130,6 +132,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     setOverrides({});
     setEditing(null);
     setMarketInput('auto');
+    // The ingredient path is a property of the recipe on screen, so it resets
+    // with everything else — unlike the Omni price, which is a fact about the
+    // Omni token and holds across recipes.
+    setPath(DEFAULT_PATH);
   }, [selectedKey]);
 
   // Two observers rather than a scroll listener: one says the top bar has left
@@ -241,8 +247,17 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     setTier('All');
   };
 
+  // --- Phase 9: which of the two legal paths this recipe is priced on -----
+  // 43 of the 46 Legendary recipes read "1 Wish Ring OR 15,000 GP". Both are
+  // things players hold, so this is a peer choice rather than an optimisation
+  // tip (D8) — and since the GP path only raises the existing Gold Bar line
+  // from 25 to 40, line indices are stable and every per-line entry below
+  // survives a flip.
+  const gold = cost ? goldPathFor(cost) : null;
+  const pathCost = cost ? onPath(cost, path) : null;
+
   // --- Per-line + total math ---------------------------------------------
-  const rows = (cost ? cost.lines : []).map((line, i) => {
+  const rows = (pathCost ? pathCost.lines : []).map((line, i) => {
     const key = String(i);
     const req = line.quantity;
     const ov = overrides[key];
@@ -446,18 +461,40 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
             <button type="button" className={`calc-all${allOwned ? ' on' : ''}`} aria-pressed={allOwned}
               onClick={() => setAllHand(true)}>All</button>
             <button type="button" className="calc-all" onClick={() => setAllHand(false)}>None</button>
+            {gold && (
+              <span className="calc-path">
+                <span className="calc-path-lab">
+                  This recipe takes
+                  <HintPopover label="About the Wish Ring or GP choice">
+                    This recipe accepts <b>1 Wish Ring</b> or <b>15,000 GP</b> — which is{' '}
+                    {BARS_PER_WISH_RING} more 1,000 GP Gold Bars, taking that line from{' '}
+                    {gold.barQuantity} to {gold.gpBarQuantity}. Both are legal; pick the one you
+                    can actually field. Gold Bars are ordinary trade goods most players already
+                    hold, so the GP path can finish a build for nothing even when it prices higher.
+                  </HintPopover>
+                </span>
+                <span className="calc-path-btns">
+                  <button type="button" className={path === 'ring' ? 'on' : undefined}
+                    aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>a Wish Ring</button>
+                  <button type="button" className={path === 'gp' ? 'on' : undefined}
+                    aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
+                </span>
+              </span>
+            )}
           </div>
           <div className="calc-lhead">
             <span>Ingredient</span><span className="h-hand">on hand</span><span>buy</span>
             <span>$/ea <i className="cl-edit-i" aria-hidden="true">✎</i></span><span>to finish</span>
           </div>
           {rows.map((r) => (
-            <div key={r.key} className={`calc-line${r.line.isSource ? ' src' : ''}${r.need === 0 && r.priced ? ' done' : ''}`}>
+            <div key={r.key} className={`calc-line${r.line.isSource ? ' src' : ''}${r.need === 0 && r.priced ? ' done' : ''}${r.line.substituted === 'replaced' ? ' swapped-out' : ''}`}>
               <div className="cl-main">
                 <span className="cl-name">
-                  <span className="cl-good">{r.req} × {r.line.displayName}</span>
+                  <span className="cl-good">
+                    {r.line.substituted === 'replaced' ? <s>{r.line.displayName}</s> : `${r.req} × ${r.line.displayName}`}
+                  </span>
                   <span className="cl-meta">
-                    {lineTag(r.line, cost.year)}
+                    {r.line.substituted === 'replaced' ? 'not needed on the GP path' : lineTag(r.line, cost.year)}
                     <button type="button" className="cl-price-m" aria-expanded={editing === r.key}
                       aria-label={`Edit unit price: ${r.line.displayName}`}
                       onClick={() => setEditing((e) => (e === r.key ? null : r.key))}>

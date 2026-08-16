@@ -5,6 +5,8 @@ import { useRoutedView } from '../hooks/useRoutedView';
 import { TransmuteSeason } from '../components/TransmuteSeason';
 import { BuildCalculator } from '../components/BuildCalculator';
 import { PageIntro } from '../components/PageIntro';
+import { HintPopover } from '../components/HintPopover';
+import { BARS_PER_WISH_RING, DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
 
 // Transmutes / build-vs-buy. Two views behind a toggle:
 //   Recipes (Phase 4) — every craftable token's estimated build cost, priced
@@ -23,6 +25,11 @@ export default function TransmutesPage() {
     pathFor: (v) => `/transmutes/${v}`,
   });
   const [recentPrices, setRecentPrices] = useState(false);
+  // Phase 9. One control for the whole list rather than 43 of them: on this
+  // view the reader is scanning recipes, not building one, and the question
+  // "what do these cost if I pay in Gold Bars" is asked of all of them at once.
+  // Defaults to the Wish Ring, which is what the recipes literally list.
+  const [path, setPath] = useState<IngredientPath>(DEFAULT_PATH);
   const [search, setSearch] = useState('');
   // null = default view (newest season open); a Set once the user toggles one.
   const [openSeasons, setOpenSeasons] = useState<Set<number> | null>(null);
@@ -38,12 +45,13 @@ export default function TransmutesPage() {
     if (!engine) return [];
     return seasons.map((year) => {
       const all = engine.costsForSeason(year);
-      const costs = q
+      const matched = q
         ? all.filter((c) => c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q))
         : all;
+      const costs = path === DEFAULT_PATH ? matched : matched.map((c) => onPath(c, path));
       return { year, costs };
     });
-  }, [engine, seasons, q]);
+  }, [engine, seasons, q, path]);
 
   const noteFor = (year: number): string | undefined => {
     if (!engine) return undefined;
@@ -70,6 +78,10 @@ export default function TransmutesPage() {
     });
 
   const total = useMemo(() => bySeason.reduce((n, s) => n + s.costs.length, 0), [bySeason]);
+  const anyGoldPath = useMemo(
+    () => bySeason.some((s) => s.costs.some((c) => goldPathFor(c))),
+    [bySeason],
+  );
   const shown = searching ? bySeason.filter((s) => s.costs.length) : bySeason;
 
   if (error) return <p className="err">Failed to load data: {error}</p>;
@@ -120,6 +132,26 @@ export default function TransmutesPage() {
             </button>
           </div>
         </div>
+
+        {!calculator && anyGoldPath && (
+          <div className="toggle path-toggle" role="group" aria-label="Legendary Wish Ring line">
+            <span className="toggle-label">
+              Wish Ring line
+              <HintPopover label="About the Wish Ring or GP choice">
+                Legendary recipes accept <b>1 Wish Ring</b> or <b>15,000 GP</b> — which is{' '}
+                {BARS_PER_WISH_RING} more 1,000 GP Gold Bars on the line the recipe already has.
+                Both are legal. Switch to price every Legendary on the path you would actually
+                take: Gold Bars are ordinary trade goods most players are already sitting on.
+              </HintPopover>
+            </span>
+            <div className="toggle-buttons">
+              <button type="button" className={path === 'ring' ? 'on' : undefined}
+                aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
+              <button type="button" className={path === 'gp' ? 'on' : undefined}
+                aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
+            </div>
+          </div>
+        )}
 
         {!calculator && (
           <label className="search">

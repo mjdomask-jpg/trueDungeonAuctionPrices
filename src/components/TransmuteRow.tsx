@@ -130,10 +130,17 @@ export function TransmuteRow({
             <span>Ingredient</span><span>avg</span><span>min</span>
           </div>
           {cost.lines.map((l, i) => (
-            <div key={i} className={`tx-bom-row${l.isSource ? ' src' : ''}${banded && !l.isSource && i % 2 === 1 ? ' band' : ''}`}>
+            <div key={i} className={`tx-bom-row${l.isSource ? ' src' : ''}${banded && !l.isSource && i % 2 === 1 ? ' band' : ''}${l.substituted === 'replaced' ? ' swapped-out' : ''}`}>
               <span className="tx-ing">
-                <span className="tx-good">{l.quantity} × {l.displayName}</span>
-                <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>{priceTag(l, cost.year)}</span>
+                {/* On the GP path the Wish Ring line stays in place, struck out:
+                    the row is what makes the swap legible, and removing it would
+                    reflow the whole BOM on a toggle (plan §3.8). */}
+                <span className="tx-good">
+                  {l.substituted === 'replaced' ? <s>{l.displayName}</s> : `${l.quantity} × ${l.displayName}`}
+                </span>
+                <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>
+                  {l.substituted === 'replaced' ? 'paid as 15,000 GP instead' : priceTag(l, cost.year)}
+                </span>
               </span>
               <span><Money value={l.extAvg} /></span>
               <span><Money value={l.extMin} /></span>
