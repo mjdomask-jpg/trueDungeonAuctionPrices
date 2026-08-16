@@ -3,6 +3,7 @@ import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
 import { OmniSuggestions } from './OmniSuggestions';
+import { PriceInput } from './PriceInput';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
 import {
@@ -72,39 +73,6 @@ const range = (lo: number, hi: number) => {
   return a === b ? a : `${a}–${b}`;
 };
 
-// Money always shows both cents digits ($10.60, not $10.6); parsing rounds to
-// cents so a stored override never carries a longer tail than it displays.
-const fmt2 = (n: number | null | undefined) => (n == null ? '' : n.toFixed(2));
-// `$` and thousands separators are stripped rather than rejected: prices get
-// pasted in from listings and reseller pages as "$1,500.00", and Number() reads
-// that as NaN. The box re-displays the bare number.
-const parsePrice = (s: string): number | null => {
-  const t = s.replace(/[$,\s]/g, '');
-  if (t === '') return null;
-  const n = Number(t);
-  return isFinite(n) ? Math.round(n * 100) / 100 : null;
-};
-
-// A price entry box that displays two decimals ($4.80) but lets you type freely
-// while focused (4.8) — a plain number input drops trailing zeros, so this holds
-// its own text and reformats from the value on blur.
-function PriceInput({ value, onChange, ariaLabel }: {
-  value: number | null;
-  onChange: (n: number | null) => void;
-  ariaLabel: string;
-}) {
-  const [text, setText] = useState(() => fmt2(value));
-  const [focused, setFocused] = useState(false);
-  useEffect(() => { if (!focused) setText(fmt2(value)); }, [value, focused]);
-  return (
-    <input
-      type="text" inputMode="decimal" aria-label={ariaLabel} value={text}
-      onFocus={(e) => { setFocused(true); e.currentTarget.select(); }}
-      onBlur={() => setFocused(false)}
-      onChange={(e) => { setText(e.target.value); onChange(parsePrice(e.target.value)); }}
-    />
-  );
-}
 
 // Compact provenance for one ingredient: its own season when it differs from the
 // recipe's, then where the price came from. Mirrors TransmuteRow's priceTag.

@@ -2247,3 +2247,7 @@ table.an-opens col.col-days { width: 16%; }
 .omni-why { color: var(--text); font-weight: 400; }
 .omni-cmp { margin: 3px 0 0; font-size: 12px; color: var(--text); line-height: 1.5; }
 .omni-foot { margin: 0; padding: 8px 12px 12px; font-size: 12px; color: var(--text); font-style: italic; }
+.omni-prices { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 4px 12px 0; border-top: 1px solid var(--border); }
+.omni-price { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; font-size: 12px; color: var(--text); }
+.omni-price-lab { color: var(--text-h); }
+.omni-price-src { color: var(--text); font-style: italic; }

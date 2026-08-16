@@ -170,6 +170,7 @@ export type OmniOffer = {
   tier: string;
   substitute: string; // 'Omni Cube' | 'Omni Orb'
   substituteYear: number;
+  quantity: number; // how many the line needs — the Omni figures are already x this
   lineAvg: number; // the line as authored, quantity included
   lineMin: number;
   omniAvg: number; // building that many Omni tokens instead
@@ -248,6 +249,7 @@ export function omniOffersFor(cost: BuildCost, engine: CostEngine): OmniOffer[] 
       tier,
       substitute,
       substituteYear: omni.year,
+      quantity: l.quantity,
       lineAvg: l.extAvg,
       lineMin: l.extMin,
       omniAvg,
