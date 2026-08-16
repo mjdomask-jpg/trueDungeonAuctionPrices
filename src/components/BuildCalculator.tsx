@@ -7,6 +7,7 @@ import { BARS_PER_WISH_RING, DEFAULT_PATH, goldPathFor, onPath, type IngredientP
 import { PriceInput } from './PriceInput';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
+import type { RecipeStatus } from '../lib/recipeWindows';
 import {
   RESALE, WASH_THRESHOLD, breakEvenHoldings, comparePaths, quickSaleValue, type PathKey,
 } from '../lib/buildCalc';
@@ -76,8 +77,10 @@ const range = (lo: number, hi: number) => {
 
 
 // Compact provenance for one ingredient: its own season when it differs from the
-// recipe's, then where the price came from. Mirrors TransmuteRow's priceTag.
-function lineTag(l: PricedLine, recipeYear: number): string {
+// recipe's, then where the price came from. Mirrors TransmuteRow's priceTag,
+// including its rule that the recipe's prevailing basis is stated once in the
+// footer rather than on every line.
+function lineTag(l: PricedLine, recipeYear: number, status: RecipeStatus): string {
   const parts: string[] = [];
   if (l.nominalYear !== recipeYear) parts.push(String(l.nominalYear));
   if (l.isSource) parts.push('source · built');
@@ -87,6 +90,11 @@ function lineTag(l: PricedLine, recipeYear: number): string {
   else if (l.source === 'build') parts.push('built');
   else parts.push('no price');
   if (l.seasonMapped) parts.push(`from ${l.pricedYear}`);
+  else if (l.floated && status !== 'active') parts.push("today's price");
+  else if (l.basis === 'window' && status !== 'expired') parts.push('over its build window');
+  else if (status === 'expired' && l.basis === 'season' && !l.seasonMapped) parts.push('season priced');
+  if (l.pricedAs && l.pricedAs !== l.good) parts.push(`priced as ${l.pricedAs}`);
+  if (l.basis === 'pool' && l.poolYears?.length) parts.push(`${l.poolYears.join('–')} pooled`);
   if (l.bound === 'ceiling') parts.push('ceiling');
   return parts.join(' · ');
 }
@@ -97,6 +105,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [tier, setTier] = useState('All');
+  const [showExpired, setShowExpired] = useState(false);
   // null = default (only the focus year open); a Set once the user toggles one.
   const [openYears, setOpenYears] = useState<Set<number> | null>(null);
   const [onHand, setOnHand] = useState<Record<string, number>>({});
@@ -224,7 +233,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       (!q || c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q));
     return years
       .map((year) => {
-        const costs = all.filter((c) => c.year === year);
+        // Expired recipes stay PICKABLE — people audit old builds — they are
+        // just out of the way until asked for.
+        const costs = all.filter((c) => c.year === year && (showExpired || c.status !== 'expired'));
         let items: PickItem[];
         if (filtering) {
           items = costs.filter(matches).map((c) => ({ type: 'single', cost: c }));
@@ -238,7 +249,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
         return { year, items };
       })
       .filter((y) => y.items.length);
-  }, [all, years, q, tier, filtering]);
+  }, [all, years, q, tier, filtering, showExpired]);
+
+  const expiredCount = useMemo(() => all.filter((c) => c.status === 'expired').length, [all]);
 
   const pick = (c: BuildCost) => {
     setSelectedKey(c.key);
@@ -381,6 +394,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       <span className="tchip" data-tier={c.level}>{c.level}</span>
       <span className="calc-opt-nm">
         {c.displayName}
+        {/* Expired recipes are pickable but never a surprise: the tag rides the
+            name so it is there in the list and again on the row you land on. */}
+        {c.status === 'expired' && <span className="calc-opt-exp">expired</span>}
         {opts.from && <span className="calc-opt-up">↳ upgrades from {opts.from}</span>}
       </span>
       <span className="calc-opt-c">{moneyCalc(c.fullAvg)}</span>
@@ -432,6 +448,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               </span>
               <span className="calc-cur-name">{cost.displayName}</span>
               <span className="calc-cur-year">{cost.year}</span>
+              {cost.status === 'expired' && <span className="calc-opt-exp">expired</span>}
             </span>
             {/* Cost to finish and the buy-it answer are one block, so no future
                 layout change can put the comparison somewhere other than beside
@@ -494,7 +511,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                     {r.line.substituted === 'replaced' ? <s>{r.line.displayName}</s> : `${r.req} × ${r.line.displayName}`}
                   </span>
                   <span className="cl-meta">
-                    {r.line.substituted === 'replaced' ? 'not needed on the GP path' : lineTag(r.line, cost.year)}
+                    {r.line.substituted === 'replaced' ? 'not needed on the GP path' : lineTag(r.line, cost.year, cost.status)}
                     <button type="button" className="cl-price-m" aria-expanded={editing === r.key}
                       aria-label={`Edit unit price: ${r.line.displayName}`}
                       onClick={() => setEditing((e) => (e === r.key ? null : r.key))}>
@@ -600,6 +617,18 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 </span>
                 <span>~{range(quick.low, quick.high)} if you sold them</span>
               </div>
+            )}
+            {cost.status === 'expired' && cost.window && (
+              <p className="calc-foot-note">
+                <b>No longer craftable.</b> Ingredients are priced over the window this recipe
+                could actually be built in — {cost.window.from} to {cost.window.to}.
+              </p>
+            )}
+            {cost.status === 'active' && rows.some((r) => r.line.floated) && (
+              <p className="calc-foot-note">
+                Still craftable, so ingredients are priced at <b>today's</b> prices — what building
+                it now would cost, not what it cost in {cost.year}.
+              </p>
             )}
             <p className="calc-foot-note">
               Full build from scratch {moneyCalc(fullAvg)} (min {moneyCalc(fullMin)}).
@@ -826,6 +855,19 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 aria-pressed={t === tier} onClick={() => setTier(t)}>{t}</button>
             ))}
           </div>
+          {expiredCount > 0 && (
+            <div className="calc-dfilter">
+              <span className="calc-dfilter-lab">
+                {showExpired
+                  ? `Showing all ${all.length} recipes`
+                  : `Showing the ${all.length - expiredCount} you can still craft`}
+              </span>
+              <button type="button" className="calc-dfilter-btn" aria-pressed={showExpired}
+                onClick={() => setShowExpired((v) => !v)}>
+                {showExpired ? 'Hide expired' : `Show all (+${expiredCount} expired)`}
+              </button>
+            </div>
+          )}
           <div className="calc-dlist">
             {drawerYears.length === 0 ? (
               <p className="empty">No recipes match.</p>

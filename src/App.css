@@ -2274,3 +2274,24 @@ table.an-opens col.col-days { width: 16%; }
    view toggle, with room for the help popover inside its label. */
 .path-toggle .toggle-label { display: inline-flex; align-items: center; gap: 4px; }
 .tx-bom-row.swapped-out { opacity: 0.55; }
+
+/* Accuracy release — recipe status. "expired" is the load-bearing one: it says
+   the number in front of you is history, not a price you could pay today, so it
+   is tinted rather than grey. "preview" stays quiet; it only means the season
+   has not been auctioned yet, which the season note already covers. */
+.tx-badge.expired { background: rgba(150, 60, 60, 0.14); color: #8a3535; }
+.tx-badge.preview { background: var(--band); color: var(--text); }
+/* The inline copy on a BOM line, where it sits inside the provenance run. */
+.tx-badge.sm { font-size: 10px; padding: 0 6px; margin-left: 6px; }
+:root[data-theme='dark'] .tx-badge.expired { background: rgba(240, 120, 120, 0.16); color: #f08a8a; }
+
+/* Drawer: how many recipes the status filter is holding back, and the way in. */
+.calc-dfilter { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex-wrap: wrap; padding: 8px 0 2px; }
+.calc-dfilter-lab { font-size: 12px; color: var(--text); }
+.calc-dfilter-btn { font: inherit; font-size: 12px; padding: 4px 12px; cursor: pointer;
+  background: var(--accent-bg); border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); }
+.calc-opt-exp { font-size: 10px; margin-left: 8px; padding: 1px 7px; border-radius: 20px;
+  background: rgba(150, 60, 60, 0.14); color: #8a3535; white-space: nowrap; }
+:root[data-theme='dark'] .calc-opt-exp { background: rgba(240, 120, 120, 0.16); color: #f08a8a; }
+.price-lab { display: inline-flex; align-items: center; gap: 4px; }

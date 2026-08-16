@@ -30,6 +30,7 @@ export default function TransmutesPage() {
   // "what do these cost if I pay in Gold Bars" is asked of all of them at once.
   // Defaults to the Wish Ring, which is what the recipes literally list.
   const [path, setPath] = useState<IngredientPath>(DEFAULT_PATH);
+  const [activeOnly, setActiveOnly] = useState(false);
   const [search, setSearch] = useState('');
   // null = default view (newest season open); a Set once the user toggles one.
   const [openSeasons, setOpenSeasons] = useState<Set<number> | null>(null);
@@ -48,10 +49,11 @@ export default function TransmutesPage() {
       const matched = q
         ? all.filter((c) => c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q))
         : all;
-      const costs = path === DEFAULT_PATH ? matched : matched.map((c) => onPath(c, path));
+      const visible = activeOnly ? matched.filter((c) => c.status !== 'expired') : matched;
+      const costs = path === DEFAULT_PATH ? visible : visible.map((c) => onPath(c, path));
       return { year, costs };
     });
-  }, [engine, seasons, q, path]);
+  }, [engine, seasons, q, path, activeOnly]);
 
   const noteFor = (year: number): string | undefined => {
     if (!engine) return undefined;
@@ -78,6 +80,10 @@ export default function TransmutesPage() {
     });
 
   const total = useMemo(() => bySeason.reduce((n, s) => n + s.costs.length, 0), [bySeason]);
+  const expiredCount = useMemo(
+    () => (engine ? engine.allCosts().filter((c) => c.status === 'expired').length : 0),
+    [engine],
+  );
   const anyGoldPath = useMemo(
     () => bySeason.some((s) => s.costs.some((c) => goldPathFor(c))),
     [bySeason],
@@ -107,13 +113,15 @@ export default function TransmutesPage() {
           <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>.
         </PageIntro>
       ) : (
-        <PageIntro short="Estimated transmute costs, priced from each transmute's debut-year auction sales.">
+        <PageIntro short="What each transmute costs to craft — at today's prices if you can still make it.">
           What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
-          building against buying from a reseller. Each transmute is priced from auction sales in the{' '}
-          <strong>year it debuted</strong> — an <strong>avg</strong> and a <strong>min</strong> total
-          per recipe. Tokens with a source show
-          both the full build and the cheaper cost if you already own that source. Expand any row for
-          its full bill of materials. For single-token price history, see <Link to="/">Prices</Link>.
+          building against buying from a reseller. A recipe you can <strong>still craft</strong> is
+          priced at <strong>today's</strong> prices, because that is what building it now would
+          cost you. One that has <strong>expired</strong> is priced over the window it could
+          actually be built in, and says so. Both are shown as an <strong>avg</strong> and a{' '}
+          <strong>min</strong> total per recipe. Tokens with a source show both the full build and
+          the cheaper cost if you already own that source. Expand any row for its full bill of
+          materials. For single-token price history, see <Link to="/">Prices</Link>.
         </PageIntro>
       )}
 
@@ -133,6 +141,21 @@ export default function TransmutesPage() {
           </div>
         </div>
 
+        {!calculator && expiredCount > 0 && (
+          <div className="toggle" role="group" aria-label="Which recipes to show">
+            <span className="toggle-label">Show</span>
+            <div className="toggle-buttons">
+              <button type="button" data-label="All" className={!activeOnly ? 'on' : undefined}
+                aria-pressed={!activeOnly} onClick={() => setActiveOnly(false)}>All</button>
+              <button type="button" data-label="Still craftable" className={activeOnly ? 'on' : undefined}
+                aria-pressed={activeOnly} onClick={() => setActiveOnly(true)}>
+                <span className="lbl-full">Still craftable</span>
+                <span className="lbl-short">Craftable</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {!calculator && anyGoldPath && (
           <div className="toggle path-toggle" role="group" aria-label="Legendary Wish Ring line">
             <span className="toggle-label">
@@ -149,6 +172,29 @@ export default function TransmutesPage() {
                 aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
               <button type="button" className={path === 'gp' ? 'on' : undefined}
                 aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
+            </div>
+          </div>
+        )}
+
+        {!calculator && (
+          <div className="toggle" role="group" aria-label="Which sales price today's recipes">
+            <span className="toggle-label price-lab">
+              Today's prices from
+              <HintPopover label="About the price basis">
+                Recipes you can still craft are priced at <b>today's</b> prices. This picks what
+                “today” means: the whole current season, or just its <b>last five auctions</b>,
+                which reacts faster when a trade good is moving. Expired recipes ignore it —
+                they are priced over the window they could actually be built in.
+              </HintPopover>
+            </span>
+            <div className="toggle-buttons">
+              <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
+                aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
+              <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
+                aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
+                <span className="lbl-full">Last 5 auctions</span>
+                <span className="lbl-short">Last 5</span>
+              </button>
             </div>
           </div>
         )}
@@ -189,10 +235,11 @@ export default function TransmutesPage() {
               open={isOpen(year)}
               onToggle={() => toggle(year)}
               note={noteFor(year)}
-              // "Recent prices" only moves the current season's numbers (past
-              // seasons are closed; the preview already prices off recent sales),
-              // so the toggle lives inside that one season, not floating globally.
-              recentToggle={engine != null && year === engine.prices.latestPriced ? { on: recentPrices, onChange: setRecentPrices } : undefined}
+              // The recent-prices control moved to the global bar in the accuracy
+              // release: it used to move only the current season's numbers, but
+              // every ACTIVE recipe now prices at today's prices, so a control
+              // buried in one season's panel would silently reprice 91 of 174
+              // rows across every other panel on the page.
             />
           ))}
         </>

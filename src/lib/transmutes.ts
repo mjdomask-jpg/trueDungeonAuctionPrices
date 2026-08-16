@@ -560,6 +560,11 @@ export type PricedLine = {
   // whose quantity it raises (the Gold Bars). The row stays in place either
   // way — see applyGoldPath in substitutions.ts for why.
   substituted?: 'replaced' | 'boosted';
+  // Status of the recipe this line was BUILT from, when it is a transmute.
+  // An expired one can no longer be crafted at any price — only bought
+  // second-hand — which is a different caveat from an estimated price and the
+  // reason Omni substitution exists (§3.2).
+  subStatus?: RecipeStatus;
   note?: string;
 };
 
@@ -818,6 +823,7 @@ export class CostEngine {
         base.estimate = sub.estimate || base.seasonMapped;
         base.bound = sub.ceiling ? 'ceiling' : '';
         base.displayName = sub.displayName;
+        base.subStatus = sub.status;
         if (sub.cycle) anyCycle = true;
         if (sub.ceiling) anyCeiling = true;
         if (sub.unpricedLines) unpriced += sub.unpricedLines;

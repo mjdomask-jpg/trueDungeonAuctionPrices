@@ -1,5 +1,4 @@
 import { orderSeason, type BuildCost } from '../lib/transmutes';
-import { HintPopover } from './HintPopover';
 import { TransmuteRow } from './TransmuteRow';
 
 // One collapsible season section: its transmutes grouped and ordered by
@@ -12,15 +11,12 @@ export function TransmuteSeason({
   open,
   onToggle,
   note,
-  recentToggle,
 }: {
   year: number;
   costs: BuildCost[];
   open: boolean;
   onToggle: () => void;
   note?: string;
-  // Present only for the current season, whose prices this toggle affects.
-  recentToggle?: { on: boolean; onChange: (v: boolean) => void };
 }) {
   const groups = orderSeason(costs);
 
@@ -35,19 +31,6 @@ export function TransmuteSeason({
 
       {open && (
         <div className="tx-sbody">
-          {recentToggle && (
-            <label className="tx-check tx-season-toggle">
-              <input
-                type="checkbox"
-                checked={recentToggle.on}
-                onChange={(e) => recentToggle.onChange(e.target.checked)}
-              />
-              Recent prices
-              <HintPopover label="About recent prices">
-                Use data from this season's last 5 auctions
-              </HintPopover>
-            </label>
-          )}
           {groups.map((g) => (
             <div key={g.label} className={`tx-group${g.kind === 'ladder' ? ' ladder' : ''}`}>
               <div className="tx-group-label">{g.label}</div>
