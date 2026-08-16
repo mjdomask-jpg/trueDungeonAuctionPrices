@@ -21,6 +21,13 @@ function priceTag(l: PricedLine, recipeYear: number): string {
   else if (l.source === 'build') parts.push('built');
   else parts.push('no price');
   if (l.seasonMapped) parts.push(`from ${l.pricedYear}`);
+  // A line naming a specific token that auctions only sell generically (every
+  // named Ultra Rare) says so, so the number is never mistaken for a sale of
+  // that token (§3.4a).
+  if (l.pricedAs && l.pricedAs !== l.good) parts.push(`priced as ${l.pricedAs}`);
+  // "Any Ultra Rare from {years}" (§3.4b), which is also what the two-season
+  // pool means: the token is redeemable across both of them.
+  if (l.basis === 'pool' && l.poolYears?.length) parts.push(`${l.poolYears.join('–')} pooled`);
   if (l.bound === 'ceiling') parts.push('ceiling');
   return parts.join(' · ');
 }
@@ -148,6 +155,13 @@ export function TransmuteRow({
               <span>Build total</span>
               <span><Money value={cost.fullAvg} /></span><span><Money value={cost.fullMin} /></span>
             </div>
+          )}
+          {cost.lines.some((l) => l.category === 'Ultra Rare') && (
+            <p className="tx-bom-note">
+              Ultra Rare lines price at the auction average for the tier — auctions sell
+              “an Ultra Rare”, not a specific one. A particular Ultra Rare bought on the
+              secondary market can cost more.
+            </p>
           )}
           {cost.marketAvg != null && (
             <p className="tx-bom-note">

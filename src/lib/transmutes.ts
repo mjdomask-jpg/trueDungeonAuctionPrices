@@ -20,6 +20,12 @@ export type RecipeLine = {
   nominalYear: number; // goodYear resolved against the recipe's own year
   quantity: number;
   isSource: boolean; // the token being upgraded FROM, not consumed as fuel
+  // Optional `IngredientType`, from the existing Category vocabulary. It lets
+  // a line name the ACTUAL token it needs (Item = "Ymir's Bane",
+  // IngredientType = "Ultra Rare") while still pricing as the generic tier
+  // when that specific token has never been auctioned — which is the case for
+  // every named Ultra Rare, since auctions sell the tier itself as PYP (§3.4).
+  ingredientType: string;
 };
 
 export type Recipe = {
@@ -109,6 +115,7 @@ export function parseRecipes(text: string): Recipe[] {
       nominalYear: resolveGoodYear(goodYear, year),
       quantity,
       isSource: (o['IsSource'] || '').toUpperCase() === 'TRUE',
+      ingredientType: (o['IngredientType'] ?? '').trim(),
     });
   }
   return [...byKey.values()];
@@ -196,6 +203,7 @@ export type LeafPrice = {
   basis: PriceBasis;
   window?: PricingWindow; // set when basis is 'window'
   poolYears?: number[]; // set when basis is 'pool'
+  pricedAs?: string; // the token actually priced, when it is not the one asked for
   datelessSales: number; // sales admitted by the D5 season fallback, not a date
 };
 
@@ -504,6 +512,17 @@ export class PriceIndex {
   }
 }
 
+/**
+ * Tiers that are themselves auctioned, so a named member of the tier can be
+ * priced by the tier when the token itself has no sales of its own.
+ *
+ * Only Ultra Rare qualifies today, and not by coincidence: the tier and the
+ * token share one canonical name because auctions sell "an Ultra Rare" (PYP)
+ * rather than a specific one (§4.1). Written as a map anyway, because the
+ * moment a second tier is sold generically the rule is already here.
+ */
+export const TIER_PROXY: Readonly<Record<string, string>> = { 'Ultra Rare': 'Ultra Rare' };
+
 // --- The cost engine -----------------------------------------------------
 
 export type PricedLine = {
@@ -532,6 +551,10 @@ export type PricedLine = {
   window?: PricingWindow; // the date range, when basis is 'window'
   poolYears?: number[]; // the seasons unioned, when basis is 'pool'
   datelessSales: number; // sales admitted by D5's season fallback
+  // Set when the line names a specific token that has no price of its own and
+  // was priced as its tier instead — the site is reporting the tier's auction
+  // average, and a specific token on the secondary market may cost more.
+  pricedAs?: string;
   note?: string;
 };
 
@@ -627,7 +650,8 @@ export class CostEngine {
    *  name (§4.1), so the line names the tier itself; a pinned `ItemYear` takes
    *  the pin branch above this one and never reaches the pool. */
   private isPoolableUltraRare(l: RecipeLine): boolean {
-    return l.good === 'Ultra Rare' && l.goodYear.trim() === '';
+    if (l.goodYear.trim() !== '') return false; // a pin never reaches the pool
+    return l.good === 'Ultra Rare' || l.ingredientType === 'Ultra Rare';
   }
 
   /**
@@ -642,17 +666,40 @@ export class CostEngine {
     status: RecipeStatus,
     window: PricingWindow | null,
   ): { price: LeafPrice | null; floated: boolean } {
+    const direct = this.leafForGood(l.good, l, recipe, status, window);
+    if (direct.price) return direct;
+
+    // A line naming a specific member of an auctioned tier falls back to the
+    // tier's own price (§3.4a). This is what makes `IngredientType` authoring
+    // safe: naming the real token the recipe needs improves what the page SAYS
+    // without changing what it CHARGES, and it cannot unprice a line.
+    const proxy = TIER_PROXY[l.ingredientType];
+    if (proxy && proxy !== l.good) {
+      const viaTier = this.leafForGood(proxy, l, recipe, status, window);
+      if (viaTier.price) return { ...viaTier, price: { ...viaTier.price, pricedAs: proxy } };
+    }
+    return direct;
+  }
+
+  /** The §10.2 rule chain itself, for one candidate token. */
+  private leafForGood(
+    good: string,
+    l: RecipeLine,
+    recipe: Recipe,
+    status: RecipeStatus,
+    window: PricingWindow | null,
+  ): { price: LeafPrice | null; floated: boolean } {
     // 1. An explicit ItemYear is a pin and never floats (34 lines). A pin
     //    names a season on purpose, so neither the float nor the window may
     //    override it -- that would make authoring the cell meaningless.
     if (l.goodYear.trim() !== '')
-      return { price: this.prices.leafPrice(l.good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
+      return { price: this.prices.leafPrice(good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
 
     // 2. On an expired recipe the date window governs every remaining line.
     //    Because the window already spans the debut season through Y+1, the
     //    two-year UR availability rule is satisfied by the window itself.
     if (status === 'expired' && window) {
-      const p = this.prices.leafPrice(l.good, l.nominalYear, 'full', window);
+      const p = this.prices.leafPrice(good, l.nominalYear, 'full', window);
       if (p) return { price: p, floated: false };
     }
 
@@ -660,7 +707,7 @@ export class CostEngine {
     //    what a UR resolves to when the basis is "today", holding the era's
     //    baseline while the trade goods around it float.
     if (status !== 'expired' && this.isPoolableUltraRare(l)) {
-      const pooled = this.prices.poolPrice(l.good, [recipe.year, recipe.year + 1]);
+      const pooled = this.prices.poolPrice(good, [recipe.year, recipe.year + 1]);
       if (pooled) return { price: pooled, floated: false };
       // Neither season sold one: every recipe before 2018, since auction data
       // starts there. Clamp to the recipe's own year -- which lands on the
@@ -668,7 +715,7 @@ export class CostEngine {
       // Floating here is precisely the failure D4 exists to prevent: it would
       // put a 2014 Legendary's Ultra Rare at 2026 PYP ($60) when the closest
       // thing to that era's baseline the data holds is 2018's ($112).
-      const clamped = this.prices.leafPrice(l.good, recipe.year, 'full');
+      const clamped = this.prices.leafPrice(good, recipe.year, 'full');
       if (clamped) return { price: clamped, floated: false };
     }
 
@@ -678,12 +725,12 @@ export class CostEngine {
     //    already clamps forward to the latest season's last-5.
     const effectiveYear = status === 'active' ? this.prices.latestPriced : l.nominalYear;
     const floated = effectiveYear !== l.nominalYear;
-    const p = this.prices.leafPrice(l.good, effectiveYear, this.variantFor(effectiveYear));
+    const p = this.prices.leafPrice(good, effectiveYear, this.variantFor(effectiveYear));
     if (p) return { price: p, floated };
 
     // 5. Defensive: floating must never cost a line the price it used to have.
     //    Measured at 0 lines today, but the data changes every season.
-    return { price: this.prices.leafPrice(l.good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
+    return { price: this.prices.leafPrice(good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
   }
 
   cost(transmute: string, year: number): BuildCost | null {
@@ -719,7 +766,9 @@ export class CostEngine {
       const base: PricedLine = {
         good: l.good,
         displayName: this.prices.displayName(l.good, l.nominalYear),
-        category: this.prices.category(l.good, l.nominalYear),
+        // A named token the metadata has never seen still knows its tier from
+        // the authored IngredientType, so the category chip stays populated.
+        category: this.prices.category(l.good, l.nominalYear) || l.ingredientType,
         quantity: l.quantity,
         isSource: l.isSource,
         nominalYear: l.nominalYear,
@@ -777,6 +826,7 @@ export class CostEngine {
           base.window = p.window;
           base.poolYears = p.poolYears;
           base.datelessSales = p.datelessSales;
+          base.pricedAs = p.pricedAs;
           if (p.bound === 'ceiling') anyCeiling = true;
         } else {
           unpriced++;

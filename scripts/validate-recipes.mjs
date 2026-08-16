@@ -57,7 +57,7 @@ const SCHEMA = {
     // Optional by design: the engine defaults every one of these, so the site
     // is correct before the sheet is touched and authoring only adds precision.
     // Listed here for documentation; absence is never an error.
-    optional: ['Expires'],
+    optional: ['Expires', 'IngredientType'],
     renamed: { Good: 'Item', GoodYear: 'ItemYear', GoodDisplayName: 'Display Name' },
   },
   'offAuctionPrices.csv': {
@@ -123,6 +123,11 @@ for (const m of meta) {
 for (const [k, n] of metaDupes) add('WARN', 'tokenMetadata', `duplicate key "${k}" appears ${n}x`);
 
 const transmuteNames = new Set(recipes.map(r => r.Transmute));
+// Mirrors TIER_PROXY in src/lib/transmutes.ts: tiers that are auctioned
+// generically, so a named member of the tier still has a price.
+const TIER_PROXY = { 'Ultra Rare': 'Ultra Rare' };
+const CATEGORY_VOCAB = new Set([...prices.map(p => p.Category), ...meta.map(m => m.Category)].filter(Boolean));
+const proxyPriced = new Set(); // `${year}|${item}` unknown tokens their tier can price
 const fleeceYears = new Set(fleece.map(f => f.Year));
 const fleeceGood  = new Set(fleece.map(f => f.Item));
 // Off-auction coverage is PER ITEM: the table's year range differs token by
@@ -184,7 +189,18 @@ for (const [i, r] of recipes.entries()) {
   if (!known) {
     const k = rv + '|' + r.Item;
     unresolvedGoods.set(k, (unresolvedGoods.get(k) ?? 0) + 1);
+    // A line naming a specific member of an auctioned tier is priceable through
+    // the tier even when the token itself is unknown to tokenMetadata -- which
+    // is the normal state for a named Ultra Rare, since auctions sell the tier.
+    // Without this, authoring `IngredientType` would turn a working sheet into
+    // a failing one, and the whole point of the column is that it is optional.
+    if (TIER_PROXY[(r.IngredientType ?? '').trim()]) proxyPriced.add(k);
   }
+
+  // IngredientType, when authored, comes from the Category vocabulary.
+  const it = (r.IngredientType ?? '').trim();
+  if (it && !CATEGORY_VOCAB.has(it))
+    add('WARN', 'ingredient-type', `line ${ln}: IngredientType "${it}" is not one of ${[...CATEGORY_VOCAB].join(', ')}`);
 
   // display name agreement
   const m = metaByKey.get(mk);
@@ -198,7 +214,10 @@ for (const [i, r] of recipes.entries()) {
 
 for (const [k, n] of [...unresolvedGoods].sort()) {
   const [y, g] = k.split('|');
-  add('ERROR', 'unknown-good', `"${g}" @ ${y} not in tokenMetadata / transmutes / fleece  (${n} row${n>1?'s':''})`);
+  if (proxyPriced.has(k))
+    add('INFO', 'tier-priced', `"${g}" @ ${y} is not in tokenMetadata; priced as its IngredientType tier  (${n} row${n>1?'s':''})`);
+  else
+    add('ERROR', 'unknown-good', `"${g}" @ ${y} not in tokenMetadata / transmutes / fleece  (${n} row${n>1?'s':''})`);
 }
 
 // ---------- season fallback (expansion-plan.md §4.4) ----------
@@ -363,6 +382,9 @@ for (const start of edges.keys()) {
 const missingPrice = new Map();
 for (const r of recipes) {
   if (transmuteNames.has(r.Item) || fleeceGood.has(r.Item) || r.Item === 'Monster Trophy') continue;
+  // A named member of an auctioned tier having no price of its own is the
+  // expected state, not a gap -- the tier-priced INFO above already says so.
+  if (proxyPriced.has(r.ResolvedYear + '|' + r.Item)) continue;
   if (!pricedYears.has(r.ResolvedYear)) continue;          // whole season un-priced; reported separately
   if (!pricedPairs.has(r.ResolvedYear + '|' + r.Item)) {
     const k = r.ResolvedYear + '|' + r.Item;
