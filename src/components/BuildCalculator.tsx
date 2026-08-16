@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
+import { OmniSuggestions } from './OmniSuggestions';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
 import {
@@ -606,6 +607,12 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               </p>
             )}
           </div>
+
+          {/* Phase 6: opt-in only, and deliberately AFTER the totals it does not
+              affect. An Omni token is a comparison, not a path most players are
+              already on — see substitutions.ts for why this and the Wish Ring
+              toggle get different treatment. */}
+          <OmniSuggestions cost={cost} engine={engine} />
 
           {/* Phase 3: buy-instead price, and the three ways to end up holding
               the token. Every total is shown, not just the verdict, so the

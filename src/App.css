@@ -2227,3 +2227,23 @@ table.an-opens col.col-days { width: 16%; }
    date aligned. */
 .foot-num { color: var(--text-h); font-weight: 500; }
 .foot-close { color: var(--text-h); font-variant-numeric: tabular-nums; }
+
+/* Phase 6 — the Omni suggestion box. Collapsed by default and set BELOW the
+   totals it deliberately does not affect: this is an alternative to price up,
+   not a cheaper reading of the same build (plan §3.5, D8). Quieter than .cbuy
+   for the same reason — the Wish Ring / GP toggle is a choice the player is
+   making, this is a note. */
+.omni { margin-top: 12px; border: 1px dashed var(--border); border-radius: 10px; }
+.omni-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px;
+  font: inherit; font-size: 13px; text-align: left; cursor: pointer; background: none;
+  border: none; color: var(--text-h); border-radius: 10px; }
+.omni-head:hover { color: var(--accent); }
+.omni-i { color: var(--accent); font-size: 14px; }
+.omni-sum { flex: 1; }
+.omni-caret { color: var(--text); font-size: 11px; }
+.omni-list { list-style: none; margin: 0; padding: 0 12px 4px; }
+.omni-offer { padding: 8px 0; border-top: 1px solid var(--border); }
+.omni-line { margin: 0; font-size: 13px; color: var(--text-h); }
+.omni-why { color: var(--text); font-weight: 400; }
+.omni-cmp { margin: 3px 0 0; font-size: 12px; color: var(--text); line-height: 1.5; }
+.omni-foot { margin: 0; padding: 8px 12px 12px; font-size: 12px; color: var(--text); font-style: italic; }

@@ -183,6 +183,10 @@ export type OmniOffer = {
    *  they were introduced so that these older Relics could still be obtained.
    *  A swap can be worth surfacing on this ground while costing more. */
   ingredientCraftable: boolean;
+  /** When the ingredient's own recipe expired, for the copy that explains why
+   *  the swap is being offered at all. Null when it never expires or is not a
+   *  transmute. */
+  ingredientExpires: string | null;
 };
 
 /** A line's tier: its own recipe level when the ingredient is itself a
@@ -252,6 +256,7 @@ export function omniOffersFor(cost: BuildCost, engine: CostEngine): OmniOffer[] 
       savesMin: l.extMin - omniMin,
       cheaper: omniAvg < l.extAvg,
       ingredientCraftable: ingredient ? ingredient.status !== 'expired' : true,
+      ingredientExpires: ingredient?.status === 'expired' ? ingredient.expires : null,
     });
   }
   // Cheaper offers first, then the ones that are only about availability.
