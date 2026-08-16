@@ -10,7 +10,7 @@
 // React and no fetching, matching the data.ts seam.
 
 import { parseCSV, aggregateSeason, seasonsOf, dateKey, type Sale, type ItemRow, type Stats, type AuctionMeta } from './data';
-import type { PricingWindow } from './recipeWindows';
+import { statusOf, windowOf, expiryOf, todayISO, type PricingWindow, type RecipeStatus } from './recipeWindows';
 
 // --- Types ---------------------------------------------------------------
 
@@ -195,6 +195,7 @@ export type LeafPrice = {
   bound: string; // 'ceiling' when the value is an upper bound (§4.3)
   basis: PriceBasis;
   window?: PricingWindow; // set when basis is 'window'
+  poolYears?: number[]; // set when basis is 'pool'
   datelessSales: number; // sales admitted by the D5 season fallback, not a date
 };
 
@@ -334,6 +335,40 @@ export class PriceIndex {
     for (const [item, b] of byItem) rows.set(item, { stats: statsOf(b.prices), dateless: b.dateless });
     this.windowCache.set(key, rows);
     return rows;
+  }
+
+  /** Two (or more) whole seasons unioned. Ultra Rares are only available in a
+   *  two-year window and are priced by the secondary market afterwards, with
+   *  the auction price as the baseline the site can report -- so a blank UR
+   *  line holds its era's baseline while the trade goods around it float to
+   *  today (D4). A straight union of sales, per E1. */
+  private rowsInSeasons(seasons: number[]): Map<string, WindowRow> {
+    const key = `S${seasons.join(',')}`;
+    const hit = this.windowCache.get(key);
+    if (hit) return hit;
+    const wanted = new Set(seasons.map(String));
+    const byItem = new Map<string, number[]>();
+    for (const sale of this.sales) {
+      if (!wanted.has(sale.season)) continue;
+      const bucket = byItem.get(sale.item);
+      if (bucket) bucket.push(sale.price);
+      else byItem.set(sale.item, [sale.price]);
+    }
+    const rows = new Map<string, WindowRow>();
+    for (const [item, prices] of byItem) rows.set(item, { stats: statsOf(prices), dateless: 0 });
+    this.windowCache.set(key, rows);
+    return rows;
+  }
+
+  /** Price a good over a pool of whole seasons. Null when none of them sold
+   *  it, which is the signal to fall back to the ordinary season path. */
+  poolPrice(good: string, seasons: number[]): LeafPrice | null {
+    const row = this.rowsInSeasons(seasons).get(good);
+    if (!row) return null;
+    return {
+      stats: row.stats, source: 'auction', pricedYear: seasons[0], variant: 'full',
+      seasonMapped: false, bound: '', basis: 'pool', poolYears: seasons, datelessSales: 0,
+    };
   }
 
   /** Whether an UNDATED auction's season counts as inside a window. Uses the
@@ -489,6 +524,14 @@ export type PricedLine = {
   extMin: number | null;
   saleCount: number | null; // n behind the stat; 0 = hand-maintained
   estimate: boolean; // season-mapped, ceiling-bounded, or built from either
+  basis: PriceBasis; // how the stats behind this line were aggregated
+  // Priced at today's prices rather than at the line's own season, because
+  // the recipe is still craftable (D3). Not an estimate — a real current
+  // price answering "what would this cost me to build now".
+  floated: boolean;
+  window?: PricingWindow; // the date range, when basis is 'window'
+  poolYears?: number[]; // the seasons unioned, when basis is 'pool'
+  datelessSales: number; // sales admitted by D5's season fallback
   note?: string;
 };
 
@@ -515,12 +558,22 @@ export type BuildCost = {
   cycle: boolean; // a source cycle was cut here (data bug; guards infinite recursion)
   marketAvg: number | null; // this token's own auction price, when it has one
   marketMin: number | null;
+  // Accuracy release (§10). `status` decides the pricing basis: active and
+  // future recipes price at today's prices, expired ones over `window`.
+  status: RecipeStatus;
+  window: PricingWindow | null;
+  expires: string | null; // resolved expiry date; null = never expires
 };
 
 export type CostOptions = {
-  /** Use each season's last-5-auctions window where available. Only affects
-   *  lines priced in the latest priced season; older seasons have no "recent". */
+  /** Use each season's last-5-auctions window where available. Applies to any
+   *  line priced at the latest priced season — which, since active recipes now
+   *  price at today's prices, means every active recipe rather than only the
+   *  current season's (§3.1 downstream). */
   recentPrices?: boolean;
+  /** 'YYYY-MM-DD'. Injectable so tests and the harness can pin a date; the
+   *  app leaves it to the viewer's own clock. */
+  today?: string;
 };
 
 // Totals exclude the source lines by default; `includeSource` adds them.
@@ -534,10 +587,12 @@ export class CostEngine {
   private visiting = new Set<string>();
   readonly prices: PriceIndex;
   private recentPrices: boolean;
+  private today: string;
 
   constructor(recipes: Recipe[], prices: PriceIndex, opts: CostOptions = {}) {
     this.prices = prices;
     this.recentPrices = opts.recentPrices ?? false;
+    this.today = opts.today ?? todayISO();
     for (const r of recipes) {
       this.recipes.set(r.key, r);
       this.byName.set(r.transmute, [...(this.byName.get(r.transmute) ?? []), r.year]);
@@ -568,6 +623,69 @@ export class CostEngine {
     return this.recentPrices && nominalYear >= this.prices.latestPriced ? 'last5' : 'full';
   }
 
+  /** A blank `Ultra Rare` line. The tier and the token share one canonical
+   *  name (§4.1), so the line names the tier itself; a pinned `ItemYear` takes
+   *  the pin branch above this one and never reaches the pool. */
+  private isPoolableUltraRare(l: RecipeLine): boolean {
+    return l.good === 'Ultra Rare' && l.goodYear.trim() === '';
+  }
+
+  /**
+   * Price one leaf line under its recipe's basis (§10.2's per-line rules).
+   * The order below IS the rule set, and it is deliberately a chain of
+   * fallbacks rather than a lookup table: whichever branch fires, a line that
+   * could be priced before must still be priced after.
+   */
+  private leafFor(
+    l: RecipeLine,
+    recipe: Recipe,
+    status: RecipeStatus,
+    window: PricingWindow | null,
+  ): { price: LeafPrice | null; floated: boolean } {
+    // 1. An explicit ItemYear is a pin and never floats (34 lines). A pin
+    //    names a season on purpose, so neither the float nor the window may
+    //    override it -- that would make authoring the cell meaningless.
+    if (l.goodYear.trim() !== '')
+      return { price: this.prices.leafPrice(l.good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
+
+    // 2. On an expired recipe the date window governs every remaining line.
+    //    Because the window already spans the debut season through Y+1, the
+    //    two-year UR availability rule is satisfied by the window itself.
+    if (status === 'expired' && window) {
+      const p = this.prices.leafPrice(l.good, l.nominalYear, 'full', window);
+      if (p) return { price: p, floated: false };
+    }
+
+    // 3. A blank Ultra Rare line pools its recipe year and the next (D4) --
+    //    what a UR resolves to when the basis is "today", holding the era's
+    //    baseline while the trade goods around it float.
+    if (status !== 'expired' && this.isPoolableUltraRare(l)) {
+      const pooled = this.prices.poolPrice(l.good, [recipe.year, recipe.year + 1]);
+      if (pooled) return { price: pooled, floated: false };
+      // Neither season sold one: every recipe before 2018, since auction data
+      // starts there. Clamp to the recipe's own year -- which lands on the
+      // earliest priced season -- rather than dropping through to the float.
+      // Floating here is precisely the failure D4 exists to prevent: it would
+      // put a 2014 Legendary's Ultra Rare at 2026 PYP ($60) when the closest
+      // thing to that era's baseline the data holds is 2018's ($112).
+      const clamped = this.prices.leafPrice(l.good, recipe.year, 'full');
+      if (clamped) return { price: clamped, floated: false };
+    }
+
+    // 4. Otherwise an ACTIVE recipe prices at today's prices (D3): someone
+    //    building something still craftable pays today's prices by definition.
+    //    FUTURE recipes keep their existing behaviour -- the 2027 preview
+    //    already clamps forward to the latest season's last-5.
+    const effectiveYear = status === 'active' ? this.prices.latestPriced : l.nominalYear;
+    const floated = effectiveYear !== l.nominalYear;
+    const p = this.prices.leafPrice(l.good, effectiveYear, this.variantFor(effectiveYear));
+    if (p) return { price: p, floated };
+
+    // 5. Defensive: floating must never cost a line the price it used to have.
+    //    Measured at 0 lines today, but the data changes every season.
+    return { price: this.prices.leafPrice(l.good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
+  }
+
   cost(transmute: string, year: number): BuildCost | null {
     const recipe = this.resolveRecipe(transmute, year);
     if (!recipe) return null;
@@ -583,9 +701,14 @@ export class CostEngine {
         level: recipe.level, lines: [], ownAvg: 0, ownMin: 0, sourceAvg: 0, sourceMin: 0,
         fullAvg: 0, fullMin: 0, hasSource: false, unpricedLines: 0, estimate: true,
         ceiling: false, cycle: true, marketAvg: null, marketMin: null,
+        status: 'active', window: null, expires: null,
       };
     }
     this.visiting.add(memoKey);
+
+    // The recipe's status decides the basis for every line below (§10.2).
+    const status = statusOf(recipe, this.prices.seasonStart, this.today);
+    const window = windowOf(recipe, this.prices.seasonStart, this.today);
 
     const lines: PricedLine[] = [];
     let ownAvg = 0, ownMin = 0, sourceAvg = 0, sourceMin = 0;
@@ -608,6 +731,9 @@ export class CostEngine {
         unitAvg: null, unitMin: null, extAvg: null, extMin: null,
         saleCount: null,
         estimate: false,
+        basis: 'season',
+        floated: false,
+        datelessSales: 0,
       };
 
       // Any line naming a producible transmute recurses; everything else is a
@@ -635,7 +761,7 @@ export class CostEngine {
         if (sub.unpricedLines) unpriced += sub.unpricedLines;
         if (base.seasonMapped) base.note = `built from the ${sub.year} recipe`;
       } else {
-        const p = this.prices.leafPrice(l.good, l.nominalYear, variant);
+        const { price: p, floated } = this.leafFor(l, recipe, status, window);
         if (p) {
           base.source = p.source;
           base.pricedYear = p.pricedYear;
@@ -646,6 +772,11 @@ export class CostEngine {
           base.unitMin = p.stats.min;
           base.saleCount = p.stats.n;
           base.estimate = p.seasonMapped || p.bound === 'ceiling';
+          base.basis = p.basis;
+          base.floated = floated;
+          base.window = p.window;
+          base.poolYears = p.poolYears;
+          base.datelessSales = p.datelessSales;
           if (p.bound === 'ceiling') anyCeiling = true;
         } else {
           unpriced++;
@@ -690,6 +821,9 @@ export class CostEngine {
       hasSource: lines.some((l) => l.isSource),
       unpricedLines: unpriced,
       estimate: anyEstimate,
+      status,
+      window,
+      expires: expiryOf(recipe),
       ceiling: anyCeiling,
       cycle: anyCycle,
       marketAvg: market ? market.stats.avg : null,
