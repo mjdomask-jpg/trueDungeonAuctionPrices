@@ -590,7 +590,7 @@ clear wording.
   control; and `.cl-hand input` / `.cl-money-in input` now hit 16px below 640px —
   both sat under the iOS zoom threshold that `docs/ui-conventions.md` mandates.
 
-### Phase 4 — Active recipe windows (accuracy) — broad blast radius
+### Phase 4 — Active recipe windows (accuracy) — ✅ SHIPPED
 §3.1: `Expires` column + parser, **date-windowed pricing** (aggregate each recipe over
 its exact debut→`Expires` range minus the 7-day shipping cutoff, via the
 `prices.csv` → `auctionMetadata` join), "is active" computation, recent-prices for all
@@ -607,12 +607,12 @@ accuracy-first, this becomes Phase 2 and the calculator shifts back.)*
 > definition. Phase 4 also no longer ships alone: it is bundled with Phases 5, 6 and 9
 > as one accuracy release. §10 is authoritative where it and this section differ.
 
-### Phase 5 — Ingredient specificity & Ultra Rare modeling
+### Phase 5 — Ingredient specificity & Ultra Rare modeling — ✅ SHIPPED
 §3.4: `IngredientType` column, show specific URs with generic-tier fallback,
 "any UR from year/set" notes, secondary-market caveat notes. UR two-year pricing
 folds in free if Phase 4 shipped.
 
-### Phase 6 — Omni Orb / Cube substitution
+### Phase 6 — Omni Orb / Cube substitution — ✅ SHIPPED (availability-triggered, §10.6)
 §3.5: substitution rule config, per-line `min(line, omni)` optimization, calculator
 suggestion box, optional Recipes-view badge.
 
@@ -623,7 +623,7 @@ suggestion box, optional Recipes-view badge.
 §2.3 + §1c: trenttokens build-time snapshot, auto-fill lowest price, buy link. Do
 last; re-confirm appetite for the infra first.
 
-### Phase 9 — Alternative ingredients: Wish Ring ⇄ 15,000 GP (added 2026-08-13)
+### Phase 9 — Alternative ingredients: Wish Ring ⇄ 15,000 GP — ✅ SHIPPED
 §3.8: model the Wish-Ring-or-15,000-GP choice on the 43 Legendary recipes that have
 it, so both legal paths are priced and the player can pick the one matching what they
 hold. Includes the exclusivity encoding for a hypothetical future Wish-Ring-only
@@ -751,8 +751,9 @@ All four resolved in favor of the recommendation; the phase order in §5 stands.
 
 ## 10. The accuracy release — Phases 4 + 5 + 6 + 9 bundled (decided 2026-08-13)
 
-**Status: DESIGN ONLY. No code has been written.** This section is authoritative
-wherever it differs from §3.1, §3.4, §3.5 or §5, all of which predate it.
+**Status: SHIPPED 2026-08-15** on branch `accuracy-release` (v2.1 → v2.2). This
+section is authoritative wherever it differs from §3.1, §3.4, §3.5 or §5, all of
+which predate it. §10.6 records what changed during the build.
 
 ### 10.0 Why these four ship together
 
@@ -791,7 +792,17 @@ authoring improves precision whenever it lands.
 Every number below came from reading `public/data/*.csv` directly, per
 `verify-claims-against-project-data`. Three of them changed the design.
 
-**Close-date coverage — the join Phase 4 depends on does not exist before 2022:**
+> **⚠ SUPERSEDED 2026-08-14 by the maintainer's date backfill.** The table below
+> described the gap that forced D5. It is kept as the record of why that
+> decision was made, but every figure in it is now wrong. Measured 2026-08-15:
+> **294 auctions, all carrying `openDate` and a `Link`; `closeDate` missing on
+> exactly 2 rows** (`202518` Failed, `202647` Open), **both with zero sales**;
+> **0 of 7,721 priced sales lack a joinable close date.** A 2018 season also
+> arrived (6 auctions), so auction pricing starts at 2018 and the pre-history
+> clamp is 2018, not 2019. D5's fallback ships as a seam with no live case.
+
+**Close-date coverage as it stood on 2026-08-13 — the join Phase 4 depends on**
+**did not then exist before 2022:**
 
 | Season | Auctions | With a parseable `closeDate` | Date range |
 |---|---|---|---|
@@ -970,13 +981,72 @@ per-line price overrides, since both paths' components are ordinary BOM lines.
 
 ### 10.4 Still open
 
-**Every phase-level fork is now settled (D1–D8).** One implementation-time detail
-remains, deliberately left to be decided by measurement rather than guessed:
+**Every phase-level fork was settled (D1–D8), and the one implementation-time**
+**detail is now closed too.**
 
-- **D4's pool shape** — whether a blank Ultra Rare line's two-year pool is a straight
-  union of both seasons' *sales* or an average of the two seasons' *aggregates*. The
-  two diverge when one of the seasons has very few sales; prefer whichever is stable
-  in that case.
+- **D4's pool shape — RESOLVED 2026-08-15: a straight union of sales.** Measured
+  before choosing, across every adjacent Ultra Rare season pair: a union and a
+  mean of the two season aggregates differ by **at most 3.4%** (2021∪2022, the
+  most lopsided pair at n=24/50) and **under 1% in six of the eight pairs**. The
+  thin-sample case the question was really about has also gone away — the
+  backfill means the smallest season now carries n=6 rather than nothing. The
+  union wins on being the same code path as the date window rather than a second
+  averaging mechanism. Maintainer-approved (E1).
+
+### 10.6 What the build changed (2026-08-15)
+
+Seven things the design did not anticipate, all found by measuring rather than
+by review. Recorded here because each one is a standing fact about the data,
+not a one-off bug.
+
+**1. A live regression the backfill had already caused.** Adding the 2018 season
+moved `PriceIndex.earliestPriced` from 2019 to 2018, but `offAuctionPrices.csv`'s
+first Golden Fleece row is 2019 — so 19 lines across 18 pre-2019 Legendaries
+silently dropped out of their totals, understating them 3.7–7.5%. The validator
+missed it because its coverage check keyed years by FILE rather than by ITEM, so
+2018 counted as covered on the strength of an unrelated row. Fixed in `48ca498`:
+a per-good nearest-season fallback in `leafPrice`, and per-item coverage rules
+that mirror the engine's fallback order.
+
+**2. The D4 pool needed a floor, not a fall-through.** An empty two-season pool
+(every recipe before 2018) dropped through to the float and put a 2014
+Legendary's Ultra Rare at 2026 PYP — exactly the failure §10.1 says forced D4
+into existence. It now clamps to the earliest priced season instead: $111.50
+from 2018, marked as an estimate, rather than $59.66.
+
+**3. Phase 6's `min(line, omni)` has no live cases.** An Omni Cube costs **$777**
+to craft against a dearest replaceable Relic line of **$651**; an Omni Orb
+**$421** against Ultra Rare lines of $60–112. A price-triggered suggestion box
+would never render. But **34 of the 81 eligible lines** name an ingredient whose
+own recipe has expired and cannot be crafted at any price — which is what the
+game added Omni tokens for (§10.0). The box triggers on availability instead,
+and still turns on by itself if prices ever cross.
+
+**4. The Omni box needed a price of its own.** It quoted the cost to CRAFT an
+Omni token, which is the one number its reader is least likely to pay: they are
+there because the ingredient can no longer be crafted, so they are buying. The
+craft cost is now a default, overridable per Omni token.
+
+**5. D3 has gutted the PRICE argument for the Phase 9 toggle.** §3.8's stat — GP
+cheaper in about a third of seasons — was measured on each season's own prices.
+Legendaries never expire, so all 43 are active and price at TODAY's prices,
+where the ring ($114) beats 15 bars ($133): GP is cheaper on **0 of 43** today.
+D8 still holds, because it was decided on on-hand likelihood rather than price —
+a player sitting on 40 Gold Bars finishes for $0 — but the UI copy leads with
+"you may already hold these", not "this might be cheaper".
+
+**6. Per-line basis tags had to become deviation-only.** Tagging every line of an
+expired recipe "over its build window" repeated one fact thirteen times and
+buried the line that did something else. The recipe's basis is stated once under
+the bill of materials; a line is tagged only where it deviates — which is how
+2022 Greater Charm Bracelets ends up flagging only its Golden Fleece, an
+off-auction item that cannot be windowed.
+
+**7. `min` moves much harder than `avg`.** Windowing unions ~2 years of sales, so
+an expired recipe's min is the cheapest sale in that whole range: Σ min falls
+12.3% on active recipes and 9.9% on expired ones, against 2.1% and 1.1% for avg.
+Inherent to D2/D3 rather than a defect, and **maintainer-confirmed** to keep min
+windowed even though it is optimistic.
 
 ### 10.5 Backfilling the 2019–2021 auction dates
 

@@ -290,6 +290,52 @@ change.
   seasons for that reason. All nine seasons (2018–2026) are now dated, so
   `seasonsWithCadence()` admits every one of them.
 
+### `Expires` — when a recipe stops being craftable
+
+This is what decides whether a recipe is priced at **today's** prices or over
+the window it could actually be built in, so it is worth understanding even
+though you rarely have to type it.
+
+| Value | Means |
+|---|---|
+| *blank* | The standard rule: **Dec 1 of `Year` + 1**. For a `Legendary`, `Mythic` or `Safehold` the code defaults to `never` instead, because the game does not retire those. |
+| `never` | Never expires. Only needed to override the standard rule on a level that is not already defaulted. |
+| `2027-03-01` | An explicit exception. Ioun Stone Mystic Orb (expired the following March) and Mark of Enlightenment (a one-year window) are the two known cases. |
+
+**Why it matters:** a recipe you can still craft is priced at today's prices,
+because that is what building it now would cost. An expired one is priced over
+the range from its debut season's first auction to its expiry, minus a 7-day
+shipping cutoff — a win inside that last week could not ship in time to craft.
+Get `Expires` wrong and the recipe is quoted on the wrong basis entirely, which
+is why the validator checks it:
+
+- `expires-conflict` (ERROR) — rows of one recipe disagree. It is one value per
+  recipe; filling the column down with different values is the failure mode.
+- `expires-format` (ERROR) — not blank, `never`, or `YYYY-MM-DD`.
+- `expires-range` (ERROR) — the date precedes the recipe's own season.
+- `expires` (INFO) — reports every authored exception, so a typo you *can*
+  parse still shows up in the output.
+
+### `IngredientType` — naming a specific Ultra Rare
+
+Auctions sell "an Ultra Rare" (`PYP`) rather than a named one, so a recipe
+line has always had to say `Ultra Rare` even when the recipe wants a specific
+token. With this column the line can name the real thing:
+
+```
+Item = "Ymir's Bane"      IngredientType = "Ultra Rare"
+```
+
+The site shows the name you typed and prices it as the tier, because the
+specific token has no sales of its own. Nothing about the cost changes — this
+tells a player *what to go buy*, which the generic line could not.
+
+Use a value from the existing `Category` vocabulary (`Ultra Rare`, `Trade 1`,
+`Premium`, …); the validator's `ingredient-type` WARN lists the valid set if you
+miss. A named token that is not in `tokenMetadata.csv` is fine here — it reports
+as a `tier-priced` INFO rather than the usual `unknown-good` ERROR, precisely so
+that authoring this column can never break a sheet that was passing.
+
 ### Gotcha
 
 Marking an auction closed is **two** edits: set `Status` to `Closed` *and* fill
@@ -479,7 +525,8 @@ sales.
 
 **Drives:** the entire Transmutes page — every bill of materials and build cost.
 1,954 rows covering 174 recipes across 16 seasons (2012–2027), 53 of them
-`IsSource` lines.
+`IsSource` lines. As of 2026-08-15 that splits 91 still craftable / 71 expired /
+12 preview, which is what decides how each one is priced.
 
 **Update when:** a new transmute is announced, or a recipe changes.
 
@@ -502,6 +549,13 @@ sales.
 | H | `Display Name` | formula | The ingredient's name that season. For your eyes — the site re-derives it. |
 | I | `Quantity` | **you type** | How many. Always a whole number, never 0. |
 | J | `IsSource` | **you type** | `TRUE` = the token being upgraded *from*; `FALSE` = a consumed ingredient. |
+| K | `Expires` | **optional** | When the recipe stops being craftable. Blank = the standard rule. One value per recipe. |
+| L | `IngredientType` | **optional** | The ingredient's tier, from the `Category` vocabulary. Lets a line name a *specific* Ultra Rare. |
+
+> **Both new columns are optional and the file is valid without them.** The
+> engine defaults every one, so the site is correct before you touch the sheet;
+> authoring them only adds precision. Add them at the end of the row — column
+> order does not matter, the header does.
 
 ### Rules that matter
 
