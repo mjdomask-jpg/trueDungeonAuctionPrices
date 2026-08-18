@@ -890,7 +890,7 @@ td.diff.down { color: var(--diff-down); }
    align to the END so the segmented pairs sit on one line even when a label
    above them wraps. */
 .calc-tools { display: flex; align-items: flex-end; gap: 16px; justify-content: flex-end;
-  flex-wrap: wrap; padding: 6px 6px 2px; }
+  flex-wrap: wrap; padding: 6px 6px 14px; }
 .calc-tool { display: flex; flex-direction: column; gap: 4px; }
 /* Same treatment as .toggle-label, including the reserved height that keeps a
    label carrying a help "?" level with one that does not. */
