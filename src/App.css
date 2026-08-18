@@ -96,9 +96,14 @@ header h1 {
 }
 .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* A page introduction. The 15px above it matches what the Analytics page
+   has always had — by accident, as it happens: that page asks for a .lede
+   class that does not exist, so its paragraph falls back to the browser's
+   default 1em margin. The spacing is right, so it is now stated here and
+   every page gets it. */
 .sub {
   max-width: 640px;
-  margin: 0;
+  margin: 15px 0 0;
   color: var(--text);
 }
 
