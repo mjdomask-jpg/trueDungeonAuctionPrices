@@ -1,6 +1,89 @@
 auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
+20183,2018,3,withheld,Patron Pin,1,-$114.30
+20183,2018,3,withheld,4th Tooth of Cavadar,1,-$92.25
+202018,2020,18,token,Bead of the Lucky Traveler,1,$145.00
+202018,2020,18,token,Kilt of Dungeonbane,1,$450.00
+202018,2020,18,token,Ioun Stone Gold Nugget,1,$104.00
+202018,2020,18,token,Kilt of Tavernbane,1,$110.00
+202018,2020,18,token,4th Tooth of Cavadar,1,$70.00
+202018,2020,18,token,5th Tooth of Cavadar,1,$55.00
+202018,2020,18,token,Set of all 6 2019 Relic Fragments,1,$75.00
+202018,2020,18,token,Set of 2018 Monster Trophies,1,$26.00
+202018,2020,18,token,Set of 2017 Monster Trophies,1,$30.00
+202018,2020,18,token,Set of 2016 Monster Trophies,1,$27.00
+202018,2020,18,token,Soul Coffer,1,$70.00
+202018,2020,18,token,Shirt of the Fae,1,$35.00
+202018,2020,18,token,Ioun Stone Fluorite Cube,1,$55.00
+202018,2020,18,token,+2 Hammer of Smiting,1,$65.00
+202018,2020,18,token,Dark Disciple's Shirt,1,$80.00
+202018,2020,18,token,Ring of Regeneration (2007 version),1,$200.00
+202019,2020,19,token,Earcuff of the Phalanx,1,$75.00
+202019,2020,19,token,Ioun Stone Fluorite Cube,1,$40.00
+202019,2020,19,token,Crown of Elemental Mastery (Onyx),1,$50.00
+202019,2020,19,token,Figurine of Power: Pixie,1,$30.00
+202019,2020,19,token,4th Tooth of Cavadar,1,$76.00
+202019,2020,19,token,Kilt of Tavernbane,1,$110.00
+202019,2020,19,token,Kilt of Fatherbane,1,$100.00
+202019,2020,19,token,Charm of Synergy,1,$86.00
+202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00
+202019,2020,19,token,Shirt of Blessed Strength,1,$36.00
+202019,2020,19,token,Redoubt Mail,1,$40.00
+202020,2020,20,token,Lute of Free Fury,1,$180.00
+202020,2020,20,token,Earcuff of the Phalanx,1,$180.00
+202020,2020,20,token,Charm of Quick Strike,1,$65.00
+202020,2020,20,token,Kilt of Dungeonbane,1,$405.00
+202021,2020,21,token,Shirt of Focus,1,$93.00
+202021,2020,21,token,Boots of the South Wind,1,$93.00
+20214,2021,4,token,Random Ultra Rare,9,$697.50
+20214,2021,4,token,Chance at Golden Ticket,1,$205.00
+20215,2021,5,token,Cook's Hat,1,$105.00
+20215,2021,5,token,+2 Flaming Blade,1,$105.00
+20215,2021,5,token,+2 Holy Avenger,1,$85.00
+20215,2021,5,token,Semi-Lich Skull,1,$105.00
+20215,2021,5,token,Ring of Wonder,1,$105.00
+20215,2021,5,token,Greater Quicksilver Charm,1,$50.00
+20215,2021,5,token,Charm of Heroism,1,$205.00
+20215,2021,5,token,Ring of Heroism,1,$160.00
+20215,2021,5,token,Belt of Ogre Mage Power,1,$9.00
+20215,2021,5,token,Ring of Fervor,1,$5.00
+20215,2021,5,token,Bracers of Reckless Fury,1,$110.00
+20215,2021,5,token,Ioun Stone Infernal Fire Prism,1,$105.00
+20215,2021,5,token,Shirt of Baneful Prowess,1,$5.00
+20215,2021,5,token,Shirt of Blessed Strength,1,$13.00
+20215,2021,5,token,Blessed Pants of the Hare,2,$10.00
+20218,2021,8,token,Shoes of the Sneak,1,$51.00
+20218,2021,8,token,Hat of the Hellway,1,$80.00
+20218,2021,8,token,Shaman's Belt,1,$60.00
+20219,2021,9,token,Ioun Stone Platinum Nugget,1,$117.00
+202110,2021,10,token,Belt of the Brave,1,$11.00
+202110,2021,10,token,Charm of Quick Strike,1,$85.00
+202110,2021,10,token,5th Tooth of Cavadar,1,$60.00
+202111,2021,11,token,Random Ultra Rare,9,$832.50
+202111,2021,11,token,Set of 2021 Rare Class Neck Items,1,$9.00
+202111,2021,11,token,Set of Hitchhiking Ghosts,1,$36.00
 202121,2021,21,token,Random Ultra Rare,9,$720.00
 202122,2021,22,token,Shaman's Belt,1,$60.00
+202122,2021,22,token,Figurine of Power: Reaver,2,$100.00
+202122,2021,22,token,Figurine of Power: Horror,2,$40.00
+202122,2021,22,token,Charm of the Faerie,1,$85.00
+202123,2021,23,token,+2 Flaming Blade,1,$95.00
+202123,2021,23,token,Bracers of Reckless Fury,1,$95.00
+202123,2021,23,token,Lenses of Agility,1,$95.00
+202123,2021,23,token,Automaton Gear,1,$7.00
+202123,2021,23,token,Death Cloak Fabric,1,$7.00
+202123,2021,23,token,Semi-Lich Dust,1,$7.00
+202124,2021,24,token,Cook's Hat,1,$96.00
+202124,2021,24,token,Key of Healing,1,$65.00
+202124,2021,24,token,Gloves of Retrieval,2,$11.00
+202124,2021,24,token,Boots of Bolting,2,$11.00
+202124,2021,24,token,Ioun Stone Jasper Ellipsoid,1,$22.00
+202124,2021,24,token,Bracers of the Tavernkeeper,3,$16.50
+202124,2021,24,token,Belt of the Brave,2,$32.00
+202124,2021,24,token,Automaton Gear,3,$15.00
+202124,2021,24,token,Automaton Oil,3,$15.75
+202124,2021,24,token,Darkrift Ingot,3,$14.25
+202124,2021,24,token,Death Cloak Fabric,3,$14.25
+202124,2021,24,token,Semi-Lich Dust,3,$14.25
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Earcuff of Freedom,1,$5.00
@@ -14,7 +97,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20233,2023,3,token,Random Ultra Rare,9,$675.00
 20236,2023,6,withheld,Ring of the 4th Circle,2,-$169.60
 20236,2023,6,withheld,Ring of the 4th Circle,1,-$84.80
-20236,2023,6,withheld,Ultra Rare,4,-$321.37
+20236,2023,6,withheld,Ultra Rare,4,-$320.90
 20236,2023,6,withheld,Adventurers' Guild Button,2,-$10.50
 20236,2023,6,withheld,Amulet of Magnifying,1,-$0.51
 20236,2023,6,withheld,Amulet of Magnifying,1,-$0.51
@@ -46,7 +129,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202312,2023,12,token,Redoubt Helm,1,$100.00
 202312,2023,12,token,Butterfly Cloak,1,$41.00
 202312,2023,12,token,Ring of Heroism,1,$150.00
-202312,2023,12,withheld,Patron Pin,1,-$319.46
+202312,2023,12,withheld,Patron Pin,1,-$318.56
 202321,2023,21,token,Golden Ticket Chance,1,$335.00
 202321,2023,21,token,Random Ultra Rare,9,$675.00
 202321,2023,21,token,Trick Bag,1,$155.00
@@ -74,7 +157,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202327,2023,27,token,Axe of the Dwarvish Kings,1,$100.00
 202327,2023,27,token,Shield of the Scholar (Onyx),1,$45.00
 202327,2023,27,token,Cook's Hat,1,$65.00
-202327,2023,27,withheld,Patron Pin,1,-$319.46
+202327,2023,27,withheld,Patron Pin,1,-$318.56
 202327,2023,27,withheld,Path to Enlightenment (Fragment 1),1,-$541.64
 202331,2023,31,withheld,Patron Pin,1,-$350.57
 202331,2023,31,token,Greater Ring of Havoc,1,$265.00
@@ -359,7 +442,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20251,2025,1,withheld,Mark of the 2nd Tenet,2,-$161.54
 20251,2025,1,withheld,Patron Pin,1,-$310.52
 20251,2025,1,withheld,Path to Enlightenment (Fragment 3),1,"-$1,330.89"
-20251,2025,1,withheld,Wish Ring,1,-$167.56
+20251,2025,1,withheld,Wish Ring,1,-$167.38
 20251,2025,1,withheld,Aragonite,78,-$761.77
 20251,2025,1,withheld,Alchemist's Ink,78,-$234.02
 20251,2025,1,withheld,Alchemist's Parchment,106,-$245.40
@@ -395,19 +478,6 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20255,2025,5,token,Ioun Stone Elfstone Shard,1,$106.00
 20255,2025,5,token,+2 Savage Sword,1,$55.50
 20255,2025,5,token,Boots of Brawling,1,$26.00
-202518,2025,18,withheld,Patron Pin,1,-$310.52
-202518,2025,18,withheld,Ultra Rare,1,-$69.97
-202518,2025,18,withheld,Alchemist's Ink,9,-$27.00
-202518,2025,18,withheld,Alchemist's Parchment,3,-$6.95
-202518,2025,18,withheld,Aragonite,3,-$29.30
-202518,2025,18,withheld,Darkwood Plank,13,-$17.82
-202518,2025,18,withheld,Dwarven Steel,10,-$28.88
-202518,2025,18,withheld,Elven Bismuth,3,-$34.69
-202518,2025,18,withheld,Minotaur Hide,8,-$34.17
-202518,2025,18,withheld,Mystic Silk,15,-$20.90
-202518,2025,18,withheld,Oil of Enchantment,3,-$51.93
-202518,2025,18,withheld,Philosopher's Stone,10,-$23.17
-202518,2025,18,withheld,"1,000 GP Gold Bar",5,-$47.69
 202520,2025,20,withheld,Ring of the 2nd Circle,4,-$315.43
 202534,2025,34,token,Random Ultra Rare,10,$400.00
 202534,2025,34,grunnel,Small Favor Scroll,1,$170.00
@@ -453,8 +523,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20262,2026,2,augment,Ring of the 3rd Circle,1,$70.00
 20262,2026,2,augment,Mark of the 3rd Tenet,1,$90.00
 20262,2026,2,augment,"Orion's Belt, Bead of the Lucky Traveler and Icecrag Hero Earcuff",1,$160.00
-20264,2026,4,withheld,Ring of the 1st Circle,4,-$454.73
-20264,2026,4,withheld,Mark of the 1st Tenet,3,-$340.90
+20264,2026,4,withheld,Ring of the 1st Circle,4,-$449.06
+20264,2026,4,withheld,Mark of the 1st Tenet,3,-$342.09
 20264,2026,4,augment,+3 Savage Sword,1,$110.00
 20264,2026,4,augment,Boots of Protection,1,$50.00
 20264,2026,4,augment,Blessed Redoubt Mail,1,$100.00
@@ -471,9 +541,9 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20264,2026,4,augment,Ring of Expertise,1,$40.00
 20264,2026,4,augment,Ring of the Siren,1,$21.00
 20264,2026,4,augment,Random Ultra Rare,9,$369.00
-20266,2026,6,withheld,Ring of the 1st Circle,4,-$454.73
+20266,2026,6,withheld,Ring of the 1st Circle,4,-$449.06
 20266,2026,6,token,Golden Ticket,1,"$1,254.00"
-202632,2026,32,withheld,Patron Pin,1,-$375.16
+202632,2026,32,withheld,Patron Pin,1,-$367.06
 202632,2026,32,augment,Random Ultra Rare,9,$310.50
 202632,2026,32,augment,D&D for up to 6 players,1,$155.00
 202632,2026,32,grunnel,Ring of Direction Prop,1,$31.00
@@ -486,8 +556,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202633,2026,33,grunnel,Raven's Head,1,$70.00
 202633,2026,33,grunnel,Auto-Succeed Arrow,1,$85.00
 202633,2026,33,grunnel,10 Potatoes,1,$111.00
-202634,2026,34,withheld,Oil of Enchantment,2,-$85.54
-202634,2026,34,withheld,Elven Bismuth,2,-$61.31
+202634,2026,34,withheld,Oil of Enchantment,2,-$86.52
+202634,2026,34,withheld,Elven Bismuth,2,-$62.34
 202634,2026,34,token,Ioun Stone Sapphire Trilliant,1,$175.00
 202634,2026,34,token,Silver Ship Passage Mirthwood,1,$45.00
 202634,2026,34,token,Ring of the 3rd Circle,1,$40.00
@@ -535,7 +605,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202645,2026,45,grunnel,Punch 4 times to open sign,1,$66.00
 202645,2026,45,grunnel,Portal Viewer #1,1,$66.00
 202645,2026,45,grunnel,Tabor's Onyx Dagger #3,1,$56.00
-202645,2026,45,withheld,Ring of the 1st Circle,8,-$909.46
+202645,2026,45,withheld,Ring of the 1st Circle,8,-$898.12
 202646,2026,46,token,Random Ultra Rare,9,$392.04
 202646,2026,46,token,Grind Spinning Timer,1,$127.00
 202646,2026,46,token,Bead of Greed,1,$82.00
@@ -552,91 +622,11 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202646,2026,46,token,Mark of the 3rd Tenet,1,$51.00
 202646,2026,46,token,Mark of the Tenets,1,$152.00
 202646,2026,46,token,Oil of Enchantment,10,$524.00
-202647,2026,47,grunnel,Gen Con 2026 Flood Bucket,1,$26.00
-202647,2026,47,grunnel,Bead of the Lucky Traveler  (Lady Darkhold),1,$50.00
-202647,2026,47,grunnel,Green Key,1,$102.00
-202647,2026,47,token,Censer and 2 of each incense,1,$5.00
-202647,2026,47,token,4x Baby Potatoes,1,$5.00
-202122,2021,22,token,Figurine of Power: Reaver,2,$100.00
-202122,2021,22,token,Figurine of Power: Horror,2,$40.00
-202122,2021,22,token,Charm of the Faerie,1,$85.00
-202111,2021,11,token,Random Ultra Rare,9,$832.50
-202111,2021,11,token,Set of 2021 Rare Class Neck Items,1,$9.00
-202111,2021,11,token,Set of Hitchhiking Ghosts,1,$36.00
-202110,2021,10,token,Belt of the Brave,1,$11.00
-202110,2021,10,token,Charm of Quick Strike,1,$85.00
-202110,2021,10,token,5th Tooth of Cavadar,1,$60.00
-20219,2021,9,token,Ioun Stone Platinum Nugget,1,$117.00
-20218,2021,8,token,Shoes of the Sneak,1,$51.00
-20218,2021,8,token,Hat of the Hellway,1,$80.00
-20218,2021,8,token,Shaman's Belt,1,$60.00
-20214,2021,4,token,Random Ultra Rare,9,$697.50
-20214,2021,4,token,Chance at Golden Ticket,1,$205.00
-20215,2021,5,token,Cook's Hat,1,$105.00
-20215,2021,5,token,+2 Flaming Blade,1,$105.00
-20215,2021,5,token,+2 Holy Avenger,1,$85.00
-20215,2021,5,token,Semi-Lich Skull,1,$105.00
-20215,2021,5,token,Ring of Wonder,1,$105.00
-20215,2021,5,token,Greater Quicksilver Charm,1,$50.00
-20215,2021,5,token,Charm of Heroism,1,$205.00
-20215,2021,5,token,Ring of Heroism,1,$160.00
-20215,2021,5,token,Belt of Ogre Mage Power,1,$9.00
-20215,2021,5,token,Ring of Fervor,1,$5.00
-20215,2021,5,token,Bracers of Reckless Fury,1,$110.00
-20215,2021,5,token,Ioun Stone Infernal Fire Prism,1,$105.00
-20215,2021,5,token,Shirt of Baneful Prowess,1,$5.00
-20215,2021,5,token,Shirt of Blessed Strength,1,$13.00
-20215,2021,5,token,Blessed Pants of the Hare,2,$10.00
-202123,2021,23,token,+2 Flaming Blade,1,$95.00
-202123,2021,23,token,Bracers of Reckless Fury,1,$95.00
-202123,2021,23,token,Lenses of Agility,1,$95.00
-202123,2021,23,token,Automaton Gear,1,$7.00
-202123,2021,23,token,Death Cloak Fabric,1,$7.00
-202123,2021,23,token,Semi-Lich Dust,1,$7.00
-202124,2021,24,token,Cook's Hat,1,$96.00
-202124,2021,24,token,Key of Healing,1,$65.00
-202124,2021,24,token,Gloves of Retrieval,2,$11.00
-202124,2021,24,token,Boots of Bolting,2,$11.00
-202124,2021,24,token,Ioun Stone Jasper Ellipsoid,1,$22.00
-202124,2021,24,token,Bracers of the Tavernkeeper,3,$16.50
-202124,2021,24,token,Belt of the Brave,2,$32.00
-202124,2021,24,token,Automaton Gear,3,$15.00
-202124,2021,24,token,Automaton Oil,3,$15.75
-202124,2021,24,token,Darkrift Ingot,3,$14.25
-202124,2021,24,token,Death Cloak Fabric,3,$14.25
-202124,2021,24,token,Semi-Lich Dust,3,$14.25
-202018,2020,18,token,Bead of the Lucky Traveler,1,$145.00
-202018,2020,18,token,Kilt of Dungeonbane,1,$450.00
-202018,2020,18,token,Ioun Stone Gold Nugget,1,$104.00
-202018,2020,18,token,Kilt of Tavernbane,1,$110.00
-202018,2020,18,token,4th Tooth of Cavadar,1,$70.00
-202018,2020,18,token,5th Tooth of Cavadar,1,$55.00
-202018,2020,18,token,Set of all 6 2019 Relic Fragments,1,$75.00
-202018,2020,18,token,Set of 2018 Monster Trophies,1,$26.00
-202018,2020,18,token,Set of 2017 Monster Trophies,1,$30.00
-202018,2020,18,token,Set of 2016 Monster Trophies,1,$27.00
-202018,2020,18,token,Soul Coffer,1,$70.00
-202018,2020,18,token,Shirt of the Fae,1,$35.00
-202018,2020,18,token,Ioun Stone Fluorite Cube,1,$55.00
-202018,2020,18,token,+2 Hammer of Smiting,1,$65.00
-202018,2020,18,token,Dark Disciple's Shirt,1,$80.00
-202018,2020,18,token,Ring of Regeneration (2007 version),1,$200.00
-202019,2020,19,token,Earcuff of the Phalanx,1,$75.00
-202019,2020,19,token,Ioun Stone Fluorite Cube,1,$40.00
-202019,2020,19,token,Crown of Elemental Mastery (Onyx),1,$50.00
-202019,2020,19,token,Figurine of Power: Pixie,1,$30.00
-202019,2020,19,token,4th Tooth of Cavadar,1,$76.00
-202019,2020,19,token,Kilt of Tavernbane,1,$110.00
-202019,2020,19,token,Kilt of Fatherbane,1,$100.00
-202019,2020,19,token,Charm of Synergy,1,$86.00
-202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00
-202019,2020,19,token,Shirt of Blessed Strength,1,$36.00
-202019,2020,19,token,Redoubt Mail,1,$40.00
-202020,2020,20,token,Lute of Free Fury,1,$180.00
-202020,2020,20,token,Earcuff of the Phalanx,1,$180.00
-202020,2020,20,token,Charm of Quick Strike,1,$65.00
-202020,2020,20,token,Kilt of Dungeonbane,1,$405.00
-202021,2020,21,token,Shirt of Focus,1,$93.00
-202021,2020,21,token,Boots of the South Wind,1,$93.00
-20183,2018,3,withheld,Patron Pin,1,-$114.30
-20183,2018,3,withheld,4th Tooth of Cavadar,1,-$92.25
+202647,2026,47,grunnel,GenCon 2026 Tornado Bucket,1,$103.00
+202647,2026,47,grunnel,Bead of the Lucky Traveler  (Lady Darkhold),1,$72.00
+202647,2026,47,grunnel,Green Key,1,$455.00
+202647,2026,47,grunnel,Acorn from Felurian's Feast,1,$137.00
+202647,2026,47,grunnel,Tomb of Terror Redux Banner,1,$161.00
+202647,2026,47,grunnel,Borrowed Ring #4 St Lorca,1,$112.00
+202647,2026,47,token,Censer and 2 of each incense,1,$47.00
+202647,2026,47,token,4x Baby Potatoes,1,$51.00
