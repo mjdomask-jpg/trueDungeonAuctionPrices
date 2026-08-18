@@ -8,8 +8,9 @@
 //     with the Phase-1 audit.
 //  2. Domain rules (data-audit.md §5): report targetFunding > $8k (a flagged
 //     EXCEPTION, not fatal — Q4), Trent rows before season 2023, Golden-Ticket
-//     sales before the guarantee era, Closed auctions with no sales, and
-//     Ultra-Rare-looking augment names not in the Random-UR list.
+//     sales before the guarantee era, Closed auctions with no sales, rows
+//     pointing at an auction that does not exist, and Ultra-Rare-looking
+//     augment names not in the Random-UR list.
 //
 // Exit non-zero only on a genuine inconsistency (recompute mismatch, or a hard
 // domain violation). Run: node scripts/validate-context.mjs
@@ -146,6 +147,20 @@ for (const s of objs(read(dataDir, 'prices.csv'))) {
     if (!(dateKey(cd) >= GT_ERA_DATE)) err(`Golden Ticket sale before guarantee era (${GT_ERA_DATE}): ${s.auctionId}`);
   }
 }
+// Rows pointing at an auction that is not in auctionMetadata. Both files join
+// to metadata to be read at all, so an orphan is not a loud failure — it is
+// silently dropped, and the auction's provenance or sales simply stop existing
+// with nothing on screen to say so. The way this happens is removing an auction
+// from auctionMetadata (a Failed one, say) without removing its rows here.
+// Reported per auction rather than per row: one deleted auction can strand
+// dozens, and thirteen copies of the same sentence is not thirteen problems.
+for (const [file, rows] of [['contextItems.csv', ctx], ['prices.csv', sales]]) {
+  const orphans = new Map();
+  for (const r of rows) if (!metaById.has(r.auctionId)) orphans.set(r.auctionId, (orphans.get(r.auctionId) ?? 0) + 1);
+  for (const [auctionId, n] of [...orphans].sort())
+    err(`${file}: ${n} row${n === 1 ? '' : 's'} for auction ${auctionId}, which is not in auctionMetadata.csv — delete the rows too, or restore the auction`);
+}
+
 // Random-UR-looking augment names not in the Random-UR list — catches a NEW
 // wording for the random URs (which should be released-payment) while leaving
 // genuine "Ultra Rare Set" augments alone.
