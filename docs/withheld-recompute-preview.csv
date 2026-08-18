@@ -1,12 +1,14 @@
 auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT_value,delta,status
+20183,Patron Pin,1,1,-114.3,-365.0,-250.7,recomputed
+20183,4th Tooth of Cavadar,1,1,-92.25,-95.0,-2.75,recomputed
 20236,Ring of the 4th Circle,2,5,-169.6,-164.0,5.6,recomputed
 20236,Ring of the 4th Circle,1,5,-84.8,-82.0,2.8,recomputed
-20236,Ultra Rare,4,5,-321.37,-384.0,-62.63,recomputed
+20236,Ultra Rare,4,5,-320.9,-384.0,-63.1,recomputed
 20236,Adventurers' Guild Button,2,5,-10.5,-2.0,8.5,recomputed
 20236,Amulet of Magnifying,1,5,-0.51,-0.8,-0.29,recomputed
 20236,Amulet of Magnifying,1,5,-0.51,-0.8,-0.29,recomputed
-202312,Patron Pin,1,5,-319.46,-434.0,-114.54,recomputed
-202327,Patron Pin,1,5,-319.46,-501.09,-181.63,recomputed
+202312,Patron Pin,1,5,-318.56,-434.0,-115.44,recomputed
+202327,Patron Pin,1,5,-318.56,-501.09,-182.53,recomputed
 202327,Path to Enlightenment (Fragment 1),1,5,-541.64,-533.6,8.04,recomputed
 202331,Patron Pin,1,5,-350.57,-488.29,-137.72,recomputed
 202334,Patron Pin,1,5,-350.57,-449.2,-98.63,recomputed
@@ -39,7 +41,7 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20251,Mark of the 2nd Tenet,2,10,-161.54,-158.91,2.63,recomputed
 20251,Patron Pin,1,5,-310.52,-352.19,-41.67,recomputed
 20251,Path to Enlightenment (Fragment 3),1,5,-1330.89,-1379.4,-48.51,recomputed
-20251,Wish Ring,1,5,-167.56,-135.2,32.36,recomputed
+20251,Wish Ring,1,5,-167.38,-135.2,32.18,recomputed
 20251,Aragonite,78,10,-761.77,-751.53,10.24,recomputed
 20251,Alchemist's Ink,78,10,-234.02,-237.82,-3.8,recomputed
 20251,Alchemist's Parchment,106,10,-245.4,-257.9,-12.5,recomputed
@@ -58,12 +60,10 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20255,Mark of the 2nd Tenet,2,8,-161.54,-161.94,-0.4,recomputed
 202520,Ring of the 2nd Circle,4,8,-315.43,-307.5,7.93,recomputed
 202545,Path to Enlightenment (Fragment 3),1,5,-1330.89,-1174.0,156.89,recomputed
-20264,Ring of the 1st Circle,4,10,-454.73,-467.48,-12.75,recomputed
-20264,Mark of the 1st Tenet,3,10,-340.9,-364.95,-24.05,recomputed
-20266,Ring of the 1st Circle,4,10,-454.73,-448.2,6.53,recomputed
-202632,Patron Pin,1,5,-375.16,-369.0,6.16,recomputed
-202634,Oil of Enchantment,2,8,-85.54,-87.67,-2.13,recomputed
-202634,Elven Bismuth,2,8,-61.31,-65.28,-3.97,recomputed
-202645,Ring of the 1st Circle,8,10,-909.46,-755.31,154.15,recomputed
-20183,Patron Pin,1,1,-114.3,-365.0,-250.7,recomputed
-20183,4th Tooth of Cavadar,1,1,-92.25,-95.0,-2.75,recomputed
+20264,Ring of the 1st Circle,4,10,-449.06,-467.48,-18.42,recomputed
+20264,Mark of the 1st Tenet,3,10,-342.09,-364.95,-22.86,recomputed
+20266,Ring of the 1st Circle,4,10,-449.06,-448.2,0.86,recomputed
+202632,Patron Pin,1,5,-367.06,-369.0,-1.94,recomputed
+202634,Oil of Enchantment,2,8,-86.52,-87.67,-1.16,recomputed
+202634,Elven Bismuth,2,8,-62.34,-65.28,-2.94,recomputed
+202645,Ring of the 1st Circle,8,10,-898.12,-755.31,142.81,recomputed
