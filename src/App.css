@@ -1433,7 +1433,17 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
 }
 .controls .controls-top .toggle.view-toggle { flex-basis: auto; }
 .controls-top .meta-line { margin: 0; }
+/* A label carrying a help "?" is taller than a bare one — the 16px trigger
+   outgrows the 12px text's line box — which left the button rows of adjacent
+   toggles 4px out of step (18px vs 22px labels). Every label reserves the
+   taller box, so a toggle lines up with its neighbours whether or not it has
+   help attached. inline-flex + gap here rather than at each call site, which
+   is what .price-lab and .path-toggle used to do separately. */
 .toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -2276,9 +2286,6 @@ table.an-opens col.col-days { width: 16%; }
 /* The line the other path switches off: still there, visibly out of play. */
 .calc-line.swapped-out { opacity: 0.55; }
 .calc-line.swapped-out .cl-good s { text-decoration-thickness: 1px; }
-/* The Recipes view's copy of the Phase 9 choice. Same segmented control as the
-   view toggle, with room for the help popover inside its label. */
-.path-toggle .toggle-label { display: inline-flex; align-items: center; gap: 4px; }
 .tx-bom-row.swapped-out { opacity: 0.55; }
 
 /* Accuracy release — recipe status. "expired" is the load-bearing one: it says
@@ -2300,17 +2307,4 @@ table.an-opens col.col-days { width: 16%; }
 .calc-opt-exp { font-size: 10px; margin-left: 8px; padding: 1px 7px; border-radius: 20px;
   background: rgba(150, 60, 60, 0.14); color: #8a3535; white-space: nowrap; }
 :root[data-theme='dark'] .calc-opt-exp { background: rgba(240, 120, 120, 0.16); color: #f08a8a; }
-.price-lab { display: inline-flex; align-items: center; gap: 4px; }
 
-/* The Transmutes options disclosure. One control at both widths (the Filters
-   menu's furniture), but it earns its keep differently: on a phone it folds a
-   303px stack of toggles away, and on desktop it starts open and simply gives
-   the row a way to collapse when the seasons matter more than the settings.
-   Full-width summary is right on a phone — it is the tap target — but on
-   desktop a 1,160px "OPTIONS" stripe costs a whole row for one word, so the
-   summary shrinks to its text and the toggles sit beside it. */
-@media (min-width: 641px) {
-  .filterset.options > summary { width: max-content; }
-  .filterset.options[open] { display: flex; align-items: flex-start; gap: 16px; }
-  .filterset.options[open] > .filterset-body { flex: 1; padding-top: 0; }
-}

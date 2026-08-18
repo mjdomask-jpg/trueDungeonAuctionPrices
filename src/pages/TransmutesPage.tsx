@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCostEngine } from '../hooks/useCostEngine';
 import { useRoutedView } from '../hooks/useRoutedView';
@@ -33,13 +33,7 @@ export default function TransmutesPage() {
   // Defaults to the Wish Ring, which is what the recipes literally list.
   const [path, setPath] = useState<IngredientPath>(DEFAULT_PATH);
   const [activeOnly, setActiveOnly] = useState(false);
-  // The options disclosure. Same control at both widths — on a phone it starts
-  // folded because the list is what you came for; on desktop it starts open
-  // because there is room, and folds when you want the seasons higher up.
-  // Controlled rather than a bare `open` attribute: React writes that property
-  // on every render, so an uncontrolled one would spring back on the next one.
-  const [optionsOpen, setOptionsOpen] = useState(!narrow);
-  useEffect(() => setOptionsOpen(!narrow), [narrow]);
+
   const [search, setSearch] = useState('');
   // null = default view (newest season open); a Set once the user toggles one.
   const [openSeasons, setOpenSeasons] = useState<Set<number> | null>(null);
@@ -140,7 +134,7 @@ export default function TransmutesPage() {
       )}
 
       <div className="toggle" role="group" aria-label="Which sales price today's recipes">
-          <span className="toggle-label price-lab">
+          <span className="toggle-label">
             Today's prices from
             <HintPopover label="About the price basis">
               Recipes you can still craft are priced at <b>today's</b> prices. This picks what
@@ -218,21 +212,21 @@ export default function TransmutesPage() {
           </div>
         </div>
 
-        {/* Four segmented toggles plus a search box stacked 303px tall on a
-            phone, pushing the season list off the bottom of the screen before
-            you had read a price — and on desktop they crowd the top of a page
-            that is mostly a reference list. One disclosure answers both, and
-            still answers it when the Season selector becomes a fifth control. */}
-        {!calculator && (
-          <details className="filterset options" open={optionsOpen}
-            onToggle={(e) => setOptionsOpen(e.currentTarget.open)}>
+        {/* Phones fold the options away — four segmented toggles plus a search
+            box stacked 303px tall, pushing the season list off the bottom of
+            the screen before you had read a price. Desktop keeps them in the
+            open: a disclosure there reads as a dropdown menu, and its count
+            badge shifts the controls beside it every time an option changes.
+            Three visible toggles are the plainer thing. */}
+        {!calculator && (narrow ? (
+          <details className="filterset options">
             <summary>
               Options
               {activeOptions > 0 && <span className="filterset-count">{activeOptions}</span>}
             </summary>
             <div className="filterset-body">{optionControls}</div>
           </details>
-        )}
+        ) : optionControls)}
         {!calculator && (
           <label className="search">
             <span className="sr-only">Search transmutes</span>
