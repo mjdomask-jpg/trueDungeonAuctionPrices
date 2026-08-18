@@ -95,6 +95,38 @@ the circle they can see, not the invisible box around it. It is 22px on mobile
 for that reason. Grow the visible control first, then let the overlay carry the
 remainder.
 
+### A popover inherits the label it sits inside
+
+**Rule: the bubble resets its own typography. Never fix this at a call site.**
+
+A `?` is usually placed *inside* the label of the control it explains, and the
+bubble renders as a descendant of that label. Control labels on this site are
+uppercase with letter-spacing — `.toggle-label`, `.filterset > summary` — so
+every popover opened from a toggle rendered its prose in ALL CAPS, which reads
+as shouting rather than as help.
+
+`.hint-pop` therefore sets `text-transform: none`, `letter-spacing: normal` and
+its own `font-family`. Resetting on the bubble rather than on each label means a
+new label style cannot reintroduce it, and a popover moved to a new home cannot
+pick up something else's casing. The same reasoning applies to anything else a
+label might impose: if it would change how a *sentence* reads, the bubble should
+neutralise it.
+
+### A label carrying a `?` is taller than one without
+
+**Rule: labels in a row of controls reserve the taller box, whether or not they
+carry help.**
+
+The `?` trigger is 16px; a 12px uppercase label's line box is not. So a label
+with help measures 22px against a bare one's 18px, and in a row of controls the
+two sit 4px out of step — visible as soon as two toggles stand side by side,
+and the sort of thing that reads as sloppiness without being obvious why.
+
+`.toggle-label` (and the calculator's `.calc-tool-lab`) are `inline-flex` with a
+`min-height` covering the trigger, so every control in a row lines up regardless
+of which ones have help attached. Use `min-height`, not `height` — a label may
+wrap to two lines on a phone.
+
 **The one exception**: `title` is still fine as a *name* for a self-evident icon
 control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, not
 help. The test is whether a user who cannot see the tooltip loses information.
