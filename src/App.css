@@ -620,6 +620,12 @@ td.diff.down { color: var(--diff-down); }
   background: var(--card); box-shadow: var(--shadow); color: var(--text-h);
   font-size: 12.5px; font-weight: 400; line-height: 1.45;
   text-align: left; white-space: normal; cursor: auto;
+  /* Help text is a sentence, not a label. The trigger usually sits INSIDE a
+     control label — .toggle-label and .filterset > summary are both uppercase
+     with tracking — and the bubble is a descendant, so it inherited all of it
+     and rendered as shouting prose. Reset here rather than at each call site,
+     so the next label style can't reintroduce it. */
+  text-transform: none; letter-spacing: normal; font-family: var(--sans);
 }
 .hint-x {
   flex: none; width: 18px; height: 18px; margin: -1px -2px 0 0; padding: 0;

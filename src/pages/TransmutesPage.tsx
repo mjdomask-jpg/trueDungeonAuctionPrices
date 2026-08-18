@@ -6,7 +6,8 @@ import { TransmuteSeason } from '../components/TransmuteSeason';
 import { BuildCalculator } from '../components/BuildCalculator';
 import { PageIntro } from '../components/PageIntro';
 import { HintPopover } from '../components/HintPopover';
-import { BARS_PER_WISH_RING, DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
 
 // Transmutes / build-vs-buy. Two views behind a toggle:
 //   Recipes (Phase 4) — every craftable token's estimated build cost, priced
@@ -19,6 +20,7 @@ import { BARS_PER_WISH_RING, DEFAULT_PATH, goldPathFor, onPath, type IngredientP
 type View = 'recipes' | 'calculator';
 
 export default function TransmutesPage() {
+  const narrow = useMediaQuery(NARROW);
   const [view, setView] = useRoutedView<View>({
     views: ['recipes', 'calculator'],
     fallback: 'recipes',
@@ -90,6 +92,74 @@ export default function TransmutesPage() {
   );
   const shown = searching ? bySeason.filter((s) => s.costs.length) : bySeason;
 
+  // The three things you can change about how the list is priced and filtered.
+  // Held as one node so the phone can fold them behind a disclosure without a
+  // second copy of the markup drifting from this one.
+  const optionControls = (
+    <>
+      {expiredCount > 0 && (
+        <div className="toggle" role="group" aria-label="Which recipes to show">
+          <span className="toggle-label">Show Recipes</span>
+          <div className="toggle-buttons">
+            <button type="button" data-label="All" className={!activeOnly ? 'on' : undefined}
+              aria-pressed={!activeOnly} onClick={() => setActiveOnly(false)}>All</button>
+            {/* One label at both widths. The two-span full/short swap needs its
+                `data-label` ghost to carry the LONGER text, which reserved room
+                for "Still craftable" while showing "Craftable" — the button then
+                overflowed selected and lost its padding unselected. */}
+            <button type="button" data-label="Active" className={activeOnly ? 'on' : undefined}
+              aria-pressed={activeOnly} onClick={() => setActiveOnly(true)}>Active</button>
+          </div>
+        </div>
+      )}
+
+      {anyGoldPath && (
+        <div className="toggle path-toggle" role="group" aria-label="How Legendary recipes are priced">
+          <span className="toggle-label">
+            Legendary Recipes
+            <HintPopover label="About the Wish Ring or GP choice">
+              Legendary recipes accept either 1 Wish Ring or 15,000 GP. Choose to show the
+              Wish Ring as a separate line item or to price the transmute with an additional
+              15,000 GP on top of the 25,000. Players often have GP on hand, not Wish Rings.
+            </HintPopover>
+          </span>
+          <div className="toggle-buttons">
+            <button type="button" className={path === 'ring' ? 'on' : undefined}
+              aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
+            <button type="button" className={path === 'gp' ? 'on' : undefined}
+              aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
+          </div>
+        </div>
+      )}
+
+      <div className="toggle" role="group" aria-label="Which sales price today's recipes">
+          <span className="toggle-label price-lab">
+            Today's prices from
+            <HintPopover label="About the price basis">
+              Recipes you can still craft are priced at <b>today's</b> prices. This picks what
+              “today” means: the whole current season, or just its <b>last five auctions</b>,
+              which reacts faster when a trade good is moving. Expired recipes ignore it —
+              they are priced over the window they could actually be built in.
+            </HintPopover>
+          </span>
+          <div className="toggle-buttons">
+            <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
+              aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
+            <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
+              aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
+              <span className="lbl-full">Last 5 auctions</span>
+              <span className="lbl-short">Last 5</span>
+            </button>
+          </div>
+        </div>
+    </>
+  );
+
+  // How many are off their default — the folded summary has to say so, or a
+  // filtered list reads as the full one (same reason FilterBar counts).
+  const activeOptions =
+    (activeOnly ? 1 : 0) + (path !== DEFAULT_PATH ? 1 : 0) + (recentPrices ? 1 : 0);
+
   if (error) return <p className="err">Failed to load data: {error}</p>;
   if (loading) return <p className="empty">Loading auction data…</p>;
   if (!ready) return <p className="empty">No transmute recipe data loaded.</p>;
@@ -141,64 +211,19 @@ export default function TransmutesPage() {
           </div>
         </div>
 
-        {!calculator && expiredCount > 0 && (
-          <div className="toggle" role="group" aria-label="Which recipes to show">
-            <span className="toggle-label">Show</span>
-            <div className="toggle-buttons">
-              <button type="button" data-label="All" className={!activeOnly ? 'on' : undefined}
-                aria-pressed={!activeOnly} onClick={() => setActiveOnly(false)}>All</button>
-              <button type="button" data-label="Still craftable" className={activeOnly ? 'on' : undefined}
-                aria-pressed={activeOnly} onClick={() => setActiveOnly(true)}>
-                <span className="lbl-full">Still craftable</span>
-                <span className="lbl-short">Craftable</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!calculator && anyGoldPath && (
-          <div className="toggle path-toggle" role="group" aria-label="Legendary Wish Ring line">
-            <span className="toggle-label">
-              Wish Ring line
-              <HintPopover label="About the Wish Ring or GP choice">
-                Legendary recipes accept <b>1 Wish Ring</b> or <b>15,000 GP</b> — which is{' '}
-                {BARS_PER_WISH_RING} more 1,000 GP Gold Bars on the line the recipe already has.
-                Both are legal. Switch to price every Legendary on the path you would actually
-                take: Gold Bars are ordinary trade goods most players are already sitting on.
-              </HintPopover>
-            </span>
-            <div className="toggle-buttons">
-              <button type="button" className={path === 'ring' ? 'on' : undefined}
-                aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
-              <button type="button" className={path === 'gp' ? 'on' : undefined}
-                aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
-            </div>
-          </div>
-        )}
-
-        {!calculator && (
-          <div className="toggle" role="group" aria-label="Which sales price today's recipes">
-            <span className="toggle-label price-lab">
-              Today's prices from
-              <HintPopover label="About the price basis">
-                Recipes you can still craft are priced at <b>today's</b> prices. This picks what
-                “today” means: the whole current season, or just its <b>last five auctions</b>,
-                which reacts faster when a trade good is moving. Expired recipes ignore it —
-                they are priced over the window they could actually be built in.
-              </HintPopover>
-            </span>
-            <div className="toggle-buttons">
-              <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
-                aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
-              <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
-                aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
-                <span className="lbl-full">Last 5 auctions</span>
-                <span className="lbl-short">Last 5</span>
-              </button>
-            </div>
-          </div>
-        )}
-
+        {/* Phones fold the options away: four segmented toggles plus a search
+            box stacked 303px tall, which pushed the season list off the bottom
+            of the screen before you had read a single price. Desktop keeps them
+            in the open, where there is room. */}
+        {!calculator && (narrow ? (
+          <details className="filterset">
+            <summary>
+              Options
+              {activeOptions > 0 && <span className="filterset-count">{activeOptions}</span>}
+            </summary>
+            <div className="filterset-body">{optionControls}</div>
+          </details>
+        ) : optionControls)}
         {!calculator && (
           <label className="search">
             <span className="sr-only">Search transmutes</span>

@@ -231,9 +231,8 @@ export function TransmuteRow({
           )}
           {cost.lines.some((l) => l.category === 'Ultra Rare') && (
             <p className="tx-bom-note">
-              Ultra Rare lines price at the auction average for the tier — auctions sell
-              “an Ultra Rare”, not a specific one. A particular Ultra Rare bought on the
-              secondary market can cost more.
+              Ultra Rares priced at the auction average for the transmute window. Secondary
+              market prices for specific Ultra Rares may vary.
             </p>
           )}
           {cost.marketAvg != null && (
