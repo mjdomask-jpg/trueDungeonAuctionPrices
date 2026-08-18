@@ -58,6 +58,27 @@ export function CurrentYearStats({
   // them, since the months themselves are different.
   const [openA, setOpenA] = useState<Set<number>>(new Set());
   const [openB, setOpenB] = useState<Set<number>>(new Set());
+
+  // Counts or each month's share of its own season's activity. The share view is
+  // what makes the two seasons comparable while the current one is still
+  // running: 45 closes against 43 says little, "month 4 is a fifth of the year's
+  // activity in both" says a lot. Counts stay the default — they're the raw fact.
+  const [closeMode, setCloseMode] = useState<'count' | 'share'>('count');
+  const closeTotals = useMemo(() => ({
+    current: closeCounts.reduce((a, r) => a + (r.current ?? 0), 0),
+    prior: closeCounts.reduce((a, r) => a + (r.prior ?? 0), 0),
+  }), [closeCounts]);
+  // Percent of that season's own total. Each season is its own denominator, so a
+  // part-run season's shares add to 100% of what has closed SO FAR — said out
+  // loud in the lede, because it is what makes an early-season share look big.
+  // null stays null: a month with no auctions must render as a gap, not a zero.
+  const closeShares = useMemo(() => closeCounts.map((r) => ({
+    month: r.month,
+    current: r.current == null || !closeTotals.current ? null : (r.current / closeTotals.current) * 100,
+    prior: r.prior == null || !closeTotals.prior ? null : (r.prior / closeTotals.prior) * 100,
+  })), [closeCounts, closeTotals]);
+  const closeRows = closeMode === 'share' ? closeShares : closeCounts;
+  const closeFmt = (n: number) => (closeMode === 'share' ? `${Math.round(n * 10) / 10}%` : String(Math.round(n)));
   useEffect(() => { setOpenA(new Set()); setOpenB(new Set()); }, [season]);
 
   const toggle = (set: (fn: (s: Set<number>) => Set<number>) => void, m: number) =>
@@ -215,19 +236,46 @@ export function CurrentYearStats({
               Counted on the <strong>close</strong> month. Months are season months — month 1 is
               each season's first month — so the two years line up by how far into the season they
               are, not by calendar date.
+              {closeMode === 'share' && (
+                <> Each bar is that month's share of <em>its own</em> season's closed auctions, so
+                  every year sums to 100%. While {season} is still running that means 100% of what
+                  has closed <strong>so far</strong> ({closeTotals.current} of them) — early in a
+                  season its shares read high against a finished year, and settle as the year fills
+                  in.</>
+              )}
             </p>
+
+            <div className="controls">
+              <div className="toggle" role="group" aria-label="Close-month measure">
+                <span className="toggle-label">Show</span>
+                <div className="toggle-buttons">
+                  <button type="button" data-label="Auctions" className={closeMode === 'count' ? 'on' : undefined}
+                    aria-pressed={closeMode === 'count'} onClick={() => setCloseMode('count')}>
+                    Auctions
+                  </button>
+                  <button type="button" data-label="% of season" className={closeMode === 'share' ? 'on' : undefined}
+                    aria-pressed={closeMode === 'share'} onClick={() => setCloseMode('share')}>
+                    % of season
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <BarChart
-              categories={closeCounts.map((r) => `M${r.month}`)}
+              categories={closeRows.map((r) => `M${r.month}`)}
               series={[
-                { label: season, color: CURRENT_COLOR, values: closeCounts.map((r) => r.current) },
-                { label: prior, color: PRIOR_COLOR, values: closeCounts.map((r) => r.prior) },
+                { label: season, color: CURRENT_COLOR, values: closeRows.map((r) => r.current) },
+                { label: prior, color: PRIOR_COLOR, values: closeRows.map((r) => r.prior) },
               ]}
-              yLabel="Auctions closed" format={(n) => String(Math.round(n))}
-              ariaLabel={`Auctions closed per season month, ${season} against ${prior}`}
+              yLabel={closeMode === 'share' ? '% of season' : 'Auctions closed'} format={closeFmt}
+              ariaLabel={`Auctions closed per season month, ${season} against ${prior}, as ${closeMode === 'share' ? 'a share of each season' : 'counts'}`}
               maxLabels={16}
             />
 
-            <table className={`an-table an-after-chart${closeCounts.length >= 4 ? ' banded' : ''}`}>
+            {/* Reads the same rows the chart does, so the two can never disagree
+                about which measure is on screen. In share mode the Change column
+                is a difference of percentages, i.e. percentage POINTS. */}
+            <table className={`an-table an-after-chart${closeRows.length >= 4 ? ' banded' : ''}`}>
               <thead>
                 <tr>
                   <th className="left">Close month</th>
@@ -237,15 +285,21 @@ export function CurrentYearStats({
                 </tr>
               </thead>
               <tbody>
-                {closeCounts.map((r) => {
+                {closeRows.map((r) => {
                   const diff = r.current != null && r.prior != null ? r.current - r.prior : null;
+                  // A difference of shares is percentage POINTS, not a percentage —
+                  // "+5.1 pts", never "+5.1%", which would read as a relative change.
+                  const fmtDiff = (n: number) => (closeMode === 'share'
+                    ? `${Math.round(n * 10) / 10} pts`
+                    : String(Math.round(n)));
+                  const sign = (n: number) => (n > 0 ? `+${fmtDiff(n)}` : fmtDiff(n));
                   return (
                     <tr key={r.month}>
                       <td className="left">Month {r.month}</td>
-                      <td className="num">{r.current ?? '—'}</td>
-                      <td className="num">{r.prior ?? '—'}</td>
+                      <td className="num">{r.current == null ? '—' : closeFmt(r.current)}</td>
+                      <td className="num">{r.prior == null ? '—' : closeFmt(r.prior)}</td>
                       <td className={`num diff${diff ? (diff > 0 ? ' up' : ' down') : ''}`}>
-                        {diff == null ? '—' : diff > 0 ? `+${diff}` : diff}
+                        {diff == null ? '—' : sign(diff)}
                       </td>
                     </tr>
                   );
@@ -254,8 +308,8 @@ export function CurrentYearStats({
               <tfoot>
                 <tr>
                   <th className="left">Total</th>
-                  <th className="num">{closeCounts.reduce((a, r) => a + (r.current ?? 0), 0)}</th>
-                  <th className="num">{closeCounts.reduce((a, r) => a + (r.prior ?? 0), 0)}</th>
+                  <th className="num">{closeMode === 'share' ? `${closeTotals.current} auctions` : closeTotals.current}</th>
+                  <th className="num">{closeMode === 'share' ? `${closeTotals.prior} auctions` : closeTotals.prior}</th>
                   <th className="num" />
                 </tr>
               </tfoot>

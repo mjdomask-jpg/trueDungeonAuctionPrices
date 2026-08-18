@@ -15,7 +15,7 @@ import { groupLabel } from './eras';
 // A raw per-lot sale, normalised from rawPricesData.csv. Only the four fields the
 // quartile math needs are kept; trentName/trentPrice (the lot total, used for the
 // sheet's max/min pivots) are dropped here.
-export type RawSale = { season: string; category: string; item: string; price: number };
+export type RawSale = { season: string; auctionNumber: number; category: string; item: string; price: number };
 
 const TENX = 10;
 
@@ -30,6 +30,7 @@ export function parseRawSales(text: string): RawSale[] {
   const header = rows[0].map((h) => h.trim());
   const col = (name: string) => header.indexOf(name);
   const iSeason = col('auctionSeason');
+  const iNum = col('auctionNumber');
   const iItem = col('Item');
   const iPrice = col('Price');
   const iCat = col('Category');
@@ -39,6 +40,7 @@ export function parseRawSales(text: string): RawSale[] {
     if (!Number.isFinite(price) || price <= 0) continue; // drops $0.00 + blanks
     out.push({
       season: (r[iSeason] ?? '').trim(),
+      auctionNumber: Number((r[iNum] ?? '').trim()),
       category: (r[iCat] ?? '').trim(),
       item: cleanName(r[iItem] ?? ''),
       price,
@@ -124,6 +126,11 @@ export type GroupedQuartiles = {
   groups: QuartileGroup[];
   ungrouped: string[]; // sold this year but assigned to no group
   unmatched: string[]; // grouping references a token that never appears in the raw feed
+  // Present only when scoped to a recency window ("Last 5"). The per-lot feed
+  // covers Trent auctions only, while the window is the SITE-WIDE last five, so
+  // some of those auctions contribute nothing — say which, rather than quietly
+  // charting a thinner sample.
+  window?: { auctions: number[]; withData: number[]; lots: number };
 };
 
 // Most common category in a group's rows (first-seen wins ties), for the heading
@@ -147,14 +154,29 @@ function modeCategory(rows: GroupRow[]): string {
 // bundle (×10, "10x " name prefix) — the same pure display transform as the
 // Prices/Timelines pages. Groups are ordered by Group Order (name as tiebreak);
 // empty groups drop out.
+//
+// `windowAuctions` optionally narrows the year to a set of auction numbers — the
+// "Last 5" recency window. It is the SITE-WIDE last five (lastFiveAuctionNumbers
+// over prices.csv), deliberately: "Last 5" has to name the same five auctions
+// here that the Prices page names, or the two pages quietly disagree about a
+// phrase they both use. The per-lot feed only covers Trent auctions, so some of
+// those five contribute nothing — the returned `window` reports which did, and
+// the UI says so.
 export function quartilesByGroup(
   raw: RawSale[], sales: Sale[], groupRows: GroupRow[], year: string, tenX: boolean,
+  windowAuctions?: number[] | null,
 ): GroupedQuartiles {
+  const inWindow = windowAuctions?.length ? new Set(windowAuctions) : null;
   // Per-token price lists for the chosen year, 10x-scaled for Trade 1 when asked.
   const pricesByItem = new Map<string, number[]>();
   const itemsInYear = new Set<string>();
+  const auctionsWithData = new Set<number>();
+  let lots = 0;
   for (const r of raw) {
     if (r.season !== year) continue;
+    if (inWindow && !inWindow.has(r.auctionNumber)) continue;
+    auctionsWithData.add(r.auctionNumber);
+    lots += 1;
     itemsInYear.add(r.item);
     const price = tenX && r.category === TRADE_1 ? r.price * TENX : r.price;
     let list = pricesByItem.get(r.item);
@@ -213,5 +235,13 @@ export function quartilesByGroup(
     .map((gr) => gr.item)
     .sort();
 
-  return { groups, ungrouped, unmatched };
+  const window = inWindow
+    ? {
+      auctions: [...inWindow].sort((a, b) => a - b),
+      withData: [...auctionsWithData].sort((a, b) => a - b),
+      lots,
+    }
+    : undefined;
+
+  return { groups, ungrouped, unmatched, window };
 }

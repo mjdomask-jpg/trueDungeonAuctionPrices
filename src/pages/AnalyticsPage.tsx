@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
         <div className="toggle view-toggle" role="group" aria-label="Analytics view">
           <span className="toggle-label">View</span>
           <div className="toggle-buttons">
-            <button type="button" data-label="Current Year" className={view === 'current' ? 'on' : undefined}
+            <button type="button" data-label="Current Year" data-short="Current" className={view === 'current' ? 'on' : undefined}
               aria-pressed={view === 'current'} onClick={() => setView('current')}>
               <span className="lbl-full">Current Year</span>
               <span className="lbl-short">Current</span>
@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
               aria-pressed={view === 'quartiles'} onClick={() => setView('quartiles')}>
               Quartiles
             </button>
-            <button type="button" data-label="Funding & Context" className={view === 'context' ? 'on' : undefined}
+            <button type="button" data-label="Funding & Context" data-short="Funding" className={view === 'context' ? 'on' : undefined}
               aria-pressed={view === 'context'} onClick={() => setView('context')}>
               <span className="lbl-full">Funding &amp; Context</span>
               <span className="lbl-short">Funding</span>

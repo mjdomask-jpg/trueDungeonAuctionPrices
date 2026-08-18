@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import {
   useFilters, activeFilterCount, CONTEXT_PROVENANCES, PROVENANCE_NAME,
   type FilterControl, type SourceFilter, type AuctionTypeFilter,
 } from '../data/filtersContext';
+import { useAuctionData } from '../data/auctionDataContext';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 // The shared context-layer controls. One implementation, dropped into each page;
@@ -13,11 +15,17 @@ const DEFAULT_CONTROLS: FilterControl[] = ['source', 'trentPricing', 'auctionTyp
 
 export function FilterBar({
   controls = DEFAULT_CONTROLS,
+  seasons,
   collapsibleOnMobile = false,
   mobileSummary = 'Filters',
   bare = false,
 }: {
   controls?: FilterControl[];
+  // The seasons the host page currently shows. Source and Trent pricing are only
+  // offered when at least one of them contains a Trent auction — every season up
+  // to 2022 predates Trent entirely, so the two controls sat there doing nothing.
+  // Omit for a page that isn't season-scoped: the whole dataset is then checked.
+  seasons?: string[];
   // When true, the bar folds behind a disclosure below 640px so it doesn't push
   // the data down a phone screen. Pages whose filter has an immediate local
   // effect (e.g. the Context page) leave it open instead.
@@ -32,14 +40,29 @@ export function FilterBar({
   bare?: boolean;
 }) {
   const { filters, setSource, setTrentPricing, setAuctionType, toggleProvenance } = useFilters();
+  const { trentSeasons } = useAuctionData();
   const narrow = useMediaQuery(NARROW);
   const show = (c: FilterControl) => controls.includes(c);
   // The Trent reward-adjust only makes sense when Trent sales are in view.
   const trentInView = filters.source !== 'Forum';
+  // Is there anything for the two Trent controls to act on? Undefined seasons
+  // means "not season-scoped" — ask the dataset instead of a season list.
+  const trentInData = seasons ? seasons.some((s) => trentSeasons.has(s)) : trentSeasons.size > 0;
+
+  // Filter state is shared across pages and survives a season change, so hiding
+  // the controls is not enough: a Source of 'Trent' carried into 2019 would
+  // silently empty the page with no visible control to explain it. Put them back
+  // to their defaults whenever they stop being offered, so what the page filters
+  // on is always something the page can show you.
+  useEffect(() => {
+    if (trentInData) return;
+    if (filters.source !== 'all') setSource('all');
+    if (filters.trentPricing !== 'nominal') setTrentPricing('nominal');
+  }, [trentInData, filters.source, filters.trentPricing, setSource, setTrentPricing]);
 
   const inner = (
     <>
-      {show('source') && (
+      {show('source') && trentInData && (
         <label>
           Source
           <select value={filters.source} onChange={(e) => setSource(e.target.value as SourceFilter)}>
@@ -50,7 +73,7 @@ export function FilterBar({
         </label>
       )}
 
-      {show('trentPricing') && trentInView && (
+      {show('trentPricing') && trentInData && trentInView && (
         <div className="toggle" role="group" aria-label="Trent pricing">
           <span className="toggle-label">Trent pricing</span>
           <div className="toggle-buttons">

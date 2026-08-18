@@ -356,7 +356,10 @@ export default function ExplorerPage() {
           <div className="filterset-body">
             <TenXToggle on={tenX} onChange={setTenX} />
             {pickers}
-            <FilterBar bare controls={sharedControls} />
+            {/* Season '' means every season, which always includes Trent ones —
+                pass a list only when the page is pinned to one. */}
+            <FilterBar bare controls={sharedControls}
+              seasons={filters.season ? [filters.season] : undefined} />
           </div>
         </details>
       </div>

@@ -126,10 +126,20 @@ header h1 {
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--text);
+  /* The label text is an anonymous flex item, so its box is exactly one line
+     box. Fixing that at 22px gives it the same reserved height .toggle-label
+     declares, which is what keeps a <select> and a segmented toggle sharing a
+     row level with each other — without it the label above a select is 18px,
+     the one above a toggle 22px, and the select rides 4px high. Any control
+     added to a .controls row inherits the alignment for free. */
+  line-height: 22px;
 }
 .controls select,
 .controls input {
   font: inherit;
+  /* `font: inherit` would also inherit the 22px label line-height above; a
+     control sizes off --control-h, not its line box. */
+  line-height: normal;
   height: var(--control-h);
   padding: 0 10px;
   border: 1px solid var(--border);
@@ -644,12 +654,25 @@ td.diff.down { color: var(--diff-down); }
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;
   margin-top: 14px; overflow: hidden; box-shadow: var(--shadow);
 }
+/* SITE RULE — mixing type sizes on one row: align on the BASELINE, not on the
+   box centre. `align-items: center` lines up boxes, and a 20px Caslon heading,
+   a 13px Georgia count and a 12px sans chip have box centres that sit at
+   different places within their own glyphs (each font splits its em between
+   ascent and descent differently), so centred boxes leave the text visibly out
+   of step — measured up to 5.9px apart in the recipe drawer, 1.5px on the
+   calculator's recipe bar. Baseline alignment also does the right thing when
+   one item is two lines (a name over its "upgrades from" note): the chip lines
+   up with the NAME, not with the middle of the stack.
+   Items that are not text — a close button, a disclosure chevron — opt back out
+   with align-self: center, since they have no meaningful baseline to share. */
 .tx-shead {
   display: flex; align-items: center; gap: 10px; width: 100%; background: none;
   border: none; padding: 14px 16px; cursor: pointer; text-align: left;
   color: var(--text-h); font-family: inherit;
 }
 .tx-shead:hover { background: var(--row-hover); }
+.tx-shead { align-items: baseline; }
+.tx-shead > .tx-chev { align-self: center; }
 .tx-syear { font-size: 20px; font-weight: 600; font-family: var(--display); }
 .tx-scount { font-size: 13px; color: var(--text); }
 .tx-snote { font-size: 12px; color: var(--text); font-style: italic; margin-left: auto; max-width: 55%; text-align: right; }
@@ -848,7 +871,8 @@ td.diff.down { color: var(--diff-down); }
 .calc-browse:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .calc-browse-i { font-style: normal; font-size: 16px; line-height: 1; }
 .calc-browse.big { font-size: 15px; padding: 10px 18px; }
-.calc-cur { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.calc-cur { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.calc-cur-x { align-self: center; }
 .calc-cur-name { font-size: 16px; font-weight: 600; font-family: var(--display); color: var(--text-h); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calc-cur-year { font-size: 13px; color: var(--text); flex: none; }
 /* Clear the current recipe. Sized to the 24px touch minimum the other small
@@ -1017,7 +1041,7 @@ td.diff.down { color: var(--diff-down); }
    answers "what does finishing cost", this answers "should you finish at all". */
 .cbuy { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
 .cbuy-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 0 6px; }
-.cbuy-price { display: inline-flex; align-items: center; gap: 8px; }
+.cbuy-price { display: inline-flex; align-items: baseline; gap: 8px; }
 .cbuy-lab { font-size: 13px; color: var(--text-h); }
 .cbuy-src { font-size: 12px; color: var(--text); }
 .cbuy-hint { font-size: 12px; color: var(--text); margin: 8px 6px 0; }
@@ -1072,7 +1096,8 @@ td.diff.down { color: var(--diff-down); }
   display: flex; flex-direction: column;
 }
 .calc-drawer.on { transform: translateX(0); }
-.calc-dhead { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); flex: none; }
+.calc-dhead { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); flex: none; }
+.calc-dhead .calc-dx { align-self: center; }
 .calc-dhead b { font-family: var(--display); font-size: 16px; color: var(--text-h); }
 .calc-dx { background: none; border: none; cursor: pointer; color: var(--text); font-size: 18px; line-height: 1; padding: 2px 6px; }
 .calc-dx:hover { color: var(--accent); }
@@ -1091,14 +1116,15 @@ td.diff.down { color: var(--diff-down); }
 .calc-tchip { font: inherit; font-size: 11px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); cursor: pointer; color: var(--text); }
 .calc-tchip:hover { border-color: var(--accent); color: var(--accent); }
 .calc-tchip.on { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
-.calc-yhead { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: none; cursor: pointer; padding: 10px 4px 6px; color: var(--text-h); font: inherit; border-bottom: 1px solid var(--border); }
+.calc-yhead { display: flex; align-items: baseline; gap: 8px; width: 100%; background: none; border: none; cursor: pointer; padding: 10px 4px 6px; color: var(--text-h); font: inherit; border-bottom: 1px solid var(--border); }
+.calc-yhead .calc-chev { align-self: center; }
 .calc-yhead:hover { color: var(--accent); }
 .calc-chev { font-style: normal; color: var(--text); font-size: 11px; transition: transform 0.12s; flex: none; }
 .calc-yhead[aria-expanded='true'] .calc-chev { transform: rotate(90deg); }
 .calc-yv { font-weight: 600; font-family: var(--display); }
 .calc-yc { color: var(--text); font-size: 12px; margin-left: auto; }
 .calc-ysec { padding: 2px 0 6px; }
-.calc-opt { display: flex; align-items: center; gap: 9px; width: 100%; background: none; border: 1px solid transparent; border-radius: 8px; cursor: pointer; padding: 7px 8px; text-align: left; color: var(--text-h); font: inherit; }
+.calc-opt { display: flex; align-items: baseline; gap: 9px; width: 100%; background: none; border: 1px solid transparent; border-radius: 8px; cursor: pointer; padding: 7px 8px; text-align: left; color: var(--text-h); font: inherit; }
 .calc-opt:hover { background: var(--row-hover); border-color: var(--border); }
 .calc-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .calc-opt.sel { background: var(--accent-bg); border-color: var(--accent); }
@@ -1486,15 +1512,15 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
   color: var(--text);
 }
 /* Phase 7's price-season picker is a <select> in a .toggle rather than in a
-   .controls label, so — exactly like .toggle-buttons below — it has to restate
-   the control font itself or it renders at the page's 15px sentence case
-   beside 12px uppercase neighbours. The phone's .controls select rule still
-   wins on font-size, which is what keeps it at the 16px iOS needs to not zoom
-   the page on focus. */
+   .controls label, so it has to restate the 12px control size itself or it
+   renders at the page's 15px beside its neighbours. Size only: the uppercasing
+   belongs to control LABELS, not to the values inside a control — every other
+   select on the site renders its options in sentence case, and this one read as
+   shouting ("AUTO (EACH RECIPE)"). The phone's .controls select rule still wins
+   on font-size, which is what keeps it at the 16px iOS needs to not zoom the
+   page on focus. */
 .price-year select {
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
 }
 /* The label is a real <label for>, so the help "?" beside it has to sit
    OUTSIDE it — clicking a popover trigger inside a label would also open the
@@ -1508,6 +1534,12 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
+  /* SITE RULE: a toggle button always has room for its own label. `overflow:
+     hidden` above zeroes this box's automatic minimum size, so as a flex item
+     in a tight .controls row it would happily shrink and clip its buttons
+     (measured: "Full Season" lost 22px at 375px). min-content restores a floor
+     of "as wide as the widest label needs" — the row wraps instead. */
+  min-width: min-content;
 }
 /* The sibling <select>s inherit their 12px size from .controls label; the
    toggle is not a label, so it has to say so itself or the buttons render at
@@ -1538,7 +1570,10 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
 .toggle-buttons button::after {
   content: attr(data-label);
   height: 0;
-  overflow: hidden;
+  /* Deliberately NOT `overflow: hidden`: a hidden-overflow box contributes 0 to
+     its flex item's min-content size, which is exactly the width this ghost
+     exists to reserve. It stays invisible via visibility, and .toggle-buttons'
+     own overflow clips the zero-height line. */
   visibility: hidden;
   font-weight: 600;
   pointer-events: none;
@@ -1843,6 +1878,55 @@ td.strong { font-weight: 600; color: var(--text-h); }
 /* The auctioneer x season matrix is the one table here that can outgrow the
    page on a narrow screen; it scrolls in its own box rather than the body. */
 .an-scroll { overflow-x: auto; }
+
+/* A PINNED table header, for the one table long enough to need it (Auctions by
+   auctioneer and season — every auctioneer on record, 40-odd rows, where the
+   season columns are meaningless once the header has scrolled away).
+
+   The note by the global `thead th` rule explains why sticky does nothing on a
+   plain .tablewrap: `overflow-x: auto` forces overflow-y to compute to `auto`
+   too, so the wrapper becomes the header's scroll container, and with no height
+   constraint it never scrolls — the PAGE scrolls and takes the header with it.
+   This is the structural change that note calls for: give the wrapper a height,
+   so the thing that scrolls under the header is the wrapper itself.
+
+   The header cells need their own opaque background (inherited from `thead th`)
+   or the rows would show through as they pass beneath. */
+.an-scroll.an-pin {
+  max-height: min(72vh, 820px);
+  overflow: auto;
+  /* The card's border and rounded corners move OUT of the table and onto this
+     wrapper. .an-table clips itself with `overflow: hidden` to round its
+     corners, and any clipping ancestor between a sticky element and the
+     scroller becomes that element's scroll container — with the table clipping,
+     the header stuck to a box that never scrolls, i.e. it did nothing. */
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.an-scroll.an-pin .an-table {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+}
+.an-scroll.an-pin .an-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  /* The global `thead th.left` pins the first column sideways, but the body
+     cells under it do not stick, so inside a two-axis scroller the header would
+     slide out of step with its own column. Horizontal stickiness off; vertical
+     only. */
+  left: auto;
+}
+/* thead has no border-collapse edge to paint once it is out of flow — a sticky
+   header keeps its background but loses the table's collapsed bottom border, so
+   restate it as a shadow that travels with the header. */
+.an-scroll.an-pin .an-table thead th::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  border-bottom: 1px solid var(--border);
+}
 .an-matrix { min-width: 620px; }
 
 /* Phone-only per-auctioneer list, rendered instead of that grid below 640px
@@ -2216,13 +2300,18 @@ table.an-opens col.col-days { width: 16%; }
      shorter mobile form (below) so none of them clip. Notes on the overrides:
      - the base `height: 100%` becomes an auto height + 44px min so each button
        keeps a tall touch target without depending on the wrapper's height;
-     - `min-width: 0` lets the flex buttons shrink below their content width
-       instead of overflowing the row and scrolling the page sideways;
-     - the ::after width-reservation ghost is dropped — flex fixes each button's
-       width, so the bold-state jitter it guards against can't happen here. */
-  .toggle-buttons { height: auto; width: 100%; flex-wrap: nowrap; max-width: 100%; }
-  .toggle-buttons button { flex: 1 1 0; min-width: 0; padding: 0 8px; height: auto; min-height: 44px; }
-  .toggle-buttons button::after { display: none; }
+     - `min-width: min-content` lets flex even out the spare width without ever
+       taking a button below its own label (the site rule on .toggle-buttons);
+     - the ::after ghost still reserves the bold-state width, but for a button
+       carrying a short mobile label it has to mirror THAT label, not the full
+       one in data-label — hence data-short. */
+  .toggle-buttons { height: auto; min-height: var(--control-h); width: 100%; flex-wrap: nowrap; max-width: 100%; }
+  /* The CONTROL is --control-h tall, borders included (box-sizing: border-box),
+     which is what lines a toggle up with the selects beside it. The buttons take
+     what's left inside the frame — 44px on the button plus the frame's 2px made
+     the toggle 1.5px taller than every select on the row. */
+  .toggle-buttons button { flex: 1 1 0; min-width: min-content; padding: 0 8px; height: auto; min-height: calc(var(--control-h) - 2px); }
+  .toggle-buttons button[data-short]::after { content: attr(data-short); }
   .toggle-buttons .lbl-full { display: none; }
   .toggle-buttons .lbl-short { display: inline; }
 

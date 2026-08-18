@@ -21,6 +21,10 @@ export type AuctionData = {
   // FilterBar's "With Golden Ticket" auction-type filter. Memoised once here so
   // every page shares it. Empty until sales load.
   goldenTicketAuctions: Set<string>;
+  // Seasons containing at least one Trent auction (see seasonsWithTrent). The
+  // FilterBar hides its Source + Trent-pricing controls where a season has none
+  // — pre-2023 there were no Trent auctions to filter for.
+  trentSeasons: Set<string>;
   // Transmutes (Phase 4). All four are optional: a missing file leaves the
   // Transmutes page empty without affecting any other view.
   recipes: Recipe[]; // bills of materials, one per (season, transmute)

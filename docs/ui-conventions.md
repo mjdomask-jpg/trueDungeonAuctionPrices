@@ -163,6 +163,62 @@ or it renders at the page's 15px sentence case beside its neighbours. Let the ph
 `.controls select` rule keep winning on `font-size`: 16px is what stops iOS zooming
 the page on focus.
 
+### Controls that share a row line up, top and bottom
+
+**A `<select>` and a segmented `.toggle` on the same `.controls` row must have
+the same top and bottom edge.** Both are a label stacked over a 32px (44px on a
+phone) control, so what decides the alignment is the LABEL box: `.toggle-label`
+reserves 22px (see "A label carrying a `?`" above) while a bare `.controls
+label`'s text was one 18px line box, which floated its select 4px above the
+toggle beside it. `.controls label` now fixes that line box at `line-height:
+22px`, so the two match; the controls themselves restate `line-height: normal`
+so they keep sizing off `--control-h`.
+
+On a phone the toggle's frame counts toward the control height too
+(`box-sizing: border-box`): the buttons take `calc(var(--control-h) - 2px)` so
+the bordered control is exactly `--control-h`, not two pixels taller than every
+select on the row.
+
+### A toggle button always fits its own label
+
+**No toggle button may clip or crush its text.** `.toggle-buttons` sets
+`overflow: hidden` for its rounded corners, which zeroes its automatic minimum
+size — as a flex item in a tight row it shrank happily, and "Full Season" lost
+22px at 375px while "Reward-adj." lost 16px. Two rules keep it honest:
+
+- `.toggle-buttons { min-width: min-content }` restores a floor of "as wide as
+  the labels need"; a crowded row wraps instead of clipping.
+- the `::after` ghost that reserves each button's **bold** (selected) width
+  deliberately does *not* set `overflow: hidden` — a hidden-overflow box
+  contributes 0 to min-content, which is the whole width it exists to reserve.
+
+The ghost's text comes from `data-label`. A button that swaps to a shorter label
+on phones (`.lbl-full`/`.lbl-short`) must also carry **`data-short`**, or the
+ghost reserves room for the full label the phone is not showing.
+
+When a label is genuinely too long for the space, shorten the label — do not
+let it clip. "Show Recipes" became "Active" for exactly this reason.
+
+### Mixed type sizes on one row align on the BASELINE
+
+**Where a row puts different font sizes or families side by side — a tier chip,
+a token name, a year, a help note — use `align-items: baseline`, not `center`.**
+Centring lines up boxes, and each font divides its em between ascent and descent
+differently, so centred boxes leave the text visibly out of step: measured 1.5px
+between a Caslon token name and the sans chip beside it on the calculator's
+recipe bar, and 5.9px in the recipe drawer. Baseline alignment also does the
+right thing when one item runs to two lines (a name over its "upgrades from"
+note): the chip lands on the NAME, not on the middle of the stack.
+
+Items that are not text — a close button, a disclosure chevron — opt back out
+with `align-self: center`, since they have no meaningful baseline to share.
+
+### Uppercasing is for control LABELS, not control values
+
+The 12px uppercase treatment belongs to the label above a control. The values
+inside it stay sentence case, like every `<select>`'s options — a picker reading
+"AUTO (EACH RECIPE)" reads as shouting.
+
 ## Form controls on mobile
 
 **Any `<select>`, `<input>` or `<textarea>` must render at 16px or larger on
@@ -231,12 +287,30 @@ Pick the breakpoint in React via `useMediaQuery`, not in CSS — hiding columns
 with `display: none` fights `table-layout: fixed` and the colspan'd group
 headers, which map by *rendered* column index.
 
-**Table headers do not stick.** `.tablewrap` sets `overflow-x: auto`, and CSS
-forces `overflow-y` to compute to `auto` alongside it, which makes the wrap the
-nearest scroll container for anything inside. The wrap has no height constraint,
-so it never scrolls vertically and a `position: sticky` header simply travels up
-and out with the page. Adding `position: sticky` to a `th` does nothing; making
-headers genuinely stick requires restructuring how the table scrolls.
+**Table headers do not stick by default, and adding `position: sticky` to a `th`
+will not change that.** `.tablewrap` sets `overflow-x: auto`, and CSS forces
+`overflow-y` to compute to `auto` alongside it, which makes the wrap the nearest
+scroll container for anything inside. The wrap has no height constraint, so it
+never scrolls vertically and a sticky header simply travels up and out with the
+page.
+
+**To pin one, give the wrapper a height** — `.an-scroll.an-pin` (`max-height:
+min(72vh, 820px); overflow: auto`) — so the thing scrolling under the header is
+the wrapper itself. Two things this needs, both of which cost an hour to find:
+
+- **No clipping ancestor between the header and the scroller.** `.an-table`
+  rounds its corners with `overflow: hidden`, and any clipping ancestor becomes
+  the sticky element's scroll container — the header stuck to a box that never
+  scrolls, i.e. did nothing. `.an-pin` moves the border and radius onto the
+  wrapper and sets `overflow: visible` on the table.
+- **The header needs its own opaque background and a restated bottom border.**
+  Out of flow it keeps `thead th`'s `--card` fill but loses the table's collapsed
+  border, so `.an-pin thead th::after` draws it back.
+
+Reserve this for tables long enough to earn a nested scrollbar. Today that is one
+table: Analytics → Historical → *Auctions by auctioneer and season*, which runs
+to every auctioneer on record and is unreadable once the season columns scroll
+away.
 
 
 - **4+ rows get alternating row shading.** `CategoryTable` and `CompareTable`

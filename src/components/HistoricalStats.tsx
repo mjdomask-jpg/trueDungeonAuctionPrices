@@ -200,7 +200,10 @@ export function HistoricalStats({
             )}
           </>
         ) : (
-          <div className="an-scroll">
+          // an-pin: this table runs to every auctioneer on record, so the
+          // header scrolls inside the wrapper rather than off the page — the
+          // season columns are unreadable without it.
+          <div className="an-scroll an-pin">
             <table className={`an-table an-matrix${matrix.rows.length >= 4 ? ' banded' : ''}`}>
               <thead>
                 <tr>
