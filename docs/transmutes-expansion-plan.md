@@ -1149,9 +1149,42 @@ can still build have cost back then", which is the actual question.)*
 The calculator is a "what do I still owe on this build" tool and always asks today.
 The engine is built with `priceYear: calculator ? null : priceYear`, so the pin is
 simply not applied there; the selection is preserved rather than cleared, so
-switching back to Recipes restores it. This deliberately does **not** repeat the
-`recentPrices` wart, where a control hidden on the calculator still governs its
-numbers.
+switching back to Recipes restores it. Pin 2021 on Recipes and hop to the
+calculator and it prices at today's, not 2021 — deliberately, and visibly, since
+the calculator now carries its own basis control (§11.3).
+
+### 11.3 The full-season / last-5 control follows it onto the calculator (1a)
+
+Reviewing F3 turned up a live inconsistency: `priceYear` is isolated from the
+calculator, but `recentPrices` **was not** — and never had been. Verified in-browser
+before deciding anything: select Last 5 on Recipes, switch to the calculator, and
+`+3 Fellbane Crossbow` reads $850 rather than $644, with no control anywhere on
+screen. The hidden toggle moved the build-vs-buy verdict.
+
+**The record says this was never decided.** The control began as a page-level
+checkbox; `888111e` (2026-07-21) moved it *inside the latest season's accordion*
+because "the toggle only affects the latest priced season". The Build Calculator
+landed **after** that move (`9d646f5`), inheriting "no control" structurally rather
+than by choice. The accuracy release (`dde2ce5`) moved it back to the global bar with
+a documented rationale (D3 made it move 91 of 174 rows) and introduced the
+`!calculator &&` gate — a gate that carries no comment, in a file where the
+mobile-disclosure decision beside it carries six lines.
+
+**Resolved by showing it on both views, in the global bar.** Rejected: isolating the
+calculator to full-season, one line and consistent with F3, but last-5 is exactly the
+reading a buyer wants when a trade good is moving, and the calculator is where that
+matters most. Also rejected: a third pair on the calculator's **tools strip** —
+prototyped and measured, and it fails on two counts. The strip only renders once a
+recipe is picked, while the **browse drawer's prices answer to this control** ($644 →
+$850 in the drawer, measured), so the control would be absent at the moment you are
+comparing recipes; and on a phone a third control wraps the strip from 76px to 148px,
+above a bill of materials the Phase 9 constraints already call ~1,955px tall.
+
+The global bar has neither problem: the control sits above the picker, governs the
+drawer, and costs one 72px row on a phone. It is declared once as `recentToggle` and
+rendered in both views, so the two copies cannot drift. It stays hidden only where it
+cannot act — a pinned PAST season on the Recipes view — which the calculator never
+has.
 
 ### 11.1 How it is built
 

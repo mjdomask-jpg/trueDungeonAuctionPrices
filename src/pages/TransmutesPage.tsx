@@ -107,9 +107,43 @@ export default function TransmutesPage() {
   const shown = searching ? bySeason.filter((s) => s.costs.length) : bySeason;
 
   // Seasons that actually hold prices (2018–2026 today) — the year list, and
-  // the test for whether last-5 can still do anything.
+  // the test for whether last-5 can still do anything. On the Recipes view a
+  // pinned past season leaves it inert (variantFor ignores it); the calculator
+  // never carries a pin (F3), so there it is always live.
   const pricedSeasons = engine ? engine.prices.pricedSeasons : [];
-  const showRecentToggle = priceYear === null || priceYear >= (engine?.prices.latestPriced ?? 0);
+  const showRecentToggle =
+    calculator || priceYear === null || priceYear >= (engine?.prices.latestPriced ?? 0);
+
+  // The one option BOTH views answer to, so it is declared once and rendered in
+  // each. It governs the calculator whether or not it is on screen there — the
+  // engine is shared — so the choice is between showing it and letting an
+  // invisible control move the build-vs-buy verdict. It shows.
+  //
+  // Hidden only where it cannot do anything: last-5 is a reading of the season
+  // still in progress, so a pinned PAST season on the Recipes view leaves it
+  // inert. A control that cannot move a number does not earn a slot.
+  const recentToggle = showRecentToggle && (
+    <div className="toggle" role="group" aria-label="Which sales price today's recipes">
+      <span className="toggle-label">
+        Today's prices from
+        <HintPopover label="About the price basis">
+          Recipes you can still craft are priced at <b>today's</b> prices. This picks what
+          “today” means: the whole current season, or just its <b>last five auctions</b>,
+          which reacts faster when a trade good is moving. Expired recipes ignore it —
+          they are priced over the window they could actually be built in.
+        </HintPopover>
+      </span>
+      <div className="toggle-buttons">
+        <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
+          aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
+        <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
+          aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
+          <span className="lbl-full">Last 5 auctions</span>
+          <span className="lbl-short">Last 5</span>
+        </button>
+      </div>
+    </div>
+  );
 
   // The things you can change about how the list is priced and filtered.
   // Held as one node so the phone can fold them behind a disclosure without a
@@ -180,32 +214,7 @@ export default function TransmutesPage() {
         </div>
       )}
 
-      {/* Last-5 is a reading of the season still in progress, so it has nothing
-          to say about a pinned past one — variantFor already ignores it there.
-          Hidden rather than shown inert, so the row never carries a control
-          that cannot move a number. */}
-      {showRecentToggle && (
-      <div className="toggle" role="group" aria-label="Which sales price today's recipes">
-          <span className="toggle-label">
-            Today's prices from
-            <HintPopover label="About the price basis">
-              Recipes you can still craft are priced at <b>today's</b> prices. This picks what
-              “today” means: the whole current season, or just its <b>last five auctions</b>,
-              which reacts faster when a trade good is moving. Expired recipes ignore it —
-              they are priced over the window they could actually be built in.
-            </HintPopover>
-          </span>
-          <div className="toggle-buttons">
-            <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
-              aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
-            <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
-              aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
-              <span className="lbl-full">Last 5 auctions</span>
-              <span className="lbl-short">Last 5</span>
-            </button>
-          </div>
-        </div>
-      )}
+      {recentToggle}
     </>
   );
 
@@ -296,6 +305,11 @@ export default function TransmutesPage() {
             <div className="filterset-body">{optionControls}</div>
           </details>
         ) : optionControls)}
+        {/* 1a: the calculator gets this one control in the global bar rather
+            than a third pair on its tools strip — the strip only exists once a
+            recipe is picked, and the browse drawer's prices answer to this
+            too. */}
+        {calculator && recentToggle}
         {!calculator && (
           <label className="search">
             <span className="sr-only">Search transmutes</span>
