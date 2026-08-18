@@ -96,9 +96,14 @@ header h1 {
 }
 .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* A page introduction. The 15px above it matches what the Analytics page
+   has always had — by accident, as it happens: that page asks for a .lede
+   class that does not exist, so its paragraph falls back to the browser's
+   default 1em margin. The spacing is right, so it is now stated here and
+   every page gets it. */
 .sub {
   max-width: 640px;
-  margin: 0;
+  margin: 15px 0 0;
   color: var(--text);
 }
 
@@ -620,6 +625,12 @@ td.diff.down { color: var(--diff-down); }
   background: var(--card); box-shadow: var(--shadow); color: var(--text-h);
   font-size: 12.5px; font-weight: 400; line-height: 1.45;
   text-align: left; white-space: normal; cursor: auto;
+  /* Help text is a sentence, not a label. The trigger usually sits INSIDE a
+     control label — .toggle-label and .filterset > summary are both uppercase
+     with tracking — and the bubble is a descendant, so it inherited all of it
+     and rendered as shouting prose. Reset here rather than at each call site,
+     so the next label style can't reintroduce it. */
+  text-transform: none; letter-spacing: normal; font-family: var(--sans);
 }
 .hint-x {
   flex: none; width: 18px; height: 18px; margin: -1px -2px 0 0; padding: 0;
@@ -840,6 +851,17 @@ td.diff.down { color: var(--diff-down); }
 .calc-cur { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .calc-cur-name { font-size: 16px; font-weight: 600; font-family: var(--display); color: var(--text-h); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calc-cur-year { font-size: 13px; color: var(--text); flex: none; }
+/* Clear the current recipe. Sized to the 24px touch minimum the other small
+   controls use, and quiet until hovered — it sits beside the recipe name, so
+   it must not compete with it. */
+.calc-cur-x {
+  flex: none; width: 24px; height: 24px; padding: 0; margin-left: 2px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: none; color: var(--text);
+  font-family: var(--sans); font-size: 17px; line-height: 1; cursor: pointer;
+}
+.calc-cur-x:hover { background: var(--band); color: var(--text-h); }
+.calc-cur-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .calc-spend { margin-left: auto; text-align: right; white-space: nowrap; }
 .calc-spend-lab { display: block; font-size: 11px; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; }
 .calc-spend-val b { font-size: 22px; font-family: var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
@@ -869,8 +891,27 @@ td.diff.down { color: var(--diff-down); }
 }
 /* Master on-hand actions — a small header strip above the table, visible on
    every width (the column header below it is desktop-only). */
-.calc-tools { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding: 6px 6px 2px; }
-.calc-tools-lab { margin-right: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text); }
+/* The tools strip: one shape for both controls (see BuildCalculator). Items
+   align to the END so the segmented pairs sit on one line even when a label
+   above them wraps. */
+.calc-tools { display: flex; align-items: flex-end; gap: 16px; justify-content: flex-end;
+  flex-wrap: wrap; padding: 6px 6px 14px; }
+.calc-tool { display: flex; flex-direction: column; gap: 4px; }
+/* Same treatment as .toggle-label, including the reserved height that keeps a
+   label carrying a help "?" level with one that does not. */
+.calc-tool-lab { display: inline-flex; align-items: center; gap: 4px; min-height: 20px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--text); }
+.calc-seg { display: inline-flex; height: 30px; border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; }
+.calc-seg button { font: inherit; font-size: 12px; padding: 0 12px; cursor: pointer;
+  background: var(--bg); border: 0; color: var(--text); white-space: nowrap; }
+.calc-seg button + button { border-left: 1px solid var(--border); }
+.calc-seg button:hover { color: var(--accent); }
+/* Accent text on the tinted accent surface, like the page toggles — white on
+   --accent fails contrast against dark mode's lighter purple. */
+.calc-seg button.on { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+.calc-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .calc-lhead {
   display: grid; grid-template-columns: 1fr 204px 40px 58px 78px; gap: 8px;
@@ -1427,7 +1468,17 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
 }
 .controls .controls-top .toggle.view-toggle { flex-basis: auto; }
 .controls-top .meta-line { margin: 0; }
+/* A label carrying a help "?" is taller than a bare one — the 16px trigger
+   outgrows the 12px text's line box — which left the button rows of adjacent
+   toggles 4px out of step (18px vs 22px labels). Every label reserves the
+   taller box, so a toggle lines up with its neighbours whether or not it has
+   help attached. inline-flex + gap here rather than at each call site, which
+   is what .price-lab and .path-toggle used to do separately. */
 .toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -2227,3 +2278,57 @@ table.an-opens col.col-days { width: 16%; }
    date aligned. */
 .foot-num { color: var(--text-h); font-weight: 500; }
 .foot-close { color: var(--text-h); font-variant-numeric: tabular-nums; }
+
+/* Phase 6 — the Omni suggestion box. Collapsed by default and set BELOW the
+   totals it deliberately does not affect: this is an alternative to price up,
+   not a cheaper reading of the same build (plan §3.5, D8). Quieter than .cbuy
+   for the same reason — the Wish Ring / GP toggle is a choice the player is
+   making, this is a note. */
+.omni { margin-top: 12px; border: 1px dashed var(--border); border-radius: 10px; }
+.omni-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px;
+  font: inherit; font-size: 13px; text-align: left; cursor: pointer; background: none;
+  border: none; color: var(--text-h); border-radius: 10px; }
+.omni-head:hover { color: var(--accent); }
+.omni-i { color: var(--accent); font-size: 14px; }
+.omni-sum { flex: 1; }
+.omni-caret { color: var(--text); font-size: 11px; }
+.omni-list { list-style: none; margin: 0; padding: 0 12px 4px; }
+.omni-offer { padding: 8px 0; border-top: 1px solid var(--border); }
+.omni-line { margin: 0; font-size: 13px; color: var(--text-h); }
+.omni-why { color: var(--text); font-weight: 400; }
+.omni-cmp { margin: 3px 0 0; font-size: 12px; color: var(--text); line-height: 1.5; }
+.omni-foot { margin: 0; padding: 8px 12px 12px; font-size: 12px; color: var(--text); font-style: italic; }
+.omni-prices { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 4px 12px 0; border-top: 1px solid var(--border); }
+.omni-price { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; font-size: 12px; color: var(--text); }
+.omni-price-lab { color: var(--text-h); }
+.omni-price-src { color: var(--text); font-style: italic; }
+
+/* The line the other path switches off: still there, visibly out of play. */
+.calc-line.swapped-out { opacity: 0.55; }
+.calc-line.swapped-out .cl-good s { text-decoration-thickness: 1px; }
+.tx-bom-row.swapped-out { opacity: 0.55; }
+
+/* Accuracy release — recipe status. "expired" is the load-bearing one: it says
+   the number in front of you is history, not a price you could pay today, so it
+   is tinted rather than grey. "preview" stays quiet; it only means the season
+   has not been auctioned yet, which the season note already covers. */
+.tx-badge.expired { background: rgba(150, 60, 60, 0.14); color: #8a3535; }
+.tx-badge.preview { background: var(--band); color: var(--text); }
+/* The inline copy on a BOM line, where it sits inside the provenance run. */
+.tx-badge.sm { font-size: 10px; padding: 0 6px; margin-left: 6px; }
+:root[data-theme='dark'] .tx-badge.expired { background: rgba(240, 120, 120, 0.16); color: #f08a8a; }
+
+/* Drawer: how many recipes the status filter is holding back, and the way in. */
+/* The drawer body is the scroll container, so its right edge sits under the
+   scrollbar. Everything else in here is text that stops short of it; this row
+   ends in a flush-right button, which the scrollbar clipped. Pad the row
+   rather than the container, so the recipe list keeps its full width. */
+.calc-dfilter { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex-wrap: wrap; padding: 8px 2px 2px 0; }
+.calc-dfilter-lab { font-size: 12px; color: var(--text); }
+.calc-dfilter-btn { font: inherit; font-size: 12px; padding: 4px 12px; cursor: pointer;
+  background: var(--accent-bg); border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); }
+.calc-opt-exp { font-size: 10px; margin-left: 8px; padding: 1px 7px; border-radius: 20px;
+  background: rgba(150, 60, 60, 0.14); color: #8a3535; white-space: nowrap; }
+:root[data-theme='dark'] .calc-opt-exp { background: rgba(240, 120, 120, 0.16); color: #f08a8a; }
+

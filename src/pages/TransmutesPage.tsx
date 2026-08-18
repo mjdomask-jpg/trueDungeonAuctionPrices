@@ -5,6 +5,9 @@ import { useRoutedView } from '../hooks/useRoutedView';
 import { TransmuteSeason } from '../components/TransmuteSeason';
 import { BuildCalculator } from '../components/BuildCalculator';
 import { PageIntro } from '../components/PageIntro';
+import { HintPopover } from '../components/HintPopover';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
 
 // Transmutes / build-vs-buy. Two views behind a toggle:
 //   Recipes (Phase 4) — every craftable token's estimated build cost, priced
@@ -17,12 +20,20 @@ import { PageIntro } from '../components/PageIntro';
 type View = 'recipes' | 'calculator';
 
 export default function TransmutesPage() {
+  const narrow = useMediaQuery(NARROW);
   const [view, setView] = useRoutedView<View>({
     views: ['recipes', 'calculator'],
     fallback: 'recipes',
     pathFor: (v) => `/transmutes/${v}`,
   });
   const [recentPrices, setRecentPrices] = useState(false);
+  // Phase 9. One control for the whole list rather than 43 of them: on this
+  // view the reader is scanning recipes, not building one, and the question
+  // "what do these cost if I pay in Gold Bars" is asked of all of them at once.
+  // Defaults to the Wish Ring, which is what the recipes literally list.
+  const [path, setPath] = useState<IngredientPath>(DEFAULT_PATH);
+  const [activeOnly, setActiveOnly] = useState(false);
+
   const [search, setSearch] = useState('');
   // null = default view (newest season open); a Set once the user toggles one.
   const [openSeasons, setOpenSeasons] = useState<Set<number> | null>(null);
@@ -38,12 +49,14 @@ export default function TransmutesPage() {
     if (!engine) return [];
     return seasons.map((year) => {
       const all = engine.costsForSeason(year);
-      const costs = q
+      const matched = q
         ? all.filter((c) => c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q))
         : all;
+      const visible = activeOnly ? matched.filter((c) => c.status !== 'expired') : matched;
+      const costs = path === DEFAULT_PATH ? visible : visible.map((c) => onPath(c, path));
       return { year, costs };
     });
-  }, [engine, seasons, q]);
+  }, [engine, seasons, q, path, activeOnly]);
 
   const noteFor = (year: number): string | undefined => {
     if (!engine) return undefined;
@@ -70,7 +83,83 @@ export default function TransmutesPage() {
     });
 
   const total = useMemo(() => bySeason.reduce((n, s) => n + s.costs.length, 0), [bySeason]);
+  const expiredCount = useMemo(
+    () => (engine ? engine.allCosts().filter((c) => c.status === 'expired').length : 0),
+    [engine],
+  );
+  const anyGoldPath = useMemo(
+    () => bySeason.some((s) => s.costs.some((c) => goldPathFor(c))),
+    [bySeason],
+  );
   const shown = searching ? bySeason.filter((s) => s.costs.length) : bySeason;
+
+  // The three things you can change about how the list is priced and filtered.
+  // Held as one node so the phone can fold them behind a disclosure without a
+  // second copy of the markup drifting from this one.
+  const optionControls = (
+    <>
+      {expiredCount > 0 && (
+        <div className="toggle" role="group" aria-label="Which recipes to show">
+          <span className="toggle-label">Show Recipes</span>
+          <div className="toggle-buttons">
+            <button type="button" data-label="All" className={!activeOnly ? 'on' : undefined}
+              aria-pressed={!activeOnly} onClick={() => setActiveOnly(false)}>All</button>
+            {/* One label at both widths. The two-span full/short swap needs its
+                `data-label` ghost to carry the LONGER text, which reserved room
+                for "Still craftable" while showing "Craftable" — the button then
+                overflowed selected and lost its padding unselected. */}
+            <button type="button" data-label="Active" className={activeOnly ? 'on' : undefined}
+              aria-pressed={activeOnly} onClick={() => setActiveOnly(true)}>Active</button>
+          </div>
+        </div>
+      )}
+
+      {anyGoldPath && (
+        <div className="toggle path-toggle" role="group" aria-label="How Legendary recipes are priced">
+          <span className="toggle-label">
+            Legendary Recipes
+            <HintPopover label="About the Wish Ring or GP choice">
+              Legendary recipes accept either 1 Wish Ring or 15,000 GP. Choose to show the
+              Wish Ring as a separate line item or to price the transmute with an additional
+              15,000 GP on top of the 25,000. Players often have GP on hand, not Wish Rings.
+            </HintPopover>
+          </span>
+          <div className="toggle-buttons">
+            <button type="button" className={path === 'ring' ? 'on' : undefined}
+              aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
+            <button type="button" className={path === 'gp' ? 'on' : undefined}
+              aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
+          </div>
+        </div>
+      )}
+
+      <div className="toggle" role="group" aria-label="Which sales price today's recipes">
+          <span className="toggle-label">
+            Today's prices from
+            <HintPopover label="About the price basis">
+              Recipes you can still craft are priced at <b>today's</b> prices. This picks what
+              “today” means: the whole current season, or just its <b>last five auctions</b>,
+              which reacts faster when a trade good is moving. Expired recipes ignore it —
+              they are priced over the window they could actually be built in.
+            </HintPopover>
+          </span>
+          <div className="toggle-buttons">
+            <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
+              aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
+            <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
+              aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
+              <span className="lbl-full">Last 5 auctions</span>
+              <span className="lbl-short">Last 5</span>
+            </button>
+          </div>
+        </div>
+    </>
+  );
+
+  // How many are off their default — the folded summary has to say so, or a
+  // filtered list reads as the full one (same reason FilterBar counts).
+  const activeOptions =
+    (activeOnly ? 1 : 0) + (path !== DEFAULT_PATH ? 1 : 0) + (recentPrices ? 1 : 0);
 
   if (error) return <p className="err">Failed to load data: {error}</p>;
   if (loading) return <p className="empty">Loading auction data…</p>;
@@ -95,13 +184,15 @@ export default function TransmutesPage() {
           <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>.
         </PageIntro>
       ) : (
-        <PageIntro short="Estimated transmute costs, priced from each transmute's debut-year auction sales.">
+        <PageIntro short="What each transmute costs to craft — at today's prices if you can still make it.">
           What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
-          building against buying from a reseller. Each transmute is priced from auction sales in the{' '}
-          <strong>year it debuted</strong> — an <strong>avg</strong> and a <strong>min</strong> total
-          per recipe. Tokens with a source show
-          both the full build and the cheaper cost if you already own that source. Expand any row for
-          its full bill of materials. For single-token price history, see <Link to="/">Prices</Link>.
+          building against buying from a reseller. A recipe you can <strong>still craft</strong> is
+          priced at <strong>today's</strong> prices, because that is what building it now would
+          cost you. One that has <strong>expired</strong> is priced over the window it could
+          actually be built in, and says so. Both are shown as an <strong>avg</strong> and a{' '}
+          <strong>min</strong> total per recipe. Tokens with a source show both the full build and
+          the cheaper cost if you already own that source. Expand any row for its full bill of
+          materials. For single-token price history, see <Link to="/">Prices</Link>.
         </PageIntro>
       )}
 
@@ -121,6 +212,21 @@ export default function TransmutesPage() {
           </div>
         </div>
 
+        {/* Phones fold the options away — four segmented toggles plus a search
+            box stacked 303px tall, pushing the season list off the bottom of
+            the screen before you had read a price. Desktop keeps them in the
+            open: a disclosure there reads as a dropdown menu, and its count
+            badge shifts the controls beside it every time an option changes.
+            Three visible toggles are the plainer thing. */}
+        {!calculator && (narrow ? (
+          <details className="filterset options">
+            <summary>
+              Options
+              {activeOptions > 0 && <span className="filterset-count">{activeOptions}</span>}
+            </summary>
+            <div className="filterset-body">{optionControls}</div>
+          </details>
+        ) : optionControls)}
         {!calculator && (
           <label className="search">
             <span className="sr-only">Search transmutes</span>
@@ -157,10 +263,11 @@ export default function TransmutesPage() {
               open={isOpen(year)}
               onToggle={() => toggle(year)}
               note={noteFor(year)}
-              // "Recent prices" only moves the current season's numbers (past
-              // seasons are closed; the preview already prices off recent sales),
-              // so the toggle lives inside that one season, not floating globally.
-              recentToggle={engine != null && year === engine.prices.latestPriced ? { on: recentPrices, onChange: setRecentPrices } : undefined}
+              // The recent-prices control moved to the global bar in the accuracy
+              // release: it used to move only the current season's numbers, but
+              // every ACTIVE recipe now prices at today's prices, so a control
+              // buried in one season's panel would silently reprice 91 of 174
+              // rows across every other panel on the page.
             />
           ))}
         </>

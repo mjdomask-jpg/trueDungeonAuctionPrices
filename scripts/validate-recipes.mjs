@@ -54,6 +54,10 @@ const SCHEMA = {
   },
   'transmuteRecipes.csv': {
     required: ['Key', 'Year', 'Level', 'Transmute', 'Item', 'ItemYear', 'ResolvedYear', 'Display Name', 'Quantity', 'IsSource'],
+    // Optional by design: the engine defaults every one of these, so the site
+    // is correct before the sheet is touched and authoring only adds precision.
+    // Listed here for documentation; absence is never an error.
+    optional: ['Expires', 'IngredientType'],
     renamed: { Good: 'Item', GoodYear: 'ItemYear', GoodDisplayName: 'Display Name' },
   },
   'offAuctionPrices.csv': {
@@ -119,8 +123,24 @@ for (const m of meta) {
 for (const [k, n] of metaDupes) add('WARN', 'tokenMetadata', `duplicate key "${k}" appears ${n}x`);
 
 const transmuteNames = new Set(recipes.map(r => r.Transmute));
+// Mirrors TIER_PROXY in src/lib/transmutes.ts: tiers that are auctioned
+// generically, so a named member of the tier still has a price.
+const TIER_PROXY = { 'Ultra Rare': 'Ultra Rare' };
+const CATEGORY_VOCAB = new Set([...prices.map(p => p.Category), ...meta.map(m => m.Category)].filter(Boolean));
+const proxyPriced = new Set(); // `${year}|${item}` unknown tokens their tier can price
 const fleeceYears = new Set(fleece.map(f => f.Year));
 const fleeceGood  = new Set(fleece.map(f => f.Item));
+// Off-auction coverage is PER ITEM: the table's year range differs token by
+// token (Golden Fleece starts 2019, Charm of Awakened Synergy is 2018 only).
+// Checking the file-wide year set instead let a season that prices some other
+// token vouch for a token it has no row for -- which is how the 2018 auction
+// season landed with Golden Fleece unpriced for 2012-2018 and 0 errors.
+const offYearsByItem = new Map();
+for (const f of fleece) {
+  if (!offYearsByItem.has(f.Item)) offYearsByItem.set(f.Item, new Set());
+  offYearsByItem.get(f.Item).add(f.Year);
+}
+const offHas = (item, year) => !!offYearsByItem.get(item)?.has(String(year));
 
 // auction-priced (year, item) pairs
 const pricedPairs = new Set(prices.map(p => p.auctionSeason + '|' + p.Item));
@@ -169,7 +189,18 @@ for (const [i, r] of recipes.entries()) {
   if (!known) {
     const k = rv + '|' + r.Item;
     unresolvedGoods.set(k, (unresolvedGoods.get(k) ?? 0) + 1);
+    // A line naming a specific member of an auctioned tier is priceable through
+    // the tier even when the token itself is unknown to tokenMetadata -- which
+    // is the normal state for a named Ultra Rare, since auctions sell the tier.
+    // Without this, authoring `IngredientType` would turn a working sheet into
+    // a failing one, and the whole point of the column is that it is optional.
+    if (TIER_PROXY[(r.IngredientType ?? '').trim()]) proxyPriced.add(k);
   }
+
+  // IngredientType, when authored, comes from the Category vocabulary.
+  const it = (r.IngredientType ?? '').trim();
+  if (it && !CATEGORY_VOCAB.has(it))
+    add('WARN', 'ingredient-type', `line ${ln}: IngredientType "${it}" is not one of ${[...CATEGORY_VOCAB].join(', ')}`);
 
   // display name agreement
   const m = metaByKey.get(mk);
@@ -183,7 +214,10 @@ for (const [i, r] of recipes.entries()) {
 
 for (const [k, n] of [...unresolvedGoods].sort()) {
   const [y, g] = k.split('|');
-  add('ERROR', 'unknown-good', `"${g}" @ ${y} not in tokenMetadata / transmutes / fleece  (${n} row${n>1?'s':''})`);
+  if (proxyPriced.has(k))
+    add('INFO', 'tier-priced', `"${g}" @ ${y} is not in tokenMetadata; priced as its IngredientType tier  (${n} row${n>1?'s':''})`);
+  else
+    add('ERROR', 'unknown-good', `"${g}" @ ${y} not in tokenMetadata / transmutes / fleece  (${n} row${n>1?'s':''})`);
 }
 
 // ---------- season fallback (expansion-plan.md §4.4) ----------
@@ -199,23 +233,45 @@ function pricingSeason(nominal) {
 }
 
 // ---------- cross-file coverage (post-fallback) ----------
-const fleeceUseYears = new Set(recipes.filter(r => fleeceGood.has(r.Item)).map(r => r.ResolvedYear));
-for (const y of [...fleeceUseYears].sort()) {
-  if (fleeceYears.has(y)) continue;
-  const ps = pricingSeason(y);
-  if (fleeceYears.has(String(ps.season)))
-    add('INFO', 'fleece-fallback', `Fleece @ ${y} -> ${ps.season} (${ps.variant}) via season fallback`);
-  else
-    add('ERROR', 'fleece-coverage', `recipes need Fleece @ ${y}; fallback season ${ps.season} also missing from pricesFleece`);
+// One (item, year) pair per off-auction-priced ingredient the recipes use.
+const offUse = new Map();
+for (const r of recipes) {
+  if (!fleeceGood.has(r.Item)) continue;
+  if (!offUse.has(r.Item)) offUse.set(r.Item, new Set());
+  offUse.get(r.Item).add(r.ResolvedYear);
+}
+for (const [item, years] of [...offUse].sort()) {
+  for (const y of [...years].sort()) {
+    if (offHas(item, y)) continue;
+    const ps = pricingSeason(y);
+    // Mirror PriceIndex.leafPrice: season clamp first, then the per-good
+    // nearest-season walk, and only then is the line genuinely unpriceable.
+    if (offHas(item, ps.season)) {
+      add('INFO', 'off-auction-fallback', `${item} @ ${y} -> ${ps.season} (${ps.variant}) via season fallback`);
+    } else {
+      const near = [...(offYearsByItem.get(item) ?? [])].map(Number)
+        .sort((a, b) => Math.abs(a - y) - Math.abs(b - y) || b - a)[0];
+      if (near === undefined)
+        add('ERROR', 'off-auction-coverage', `recipes need ${item} @ ${y}; it is absent from pricesFleece entirely`);
+      else
+        add('INFO', 'off-auction-fallback', `${item} @ ${y} -> ${near} via nearest-season fallback (season ${ps.season} has no ${item} row)`);
+    }
+  }
 }
 const trophyYears = new Set(recipes.filter(r => r.Item === 'Monster Trophy').map(r => r.ResolvedYear));
 for (const y of [...trophyYears].sort()) {
-  if (fleeceYears.has(y)) continue;
+  if (offHas('Golden Fleece', y)) continue;
   const ps = pricingSeason(y);
-  if (fleeceYears.has(String(ps.season)))
+  if (offHas('Golden Fleece', ps.season)) {
     add('INFO', 'derived-fallback', `Monster Trophy @ ${y} prices off Golden Fleece @ ${ps.season} (${ps.variant})`);
-  else
-    add('ERROR', 'derived-price', `Monster Trophy @ ${y}: neither Golden Fleece @ ${y} nor fallback ${ps.season} exists`);
+  } else {
+    const near = [...(offYearsByItem.get('Golden Fleece') ?? [])].map(Number)
+      .sort((a, b) => Math.abs(a - y) - Math.abs(b - y) || b - a)[0];
+    if (near === undefined)
+      add('ERROR', 'derived-price', `Monster Trophy @ ${y}: Golden Fleece is absent from pricesFleece entirely`);
+    else
+      add('INFO', 'derived-fallback', `Monster Trophy @ ${y} prices off Golden Fleece @ ${near} via nearest-season fallback`);
+  }
 }
 
 // ---------- category agreement between metadata and the off-auction table ----------
@@ -229,6 +285,43 @@ for (const f of fleece) {
   const expectKey = f.Year + f.Item;
   if (f.Key && f.Key !== expectKey)
     add('WARN', 'fleece-key', `pricesFleece Key "${f.Key}" != auctionSeason+Item "${expectKey}"`);
+}
+
+// ---------- Expires (optional column, accuracy release) ----------
+// One value per recipe: blank = the standard rule for the level, `never`, or an
+// explicit YYYY-MM-DD exception. Blank is the overwhelming default, so these
+// rules exist to catch a typo turning into a silently wrong pricing basis.
+const NEVER_LEVELS = new Set(['Legendary', 'Mythic', 'Safehold']);
+const expiresByRecipe = new Map(); // `${Year}|${Transmute}` -> Set of authored values
+for (const r of recipes) {
+  const v = (r.Expires ?? '').trim();
+  if (!v) continue;
+  const k = `${r.Year}|${r.Transmute}`;
+  if (!expiresByRecipe.has(k)) expiresByRecipe.set(k, new Map());
+  expiresByRecipe.get(k).set(v, (expiresByRecipe.get(k).get(v) ?? 0) + 1);
+}
+for (const [k, values] of expiresByRecipe) {
+  const [year, transmute] = k.split('|');
+  if (values.size > 1)
+    add('ERROR', 'expires-conflict', `${k}: rows disagree on Expires (${[...values.keys()].map(v => `"${v}"`).join(' vs ')}) -- it is one value per recipe`);
+  for (const v of values.keys()) {
+    if (v.toLowerCase() === 'never') {
+      const level = recipes.find(r => r.Year === year && r.Transmute === transmute)?.Level;
+      if (NEVER_LEVELS.has(level))
+        add('INFO', 'expires', `${k}: Expires=never restates the default for ${level}`);
+      continue;
+    }
+    if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(v)) {
+      add('ERROR', 'expires-format', `${k}: Expires "${v}" is neither blank, "never", nor YYYY-MM-DD`);
+      continue;
+    }
+    if (Number.isNaN(Date.parse(v + 'T00:00:00Z')))
+      add('ERROR', 'expires-format', `${k}: Expires "${v}" is not a real date`);
+    else if (v < `${year}-01-01`)
+      add('ERROR', 'expires-range', `${k}: Expires ${v} precedes the recipe's own season`);
+    else
+      add('INFO', 'expires', `${k}: non-standard expiry ${v} (standard would be ${Number(year) + 1}-12-01)`);
+  }
 }
 
 // ---------- source / recursion checks ----------
@@ -289,6 +382,9 @@ for (const start of edges.keys()) {
 const missingPrice = new Map();
 for (const r of recipes) {
   if (transmuteNames.has(r.Item) || fleeceGood.has(r.Item) || r.Item === 'Monster Trophy') continue;
+  // A named member of an auctioned tier having no price of its own is the
+  // expected state, not a gap -- the tier-priced INFO above already says so.
+  if (proxyPriced.has(r.ResolvedYear + '|' + r.Item)) continue;
   if (!pricedYears.has(r.ResolvedYear)) continue;          // whole season un-priced; reported separately
   if (!pricedPairs.has(r.ResolvedYear + '|' + r.Item)) {
     const k = r.ResolvedYear + '|' + r.Item;
@@ -311,7 +407,7 @@ for (const y of unpricedSeasons) {
 console.log(`recipes: ${recipes.length} rows | tokenMetadata: ${meta.length} | pricesFleece: ${fleece.length}`);
 console.log(`recipe seasons: ${[...new Set(recipes.map(r=>r.Year))].sort().join(', ')}`);
 console.log(`price data seasons: ${[...pricedYears].sort().join(', ')}`);
-console.log(`fleece price seasons: ${[...fleeceYears].sort().join(', ')}`);
+console.log(`off-auction seasons: ${[...fleeceYears].sort().join(', ')} | Golden Fleece: ${[...(offYearsByItem.get('Golden Fleece') ?? [])].sort().join(', ')}`);
 console.log('');
 const order = { ERROR: 0, WARN: 1, INFO: 2 };
 problems.sort((a, b) => order[a.sev] - order[b.sev] || a.cat.localeCompare(b.cat));

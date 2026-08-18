@@ -2,8 +2,12 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
+import { OmniSuggestions } from './OmniSuggestions';
+import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
+import { PriceInput } from './PriceInput';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
+import type { RecipeStatus } from '../lib/recipeWindows';
 import {
   RESALE, WASH_THRESHOLD, breakEvenHoldings, comparePaths, quickSaleValue, type PathKey,
 } from '../lib/buildCalc';
@@ -71,43 +75,12 @@ const range = (lo: number, hi: number) => {
   return a === b ? a : `${a}–${b}`;
 };
 
-// Money always shows both cents digits ($10.60, not $10.6); parsing rounds to
-// cents so a stored override never carries a longer tail than it displays.
-const fmt2 = (n: number | null | undefined) => (n == null ? '' : n.toFixed(2));
-// `$` and thousands separators are stripped rather than rejected: prices get
-// pasted in from listings and reseller pages as "$1,500.00", and Number() reads
-// that as NaN. The box re-displays the bare number.
-const parsePrice = (s: string): number | null => {
-  const t = s.replace(/[$,\s]/g, '');
-  if (t === '') return null;
-  const n = Number(t);
-  return isFinite(n) ? Math.round(n * 100) / 100 : null;
-};
-
-// A price entry box that displays two decimals ($4.80) but lets you type freely
-// while focused (4.8) — a plain number input drops trailing zeros, so this holds
-// its own text and reformats from the value on blur.
-function PriceInput({ value, onChange, ariaLabel }: {
-  value: number | null;
-  onChange: (n: number | null) => void;
-  ariaLabel: string;
-}) {
-  const [text, setText] = useState(() => fmt2(value));
-  const [focused, setFocused] = useState(false);
-  useEffect(() => { if (!focused) setText(fmt2(value)); }, [value, focused]);
-  return (
-    <input
-      type="text" inputMode="decimal" aria-label={ariaLabel} value={text}
-      onFocus={(e) => { setFocused(true); e.currentTarget.select(); }}
-      onBlur={() => setFocused(false)}
-      onChange={(e) => { setText(e.target.value); onChange(parsePrice(e.target.value)); }}
-    />
-  );
-}
 
 // Compact provenance for one ingredient: its own season when it differs from the
-// recipe's, then where the price came from. Mirrors TransmuteRow's priceTag.
-function lineTag(l: PricedLine, recipeYear: number): string {
+// recipe's, then where the price came from. Mirrors TransmuteRow's priceTag,
+// including its rule that the recipe's prevailing basis is stated once in the
+// footer rather than on every line.
+function lineTag(l: PricedLine, recipeYear: number, status: RecipeStatus): string {
   const parts: string[] = [];
   if (l.nominalYear !== recipeYear) parts.push(String(l.nominalYear));
   if (l.isSource) parts.push('source · built');
@@ -117,6 +90,11 @@ function lineTag(l: PricedLine, recipeYear: number): string {
   else if (l.source === 'build') parts.push('built');
   else parts.push('no price');
   if (l.seasonMapped) parts.push(`from ${l.pricedYear}`);
+  else if (l.floated && status !== 'active') parts.push("today's price");
+  else if (l.basis === 'window' && status !== 'expired') parts.push('over its build window');
+  else if (status === 'expired' && l.basis === 'season' && !l.seasonMapped) parts.push('season priced');
+  if (l.pricedAs && l.pricedAs !== l.good) parts.push(`priced as ${l.pricedAs}`);
+  if (l.basis === 'pool' && l.poolYears?.length) parts.push(`${l.poolYears.join('–')} pooled`);
   if (l.bound === 'ceiling') parts.push('ceiling');
   return parts.join(' · ');
 }
@@ -127,12 +105,14 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [tier, setTier] = useState('All');
+  const [showExpired, setShowExpired] = useState(false);
   // null = default (only the focus year open); a Set once the user toggles one.
   const [openYears, setOpenYears] = useState<Set<number> | null>(null);
   const [onHand, setOnHand] = useState<Record<string, number>>({});
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [marketInput, setMarketInput] = useState<MarketInput>('auto');
+  const [path, setPath] = useState<IngredientPath>(DEFAULT_PATH);
   // The pinned summary strip: on while the ingredient table fills the screen and
   // nothing else is telling you where you stand.
   const barRef = useRef<HTMLDivElement>(null);
@@ -161,6 +141,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     setOverrides({});
     setEditing(null);
     setMarketInput('auto');
+    // The ingredient path is a property of the recipe on screen, so it resets
+    // with everything else — unlike the Omni price, which is a fact about the
+    // Omni token and holds across recipes.
+    setPath(DEFAULT_PATH);
   }, [selectedKey]);
 
   // Two observers rather than a scroll listener: one says the top bar has left
@@ -249,7 +233,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       (!q || c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q));
     return years
       .map((year) => {
-        const costs = all.filter((c) => c.year === year);
+        // Expired recipes stay PICKABLE — people audit old builds — they are
+        // just out of the way until asked for.
+        const costs = all.filter((c) => c.year === year && (showExpired || c.status !== 'expired'));
         let items: PickItem[];
         if (filtering) {
           items = costs.filter(matches).map((c) => ({ type: 'single', cost: c }));
@@ -263,7 +249,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
         return { year, items };
       })
       .filter((y) => y.items.length);
-  }, [all, years, q, tier, filtering]);
+  }, [all, years, q, tier, filtering, showExpired]);
+
+  const expiredCount = useMemo(() => all.filter((c) => c.status === 'expired').length, [all]);
 
   const pick = (c: BuildCost) => {
     setSelectedKey(c.key);
@@ -272,8 +260,17 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     setTier('All');
   };
 
+  // --- Phase 9: which of the two legal paths this recipe is priced on -----
+  // 43 of the 46 Legendary recipes read "1 Wish Ring OR 15,000 GP". Both are
+  // things players hold, so this is a peer choice rather than an optimisation
+  // tip (D8) — and since the GP path only raises the existing Gold Bar line
+  // from 25 to 40, line indices are stable and every per-line entry below
+  // survives a flip.
+  const gold = cost ? goldPathFor(cost) : null;
+  const pathCost = cost ? onPath(cost, path) : null;
+
   // --- Per-line + total math ---------------------------------------------
-  const rows = (cost ? cost.lines : []).map((line, i) => {
+  const rows = (pathCost ? pathCost.lines : []).map((line, i) => {
     const key = String(i);
     const req = line.quantity;
     const ov = overrides[key];
@@ -379,6 +376,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   // (fast when you have most of the materials and only lack a few), or clear all.
   const pricedRows = rows.filter((r) => r.priced);
   const allOwned = pricedRows.length > 0 && pricedRows.every((r) => r.have >= r.req);
+  // All/None is a real two-state control, not a pair of momentary buttons:
+  // neither lights while you are part-way through entering what you hold,
+  // which is more informative than the old "All lights, None never does".
+  const noneOwned = pricedRows.length > 0 && pricedRows.every((r) => r.have === 0);
   const setAllHand = (full: boolean) =>
     setOnHand(() => {
       const next: Record<string, number> = {};
@@ -397,6 +398,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       <span className="tchip" data-tier={c.level}>{c.level}</span>
       <span className="calc-opt-nm">
         {c.displayName}
+        {/* Expired recipes are pickable but never a surprise: the tag rides the
+            name so it is there in the list and again on the row you land on. */}
+        {c.status === 'expired' && <span className="calc-opt-exp">expired</span>}
         {opts.from && <span className="calc-opt-up">↳ upgrades from {opts.from}</span>}
       </span>
       <span className="calc-opt-c">{moneyCalc(c.fullAvg)}</span>
@@ -448,6 +452,14 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               </span>
               <span className="calc-cur-name">{cost.displayName}</span>
               <span className="calc-cur-year">{cost.year}</span>
+              {cost.status === 'expired' && <span className="calc-opt-exp">expired</span>}
+              {/* Browse recipes can swap the recipe, but there was no way to put
+                  the calculator back to empty — people were bouncing off to the
+                  Recipes view and back to do it. Clearing also drops every
+                  on-hand count and override, which is the same reset picking a
+                  different recipe performs. */}
+              <button type="button" className="calc-cur-x" aria-label="Clear this recipe"
+                onClick={() => setSelectedKey(null)}>×</button>
             </span>
             {/* Cost to finish and the buy-it answer are one block, so no future
                 layout change can put the comparison somewhere other than beside
@@ -472,23 +484,53 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
 
       {cost ? (
         <div className="calc-panel" ref={panelRef}>
+          {/* Both controls wear the same shape — label above, segmented pair
+              below — because side-by-side they were a labelled button group
+              next to a labelled toggle, at two heights, with the labels on
+              two different sides. Uppercase labels match every other toggle
+              on the site rather than inventing a second convention here. */}
           <div className="calc-tools">
-            <span className="calc-tools-lab">Set all on hand</span>
-            <button type="button" className={`calc-all${allOwned ? ' on' : ''}`} aria-pressed={allOwned}
-              onClick={() => setAllHand(true)}>All</button>
-            <button type="button" className="calc-all" onClick={() => setAllHand(false)}>None</button>
+            <span className="calc-tool">
+              <span className="calc-tool-lab">On hand</span>
+              <span className="calc-seg">
+                <button type="button" className={allOwned ? 'on' : undefined} aria-pressed={allOwned}
+                  onClick={() => setAllHand(true)}>All</button>
+                <button type="button" className={noneOwned ? 'on' : undefined} aria-pressed={noneOwned}
+                  onClick={() => setAllHand(false)}>None</button>
+              </span>
+            </span>
+            {gold && (
+              <span className="calc-tool">
+                <span className="calc-tool-lab">
+                  Show recipe with
+                  <HintPopover label="About the Wish Ring or GP choice">
+                    Legendary recipes accept either 1 Wish Ring or 15,000 GP. Choose to show the
+                    Wish Ring as a separate line item or to price the transmute with an additional
+                    15,000 GP on top of the 25,000. Players often have GP on hand, not Wish Rings.
+                  </HintPopover>
+                </span>
+                <span className="calc-seg">
+                  <button type="button" className={path === 'ring' ? 'on' : undefined}
+                    aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
+                  <button type="button" className={path === 'gp' ? 'on' : undefined}
+                    aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
+                </span>
+              </span>
+            )}
           </div>
           <div className="calc-lhead">
             <span>Ingredient</span><span className="h-hand">on hand</span><span>buy</span>
             <span>$/ea <i className="cl-edit-i" aria-hidden="true">✎</i></span><span>to finish</span>
           </div>
           {rows.map((r) => (
-            <div key={r.key} className={`calc-line${r.line.isSource ? ' src' : ''}${r.need === 0 && r.priced ? ' done' : ''}`}>
+            <div key={r.key} className={`calc-line${r.line.isSource ? ' src' : ''}${r.need === 0 && r.priced ? ' done' : ''}${r.line.substituted === 'replaced' ? ' swapped-out' : ''}`}>
               <div className="cl-main">
                 <span className="cl-name">
-                  <span className="cl-good">{r.req} × {r.line.displayName}</span>
+                  <span className="cl-good">
+                    {r.line.substituted === 'replaced' ? <s>{r.line.displayName}</s> : `${r.req} × ${r.line.displayName}`}
+                  </span>
                   <span className="cl-meta">
-                    {lineTag(r.line, cost.year)}
+                    {r.line.substituted === 'replaced' ? 'not needed on the GP path' : lineTag(r.line, cost.year, cost.status)}
                     <button type="button" className="cl-price-m" aria-expanded={editing === r.key}
                       aria-label={`Edit unit price: ${r.line.displayName}`}
                       onClick={() => setEditing((e) => (e === r.key ? null : r.key))}>
@@ -595,6 +637,18 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 <span>~{range(quick.low, quick.high)} if you sold them</span>
               </div>
             )}
+            {cost.status === 'expired' && cost.window && (
+              <p className="calc-foot-note">
+                <b>No longer craftable.</b> Ingredients are priced over the window this recipe
+                could actually be built in — {cost.window.from} to {cost.window.to}.
+              </p>
+            )}
+            {cost.status === 'active' && rows.some((r) => r.line.floated) && (
+              <p className="calc-foot-note">
+                Still craftable, so ingredients are priced at <b>today's</b> prices — what building
+                it now would cost, not what it cost in {cost.year}.
+              </p>
+            )}
             <p className="calc-foot-note">
               Full build from scratch {moneyCalc(fullAvg)} (min {moneyCalc(fullMin)}).
               {src && <> Own the {src.displayName}? Hit <b>All</b> on the top row for the upgrade-only price.</>}
@@ -606,6 +660,12 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               </p>
             )}
           </div>
+
+          {/* Phase 6: opt-in only, and deliberately AFTER the totals it does not
+              affect. An Omni token is a comparison, not a path most players are
+              already on — see substitutions.ts for why this and the Wish Ring
+              toggle get different treatment. */}
+          <OmniSuggestions cost={cost} engine={engine} />
 
           {/* Phase 3: buy-instead price, and the three ways to end up holding
               the token. Every total is shown, not just the verdict, so the
@@ -814,6 +874,19 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                 aria-pressed={t === tier} onClick={() => setTier(t)}>{t}</button>
             ))}
           </div>
+          {expiredCount > 0 && (
+            <div className="calc-dfilter">
+              <span className="calc-dfilter-lab">
+                {showExpired
+                  ? `Showing all ${all.length} recipes`
+                  : `Showing the ${all.length - expiredCount} active recipes`}
+              </span>
+              <button type="button" className="calc-dfilter-btn" aria-pressed={showExpired}
+                onClick={() => setShowExpired((v) => !v)}>
+                {showExpired ? 'Hide expired' : `Show all (+${expiredCount} expired)`}
+              </button>
+            </div>
+          )}
           <div className="calc-dlist">
             {drawerYears.length === 0 ? (
               <p className="empty">No recipes match.</p>
