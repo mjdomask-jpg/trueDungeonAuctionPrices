@@ -2301,3 +2301,16 @@ table.an-opens col.col-days { width: 16%; }
   background: rgba(150, 60, 60, 0.14); color: #8a3535; white-space: nowrap; }
 :root[data-theme='dark'] .calc-opt-exp { background: rgba(240, 120, 120, 0.16); color: #f08a8a; }
 .price-lab { display: inline-flex; align-items: center; gap: 4px; }
+
+/* The Transmutes options disclosure. One control at both widths (the Filters
+   menu's furniture), but it earns its keep differently: on a phone it folds a
+   303px stack of toggles away, and on desktop it starts open and simply gives
+   the row a way to collapse when the seasons matter more than the settings.
+   Full-width summary is right on a phone — it is the tap target — but on
+   desktop a 1,160px "OPTIONS" stripe costs a whole row for one word, so the
+   summary shrinks to its text and the toggles sit beside it. */
+@media (min-width: 641px) {
+  .filterset.options > summary { width: max-content; }
+  .filterset.options[open] { display: flex; align-items: flex-start; gap: 16px; }
+  .filterset.options[open] > .filterset-body { flex: 1; padding-top: 0; }
+}
