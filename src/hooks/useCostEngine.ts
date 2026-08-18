@@ -10,8 +10,12 @@ import { PriceIndex, CostEngine } from '../lib/transmutes';
 // alone and survives a change to the "recent prices" toggle. Only the much
 // cheaper CostEngine is rebuilt when that toggle flips; rebuilding it is also
 // what clears its memo, which is required because the toggle changes which
-// price variant every line resolves to.
-export function useCostEngine({ recentPrices = false }: { recentPrices?: boolean } = {}) {
+// price variant every line resolves to. Phase 7's price-year selector works the
+// same way and for the same reason: it changes which season every unpinned line
+// resolves to, so the engine (and with it the memo) has to be rebuilt.
+export function useCostEngine(
+  { recentPrices = false, priceYear = null }: { recentPrices?: boolean; priceYear?: number | null } = {},
+) {
   const { sales, meta, recipes, tokenMeta, offAuctionPrices, derivedRules, loading, error } = useAuctionData();
 
   const prices = useMemo(
@@ -20,8 +24,8 @@ export function useCostEngine({ recentPrices = false }: { recentPrices?: boolean
   );
 
   const engine = useMemo(
-    () => (prices && recipes.length ? new CostEngine(recipes, prices, { recentPrices }) : null),
-    [prices, recipes, recentPrices],
+    () => (prices && recipes.length ? new CostEngine(recipes, prices, { recentPrices, priceYear }) : null),
+    [prices, recipes, recentPrices, priceYear],
   );
 
   return { engine, prices, loading, error, ready: !!engine };

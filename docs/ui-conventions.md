@@ -132,6 +132,37 @@ control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, no
 help. The test is whether a user who cannot see the tooltip loses information.
 For a sun/moon toggle, no. For "what does `est.` mean", yes.
 
+### A `?` next to a `<select>` goes OUTSIDE the `<label>`
+
+**Rule: when the control a popover explains is a `<select>`, the help trigger must
+not be a descendant of that select's `<label>`.**
+
+The site's usual shape puts the `?` inside the label — safe for a segmented toggle,
+because `.toggle-label` is a plain `<span>` and clicking it does nothing. A `<label>`
+wrapping a form control is different: a click anywhere inside it, the popover trigger
+included, is forwarded to the control. Tapping "what does this mean" would drop the
+dropdown open behind the bubble.
+
+So the Transmutes price-season picker uses an explicit `<label htmlFor>` for the text
+and puts `HintPopover` beside it, both inside the `.toggle-label` span that keeps the
+pair aligned and reserves the 22px box the rule above describes:
+
+```jsx
+<div className="toggle price-year">
+  <span className="toggle-label">
+    <label htmlFor="price-year">Price data from</label>
+    <HintPopover label="…">…</HintPopover>
+  </span>
+  <select id="price-year">…</select>
+</div>
+```
+
+A `<select>` placed in a `.toggle` rather than in a `.controls label` also has to
+restate the 12px uppercase control font itself — same reason `.toggle-buttons` does —
+or it renders at the page's 15px sentence case beside its neighbours. Let the phone's
+`.controls select` rule keep winning on `font-size`: 16px is what stops iOS zooming
+the page on focus.
+
 ## Form controls on mobile
 
 **Any `<select>`, `<input>` or `<textarea>` must render at 16px or larger on

@@ -1485,6 +1485,23 @@ thead th[aria-sort='descending'] button { color: var(--accent); }
   letter-spacing: 0.4px;
   color: var(--text);
 }
+/* Phase 7's price-season picker is a <select> in a .toggle rather than in a
+   .controls label, so — exactly like .toggle-buttons below — it has to restate
+   the control font itself or it renders at the page's 15px sentence case
+   beside 12px uppercase neighbours. The phone's .controls select rule still
+   wins on font-size, which is what keeps it at the 16px iOS needs to not zoom
+   the page on focus. */
+.price-year select {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+/* The label is a real <label for>, so the help "?" beside it has to sit
+   OUTSIDE it — clicking a popover trigger inside a label would also open the
+   select underneath. .toggle-label keeps the pair aligned and reserves the
+   same 22px box every other control label does. */
+.price-year .toggle-label label { cursor: pointer; }
+
 .toggle-buttons {
   display: inline-flex;
   height: var(--control-h);

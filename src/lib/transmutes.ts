@@ -596,6 +596,10 @@ export type BuildCost = {
   status: RecipeStatus;
   window: PricingWindow | null;
   expires: string | null; // resolved expiry date; null = never expires
+  // Phase 7. The season every unpinned line was priced from, when the reader
+  // pinned one; null = the natural basis. The row states it once under the
+  // bill of materials rather than tagging every line (§10.6.6).
+  priceYear: number | null;
 };
 
 export type CostOptions = {
@@ -607,6 +611,11 @@ export type CostOptions = {
   /** 'YYYY-MM-DD'. Injectable so tests and the harness can pin a date; the
    *  app leaves it to the viewer's own clock. */
   today?: string;
+  /** Phase 7 (§3.6). A season to price every UNPINNED line from, replacing the
+   *  basis the recipe's own status would have chosen. null = Auto, the natural
+   *  basis. Prices only (F2): status, windows, badges and the recipe list all
+   *  still answer to `today`, so the page keeps saying what is craftable now. */
+  priceYear?: number | null;
 };
 
 // Totals exclude the source lines by default; `includeSource` adds them.
@@ -621,11 +630,13 @@ export class CostEngine {
   readonly prices: PriceIndex;
   private recentPrices: boolean;
   private today: string;
+  private priceYear: number | null;
 
   constructor(recipes: Recipe[], prices: PriceIndex, opts: CostOptions = {}) {
     this.prices = prices;
     this.recentPrices = opts.recentPrices ?? false;
     this.today = opts.today ?? todayISO();
+    this.priceYear = opts.priceYear ?? null;
     for (const r of recipes) {
       this.recipes.set(r.key, r);
       this.byName.set(r.transmute, [...(this.byName.get(r.transmute) ?? []), r.year]);
@@ -713,6 +724,27 @@ export class CostEngine {
     if (l.goodYear.trim() !== '')
       return { price: this.prices.leafPrice(good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
 
+    // 1b. Phase 7: an explicit price year replaces the RECIPE's basis -- both
+    //    the today's-prices float below and the expired window under it --
+    //    because the reader has asked one question of the whole page: what did
+    //    this cost in season X. It sits BELOW the pin above it on purpose
+    //    (F1): a pin names WHICH token the recipe needs (an Ultra Rare one
+    //    season older, the 2023 Safehold V), not merely which market to read,
+    //    so repricing it would quietly answer a different question. It sits
+    //    ABOVE the Ultra Rare pool (rule 3) for the same reason the window
+    //    does -- the pool is what a UR resolves to when the basis is "today",
+    //    and here the basis is a named season, so the pool collapses into it.
+    if (this.priceYear !== null) {
+      const p = this.prices.leafPrice(good, this.priceYear, this.variantFor(this.priceYear));
+      // No `floated`: floating is the D3 story about an active recipe drifting
+      // to today, and per-line tags are deviation-only (§10.6.6). Under a
+      // pinned year the basis is stated once for the whole page instead.
+      if (p) return { price: p, floated: false };
+      // Falls through when the season prices nothing at all under this name --
+      // the same rule as everywhere else here: whichever branch fires, a line
+      // that could be priced before must still be priced after.
+    }
+
     // 2. On an expired recipe the date window governs every remaining line.
     //    Because the window already spans the debut season through Y+1, the
     //    two-year UR availability rule is satisfied by the window itself.
@@ -766,7 +798,7 @@ export class CostEngine {
         level: recipe.level, lines: [], ownAvg: 0, ownMin: 0, sourceAvg: 0, sourceMin: 0,
         fullAvg: 0, fullMin: 0, hasSource: false, unpricedLines: 0, estimate: true,
         ceiling: false, cycle: true, marketAvg: null, marketMin: null,
-        status: 'active', window: null, expires: null,
+        status: 'active', window: null, expires: null, priceYear: this.priceYear,
       };
     }
     this.visiting.add(memoKey);
@@ -875,7 +907,11 @@ export class CostEngine {
     // stable, so everything else keeps its authored sequence.
     const ordered = [...lines].sort((a, b) => Number(b.isSource) - Number(a.isSource));
 
-    const market = this.prices.leafPrice(recipe.transmute, recipe.year, this.variantFor(recipe.year));
+    // The build-vs-buy comparison has to be quoted in the same season as the
+    // build, or a pinned 2019 build cost would be weighed against a 2026 asking
+    // price. Unlike a line, this is not an authored pin, so it always moves.
+    const marketYear = this.priceYear ?? recipe.year;
+    const market = this.prices.leafPrice(recipe.transmute, marketYear, this.variantFor(marketYear));
     const out: BuildCost = {
       key: memoKey,
       transmute: recipe.transmute,
@@ -893,6 +929,7 @@ export class CostEngine {
       status,
       window,
       expires: expiryOf(recipe),
+      priceYear: this.priceYear,
       ceiling: anyCeiling,
       cycle: anyCycle,
       marketAvg: market ? market.stats.avg : null,

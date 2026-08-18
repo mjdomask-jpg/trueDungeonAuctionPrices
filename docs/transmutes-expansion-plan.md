@@ -281,6 +281,12 @@ mirrors the existing global `recentPrices` pattern, is predictable, is one contr
 learn, and composes cleanly with the calculator. Per-recipe pinning is a lot of UI
 for a niche ask; per-year-group is an odd middle ground. Medium cost; Phase 7.
 
+**Superseded in part by the accuracy release.** §3.6 was written when a recipe had
+exactly one basis (its debut season), so "choosing a year" had only one thing to
+override. There are now three bases in play — active → today, expired → its build
+window, and 34 authored `ItemYear` pins — and the selector has to say which of them
+it displaces. Settled as **F1–F3 in §11**, which is the live spec for this feature.
+
 ### 3.7 Make the Recent-Prices checkbox effect obvious
 
 Pure UI, high delight, isolated — the easiest win in the whole list. On toggle,
@@ -616,8 +622,9 @@ folds in free if Phase 4 shipped.
 §3.5: substitution rule config, per-line `min(line, omni)` optimization, calculator
 suggestion box, optional Recipes-view badge.
 
-### Phase 7 — Prices as of a specific year
-§3.6: global price-season selector, default Auto.
+### Phase 7 — Prices as of a specific year — ✅ BUILT (see §11)
+§3.6: global price-season selector, default Auto. The three forks §3.6 could not
+have anticipated — it predates the accuracy release — are settled as F1–F3 in §11.
 
 ### Phase 8 — Could-haves: third-party prices (deferred)
 §2.3 + §1c: trenttokens build-time snapshot, auto-fill lowest price, buy link. Do
@@ -1080,3 +1087,118 @@ What the data said at the time, if it were ever automated:
   per row** rather than writing directly; land it in the **sheet**, not `public/data`,
   per `td-data-pipeline`; and confirm up front that fetching truedungeon.com's forum
   at that volume is acceptable.
+
+---
+
+## 11. Phase 7 — the price-season selector (decided + built 2026-08-17)
+
+One global **"Price data from"** control at the top of the Recipes view: `Auto (each
+recipe)` by default, or one of the nine priced seasons (2018–2026). Picking a season
+re-prices every recipe on the page from that season's auctions.
+
+§3.6 recommended the control and was right about its shape. What it could not
+anticipate is that the accuracy release gave a recipe **three** possible bases —
+active → today's prices (D3), expired → its build window (D2), and 34 authored
+`ItemYear` pins — so "price everything from year X" now has to say which of them it
+displaces. Three forks, all maintainer calls:
+
+### F1 — The year overrides the RECIPE's basis. Authored pins keep their vintage.
+
+A pinned season names **which token the recipe needs**, not merely which market to
+read it in. The 34 pins split two ways and both readings agree: **22 relative
+offsets** (`-1` … `-7` — a 2026 recipe calling for an Ultra Rare from the season
+before, a 2022 one reaching back seven for an 8k Bonus) and **12 absolute pins**
+(2023 Safehold V, 4 × 2025 Omni Orb, the three 2027 Charms). Repricing those would
+quietly answer a different question than the recipe asks. So the selector displaces
+today's-prices and the build window, and stops at the pin.
+
+*Consequence, measured:* the **D4 Ultra Rare pool collapses**. A blank UR line pools
+its recipe year ∪ year+1 to hold the era's baseline while trade goods float to today
+— but that is what a UR resolves to when the basis is *"today"*, and under F1 the
+basis is a named season instead. This is why **pinning 2026 is not the same as Auto**
+even though 2026 *is* today: 49 of the 91 active recipes still move, 30 of them
+because a pooled UR line collapsed into 2026 alone, 14 because a source line recurses
+into an *expired* sub-recipe that was on its window, and 8 more from lines the
+pre-2018 clamp had parked at 2018. All correct under F1; worth knowing before reading
+a diff.
+
+*(Rejected: overriding pins too, which is simpler to explain and makes every total
+one clean season, but turns "an Ultra Rare from the season before" into "the 2021
+Ultra Rare tier average" with nothing on screen saying the recipe asked for something
+else. Also rejected: re-anchoring the 22 offsets to the selected year — most faithful
+to recipe intent, but a third rule to teach, and it reaches below 2018 where there is
+no data.)*
+
+### F2 — Prices only. The clock does not move.
+
+Status, the expired / preview badges, the Show Recipes filter and the recipe list all
+still answer to **today**. Only the money changes. A recipe that is expired today is
+still badged expired under a 2019 pin — it is simply priced from 2019 rather than
+over its window, and both the badge's popover and the note under its bill of
+materials say exactly that.
+
+*(Rejected: the full time machine — setting the engine's `today` to the end of the
+chosen season so statuses recompute and unreleased recipes drop off the page. It is
+arguably the more honest answer to "what did this cost in 2021", but it is a much
+larger build: every "still craftable" / "no longer craftable" string in both views
+becomes past tense, and the reader loses the ability to ask "what would this recipe I
+can still build have cost back then", which is the actual question.)*
+
+### F3 — Recipes view only.
+
+The calculator is a "what do I still owe on this build" tool and always asks today.
+The engine is built with `priceYear: calculator ? null : priceYear`, so the pin is
+simply not applied there; the selection is preserved rather than cleared, so
+switching back to Recipes restores it. This deliberately does **not** repeat the
+`recentPrices` wart, where a control hidden on the calculator still governs its
+numbers.
+
+### 11.1 How it is built
+
+One option on `CostOptions`, one rung in the `leafForGood` rule chain, one memo dep,
+one control. The rung sits **below** the pin (F1) and **above** both the expired
+window and the UR pool, and falls through when the pinned season prices nothing at
+all under that name — the same invariant the rest of the chain keeps: whichever
+branch fires, a line that could be priced before must still be priced after. A line
+the pinned season cannot price falls to the existing clamp and is tagged `from YYYY`,
+which is also what marks the row `est.`.
+
+`BuildCost.priceYear` carries the basis to the view so it is **stated once** under
+the bill of materials rather than tagged on all thirteen lines (§10.6.6). Under a
+pin, `priceTag` reads its deviations against the pinned season instead of the
+recipe's year, so the only lines wearing a year are the pins and the fallbacks. The
+`Today's prices from` (full season / last 5) toggle is **hidden** while a past season
+is pinned — last-5 is a reading of the season still in progress and `variantFor`
+already ignores it there, so leaving it on screen would be a control that cannot move
+a number. It returns for Auto and for a 2026 pin. The build-vs-buy market price moves
+with the pin too, or a 2019 build cost would be weighed against a 2026 asking price.
+
+### 11.2 What it measures
+
+Σ full build cost across all 174 recipes, against Auto (today = 2026-08-17):
+
+| Basis | Σ avg | vs Auto | Σ min | vs Auto | recipes moved |
+|---|---|---|---|---|---|
+| Auto | $138,824 | — | $92,164 | — | — |
+| 2018 | $151,721 | +9.3% | $125,604 | +36.3% | 160/174 |
+| 2019 | $154,072 | +11.0% | $129,167 | +40.1% | 173/174 |
+| 2020 | $142,062 | +2.3% | $113,445 | +23.1% | 173/174 |
+| 2021 | $139,649 | +0.6% | $97,312 | +5.6% | 173/174 |
+| 2022 | $133,559 | −3.8% | $90,470 | −1.8% | 173/174 |
+| 2023 | $123,250 | −11.2% | $90,941 | −1.3% | 173/174 |
+| 2024 | $121,202 | −12.7% | $67,293 | −27.0% | 173/174 |
+| 2025 | $122,812 | −11.5% | $82,484 | −10.5% | 173/174 |
+| 2026 | $133,215 | −4.0% | $82,747 | −10.2% | 132/174 |
+
+No line goes unpriced at any basis. The shape is the same one §10.6.7 found: `min`
+moves several times harder than `avg`, because a single season's minimum is one sale
+rather than a window's union of two years of them.
+
+**Two invariants checked by measurement, not by review:**
+
+1. **Auto is byte-identical to what `main` produced** — 174 recipes compared
+   recipe-by-recipe and line-by-line (totals, status, estimate, unpriced count,
+   market price; per line the priced year, basis, season-mapped and floated flags and
+   the extended price): **0 diffs**. The feature is inert until a season is picked.
+2. **Pins never move** — 306 pinned-line observations (34 pins × 9 seasons): **0**
+   changed their priced year.
