@@ -17,16 +17,27 @@ import type { RecipeStatus } from '../lib/recipeWindows';
 // noise, and it buries the lines that did something different. So a basis tag
 // appears only where the line DEVIATES from what the recipe as a whole did.
 // Same rule the est. badge already follows against the season note.
-function priceTag(l: PricedLine, recipeYear: number, status: RecipeStatus): string {
+// Phase 7: `priceYear` is the pinned season, or null for the natural basis. It
+// moves what counts as a deviation without changing the rule.
+function priceTag(l: PricedLine, recipeYear: number, status: RecipeStatus, priceYear: number | null): string {
   const parts: string[] = [];
-  if (l.nominalYear !== recipeYear) parts.push(String(l.nominalYear));
+  // Which season priced this line, when it differs from the basis the recipe as
+  // a whole used. Under Auto the basis is the recipe's own year, and what
+  // deviates is a line naming another one. Under a pinned price year the basis
+  // is that year, so the deviations are the authored pins — which keep their
+  // vintage (F1) — and any line the pinned season could not price at all.
+  const basisYear = priceYear ?? recipeYear;
+  const lineYear = priceYear === null ? l.nominalYear : l.pricedYear;
+  if (lineYear !== basisYear) parts.push(String(lineYear));
   if (l.isSource) parts.push('source · built');
   else if (l.source === 'auction') parts.push('auction');
   else if (l.source === 'offAuction') parts.push('non-auction item');
   else if (l.source === 'derived') parts.push('derived');
   else if (l.source === 'build') parts.push('built');
   else parts.push('no price');
-  if (l.seasonMapped) parts.push(`from ${l.pricedYear}`);
+  // Skipped when the year part above already IS the priced year, which is what
+  // a pinned basis makes it — "2019 · auction · from 2019" says it twice.
+  if (l.seasonMapped && lineYear !== l.pricedYear) parts.push(`from ${l.pricedYear}`);
   // The accuracy release's two new bases. Both change what the number MEANS,
   // so neither can be silent: a floated line is today's real price for a
   // recipe you can still build, and a windowed one is the average over the
@@ -36,7 +47,10 @@ function priceTag(l: PricedLine, recipeYear: number, status: RecipeStatus): stri
   // The deviations, which are the ones worth a tag: a line on an expired
   // recipe that fell back to a whole season because its window held no sales
   // (every recipe before 2018), and one on an active recipe that did not float.
-  else if (status === 'expired' && l.basis === 'season' && !l.seasonMapped) parts.push('season priced');
+  // Only under Auto: with a year pinned, EVERY line on an expired recipe is
+  // season-priced, so the tag would land on all thirteen and say nothing.
+  else if (priceYear === null && status === 'expired' && l.basis === 'season' && !l.seasonMapped)
+    parts.push('season priced');
   // A line naming a specific token that auctions only sell generically (every
   // named Ultra Rare) says so, so the number is never mistaken for a sale of
   // that token (§3.4a).
@@ -119,11 +133,20 @@ export function TransmuteRow({
                   </span>
                 )}
               >
-                This recipe stopped being craftable{cost.expires ? ` on ${cost.expires}` : ''}, so it is
-                priced over the period it could actually be built — auctions from
-                {' '}{cost.window ? `${cost.window.from} to ${cost.window.to}` : 'its own seasons'},
-                stopping a week short of the deadline because a win any later could not
-                ship in time to craft.
+                This recipe stopped being craftable{cost.expires ? ` on ${cost.expires}` : ''}.{' '}
+                {cost.priceYear === null ? (
+                  <>
+                    It is priced over the period it could actually be built — auctions from
+                    {' '}{cost.window ? `${cost.window.from} to ${cost.window.to}` : 'its own seasons'},
+                    stopping a week short of the deadline because a win any later could not
+                    ship in time to craft.
+                  </>
+                ) : (
+                  <>
+                    You have pinned prices to {cost.priceYear}, so it is priced from that season's
+                    auctions instead of over its build window.
+                  </>
+                )}
               </HintPopover>
             )}
             {/* Suppressed when the season note already says the whole season is
@@ -159,6 +182,7 @@ export function TransmuteRow({
                 trigger={<span className="tx-market">buy ~{money0(cost.marketAvg)}</span>}
               >
                 This token also sells at auction.
+                {cost.priceYear !== null && ` This is its ${cost.priceYear} auction price, matching the season you pinned the build to.`}
               </HintPopover>
             )}
           </span>
@@ -190,7 +214,7 @@ export function TransmuteRow({
                   {l.substituted === 'replaced' ? <s>{l.displayName}</s> : `${l.quantity} × ${l.displayName}`}
                 </span>
                 <span className={`tx-src${l.source === 'offAuction' && !l.isSource ? ' nonauction' : ''}`}>
-                  {l.substituted === 'replaced' ? 'paid as 15,000 GP instead' : priceTag(l, cost.year, cost.status)}
+                  {l.substituted === 'replaced' ? 'paid as 15,000 GP instead' : priceTag(l, cost.year, cost.status, cost.priceYear)}
                   {l.subStatus === 'expired' && (
                     <HintPopover
                       label="What “no longer craftable” means"
@@ -225,14 +249,22 @@ export function TransmuteRow({
               <span><Money value={cost.fullAvg} /></span><span><Money value={cost.fullMin} /></span>
             </div>
           )}
-          {cost.status === 'expired' && cost.window && (
+          {cost.priceYear !== null && (
+            <p className="tx-bom-note">
+              Priced from <b>{cost.priceYear}</b> auctions, because that is the season you
+              picked — not at today's prices{cost.status === 'expired' ? ' or over this recipe’s build window' : ''}.
+              Ingredients the recipe pins to a particular season keep it, and are tagged with
+              the year they were priced from.
+            </p>
+          )}
+          {cost.priceYear === null && cost.status === 'expired' && cost.window && (
             <p className="tx-bom-note">
               No longer craftable. Ingredients are priced over the window this recipe could
               actually be built in — {cost.window.from} to {cost.window.to} — rather than at
               today's prices, which nobody could have paid for it.
             </p>
           )}
-          {cost.status === 'active' && cost.lines.some((l) => l.floated) && (
+          {cost.priceYear === null && cost.status === 'active' && cost.lines.some((l) => l.floated) && (
             <p className="tx-bom-note">
               Still craftable, so ingredients are priced at <b>today's</b> prices — what it
               would cost you to build now, not what it cost in {cost.year}.
@@ -240,13 +272,15 @@ export function TransmuteRow({
           )}
           {cost.lines.some((l) => l.category === 'Ultra Rare') && (
             <p className="tx-bom-note">
-              Ultra Rares priced at the auction average for the transmute window. Secondary
+              Ultra Rares priced at the auction average for
+              {cost.priceYear === null ? ' the transmute window' : ` ${cost.priceYear}`}. Secondary
               market prices for specific Ultra Rares may vary.
             </p>
           )}
           {cost.marketAvg != null && (
             <p className="tx-bom-note">
-              Also sells at auction for about {money0(cost.marketAvg)} (min {money0(cost.marketMin)}) — building it
+              Also sells at auction for about {money0(cost.marketAvg)} (min {money0(cost.marketMin)})
+              {cost.priceYear !== null && ` in ${cost.priceYear}`} — building it
               {cost.fullAvg <= cost.marketAvg ? ' is cheaper on average.' : ' costs more than buying, on average.'}
             </p>
           )}

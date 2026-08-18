@@ -26,7 +26,13 @@ export default function TransmutesPage() {
     fallback: 'recipes',
     pathFor: (v) => `/transmutes/${v}`,
   });
+  const calculator = view === 'calculator';
   const [recentPrices, setRecentPrices] = useState(false);
+  // Phase 7 (§3.6). null = Auto: every recipe on its natural basis, active at
+  // today's prices and expired over its build window. A season pins all of
+  // them to that season instead. Recipes view only (F3) — the calculator is a
+  // "what do I still owe on this build" tool, so it always asks today.
+  const [priceYear, setPriceYear] = useState<number | null>(null);
   // Phase 9. One control for the whole list rather than 43 of them: on this
   // view the reader is scanning recipes, not building one, and the question
   // "what do these cost if I pay in Gold Bars" is asked of all of them at once.
@@ -38,7 +44,10 @@ export default function TransmutesPage() {
   // null = default view (newest season open); a Set once the user toggles one.
   const [openSeasons, setOpenSeasons] = useState<Set<number> | null>(null);
 
-  const { engine, loading, error, ready } = useCostEngine({ recentPrices });
+  const { engine, loading, error, ready } = useCostEngine({
+    recentPrices,
+    priceYear: calculator ? null : priceYear,
+  });
 
   const seasons = useMemo(() => (engine ? engine.seasons() : []), [engine]);
   const q = search.trim().toLowerCase();
@@ -60,6 +69,10 @@ export default function TransmutesPage() {
 
   const noteFor = (year: number): string | undefined => {
     if (!engine) return undefined;
+    // Both notes below describe where a season's prices came from when the
+    // basis is Auto. With a year pinned they are simply false — the answer is
+    // the pinned season, which the meta-line and every open row already say.
+    if (priceYear !== null) return undefined;
     const { earliestPriced, latestPriced } = engine.prices;
     if (year < earliestPriced)
       return `Estimated — no auction data before ${earliestPriced}, so these costs are priced from ${earliestPriced} data`;
@@ -93,7 +106,46 @@ export default function TransmutesPage() {
   );
   const shown = searching ? bySeason.filter((s) => s.costs.length) : bySeason;
 
-  // The three things you can change about how the list is priced and filtered.
+  // Seasons that actually hold prices (2018–2026 today) — the year list, and
+  // the test for whether last-5 can still do anything. On the Recipes view a
+  // pinned past season leaves it inert (variantFor ignores it); the calculator
+  // never carries a pin (F3), so there it is always live.
+  const pricedSeasons = engine ? engine.prices.pricedSeasons : [];
+  const showRecentToggle =
+    calculator || priceYear === null || priceYear >= (engine?.prices.latestPriced ?? 0);
+
+  // The one option BOTH views answer to, so it is declared once and rendered in
+  // each. It governs the calculator whether or not it is on screen there — the
+  // engine is shared — so the choice is between showing it and letting an
+  // invisible control move the build-vs-buy verdict. It shows.
+  //
+  // Hidden only where it cannot do anything: last-5 is a reading of the season
+  // still in progress, so a pinned PAST season on the Recipes view leaves it
+  // inert. A control that cannot move a number does not earn a slot.
+  const recentToggle = showRecentToggle && (
+    <div className="toggle" role="group" aria-label="Which sales price today's recipes">
+      <span className="toggle-label">
+        Today's prices from
+        <HintPopover label="About the price basis">
+          Recipes you can still craft are priced at <b>today's</b> prices. This picks what
+          “today” means: the whole current season, or just its <b>last five auctions</b>,
+          which reacts faster when a trade good is moving. Expired recipes ignore it —
+          they are priced over the window they could actually be built in.
+        </HintPopover>
+      </span>
+      <div className="toggle-buttons">
+        <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
+          aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
+        <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
+          aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
+          <span className="lbl-full">Last 5 auctions</span>
+          <span className="lbl-short">Last 5</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  // The things you can change about how the list is priced and filtered.
   // Held as one node so the phone can fold them behind a disclosure without a
   // second copy of the markup drifting from this one.
   const optionControls = (
@@ -133,39 +185,48 @@ export default function TransmutesPage() {
         </div>
       )}
 
-      <div className="toggle" role="group" aria-label="Which sales price today's recipes">
+      {/* Phase 7. A select rather than a segmented pair: nine seasons plus Auto
+          is far past what the .toggle-buttons shape can hold, and it is the
+          same <label>-over-<select> the Auction Data filters use. */}
+      {pricedSeasons.length > 0 && (
+        <div className="toggle price-year">
           <span className="toggle-label">
-            Today's prices from
-            <HintPopover label="About the price basis">
-              Recipes you can still craft are priced at <b>today's</b> prices. This picks what
-              “today” means: the whole current season, or just its <b>last five auctions</b>,
-              which reacts faster when a trade good is moving. Expired recipes ignore it —
-              they are priced over the window they could actually be built in.
+            <label htmlFor="price-year">Price data from</label>
+            <HintPopover label="About pricing everything from one season">
+              By default each recipe is priced on its own basis — <b>today's</b> prices if you
+              can still craft it, its <b>build window</b> if it has expired. Pick a season to
+              price every recipe from that season's auctions instead, which is how you compare
+              what a build cost then against what it costs now. Ingredients a recipe pins to a
+              particular season (an Ultra Rare from the year before, a named older token) keep
+              that season, and say so on the line.
             </HintPopover>
           </span>
-          <div className="toggle-buttons">
-            <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
-              aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
-            <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
-              aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
-              <span className="lbl-full">Last 5 auctions</span>
-              <span className="lbl-short">Last 5</span>
-            </button>
-          </div>
+          <select
+            id="price-year"
+            value={priceYear ?? 'auto'}
+            onChange={(e) => setPriceYear(e.target.value === 'auto' ? null : Number(e.target.value))}
+          >
+            <option value="auto">Auto (each recipe)</option>
+            {[...pricedSeasons].reverse().map((y) => (
+              <option key={y} value={y}>{y} prices</option>
+            ))}
+          </select>
         </div>
+      )}
+
+      {recentToggle}
     </>
   );
 
   // How many are off their default — the folded summary has to say so, or a
   // filtered list reads as the full one (same reason FilterBar counts).
   const activeOptions =
-    (activeOnly ? 1 : 0) + (path !== DEFAULT_PATH ? 1 : 0) + (recentPrices ? 1 : 0);
+    (activeOnly ? 1 : 0) + (path !== DEFAULT_PATH ? 1 : 0) +
+    (recentPrices && showRecentToggle ? 1 : 0) + (priceYear !== null ? 1 : 0);
 
   if (error) return <p className="err">Failed to load data: {error}</p>;
   if (loading) return <p className="empty">Loading auction data…</p>;
   if (!ready) return <p className="empty">No transmute recipe data loaded.</p>;
-
-  const calculator = view === 'calculator';
 
   return (
     <>
@@ -184,12 +245,29 @@ export default function TransmutesPage() {
           <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>.
         </PageIntro>
       ) : (
-        <PageIntro short="What each transmute costs to craft — at today's prices if you can still make it.">
+        <PageIntro
+          short={priceYear === null
+            ? "What each transmute costs to craft — at today's prices if you can still make it."
+            : `What each transmute would have cost to craft at ${priceYear} prices.`}
+        >
           What it costs to <strong>craft</strong> each token from its ingredients, so you can weigh
-          building against buying from a reseller. A recipe you can <strong>still craft</strong> is
-          priced at <strong>today's</strong> prices, because that is what building it now would
-          cost you. One that has <strong>expired</strong> is priced over the window it could
-          actually be built in, and says so. Both are shown as an <strong>avg</strong> and a{' '}
+          building against buying from a reseller.{' '}
+          {priceYear === null ? (
+            <>
+              A recipe you can <strong>still craft</strong> is priced at <strong>today's</strong>{' '}
+              prices, because that is what building it now would cost you. One that has{' '}
+              <strong>expired</strong> is priced over the window it could actually be built in, and
+              says so.
+            </>
+          ) : (
+            <>
+              You have pinned every recipe to <strong>{priceYear}</strong> prices, so each one
+              answers what it would have cost to build that season rather than what it costs now —
+              whether or not it was craftable then. Ingredients a recipe pins to a particular
+              season keep it, and say so on the line.
+            </>
+          )}{' '}
+          Both are shown as an <strong>avg</strong> and a{' '}
           <strong>min</strong> total per recipe. Tokens with a source show both the full build and
           the cheaper cost if you already own that source. Expand any row for its full bill of
           materials. For single-token price history, see <Link to="/">Prices</Link>.
@@ -227,6 +305,11 @@ export default function TransmutesPage() {
             <div className="filterset-body">{optionControls}</div>
           </details>
         ) : optionControls)}
+        {/* 1a: the calculator gets this one control in the global bar rather
+            than a third pair on its tools strip — the strip only exists once a
+            recipe is picked, and the browse drawer's prices answer to this
+            too. */}
+        {calculator && recentToggle}
         {!calculator && (
           <label className="search">
             <span className="sr-only">Search transmutes</span>
@@ -250,6 +333,7 @@ export default function TransmutesPage() {
               comes off and the line stays. */}
           <p className={`meta-line${searching ? '' : ' stats'}`}>
             {total} transmute{total === 1 ? '' : 's'} across {seasons.length} seasons
+            {priceYear !== null && ` · all priced from ${priceYear} auctions`}
             {searching && ` · ${shown.length} season${shown.length === 1 ? '' : 's'} with matches`}
           </p>
 
