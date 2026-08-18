@@ -17,10 +17,19 @@ lives in [`expansion-plan.md`](expansion-plan.md) §3.2 and §4.1–§4.2; this 
 | H | `Display Name` | formula | The ingredient's display name that season — **for your eyes only**. |
 | I | `Quantity` | **you type** | How many. **Never 0** — the old qty-0 marker convention is retired. |
 | J | `IsSource` | **you type** | `TRUE` = the token being upgraded *from*; `FALSE` = consumed ingredient. |
+| K | `Expires` | **optional** | When the recipe stops being craftable — blank, `never`, or `YYYY-MM-DD`. One value per recipe. |
+| L | `IngredientType` | **optional** | The ingredient's tier, so a line can name a *specific* Ultra Rare and still price as the tier. |
 
-One row per (transmute, ingredient, season, role). Six columns to type; four to leave alone.
+One row per (transmute, ingredient, season, role). Six columns to type; four to leave
+alone; two optional ones you can ignore until you need them.
 
-**The importer reads only B–F, I, J.** `Key`, `ResolvedYear` and `Display Name` are authoring
+**K and L are optional and the file is valid without them.** The engine defaults both, so
+the site is correct before you author either — `Expires` decides whether a recipe is priced
+at today's prices or over the window it could be built in, and `IngredientType` only changes
+what the page *says*, never what it charges. Both are documented in full in
+[`updating-the-data.md`](updating-the-data.md), including the validator rules that guard them.
+
+**The importer reads only B–F and I–L.** `Key`, `ResolvedYear` and `Display Name` are authoring
 aids and are ignored — the site derives all three itself. That is deliberate: derived columns can
 drift from their source, so nothing downstream is allowed to trust them.
 
