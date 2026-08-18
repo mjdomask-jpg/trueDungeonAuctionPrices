@@ -135,7 +135,7 @@ export function OmniSuggestions({ cost, engine }: { cost: BuildCost; engine: Cos
             })}
           </div>
           <p className="omni-foot">
-            Omni tokens are wildcards the game added so that older ingredients stay obtainable.
+            Omni tokens are wildcards the game added so that older recipes stay craftable.
             Most players buy one rather than craft it, so type in what you can actually get one for.
             None of this is included in the totals above — it is an alternative to price up,
             not a cheaper way to read the same build.

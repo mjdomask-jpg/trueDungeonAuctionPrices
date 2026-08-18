@@ -48,6 +48,15 @@ export const fmtDateLong = (iso: string | undefined): string | null => {
   return base && m ? `${base}, ${m[1]}` : base;
 };
 
+// "Dec 2023" — month and year only, for dates where the day carries no
+// meaning a reader would use. A recipe's expiry is one: the standard rule
+// puts every one of them on Dec 1, so the day is noise.
+export const fmtMonthYear = (iso: string | null | undefined): string | null => {
+  const m = /^(\d{4})-(\d{2})/.exec(iso ?? '');
+  const month = m && MONTHS[parseInt(m[2], 10) - 1];
+  return m && month ? `${month} ${m[1]}` : null;
+};
+
 // Render an absolute instant (an ISO-8601 string with offset, e.g. git's %cI)
 // in US Central time — DST-correct via the IANA zone, so it shows CDT in summer
 // and CST in winter regardless of where the commit was made. Output pairs an

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { money0 } from '../lib/format';
+import { fmtMonthYear, money0 } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
@@ -108,7 +108,16 @@ export function TransmuteRow({
             {cost.status === 'expired' && (
               <HintPopover
                 label="What “expired” means"
-                trigger={<span className="tx-badge expired">expired</span>}
+                trigger={(
+                  // The date rides the badge rather than arriving as a second
+                  // chip: it is the same fact the badge states, and a chip of
+                  // its own would break onto a line of its own on a phone,
+                  // leaving a bare "expired" beside the year. Only once the row
+                  // is open, so collapsed rows stay scannable.
+                  <span className="tx-badge expired">
+                    expired{open && cost.expires ? ` ${fmtMonthYear(cost.expires)}` : ''}
+                  </span>
+                )}
               >
                 This recipe stopped being craftable{cost.expires ? ` on ${cost.expires}` : ''}, so it is
                 priced over the period it could actually be built — auctions from

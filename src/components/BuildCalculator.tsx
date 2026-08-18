@@ -3,7 +3,7 @@ import { money0, moneyCalc } from '../lib/format';
 import { Money } from './Money';
 import { HintPopover } from './HintPopover';
 import { OmniSuggestions } from './OmniSuggestions';
-import { BARS_PER_WISH_RING, DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
+import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
 import { PriceInput } from './PriceInput';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
@@ -376,6 +376,10 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   // (fast when you have most of the materials and only lack a few), or clear all.
   const pricedRows = rows.filter((r) => r.priced);
   const allOwned = pricedRows.length > 0 && pricedRows.every((r) => r.have >= r.req);
+  // All/None is a real two-state control, not a pair of momentary buttons:
+  // neither lights while you are part-way through entering what you hold,
+  // which is more informative than the old "All lights, None never does".
+  const noneOwned = pricedRows.length > 0 && pricedRows.every((r) => r.have === 0);
   const setAllHand = (full: boolean) =>
     setOnHand(() => {
       const next: Record<string, number> = {};
@@ -449,6 +453,13 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               <span className="calc-cur-name">{cost.displayName}</span>
               <span className="calc-cur-year">{cost.year}</span>
               {cost.status === 'expired' && <span className="calc-opt-exp">expired</span>}
+              {/* Browse recipes can swap the recipe, but there was no way to put
+                  the calculator back to empty — people were bouncing off to the
+                  Recipes view and back to do it. Clearing also drops every
+                  on-hand count and override, which is the same reset picking a
+                  different recipe performs. */}
+              <button type="button" className="calc-cur-x" aria-label="Clear this recipe"
+                onClick={() => setSelectedKey(null)}>×</button>
             </span>
             {/* Cost to finish and the buy-it answer are one block, so no future
                 layout change can put the comparison somewhere other than beside
@@ -473,26 +484,34 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
 
       {cost ? (
         <div className="calc-panel" ref={panelRef}>
+          {/* Both controls wear the same shape — label above, segmented pair
+              below — because side-by-side they were a labelled button group
+              next to a labelled toggle, at two heights, with the labels on
+              two different sides. Uppercase labels match every other toggle
+              on the site rather than inventing a second convention here. */}
           <div className="calc-tools">
-            <span className="calc-tools-lab">Set all on hand</span>
-            <button type="button" className={`calc-all${allOwned ? ' on' : ''}`} aria-pressed={allOwned}
-              onClick={() => setAllHand(true)}>All</button>
-            <button type="button" className="calc-all" onClick={() => setAllHand(false)}>None</button>
+            <span className="calc-tool">
+              <span className="calc-tool-lab">On hand</span>
+              <span className="calc-seg">
+                <button type="button" className={allOwned ? 'on' : undefined} aria-pressed={allOwned}
+                  onClick={() => setAllHand(true)}>All</button>
+                <button type="button" className={noneOwned ? 'on' : undefined} aria-pressed={noneOwned}
+                  onClick={() => setAllHand(false)}>None</button>
+              </span>
+            </span>
             {gold && (
-              <span className="calc-path">
-                <span className="calc-path-lab">
-                  This recipe takes
+              <span className="calc-tool">
+                <span className="calc-tool-lab">
+                  Show recipe with
                   <HintPopover label="About the Wish Ring or GP choice">
-                    This recipe accepts <b>1 Wish Ring</b> or <b>15,000 GP</b> — which is{' '}
-                    {BARS_PER_WISH_RING} more 1,000 GP Gold Bars, taking that line from{' '}
-                    {gold.barQuantity} to {gold.gpBarQuantity}. Both are legal; pick the one you
-                    can actually field. Gold Bars are ordinary trade goods most players already
-                    hold, so the GP path can finish a build for nothing even when it prices higher.
+                    Legendary recipes accept either 1 Wish Ring or 15,000 GP. Choose to show the
+                    Wish Ring as a separate line item or to price the transmute with an additional
+                    15,000 GP on top of the 25,000. Players often have GP on hand, not Wish Rings.
                   </HintPopover>
                 </span>
-                <span className="calc-path-btns">
+                <span className="calc-seg">
                   <button type="button" className={path === 'ring' ? 'on' : undefined}
-                    aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>a Wish Ring</button>
+                    aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
                   <button type="button" className={path === 'gp' ? 'on' : undefined}
                     aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
                 </span>
@@ -860,7 +879,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
               <span className="calc-dfilter-lab">
                 {showExpired
                   ? `Showing all ${all.length} recipes`
-                  : `Showing the ${all.length - expiredCount} you can still craft`}
+                  : `Showing the ${all.length - expiredCount} active recipes`}
               </span>
               <button type="button" className="calc-dfilter-btn" aria-pressed={showExpired}
                 onClick={() => setShowExpired((v) => !v)}>
