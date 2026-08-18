@@ -47,7 +47,7 @@ export default function AnalyticsPage() {
 
   return (
     <>
-      <PageIntro className="lede" short="Statistics about the auctions, and how token prices were distributed.">
+      <PageIntro short="Statistics about the auctions, and how token prices were distributed.">
         Statistics about the auctions themselves — who ran them, when they opened, and how long
         they took to close — plus, under Quartiles, how each token's sale prices were distributed
         within a year.
