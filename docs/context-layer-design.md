@@ -181,8 +181,8 @@ state shape, identical everywhere:
 
 | Control | Options | Default |
 | --- | --- | --- |
-| **Source** | All · Forum · Trent | All |
-| **Trent pricing** | Nominal · Reward-adjusted (−10%) | Nominal — only visible when Trent is in view |
+| **Source** | All · Forum · Trent | All — hidden when the seasons in view hold no Trent auction |
+| **Trent pricing** | Nominal · Reward-adjusted (−10%) | Nominal — hidden on the same test, and when Trent is filtered out of view |
 | **Auction type** | All · Augmented · Non-augmented · With Golden Ticket | All |
 | **Item provenance** | Normal · Released payment · Augment · Grunnel · **Withheld (est.)** | All *real* on; **Withheld OFF** |
 
@@ -192,6 +192,14 @@ state shape, identical everywhere:
   the hook — the same friction as adding a season `<select>` today.
 - Not every page needs every control (e.g. Onyx has one source); `FilterBar` takes a
   prop listing which controls to show, defaulting to all.
+- **The two Trent controls only appear where there is a Trent auction to act on.**
+  A page passes the seasons it is showing (`seasons` prop); `FilterBar` tests them
+  against `seasonsWithTrent(meta)`, which requires both an actual Trent auction and
+  `season >= ERAS.trentStartSeason` — Trent ran none before 2023, so 2018–2022 can
+  never offer them. Hiding is not enough on its own: the filter state is shared and
+  survives a season change, so a Source of `Trent` carried into 2019 would empty the
+  page with no visible control to explain it. `FilterBar` therefore resets both to
+  their defaults whenever they stop being offered.
 
 ### 5.3 Per-row provenance badges
 

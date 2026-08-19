@@ -136,7 +136,7 @@ export default function TransmutesPage() {
       <div className="toggle-buttons">
         <button type="button" data-label="Full season" className={!recentPrices ? 'on' : undefined}
           aria-pressed={!recentPrices} onClick={() => setRecentPrices(false)}>Full season</button>
-        <button type="button" data-label="Last 5 auctions" className={recentPrices ? 'on' : undefined}
+        <button type="button" data-label="Last 5 auctions" data-short="Last 5" className={recentPrices ? 'on' : undefined}
           aria-pressed={recentPrices} onClick={() => setRecentPrices(true)}>
           <span className="lbl-full">Last 5 auctions</span>
           <span className="lbl-short">Last 5</span>
@@ -282,7 +282,7 @@ export default function TransmutesPage() {
               aria-pressed={view === 'recipes'} onClick={() => setView('recipes')}>
               Recipes
             </button>
-            <button type="button" data-label="Build Calculator" className={view === 'calculator' ? 'on' : undefined}
+            <button type="button" data-label="Build Calculator" data-short="Calculator" className={view === 'calculator' ? 'on' : undefined}
               aria-pressed={view === 'calculator'} onClick={() => setView('calculator')}>
               <span className="lbl-full">Build Calculator</span>
               <span className="lbl-short">Calculator</span>

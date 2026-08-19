@@ -252,6 +252,26 @@ export type ViewFilter = {
   auctionType: AuctionTypeFilter;
 };
 
+// Seasons that actually contain a Trent auction — what the Source and
+// Trent-pricing controls need to exist before they mean anything. Two gates,
+// both deliberate:
+//  - the ERAS.trentStartSeason floor is the HARD RULE. Trent ran no auctions
+//    before 2023, so those seasons can never offer the controls, whatever a
+//    stray row in the export might say.
+//  - the per-season membership is the honest one. A season inside the Trent era
+//    could still turn out Forum-only, and the controls should follow the data
+//    rather than the calendar.
+// Read per auction via the derived `source` (deriveSource), never from a date.
+export function seasonsWithTrent(meta: AuctionMeta[]): Set<string> {
+  const out = new Set<string>();
+  for (const m of meta) {
+    if (m.source !== 'Trent') continue;
+    if (Number(m.season) < ERAS.trentStartSeason) continue;
+    out.add(m.season);
+  }
+  return out;
+}
+
 // Auctions that included a Golden Ticket, from EITHER feed: a GT sale in
 // prices.csv (13 auctions) or a GT released-payment context row (audit §5). Union
 // so the "With Golden Ticket" filter is complete regardless of which sheet

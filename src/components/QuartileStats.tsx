@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Sale, GroupRow } from '../lib/data';
+import { lastFiveAuctionNumbers, type Sale, type GroupRow } from '../lib/data';
 import {
   parseRawSales, rawSeasons, quartilesByGroup,
   type RawSale, type QuartileItem,
@@ -24,6 +24,11 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
   const [err, setErr] = useState('');
   const [picked, setPicked] = useState('');
   const [tenX, setTenX] = useTenX();
+  // Full season, or only the season's last five auctions — the same recency
+  // window the Prices page offers, and the reason to want it here is the same:
+  // late in a season the whole-year spread is dragged by prices that have since
+  // moved, and the last five describe what a token goes for now.
+  const [span, setSpan] = useState<'full' | 'last5'>('full');
   const narrow = useMediaQuery(NARROW);
 
   useEffect(() => {
@@ -38,9 +43,17 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
   const seasons = useMemo(() => (raw ? rawSeasons(raw) : []), [raw]);
   const season = picked && seasons.includes(picked) ? picked : seasons[0] ?? '';
 
+  // The window is defined over prices.csv, not the per-lot feed, so "Last 5"
+  // means the same five auctions it means on Prices (see quartilesByGroup).
+  const last5 = useMemo(
+    () => (season ? lastFiveAuctionNumbers(sales, season) : []),
+    [sales, season],
+  );
   const grouped = useMemo(
-    () => (raw && season ? quartilesByGroup(raw, sales, groupRows, season, tenX) : null),
-    [raw, sales, groupRows, season, tenX],
+    () => (raw && season
+      ? quartilesByGroup(raw, sales, groupRows, season, tenX, span === 'last5' ? last5 : null)
+      : null),
+    [raw, sales, groupRows, season, tenX, span, last5],
   );
 
   if (err) return <p className="err">Failed to load quartile data: {err}</p>;
@@ -67,8 +80,36 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
             </select>
           </label>
         )}
+        <div className="toggle" role="group" aria-label="Price window">
+          <span className="toggle-label">Show</span>
+          <div className="toggle-buttons">
+            <button type="button" data-label="Full season" className={span === 'full' ? 'on' : undefined}
+              aria-pressed={span === 'full'} onClick={() => setSpan('full')}>
+              Full season
+            </button>
+            <button type="button" data-label="Last 5 auctions" data-short="Last 5"
+              className={span === 'last5' ? 'on' : undefined}
+              aria-pressed={span === 'last5'} onClick={() => setSpan('last5')}>
+              <span className="lbl-full">Last 5 auctions</span>
+              <span className="lbl-short">Last 5</span>
+            </button>
+          </div>
+        </div>
         <TenXToggle on={tenX} onChange={setTenX} />
       </div>
+
+      {/* Which auctions the window actually rests on. The per-lot feed is Trent's,
+          so the site-wide last five routinely include Forum auctions it has no
+          rows for — a quartile drawn from two auctions should say it is. */}
+      {grouped?.window && (
+        <p className="meta-line">
+          Last 5 auctions of {season}: {grouped.window.auctions.join(', ')} ·{' '}
+          {grouped.window.withData.length === 0
+            ? 'none of them are in the per-lot feed'
+            : <>per-lot data for {grouped.window.withData.length} of them
+              {' '}({grouped.window.withData.join(', ')}), {grouped.window.lots.toLocaleString()} lots</>}
+        </p>
+      )}
 
       {grouped && grouped.unmatched.length > 0 && (
         <p className="err">

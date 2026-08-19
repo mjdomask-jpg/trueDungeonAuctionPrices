@@ -211,7 +211,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} seasons={[activeSeason]} collapsibleOnMobile />
 
       <p className="meta-line stats">
         Season {activeSeason}: {closedAuctions} closed auctions ·

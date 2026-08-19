@@ -69,7 +69,7 @@ export function TimelineTrends() {
         <TenXToggle on={tenX} onChange={setTenX} />
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType']} collapsibleOnMobile />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType']} seasons={[activeSeason]} collapsibleOnMobile />
 
       {unmatched.length > 0 && (
         <p className="err">
