@@ -493,9 +493,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
             <span className="calc-tool">
               <span className="calc-tool-lab">On hand</span>
               <span className="calc-seg">
-                <button type="button" className={allOwned ? 'on' : undefined} aria-pressed={allOwned}
+                <button type="button" data-label="All" className={allOwned ? 'on' : undefined} aria-pressed={allOwned}
                   onClick={() => setAllHand(true)}>All</button>
-                <button type="button" className={noneOwned ? 'on' : undefined} aria-pressed={noneOwned}
+                <button type="button" data-label="None" className={noneOwned ? 'on' : undefined} aria-pressed={noneOwned}
                   onClick={() => setAllHand(false)}>None</button>
               </span>
             </span>
@@ -510,9 +510,9 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
                   </HintPopover>
                 </span>
                 <span className="calc-seg">
-                  <button type="button" className={path === 'ring' ? 'on' : undefined}
+                  <button type="button" data-label="Wish Ring" className={path === 'ring' ? 'on' : undefined}
                     aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
-                  <button type="button" className={path === 'gp' ? 'on' : undefined}
+                  <button type="button" data-label="15,000 GP" className={path === 'gp' ? 'on' : undefined}
                     aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
                 </span>
               </span>
