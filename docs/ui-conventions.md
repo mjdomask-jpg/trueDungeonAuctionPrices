@@ -179,6 +179,44 @@ On a phone the toggle's frame counts toward the control height too
 the bordered control is exactly `--control-h`, not two pixels taller than every
 select on the row.
 
+### A toggle never changes size when the selection moves
+
+**A segmented control must measure the same in every state.** The selected
+button bolds its label, and 600-weight text is a few px wider than the 400-weight
+inactive one — so as the selection moves the button grows, the control grows, and
+whatever shares its row gets nudged left and right. The whole row visibly jitters
+on a click that was supposed to change nothing but the highlight.
+
+The fix, on every segmented control: stack the real label over an **invisible
+bold ghost of its own text**, so each button always reserves its widest (bold)
+state.
+
+```css
+.seg button { display: flex; flex-direction: column; align-items: center;
+  justify-content: center; }
+.seg button::after {
+  content: attr(data-label);   /* the button's OWN visible text */
+  height: 0;                   /* zero-height line, clipped by .seg's overflow */
+  visibility: hidden;          /* NOT display:none, NOT overflow:hidden */
+  font-weight: 600;            /* the selected weight — the width being reserved */
+  pointer-events: none;
+}
+```
+
+Two details that are easy to get wrong:
+
+- `data-label` mirrors the button's **own** text, never the longer sibling's.
+  Carrying the neighbour's label reserves room for text this button never shows;
+  it then overflows when selected and loses its padding when not. (Recipes'
+  All/Active pair hit exactly this.)
+- the ghost must not set `overflow: hidden` — a hidden-overflow box contributes
+  0 to min-content, which is the entire width it exists to reserve. Hide it with
+  `visibility` and let the wrapper's `overflow: hidden` clip the zero line.
+
+This applies to **both** segmented shapes on the site — `.toggle-buttons` (page
+control rows) and `.calc-seg` (the calculator's calc-tools block). Any new
+segmented control adds `data-label` to every button from the start.
+
 ### A toggle button always fits its own label
 
 **No toggle button may clip or crush its text.** `.toggle-buttons` sets

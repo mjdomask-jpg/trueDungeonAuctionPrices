@@ -929,7 +929,23 @@ td.diff.down { color: var(--diff-down); }
 .calc-seg { display: inline-flex; height: 30px; border: 1px solid var(--border);
   border-radius: 8px; overflow: hidden; }
 .calc-seg button { font: inherit; font-size: 12px; padding: 0 12px; cursor: pointer;
-  background: var(--bg); border: 0; color: var(--text); white-space: nowrap; }
+  background: var(--bg); border: 0; color: var(--text); white-space: nowrap;
+  /* Column-stack the real label over an invisible bold ghost of itself, the
+     same shape .toggle-buttons uses — see its ::after for the full note. */
+  display: flex; flex-direction: column; align-items: center; justify-content: center; }
+/* The selected button bolds, and 600-weight text is wider than 400, so without
+   reserving that width the segment — and the calc-tools row beside it — grew and
+   shrank as the selection moved. The ghost fixes each button at its bold width.
+   No `overflow: hidden` here: a hidden-overflow box contributes 0 to min-content,
+   which is the width this exists to reserve. .calc-seg's own overflow clips the
+   zero-height line. `data-label` mirrors the button's own visible text. */
+.calc-seg button::after {
+  content: attr(data-label);
+  height: 0;
+  visibility: hidden;
+  font-weight: 600;
+  pointer-events: none;
+}
 .calc-seg button + button { border-left: 1px solid var(--border); }
 .calc-seg button:hover { color: var(--accent); }
 /* Accent text on the tinted accent surface, like the page toggles — white on

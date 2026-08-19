@@ -177,9 +177,9 @@ export default function TransmutesPage() {
             </HintPopover>
           </span>
           <div className="toggle-buttons">
-            <button type="button" className={path === 'ring' ? 'on' : undefined}
+            <button type="button" data-label="Wish Ring" className={path === 'ring' ? 'on' : undefined}
               aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
-            <button type="button" className={path === 'gp' ? 'on' : undefined}
+            <button type="button" data-label="15,000 GP" className={path === 'gp' ? 'on' : undefined}
               aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
           </div>
         </div>
