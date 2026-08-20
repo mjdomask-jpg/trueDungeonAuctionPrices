@@ -24,7 +24,7 @@ export type RecipeLine = {
   // a line name the ACTUAL token it needs (Item = "Ymir's Bane",
   // IngredientType = "Ultra Rare") while still pricing as the generic tier
   // when that specific token has never been auctioned — which is the case for
-  // every named Ultra Rare, since auctions sell the tier itself as PYP (§3.4).
+  // every named Ultra Rare, since auctions sell the tier itself (§3.4).
   ingredientType: string;
 };
 
@@ -517,9 +517,10 @@ export class PriceIndex {
  * priced by the tier when the token itself has no sales of its own.
  *
  * Only Ultra Rare qualifies today, and not by coincidence: the tier and the
- * token share one canonical name because auctions sell "an Ultra Rare" (PYP)
- * rather than a specific one (§4.1). Written as a map anyway, because the
- * moment a second tier is sold generically the rule is already here.
+ * token share one canonical name — literally `Ultra Rare` — because auctions
+ * sell "an Ultra Rare" rather than a specific one (§4.1). Written as a map
+ * anyway, because the moment a second tier is sold generically the rule is
+ * already here.
  */
 export const TIER_PROXY: Readonly<Record<string, string>> = { 'Ultra Rare': 'Ultra Rare' };
 
@@ -763,7 +764,7 @@ export class CostEngine {
       // starts there. Clamp to the recipe's own year -- which lands on the
       // earliest priced season -- rather than dropping through to the float.
       // Floating here is precisely the failure D4 exists to prevent: it would
-      // put a 2014 Legendary's Ultra Rare at 2026 PYP ($60) when the closest
+      // put a 2014 Legendary's Ultra Rare at the 2026 price ($60) when the closest
       // thing to that era's baseline the data holds is 2018's ($112).
       const clamped = this.prices.leafPrice(good, recipe.year, 'full');
       if (clamped) return { price: clamped, floated: false };
