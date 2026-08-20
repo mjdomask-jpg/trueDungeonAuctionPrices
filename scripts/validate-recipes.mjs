@@ -383,8 +383,16 @@ const missingPrice = new Map();
 for (const r of recipes) {
   if (transmuteNames.has(r.Item) || fleeceGood.has(r.Item) || r.Item === 'Monster Trophy') continue;
   // A named member of an auctioned tier having no price of its own is the
-  // expected state, not a gap -- the tier-priced INFO above already says so.
-  if (proxyPriced.has(r.ResolvedYear + '|' + r.Item)) continue;
+  // expected state, not a gap: the runtime prices it through the tier. Test the
+  // line's IngredientType rather than `proxyPriced`, which only ever holds goods
+  // MISSING from tokenMetadata -- give a named Ultra Rare the tokenMetadata row
+  // the transmutes expansion asks for and it would drop out of that set and be
+  // reported as an unpriced gap it never was. TIER_PROXY in transmutes.ts keys
+  // off IngredientType alone and never consults tokenMetadata; mirror it here.
+  // The tier itself still has to be priced in that season -- if it is not, the
+  // line really is unpriced and the warning below is the right answer.
+  const proxyTier = TIER_PROXY[(r.IngredientType ?? '').trim()];
+  if (proxyTier && pricedPairs.has(r.ResolvedYear + '|' + proxyTier)) continue;
   if (!pricedYears.has(r.ResolvedYear)) continue;          // whole season un-priced; reported separately
   if (!pricedPairs.has(r.ResolvedYear + '|' + r.Item)) {
     const k = r.ResolvedYear + '|' + r.Item;
@@ -413,4 +421,13 @@ const order = { ERROR: 0, WARN: 1, INFO: 2 };
 problems.sort((a, b) => order[a.sev] - order[b.sev] || a.cat.localeCompare(b.cat));
 if (!problems.length) console.log('No problems found.');
 for (const p of problems) console.log(`[${p.sev}] ${p.cat}: ${p.msg}`);
-console.log(`\n--- ${problems.filter(p=>p.sev==='ERROR').length} errors, ${problems.filter(p=>p.sev==='WARN').length} warnings ---`);
+const errors = problems.filter(p => p.sev === 'ERROR').length;
+console.log(`\n--- ${errors} errors, ${problems.filter(p=>p.sev==='WARN').length} warnings ---`);
+
+// Fail the run on an ERROR, so `npm run validate` -- and with it the PR check --
+// stops a bad export instead of printing the problem and exiting 0. WARN and
+// INFO never fail: they flag data worth a look (an unpriced good, a season with
+// no auctions behind it) that is routinely the correct state of the sheet, and
+// authoring an optional column must never turn a passing export into a failing
+// one.
+process.exit(errors ? 1 : 0);
