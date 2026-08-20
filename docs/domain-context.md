@@ -5,6 +5,13 @@ anyone (contributor, future maintainer, or curious community member) who needs t
 understand *why* the data looks the way it does before touching *how* it is
 processed.
 
+> **Game-level domain facts** — tokens, the canonical rarity and tier ladders,
+> trade goods, transmuting, chase tokens — are shared with other True Dungeon
+> projects and maintained in the **`td-domain` skill**
+> (`~/.claude/skills/td-domain/`). Where a *game* fact here disagrees with that
+> skill, the skill wins. Everything about *this site* — its data shapes,
+> statistics, and sale categories — is authoritative here.
+
 ## What True Dungeon is
 
 True Dungeon is an interactive, tabletop-style dungeon adventure played at
@@ -17,7 +24,12 @@ Each year the company releases a **new set** of tokens. Because a new set comes
 out annually, there is a recurring, time-boxed market for acquiring that year's
 tokens.
 
-## How people acquire a set: the group buy
+## How tokens enter circulation
+
+Tokens reach players two independent ways. Neither is a sub-case of the other,
+and this site is concerned with only the first.
+
+### Buying a set: the group buy
 
 The primary way the community buys a new set is through a **group buy**: many
 people pool their money into a single large order (often an "8K" order, referring
@@ -28,6 +40,16 @@ The challenge with a group buy is fairness: once the single bulk order arrives, 
 group must decide **who pays how much** and **who receives which tokens**. This is
 resolved with an **auction**.
 
+### Playing the game: treasure pulls
+
+Players also receive tokens as loot from playing. The mix of a given year's
+treasure is **not published**, so the community deduces it by pooling recorded
+pulls. Some tokens appear *only* this way and never in auctions — Monster
+Trophies, and chase tokens such as the 50 GP Idol.
+
+This site does not track treasure; a sibling project does. It matters here only
+because the two share a token catalog and a rarity vocabulary.
+
 ## The auction system
 
 Within each group buy, the components of the order are **auctioned** among the
@@ -37,6 +59,13 @@ participants:
   premium/bonus items) they want.
 - The high bidder **wins** those tokens and pays their bid.
 - The collected bids fund the order.
+
+**Why the "condensed" styles exist.** Rare and Uncommon tokens transmute into
+Trade 1 and Trade 2 trade goods, but that conversion is tedious and multi-step,
+so most buyers would rather receive the goods already converted. The condensed
+styles encode how much of that conversion was done before delivery. In very early
+seasons the unconverted **Rare Bag** and **Uncommon Bag** were themselves
+auctioned, which is why they turn up in the oldest data.
 
 Different auctions run in different **styles** ("Super Condensed", "Ultra
 Condensed", "Limited", and the "Onyx"/"Safehold" variants) and complete in
@@ -66,11 +95,30 @@ groups together all the auctions that belong to one annual set release.
 Within a season, each auction is numbered sequentially (auction 1, 2, 3, …). The
 combination of season + auction number uniquely identifies a single auction.
 
+### The other time axis: events
+
+Seasons govern *buying*. They do not govern *play*. Treasure pulls follow the
+**calendar year** and are tracked **per event** — named conventions, virtual
+runs, and specials, running January through December. The sibling treasure
+project uses that axis; this site does not.
+
+One collision worth knowing: in treasure data `V26` is the **26th virtual
+event**, not the 2026 season. Never read a V-number as a year.
+
 ## Category color conventions
 
+> **This is the *sale* axis, not rarity.** These categories describe how a lot was
+> sold in a group buy. They are neither the canonical rarity ladder (Uncommon,
+> Rare, Ultra Rare, …) nor the treasure project's analysis buckets ("Ultra Rare
+> or Better", "Under Ultra Rare"). Three different things are called "category"
+> across TD tooling, and `Ultra Rare` appears in two of them meaning different
+> things. Do not reuse this list outside the auction domain.
+
 Every component sold falls into a **category** — `Trade 1`, `Trade 2`, `Ultra Rare`,
-`Premium`, `Bonus`, `Preorder`, or `Golden Ticket`. (`Trade 1` and `Trade 2` are the
-site's split of the single community "Trade Good" class, kept on one shared color.) These aren't just internal
+`Premium`, `Bonus`, `Preorder`, or `Golden Ticket`. (`Trade 1` and `Trade 2` are not a
+site invention: trade goods run a real ladder, `Trade 1` through `Trade 5`, and
+these are its first two rungs. Only they appear in auction data — higher levels
+turn up in treasure. They share one color by community convention.) These aren't just internal
 labels: within the community each category has a **customarily associated color**,
 familiar from the tokens and from years of the maintainer's spreadsheets. Members
 recognize a category partly by its color, so the site color-codes each category's
@@ -227,3 +275,8 @@ website is ultimately built to present.
 | **Onyx** | A special order that swaps part of the Ultra Rares for a fixed set of chase versions. |
 | **Golden Fleece** | A recipe ingredient not sold at auction, whose price is tracked manually. |
 | **Augment** | A prior-season transmute an auctioneer may bundle into an auction to help it fund. |
+| **Trade good** | A `Trade 1` or `Trade 2` token; the raw material of transmuting. |
+| **Condensed** | Sold pre-transmuted into trade goods rather than as Rare/Uncommon. Styles: Super Condensed, Ultra Condensed. |
+| **Chase** | A scarce variant — the fixed list of one of each Ultra Rare in the set. Also used of treasure-only rarities. |
+| **Treasure pull** | A token received from *playing* rather than bought. Tracked by a sibling project, not this site. |
+| **Event** | One occasion of play — a convention, virtual run, or special. The treasure axis, not the auction axis. |
