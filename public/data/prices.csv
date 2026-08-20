@@ -3220,7 +3220,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202342,2023,42,2k Bonus,2,Grunnel's +2 Pointy Stick,Premium
 202342,2023,42,3 Star,0.25,Amulet of Magnifying,Bonus
 202342,2023,42,8k Bonus,610,Path to Enlightenment (Fragment 1),Premium
-202342,2023,42,Alchemist's Ink,7.75,Alchemist's Ink,Trade 1
+202342,2023,42,Alchemist's Ink,5.75,Alchemist's Ink,Trade 1
 202342,2023,42,Alchemist's Parchment,2.5,Alchemist's Parchment,Trade 1
 202342,2023,42,Aragonite,11,Aragonite,Trade 2
 202342,2023,42,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
@@ -3452,7 +3452,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20241,2024,1,1k Bonus,120,Ring of the 3rd Circle,Premium
 20241,2024,1,2k Bonus,90.01,Mark of the 3rd Tenet,Premium
 20241,2024,1,Treasure Chip,2.75,Treasure Chip (each),Preorder
-20241,2024,1,Alchemist's Ink,1.4,Alchemist's Ink,Trade 1
+20241,2024,1,Alchemist's Ink,4.1,Alchemist's Ink,Trade 1
 20241,2024,1,Alchemist's Parchment,2.6,Alchemist's Parchment,Trade 1
 20241,2024,1,Aragonite,10.5,Aragonite,Trade 2
 20241,2024,1,Darkwood Plank,1.7,Darkwood Plank,Trade 1
@@ -3642,7 +3642,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20248,2024,8,Aragonite,10,Aragonite,Trade 2
 20248,2024,8,Darkwood Plank,1.3,Darkwood Plank,Trade 1
 20248,2024,8,Dwarven Steel,3.9,Dwarven Steel,Trade 1
-20248,2024,8,Elven Bismuth,1.25,Elven Bismuth,Trade 2
+20248,2024,8,Elven Bismuth,4.25,Elven Bismuth,Trade 2
 20248,2024,8,Enchanter's Munition,2.1,Enchanter's Munition,Trade 1
 20248,2024,8,Adventurers' Guild Button,2,Adventurers' Guild Button,Bonus
 20248,2024,8,Minotaur Hide,3.75,Minotaur Hide,Trade 1
@@ -4183,6 +4183,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202424,2024,24,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202425,2024,25,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202425,2024,25,1k Bonus,131,Ring of the 3rd Circle,Premium
+202425,2024,25,1k Bonus,115,Ring of the 3rd Circle,Premium
 202425,2024,25,2k Bonus,200,Mark of the 3rd Tenet,Premium
 202425,2024,25,8k Bonus,881.52,Path to Enlightenment (Fragment 2),Premium
 202425,2024,25,Alchemist's Ink,3.34,Alchemist's Ink,Trade 1
@@ -5055,45 +5056,44 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20259,2025,9,Preorder Bonus,1,Averon's Cherry Mead,Preorder
 20259,2025,9,Ultra Rare,70,Ultra Rare,Ultra Rare
 20259,2025,9,Wish Ring,120,Wish Ring,Premium
-202510,2025,10,Treasure Chip,4.5,Treasure Chip (each),Preorder
-202510,2025,10,1k Bonus,87,Ring of the 2nd Circle,Premium
+202510,2025,10,"1,000 GP Gold Bar",9.39,"1,000 GP Gold Bar",Trade 2
+202510,2025,10,"1,000 GP Gold Bar",8.26,"1,000 GP Gold Bar",Trade 2
+202510,2025,10,1k Bonus,80,Ring of the 2nd Circle,Premium
+202510,2025,10,1k Bonus,83.26,Ring of the 2nd Circle,Premium
 202510,2025,10,2k Bonus,90,Mark of the 2nd Tenet,Premium
-202510,2025,10,8k Bonus,"1,416.00",Path to Enlightenment (Fragment 3),Premium
-202510,2025,10,Alchemist's Ink,4.1,Alchemist's Ink,Trade 1
-202510,2025,10,Alchemist's Parchment,2.97,Alchemist's Parchment,Trade 1
-202510,2025,10,Aragonite,8.12,Aragonite,Trade 2
-202510,2025,10,"1,000 GP Gold Bar",8.53,"1,000 GP Gold Bar",Trade 2
-202510,2025,10,Darkwood Plank,1.25,Darkwood Plank,Trade 1
-202510,2025,10,Dwarven Steel,3.3,Dwarven Steel,Trade 1
-202510,2025,10,Elven Bismuth,8.25,Elven Bismuth,Trade 2
-202510,2025,10,Enchanter's Munition,6.1,Enchanter's Munition,Trade 1
-202510,2025,10,Adventurers' Guild Button,5.25,Adventurers' Guild Button,Bonus
-202510,2025,10,Minotaur Hide,4.77,Minotaur Hide,Trade 1
-202510,2025,10,Mystic Silk,1.6,Mystic Silk,Trade 1
-202510,2025,10,Oil of Enchantment,8.26,Oil of Enchantment,Trade 2
-202510,2025,10,Patron Pin,580,Patron Pin,Premium
-202510,2025,10,Philosopher's Stone,2.51,Philosopher's Stone,Trade 1
-202510,2025,10,Preorder Bonus,0.6,Averon's Cherry Mead,Preorder
-202510,2025,10,Ultra Rare,70.25,Ultra Rare,Ultra Rare
-202510,2025,10,Wish Ring,125.77,Wish Ring,Premium
-202510,2025,10,Treasure Chip,3.8,Treasure Chip (each),Preorder
-202510,2025,10,1k Bonus,81.25,Ring of the 2nd Circle,Premium
-202510,2025,10,2k Bonus,75,Mark of the 2nd Tenet,Premium
-202510,2025,10,Alchemist's Ink,3.14,Alchemist's Ink,Trade 1
-202510,2025,10,Alchemist's Parchment,2.08,Alchemist's Parchment,Trade 1
-202510,2025,10,Aragonite,7.26,Aragonite,Trade 2
-202510,2025,10,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
-202510,2025,10,Darkwood Plank,1.03,Darkwood Plank,Trade 1
-202510,2025,10,Dwarven Steel,3.1,Dwarven Steel,Trade 1
-202510,2025,10,Elven Bismuth,4.26,Elven Bismuth,Trade 2
-202510,2025,10,Enchanter's Munition,6.1,Enchanter's Munition,Trade 1
-202510,2025,10,Adventurers' Guild Button,3.94,Adventurers' Guild Button,Bonus
-202510,2025,10,Minotaur Hide,3.5,Minotaur Hide,Trade 1
-202510,2025,10,Mystic Silk,1,Mystic Silk,Trade 1
-202510,2025,10,Oil of Enchantment,5.75,Oil of Enchantment,Trade 2
-202510,2025,10,Philosopher's Stone,2.1,Philosopher's Stone,Trade 1
+202510,2025,10,2k Bonus,95,Mark of the 2nd Tenet,Premium
+202510,2025,10,8k Bonus,"1,450.00",Path to Enlightenment (Fragment 3),Premium
+202510,2025,10,Adventurers' Guild Button,3.25,Adventurers' Guild Button,Bonus
+202510,2025,10,Adventurers' Guild Button,5,Adventurers' Guild Button,Bonus
+202510,2025,10,Alchemist's Ink,3.3,Alchemist's Ink,Trade 1
+202510,2025,10,Alchemist's Ink,3.6,Alchemist's Ink,Trade 1
+202510,2025,10,Alchemist's Parchment,1.59,Alchemist's Parchment,Trade 1
+202510,2025,10,Alchemist's Parchment,3.1,Alchemist's Parchment,Trade 1
+202510,2025,10,Aragonite,9.25,Aragonite,Trade 2
+202510,2025,10,Aragonite,10.25,Aragonite,Trade 2
+202510,2025,10,Darkwood Plank,1.09,Darkwood Plank,Trade 1
+202510,2025,10,Darkwood Plank,1.23,Darkwood Plank,Trade 1
+202510,2025,10,Dwarven Steel,2.7,Dwarven Steel,Trade 1
+202510,2025,10,Dwarven Steel,2.9,Dwarven Steel,Trade 1
+202510,2025,10,Elven Bismuth,5.82,Elven Bismuth,Trade 2
+202510,2025,10,Elven Bismuth,9.25,Elven Bismuth,Trade 2
+202510,2025,10,Enchanter's Munition,6.28,Enchanter's Munition,Trade 1
+202510,2025,10,Enchanter's Munition,6.8,Enchanter's Munition,Trade 1
+202510,2025,10,Minotaur Hide,3.38,Minotaur Hide,Trade 1
+202510,2025,10,Minotaur Hide,3.56,Minotaur Hide,Trade 1
+202510,2025,10,Mystic Silk,1.05,Mystic Silk,Trade 1
+202510,2025,10,Mystic Silk,1.5,Mystic Silk,Trade 1
+202510,2025,10,Oil of Enchantment,8.5,Oil of Enchantment,Trade 2
+202510,2025,10,Oil of Enchantment,12.25,Oil of Enchantment,Trade 2
+202510,2025,10,Patron Pin,535,Patron Pin,Premium
+202510,2025,10,Philosopher's Stone,2.2,Philosopher's Stone,Trade 1
+202510,2025,10,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202510,2025,10,Preorder Bonus,0.53,Averon's Cherry Mead,Preorder
-202510,2025,10,Ultra Rare,60.25,Ultra Rare,Ultra Rare
+202510,2025,10,Treasure Chip,3.5,Treasure Chip (each),Preorder
+202510,2025,10,Treasure Chip,3.65,Treasure Chip (each),Preorder
+202510,2025,10,Ultra Rare,59.25,Ultra Rare,Ultra Rare
+202510,2025,10,Ultra Rare,75.01,Ultra Rare,Ultra Rare
+202510,2025,10,Wish Ring,130.02,Wish Ring,Premium
 202511,2025,11,Treasure Chip,4.1,Treasure Chip (each),Preorder
 202511,2025,11,1k Bonus,76.17,Ring of the 2nd Circle,Premium
 202511,2025,11,2k Bonus,85,Mark of the 2nd Tenet,Premium
@@ -5656,7 +5656,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202528,2025,28,Dwarven Steel,3.1,Dwarven Steel,Trade 1
 202528,2025,28,Elven Bismuth,10,Elven Bismuth,Trade 2
 202528,2025,28,Enchanter's Munition,6.1,Enchanter's Munition,Trade 1
-202528,2025,28,Adventurers' Guild Button,-,Adventurers' Guild Button,Bonus
+202528,2025,28,Adventurers' Guild Button,0.25,Adventurers' Guild Button,Bonus
 202528,2025,28,Minotaur Hide,3.88,Minotaur Hide,Trade 1
 202528,2025,28,Mystic Silk,1.2,Mystic Silk,Trade 1
 202528,2025,28,Oil of Enchantment,19,Oil of Enchantment,Trade 2
@@ -5715,7 +5715,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202529,2025,29,Dwarven Steel,2.5,Dwarven Steel,Trade 1
 202529,2025,29,Elven Bismuth,11.26,Elven Bismuth,Trade 2
 202529,2025,29,Enchanter's Munition,6.53,Enchanter's Munition,Trade 1
-202529,2025,29,Adventurers' Guild Button,-,Adventurers' Guild Button,Bonus
 202529,2025,29,Minotaur Hide,7.1,Minotaur Hide,Trade 1
 202529,2025,29,Mystic Silk,1,Mystic Silk,Trade 1
 202529,2025,29,Oil of Enchantment,19.01,Oil of Enchantment,Trade 2
@@ -5754,7 +5753,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202530,2025,30,Dwarven Steel,2.5,Dwarven Steel,Trade 1
 202530,2025,30,Elven Bismuth,11.04,Elven Bismuth,Trade 2
 202530,2025,30,Enchanter's Munition,6.43,Enchanter's Munition,Trade 1
-202530,2025,30,Adventurers' Guild Button,-,Adventurers' Guild Button,Bonus
 202530,2025,30,Minotaur Hide,4.03,Minotaur Hide,Trade 1
 202530,2025,30,Mystic Silk,1,Mystic Silk,Trade 1
 202530,2025,30,Oil of Enchantment,21,Oil of Enchantment,Trade 2
@@ -6027,7 +6025,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202539,2025,39,Dwarven Steel,2.5,Dwarven Steel,Trade 1
 202539,2025,39,Elven Bismuth,15.01,Elven Bismuth,Trade 2
 202539,2025,39,Enchanter's Munition,6.7,Enchanter's Munition,Trade 1
-202539,2025,39,Adventurers' Guild Button,-,Adventurers' Guild Button,Bonus
 202539,2025,39,Minotaur Hide,3.88,Minotaur Hide,Trade 1
 202539,2025,39,Mystic Silk,1.35,Mystic Silk,Trade 1
 202539,2025,39,Oil of Enchantment,26,Oil of Enchantment,Trade 2
@@ -7166,7 +7163,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202627,2026,27,Dwarven Steel,1.63,Dwarven Steel,Trade 1
 202627,2026,27,Elven Bismuth,25,Elven Bismuth,Trade 2
 202627,2026,27,Enchanter's Munition,6,Enchanter's Munition,Trade 1
-202627,2026,27,Adventurers' Guild Button,-,Adventurers' Guild Button,Bonus
 202627,2026,27,Minotaur Hide,2.53,Minotaur Hide,Trade 1
 202627,2026,27,Mystic Silk,0.5,Mystic Silk,Trade 1
 202627,2026,27,Oil of Enchantment,44,Oil of Enchantment,Trade 2
@@ -7364,7 +7360,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202634,2026,34,Minotaur Hide,3.5,Minotaur Hide,Trade 1
 202634,2026,34,Mystic Silk,1,Mystic Silk,Trade 1
 202634,2026,34,Oil of Enchantment,45,Oil of Enchantment,Trade 2
-202634,2026,34,Patron Pin,325,Patron Pin,Premium
+202634,2026,34,Patron Pin,235,Patron Pin,Premium
 202634,2026,34,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202634,2026,34,Ultra Rare,55,Ultra Rare,Ultra Rare
 202634,2026,34,Wish Ring,100,Wish Ring,Premium
@@ -7433,7 +7429,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202636,2026,36,Dwarven Steel,1.7,Dwarven Steel,Trade 1
 202636,2026,36,Elven Bismuth,41,Elven Bismuth,Trade 2
 202636,2026,36,Enchanter's Munition,5.13,Enchanter's Munition,Trade 1
-202636,2026,36,Adventurers' Guild Button,-,Adventurers' Guild Button,Bonus
 202636,2026,36,Minotaur Hide,2.38,Minotaur Hide,Trade 1
 202636,2026,36,Mystic Silk,1.3,Mystic Silk,Trade 1
 202636,2026,36,Oil of Enchantment,60,Oil of Enchantment,Trade 2
@@ -7612,41 +7607,40 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202642,2026,42,Oil of Enchantment,69.69,Oil of Enchantment,Trade 2
 202642,2026,42,Philosopher's Stone,1.4,Philosopher's Stone,Trade 1
 202642,2026,42,Ultra Rare,70.1,Ultra Rare,Ultra Rare
-202643,2026,43,"1,000 GP Gold Bar",9.24,"1,000 GP Gold Bar",Trade 2
-202643,2026,43,1k Bonus,106.11,Ring of the 1st Circle,Premium
-202643,2026,43,2k Bonus,121,Mark of the 1st Tenet,Premium
-202643,2026,43,8k Bonus,402,Path to Enlightenment (Fragment 4),Premium
-202643,2026,43,Alchemist's Ink,3.8,Alchemist's Ink,Trade 1
-202643,2026,43,Alchemist's Parchment,2,Alchemist's Parchment,Trade 1
-202643,2026,43,Aragonite,15,Aragonite,Trade 2
-202643,2026,43,Darkwood Plank,0.96,Darkwood Plank,Trade 1
-202643,2026,43,Dwarven Steel,1.85,Dwarven Steel,Trade 1
-202643,2026,43,Elven Bismuth,65,Elven Bismuth,Trade 2
-202643,2026,43,Enchanter's Munition,5.62,Enchanter's Munition,Trade 1
-202643,2026,43,Adventurers' Guild Button,3.84,Adventurers' Guild Button,Bonus
-202643,2026,43,Minotaur Hide,2.83,Minotaur Hide,Trade 1
-202643,2026,43,Mystic Silk,1.24,Mystic Silk,Trade 1
-202643,2026,43,Oil of Enchantment,75,Oil of Enchantment,Trade 2
-202643,2026,43,Patron Pin,295.05,Patron Pin,Premium
-202643,2026,43,Philosopher's Stone,2.2,Philosopher's Stone,Trade 1
-202643,2026,43,Ultra Rare,85,Ultra Rare,Ultra Rare
-202643,2026,43,Wish Ring,135.03,Wish Ring,Premium
-202643,2026,43,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
-202643,2026,43,1k Bonus,96.96,Ring of the 1st Circle,Premium
+202643,2026,43,"1,000 GP Gold Bar",7.75,"1,000 GP Gold Bar",Trade 2
+202643,2026,43,"1,000 GP Gold Bar",8.3,"1,000 GP Gold Bar",Trade 2
+202643,2026,43,1k Bonus,80,Ring of the 1st Circle,Premium
+202643,2026,43,1k Bonus,125,Ring of the 1st Circle,Premium
 202643,2026,43,2k Bonus,115,Mark of the 1st Tenet,Premium
-202643,2026,43,Alchemist's Ink,3.73,Alchemist's Ink,Trade 1
-202643,2026,43,Alchemist's Parchment,1.74,Alchemist's Parchment,Trade 1
-202643,2026,43,Aragonite,12.59,Aragonite,Trade 2
-202643,2026,43,Darkwood Plank,0.83,Darkwood Plank,Trade 1
-202643,2026,43,Dwarven Steel,1.67,Dwarven Steel,Trade 1
-202643,2026,43,Elven Bismuth,60,Elven Bismuth,Trade 2
-202643,2026,43,Enchanter's Munition,5,Enchanter's Munition,Trade 1
-202643,2026,43,Adventurers' Guild Button,3,Adventurers' Guild Button,Bonus
-202643,2026,43,Minotaur Hide,2.63,Minotaur Hide,Trade 1
-202643,2026,43,Mystic Silk,1,Mystic Silk,Trade 1
-202643,2026,43,Oil of Enchantment,69.69,Oil of Enchantment,Trade 2
-202643,2026,43,Philosopher's Stone,1.4,Philosopher's Stone,Trade 1
-202643,2026,43,Ultra Rare,70.1,Ultra Rare,Ultra Rare
+202643,2026,43,2k Bonus,125,Mark of the 1st Tenet,Premium
+202643,2026,43,8k Bonus,205,Path to Enlightenment (Fragment 4),Premium
+202643,2026,43,Adventurers' Guild Button,2.8,Adventurers' Guild Button,Bonus
+202643,2026,43,Alchemist's Ink,3,Alchemist's Ink,Trade 1
+202643,2026,43,Alchemist's Ink,3.75,Alchemist's Ink,Trade 1
+202643,2026,43,Alchemist's Parchment,1.4,Alchemist's Parchment,Trade 1
+202643,2026,43,Alchemist's Parchment,1.53,Alchemist's Parchment,Trade 1
+202643,2026,43,Aragonite,12.04,Aragonite,Trade 2
+202643,2026,43,Aragonite,13.04,Aragonite,Trade 2
+202643,2026,43,Darkwood Plank,1.03,Darkwood Plank,Trade 1
+202643,2026,43,Darkwood Plank,1.13,Darkwood Plank,Trade 1
+202643,2026,43,Dwarven Steel,1.7,Dwarven Steel,Trade 1
+202643,2026,43,Dwarven Steel,2,Dwarven Steel,Trade 1
+202643,2026,43,Elven Bismuth,80,Elven Bismuth,Trade 2
+202643,2026,43,Elven Bismuth,86,Elven Bismuth,Trade 2
+202643,2026,43,Enchanter's Munition,6.27,Enchanter's Munition,Trade 1
+202643,2026,43,Enchanter's Munition,6.5,Enchanter's Munition,Trade 1
+202643,2026,43,Minotaur Hide,3.03,Minotaur Hide,Trade 1
+202643,2026,43,Minotaur Hide,3.53,Minotaur Hide,Trade 1
+202643,2026,43,Mystic Silk,0.86,Mystic Silk,Trade 1
+202643,2026,43,Mystic Silk,1.13,Mystic Silk,Trade 1
+202643,2026,43,Oil of Enchantment,75,Oil of Enchantment,Trade 2
+202643,2026,43,Oil of Enchantment,81,Oil of Enchantment,Trade 2
+202643,2026,43,Patron Pin,306,Patron Pin,Premium
+202643,2026,43,Philosopher's Stone,1.05,Philosopher's Stone,Trade 1
+202643,2026,43,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
+202643,2026,43,Ultra Rare,66,Ultra Rare,Ultra Rare
+202643,2026,43,Ultra Rare,80,Ultra Rare,Ultra Rare
+202643,2026,43,Wish Ring,140.11,Wish Ring,Premium
 202644,2026,44,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202644,2026,44,1k Bonus,64,Ring of the 1st Circle,Premium
 202644,2026,44,2k Bonus,87,Mark of the 1st Tenet,Premium
