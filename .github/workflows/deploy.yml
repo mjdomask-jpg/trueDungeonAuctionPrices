@@ -21,13 +21,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Full history so the build can read prices.csv's last-commit date
           # for the footer's "prices updated" line (git log needs the commit
           # that touched the file, which a shallow clone may not include).
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
