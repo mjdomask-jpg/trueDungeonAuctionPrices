@@ -169,8 +169,10 @@ Two views matter most to the community:
 Beyond simply buying tokens, players can **craft** — or "transmute" — a more powerful
 token from a set of cheaper ones, much like a crafting system in a computer RPG. Each
 transmute has a **recipe**: a bill of materials listing quantities of other tokens
-required to make it. Recipe ingredients are mostly trade goods and `Ultra Rare`s, and
-occasionally `Premium` items.
+required to make it. Recipe ingredients are mostly trade goods and `Ultra Rare`s,
+and occasionally `Premium` items. A meaningful minority come from **treasure**
+rather than auctions — the `Treasure Chest` category, covering Monster Trophies
+and chase sets — and those are never auctioned at all (see below).
 
 Crucially, **transmuted tokens are not sold in the auctions.** The auctions distribute
 tokens bought directly from the game's first-party creator; transmutes are made by players
@@ -231,9 +233,13 @@ so build costs remain complete.
 
 ## Onyx orders
 
-**Onyx** is a special order type. Instead of letting a buyer choose specific (non-chase)
-Ultra Rares, an Onyx order replaces a portion of the Ultra Rares with **chase** versions — a
-fixed list of one of each Ultra Rare in the set. Onyx tokens sell through the auctions like
+**Onyx** is a special order type. Instead of letting a buyer choose specific Ultra Rares,
+an Onyx order replaces a portion of them with versions in an **alternate color**
+(black/onyx) — a fixed list of one of each Ultra Rare in the set.
+
+Onyx is **not** related to *chase*. Chase tokens are treasure-only tokens forming a
+numbered set (1 of 20, 1 of 40) whose complete set feeds a special transmute; they never
+appear in an auction. The two are both scarce and otherwise unconnected. Onyx tokens sell through the auctions like
 other components and have their own price history, tracked separately from the main
 Ultra Rare list.
 
@@ -272,7 +278,9 @@ website is ultimately built to present.
 | **Build-vs-buy** | The decision to craft a transmute yourself vs. buy the finished one from a reseller. |
 | **Source token** | A lower-tier token consumed as an ingredient when crafting a higher-tier one (e.g. a Relic inside a Legendary). |
 | **Tier / level** | A transmute's rank on the upgrade ladder (Relic, Legendary, Arcanum, …; Safehold V–I). |
-| **Onyx** | A special order that swaps part of the Ultra Rares for a fixed set of chase versions. |
+| **Onyx** | A special order that swaps part of a buyer's Ultra Rares for versions with an alternate color (black/onyx). Unrelated to *chase*. |
+| **Chase** | Treasure-only tokens forming a numbered set (1 of 20, 1 of 40); a complete set feeds a special transmute. Never auctioned. |
+| **Treasure Chest** | The category for treasure-sourced recipe ingredients — Monster Trophy, chase sets. Priced off-auction. |
 | **Golden Fleece** | A recipe ingredient not sold at auction, whose price is tracked manually. |
 | **Augment** | A prior-season transmute an auctioneer may bundle into an auction to help it fund. |
 | **Trade good** | A `Trade 1` or `Trade 2` token; the raw material of transmuting. |
