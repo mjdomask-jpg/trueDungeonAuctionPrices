@@ -252,28 +252,37 @@ change.
 | `auctionSeason` | **Yes** | Four-digit year, e.g. `2026`. |
 | `auctionNumber` | **Yes** | Sequence within the season, e.g. `47`. |
 | `auctionName` | **Yes** | Free text, shown to users. May contain commas — the sheet quotes them correctly on export. |
-| `Status` | **Yes** | One of `Closed`, `Failed`, `Open`. |
-| `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated for every season back to 2018 (the 2026-08-14 backfill; `n/a` no longer appears). Blank only for the one `Open` auction and one 2025 `Failed` row. See the padding warning below. |
+| `Status` | **Yes** | **Derived, not typed.** The sheet computes it as `IF(closeDate = "", "Open", "Closed")`, so it is `Open` exactly while `closeDate` is empty and `Closed` once you fill it in. **`Failed` cannot be produced by that formula** — see the rules below. All 289 rows read `Closed` today. |
+| `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated on **all 289 rows** — none blank, none `n/a`. Because `Status` keys off this column, clearing it is what makes an auction show as live. See the padding warning below. |
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
 | `Link` | Optional | URL to the original forum thread; the "Auction link" on the explorer's expanded cards and, always visible, on the open-auctions banner/section. Fill it in especially for any `Open` auction — it's the whole point of surfacing a live auction. |
-| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. **Populated on all 294 auctions** since the backfill. |
-| `daysToClose` | Optional | Whole days the auction ran. The Analytics days-to-close chart and every "avg days to close" figure. An auction with this blank is **left out of those averages**, not counted as zero. Populated back to 2018; 6 rows are still blank (2025 ×4, 2026 ×2, all `Failed`/`Open`). |
+| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. **Populated on all 289 rows** since the backfill. |
+| `daysToClose` | Optional | Whole days the auction ran, computed as `MAX(closeDate - openDate, 1)` — the floor of `1` is why same-day auctions read `1`, not `0`. Drives the Analytics days-to-close chart and every "avg days to close" figure; a row that isn't a number is **left out of those averages**, not counted as zero. **Populated on all 289 rows** — none blank, none `n/a`, so the averages cover every auction. Four rows read `n/a` until 2026-08-20, when their formulas were repaired: each had lost its `closeDate` reference and evaluated to `#REF!`, which the surrounding `IFERROR` quietly turned into `n/a`. Worth knowing as a failure shape — a broken reference here degrades to a plausible-looking string rather than an error. |
 | `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. **Populated on every season back to 2018.** They are derived from `openDate`/`closeDate`, so a wrong date shows up here as an out-of-range month — see the gotcha below. |
 | `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced directly (they feed Analytics → Funding & Context). Present for 2018–2021 and 2023–2026; **the whole 2022 season is still blank — backfill queued for the next round of updates.** |
 
 ### Rules that matter
 
-- **Only `Status = Closed` auctions are counted.** `Failed` and `Open` auctions
-  are loaded but excluded from every count and statistic. The vast majority of
-  rows are `Closed`; a handful are `Failed`, and any currently-live auctions are
-  `Open`.
+- **Only `Status = Closed` auctions are counted.** Anything else is loaded but
+  excluded from every count and statistic. **Today that is every row: all 289
+  are `Closed`, and there are no `Open` or `Failed` rows at all.**
+- **`Failed` is not a value you can set.** `Status` is the formula
+  `IF(closeDate = "", "Open", "Closed")`, which can only ever produce those two
+  strings. A failed auction is therefore **deleted** rather than marked, which
+  is why `auctionNumber` sequences have permanent gaps — `202518`, `202525`,
+  `202531`, `20263` and `202638` are the known ones. A gap is expected; a
+  *duplicate* number is not.
+  > The site treats `Failed` identically to any non-`Closed` row, so nothing
+  > renders differently either way. Recording failures instead of deleting them
+  > would need a separate flag column feeding
+  > `IF(failed, "Failed", IF(closeDate = "", "Open", "Closed"))`.
 - **`Open` auctions are surfaced separately** by the live "open auctions" banner
   (top of Prices) and the "Open auctions" section (top of Auction Data). Both
-  read `Status = Open` directly and are independent of every page filter, so a
-  live auction must be marked `Open` to appear — and switched back to `Closed`
-  (or `Failed`) when it ends, or it keeps showing as open.
+  read `Status = Open` directly and are independent of every page filter. Since
+  `Status` is derived, **an auction is live exactly while `closeDate` is empty**
+  — fill that column in and it stops showing as open.
 - **`closeDate` drives the "Last 5" labels.** The Prices page shows the five most
   recent auctions in a season by date. A missing or wrong `closeDate` puts the
   window in the wrong place.
@@ -348,23 +357,26 @@ Auction 202112 was in exactly this state until 2026-08-14. **Anything outside
 `1`–`13` is a typo in the date, not a real month** — scan that column after any
 date edit, since nothing validates this file.
 
-Listing a **live** auction is the mirror: set `Status` to `Open` and fill in
-`Link` and `openDate`. The open-auctions banner/section shows the name as a link
-and an "opened N days ago" line, so both fields are what make a live listing
-useful. When it ends, switch `Status` back to `Closed`/`Failed` (and add
-`closeDate`) or it will keep showing as open.
+Listing a **live** auction is the mirror: **leave `closeDate` empty** and fill in
+`Link` and `openDate`. Do not try to type `Open` into `Status` — that column is a
+formula and will overwrite you; an empty `closeDate` is what makes the auction
+live. The open-auctions banner/section shows the name as a link and an "opened N
+days ago" line, so `Link` and `openDate` are what make the listing useful. When
+it ends, fill in `closeDate` and `Status` flips to `Closed` on its own.
 
 ---
 
 ## `prices.csv`
 
-**Export from:** the `auctionPrices` tab → save as **`prices.csv`** (note the
-name change)
+**Export from:** the `prices` tab → save as `prices.csv`
+
+> Not `auctionPricesOLD` — that is a retired copy that still recalculates. Check
+> the tab name before you download.
 
 **Drives:** the Prices page, Timelines, Compare Years, and every build cost on
 the Transmutes page. This is the single most important file.
 
-**Update when:** an auction closes and you have its results. 7,721 rows today,
+**Update when:** an auction closes and you have its results. 7,752 rows today,
 seasons 2018–2026 (2018 arrived with the 2026-08-14 backfill and is now the
 earliest priced season — every pre-2018 recipe falls back to it).
 
@@ -384,8 +396,13 @@ earliest priced season — every pre-2018 recipe falls back to it).
 
 - **One row per sale, not per token.** A token selling three times in one
   auction is three rows. Timelines average them into a single point per auction.
-- **`Price` must be numeric.** A `-` is used for a no-sale; those rows are
-  dropped rather than counted as $0. Six such rows exist today.
+- **`Price` must be numeric — always.** There is **no** no-sale marker. Six rows
+  once carried a `-`, which looked like one; every one turned out to be a
+  copy/paste artifact from the pivot table, and all six had real sales behind
+  them. They were corrected on 2026-08-20 and **no non-numeric price remains**.
+  If you see a `-`, treat it as a transcription bug and go back to the source,
+  not as "this didn't sell". The loader silently drops such rows, so a stray one
+  costs you a sale with no warning.
 - **This file is the source of truth for `Display Name` and `Category`.** If it
   disagrees with `tokenMetadata.csv`, `prices.csv` wins and `tokenMetadata`
   should be corrected to match.
@@ -596,7 +613,7 @@ The `IsSource` flag is what makes the "I already own this" toggle work.
 
 ## `offAuctionPrices.csv`
 
-**Export from:** the `pricesFleece` tab → save as **`offAuctionPrices.csv`**
+**Export from:** the `offAuctionPrices` tab → save as `offAuctionPrices.csv`
 (note the name change)
 
 **Drives:** prices for tokens that exist as recipe ingredients but are never sold
@@ -637,7 +654,7 @@ Recipes must reference `Golden Fleece`.
 
 ## `contextItems.csv`
 
-**Export from:** the `augmentData` tab → save as **`contextItems.csv`** (note the
+**Export from:** the `contextItems` tab → save as `contextItems.csv` (note the
 name change). Only columns A–G are used.
 
 **Drives:** the auction context layer (item provenance + the withheld estimate).
@@ -841,20 +858,28 @@ checked against the actual CSV headers and against the parsers in
 `src/lib/data.ts` and `src/lib/transmutes.ts`, not written from memory. Do the
 same — a runbook that is confidently wrong is worse than none.
 
-### Known inaccuracy risk
+### Tab names
 
-The **tab names** in each "Export from" line are inferred from the filenames
-Google Sheets produced on previous exports (`auctionData - tokenMetadata.csv`
-implies a spreadsheet named `auctionData` with a tab named `tokenMetadata`). If
-you rename a tab, the download name changes but the required filename in
-`public/data/` does not — correct the "Export from" line here when that happens.
+Verified against the workbook export of **2026-08-20**. Earlier versions of this
+section inferred tab names from download filenames and got three of them wrong;
+these are read from the workbook itself.
 
-Four files are already named differently from their tab, so the rename in step 2
-is not optional:
+The full tab list is:
+
+`auctionMetadata`, `prices`, `pricesOnyx`, `contextItems`, `tokenMetadata`,
+`transmuteRecipes`, `offAuctionPrices`, `rawPricesData`, `trentNormalization`,
+`startDates`, `canonical names` — plus two retired tabs, **`auctionPricesOLD`**
+and **`transmutesOLD`**, which still recalculate and must never be exported.
+
+Only one tab is named differently from the file it becomes, so that rename in
+step 2 is not optional:
 
 | Tab | Download | Must be saved as |
 |---|---|---|
-| `auctionPrices` | `auctionData - auctionPrices.csv` | `prices.csv` |
 | `pricesOnyx` | `auctionData - pricesOnyx.csv` | `onyx.csv` |
-| `pricesFleece` | `auctionData - pricesFleece.csv` | `offAuctionPrices.csv` |
-| `augmentData` | `auctionData - augmentData.csv` | `contextItems.csv` |
+
+Every other tab shares its name with its target file, so the only change needed
+is stripping Google's `auctionData - ` prefix.
+
+If you rename a tab, the download name changes but the required filename in
+`public/data/` does not — correct the "Export from" line here when that happens.

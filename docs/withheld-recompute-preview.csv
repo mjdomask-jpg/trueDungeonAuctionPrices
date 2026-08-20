@@ -3,67 +3,67 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20183,4th Tooth of Cavadar,1,1,-92.25,-95.0,-2.75,recomputed
 20236,Ring of the 4th Circle,2,5,-169.6,-164.0,5.6,recomputed
 20236,Ring of the 4th Circle,1,5,-84.8,-82.0,2.8,recomputed
-20236,Ultra Rare,4,5,-320.9,-384.0,-63.1,recomputed
+20236,Ultra Rare,4,5,-320.85,-384.0,-63.15,recomputed
 20236,Adventurers' Guild Button,2,5,-10.5,-2.0,8.5,recomputed
 20236,Amulet of Magnifying,1,5,-0.51,-0.8,-0.29,recomputed
 20236,Amulet of Magnifying,1,5,-0.51,-0.8,-0.29,recomputed
-202312,Patron Pin,1,5,-318.56,-434.0,-115.44,recomputed
-202327,Patron Pin,1,5,-318.56,-501.09,-182.53,recomputed
+202312,Patron Pin,1,5,-318.11,-434.0,-115.89,recomputed
+202327,Patron Pin,1,5,-318.11,-501.09,-182.98,recomputed
 202327,Path to Enlightenment (Fragment 1),1,5,-541.64,-533.6,8.04,recomputed
 202331,Patron Pin,1,5,-350.57,-488.29,-137.72,recomputed
 202334,Patron Pin,1,5,-350.57,-449.2,-98.63,recomputed
 202349,Ultra Rare,2,5,-184.41,-174.76,9.65,recomputed
 202350,Path to Enlightenment (Fragment 1),1,5,-541.64,-615.4,-73.76,recomputed
 202351,Path to Enlightenment (Fragment 1),1,5,-541.64,-615.4,-73.76,recomputed
-20242,Ring of the 3rd Circle,1,10,-104.21,-108.6,-4.39,recomputed
-20242,Ring of the 3rd Circle,1,10,-104.21,-108.6,-4.39,recomputed
+20242,Ring of the 3rd Circle,1,10,-104.36,-108.6,-4.24,recomputed
+20242,Ring of the 3rd Circle,1,10,-104.36,-108.6,-4.24,recomputed
 20242,Mark of the 3rd Tenet,1,10,-98.07,-90.8,7.27,recomputed
 20242,Adventurers' Guild Button,1,9,,-1.03,,FIXED_was_error
 20242,Adventurers' Guild Button,1,9,,-1.03,,FIXED_was_error
-20244,Ring of the 3rd Circle,1,10,-104.21,-116.22,-12.01,recomputed
+20244,Ring of the 3rd Circle,1,10,-104.36,-116.22,-11.86,recomputed
 20244,Mark of the 3rd Tenet,1,10,-98.07,-92.83,5.24,recomputed
 20244,Treasure Chip (each),1,10,-132.86,-2.34,130.52,recomputed
 20246,Patron Pin,1,5,-392.49,-532.83,-140.34,recomputed
 20246,Path to Enlightenment (Fragment 2),1,5,-1049.27,-796.0,253.27,recomputed
-202413,Ring of the 3rd Circle,1,8,-104.21,-113.62,-9.42,recomputed
-202413,Ring of the 3rd Circle,1,8,-104.21,-113.62,-9.42,recomputed
-202413,Ring of the 3rd Circle,1,8,-104.21,-113.62,-9.42,recomputed
-202413,Ring of the 3rd Circle,1,8,-104.21,-113.62,-9.42,recomputed
+202413,Ring of the 3rd Circle,1,8,-104.36,-113.62,-9.26,recomputed
+202413,Ring of the 3rd Circle,1,8,-104.36,-113.62,-9.26,recomputed
+202413,Ring of the 3rd Circle,1,8,-104.36,-113.62,-9.26,recomputed
+202413,Ring of the 3rd Circle,1,8,-104.36,-113.62,-9.26,recomputed
 202413,Mark of the 3rd Tenet,1,9,-98.07,-102.44,-4.37,recomputed
 202413,Mark of the 3rd Tenet,1,9,-98.07,-102.44,-4.37,recomputed
 202415,Path to Enlightenment (Fragment 2),1,5,-1049.27,-764.0,285.27,recomputed
-202415,Ring of the 3rd Circle,1,8,-104.21,-99.12,5.08,recomputed
-202415,Ring of the 3rd Circle,1,8,-104.21,-99.12,5.08,recomputed
-202415,Ring of the 3rd Circle,1,8,-104.21,-99.12,5.08,recomputed
-202415,Ring of the 3rd Circle,1,8,-104.21,-99.12,5.08,recomputed
+202415,Ring of the 3rd Circle,1,8,-104.36,-99.12,5.24,recomputed
+202415,Ring of the 3rd Circle,1,8,-104.36,-99.12,5.24,recomputed
+202415,Ring of the 3rd Circle,1,8,-104.36,-99.12,5.24,recomputed
+202415,Ring of the 3rd Circle,1,8,-104.36,-99.12,5.24,recomputed
 202415,Patron Pin,1,5,-392.49,-513.23,-120.74,recomputed
-20251,Ring of the 2nd Circle,2,10,-157.72,-170.6,-12.88,recomputed
-20251,Mark of the 2nd Tenet,2,10,-161.54,-158.91,2.63,recomputed
-20251,Patron Pin,1,5,-310.52,-352.19,-41.67,recomputed
-20251,Path to Enlightenment (Fragment 3),1,5,-1330.89,-1379.4,-48.51,recomputed
-20251,Wish Ring,1,5,-167.38,-135.2,32.18,recomputed
-20251,Aragonite,78,10,-761.77,-751.53,10.24,recomputed
-20251,Alchemist's Ink,78,10,-234.02,-237.82,-3.8,recomputed
-20251,Alchemist's Parchment,106,10,-245.4,-257.9,-12.5,recomputed
-20251,Darkwood Plank,226,10,-309.74,-269.39,40.35,recomputed
-20251,Dwarven Steel,80,10,-231.02,-222.08,8.94,recomputed
-20251,Elven Bismuth,24,10,-277.54,-278.52,-0.98,recomputed
-20251,Enchanter's Munition,40,10,-263.61,-262.08,1.53,recomputed
-20251,Minotaur Hide,96,10,-410.06,-429.41,-19.35,recomputed
-20251,Mystic Silk,230,10,-320.44,-281.52,38.92,recomputed
-20251,Oil of Enchantment,20,10,-346.21,-312.3,33.91,recomputed
-20251,Philosopher's Stone,220,10,-509.73,-507.98,1.75,recomputed
-20251,"1,000 GP Gold Bar",90,10,-858.49,-838.26,20.23,recomputed
-20251,Wish Ring,2,5,-261.72,-270.4,-8.68,recomputed
-20251,Ultra Rare,15,10,-1049.49,-1059.46,-9.97,recomputed
-20255,Ring of the 2nd Circle,4,9,-315.43,-316.0,-0.57,recomputed
-20255,Mark of the 2nd Tenet,2,8,-161.54,-161.94,-0.4,recomputed
-202520,Ring of the 2nd Circle,4,8,-315.43,-307.5,7.93,recomputed
-202545,Path to Enlightenment (Fragment 3),1,5,-1330.89,-1174.0,156.89,recomputed
-20264,Ring of the 1st Circle,4,10,-449.06,-467.48,-18.42,recomputed
-20264,Mark of the 1st Tenet,3,10,-342.09,-364.95,-22.86,recomputed
-20266,Ring of the 1st Circle,4,10,-449.06,-448.2,0.86,recomputed
-202632,Patron Pin,1,5,-367.06,-369.0,-1.94,recomputed
-202634,Oil of Enchantment,2,8,-86.52,-87.67,-1.16,recomputed
-202634,Elven Bismuth,2,8,-62.34,-65.28,-2.94,recomputed
-202645,Ring of the 1st Circle,8,10,-898.12,-755.31,142.81,recomputed
+20251,Ring of the 2nd Circle,2,10,-157.59,-170.6,-13.01,recomputed
+20251,Mark of the 2nd Tenet,2,10,-162.07,-158.91,3.16,recomputed
+20251,Patron Pin,1,5,-309.45,-352.19,-42.74,recomputed
+20251,Path to Enlightenment (Fragment 3),1,5,-1331.72,-1379.4,-47.68,recomputed
+20251,Wish Ring,1,5,-167.41,-135.2,32.21,recomputed
+20251,Aragonite,78,10,-766.05,-751.53,14.52,recomputed
+20251,Alchemist's Ink,78,10,-233.67,-237.82,-4.15,recomputed
+20251,Alchemist's Parchment,106,10,-244.89,-257.9,-13.01,recomputed
+20251,Darkwood Plank,226,10,-309.86,-269.39,40.47,recomputed
+20251,Dwarven Steel,80,10,-230.17,-222.08,8.09,recomputed
+20251,Elven Bismuth,24,10,-278.36,-278.52,-0.16,recomputed
+20251,Enchanter's Munition,40,10,-264.07,-262.08,1.99,recomputed
+20251,Minotaur Hide,96,10,-408.36,-429.41,-21.05,recomputed
+20251,Mystic Silk,230,10,-320.28,-281.52,38.76,recomputed
+20251,Oil of Enchantment,20,10,-348,-312.3,35.7,recomputed
+20251,Philosopher's Stone,220,10,-509.99,-507.98,2.01,recomputed
+20251,"1,000 GP Gold Bar",90,10,-859.54,-838.26,21.28,recomputed
+20251,Wish Ring,2,5,-261.93,-270.4,-8.47,recomputed
+20251,Ultra Rare,15,10,-1050.23,-1059.46,-9.23,recomputed
+20255,Ring of the 2nd Circle,4,9,-315.18,-316.0,-0.82,recomputed
+20255,Mark of the 2nd Tenet,2,8,-162.07,-161.94,0.13,recomputed
+202520,Ring of the 2nd Circle,4,8,-315.18,-307.5,7.68,recomputed
+202545,Path to Enlightenment (Fragment 3),1,5,-1331.72,-1174.0,157.72,recomputed
+20264,Ring of the 1st Circle,4,10,-449.16,-467.48,-18.32,recomputed
+20264,Mark of the 1st Tenet,3,10,-342.24,-364.95,-22.71,recomputed
+20266,Ring of the 1st Circle,4,10,-449.16,-448.2,0.96,recomputed
+202632,Patron Pin,1,5,-365.26,-369.0,-3.74,recomputed
+202634,Oil of Enchantment,2,8,-86.79,-87.67,-0.88,recomputed
+202634,Elven Bismuth,2,8,-63.35,-65.28,-1.93,recomputed
+202645,Ring of the 1st Circle,8,10,-898.32,-756.86,141.46,recomputed
