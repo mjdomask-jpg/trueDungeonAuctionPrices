@@ -115,8 +115,10 @@ event**, not the 2026 season. Never read a V-number as a year.
 > things. Do not reuse this list outside the auction domain.
 
 Every component sold falls into a **category** — `Trade 1`, `Trade 2`, `Ultra Rare`,
-`Premium`, `Bonus`, `Preorder`, or `Golden Ticket`. (`Trade 1` and `Trade 2` are the
-site's split of the single community "Trade Good" class, kept on one shared color.) These aren't just internal
+`Premium`, `Bonus`, `Preorder`, or `Golden Ticket`. (`Trade 1` and `Trade 2` are not a
+site invention: trade goods run a real ladder, `Trade 1` through `Trade 5`, and
+these are its first two rungs. Only they appear in auction data — higher levels
+turn up in treasure. They share one color by community convention.) These aren't just internal
 labels: within the community each category has a **customarily associated color**,
 familiar from the tokens and from years of the maintainer's spreadsheets. Members
 recognize a category partly by its color, so the site color-codes each category's
