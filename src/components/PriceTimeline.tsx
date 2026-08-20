@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { type TimelinePoint } from '../lib/data';
 import { money, money0, fmtCloseDate } from '../lib/format';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
-import { TOKEN_ABBREVIATIONS } from '../lib/tokenAbbreviations';
+import { tokenAbbreviation } from '../lib/tokenAbbreviations';
 
 // Hand-rolled multi-series SVG line chart — zero dependencies, themes via CSS
 // variables. Each series is one token in a group; they share this chart's x
@@ -129,7 +129,7 @@ export function PriceTimeline({ series, title }: { series: Series[]; title: stri
   const legendOrder = series
     .map((_, si) => si)
     .sort((a, b) => series[a].label.localeCompare(series[b].label));
-  const legendLabel = (s: Series) => (narrow ? TOKEN_ABBREVIATIONS[s.label] ?? s.label : s.label);
+  const legendLabel = (s: Series) => (narrow ? tokenAbbreviation(s.label) : s.label);
 
   // Line colour: explicit override → a lone series takes its category colour
   // (matching the heading) → otherwise the categorical palette for distinctness.

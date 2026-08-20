@@ -10,7 +10,7 @@ key,auctionSeason,Item,Display Name,Category
 2012Dwarven Steel,2012,Dwarven Steel,Dwarven Steel,Trade 1
 2012Elven Bismuth,2012,Elven Bismuth,Elven Bismuth,Trade 2
 2012Enchanter's Munition,2012,Enchanter's Munition,Enchanter's Munition,Trade 1
-2012Golden Fleece,2012,Golden Fleece,Golden Fleece,Golden Fleece
+2012Golden Fleece,2012,Golden Fleece,Golden Fleece,Trade 3
 2012Minotaur Hide,2012,Minotaur Hide,Minotaur Hide,Trade 1
 2012Monster Trophy,2012,Monster Trophy,Monster Trophy,Treasure Chest
 2012Mystic Silk,2012,Mystic Silk,Mystic Silk,Trade 1
@@ -35,7 +35,7 @@ key,auctionSeason,Item,Display Name,Category
 2013Dwarven Steel,2013,Dwarven Steel,Dwarven Steel,Trade 1
 2013Elven Bismuth,2013,Elven Bismuth,Elven Bismuth,Trade 2
 2013Enchanter's Munition,2013,Enchanter's Munition,Enchanter's Munition,Trade 1
-2013Golden Fleece,2013,Golden Fleece,Golden Fleece,Golden Fleece
+2013Golden Fleece,2013,Golden Fleece,Golden Fleece,Trade 3
 2013Minotaur Hide,2013,Minotaur Hide,Minotaur Hide,Trade 1
 2013Monster Trophy,2013,Monster Trophy,Monster Trophy,Treasure Chest
 2013Mystic Silk,2013,Mystic Silk,Mystic Silk,Trade 1
@@ -60,7 +60,7 @@ key,auctionSeason,Item,Display Name,Category
 2014Dwarven Steel,2014,Dwarven Steel,Dwarven Steel,Trade 1
 2014Elven Bismuth,2014,Elven Bismuth,Elven Bismuth,Trade 2
 2014Enchanter's Munition,2014,Enchanter's Munition,Enchanter's Munition,Trade 1
-2014Golden Fleece,2014,Golden Fleece,Golden Fleece,Golden Fleece
+2014Golden Fleece,2014,Golden Fleece,Golden Fleece,Trade 3
 2014Minotaur Hide,2014,Minotaur Hide,Minotaur Hide,Trade 1
 2014Monster Trophy,2014,Monster Trophy,Monster Trophy,Treasure Chest
 2014Mystic Silk,2014,Mystic Silk,Mystic Silk,Trade 1
@@ -87,7 +87,7 @@ key,auctionSeason,Item,Display Name,Category
 2015Dwarven Steel,2015,Dwarven Steel,Dwarven Steel,Trade 1
 2015Elven Bismuth,2015,Elven Bismuth,Elven Bismuth,Trade 2
 2015Enchanter's Munition,2015,Enchanter's Munition,Enchanter's Munition,Trade 1
-2015Golden Fleece,2015,Golden Fleece,Golden Fleece,Golden Fleece
+2015Golden Fleece,2015,Golden Fleece,Golden Fleece,Trade 3
 2015Minotaur Hide,2015,Minotaur Hide,Minotaur Hide,Trade 1
 2015Monster Trophy,2015,Monster Trophy,Monster Trophy,Treasure Chest
 2015Mystic Silk,2015,Mystic Silk,Mystic Silk,Trade 1
@@ -113,7 +113,7 @@ key,auctionSeason,Item,Display Name,Category
 2016Dwarven Steel,2016,Dwarven Steel,Dwarven Steel,Trade 1
 2016Elven Bismuth,2016,Elven Bismuth,Elven Bismuth,Trade 2
 2016Enchanter's Munition,2016,Enchanter's Munition,Enchanter's Munition,Trade 1
-2016Golden Fleece,2016,Golden Fleece,Golden Fleece,Golden Fleece
+2016Golden Fleece,2016,Golden Fleece,Golden Fleece,Trade 3
 2016Minotaur Hide,2016,Minotaur Hide,Minotaur Hide,Trade 1
 2016Monster Trophy,2016,Monster Trophy,Monster Trophy,Treasure Chest
 2016Mystic Silk,2016,Mystic Silk,Mystic Silk,Trade 1
@@ -140,7 +140,7 @@ key,auctionSeason,Item,Display Name,Category
 2017Dwarven Steel,2017,Dwarven Steel,Dwarven Steel,Trade 1
 2017Elven Bismuth,2017,Elven Bismuth,Elven Bismuth,Trade 2
 2017Enchanter's Munition,2017,Enchanter's Munition,Enchanter's Munition,Trade 1
-2017Golden Fleece,2017,Golden Fleece,Golden Fleece,Golden Fleece
+2017Golden Fleece,2017,Golden Fleece,Golden Fleece,Trade 3
 2017Minotaur Hide,2017,Minotaur Hide,Minotaur Hide,Trade 1
 2017Monster Trophy,2017,Monster Trophy,Monster Trophy,Treasure Chest
 2017Mystic Silk,2017,Mystic Silk,Mystic Silk,Trade 1
@@ -168,7 +168,7 @@ key,auctionSeason,Item,Display Name,Category
 2018Dwarven Steel,2018,Dwarven Steel,Dwarven Steel,Trade 1
 2018Elven Bismuth,2018,Elven Bismuth,Elven Bismuth,Trade 2
 2018Enchanter's Munition,2018,Enchanter's Munition,Enchanter's Munition,Trade 1
-2018Golden Fleece,2018,Golden Fleece,Golden Fleece,Golden Fleece
+2018Golden Fleece,2018,Golden Fleece,Golden Fleece,Trade 3
 2018Minotaur Hide,2018,Minotaur Hide,Minotaur Hide,Trade 1
 2018Monster Trophy,2018,Monster Trophy,Monster Trophy,Treasure Chest
 2018Mystic Silk,2018,Mystic Silk,Mystic Silk,Trade 1
@@ -195,7 +195,7 @@ key,auctionSeason,Item,Display Name,Category
 2019Dwarven Steel,2019,Dwarven Steel,Dwarven Steel,Trade 1
 2019Elven Bismuth,2019,Elven Bismuth,Elven Bismuth,Trade 2
 2019Enchanter's Munition,2019,Enchanter's Munition,Enchanter's Munition,Trade 1
-2019Golden Fleece,2019,Golden Fleece,Golden Fleece,Golden Fleece
+2019Golden Fleece,2019,Golden Fleece,Golden Fleece,Trade 3
 2019Minotaur Hide,2019,Minotaur Hide,Minotaur Hide,Trade 1
 2019Monster Trophy,2019,Monster Trophy,Monster Trophy,Treasure Chest
 2019Mystic Silk,2019,Mystic Silk,Mystic Silk,Trade 1
@@ -222,7 +222,7 @@ key,auctionSeason,Item,Display Name,Category
 2020Dwarven Steel,2020,Dwarven Steel,Dwarven Steel,Trade 1
 2020Elven Bismuth,2020,Elven Bismuth,Elven Bismuth,Trade 2
 2020Enchanter's Munition,2020,Enchanter's Munition,Enchanter's Munition,Trade 1
-2020Golden Fleece,2020,Golden Fleece,Golden Fleece,Golden Fleece
+2020Golden Fleece,2020,Golden Fleece,Golden Fleece,Trade 3
 2020Minotaur Hide,2020,Minotaur Hide,Minotaur Hide,Trade 1
 2020Monster Trophy,2020,Monster Trophy,Monster Trophy,Treasure Chest
 2020Mystic Silk,2020,Mystic Silk,Mystic Silk,Trade 1
@@ -249,7 +249,7 @@ key,auctionSeason,Item,Display Name,Category
 2021Dwarven Steel,2021,Dwarven Steel,Dwarven Steel,Trade 1
 2021Elven Bismuth,2021,Elven Bismuth,Elven Bismuth,Trade 2
 2021Enchanter's Munition,2021,Enchanter's Munition,Enchanter's Munition,Trade 1
-2021Golden Fleece,2021,Golden Fleece,Golden Fleece,Golden Fleece
+2021Golden Fleece,2021,Golden Fleece,Golden Fleece,Trade 3
 2021Minotaur Hide,2021,Minotaur Hide,Minotaur Hide,Trade 1
 2021Monster Trophy,2021,Monster Trophy,Monster Trophy,Treasure Chest
 2021Mystic Silk,2021,Mystic Silk,Mystic Silk,Trade 1
@@ -277,7 +277,7 @@ key,auctionSeason,Item,Display Name,Category
 2022Dwarven Steel,2022,Dwarven Steel,Dwarven Steel,Trade 1
 2022Elven Bismuth,2022,Elven Bismuth,Elven Bismuth,Trade 2
 2022Enchanter's Munition,2022,Enchanter's Munition,Enchanter's Munition,Trade 1
-2022Golden Fleece,2022,Golden Fleece,Golden Fleece,Golden Fleece
+2022Golden Fleece,2022,Golden Fleece,Golden Fleece,Trade 3
 2022Minotaur Hide,2022,Minotaur Hide,Minotaur Hide,Trade 1
 2022Monster Trophy,2022,Monster Trophy,Monster Trophy,Treasure Chest
 2022Mystic Silk,2022,Mystic Silk,Mystic Silk,Trade 1
@@ -305,7 +305,7 @@ key,auctionSeason,Item,Display Name,Category
 2023Dwarven Steel,2023,Dwarven Steel,Dwarven Steel,Trade 1
 2023Elven Bismuth,2023,Elven Bismuth,Elven Bismuth,Trade 2
 2023Enchanter's Munition,2023,Enchanter's Munition,Enchanter's Munition,Trade 1
-2023Golden Fleece,2023,Golden Fleece,Golden Fleece,Golden Fleece
+2023Golden Fleece,2023,Golden Fleece,Golden Fleece,Trade 3
 2023Minotaur Hide,2023,Minotaur Hide,Minotaur Hide,Trade 1
 2023Monster Trophy,2023,Monster Trophy,Monster Trophy,Treasure Chest
 2023Mystic Silk,2023,Mystic Silk,Mystic Silk,Trade 1
@@ -334,7 +334,7 @@ key,auctionSeason,Item,Display Name,Category
 2024Dwarven Steel,2024,Dwarven Steel,Dwarven Steel,Trade 1
 2024Elven Bismuth,2024,Elven Bismuth,Elven Bismuth,Trade 2
 2024Enchanter's Munition,2024,Enchanter's Munition,Enchanter's Munition,Trade 1
-2024Golden Fleece,2024,Golden Fleece,Golden Fleece,Golden Fleece
+2024Golden Fleece,2024,Golden Fleece,Golden Fleece,Trade 3
 2024Minotaur Hide,2024,Minotaur Hide,Minotaur Hide,Trade 1
 2024Monster Trophy,2024,Monster Trophy,Monster Trophy,Treasure Chest
 2024Mystic Silk,2024,Mystic Silk,Mystic Silk,Trade 1
@@ -363,7 +363,7 @@ key,auctionSeason,Item,Display Name,Category
 2025Dwarven Steel,2025,Dwarven Steel,Dwarven Steel,Trade 1
 2025Elven Bismuth,2025,Elven Bismuth,Elven Bismuth,Trade 2
 2025Enchanter's Munition,2025,Enchanter's Munition,Enchanter's Munition,Trade 1
-2025Golden Fleece,2025,Golden Fleece,Golden Fleece,Golden Fleece
+2025Golden Fleece,2025,Golden Fleece,Golden Fleece,Trade 3
 2025Golden Ticket,2025,Golden Ticket,Golden Ticket,Golden Ticket
 2025Minotaur Hide,2025,Minotaur Hide,Minotaur Hide,Trade 1
 2025Monster Trophy,2025,Monster Trophy,Monster Trophy,Treasure Chest
@@ -392,7 +392,7 @@ key,auctionSeason,Item,Display Name,Category
 2026Dwarven Steel,2026,Dwarven Steel,Dwarven Steel,Trade 1
 2026Elven Bismuth,2026,Elven Bismuth,Elven Bismuth,Trade 2
 2026Enchanter's Munition,2026,Enchanter's Munition,Enchanter's Munition,Trade 1
-2026Golden Fleece,2026,Golden Fleece,Golden Fleece,Golden Fleece
+2026Golden Fleece,2026,Golden Fleece,Golden Fleece,Trade 3
 2026Golden Ticket,2026,Golden Ticket,Golden Ticket,Golden Ticket
 2026Golem Piece (40 Unique),2026,Golem Piece (40 Unique),Golem Piece (40 Unique),Treasure Chest
 2026Herald Token (20 Unique),2026,Herald Token (20 Unique),Herald Token (20 Unique),Treasure Chest
@@ -430,7 +430,7 @@ key,auctionSeason,Item,Display Name,Category
 2027Dwarven Steel,2027,Dwarven Steel,Dwarven Steel,Trade 1
 2027Elven Bismuth,2027,Elven Bismuth,Elven Bismuth,Trade 2
 2027Enchanter's Munition,2027,Enchanter's Munition,Enchanter's Munition,Trade 1
-2027Golden Fleece,2027,Golden Fleece,Golden Fleece,Golden Fleece
+2027Golden Fleece,2027,Golden Fleece,Golden Fleece,Trade 3
 2027Golden Ticket,2027,Golden Ticket,Golden Ticket,Golden Ticket
 2027Minotaur Hide,2027,Minotaur Hide,Minotaur Hide,Trade 1
 2027Monster Trophy,2027,Monster Trophy,Monster Trophy,Treasure Chest
@@ -442,3 +442,103 @@ key,auctionSeason,Item,Display Name,Category
 2027Treasure Chip,2027,Treasure Chip,Treasure Chip (each),Preorder
 2027Ultra Rare,2027,Ultra Rare,Ultra Rare,Ultra Rare
 2027Wish Ring,2027,Wish Ring,Wish Ring,Premium
+2012Ring of Evasion,2012,Ring of Evasion,Ring of Evasion,Ultra Rare
+2012Girdle of Hill Giant Strength,2012,Girdle of Hill Giant Strength,Girdle of Hill Giant Strength,Ultra Rare
+2012+2 Mithral Bracers,2012,+2 Mithral Bracers,+2 Mithral Bracers,Ultra Rare
+2013Cloak of Destiny,2013,Cloak of Destiny,Cloak of Destiny,Ultra Rare
+2014Viper Strike Belt,2014,Viper Strike Belt,Viper Strike Belt,Ultra Rare
+2014Viper Strike Shirt,2014,Viper Strike Shirt,Viper Strike Shirt,Ultra Rare
+2014+2 Sacred Sling,2014,+2 Sacred Sling,+2 Sacred Sling,Ultra Rare
+2014Stu-pendus Pendant,2014,Stu-pendus Pendant,Stu-pendus Pendant,Ultra Rare
+2014+2 Viper Strike Fang,2014,+2 Viper Strike Fang,+2 Viper Strike Fang,Ultra Rare
+2014+2 Keen Longbow,2014,+2 Keen Longbow,+2 Keen Longbow,Ultra Rare
+2014Ring of Focus,2014,Ring of Focus,Ring of Focus,Ultra Rare
+2014Ring of Protection +2,2014,Ring of Protection +2,Ring of Protection +2,Ultra Rare
+2014+2 Slayer Sword,2014,+2 Slayer Sword,+2 Slayer Sword,Ultra Rare
+2015+2 Deadly Drow Blood Mace,2015,+2 Deadly Drow Blood Mace,+2 Deadly Drow Blood Mace,Ultra Rare
+2015Gauntlets of Linked Fury,2015,Gauntlets of Linked Fury,Gauntlets of Linked Fury,Ultra Rare
+2015Bracers of Supreme Archery,2015,Bracers of Supreme Archery,Bracers of Supreme Archery,Ultra Rare
+2015Carter's Tome of Insight,2015,Carter's Tome of Insight,Carter's Tome of Insight,Ultra Rare
+2015+2 Deathcleaver,2015,+2 Deathcleaver,+2 Deathcleaver,Ultra Rare
+2015+2 Staff of Focus,2015,+2 Staff of Focus,+2 Staff of Focus,Ultra Rare
+2016Redoubt Helm,2016,Redoubt Helm,Redoubt Helm,Ultra Rare
+2016Redoubt Shield,2016,Redoubt Shield,Redoubt Shield,Ultra Rare
+2016Goggles of Instant Analysis,2016,Goggles of Instant Analysis,Goggles of Instant Analysis,Ultra Rare
+2016Ring of Spell Storing,2016,Ring of Spell Storing,Ring of Spell Storing,Ultra Rare
+2016Redoubt Plate,2016,Redoubt Plate,Redoubt Plate,Ultra Rare
+2016+2 Baton of Focus,2016,+2 Baton of Focus,+2 Baton of Focus,Ultra Rare
+2016Redoubt Mail,2016,Redoubt Mail,Redoubt Mail,Ultra Rare
+2017Medallion of Mystic Mouth,2017,Medallion of Mystic Mouth,Medallion of Mystic Mouth,Ultra Rare
+2017Amulet of Guarding,2017,Amulet of Guarding,Amulet of Guarding,Ultra Rare
+2017Ultra Rare robe,2017,Ultra Rare robe,Ultra Rare robe,Ultra Rare
+2017Ultra Rare Shield,2017,Ultra Rare Shield,Ultra Rare Shield,Ultra Rare
+2018+2 Archer's Buckler,2018,+2 Archer's Buckler,+2 Archer's Buckler,Ultra Rare
+2018Medallion of Valhalla,2018,Medallion of Valhalla,Medallion of Valhalla,Ultra Rare
+2018Girdle of Stone Giant Strength,2018,Girdle of Stone Giant Strength,Girdle of Stone Giant Strength,Ultra Rare
+2018Mighty Ultra Rare weapon,2018,Mighty Ultra Rare weapon,Mighty Ultra Rare weapon,Ultra Rare
+2018Hat of the Hellway,2018,Hat of the Hellway,Hat of the Hellway,Ultra Rare
+2018+2 Hammer of Smiting,2018,+2 Hammer of Smiting,+2 Hammer of Smiting,Ultra Rare
+2019Earcuff of the Phalanx,2019,Earcuff of the Phalanx,Earcuff of the Phalanx,Ultra Rare
+2019Dark Disciple's Shirt,2019,Dark Disciple's Shirt,Dark Disciple's Shirt,Ultra Rare
+2019Questor's Charm of Luck,2019,Questor's Charm of Luck,Questor's Charm of Luck,Ultra Rare
+2019Cloak of Shadowskin,2019,Cloak of Shadowskin,Cloak of Shadowskin,Ultra Rare
+2019Charm of Spell Swapping,2019,Charm of Spell Swapping,Charm of Spell Swapping,Ultra Rare
+2019Lenses of Divine Sight,2019,Lenses of Divine Sight,Lenses of Divine Sight,Ultra Rare
+2019Lute of Fury,2019,Lute of Fury,Lute of Fury,Ultra Rare
+2019Shoes of the Sneak,2019,Shoes of the Sneak,Shoes of the Sneak,Ultra Rare
+2019Shaman’s Belt,2019,Shaman’s Belt,Shaman’s Belt,Ultra Rare
+2020+2 Flaming Blade,2020,+2 Flaming Blade,+2 Flaming Blade,Ultra Rare
+2020Charm of Glory,2020,Charm of Glory,Charm of Glory,Ultra Rare
+2020Cook's Hat,2020,Cook's Hat,Cook's Hat,Ultra Rare
+2020Key of Healing,2020,Key of Healing,Key of Healing,Ultra Rare
+2020+1 Mighty Short Bow,2020,+1 Mighty Short Bow,+1 Mighty Short Bow,Ultra Rare
+2020Lenses of Agility,2020,Lenses of Agility,Lenses of Agility,Ultra Rare
+2020Arcane Belt,2020,Arcane Belt,Arcane Belt,Ultra Rare
+2020Ioun Stone Banshee Prism,2020,Ioun Stone Banshee Prism,Ioun Stone Banshee Prism,Ultra Rare
+2020+2 Holy Avenger,2020,+2 Holy Avenger,+2 Holy Avenger,Ultra Rare
+2020Ring of the Drake,2020,Ring of the Drake,Ring of the Drake,Ultra Rare
+2020Cloak of the Elm,2020,Cloak of the Elm,Cloak of the Elm,Ultra Rare
+2020Bracers of Reckless Fury,2020,Bracers of Reckless Fury,Bracers of Reckless Fury,Ultra Rare
+2021+4 Rod of the Meek,2021,+4 Rod of the Meek,+4 Rod of the Meek,Ultra Rare
+2021Axe of the Dwarvish Kings,2021,Axe of the Dwarvish Kings,Axe of the Dwarvish Kings,Ultra Rare
+2021Psyferre's Spectacles,2021,Psyferre's Spectacles,Psyferre's Spectacles,Ultra Rare
+2021Ring of Expertise,2021,Ring of Expertise,Ring of Expertise,Ultra Rare
+2021Charm of the Faerie,2021,Charm of the Faerie,Charm of the Faerie,Ultra Rare
+2021Ring of the Siren,2021,Ring of the Siren,Ring of the Siren,Ultra Rare
+2021Medallion of the Sweetwoods,2021,Medallion of the Sweetwoods,Medallion of the Sweetwoods,Ultra Rare
+2021Mad Evoker's Charm,2021,Mad Evoker's Charm,Mad Evoker's Charm,Ultra Rare
+2021Ring of Quick Blessing,2021,Ring of Quick Blessing,Ring of Quick Blessing,Ultra Rare
+2021Ioun Stone Sunstone Shard,2021,Ioun Stone Sunstone Shard,Ioun Stone Sunstone Shard,Ultra Rare
+2022Amulet of Aiming,2022,Amulet of Aiming,Amulet of Aiming,Ultra Rare
+2022Charm of Spell Storing,2022,Charm of Spell Storing,Charm of Spell Storing,Ultra Rare
+2022+2 Mug of Battle,2022,+2 Mug of Battle,+2 Mug of Battle,Ultra Rare
+2022Earcuff of the Ravager,2022,Earcuff of the Ravager,Earcuff of the Ravager,Ultra Rare
+2022Charm Bracelets,2022,Charm Bracelets,Charm Bracelets,Ultra Rare
+2022Ring of Havoc,2022,Ring of Havoc,Ring of Havoc,Ultra Rare
+2023+2 Sun Scimitar,2023,+2 Sun Scimitar,+2 Sun Scimitar,Ultra Rare
+2023Necklace of the Zephyr,2023,Necklace of the Zephyr,Necklace of the Zephyr,Ultra Rare
+2023Greaves of Absorption,2023,Greaves of Absorption,Greaves of Absorption,Ultra Rare
+2023Robe of Healing,2023,Robe of Healing,Robe of Healing,Ultra Rare
+2023Bead of Dark Resistance,2023,Bead of Dark Resistance,Bead of Dark Resistance,Ultra Rare
+2023Boots of Puhweehwa,2023,Boots of Puhweehwa,Boots of Puhweehwa,Ultra Rare
+2024Boots of Brawling,2024,Boots of Brawling,Boots of Brawling,Ultra Rare
+2024Figurine of Power: Cat,2024,Figurine of Power: Cat,Figurine of Power: Cat,Ultra Rare
+2024Acherin's Biting Bow,2024,Acherin's Biting Bow,Acherin's Biting Bow,Ultra Rare
+2024Kilt of Divine Healing,2024,Kilt of Divine Healing,Kilt of Divine Healing,Ultra Rare
+2024+2 Savage Sword,2024,+2 Savage Sword,+2 Savage Sword,Ultra Rare
+2024Gloves of the Gladiator,2024,Gloves of the Gladiator,Gloves of the Gladiator,Ultra Rare
+2025Bead of Celecia,2025,Bead of Celecia,Bead of Celecia,Ultra Rare
+2025Charm of Echoed Taunts,2025,Charm of Echoed Taunts,Charm of Echoed Taunts,Ultra Rare
+2025+2 Rod of Focus,2025,+2 Rod of Focus,+2 Rod of Focus,Ultra Rare
+2025Holy Symbol of Thor,2025,Holy Symbol of Thor,Holy Symbol of Thor,Ultra Rare
+2025Charm of Temptation,2025,Charm of Temptation,Charm of Temptation,Ultra Rare
+2025Thor’' Mug of Melee,2025,Thor’' Mug of Melee,Thor’' Mug of Melee,Ultra Rare
+2025Bead Bracelets,2025,Bead Bracelets,Bead Bracelets,Ultra Rare
+2025Eye Patch of the Aesir,2025,Eye Patch of the Aesir,Eye Patch of the Aesir,Ultra Rare
+2025Ioun Stone Topaz Trilliant,2025,Ioun Stone Topaz Trilliant,Ioun Stone Topaz Trilliant,Ultra Rare
+2026+2 Darkbane Crossbow,2026,+2 Darkbane Crossbow,+2 Darkbane Crossbow,Ultra Rare
+2026Ring of the Vampire,2026,Ring of the Vampire,Ring of the Vampire,Ultra Rare
+2027Carter's Tome of Insight,2027,Carter's Tome of Insight,Carter's Tome of Insight,Ultra Rare
+2027Natasha's Nightcap,2027,Natasha's Nightcap,Natasha's Nightcap,Ultra Rare
+2027Charm of Coordination,2027,Charm of Coordination,Charm of Coordination,Ultra Rare
+2027Necklace of Baubles,2027,Necklace of Baubles,Necklace of Baubles,Ultra Rare

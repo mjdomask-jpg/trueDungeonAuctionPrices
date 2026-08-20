@@ -3,7 +3,7 @@ import { type BoxStats } from '../lib/quartiles';
 import { boxColorAt } from '../lib/boxColors';
 import { money, money0 } from '../lib/format';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
-import { TOKEN_ABBREVIATIONS } from '../lib/tokenAbbreviations';
+import { tokenAbbreviation } from '../lib/tokenAbbreviations';
 
 // Hand-rolled multi-box box-and-whisker chart — the distribution counterpart to
 // PriceTimeline, sharing its conventions: zero dependencies, themed via CSS
@@ -92,7 +92,7 @@ export function BoxPlot({ boxes, title }: { boxes: Box[]; title: string }) {
   const legendOrder = boxes
     .map((_, i) => i)
     .sort((a, b) => boxes[a].label.localeCompare(boxes[b].label));
-  const legendLabel = (b: Box) => (narrow ? TOKEN_ABBREVIATIONS[b.label] ?? b.label : b.label);
+  const legendLabel = (b: Box) => (narrow ? tokenAbbreviation(b.label) : b.label);
 
   // Map the cursor's x to the nearest band (works through the SVG's scaling via
   // the rendered rect). A finger fires pointerdown on tap; a mouse fires move.

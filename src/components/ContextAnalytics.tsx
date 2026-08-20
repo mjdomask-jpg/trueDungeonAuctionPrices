@@ -107,11 +107,11 @@ function LedgerCard({ r }: { r: LedgerRow }) {
         <span className="led-sub">#{r.auctionNumber} · {r.auctioneer}</span>
       </div>
       <div className="led-figs">
+        {fig('Funding goal', r.fundingGoal == null ? 'n/a' : money0(r.fundingGoal))}
         {fig('Withheld', r.withheld ? money0(r.withheld) : '—', 'neg')}
         {fig('Included', r.released ? money0(r.released) : '—')}
         {fig('Augments', r.augment ? money0(r.augment) : '—')}
         {fig('Grunnel', r.grunnel ? money0(r.grunnel) : '—', 'muted')}
-        {fig('Funding goal', r.fundingGoal == null ? 'n/a' : money0(r.fundingGoal))}
       </div>
       <div className="led-balance-row">
         <span className="led-fig-label">Balance</span>
@@ -184,11 +184,11 @@ function LedgerView({
             <thead>
               <tr>
                 <th className="left">Auction</th>
+                <th className="num">Funding goal</th>
                 <th className="num">Withheld</th>
                 <th className="num">Included</th>
                 <th className="num">Augments</th>
                 <th className="num">Grunnel</th>
-                <th className="num">Funding goal</th>
                 <th className="num">Balance</th>
               </tr>
             </thead>
@@ -199,11 +199,11 @@ function LedgerView({
                     <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
                     <span className="an-lsub">#{r.auctionNumber} · {r.auctioneer}</span>
                   </td>
+                  <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
                   <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
                   <td className="num">{r.released ? money0(r.released) : '—'}</td>
                   <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
                   <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
-                  <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
                   <td className={`num diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</td>
                 </tr>
               ))}
