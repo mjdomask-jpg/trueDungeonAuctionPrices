@@ -1,4 +1,5 @@
 key,auctionSeason,Item,Display Name,Category
+2012+2 Mithral Bracers,2012,+2 Mithral Bracers,+2 Mithral Bracers,Ultra Rare
 "20121,000 GP Gold Bar",2012,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20121k Bonus,2012,1k Bonus,Rod of Seven Parts Segment 5,Premium
 20123 Star,2012,3 Star,Canteen of Quaffing,Bonus
@@ -10,6 +11,7 @@ key,auctionSeason,Item,Display Name,Category
 2012Dwarven Steel,2012,Dwarven Steel,Dwarven Steel,Trade 1
 2012Elven Bismuth,2012,Elven Bismuth,Elven Bismuth,Trade 2
 2012Enchanter's Munition,2012,Enchanter's Munition,Enchanter's Munition,Trade 1
+2012Girdle of Hill Giant Strength,2012,Girdle of Hill Giant Strength,Girdle of Hill Giant Strength,Ultra Rare
 2012Golden Fleece,2012,Golden Fleece,Golden Fleece,Trade 3
 2012Minotaur Hide,2012,Minotaur Hide,Minotaur Hide,Trade 1
 2012Monster Trophy,2012,Monster Trophy,Monster Trophy,Treasure Chest
@@ -20,6 +22,7 @@ key,auctionSeason,Item,Display Name,Category
 2012Philosopher's Stone,2012,Philosopher's Stone,Philosopher's Stone,Trade 1
 2012Preorder Bonus,2012,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
 2012Rare Bag,2012,Rare Bag,Rare Bag,Condensed
+2012Ring of Evasion,2012,Ring of Evasion,Ring of Evasion,Ultra Rare
 2012Treasure Chip,2012,Treasure Chip,Treasure Chip (each),Preorder
 2012Ultra Rare,2012,Ultra Rare,Ultra Rare,Ultra Rare
 2012Uncommon Bag,2012,Uncommon Bag,Uncommon Bag,Condensed
@@ -31,6 +34,7 @@ key,auctionSeason,Item,Display Name,Category
 2013Alchemist's Ink,2013,Alchemist's Ink,Alchemist's Ink,Trade 1
 2013Alchemist's Parchment,2013,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2013Aragonite,2013,Aragonite,Aragonite,Trade 2
+2013Cloak of Destiny,2013,Cloak of Destiny,Cloak of Destiny,Ultra Rare
 2013Darkwood Plank,2013,Darkwood Plank,Darkwood Plank,Trade 1
 2013Dwarven Steel,2013,Dwarven Steel,Dwarven Steel,Trade 1
 2013Elven Bismuth,2013,Elven Bismuth,Elven Bismuth,Trade 2
@@ -49,6 +53,10 @@ key,auctionSeason,Item,Display Name,Category
 2013Ultra Rare,2013,Ultra Rare,Ultra Rare,Ultra Rare
 2013Uncommon Bag,2013,Uncommon Bag,Uncommon Bag,Condensed
 2013Wish Ring,2013,Wish Ring,Wish Ring,Premium
+2014+2 Keen Longbow,2014,+2 Keen Longbow,+2 Keen Longbow,Ultra Rare
+2014+2 Sacred Sling,2014,+2 Sacred Sling,+2 Sacred Sling,Ultra Rare
+2014+2 Slayer Sword,2014,+2 Slayer Sword,+2 Slayer Sword,Ultra Rare
+2014+2 Viper Strike Fang,2014,+2 Viper Strike Fang,+2 Viper Strike Fang,Ultra Rare
 "20141,000 GP Gold Bar",2014,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20141k Bonus,2014,1k Bonus,Rod of Seven Parts Segment 7,Premium
 20143 Star,2014,3 Star,Canteen of Quaffing,Bonus
@@ -70,10 +78,18 @@ key,auctionSeason,Item,Display Name,Category
 2014Philosopher's Stone,2014,Philosopher's Stone,Philosopher's Stone,Trade 1
 2014Preorder Bonus,2014,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
 2014Rare Bag,2014,Rare Bag,Rare Bag,Condensed
+2014Ring of Focus,2014,Ring of Focus,Ring of Focus,Ultra Rare
+2014Ring of Protection +2,2014,Ring of Protection +2,Ring of Protection +2,Ultra Rare
+2014Stu-pendus Pendant,2014,Stu-pendus Pendant,Stu-pendus Pendant,Ultra Rare
 2014Treasure Chip,2014,Treasure Chip,Treasure Chip (each),Preorder
 2014Ultra Rare,2014,Ultra Rare,Ultra Rare,Ultra Rare
 2014Uncommon Bag,2014,Uncommon Bag,Uncommon Bag,Condensed
+2014Viper Strike Belt,2014,Viper Strike Belt,Viper Strike Belt,Ultra Rare
+2014Viper Strike Shirt,2014,Viper Strike Shirt,Viper Strike Shirt,Ultra Rare
 2014Wish Ring,2014,Wish Ring,Wish Ring,Premium
+2015+2 Deadly Drow Blood Mace,2015,+2 Deadly Drow Blood Mace,+2 Deadly Drow Blood Mace,Ultra Rare
+2015+2 Deathcleaver,2015,+2 Deathcleaver,+2 Deathcleaver,Ultra Rare
+2015+2 Staff of Focus,2015,+2 Staff of Focus,+2 Staff of Focus,Ultra Rare
 "20151,000 GP Gold Bar",2015,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20151k Bonus,2015,1k Bonus,1st Tooth of Cavadar,Premium
 20153 Star,2015,3 Star,Canteen of Quaffing,Bonus
@@ -82,11 +98,14 @@ key,auctionSeason,Item,Display Name,Category
 2015Alchemist's Ink,2015,Alchemist's Ink,Alchemist's Ink,Trade 1
 2015Alchemist's Parchment,2015,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2015Aragonite,2015,Aragonite,Aragonite,Trade 2
+2015Bracers of Supreme Archery,2015,Bracers of Supreme Archery,Bracers of Supreme Archery,Ultra Rare
+2015Carter's Tome of Insight,2015,Carter's Tome of Insight,Carter's Tome of Insight,Ultra Rare
 2015Charm of Avarice,2015,Charm of Avarice,Charm of Avarice,Legendary
 2015Darkwood Plank,2015,Darkwood Plank,Darkwood Plank,Trade 1
 2015Dwarven Steel,2015,Dwarven Steel,Dwarven Steel,Trade 1
 2015Elven Bismuth,2015,Elven Bismuth,Elven Bismuth,Trade 2
 2015Enchanter's Munition,2015,Enchanter's Munition,Enchanter's Munition,Trade 1
+2015Gauntlets of Linked Fury,2015,Gauntlets of Linked Fury,Gauntlets of Linked Fury,Ultra Rare
 2015Golden Fleece,2015,Golden Fleece,Golden Fleece,Trade 3
 2015Minotaur Hide,2015,Minotaur Hide,Minotaur Hide,Trade 1
 2015Monster Trophy,2015,Monster Trophy,Monster Trophy,Treasure Chest
@@ -101,6 +120,7 @@ key,auctionSeason,Item,Display Name,Category
 2015Ultra Rare,2015,Ultra Rare,Ultra Rare,Ultra Rare
 2015Uncommon Bag,2015,Uncommon Bag,Uncommon Bag,Condensed
 2015Wish Ring,2015,Wish Ring,Wish Ring,Premium
+2016+2 Baton of Focus,2016,+2 Baton of Focus,+2 Baton of Focus,Ultra Rare
 "20161,000 GP Gold Bar",2016,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20161k Bonus,2016,1k Bonus,2nd Tooth of Cavadar,Premium
 20163 Star,2016,3 Star,Canteen of Quaffing,Bonus
@@ -113,6 +133,7 @@ key,auctionSeason,Item,Display Name,Category
 2016Dwarven Steel,2016,Dwarven Steel,Dwarven Steel,Trade 1
 2016Elven Bismuth,2016,Elven Bismuth,Elven Bismuth,Trade 2
 2016Enchanter's Munition,2016,Enchanter's Munition,Enchanter's Munition,Trade 1
+2016Goggles of Instant Analysis,2016,Goggles of Instant Analysis,Goggles of Instant Analysis,Ultra Rare
 2016Golden Fleece,2016,Golden Fleece,Golden Fleece,Trade 3
 2016Minotaur Hide,2016,Minotaur Hide,Minotaur Hide,Trade 1
 2016Monster Trophy,2016,Monster Trophy,Monster Trophy,Treasure Chest
@@ -123,6 +144,11 @@ key,auctionSeason,Item,Display Name,Category
 2016Philosopher's Stone,2016,Philosopher's Stone,Philosopher's Stone,Trade 1
 2016Preorder Bonus,2016,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
 2016Rare Bag,2016,Rare Bag,Rare Bag,Condensed
+2016Redoubt Helm,2016,Redoubt Helm,Redoubt Helm,Ultra Rare
+2016Redoubt Mail,2016,Redoubt Mail,Redoubt Mail,Ultra Rare
+2016Redoubt Plate,2016,Redoubt Plate,Redoubt Plate,Ultra Rare
+2016Redoubt Shield,2016,Redoubt Shield,Redoubt Shield,Ultra Rare
+2016Ring of Spell Storing,2016,Ring of Spell Storing,Ring of Spell Storing,Ultra Rare
 2016Treasure Chip,2016,Treasure Chip,Treasure Chip (each),Preorder
 2016Ultra Rare,2016,Ultra Rare,Ultra Rare,Ultra Rare
 2016Uncommon Bag,2016,Uncommon Bag,Uncommon Bag,Condensed
@@ -134,6 +160,7 @@ key,auctionSeason,Item,Display Name,Category
 2017Adventurers' Guild Button,2017,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2017Alchemist's Ink,2017,Alchemist's Ink,Alchemist's Ink,Trade 1
 2017Alchemist's Parchment,2017,Alchemist's Parchment,Alchemist's Parchment,Trade 1
+2017Amulet of Guarding,2017,Amulet of Guarding,Amulet of Guarding,Ultra Rare
 2017Aragonite,2017,Aragonite,Aragonite,Trade 2
 2017Charm of Synergy,2017,Charm of Synergy,Charm of Synergy,Ultra Rare
 2017Darkwood Plank,2017,Darkwood Plank,Darkwood Plank,Trade 1
@@ -141,6 +168,7 @@ key,auctionSeason,Item,Display Name,Category
 2017Elven Bismuth,2017,Elven Bismuth,Elven Bismuth,Trade 2
 2017Enchanter's Munition,2017,Enchanter's Munition,Enchanter's Munition,Trade 1
 2017Golden Fleece,2017,Golden Fleece,Golden Fleece,Trade 3
+2017Medallion of Mystic Mouth,2017,Medallion of Mystic Mouth,Medallion of Mystic Mouth,Ultra Rare
 2017Minotaur Hide,2017,Minotaur Hide,Minotaur Hide,Trade 1
 2017Monster Trophy,2017,Monster Trophy,Monster Trophy,Treasure Chest
 2017Mystic Silk,2017,Mystic Silk,Mystic Silk,Trade 1
@@ -152,8 +180,12 @@ key,auctionSeason,Item,Display Name,Category
 2017Rare Bag,2017,Rare Bag,Rare Bag,Condensed
 2017Treasure Chip,2017,Treasure Chip,Treasure Chip (each),Preorder
 2017Ultra Rare,2017,Ultra Rare,Ultra Rare,Ultra Rare
+2017Ultra Rare robe,2017,Ultra Rare robe,Ultra Rare robe,Ultra Rare
+2017Ultra Rare Shield,2017,Ultra Rare Shield,Ultra Rare Shield,Ultra Rare
 2017Uncommon Bag,2017,Uncommon Bag,Uncommon Bag,Condensed
 2017Wish Ring,2017,Wish Ring,Wish Ring,Premium
+2018+2 Archer's Buckler,2018,+2 Archer's Buckler,+2 Archer's Buckler,Ultra Rare
+2018+2 Hammer of Smiting,2018,+2 Hammer of Smiting,+2 Hammer of Smiting,Ultra Rare
 "20181,000 GP Gold Bar",2018,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20181k Bonus,2018,1k Bonus,4th Tooth of Cavadar,Premium
 20182k Bonus,2018,2k Bonus,Adventurers' Guild Token,Bonus
@@ -168,7 +200,11 @@ key,auctionSeason,Item,Display Name,Category
 2018Dwarven Steel,2018,Dwarven Steel,Dwarven Steel,Trade 1
 2018Elven Bismuth,2018,Elven Bismuth,Elven Bismuth,Trade 2
 2018Enchanter's Munition,2018,Enchanter's Munition,Enchanter's Munition,Trade 1
+2018Girdle of Stone Giant Strength,2018,Girdle of Stone Giant Strength,Girdle of Stone Giant Strength,Ultra Rare
 2018Golden Fleece,2018,Golden Fleece,Golden Fleece,Trade 3
+2018Hat of the Hellway,2018,Hat of the Hellway,Hat of the Hellway,Ultra Rare
+2018Medallion of Valhalla,2018,Medallion of Valhalla,Medallion of Valhalla,Ultra Rare
+2018Mighty Ultra Rare weapon,2018,Mighty Ultra Rare weapon,Mighty Ultra Rare weapon,Ultra Rare
 2018Minotaur Hide,2018,Minotaur Hide,Minotaur Hide,Trade 1
 2018Monster Trophy,2018,Monster Trophy,Monster Trophy,Treasure Chest
 2018Mystic Silk,2018,Mystic Silk,Mystic Silk,Trade 1
@@ -191,11 +227,17 @@ key,auctionSeason,Item,Display Name,Category
 2019Alchemist's Ink,2019,Alchemist's Ink,Alchemist's Ink,Trade 1
 2019Alchemist's Parchment,2019,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2019Aragonite,2019,Aragonite,Aragonite,Trade 2
+2019Charm of Spell Swapping,2019,Charm of Spell Swapping,Charm of Spell Swapping,Ultra Rare
+2019Cloak of Shadowskin,2019,Cloak of Shadowskin,Cloak of Shadowskin,Ultra Rare
+2019Dark Disciple's Shirt,2019,Dark Disciple's Shirt,Dark Disciple's Shirt,Ultra Rare
 2019Darkwood Plank,2019,Darkwood Plank,Darkwood Plank,Trade 1
 2019Dwarven Steel,2019,Dwarven Steel,Dwarven Steel,Trade 1
+2019Earcuff of the Phalanx,2019,Earcuff of the Phalanx,Earcuff of the Phalanx,Ultra Rare
 2019Elven Bismuth,2019,Elven Bismuth,Elven Bismuth,Trade 2
 2019Enchanter's Munition,2019,Enchanter's Munition,Enchanter's Munition,Trade 1
 2019Golden Fleece,2019,Golden Fleece,Golden Fleece,Trade 3
+2019Lenses of Divine Sight,2019,Lenses of Divine Sight,Lenses of Divine Sight,Ultra Rare
+2019Lute of Fury,2019,Lute of Fury,Lute of Fury,Ultra Rare
 2019Minotaur Hide,2019,Minotaur Hide,Minotaur Hide,Trade 1
 2019Monster Trophy,2019,Monster Trophy,Monster Trophy,Treasure Chest
 2019Mystic Silk,2019,Mystic Silk,Mystic Silk,Trade 1
@@ -204,11 +246,17 @@ key,auctionSeason,Item,Display Name,Category
 2019PCH,2019,PCH,Potion Condensed Healing,Bonus
 2019Philosopher's Stone,2019,Philosopher's Stone,Philosopher's Stone,Trade 1
 2019Preorder Bonus,2019,Preorder Bonus,Averon's +3 Cherry Bomb,Preorder
+2019Questor's Charm of Luck,2019,Questor's Charm of Luck,Questor's Charm of Luck,Ultra Rare
 2019Rare Bag,2019,Rare Bag,Rare Bag,Condensed
+2019Shaman’s Belt,2019,Shaman’s Belt,Shaman’s Belt,Ultra Rare
+2019Shoes of the Sneak,2019,Shoes of the Sneak,Shoes of the Sneak,Ultra Rare
 2019Treasure Chip,2019,Treasure Chip,Treasure Chip (each),Preorder
 2019Ultra Rare,2019,Ultra Rare,Ultra Rare,Ultra Rare
 2019Uncommon Bag,2019,Uncommon Bag,Uncommon Bag,Condensed
 2019Wish Ring,2019,Wish Ring,Wish Ring,Premium
+2020+1 Mighty Short Bow,2020,+1 Mighty Short Bow,+1 Mighty Short Bow,Ultra Rare
+2020+2 Flaming Blade,2020,+2 Flaming Blade,+2 Flaming Blade,Ultra Rare
+2020+2 Holy Avenger,2020,+2 Holy Avenger,+2 Holy Avenger,Ultra Rare
 "20201,000 GP Gold Bar",2020,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20201k Bonus,2020,1k Bonus,6th Tooth of Cavadar,Premium
 20202k Bonus,2020,2k Bonus,Hitchhiking Ghost: Shog,Premium
@@ -218,11 +266,19 @@ key,auctionSeason,Item,Display Name,Category
 2020Alchemist's Ink,2020,Alchemist's Ink,Alchemist's Ink,Trade 1
 2020Alchemist's Parchment,2020,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2020Aragonite,2020,Aragonite,Aragonite,Trade 2
+2020Arcane Belt,2020,Arcane Belt,Arcane Belt,Ultra Rare
+2020Bracers of Reckless Fury,2020,Bracers of Reckless Fury,Bracers of Reckless Fury,Ultra Rare
+2020Charm of Glory,2020,Charm of Glory,Charm of Glory,Ultra Rare
+2020Cloak of the Elm,2020,Cloak of the Elm,Cloak of the Elm,Ultra Rare
+2020Cook's Hat,2020,Cook's Hat,Cook's Hat,Ultra Rare
 2020Darkwood Plank,2020,Darkwood Plank,Darkwood Plank,Trade 1
 2020Dwarven Steel,2020,Dwarven Steel,Dwarven Steel,Trade 1
 2020Elven Bismuth,2020,Elven Bismuth,Elven Bismuth,Trade 2
 2020Enchanter's Munition,2020,Enchanter's Munition,Enchanter's Munition,Trade 1
 2020Golden Fleece,2020,Golden Fleece,Golden Fleece,Trade 3
+2020Ioun Stone Banshee Prism,2020,Ioun Stone Banshee Prism,Ioun Stone Banshee Prism,Ultra Rare
+2020Key of Healing,2020,Key of Healing,Key of Healing,Ultra Rare
+2020Lenses of Agility,2020,Lenses of Agility,Lenses of Agility,Ultra Rare
 2020Minotaur Hide,2020,Minotaur Hide,Minotaur Hide,Trade 1
 2020Monster Trophy,2020,Monster Trophy,Monster Trophy,Treasure Chest
 2020Mystic Silk,2020,Mystic Silk,Mystic Silk,Trade 1
@@ -232,10 +288,12 @@ key,auctionSeason,Item,Display Name,Category
 2020Philosopher's Stone,2020,Philosopher's Stone,Philosopher's Stone,Trade 1
 2020Preorder Bonus,2020,Preorder Bonus,Averon's +3 Cherry Wine,Preorder
 2020Rare Bag,2020,Rare Bag,Rare Bag,Condensed
+2020Ring of the Drake,2020,Ring of the Drake,Ring of the Drake,Ultra Rare
 2020Treasure Chip,2020,Treasure Chip,Treasure Chip (each),Preorder
 2020Ultra Rare,2020,Ultra Rare,Ultra Rare,Ultra Rare
 2020Uncommon Bag,2020,Uncommon Bag,Uncommon Bag,Condensed
 2020Wish Ring,2020,Wish Ring,Wish Ring,Premium
+2021+4 Rod of the Meek,2021,+4 Rod of the Meek,+4 Rod of the Meek,Ultra Rare
 "20211,000 GP Gold Bar",2021,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20211k Bonus,2021,1k Bonus,7th Tooth of Cavadar,Premium
 20212k Bonus,2021,2k Bonus,Goggles of Ethereal Vision,Premium
@@ -245,11 +303,16 @@ key,auctionSeason,Item,Display Name,Category
 2021Alchemist's Ink,2021,Alchemist's Ink,Alchemist's Ink,Trade 1
 2021Alchemist's Parchment,2021,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2021Aragonite,2021,Aragonite,Aragonite,Trade 2
+2021Axe of the Dwarvish Kings,2021,Axe of the Dwarvish Kings,Axe of the Dwarvish Kings,Ultra Rare
+2021Charm of the Faerie,2021,Charm of the Faerie,Charm of the Faerie,Ultra Rare
 2021Darkwood Plank,2021,Darkwood Plank,Darkwood Plank,Trade 1
 2021Dwarven Steel,2021,Dwarven Steel,Dwarven Steel,Trade 1
 2021Elven Bismuth,2021,Elven Bismuth,Elven Bismuth,Trade 2
 2021Enchanter's Munition,2021,Enchanter's Munition,Enchanter's Munition,Trade 1
 2021Golden Fleece,2021,Golden Fleece,Golden Fleece,Trade 3
+2021Ioun Stone Sunstone Shard,2021,Ioun Stone Sunstone Shard,Ioun Stone Sunstone Shard,Ultra Rare
+2021Mad Evoker's Charm,2021,Mad Evoker's Charm,Mad Evoker's Charm,Ultra Rare
+2021Medallion of the Sweetwoods,2021,Medallion of the Sweetwoods,Medallion of the Sweetwoods,Ultra Rare
 2021Minotaur Hide,2021,Minotaur Hide,Minotaur Hide,Trade 1
 2021Monster Trophy,2021,Monster Trophy,Monster Trophy,Treasure Chest
 2021Mystic Silk,2021,Mystic Silk,Mystic Silk,Trade 1
@@ -259,11 +322,16 @@ key,auctionSeason,Item,Display Name,Category
 2021PCH,2021,PCH,Potion Condensed Healing,Bonus
 2021Philosopher's Stone,2021,Philosopher's Stone,Philosopher's Stone,Trade 1
 2021Preorder Bonus,2021,Preorder Bonus,Potion Re-Pete Healing,Preorder
+2021Psyferre's Spectacles,2021,Psyferre's Spectacles,Psyferre's Spectacles,Ultra Rare
 2021Rare Bag,2021,Rare Bag,Rare Bag,Condensed
+2021Ring of Expertise,2021,Ring of Expertise,Ring of Expertise,Ultra Rare
+2021Ring of Quick Blessing,2021,Ring of Quick Blessing,Ring of Quick Blessing,Ultra Rare
+2021Ring of the Siren,2021,Ring of the Siren,Ring of the Siren,Ultra Rare
 2021Treasure Chip,2021,Treasure Chip,Treasure Chip (each),Preorder
 2021Ultra Rare,2021,Ultra Rare,Ultra Rare,Ultra Rare
 2021Uncommon Bag,2021,Uncommon Bag,Uncommon Bag,Condensed
 2021Wish Ring,2021,Wish Ring,Wish Ring,Premium
+2022+2 Mug of Battle,2022,+2 Mug of Battle,+2 Mug of Battle,Ultra Rare
 "20221,000 GP Gold Bar",2022,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20221k Bonus,2022,1k Bonus,Ring of the 5th Circle,Premium
 20222k Bonus,2022,2k Bonus,+1 Turkey Leg of Smiting,Premium
@@ -272,9 +340,13 @@ key,auctionSeason,Item,Display Name,Category
 2022Adventurers' Guild Button,2022,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2022Alchemist's Ink,2022,Alchemist's Ink,Alchemist's Ink,Trade 1
 2022Alchemist's Parchment,2022,Alchemist's Parchment,Alchemist's Parchment,Trade 1
+2022Amulet of Aiming,2022,Amulet of Aiming,Amulet of Aiming,Ultra Rare
 2022Aragonite,2022,Aragonite,Aragonite,Trade 2
+2022Charm Bracelets,2022,Charm Bracelets,Charm Bracelets,Ultra Rare
+2022Charm of Spell Storing,2022,Charm of Spell Storing,Charm of Spell Storing,Ultra Rare
 2022Darkwood Plank,2022,Darkwood Plank,Darkwood Plank,Trade 1
 2022Dwarven Steel,2022,Dwarven Steel,Dwarven Steel,Trade 1
+2022Earcuff of the Ravager,2022,Earcuff of the Ravager,Earcuff of the Ravager,Ultra Rare
 2022Elven Bismuth,2022,Elven Bismuth,Elven Bismuth,Trade 2
 2022Enchanter's Munition,2022,Enchanter's Munition,Enchanter's Munition,Trade 1
 2022Golden Fleece,2022,Golden Fleece,Golden Fleece,Trade 3
@@ -288,10 +360,12 @@ key,auctionSeason,Item,Display Name,Category
 2022Philosopher's Stone,2022,Philosopher's Stone,Philosopher's Stone,Trade 1
 2022Preorder Bonus,2022,Preorder Bonus,+1 Turkey Leg,Preorder
 2022Rare Bag,2022,Rare Bag,Rare Bag,Condensed
+2022Ring of Havoc,2022,Ring of Havoc,Ring of Havoc,Ultra Rare
 2022Treasure Chip,2022,Treasure Chip,Treasure Chip (each),Preorder
 2022Ultra Rare,2022,Ultra Rare,Ultra Rare,Ultra Rare
 2022Uncommon Bag,2022,Uncommon Bag,Uncommon Bag,Condensed
 2022Wish Ring,2022,Wish Ring,Wish Ring,Premium
+2023+2 Sun Scimitar,2023,+2 Sun Scimitar,+2 Sun Scimitar,Ultra Rare
 "20231,000 GP Gold Bar",2023,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20231k Bonus,2023,1k Bonus,Ring of the 4th Circle,Premium
 20232k Bonus,2023,2k Bonus,Grunnel's +2 Pointy Stick,Premium
@@ -301,14 +375,18 @@ key,auctionSeason,Item,Display Name,Category
 2023Alchemist's Ink,2023,Alchemist's Ink,Alchemist's Ink,Trade 1
 2023Alchemist's Parchment,2023,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2023Aragonite,2023,Aragonite,Aragonite,Trade 2
+2023Bead of Dark Resistance,2023,Bead of Dark Resistance,Bead of Dark Resistance,Ultra Rare
+2023Boots of Puhweehwa,2023,Boots of Puhweehwa,Boots of Puhweehwa,Ultra Rare
 2023Darkwood Plank,2023,Darkwood Plank,Darkwood Plank,Trade 1
 2023Dwarven Steel,2023,Dwarven Steel,Dwarven Steel,Trade 1
 2023Elven Bismuth,2023,Elven Bismuth,Elven Bismuth,Trade 2
 2023Enchanter's Munition,2023,Enchanter's Munition,Enchanter's Munition,Trade 1
 2023Golden Fleece,2023,Golden Fleece,Golden Fleece,Trade 3
+2023Greaves of Absorption,2023,Greaves of Absorption,Greaves of Absorption,Ultra Rare
 2023Minotaur Hide,2023,Minotaur Hide,Minotaur Hide,Trade 1
 2023Monster Trophy,2023,Monster Trophy,Monster Trophy,Treasure Chest
 2023Mystic Silk,2023,Mystic Silk,Mystic Silk,Trade 1
+2023Necklace of the Zephyr,2023,Necklace of the Zephyr,Necklace of the Zephyr,Ultra Rare
 2023Oil of Enchantment,2023,Oil of Enchantment,Oil of Enchantment,Trade 2
 2023Patron Pin,2023,Patron Pin,Patron Pin,Premium
 2023Patron Token 1,2023,Patron Token 1,Charm of Biting,Premium
@@ -316,25 +394,32 @@ key,auctionSeason,Item,Display Name,Category
 2023Philosopher's Stone,2023,Philosopher's Stone,Philosopher's Stone,Trade 1
 2023Preorder Bonus,2023,Preorder Bonus,Gib Gub's Handy Acorn,Preorder
 2023Rare Bag,2023,Rare Bag,Rare Bag,Condensed
+2023Robe of Healing,2023,Robe of Healing,Robe of Healing,Ultra Rare
 2023Stalker Token,2023,Stalker Token,Stalker Token,Treasure Chest
 2023Treasure Chip,2023,Treasure Chip,Treasure Chip (each),Preorder
 2023Ultra Rare,2023,Ultra Rare,Ultra Rare,Ultra Rare
 2023Uncommon Bag,2023,Uncommon Bag,Uncommon Bag,Condensed
 2023Wish Ring,2023,Wish Ring,Wish Ring,Premium
+2024+2 Savage Sword,2024,+2 Savage Sword,+2 Savage Sword,Ultra Rare
 "20241,000 GP Gold Bar",2024,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20241k Bonus,2024,1k Bonus,Ring of the 3rd Circle,Premium
 20242k Bonus,2024,2k Bonus,Mark of the 3rd Tenet,Premium
 20243 Star,2024,3 Star,Chalice of Chugging,Bonus
 20248k Bonus,2024,8k Bonus,Path to Enlightenment (Fragment 2),Premium
+2024Acherin's Biting Bow,2024,Acherin's Biting Bow,Acherin's Biting Bow,Ultra Rare
 2024Adventurers' Guild Button,2024,Adventurers' Guild Button,Adventurers' Guild Button,Bonus
 2024Alchemist's Ink,2024,Alchemist's Ink,Alchemist's Ink,Trade 1
 2024Alchemist's Parchment,2024,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2024Aragonite,2024,Aragonite,Aragonite,Trade 2
+2024Boots of Brawling,2024,Boots of Brawling,Boots of Brawling,Ultra Rare
 2024Darkwood Plank,2024,Darkwood Plank,Darkwood Plank,Trade 1
 2024Dwarven Steel,2024,Dwarven Steel,Dwarven Steel,Trade 1
 2024Elven Bismuth,2024,Elven Bismuth,Elven Bismuth,Trade 2
 2024Enchanter's Munition,2024,Enchanter's Munition,Enchanter's Munition,Trade 1
+2024Figurine of Power: Cat,2024,Figurine of Power: Cat,Figurine of Power: Cat,Ultra Rare
+2024Gloves of the Gladiator,2024,Gloves of the Gladiator,Gloves of the Gladiator,Ultra Rare
 2024Golden Fleece,2024,Golden Fleece,Golden Fleece,Trade 3
+2024Kilt of Divine Healing,2024,Kilt of Divine Healing,Kilt of Divine Healing,Ultra Rare
 2024Minotaur Hide,2024,Minotaur Hide,Minotaur Hide,Trade 1
 2024Monster Trophy,2024,Monster Trophy,Monster Trophy,Treasure Chest
 2024Mystic Silk,2024,Mystic Silk,Mystic Silk,Trade 1
@@ -350,6 +435,7 @@ key,auctionSeason,Item,Display Name,Category
 2024Ultra Rare,2024,Ultra Rare,Ultra Rare,Ultra Rare
 2024Uncommon Bag,2024,Uncommon Bag,Uncommon Bag,Condensed
 2024Wish Ring,2024,Wish Ring,Wish Ring,Premium
+2025+2 Rod of Focus,2025,+2 Rod of Focus,+2 Rod of Focus,Ultra Rare
 "20251,000 GP Gold Bar",2025,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20251k Bonus,2025,1k Bonus,Ring of the 2nd Circle,Premium
 20252k Bonus,2025,2k Bonus,Mark of the 2nd Tenet,Premium
@@ -359,12 +445,19 @@ key,auctionSeason,Item,Display Name,Category
 2025Alchemist's Ink,2025,Alchemist's Ink,Alchemist's Ink,Trade 1
 2025Alchemist's Parchment,2025,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2025Aragonite,2025,Aragonite,Aragonite,Trade 2
+2025Bead Bracelets,2025,Bead Bracelets,Bead Bracelets,Ultra Rare
+2025Bead of Celecia,2025,Bead of Celecia,Bead of Celecia,Ultra Rare
+2025Charm of Echoed Taunts,2025,Charm of Echoed Taunts,Charm of Echoed Taunts,Ultra Rare
+2025Charm of Temptation,2025,Charm of Temptation,Charm of Temptation,Ultra Rare
 2025Darkwood Plank,2025,Darkwood Plank,Darkwood Plank,Trade 1
 2025Dwarven Steel,2025,Dwarven Steel,Dwarven Steel,Trade 1
 2025Elven Bismuth,2025,Elven Bismuth,Elven Bismuth,Trade 2
 2025Enchanter's Munition,2025,Enchanter's Munition,Enchanter's Munition,Trade 1
+2025Eye Patch of the Aesir,2025,Eye Patch of the Aesir,Eye Patch of the Aesir,Ultra Rare
 2025Golden Fleece,2025,Golden Fleece,Golden Fleece,Trade 3
 2025Golden Ticket,2025,Golden Ticket,Golden Ticket,Golden Ticket
+2025Holy Symbol of Thor,2025,Holy Symbol of Thor,Holy Symbol of Thor,Ultra Rare
+2025Ioun Stone Topaz Trilliant,2025,Ioun Stone Topaz Trilliant,Ioun Stone Topaz Trilliant,Ultra Rare
 2025Minotaur Hide,2025,Minotaur Hide,Minotaur Hide,Trade 1
 2025Monster Trophy,2025,Monster Trophy,Monster Trophy,Treasure Chest
 2025Mystic Silk,2025,Mystic Silk,Mystic Silk,Trade 1
@@ -375,10 +468,12 @@ key,auctionSeason,Item,Display Name,Category
 2025Philosopher's Stone,2025,Philosopher's Stone,Philosopher's Stone,Trade 1
 2025Preorder Bonus,2025,Preorder Bonus,Averon's Cherry Mead,Preorder
 2025Rare Bag,2025,Rare Bag,Rare Bag,Condensed
+2025Thor’' Mug of Melee,2025,Thor’' Mug of Melee,Thor’' Mug of Melee,Ultra Rare
 2025Treasure Chip,2025,Treasure Chip,Treasure Chip (each),Preorder
 2025Ultra Rare,2025,Ultra Rare,Ultra Rare,Ultra Rare
 2025Uncommon Bag,2025,Uncommon Bag,Uncommon Bag,Condensed
 2025Wish Ring,2025,Wish Ring,Wish Ring,Premium
+2026+2 Darkbane Crossbow,2026,+2 Darkbane Crossbow,+2 Darkbane Crossbow,Ultra Rare
 "20261,000 GP Gold Bar",2026,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 202610x Treasure Chip,2026,10x Treasure Chip,Treasure Chip (each),Preorder
 20261k Bonus,2026,1k Bonus,Ring of the 1st Circle,Premium
@@ -414,6 +509,7 @@ key,auctionSeason,Item,Display Name,Category
 2026Pemberton Pain Extract,2026,Pemberton Pain Extract,Pemberton Pain Extract,Silver Ship Games
 2026Philosopher's Stone,2026,Philosopher's Stone,Philosopher's Stone,Trade 1
 2026Preorder Bonus,2026,Preorder Bonus,Drake's Draught,Preorder
+2026Ring of the Vampire,2026,Ring of the Vampire,Ring of the Vampire,Ultra Rare
 2026Treasure Chip,2026,Treasure Chip,Treasure Chip (each),Preorder
 2026Ultra Rare,2026,Ultra Rare,Ultra Rare,Ultra Rare
 2026Wish Ring,2026,Wish Ring,Wish Ring,Premium
@@ -426,6 +522,8 @@ key,auctionSeason,Item,Display Name,Category
 2027Alchemist's Ink,2027,Alchemist's Ink,Alchemist's Ink,Trade 1
 2027Alchemist's Parchment,2027,Alchemist's Parchment,Alchemist's Parchment,Trade 1
 2027Aragonite,2027,Aragonite,Aragonite,Trade 2
+2027Carter's Tome of Insight,2027,Carter's Tome of Insight,Carter's Tome of Insight,Ultra Rare
+2027Charm of Coordination,2027,Charm of Coordination,Charm of Coordination ,Ultra Rare
 2027Darkwood Plank,2027,Darkwood Plank,Darkwood Plank,Trade 1
 2027Dwarven Steel,2027,Dwarven Steel,Dwarven Steel,Trade 1
 2027Elven Bismuth,2027,Elven Bismuth,Elven Bismuth,Trade 2
@@ -435,6 +533,8 @@ key,auctionSeason,Item,Display Name,Category
 2027Minotaur Hide,2027,Minotaur Hide,Minotaur Hide,Trade 1
 2027Monster Trophy,2027,Monster Trophy,Monster Trophy,Treasure Chest
 2027Mystic Silk,2027,Mystic Silk,Mystic Silk,Trade 1
+2027Natasha's Nightcap,2027,Natasha's Nightcap,Natasha's Nightcap,Ultra Rare
+2027Necklace of Baubles,2027,Necklace of Baubles,Necklace of Baubles,Ultra Rare
 2027Oil of Enchantment,2027,Oil of Enchantment,Oil of Enchantment,Trade 2
 2027Patron Pin,2027,Patron Pin,Patron Pin,Premium
 2027Philosopher's Stone,2027,Philosopher's Stone,Philosopher's Stone,Trade 1
@@ -442,103 +542,3 @@ key,auctionSeason,Item,Display Name,Category
 2027Treasure Chip,2027,Treasure Chip,Treasure Chip (each),Preorder
 2027Ultra Rare,2027,Ultra Rare,Ultra Rare,Ultra Rare
 2027Wish Ring,2027,Wish Ring,Wish Ring,Premium
-2012Ring of Evasion,2012,Ring of Evasion,Ring of Evasion,Ultra Rare
-2012Girdle of Hill Giant Strength,2012,Girdle of Hill Giant Strength,Girdle of Hill Giant Strength,Ultra Rare
-2012+2 Mithral Bracers,2012,+2 Mithral Bracers,+2 Mithral Bracers,Ultra Rare
-2013Cloak of Destiny,2013,Cloak of Destiny,Cloak of Destiny,Ultra Rare
-2014Viper Strike Belt,2014,Viper Strike Belt,Viper Strike Belt,Ultra Rare
-2014Viper Strike Shirt,2014,Viper Strike Shirt,Viper Strike Shirt,Ultra Rare
-2014+2 Sacred Sling,2014,+2 Sacred Sling,+2 Sacred Sling,Ultra Rare
-2014Stu-pendus Pendant,2014,Stu-pendus Pendant,Stu-pendus Pendant,Ultra Rare
-2014+2 Viper Strike Fang,2014,+2 Viper Strike Fang,+2 Viper Strike Fang,Ultra Rare
-2014+2 Keen Longbow,2014,+2 Keen Longbow,+2 Keen Longbow,Ultra Rare
-2014Ring of Focus,2014,Ring of Focus,Ring of Focus,Ultra Rare
-2014Ring of Protection +2,2014,Ring of Protection +2,Ring of Protection +2,Ultra Rare
-2014+2 Slayer Sword,2014,+2 Slayer Sword,+2 Slayer Sword,Ultra Rare
-2015+2 Deadly Drow Blood Mace,2015,+2 Deadly Drow Blood Mace,+2 Deadly Drow Blood Mace,Ultra Rare
-2015Gauntlets of Linked Fury,2015,Gauntlets of Linked Fury,Gauntlets of Linked Fury,Ultra Rare
-2015Bracers of Supreme Archery,2015,Bracers of Supreme Archery,Bracers of Supreme Archery,Ultra Rare
-2015Carter's Tome of Insight,2015,Carter's Tome of Insight,Carter's Tome of Insight,Ultra Rare
-2015+2 Deathcleaver,2015,+2 Deathcleaver,+2 Deathcleaver,Ultra Rare
-2015+2 Staff of Focus,2015,+2 Staff of Focus,+2 Staff of Focus,Ultra Rare
-2016Redoubt Helm,2016,Redoubt Helm,Redoubt Helm,Ultra Rare
-2016Redoubt Shield,2016,Redoubt Shield,Redoubt Shield,Ultra Rare
-2016Goggles of Instant Analysis,2016,Goggles of Instant Analysis,Goggles of Instant Analysis,Ultra Rare
-2016Ring of Spell Storing,2016,Ring of Spell Storing,Ring of Spell Storing,Ultra Rare
-2016Redoubt Plate,2016,Redoubt Plate,Redoubt Plate,Ultra Rare
-2016+2 Baton of Focus,2016,+2 Baton of Focus,+2 Baton of Focus,Ultra Rare
-2016Redoubt Mail,2016,Redoubt Mail,Redoubt Mail,Ultra Rare
-2017Medallion of Mystic Mouth,2017,Medallion of Mystic Mouth,Medallion of Mystic Mouth,Ultra Rare
-2017Amulet of Guarding,2017,Amulet of Guarding,Amulet of Guarding,Ultra Rare
-2017Ultra Rare robe,2017,Ultra Rare robe,Ultra Rare robe,Ultra Rare
-2017Ultra Rare Shield,2017,Ultra Rare Shield,Ultra Rare Shield,Ultra Rare
-2018+2 Archer's Buckler,2018,+2 Archer's Buckler,+2 Archer's Buckler,Ultra Rare
-2018Medallion of Valhalla,2018,Medallion of Valhalla,Medallion of Valhalla,Ultra Rare
-2018Girdle of Stone Giant Strength,2018,Girdle of Stone Giant Strength,Girdle of Stone Giant Strength,Ultra Rare
-2018Mighty Ultra Rare weapon,2018,Mighty Ultra Rare weapon,Mighty Ultra Rare weapon,Ultra Rare
-2018Hat of the Hellway,2018,Hat of the Hellway,Hat of the Hellway,Ultra Rare
-2018+2 Hammer of Smiting,2018,+2 Hammer of Smiting,+2 Hammer of Smiting,Ultra Rare
-2019Earcuff of the Phalanx,2019,Earcuff of the Phalanx,Earcuff of the Phalanx,Ultra Rare
-2019Dark Disciple's Shirt,2019,Dark Disciple's Shirt,Dark Disciple's Shirt,Ultra Rare
-2019Questor's Charm of Luck,2019,Questor's Charm of Luck,Questor's Charm of Luck,Ultra Rare
-2019Cloak of Shadowskin,2019,Cloak of Shadowskin,Cloak of Shadowskin,Ultra Rare
-2019Charm of Spell Swapping,2019,Charm of Spell Swapping,Charm of Spell Swapping,Ultra Rare
-2019Lenses of Divine Sight,2019,Lenses of Divine Sight,Lenses of Divine Sight,Ultra Rare
-2019Lute of Fury,2019,Lute of Fury,Lute of Fury,Ultra Rare
-2019Shoes of the Sneak,2019,Shoes of the Sneak,Shoes of the Sneak,Ultra Rare
-2019Shaman’s Belt,2019,Shaman’s Belt,Shaman’s Belt,Ultra Rare
-2020+2 Flaming Blade,2020,+2 Flaming Blade,+2 Flaming Blade,Ultra Rare
-2020Charm of Glory,2020,Charm of Glory,Charm of Glory,Ultra Rare
-2020Cook's Hat,2020,Cook's Hat,Cook's Hat,Ultra Rare
-2020Key of Healing,2020,Key of Healing,Key of Healing,Ultra Rare
-2020+1 Mighty Short Bow,2020,+1 Mighty Short Bow,+1 Mighty Short Bow,Ultra Rare
-2020Lenses of Agility,2020,Lenses of Agility,Lenses of Agility,Ultra Rare
-2020Arcane Belt,2020,Arcane Belt,Arcane Belt,Ultra Rare
-2020Ioun Stone Banshee Prism,2020,Ioun Stone Banshee Prism,Ioun Stone Banshee Prism,Ultra Rare
-2020+2 Holy Avenger,2020,+2 Holy Avenger,+2 Holy Avenger,Ultra Rare
-2020Ring of the Drake,2020,Ring of the Drake,Ring of the Drake,Ultra Rare
-2020Cloak of the Elm,2020,Cloak of the Elm,Cloak of the Elm,Ultra Rare
-2020Bracers of Reckless Fury,2020,Bracers of Reckless Fury,Bracers of Reckless Fury,Ultra Rare
-2021+4 Rod of the Meek,2021,+4 Rod of the Meek,+4 Rod of the Meek,Ultra Rare
-2021Axe of the Dwarvish Kings,2021,Axe of the Dwarvish Kings,Axe of the Dwarvish Kings,Ultra Rare
-2021Psyferre's Spectacles,2021,Psyferre's Spectacles,Psyferre's Spectacles,Ultra Rare
-2021Ring of Expertise,2021,Ring of Expertise,Ring of Expertise,Ultra Rare
-2021Charm of the Faerie,2021,Charm of the Faerie,Charm of the Faerie,Ultra Rare
-2021Ring of the Siren,2021,Ring of the Siren,Ring of the Siren,Ultra Rare
-2021Medallion of the Sweetwoods,2021,Medallion of the Sweetwoods,Medallion of the Sweetwoods,Ultra Rare
-2021Mad Evoker's Charm,2021,Mad Evoker's Charm,Mad Evoker's Charm,Ultra Rare
-2021Ring of Quick Blessing,2021,Ring of Quick Blessing,Ring of Quick Blessing,Ultra Rare
-2021Ioun Stone Sunstone Shard,2021,Ioun Stone Sunstone Shard,Ioun Stone Sunstone Shard,Ultra Rare
-2022Amulet of Aiming,2022,Amulet of Aiming,Amulet of Aiming,Ultra Rare
-2022Charm of Spell Storing,2022,Charm of Spell Storing,Charm of Spell Storing,Ultra Rare
-2022+2 Mug of Battle,2022,+2 Mug of Battle,+2 Mug of Battle,Ultra Rare
-2022Earcuff of the Ravager,2022,Earcuff of the Ravager,Earcuff of the Ravager,Ultra Rare
-2022Charm Bracelets,2022,Charm Bracelets,Charm Bracelets,Ultra Rare
-2022Ring of Havoc,2022,Ring of Havoc,Ring of Havoc,Ultra Rare
-2023+2 Sun Scimitar,2023,+2 Sun Scimitar,+2 Sun Scimitar,Ultra Rare
-2023Necklace of the Zephyr,2023,Necklace of the Zephyr,Necklace of the Zephyr,Ultra Rare
-2023Greaves of Absorption,2023,Greaves of Absorption,Greaves of Absorption,Ultra Rare
-2023Robe of Healing,2023,Robe of Healing,Robe of Healing,Ultra Rare
-2023Bead of Dark Resistance,2023,Bead of Dark Resistance,Bead of Dark Resistance,Ultra Rare
-2023Boots of Puhweehwa,2023,Boots of Puhweehwa,Boots of Puhweehwa,Ultra Rare
-2024Boots of Brawling,2024,Boots of Brawling,Boots of Brawling,Ultra Rare
-2024Figurine of Power: Cat,2024,Figurine of Power: Cat,Figurine of Power: Cat,Ultra Rare
-2024Acherin's Biting Bow,2024,Acherin's Biting Bow,Acherin's Biting Bow,Ultra Rare
-2024Kilt of Divine Healing,2024,Kilt of Divine Healing,Kilt of Divine Healing,Ultra Rare
-2024+2 Savage Sword,2024,+2 Savage Sword,+2 Savage Sword,Ultra Rare
-2024Gloves of the Gladiator,2024,Gloves of the Gladiator,Gloves of the Gladiator,Ultra Rare
-2025Bead of Celecia,2025,Bead of Celecia,Bead of Celecia,Ultra Rare
-2025Charm of Echoed Taunts,2025,Charm of Echoed Taunts,Charm of Echoed Taunts,Ultra Rare
-2025+2 Rod of Focus,2025,+2 Rod of Focus,+2 Rod of Focus,Ultra Rare
-2025Holy Symbol of Thor,2025,Holy Symbol of Thor,Holy Symbol of Thor,Ultra Rare
-2025Charm of Temptation,2025,Charm of Temptation,Charm of Temptation,Ultra Rare
-2025Thor’' Mug of Melee,2025,Thor’' Mug of Melee,Thor’' Mug of Melee,Ultra Rare
-2025Bead Bracelets,2025,Bead Bracelets,Bead Bracelets,Ultra Rare
-2025Eye Patch of the Aesir,2025,Eye Patch of the Aesir,Eye Patch of the Aesir,Ultra Rare
-2025Ioun Stone Topaz Trilliant,2025,Ioun Stone Topaz Trilliant,Ioun Stone Topaz Trilliant,Ultra Rare
-2026+2 Darkbane Crossbow,2026,+2 Darkbane Crossbow,+2 Darkbane Crossbow,Ultra Rare
-2026Ring of the Vampire,2026,Ring of the Vampire,Ring of the Vampire,Ultra Rare
-2027Carter's Tome of Insight,2027,Carter's Tome of Insight,Carter's Tome of Insight,Ultra Rare
-2027Natasha's Nightcap,2027,Natasha's Nightcap,Natasha's Nightcap,Ultra Rare
-2027Charm of Coordination,2027,Charm of Coordination,Charm of Coordination,Ultra Rare
-2027Necklace of Baubles,2027,Necklace of Baubles,Necklace of Baubles,Ultra Rare

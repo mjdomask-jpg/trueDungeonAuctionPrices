@@ -99,8 +99,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20236,2023,6,withheld,Ring of the 4th Circle,1,-$84.80
 20236,2023,6,withheld,Ultra Rare,4,-$320.85
 20236,2023,6,withheld,Adventurers' Guild Button,2,-$10.50
-20236,2023,6,withheld,Amulet of Magnifying,1,-$0.51
-20236,2023,6,withheld,Amulet of Magnifying,1,-$0.51
+20236,2023,6,withheld,Amulet of Magnifying,1,-$0.50
+20236,2023,6,withheld,Amulet of Magnifying,1,-$0.50
 20236,2023,6,token,Sacred Necklace,1,$206.00
 20236,2023,6,token,Mad Evoker's Charm,1,$31.00
 20236,2023,6,token,Belt of the Deadshot,1,$81.00
@@ -238,8 +238,6 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20242,2024,2,withheld,Ring of the 3rd Circle,1,-$104.36
 20242,2024,2,withheld,Ring of the 3rd Circle,1,-$104.36
 20242,2024,2,withheld,Mark of the 3rd Tenet,1,-$98.07
-20242,2024,2,withheld,Adventurers' Guild Button,1,#VALUE!
-20242,2024,2,withheld,Adventurers' Guild Button,1,#VALUE!
 20242,2024,2,token,Greater Ring of Havoc,1,$180.00
 20242,2024,2,token,Shirt of the Shrewd,1,$87.00
 20242,2024,2,token,Gauntlets of Divine Guidance,1,$51.00
