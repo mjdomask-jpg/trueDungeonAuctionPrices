@@ -58,7 +58,7 @@
  * Shown in every dialog, so the copy pasted into the workbook can be told apart
  * from the copy in the repo at a glance. Bump it with any change to this file.
  */
-var PUBLISH_SCRIPT_VERSION = '2026-08-21.2';
+var PUBLISH_SCRIPT_VERSION = '2026-08-21.3';
 
 /**
  * The repository this publishes into. All three values are public facts and
@@ -600,18 +600,24 @@ function publishWithheldPreviewNotice(plan) {
   if (!touched.length) return null;
 
   var lead = countDelta
-    ? 'The withheld row count changes ' + countDelta.before + ' -> ' + countDelta.after +
-      ', so docs/withheld-recompute-preview.csv WILL fail the PR check until it is regenerated.'
-    : 'This publish touches ' + touched.join(', ') + ', which feed the withheld estimate, so ' +
-      'docs/withheld-recompute-preview.csv MAY need regenerating.';
+    ? 'The withheld row count changes ' + countDelta.before + ' -> ' + countDelta.after + '.'
+    : 'This publish touches ' + touched.join(', ') + ', which feed the withheld estimate.';
 
+  // Deliberately not alarming. New withheld rows no longer fail the PR check —
+  // validate-context.mjs compares the audited preview on the INTERSECTION, so a
+  // new auction is reported as new data rather than as drift. Regenerating is
+  // now housekeeping that brings the audit forward, not a blocker standing
+  // between a closed auction and the live site. If a value the audit already
+  // covers has genuinely moved, the check fails and says so itself — which is
+  // the case that wants a human, and the only one that gets to stop a publish.
   return lead + '\n' +
-    'That file is in the repo, not the sheet, so this publish cannot update it. On the publish branch:\n' +
+    'docs/withheld-recompute-preview.csv is a repo file, not a tab, so this publish cannot\n' +
+    'update it. New rows will NOT fail the check. Bring the audit forward when convenient:\n' +
     '    git fetch origin && git checkout <the branch this opens>\n' +
     '    node scripts/gen-withheld-preview.mjs\n' +
     '    npm run validate\n' +
     '    git commit -am "Regenerate the withheld preview" && git push\n' +
-    'Read the diff before committing: a cent of drift is the price cascade, dollars are not.';
+    'Read the diff first: a cent of movement is the price cascade, dollars are not.';
 }
 
 /** Branch names must be unique per run; the stamp comes from the caller. */
