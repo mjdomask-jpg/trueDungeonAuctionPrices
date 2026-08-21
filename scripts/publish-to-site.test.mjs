@@ -390,5 +390,78 @@ console.log('\nThe shipped data through the preflights\n');
   }
 }
 
+
+// ===========================================================================
+// The two gaps the first real publish exposed
+// ===========================================================================
+console.log('\nGaps found by the first real publish\n');
+{
+  // GAP 1 — a custom IFERROR sentinel is not a native error value, so the
+  // original token list missed it. `transmuteRecipes.csv` shipped carrying
+  // `⚠ check name` where an ingredient name belonged, because a trailing space
+  // had been typed into tokenMetadata's `Charm of Coordination`.
+  const recipeGrid = [
+    ['Key', 'Year', 'Tier', 'Item', 'Display Name'],
+    ['2027|Smith|Charm', '2027', 'Legendary', 'Smith', '⚠ check name'],
+  ];
+  const caught = P.publishScanErrorCells('transmuteRecipes.csv', recipeGrid);
+  check('a ⚠ sentinel aborts the publish', caught.length === 1 && /⚠/.test(caught[0]), caught.join('\n'));
+
+  check('the older "No Match Found" sentinel still aborts',
+    P.publishScanErrorCells('prices.csv', [['Item', 'Display Name'], ['1k Bonus', 'No Match Found']]).length === 1);
+
+  // The glyph must not collide with real data — it appears in none of the ten
+  // shipped CSVs, which is what makes a bare substring match safe.
+  const glyphInData = readdirSync(dataDir).filter((f) => f.endsWith(".csv")).filter((f) => readCsv(f).indexOf('⚠') !== -1);
+  check('⚠ appears in no shipped CSV, so matching the bare glyph is safe',
+    !glyphInData.length, `found in: ${glyphInData.join(', ')}`);
+
+  // GAP 2 — docs/withheld-recompute-preview.csv is an audited golden file in
+  // the repo with no tab behind it, so a publish can red the PR check through
+  // a file it never wrote and cannot regenerate. Deleting two withheld rows in
+  // the sheet took the recompute from 68 to 66 while the preview still said 68.
+  const withheldGrid = (n) => {
+    const rows = [['auctionId', 'auctionSeason', 'auctionNumber', 'category', 'Item', 'quantity', 'priceAugmented']];
+    for (let i = 0; i < n; i++) rows.push(['20242', '2024', '2', 'withheld', `Item ${i}`, '1', '-$1.00']);
+    rows.push(['20242', '2024', '2', 'token', 'Not withheld', '1', '$5.00']);
+    return rows;
+  };
+  check('withheld rows are counted, and other categories are not',
+    P.publishWithheldRowCount(withheldGrid(68)) === 68);
+  check('a file with no category column counts nothing',
+    P.publishWithheldRowCount([['auctionId', 'Item'], ['20242', 'x']]) === null);
+
+  const planWith = (file, withheld, previousWithheld) => ({
+    ok: true, aborts: [], cautions: [], unchanged: [],
+    changed: [{ file, rows: 10, previousRows: 10, withheld, previousWithheld }],
+  });
+
+  const dropped = P.publishWithheldPreviewNotice(planWith('contextItems.csv', 66, 68));
+  check('a changed withheld row count says the check WILL fail',
+    dropped && /68 -> 66/.test(dropped) && /WILL fail/.test(dropped), dropped);
+  check('the notice names the file the publish cannot write',
+    dropped && /withheld-recompute-preview\.csv/.test(dropped) && /gen-withheld-preview\.mjs/.test(dropped), dropped);
+
+  const sameCount = P.publishWithheldPreviewNotice(planWith('prices.csv', null, null));
+  check('a touched input with no count change says MAY, not WILL',
+    sameCount && /MAY need regenerating/.test(sameCount) && !/WILL fail/.test(sameCount), sameCount);
+
+  check('a publish touching none of the withheld inputs says nothing',
+    P.publishWithheldPreviewNotice(planWith('onyx.csv', null, null)) === null);
+
+  // The notice has to reach both places the operator actually looks.
+  const plan = P.publishPlan([]);
+  plan.changed = [{ file: 'contextItems.csv', rows: 631, previousRows: 633, withheld: 66, previousWithheld: 68 }];
+  check('the PR body carries the regeneration commands, not just a headline',
+    /gen-withheld-preview\.mjs/.test(P.publishPullRequestBody(plan)));
+
+  // And the inputs list must match what validate-context.mjs actually reads —
+  // if that ever gains a fourth input this test is the thing that notices.
+  const contextValidator = readFileSync(join(here, '..', 'scripts', 'validate-context.mjs'), 'utf8');
+  const missed = P.PUBLISH_WITHHELD_INPUTS.filter((f) => contextValidator.indexOf(f) === -1);
+  check('every file in PUBLISH_WITHHELD_INPUTS is one validate-context.mjs reads',
+    !missed.length, `not read by the validator: ${missed.join(', ')}`);
+}
+
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

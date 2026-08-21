@@ -469,7 +469,7 @@ before anything reaches GitHub:
 
 | The message says | What it means |
 |---|---|
-| `row N (column): #REF!` — or `#N/A`, `#VALUE!`, `#DIV/0!`, `No Match Found` | A formula is broken, or a VLOOKUP missed and the sheet's `IFERROR` wrote its sentinel. `No Match Found` looks like data, which is exactly why it is refused. Fix the formula. |
+| `row N (column): #REF!` — or `#N/A`, `#VALUE!`, `#DIV/0!`, `No Match Found`, `⚠` | A formula is broken, or a VLOOKUP missed and the sheet's `IFERROR` wrote its sentinel. The sentinels look like data, which is exactly why they are refused. Fix the formula — and look at what the lookup was pointing *at*: the `⚠ check name` that got through before this check existed was caused by a trailing space typed into a `tokenMetadata` display name, so the broken cell and the broken cause were on different tabs. |
 | `row N: Price is blank` / `is "-"` | A keyed price row with nothing to price, in `prices`, `onyx` or `rawPricesData`. **Blank does not mean unsold** — the site silently drops such a row, so it moves no statistic and looks healthy. Fill it in or delete the row. |
 | `row N: no auctionId` | A keyed row that joins to nothing. Wholly blank rows are fine and are skipped. |
 | `7753 rows -> 4000 (-3753)` | The tab lost more rows than a correction plausibly would (more than 2%, or 3 rows on a small file). Check for a filter left on, a sort that clipped the range, or a half-deleted tab. |
@@ -481,13 +481,43 @@ was renamed, added or removed — adding one is legitimate and has happened twic
 so it asks you to look rather than standing in the way. `Nothing changed` means
 every tab already matches the repository.
 
-> **Known, and it will abort your first publish:** `contextItems` rows 241–242
-> (`20242`, `Adventurers' Guild Button`, `withheld`) both hold `#VALUE!` in
-> `priceAugmented`. It has been in the shipped CSV for some time and no
-> validator catches it, because the site ignores `priceAugmented` on a
-> `withheld` row entirely. Clear both cells in the sheet — a withheld row is
-> supposed to have no price — and the publish goes through. They are also
-> duplicates of each other, which is worth a second look while you are there.
+### The one thing a publish can break that it cannot fix
+
+`docs/withheld-recompute-preview.csv` is an **audited golden file in the repo**,
+with no tab behind it. `validate-context.mjs` checks the live withheld recompute
+against it, so when the two disagree the PR check fails — through a file the
+publish never wrote and cannot regenerate.
+
+It happened on the first real publish: two `withheld` rows were deleted in the
+sheet, the recompute went from 68 rows to 66, the preview still said 68, and the
+PR sat blocked with nothing in its diff to explain why.
+
+So the publish now tells you. If it touches `contextItems`, `prices` or
+`auctionMetadata` — the three inputs the recompute reads — the dialog and the PR
+body say so, and if the **withheld row count changed** they say the check *will*
+fail rather than *may*. Then, on the branch the publish opened:
+
+```bash
+node scripts/gen-withheld-preview.mjs
+```
+
+```bash
+npm run validate
+```
+
+Commit the regenerated preview to that branch and push. Auto-merge is already
+armed from the publish, so the merge completes on its own once the check goes
+green.
+
+> **Read the diff before you commit it.** A withheld value moving by a cent is
+> the price cascade and is expected; dollars are not, and a row count that moved
+> by more than you changed means something else happened. Regenerating the
+> preview when you *cannot* explain the drift destroys the check — you would be
+> comparing the recompute against a baseline built from the same data.
+
+**Regenerating is deliberately not automated**, for that reason. If the publisher
+rebuilt the golden file from the data it had just published, the check would be
+comparing the data against itself and would never fail again.
 
 ### Two things it does not do
 
