@@ -334,7 +334,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202238,2022,38,Bead of Focus,$80.00,Bead of Focus,Onyx Ultra Rare
 202238,2022,38,Goggles of the Deadshot,$75.00,Goggles of the Deadshot,Onyx Ultra Rare
 202238,2022,38,Shirt of the Imbiber,$80.00,Shirt of the Imbiber,Onyx Ultra Rare
-202238,2022,38,Bead of Guided Strike 80  Harlax's Helpful Lamp,$80.00,Bead of Guided Strike 80  Harlax's Helpful Lamp,Onyx Ultra Rare
+202238,2022,38,Bead of Guided Strike,$80.00,Bead of Guided Strike,Onyx Ultra Rare
+202238,2022,38,Harlax's Helpful Lamp,$80.00,Harlax's Helpful Lamp,Onyx Ultra Rare
 202238,2022,38,C/UC/R Set,$80.00,C/UC/R Set,Onyx Ultra Rare
 202238,2022,38,Belt of the Deadshot,$80.00,Belt of the Deadshot,Onyx Ultra Rare
 202238,2022,38,Butterfly Cloak,$65.00,Butterfly Cloak,Onyx Ultra Rare
@@ -800,27 +801,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202545,2025,45,Shield of Guarding,$50.00,Shield of Guarding,Onyx Ultra Rare
 202545,2025,45,Thor's Mug of Melee,$51.00,Thor's Mug of Melee,Onyx Ultra Rare
 202545,2025,45,C/UC/R Set,$110.00,C/UC/R Set,Onyx Ultra Rare
-20262,2026,2,+2 Branding Mace,,+2 Branding Mace,Onyx Ultra Rare
-20262,2026,2,+2 Darkbane Crossbow,,+2 Darkbane Crossbow,Onyx Ultra Rare
-20262,2026,2,Belt of the Accursed,,Belt of the Accursed,Onyx Ultra Rare
-20262,2026,2,Boots of Grave's Reach,,Boots of Grave's Reach,Onyx Ultra Rare
-20262,2026,2,Bracers of Boosting,,Bracers of Boosting,Onyx Ultra Rare
-20262,2026,2,Charm of Fickle Fate,,Charm of Fickle Fate,Onyx Ultra Rare
-20262,2026,2,Cloak of the Accursed,,Cloak of the Accursed,Onyx Ultra Rare
-20262,2026,2,Earcuff of the Accursed,,Earcuff of the Accursed,Onyx Ultra Rare
-20262,2026,2,Figurine of Power: Pilgrim,,Figurine of Power: Pilgrim,Onyx Ultra Rare
-20262,2026,2,Goblet of Saintly Surge,,Goblet of Saintly Surge,Onyx Ultra Rare
-20262,2026,2,Greaves of Diffusion,,Greaves of Diffusion,Onyx Ultra Rare
-20262,2026,2,Hat of Critical Thinking,,Hat of Critical Thinking,Onyx Ultra Rare
-20262,2026,2,Ioun Stone Moonstone Orb,,Ioun Stone Moonstone Orb,Onyx Ultra Rare
-20262,2026,2,Lady Ashley's Triad Shield,,Lady Ashley's Triad Shield,Onyx Ultra Rare
-20262,2026,2,Mongo's Miracle Bead,,Mongo's Miracle Bead,Onyx Ultra Rare
-20262,2026,2,Ring of the Vampire,,Ring of the Vampire,Onyx Ultra Rare
-20262,2026,2,Shirt of the Lycan,,Shirt of the Lycan,Onyx Ultra Rare
-20262,2026,2,Sir Andrew's Triad Armor,,Sir Andrew's Triad Armor,Onyx Ultra Rare
-20262,2026,2,Sir Jason's Triad Helm,,Sir Jason's Triad Helm,Onyx Ultra Rare
-20262,2026,2,St. Gubb's Gorget,,St. Gubb's Gorget,Onyx Ultra Rare
-20262,2026,2,C/UC/R Set,,C/UC/R Set,Onyx Ultra Rare
 20262,2026,2,+2 Branding Mace,$37.00,+2 Branding Mace,Onyx Ultra Rare
 20262,2026,2,+2 Darkbane Crossbow,$41.00,+2 Darkbane Crossbow,Onyx Ultra Rare
 20262,2026,2,Belt of the Accursed,$50.00,Belt of the Accursed,Onyx Ultra Rare
@@ -842,27 +822,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20262,2026,2,Sir Jason's Triad Helm,$60.00,Sir Jason's Triad Helm,Onyx Ultra Rare
 20262,2026,2,St. Gubb's Gorget,$41.00,St. Gubb's Gorget,Onyx Ultra Rare
 20262,2026,2,C/UC/R Set,$105.00,C/UC/R Set,Onyx Ultra Rare
-20264,2026,4,+2 Branding Mace,,+2 Branding Mace,Onyx Ultra Rare
-20264,2026,4,+2 Darkbane Crossbow,,+2 Darkbane Crossbow,Onyx Ultra Rare
-20264,2026,4,Belt of the Accursed,,Belt of the Accursed,Onyx Ultra Rare
-20264,2026,4,Boots of Grave's Reach,,Boots of Grave's Reach,Onyx Ultra Rare
-20264,2026,4,Bracers of Boosting,,Bracers of Boosting,Onyx Ultra Rare
-20264,2026,4,Charm of Fickle Fate,,Charm of Fickle Fate,Onyx Ultra Rare
-20264,2026,4,Cloak of the Accursed,,Cloak of the Accursed,Onyx Ultra Rare
-20264,2026,4,Earcuff of the Accursed,,Earcuff of the Accursed,Onyx Ultra Rare
-20264,2026,4,Figurine of Power: Pilgrim,,Figurine of Power: Pilgrim,Onyx Ultra Rare
-20264,2026,4,Goblet of Saintly Surge,,Goblet of Saintly Surge,Onyx Ultra Rare
-20264,2026,4,Greaves of Diffusion,,Greaves of Diffusion,Onyx Ultra Rare
-20264,2026,4,Hat of Critical Thinking,,Hat of Critical Thinking,Onyx Ultra Rare
-20264,2026,4,Ioun Stone Moonstone Orb,,Ioun Stone Moonstone Orb,Onyx Ultra Rare
-20264,2026,4,Lady Ashley's Triad Shield,,Lady Ashley's Triad Shield,Onyx Ultra Rare
-20264,2026,4,Mongo's Miracle Bead,,Mongo's Miracle Bead,Onyx Ultra Rare
-20264,2026,4,Ring of the Vampire,,Ring of the Vampire,Onyx Ultra Rare
-20264,2026,4,Shirt of the Lycan,,Shirt of the Lycan,Onyx Ultra Rare
-20264,2026,4,Sir Andrew's Triad Armor,,Sir Andrew's Triad Armor,Onyx Ultra Rare
-20264,2026,4,Sir Jason's Triad Helm,,Sir Jason's Triad Helm,Onyx Ultra Rare
-20264,2026,4,St. Gubb's Gorget,,St. Gubb's Gorget,Onyx Ultra Rare
-20264,2026,4,C/UC/R Set,,C/UC/R Set,Onyx Ultra Rare
 20264,2026,4,+2 Branding Mace,$42.00,+2 Branding Mace,Onyx Ultra Rare
 20264,2026,4,+2 Darkbane Crossbow,$46.00,+2 Darkbane Crossbow,Onyx Ultra Rare
 20264,2026,4,Belt of the Accursed,$43.00,Belt of the Accursed,Onyx Ultra Rare
@@ -926,3 +885,129 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202634,2026,34,Sir Jason's Triad Helm,$55.00,Sir Jason's Triad Helm,Onyx Ultra Rare
 202634,2026,34,St. Gubb's Gorget,$45.00,St. Gubb's Gorget,Onyx Ultra Rare
 202634,2026,34,C/UC/R Set,$100.00,C/UC/R Set,Onyx Ultra Rare
+20182,2018,2,C/UC/R Set,$110.00,C/UC/R Set,Onyx Ultra Rare
+20182,2018,2,+1 Mighty Long Bow,$99.00,+1 Mighty Long Bow,Onyx Ultra Rare
+20182,2018,2,+2 Archer's Buckler,$102.00,+2 Archer's Buckler,Onyx Ultra Rare
+20182,2018,2,+2 Hammer of Smiting,$92.00,+2 Hammer of Smiting,Onyx Ultra Rare
+20182,2018,2,Ash's Death Pouch,$101.00,Ash's Death Pouch,Onyx Ultra Rare
+20182,2018,2,Bracers of Guided Strike,$95.00,Bracers of Guided Strike,Onyx Ultra Rare
+20182,2018,2,Charm of Awareness,$96.00,Charm of Awareness,Onyx Ultra Rare
+20182,2018,2,Charm of Shadow Shot,$97.00,Charm of Shadow Shot,Onyx Ultra Rare
+20182,2018,2,Crown of Expertise,$100.00,Crown of Expertise,Onyx Ultra Rare
+20182,2018,2,Figurine of Power: Raven,$86.00,Figurine of Power: Raven,Onyx Ultra Rare
+20182,2018,2,Girdle of Stone Giant Strength,$96.00,Girdle of Stone Giant Strength,Onyx Ultra Rare
+20182,2018,2,Gloves of Greater Archery,$102.00,Gloves of Greater Archery,Onyx Ultra Rare
+20182,2018,2,Horn of the Valkyrie,$91.00,Horn of the Valkyrie,Onyx Ultra Rare
+20182,2018,2,Ioun Stone Fluorite Cube,$91.00,Ioun Stone Fluorite Cube,Onyx Ultra Rare
+20182,2018,2,Kilt of Fatherbane,$101.00,Kilt of Fatherbane,Onyx Ultra Rare
+20182,2018,2,Lotus Blossom Bowls,$100.00,Lotus Blossom Bowls,Onyx Ultra Rare
+20182,2018,2,Medallion of Valhalla,$106.00,Medallion of Valhalla,Onyx Ultra Rare
+20182,2018,2,Pouch of Tulz,$100.00,Pouch of Tulz,Onyx Ultra Rare
+20182,2018,2,Ring of the Eel,$106.00,Ring of the Eel,Onyx Ultra Rare
+20182,2018,2,Shirt of Focus,$107.00,Shirt of Focus,Onyx Ultra Rare
+20182,2018,2,Viper Strike Pants,$85.00,Viper Strike Pants,Onyx Ultra Rare
+20183,2018,3,C/UC/R Set,$75.00,C/UC/R Set,Onyx Ultra Rare
+20183,2018,3,+1 Mighty Long Bow,$98.00,+1 Mighty Long Bow,Onyx Ultra Rare
+20183,2018,3,+2 Archer's Buckler,$125.00,+2 Archer's Buckler,Onyx Ultra Rare
+20183,2018,3,+2 Hammer of Smiting,$103.00,+2 Hammer of Smiting,Onyx Ultra Rare
+20183,2018,3,Ash's Death Pouch,$125.00,Ash's Death Pouch,Onyx Ultra Rare
+20183,2018,3,Bracers of Guided Strike,$115.00,Bracers of Guided Strike,Onyx Ultra Rare
+20183,2018,3,Charm of Awareness,$103.00,Charm of Awareness,Onyx Ultra Rare
+20183,2018,3,Charm of Shadow Shot,$103.00,Charm of Shadow Shot,Onyx Ultra Rare
+20183,2018,3,Crown of Expertise,$95.00,Crown of Expertise,Onyx Ultra Rare
+20183,2018,3,Figurine of Power: Raven,$81.00,Figurine of Power: Raven,Onyx Ultra Rare
+20183,2018,3,Girdle of Stone Giant Strength,$103.00,Girdle of Stone Giant Strength,Onyx Ultra Rare
+20183,2018,3,Gloves of Greater Archery,$110.00,Gloves of Greater Archery,Onyx Ultra Rare
+20183,2018,3,Horn of the Valkyrie,$95.00,Horn of the Valkyrie,Onyx Ultra Rare
+20183,2018,3,Ioun Stone Fluorite Cube,$81.00,Ioun Stone Fluorite Cube,Onyx Ultra Rare
+20183,2018,3,Kilt of Fatherbane,$103.00,Kilt of Fatherbane,Onyx Ultra Rare
+20183,2018,3,Lotus Blossom Bowls,$108.00,Lotus Blossom Bowls,Onyx Ultra Rare
+20183,2018,3,Medallion of Valhalla,$110.00,Medallion of Valhalla,Onyx Ultra Rare
+20183,2018,3,Pouch of Tulz,$108.00,Pouch of Tulz,Onyx Ultra Rare
+20183,2018,3,Ring of the Eel,$103.00,Ring of the Eel,Onyx Ultra Rare
+20183,2018,3,Shirt of Focus,$108.00,Shirt of Focus,Onyx Ultra Rare
+20183,2018,3,Viper Strike Pants,$81.00,Viper Strike Pants,Onyx Ultra Rare
+20184,2018,4,C/UC/R Set,$100.00,C/UC/R Set,Onyx Ultra Rare
+20184,2018,4,+1 Mighty Long Bow,$75.00,+1 Mighty Long Bow,Onyx Ultra Rare
+20184,2018,4,+2 Archer's Buckler,$125.00,+2 Archer's Buckler,Onyx Ultra Rare
+20184,2018,4,+2 Hammer of Smiting,$105.00,+2 Hammer of Smiting,Onyx Ultra Rare
+20184,2018,4,Ash's Death Pouch,$90.00,Ash's Death Pouch,Onyx Ultra Rare
+20184,2018,4,Bracers of Guided Strike,$75.00,Bracers of Guided Strike,Onyx Ultra Rare
+20184,2018,4,Charm of Awareness,$80.00,Charm of Awareness,Onyx Ultra Rare
+20184,2018,4,Charm of Shadow Shot,$85.00,Charm of Shadow Shot,Onyx Ultra Rare
+20184,2018,4,Crown of Expertise,$80.00,Crown of Expertise,Onyx Ultra Rare
+20184,2018,4,Figurine of Power: Raven,$90.00,Figurine of Power: Raven,Onyx Ultra Rare
+20184,2018,4,Girdle of Stone Giant Strength,$105.00,Girdle of Stone Giant Strength,Onyx Ultra Rare
+20184,2018,4,Gloves of Greater Archery,$95.00,Gloves of Greater Archery,Onyx Ultra Rare
+20184,2018,4,Horn of the Valkyrie,$100.00,Horn of the Valkyrie,Onyx Ultra Rare
+20184,2018,4,Ioun Stone Fluorite Cube,$75.00,Ioun Stone Fluorite Cube,Onyx Ultra Rare
+20184,2018,4,Kilt of Fatherbane,$90.00,Kilt of Fatherbane,Onyx Ultra Rare
+20184,2018,4,Lotus Blossom Bowls,$100.00,Lotus Blossom Bowls,Onyx Ultra Rare
+20184,2018,4,Medallion of Valhalla,$100.00,Medallion of Valhalla,Onyx Ultra Rare
+20184,2018,4,Pouch of Tulz,$85.00,Pouch of Tulz,Onyx Ultra Rare
+20184,2018,4,Ring of the Eel,$80.00,Ring of the Eel,Onyx Ultra Rare
+20184,2018,4,Shirt of Focus,$125.00,Shirt of Focus,Onyx Ultra Rare
+20184,2018,4,Viper Strike Pants,$60.00,Viper Strike Pants,Onyx Ultra Rare
+20211,2021,1,C/UC/R Set,$90.00,C/UC/R Set,Onyx Ultra Rare
+20211,2021,1,+4 Rod of the Meek,$75.00,+4 Rod of the Meek,Onyx Ultra Rare
+20211,2021,1,Axe of the Dwarvish Kings,$100.00,Axe of the Dwarvish Kings,Onyx Ultra Rare
+20211,2021,1,Charm of the Faerie,$55.00,Charm of the Faerie,Onyx Ultra Rare
+20211,2021,1,Cranston's Helpful Hat,$125.00,Cranston's Helpful Hat,Onyx Ultra Rare
+20211,2021,1,Death Knight Armor,$95.00,Death Knight Armor,Onyx Ultra Rare
+20211,2021,1,Death Knight Boots,$110.00,Death Knight Boots,Onyx Ultra Rare
+20211,2021,1,Death Knight Gauntlets,$120.00,Death Knight Gauntlets,Onyx Ultra Rare
+20211,2021,1,Ioun Stone Platinum Nugget,$160.00,Ioun Stone Platinum Nugget,Onyx Ultra Rare
+20211,2021,1,Ioun Stone Sunstone Shard,$99.00,Ioun Stone Sunstone Shard,Onyx Ultra Rare
+20211,2021,1,Lucky Cloak,$120.00,Lucky Cloak,Onyx Ultra Rare
+20211,2021,1,Mad Evoker's Charm,$105.00,Mad Evoker's Charm,Onyx Ultra Rare
+20211,2021,1,Medallion of the Sweetwoods,$106.00,Medallion of the Sweetwoods,Onyx Ultra Rare
+20211,2021,1,Nightshade's +2 Throwing Dagger,$135.00,Nightshade's +2 Throwing Dagger,Onyx Ultra Rare
+20211,2021,1,Pants of Focus,$100.00,Pants of Focus,Onyx Ultra Rare
+20211,2021,1,Psyferre's Spectacles,$106.00,Psyferre's Spectacles,Onyx Ultra Rare
+20211,2021,1,Ring of Expertise,$100.00,Ring of Expertise,Onyx Ultra Rare
+20211,2021,1,Ring of Quick Blessing,$115.00,Ring of Quick Blessing,Onyx Ultra Rare
+20211,2021,1,Ring of the Siren,$110.00,Ring of the Siren,Onyx Ultra Rare
+20211,2021,1,Shield of the Scholar,$115.00,Shield of the Scholar,Onyx Ultra Rare
+20211,2021,1,Shirt of the Nimble,$100.00,Shirt of the Nimble,Onyx Ultra Rare
+20212,2021,2,C/UC/R Set,$151.00,C/UC/R Set,Onyx Ultra Rare
+20212,2021,2,+4 Rod of the Meek,$100.00,+4 Rod of the Meek,Onyx Ultra Rare
+20212,2021,2,Axe of the Dwarvish Kings,$100.00,Axe of the Dwarvish Kings,Onyx Ultra Rare
+20212,2021,2,Charm of the Faerie,$80.00,Charm of the Faerie,Onyx Ultra Rare
+20212,2021,2,Cranston's Helpful Hat,$125.00,Cranston's Helpful Hat,Onyx Ultra Rare
+20212,2021,2,Death Knight Armor,$120.00,Death Knight Armor,Onyx Ultra Rare
+20212,2021,2,Death Knight Boots,$120.00,Death Knight Boots,Onyx Ultra Rare
+20212,2021,2,Death Knight Gauntlets,$151.00,Death Knight Gauntlets,Onyx Ultra Rare
+20212,2021,2,Ioun Stone Platinum Nugget,$151.00,Ioun Stone Platinum Nugget,Onyx Ultra Rare
+20212,2021,2,Ioun Stone Sunstone Shard,$117.00,Ioun Stone Sunstone Shard,Onyx Ultra Rare
+20212,2021,2,Lucky Cloak,$106.00,Lucky Cloak,Onyx Ultra Rare
+20212,2021,2,Mad Evoker's Charm,$110.00,Mad Evoker's Charm,Onyx Ultra Rare
+20212,2021,2,Medallion of the Sweetwoods,$106.00,Medallion of the Sweetwoods,Onyx Ultra Rare
+20212,2021,2,Nightshade's +2 Throwing Dagger,$126.00,Nightshade's +2 Throwing Dagger,Onyx Ultra Rare
+20212,2021,2,Pants of Focus,$91.00,Pants of Focus,Onyx Ultra Rare
+20212,2021,2,Psyferre's Spectacles,$118.00,Psyferre's Spectacles,Onyx Ultra Rare
+20212,2021,2,Ring of Expertise,$100.00,Ring of Expertise,Onyx Ultra Rare
+20212,2021,2,Ring of Quick Blessing,$117.00,Ring of Quick Blessing,Onyx Ultra Rare
+20212,2021,2,Ring of the Siren,$106.00,Ring of the Siren,Onyx Ultra Rare
+20212,2021,2,Shield of the Scholar,$116.00,Shield of the Scholar,Onyx Ultra Rare
+20212,2021,2,Shirt of the Nimble,$117.00,Shirt of the Nimble,Onyx Ultra Rare
+20213,2021,3,C/UC/R Set,$145.00,C/UC/R Set,Onyx Ultra Rare
+20213,2021,3,+4 Rod of the Meek,$100.00,+4 Rod of the Meek,Onyx Ultra Rare
+20213,2021,3,Axe of the Dwarvish Kings,$100.00,Axe of the Dwarvish Kings,Onyx Ultra Rare
+20213,2021,3,Charm of the Faerie,$100.00,Charm of the Faerie,Onyx Ultra Rare
+20213,2021,3,Cranston's Helpful Hat,$111.00,Cranston's Helpful Hat,Onyx Ultra Rare
+20213,2021,3,Death Knight Armor,$110.00,Death Knight Armor,Onyx Ultra Rare
+20213,2021,3,Death Knight Boots,$109.00,Death Knight Boots,Onyx Ultra Rare
+20213,2021,3,Death Knight Gauntlets,$127.00,Death Knight Gauntlets,Onyx Ultra Rare
+20213,2021,3,Ioun Stone Platinum Nugget,$155.00,Ioun Stone Platinum Nugget,Onyx Ultra Rare
+20213,2021,3,Ioun Stone Sunstone Shard,$121.00,Ioun Stone Sunstone Shard,Onyx Ultra Rare
+20213,2021,3,Lucky Cloak,$115.00,Lucky Cloak,Onyx Ultra Rare
+20213,2021,3,Mad Evoker's Charm,$121.00,Mad Evoker's Charm,Onyx Ultra Rare
+20213,2021,3,Medallion of the Sweetwoods,$111.00,Medallion of the Sweetwoods,Onyx Ultra Rare
+20213,2021,3,Nightshade's +2 Throwing Dagger,$117.00,Nightshade's +2 Throwing Dagger,Onyx Ultra Rare
+20213,2021,3,Pants of Focus,$105.00,Pants of Focus,Onyx Ultra Rare
+20213,2021,3,Psyferre's Spectacles,$106.00,Psyferre's Spectacles,Onyx Ultra Rare
+20213,2021,3,Ring of Expertise,$100.00,Ring of Expertise,Onyx Ultra Rare
+20213,2021,3,Ring of Quick Blessing,$115.00,Ring of Quick Blessing,Onyx Ultra Rare
+20213,2021,3,Ring of the Siren,$100.00,Ring of the Siren,Onyx Ultra Rare
+20213,2021,3,Shield of the Scholar,$117.00,Shield of the Scholar,Onyx Ultra Rare
+20213,2021,3,Shirt of the Nimble,$121.00,Shirt of the Nimble,Onyx Ultra Rare
