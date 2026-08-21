@@ -143,7 +143,7 @@ const rawAuctionIds = new Set(raw.map((r) => r.auctionId).filter(Boolean));
       }
     }
   }
-  // The mirror direction: a Trent auction carrying a priced item that has no
+  // The mirror direction: an auction with per-lot data carrying a priced item
   // lots behind it. Legitimate off-auction additions exist, so this is a WARN.
   for (const [k, vals] of priceRows) {
     const [auctionId, item] = k.split('|');
@@ -151,7 +151,7 @@ const rawAuctionIds = new Set(raw.map((r) => r.auctionId).filter(Boolean));
       warns.push(`${auctionId} "${item}": priced at [${vals.join(', ')}] in prices.csv with no lots in rawPricesData`);
   }
   capped(err, errs); capped(note, warns);
-  if (!errs.length) ok(`${checked} (auction, item) group(s) across ${rawAuctionIds.size} Trent auctions reconcile to their lots`);
+  if (!errs.length) ok(`${checked} (auction, item) group(s) across ${rawAuctionIds.size} auction(s) with per-lot data reconcile to their lots`);
 }
 
 // ===========================================================================

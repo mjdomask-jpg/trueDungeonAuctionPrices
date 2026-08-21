@@ -104,19 +104,19 @@ next time.
 falling back to earlier prices, an auction-number gap left by a deleted `Failed`
 row, the skipped link check.
 
-**Warnings (`!`) are not automatically fine.** Seven of them are standing —
-things known to be odd that nobody has decided about yet — so the useful
-question is not "are there warnings" but *"is this warning new?"* The standing
-set, as of 2026-08-21:
+**Warnings (`!`) are not automatically fine.** Two of them are standing — known
+and decided — so the useful question is not "are there warnings" but *"is this
+warning new?"* The standing set, as of 2026-08-21:
 
 | Warning | Why it's there |
 |---|---|
 | `20251 FERRET HORDE AUCTION targetFunding > $8,000` | a genuine $10,250 auction |
-| `202314 "3 Star": 1 lot … but no row in prices.csv` | one lot never summarised |
-| `202316`, `202317`, `202335`, `202339` outside their lot range | four single-price-era rows that don't sit inside their own lots |
-| `202647 "Golden Ticket": priced … with no lots` | recorded off-auction |
+| `202647 "Golden Ticket": priced … with no lots` | it sold, but its lot was routed to `contextItems` as funding rather than into `rawPricesData` |
 
-Anything else means your export introduced it. Stop and look.
+**Anything else means your export introduced it. Stop and look.** The six
+warnings that stood here when the validator shipped were all real defects, and
+all six were corrected in the sheet on 2026-08-21 — that is what this table is
+for.
 
 ### Step 5 — Check it in a browser (optional but recommended)
 
@@ -174,6 +174,166 @@ open the live site and confirm your change is visible.
 > **Browser caching:** if the live site looks unchanged, hard-reload
 > (`Ctrl+Shift+R`). The CSVs are fetched at runtime and your browser may hold an
 > old copy.
+
+---
+
+## Importing a Trent close
+
+### Installing it (once)
+
+1. Open **`Auction Data for Website - EDIT HERE FIRST`** in Google Sheets.
+2. **Extensions → Apps Script.** A new tab opens on a file called `Code.gs`
+   containing an empty `myFunction()`.
+3. Select everything in that editor and replace it with the whole of
+   `site/apps-script/trentClose.gs`. Rename the file to `trentClose` if you
+   like; the name doesn't matter, the contents do.
+4. **Save** (the disk icon, or Ctrl+S).
+5. Add a tab to the workbook called exactly **`trentStaging`**. Leave it empty.
+6. Reload the spreadsheet tab. A **TD auctions** menu appears next to Help.
+   It is added by `onOpen()`, so it only shows up after a reload.
+7. The first time you run a menu item, Google asks for authorisation: *Review
+   permissions* → pick your account → *Advanced* → *Go to (project name)* →
+   *Allow*. The warning screen is what Google shows for any unpublished script;
+   it is asking to let the script edit this spreadsheet, which is the whole job.
+8. Run **TD auctions → Dry run** once against a close you already have, and
+   check the numbers before you ever let it write.
+
+The menu has two items. **Dry run** parses and reports and writes nothing.
+**Import Trent close…** does the same and then asks before appending.
+
+> **Before the first real import, make a copy of the workbook** (File → Make a
+> copy) and run it there. Nothing below has ever executed against the live
+> sheet: every parsing rule is verified against 18,466 real lots, but the half
+> that talks to the spreadsheet — the menu, the prompts, the append — has only
+> been reasoned about.
+
+**Two things it will do to the sheet that are worth knowing before you say yes.**
+
+It appends **literal values** to `rawPricesData` and `prices`, into columns that
+hold VLOOKUP formulas today. That is deliberate — the parser has already
+resolved the names, and it does so without needing a `trentNormalization` row
+per lot number. But it means new rows are literals sitting under formula rows,
+so **do not fill the old formulas down over the imported rows**: they resolve
+through `trentNormalization`, which no longer gets new entries, and would
+replace correct values with the `"No Match Found"` sentinel.
+
+It writes to **`prices`** — not `auctionPricesOLD`, the retired copy that still
+recalculates. The script refuses to write to any tab whose name ends in `OLD`,
+and checks every tab it needs exists before it reads anything.
+
+### Using it
+
+For a **Trent** auction, do not type any of this by hand. The workbook has an
+importer that does the whole front half of the loop — the parsing, the
+per-token division, the min/max, the Onyx split — and writes the rows itself.
+
+**Extensions → TD auctions → Import Trent close…**
+
+1. Open Trent's close file. Copy the whole sheet — **including the header
+   row** — and paste it into the **`trentStaging`** tab. Don't tidy it first:
+   the extra date columns, the varying header spellings and the unsold rows are
+   all expected, and removing them by hand is the step this replaces.
+2. Run the menu item and give it the target `auctionId`. It lists the most
+   recent Trent auctions to choose from.
+3. Read the summary. It says how many lots it read, how many rows go to each
+   tab, and **names every unsold lot it is dropping**. Confirm, or cancel.
+4. Then rejoin [the standard loop](#the-standard-loop) at step 2: export the
+   changed tabs, place them, `npm run validate`.
+
+### What it does that you don't have to
+
+| | |
+|---|---|
+| Lot names | Resolved to the canonical `Item` against that season's `tokenMetadata`, with a short exception list for the irregular ones. **The old `trentNormalization` tab is not used and does not need a new row per lot.** |
+| Quantity | `10x Dwarven Steels #7` is ten tokens, `1,000 GP Gold Bar x4 #1 (4 Tokens)` is four — the `x4` and the `(4 Tokens)` are one fact written twice, not sixteen tokens. |
+| Per-token price | The lot price divided by that quantity, rounded half away from zero to match every existing row. |
+| `auctionPrices` | Min and max per item — **one** row where an item had a single lot. |
+| Onyx lots | `+2 Sacred Sling - 2023 (Onyx)` is routed to `onyx` with the marker and the year stripped. They arrive inline in Trent's file. |
+| Unsold lots | A blank bid is the real no-sale signal. **No row is written**, and the count is reported. |
+| The auction key | Derived from the auction you picked, applied to every row. You never choose a paste target, which is what makes "pasted into the wrong auction" impossible rather than merely detectable. |
+
+### When it refuses
+
+It writes **all of an auction or none of it**. Three things stop it, and each
+one is a question only you can answer:
+
+- **A lot name it cannot resolve.** The message says which of the two causes it
+  looks like, because the fix is completely different for each — see
+  [Context items](#context-items-in-trents-file) below.
+- **A season mismatch.** The file's own token names say one season, the auction
+  you picked is another. Check the auction before anything else — the year in
+  Trent's *filename* is a calendar year, not a season, and they differ for every
+  autumn auction.
+- **A contradictory quantity**, where `(4 Tokens)` and a mid-name `x2` disagree.
+  Check the lot name against Trent's file; the script will not pick one.
+
+A **CAUTION** line is different from a refusal. It appears when nothing in the
+file is unique to one season, so the season check could not run — the import is
+still offered, but confirm you picked the right auction.
+
+### Context items in Trent's file
+
+Trent's close file carries more than tokens. Grunnel items, bundles and other
+context lots come through inline, and they belong in
+[`contextItems.csv`](#contextitemscsv), not in the price spine. **The importer
+never writes them** — it stops and hands them to you.
+
+Only one Trent auction has ever needed this — `202348`'s single `Grunnel
+Scroll`. (Auction `202647` has ten such rows, but it is alesiev's **forum**
+auction, not Trent's, so this importer will never see it.)
+
+The importer sorts unresolved names into two kinds, because the fix differs:
+
+| The message says | What it means | What to do |
+|---|---|---|
+| `…not a token in season 2026, but it is in 2025` | It *is* a token. Either you picked the wrong auction, or `tokenMetadata` is missing a row for this season. | Fix the auction, or add the token, then re-run. |
+| `…is not a token in any season — most likely a context item` | Not a token at all. | Use the worksheet, below. |
+
+When anything falls in the second group, a **Context items** box opens with a
+ready-to-paste block in `contextItems` column order:
+
+```
+auctionId  auctionSeason  auctionNumber  category  Item          quantity  priceAugmented
+202647     2026           47                       Green Key     1         455
+```
+
+Three things you must do to it, none of which the script will guess:
+
+1. **Fill in `category`** — `token`, `grunnel`, `withheld` or `augment`. That is
+   a judgement about what the item was doing in the auction; a name can't decide
+   it.
+2. **Check `quantity`.** It is read from the lot name, so `4x Baby Potatoes`
+   gives 4 but `Random UR` gives 1 where the real answer was 9.
+3. **Don't put a price on a `withheld` row.** A withheld item didn't sell, so
+   there is no bid to transcribe — and the **site recomputes** the figure it
+   displays from live sales regardless (see
+   [`priceAugmented`](#contextitemscsv)). Signs matter on the rows that do carry
+   a price: `withheld` negative, `token` and `grunnel` positive.
+
+Then **delete those lots from `trentStaging`** and run the import again. It
+writes all of an auction or none of it, so nothing landed on the first attempt.
+
+> **One name will not stop it: `Golden Ticket`.** It is a real token in
+> `tokenMetadata`, so it is priced like any other lot — which is right, it did
+> sell. If the auction also needs a Golden Ticket *funding* row in
+> `contextItems`, add that yourself; the two records are different facts.
+
+### Changing the script
+
+`apps-script/trentClose.gs` **in the repo is the source of truth**, not the copy
+in the workbook's script editor. Edit it here, **bump `SCRIPT_VERSION`**, run
+`npm run test:trent`, then paste the whole file over the editor's contents.
+
+**Is the workbook's copy current?** Every dialog shows the version in its title
+— `Import Trent close (script 2026-08-21.4)`. Compare it with `SCRIPT_VERSION`
+at the top of the repo file; if they differ, re-paste. Re-pasting is always
+safe: the script keeps no state between runs, so there is nothing to migrate.
+
+That test replays every Trent auction already in the repo — ~18,000 lots across
+~110 auctions — back through the importer and asserts it reproduces the shipped
+CSVs exactly, plus fixtures in `fixtures/trent/` for the Onyx, unsold and
+odd-header shapes that `rawPricesData` doesn't carry. An edit made only in the
+editor is an edit nothing tests.
 
 ---
 
@@ -392,6 +552,10 @@ the Transmutes page. This is the single most important file.
 seasons 2018–2026 (2018 arrived with the 2026-08-14 backfill and is now the
 earliest priced season — every pre-2018 recipe falls back to it).
 
+> For a **Trent** auction these rows are written by the importer — see
+> [Importing a Trent close](#importing-a-trent-close). Forum auctions are still
+> entered by hand.
+
 ### Columns
 
 | Column | Required | Notes |
@@ -428,17 +592,23 @@ the Transmutes page can't resolve it. The validator will tell you.
 
 ## `rawPricesData.csv`
 
-**Export from:** Trent's per-lot sales spreadsheet (the Excel file behind the
-max/min pivots that feed `prices.csv`) → save the flat sheet as
-**`rawPricesData.csv`**.
+**Export from:** the `rawPricesData` tab → save as **`rawPricesData.csv`**.
+The rows are written by the importer — see
+[Importing a Trent close](#importing-a-trent-close); the pivot table that used
+to produce them is retired.
 
 **Drives:** the Analytics → **Quartiles** view *only*. Nothing else reads it, so
 a stale or missing file affects that one view and no other page.
 
-**Update when:** you have refreshed per-lot Trent results. ~18,000 rows today.
-Unlike `prices.csv` (which keeps only each auction's high/low points), this is
-**every individual lot**, which is what makes the box plots and quartile tables
-possible. Trent auctions only, 2023 on.
+**Update when:** you have refreshed per-lot results. ~18,000 rows today. Unlike
+`prices.csv` (which keeps only each auction's high/low points), this is **every
+individual lot**, which is what makes the box plots and quartile tables
+possible. Seasons 2023 on.
+
+> **It is no longer Trent-only.** 110 of the 111 auctions here are Trent's; the
+> 111th, `202647`, is alesiev's **forum** auction — the first non-Trent
+> auctioneer to supply per-lot data. Expect more of these, and don't assume a
+> row in this file means the Trent runbook applies to it.
 
 ### Columns
 
@@ -471,16 +641,21 @@ categories are silently skipped here — that is expected, not an error.
 
 ## `onyx.csv`
 
-**Export from:** the `pricesOnyx` tab → save as **`onyx.csv`** (note the name
-change)
+**Export from:** the `onyx` tab → save as `onyx.csv`
 
 **Drives:** the **Onyx** and **All** views of the Prices page (toggle at the top).
 It is loaded independently — if this file is missing or empty, those views are
 blank and nothing else is affected.
 
-**Update when:** an Onyx chase token sells. 844 rows today, seasons 2022–2026,
-across 38 auctions and 101 chase tokens. 42 of those rows (all 2026) have a blank
-`Price` — unsold lots, dropped at parse time, so 802 actually price.
+**Update when:** an Onyx chase token sells. 1,011 rows today, seasons 2018–2026,
+across 48 auctions and 141 chase tokens. For a **Trent** auction the rows are
+written by the importer — Trent's close file carries the Onyx lots inline. See
+[Importing a Trent close](#importing-a-trent-close).
+
+> **Every row must carry a price.** A blank one is not "unsold" — the parser
+> drops it silently, so it moves no statistic and the site looks healthy. 42
+> such rows sat here for months. A genuine no-sale is recorded by writing **no
+> row at all**, and `npm run validate` now errors on a blank.
 
 ### Columns
 
@@ -688,7 +863,7 @@ rows at all. `augment`-category rows exist only in 2026.
 | `category` | **Yes** | One of `token`, `augment`, `grunnel`, `withheld`. `token`/`augment` are treated the same (personal-collection augment), except items named as a Random Ultra Rare become `released-payment`. |
 | `Item` | **Yes** | A **Display Name**, not the stable `Item` key — this is what the withheld estimate joins to `prices."Display Name"` on. Write it exactly as the token's public name appears in `prices.csv`. |
 | `quantity` | **Yes** | Lot size. `priceAugmented` is the lot total, already ×quantity. |
-| `priceAugmented` | **Yes** (except withheld) | Real value for `token`/`augment`/`grunnel`. For `withheld` it is **ignored** — the value is recomputed from live sales — so a stale or error value there is harmless. |
+| `priceAugmented` | **Yes** (except withheld) | Real value for `token`/`augment`/`grunnel`. For `withheld` it is **ignored** — the value is recomputed from live sales — so a stale or error value there is harmless. The one exception: if an item has *no* prior same-season sale, the recompute falls back to this number rather than silently showing $0. That does not occur in the current data. |
 
 ### Rules that matter
 
@@ -907,6 +1082,7 @@ This runbook hardcodes things that live in the repo, so it goes stale silently.
 | a validator message | the troubleshooting section |
 | a check in `validate-prices.mjs` | its case in `scripts/validate-prices.test.mjs` — that file injects one known defect per check and asserts the check reports it, so a check with no case is a check nobody proves still works. Run it with `npm run test:validators` |
 | the set of standing warnings | the table in step 4 |
+| `apps-script/trentClose.gs` | run `npm run test:trent`, update [Importing a Trent close](#importing-a-trent-close), and paste the file over the workbook's script editor — the repo copy is the source of truth, and the editor copy is downstream of it |
 | the `Category` list | the shared rules section |
 | which columns a parser reads | the Required column of that file's table |
 
@@ -927,20 +1103,16 @@ these are read from the workbook itself.
 
 The full tab list is:
 
-`auctionMetadata`, `prices`, `pricesOnyx`, `contextItems`, `tokenMetadata`,
+`auctionMetadata`, `prices`, `onyx`, `contextItems`, `tokenMetadata`,
 `transmuteRecipes`, `offAuctionPrices`, `rawPricesData`, `trentNormalization`,
-`startDates`, `canonical names` — plus two retired tabs, **`auctionPricesOLD`**
-and **`transmutesOLD`**, which still recalculate and must never be exported.
+`startDates`, `canonical names`, `trentStaging` — plus two retired tabs,
+**`auctionPricesOLD`** and **`transmutesOLD`**, which still recalculate and must
+never be exported.
 
-Only one tab is named differently from the file it becomes, so that rename in
-step 2 is not optional:
-
-| Tab | Download | Must be saved as |
-|---|---|---|
-| `pricesOnyx` | `auctionData - pricesOnyx.csv` | `onyx.csv` |
-
-Every other tab shares its name with its target file, so the only change needed
-is stripping Google's `auctionData - ` prefix.
+**Every tab now shares its name with the file it becomes**, so the only change
+step 2 needs is stripping Google's `auctionData - ` prefix. That used to be
+untrue of one tab: `pricesOnyx` had to be saved as `onyx.csv`, and the tab was
+renamed to `onyx` on 2026-08-21 to remove the special case.
 
 If you rename a tab, the download name changes but the required filename in
 `public/data/` does not — correct the "Export from" line here when that happens.

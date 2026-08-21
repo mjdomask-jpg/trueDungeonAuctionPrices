@@ -37,7 +37,10 @@ jobs:
       # gate the deploy workflow doesn't run (the whole reason for this PR
       # check).
       - run: npm run validate
-      # Mutation test: proves the reconciliation checks still fire, by injecting
-      # one known defect at a time into a copy of the data. Without it a check
-      # can rot into a no-op and the run stays green.
-      - run: npm run test:validators
+      # Two suites the data itself cannot cover. The mutation test proves the
+      # reconciliation checks still fire, by injecting one known defect at a
+      # time into a copy of the data — without it a check can rot into a no-op
+      # and the run stays green. The Trent suite replays every Trent auction in
+      # the repo through the Apps Script importer, which otherwise only ever
+      # runs inside a spreadsheet where nothing can test it.
+      - run: npm test
