@@ -11,7 +11,9 @@
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/check-dist-data.mjs",
     "validate": "node scripts/validate-recipes.mjs && node scripts/validate-context.mjs && node scripts/validate-prices.mjs",
+    "test": "npm run test:validators && npm run test:trent",
     "test:validators": "node scripts/validate-prices.test.mjs",
+    "test:trent": "node scripts/trent-close.test.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },

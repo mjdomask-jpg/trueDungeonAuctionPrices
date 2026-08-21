@@ -1,0 +1,15 @@
+[
+  {
+    "file": "auction-8-onyx.csv",
+    "season": "2023",
+    "reconciles": "202335",
+    "note": "Onyx lots and unsold lots inline, name/price in columns C and D",
+    "expect": { "priced": 156, "onyx": 21, "unsold": 4 }
+  },
+  {
+    "file": "auction-29-token-price-headers.csv",
+    "season": "2025",
+    "note": "the \"Token | Price\" header spelling",
+    "expect": { "priced": 160, "onyx": 0, "unsold": 0 }
+  }
+]
