@@ -481,21 +481,34 @@ was renamed, added or removed — adding one is legitimate and has happened twic
 so it asks you to look rather than standing in the way. `Nothing changed` means
 every tab already matches the repository.
 
-### The one thing a publish can break that it cannot fix
+### The withheld preview, and why it no longer blocks you
 
 `docs/withheld-recompute-preview.csv` is an **audited golden file in the repo**,
 with no tab behind it. `validate-context.mjs` checks the live withheld recompute
-against it, so when the two disagree the PR check fails — through a file the
-publish never wrote and cannot regenerate.
+against it — and only a checkout can regenerate it, so for a while any publish
+that changed withheld rows blocked its own PR until someone sat down at the
+repo. About one auction in ten carries withheld items, so that was a real tax on
+the whole point of publishing from the sheet.
 
-It happened on the first real publish: two `withheld` rows were deleted in the
-sheet, the recompute went from 68 rows to 66, the preview still said 68, and the
-PR sat blocked with nothing in its diff to explain why.
+**It doesn't any more.** The audit compares on the **intersection**: a value it
+already covers must still match to the cent, but a withheld row it has never
+seen is new data, not drift. A new auction can't move an old estimate — the
+recompute only reads sales closing *strictly before* the withheld auction, so
+that window is shut by the time a later auction exists.
 
-So the publish now tells you. If it touches `contextItems`, `prices` or
-`auctionMetadata` — the three inputs the recompute reads — the dialog and the PR
-body say so, and if the **withheld row count changed** they say the check *will*
-fail rather than *may*. Then, on the branch the publish opened:
+| What changed | What the check does |
+|---|---|
+| A new auction brings new withheld rows | **Passes.** Reported as new data. |
+| A value the audit covers has moved | **Fails**, naming the rows and the old and new figures. |
+| A withheld row disappeared | **Warns.** Visible; the publisher's row-delta guard is what stops a mass deletion. |
+
+So the only thing that still stops a publish is the one case that genuinely
+wants a person: a historical estimate that moved. A correction to an old price,
+or a change to the recompute itself, does that. A new auction does not.
+
+The publish still tells you when it touches `contextItems`, `prices` or
+`auctionMetadata`, so you know the preview has fallen behind. Bringing it
+forward is housekeeping you can batch. On the branch the publish opened:
 
 ```bash
 node scripts/gen-withheld-preview.mjs
@@ -505,9 +518,8 @@ node scripts/gen-withheld-preview.mjs
 npm run validate
 ```
 
-Commit the regenerated preview to that branch and push. Auto-merge is already
-armed from the publish, so the merge completes on its own once the check goes
-green.
+Commit the regenerated preview to that branch and push — or do it later on its
+own branch; nothing is waiting on it.
 
 > **Read the diff before you commit it.** A withheld value moving by a cent is
 > the price cascade and is expected; dollars are not, and a row count that moved

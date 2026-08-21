@@ -17,11 +17,18 @@
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const dataDir = join(here, '..', 'public', 'data');
-const docsDir = join(here, '..', 'docs');
+// --data / --docs point the run at directories other than the repo's own, so
+// the test suite can check behaviour against a mutated copy without writing to
+// public/data. Mirrors validate-prices.mjs's --data.
+const dirArg = (flag, fallback) => {
+  const i = process.argv.indexOf(flag);
+  return i === -1 ? fallback : resolve(process.argv[i + 1]);
+};
+const dataDir = dirArg('--data', join(here, '..', 'public', 'data'));
+const docsDir = dirArg('--docs', join(here, '..', 'docs'));
 
 // --- tiny RFC-4180 CSV parser (mirror of parseCSV) ---
 function parseCSV(text) {
@@ -121,15 +128,53 @@ const group = (arr) => {
   return m;
 };
 const A = group(withheld), B = group(preview);
-let mismatch = 0;
-for (const k of new Set([...A.keys(), ...B.keys()])) {
-  const a = A.get(k) ?? [], b = B.get(k) ?? [];
-  if (a.length !== b.length || a.some((v, i) => Math.abs(v - b[i]) > 0.01)) mismatch++;
+
+// Compared on the INTERSECTION, not the union.
+//
+// What this file is actually guarding is that the shipped data and the live
+// recompute still agree with the Phase-1 audit — i.e. that no withheld value
+// DRIFTS without someone noticing. New auctions are not drift. Failing on them
+// made a routine publish need a laptop: `gen-withheld-preview.mjs` has to run
+// somewhere with the repo checked out, so every auction carrying withheld items
+// (9 of the 88 in seasons 2025-26) blocked its own PR until a human did that by
+// hand. That is a direct tax on the whole pipeline's reason for existing.
+//
+// Narrowing it is sound because a new auction cannot move an old estimate:
+// valueWithheld only reads sales closing STRICTLY BEFORE the withheld auction,
+// so its window is closed by the time a later auction exists. Measured, not
+// assumed — appending a synthetic future auction with its own withheld rows
+// adds two keys and moves zero existing values.
+//
+// So: a key in both must still match to the cent (ERROR, the audit), a key only
+// in the recompute is new data (INFO, never blocks), and a key only in the
+// preview has been removed (WARN, worth seeing — the publisher's row-delta
+// guard is what actually stops a mass deletion).
+const shared = [...A.keys()].filter((k) => B.has(k));
+const added = [...A.keys()].filter((k) => !B.has(k));
+const removed = [...B.keys()].filter((k) => !A.has(k));
+const drifted = shared.filter((k) => {
+  const a = A.get(k), b = B.get(k);
+  return a.length !== b.length || a.some((v, i) => Math.abs(v - b[i]) > 0.01);
+});
+
+console.log(`Withheld recompute: ${withheld.length} rows vs ${preview.length} audited preview rows ` +
+  `(${shared.length} shared, ${added.length} new, ${removed.length} gone)`);
+if (drifted.length) {
+  err(`${drifted.length} withheld (auction,item) group(s) drifted from the audited preview:`);
+  for (const k of drifted.slice(0, 8)) {
+    console.error(`      ${k}: now [${A.get(k).map((v) => v.toFixed(2)).join(', ')}], ` +
+      `audited [${B.get(k).map((v) => v.toFixed(2)).join(', ')}]`);
+  }
+  console.error('      A value moving means the data behind it changed or the recompute did.');
+  console.error('      If that is expected: node scripts/gen-withheld-preview.mjs');
+} else {
+  console.log(`  ✓ all ${shared.length} audited withheld value(s) still match (±$0.01)`);
 }
-console.log(`Withheld recompute: ${withheld.length} rows vs ${preview.length} audited preview rows`);
-if (withheld.length !== preview.length) err(`row count differs (${withheld.length} vs ${preview.length})`);
-if (mismatch) err(`${mismatch} withheld (auction,item) group(s) do not match the audited preview`);
-else console.log('  ✓ every withheld value matches docs/withheld-recompute-preview.csv (±$0.01)');
+for (const k of removed) note(`withheld row no longer present, was in the audited preview: ${k}`);
+if (added.length) {
+  console.log(`  · ${added.length} withheld row(s) not in the preview yet — new auctions, not drift. ` +
+    'Run gen-withheld-preview.mjs when convenient to bring the audit forward.');
+}
 
 // === 2. domain rules ===
 console.log('Domain rules:');

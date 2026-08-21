@@ -437,14 +437,20 @@ console.log('\nGaps found by the first real publish\n');
   });
 
   const dropped = P.publishWithheldPreviewNotice(planWith('contextItems.csv', 66, 68));
-  check('a changed withheld row count says the check WILL fail',
-    dropped && /68 -> 66/.test(dropped) && /WILL fail/.test(dropped), dropped);
+  check('a changed withheld row count is reported with both numbers',
+    dropped && /68 -> 66/.test(dropped), dropped);
   check('the notice names the file the publish cannot write',
     dropped && /withheld-recompute-preview\.csv/.test(dropped) && /gen-withheld-preview\.mjs/.test(dropped), dropped);
 
-  const sameCount = P.publishWithheldPreviewNotice(planWith('prices.csv', null, null));
-  check('a touched input with no count change says MAY, not WILL',
-    sameCount && /MAY need regenerating/.test(sameCount) && !/WILL fail/.test(sameCount), sameCount);
+  // The notice must not threaten a failure that no longer happens.
+  // validate-context.mjs compares the audited preview on the intersection, so
+  // new withheld rows are new data, not drift — and a routine publish of an
+  // auction with withheld items goes green without anyone opening a checkout.
+  const notices = [dropped, P.publishWithheldPreviewNotice(planWith('prices.csv', null, null))];
+  check('no notice claims new rows will fail the check',
+    notices.every((n) => n && /will NOT fail/.test(n) && !/WILL fail/.test(n)), notices.join('\n---\n'));
+  check('regenerating is framed as housekeeping, not a blocker',
+    notices.every((n) => /when convenient/.test(n)), notices.join('\n---\n'));
 
   check('a publish touching none of the withheld inputs says nothing',
     P.publishWithheldPreviewNotice(planWith('onyx.csv', null, null)) === null);
