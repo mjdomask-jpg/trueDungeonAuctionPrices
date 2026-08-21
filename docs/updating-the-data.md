@@ -22,13 +22,24 @@ This document assumes no prior knowledge. Work top to bottom the first time.
   1. Edit             2. Export            3. Place              4. Check
   Google Sheet   →    tab as CSV      →    public/data/     →    npm run validate
                                                                       ↓
-  7. Verify           6. Deploy            5. Commit               (fix & repeat
-  the live site  ←    GitHub Actions  ←    and push         ←       if it fails)
+  7. Merge &          6. PR check          5. Commit on a          (fix & repeat
+  watch deploy   ←    (the gate)      ←    branch, open a PR  ←     if it fails)
 ```
 
 Steps 1–3 are manual. Steps 4–7 are the same regardless of which file you
 changed. Only step 2's details differ per file — that's what the per-file
 sections below cover.
+
+**Or skip 2–7 entirely:** the workbook can publish itself — see
+[Publishing from the sheet](#publishing-from-the-sheet). It does the same thing
+this loop does, including opening the PR, so the gate is identical.
+
+> **There is now a one-click version of steps 2–7.** The workbook can serialise
+> its own tabs and open a pull request itself: **TD auctions → Publish to
+> site…**. See [Publishing from the sheet](#publishing-from-the-sheet). The
+> manual loop below still works and is still what you fall back to, so read it
+> first — the publisher does exactly these steps, and understanding them is how
+> you read its dialogs.
 
 **Live site:** <https://mjdomask-jpg.github.io/trueDungeonAuctionPrices/>
 
@@ -131,17 +142,10 @@ affected. Stop the server with `Ctrl+C` when done.
 > running, it locks the CSVs and git fails with `unable to unlink … Invalid
 > argument`.
 
-### Step 6 — Commit and push
+### Step 6 — Commit on a branch and open a PR
 
-```bash
-git add public/data
-git commit -m "Add 2026 auction 47 results"
-git push
-```
-
-If you are working on `main`, that's it — the push triggers the deploy.
-
-For a larger or riskier change, use a branch so you can review it first:
+**Everything goes through a pull request.** `main` requires the
+`build-and-validate` check, so a direct push to it is rejected.
 
 ```bash
 git checkout -b update-2026-auction-47
@@ -150,16 +154,37 @@ git commit -m "Add 2026 auction 47 results"
 git push -u origin update-2026-auction-47
 ```
 
-Then open a pull request on GitHub and merge it. Deployment happens on merge to
-`main`, not on the branch push.
+Then:
 
-### Step 7 — Watch the deploy, then verify
+```bash
+gh pr create --fill
+```
 
-Pushing to `main` triggers the **Deploy to GitHub Pages** workflow
+**This is the gate, not a formality.** `deploy.yml` runs on a push to `main` and
+does **not** run `npm run validate`; only `pr-checks.yml` does, and only on pull
+requests. A change that reaches `main` without passing through a PR has been
+seen by no validator at all — which is how the original defects got onto the
+live site. Step 4 catches them locally; this catches them when you forget step 4.
+
+The same rule is why [the publisher](#publishing-from-the-sheet) opens a PR
+rather than committing to `main`, and why it will never fall back to `main` if
+auto-merge fails.
+
+### Step 7 — Merge, then watch the deploy
+
+Wait for the check, then merge:
+
+```bash
+gh pr checks --watch
+```
+
+```bash
+gh pr merge --squash --delete-branch
+```
+
+Merging to `main` triggers the **Deploy to GitHub Pages** workflow
 (`.github/workflows/deploy.yml`): `npm ci` → `npm run build` → publish `dist/`.
 It takes roughly a minute.
-
-Watch it under the repository's **Actions** tab, or:
 
 ```bash
 gh run watch
@@ -167,9 +192,6 @@ gh run watch
 
 A green run means the build succeeded and `dist/data` matched `public/data`. Then
 open the live site and confirm your change is visible.
-
-> **The deploy does not run `npm run validate`.** A build can go green while the
-> data has a problem the validator would have caught. Step 4 is not optional.
 
 > **Browser caching:** if the live site looks unchanged, hard-reload
 > (`Ctrl+Shift+R`). The CSVs are fetched at runtime and your browser may hold an
@@ -334,6 +356,176 @@ That test replays every Trent auction already in the repo — ~18,000 lots acros
 CSVs exactly, plus fixtures in `fixtures/trent/` for the Onyx, unsold and
 odd-header shapes that `rawPricesData` doesn't carry. An edit made only in the
 editor is an edit nothing tests.
+
+---
+
+## Publishing from the sheet
+
+`apps-script/publishToSite.gs` collapses steps 2–7 of the standard loop into one
+menu click. It reads the eight sheet-backed tabs, writes them as CSV, compares
+each against what the repository already holds, commits only what changed as a
+**single commit on a new branch**, and opens a **pull request with auto-merge**.
+The PR check then runs `npm run build`, `npm run validate` and `npm test`, and
+merging triggers the deploy.
+
+**It never commits to `main` directly, and that is not a stylistic choice.**
+`deploy.yml` runs on push to `main` and does **not** run `npm run validate`;
+only `pr-checks.yml` does, and only on pull requests. A direct commit would skip
+every validator this project has. The PR route costs about ninety seconds.
+
+### Installing it (once)
+
+The script goes into the **same** Apps Script project as `trentClose.gs`, as a
+second file. Do the Trent install first if you have not
+([Importing a Trent close](#importing-a-trent-close)).
+
+1. **Extensions → Apps Script**, then **+ → Script** to add a file. Name it
+   `publishToSite`.
+2. Paste the whole of `site/apps-script/publishToSite.gs` into it and save.
+3. **Re-paste `trentClose.gs` too**, if the workbook's copy predates version
+   `2026-08-21.5`. Its `onOpen` is what adds the publish menu items — every
+   `.gs` file in a project shares one global scope, so a second `onOpen` here
+   would replace the first and one of the two menus would silently vanish.
+4. Reload the spreadsheet. **TD auctions** now has *Publish to site…* and
+   *Dry run — what would be published* below a separator.
+5. **Create the token** (below), then run the **dry run** before anything else.
+
+### The token — you create and store this, nobody else touches it
+
+The script authenticates as you. It reads the token from script properties and
+it is **never in the script body**, which is visible to anyone with edit access
+to the spreadsheet and is kept in version history forever.
+
+1. On GitHub: **Settings → Developer settings → Personal access tokens → 
+   Fine-grained tokens → Generate new token**.
+2. **Repository access: Only select repositories →
+   `mjdomask-jpg/trueDungeonAuctionPrices`.** Not "all repositories".
+3. **Permissions → Repository permissions:**
+   - **Contents: Read and write** — to create the blobs, tree, commit and branch.
+   - **Pull requests: Read and write** — to open the PR and enable auto-merge.
+
+   Nothing else. Leave every other permission at *No access*.
+4. Set an expiry you will actually notice — 90 days is a reasonable default —
+   and put a reminder in the calendar. When it expires the script fails loudly
+   with a 401; nothing is published half-way.
+5. Copy the token **once** (GitHub will not show it again).
+6. In the Apps Script editor: **Project Settings → Script Properties → Add
+   script property**, name **`GITHUB_TOKEN`**, value the token. Save.
+
+**Do not paste the token into a file, a commit, a chat, or the script body.** If
+the spreadsheet is ever shared more widely, revoke it on GitHub and issue a new
+one — that takes a minute and is the whole reason for the single-repository
+scope.
+
+### Two repository settings auto-merge needs
+
+Auto-merge is a repository feature, not something the script can switch on:
+
+- **Settings → General → Pull Requests → Allow auto-merge** must be ticked.
+- There must be a **branch protection rule on `main` requiring the PR check**.
+  With nothing to wait for, GitHub considers the PR already mergeable and
+  refuses to queue an auto-merge.
+
+If either is missing the publish still succeeds and the dialog says so — it
+reports the PR link and asks you to merge it yourself. It will **never** fall
+back to committing to `main`.
+
+### Using it
+
+**TD auctions → Dry run — what would be published** first, every time you are
+unsure. It reads the tabs, diffs them, runs every preflight and writes nothing.
+(It still needs the token — the diff is against the live repository — but it
+makes no write of any kind.)
+
+Then **TD auctions → Publish to site…**. The confirmation dialog lists each
+changed file with its row count and how it moved, each unchanged file, any
+cautions, and the branch name. Confirm, and it reports the pull request URL.
+
+> **The dry run is also the fidelity test, and it is worth understanding.**
+> The CSVs in the repo came from Google's own *Download → CSV*, and the script
+> writes CSV from `getDisplayValues()` — the same rendered text. So **a tab you
+> have not edited must report as unchanged.** If one you did not touch reports
+> as CHANGED, the script's output differs from Google's own export somewhere,
+> and that is a bug to chase before publishing, not a diff to accept. Run the
+> dry run once on a day you have changed nothing: all eight should say
+> unchanged.
+
+### What it refuses to do
+
+**It publishes eight files and only eight.** `derivedPrices.csv` and
+`tokenGroups.csv` are [hand-authored](#hand-authored-files) with no tab behind
+them; publishing all ten would overwrite both with whatever a same-named tab
+happened to hold. The allow-list is in `PUBLISH_FILES`, the two names are
+refused by `PUBLISH_NEVER`, and the guard runs twice — once when a tab is read,
+once again immediately before the file becomes a git blob.
+
+It also refuses any tab whose name ends in `OLD`, for the same reason the Trent
+importer does: `auctionPricesOLD` and `transmutesOLD` still recalculate.
+
+### When it aborts
+
+**All eight files publish or none do.** Any of these stops the run in the sheet,
+before anything reaches GitHub:
+
+| The message says | What it means |
+|---|---|
+| `row N (column): #REF!` — or `#N/A`, `#VALUE!`, `#DIV/0!`, `No Match Found` | A formula is broken, or a VLOOKUP missed and the sheet's `IFERROR` wrote its sentinel. `No Match Found` looks like data, which is exactly why it is refused. Fix the formula. |
+| `row N: Price is blank` / `is "-"` | A keyed price row with nothing to price, in `prices`, `onyx` or `rawPricesData`. **Blank does not mean unsold** — the site silently drops such a row, so it moves no statistic and looks healthy. Fill it in or delete the row. |
+| `row N: no auctionId` | A keyed row that joins to nothing. Wholly blank rows are fine and are skipped. |
+| `7753 rows -> 4000 (-3753)` | The tab lost more rows than a correction plausibly would (more than 2%, or 3 rows on a small file). Check for a filter left on, a sort that clipped the range, or a half-deleted tab. |
+| `7753 rows -> 15506 (+7753)` | The tab gained more than 25% (or 200 rows on a small file). Confirm it is a backfill and not a duplicated block. |
+| `the tab has no data rows at all` | Always refused, whatever the percentages say. |
+
+A **CAUTION** is not a refusal. `the header row changed` appears when a column
+was renamed, added or removed — adding one is legitimate and has happened twice,
+so it asks you to look rather than standing in the way. `Nothing changed` means
+every tab already matches the repository.
+
+> **Known, and it will abort your first publish:** `contextItems` rows 241–242
+> (`20242`, `Adventurers' Guild Button`, `withheld`) both hold `#VALUE!` in
+> `priceAugmented`. It has been in the shipped CSV for some time and no
+> validator catches it, because the site ignores `priceAugmented` on a
+> `withheld` row entirely. Clear both cells in the sheet — a withheld row is
+> supposed to have no price — and the publish goes through. They are also
+> duplicates of each other, which is worth a second look while you are there.
+
+### Two things it does not do
+
+**Nothing for correctness.** It publishes whatever the sheet says, faster. That
+is exactly why `validate-prices.mjs` had to land first: auto-publish without the
+reconciliation validator means a bad value reaches the live site in ninety
+seconds instead of whenever you next sat down.
+
+**Nothing on a timer.** It is menu-driven, on purpose. A time-driven trigger is
+the thing that actually removes deferral, but it needs a "ready to publish"
+latch first, or a trigger firing mid-entry ships a half-typed auction — and the
+preflights will not catch a genuinely incomplete row.
+
+### Changing the script
+
+`apps-script/publishToSite.gs` **in the repo is the source of truth**, not the
+copy in the workbook's editor. Edit it here, **bump `PUBLISH_SCRIPT_VERSION`**,
+run `npm run test:publish`, then paste the whole file over the editor's
+contents. Every dialog shows the version in its title, so comparing it against
+the constant at the top of the repo file answers "is the workbook's copy
+current?".
+
+That suite parses every shipped CSV back into a grid, re-serialises it, and
+requires the result to match **byte for byte** — quoting, embedded commas and
+quotes, CRLF, and the absent trailing newline. `rawPricesData.csv` is the real
+exercise at 18,466 rows and 1,452 lines carrying quoted fields with commas
+inside. It also proves the allow-list refuses both hand-authored files, that
+each preflight fires on an injected fault, and that a byte-identical file is
+skipped.
+
+> **Line endings are two different shapes and the script knows it.** Google
+> exports CRLF; the repository stores **LF**, because `core.autocrlf` strips the
+> CR on commit from a Windows checkout. The GitHub API writes raw bytes with no
+> normalisation, so the script serialises to Google's shape and commits git's.
+> Getting this wrong does not corrupt anything, but it would rewrite all eight
+> files on the first publish and leave the diff permanently broken — a CRLF blob
+> can never hash to the LF sha the repository carries, so nothing would ever be
+> skipped again.
 
 ---
 
@@ -911,6 +1103,12 @@ Eyeball the diff (the `delta` column shows how each estimate moved), then
 These two have **no Google Sheet behind them**. Edit them directly in
 `public/data/` and commit. They're listed for completeness.
 
+> **The sheet publisher is forbidden from touching either.** They are named in
+> `PUBLISH_NEVER` in `apps-script/publishToSite.gs` and absent from its
+> allow-list, and `npm run test:publish` tries to sneak both past the guard on
+> every run. Overwriting one is the only way this pipeline could destroy data
+> that exists nowhere else — these files have no upstream to re-export from.
+
 ### `tokenGroups.csv`
 
 Controls how tokens are grouped into charts on the Timelines page, and their line
@@ -1083,6 +1281,8 @@ This runbook hardcodes things that live in the repo, so it goes stale silently.
 | a check in `validate-prices.mjs` | its case in `scripts/validate-prices.test.mjs` — that file injects one known defect per check and asserts the check reports it, so a check with no case is a check nobody proves still works. Run it with `npm run test:validators` |
 | the set of standing warnings | the table in step 4 |
 | `apps-script/trentClose.gs` | run `npm run test:trent`, update [Importing a Trent close](#importing-a-trent-close), and paste the file over the workbook's script editor — the repo copy is the source of truth, and the editor copy is downstream of it |
+| `apps-script/publishToSite.gs` | run `npm run test:publish`, update [Publishing from the sheet](#publishing-from-the-sheet), bump `PUBLISH_SCRIPT_VERSION`, and paste the file over the workbook's editor |
+| **which files are sheet-backed** | `PUBLISH_FILES` and `PUBLISH_NEVER` in `apps-script/publishToSite.gs`, plus [Hand-authored files](#hand-authored-files). The publish suite asserts the allow-list equals the CSVs on disk minus the hand-authored two, so adding a data file without updating the list fails `npm test` |
 | the `Category` list | the shared rules section |
 | which columns a parser reads | the Required column of that file's table |
 
@@ -1113,6 +1313,12 @@ never be exported.
 step 2 needs is stripping Google's `auctionData - ` prefix. That used to be
 untrue of one tab: `pricesOnyx` had to be saved as `onyx.csv`, and the tab was
 renamed to `onyx` on 2026-08-21 to remove the special case.
+
+**Eight of those tabs are sheet-backed data files**; `trentNormalization`,
+`startDates`, `canonical names` and `trentStaging` are working tabs the site
+never reads, and `derivedPrices.csv` / `tokenGroups.csv` are the mirror case —
+files with no tab. That eight-to-ten split is the mapping `PUBLISH_FILES`
+encodes; see [Publishing from the sheet](#publishing-from-the-sheet).
 
 If you rename a tab, the download name changes but the required filename in
 `public/data/` does not — correct the "Export from" line here when that happens.
