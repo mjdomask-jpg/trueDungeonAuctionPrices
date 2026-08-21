@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-21.5';
+var SCRIPT_VERSION = '2026-08-21.6';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -584,12 +584,33 @@ function contextRows(plan, target) {
   return rows;
 }
 
-/** Tab-separated so it pastes across columns rather than into one cell. */
+/**
+ * Tab-separated so it pastes across columns rather than into one cell.
+ *
+ * Which is exactly why a tab INSIDE a value has to go: it would shift every
+ * later column of that row one place right, silently, and the operator pasting
+ * it has no way to see that happened. Not hypothetical — `contextItems.csv`
+ * already carries `"HAMSTER with his own pet\t"`, a real Item name with a
+ * trailing tab. A newline would be worse still, splitting one row into two.
+ *
+ * Collapsing rather than escaping is right for this format: TSV has no escape
+ * mechanism, and every consumer of these names trims on read anyway
+ * (`src/lib/data.ts` trims every cell), so a space and a tab are already the
+ * same string by the time anything joins on them.
+ */
+function tsvCell(value) {
+  return String(value == null ? '' : value).replace(/[\t\r\n]+/g, ' ');
+}
+
 function contextWorksheetText(plan, target) {
   var rows = contextRows(plan, target);
   if (!rows.length) return '';
   var lines = [CONTEXT_COLUMNS.join('\t')];
-  for (var i = 0; i < rows.length; i++) lines.push(rows[i].join('\t'));
+  for (var i = 0; i < rows.length; i++) {
+    var cells = [];
+    for (var c = 0; c < rows[i].length; c++) cells.push(tsvCell(rows[i][c]));
+    lines.push(cells.join('\t'));
+  }
   return lines.join('\n');
 }
 
@@ -834,6 +855,7 @@ if (typeof module !== 'undefined') {
     seasonsResolving: seasonsResolving,
     contextRows: contextRows,
     contextWorksheetText: contextWorksheetText,
+    tsvCell: tsvCell,
     CONTEXT_COLUMNS: CONTEXT_COLUMNS,
     EXCEPTIONS: EXCEPTIONS,
   };

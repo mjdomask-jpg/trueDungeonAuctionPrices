@@ -347,7 +347,7 @@ in the workbook's script editor. Edit it here, **bump `SCRIPT_VERSION`**, run
 `npm run test:trent`, then paste the whole file over the editor's contents.
 
 **Is the workbook's copy current?** Every dialog shows the version in its title
-— `Import Trent close (script 2026-08-21.4)`. Compare it with `SCRIPT_VERSION`
+— `Import Trent close (script 2026-08-21.6)`. Compare it with `SCRIPT_VERSION`
 at the top of the repo file; if they differ, re-paste. Re-pasting is always
 safe: the script keeps no state between runs, so there is nothing to migrate.
 
@@ -383,7 +383,7 @@ second file. Do the Trent install first if you have not
    `publishToSite`.
 2. Paste the whole of `site/apps-script/publishToSite.gs` into it and save.
 3. **Re-paste `trentClose.gs` too**, if the workbook's copy predates version
-   `2026-08-21.5`. Its `onOpen` is what adds the publish menu items — every
+   `2026-08-21.6`. Its `onOpen` is what adds the publish menu items — every
    `.gs` file in a project shares one global scope, so a second `onOpen` here
    would replace the first and one of the two menus would silently vanish.
 4. Reload the spreadsheet. **TD auctions** now has *Publish to site…* and
