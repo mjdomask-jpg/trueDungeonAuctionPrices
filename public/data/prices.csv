@@ -2593,6 +2593,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202313,2023,13,Wish Ring,200,Wish Ring,Premium
 202314,2023,14,1k Bonus,90,Ring of the 4th Circle,Premium
 202314,2023,14,2k Bonus,7.5,Grunnel's +2 Pointy Stick,Premium
+202314,2023,14,3 Star,0.25,Amulet of Magnifying,Bonus
 202314,2023,14,Treasure Chip,2.92,Treasure Chip (each),Preorder
 202314,2023,14,Alchemist's Ink,4.1,Alchemist's Ink,Trade 1
 202314,2023,14,Alchemist's Parchment,1.5,Alchemist's Parchment,Trade 1
@@ -2655,7 +2656,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202316,2023,16,Patron Pin,465,Patron Pin,Premium
 202316,2023,16,PCH,1.31,Potion Healer's Rum,Bonus
 202316,2023,16,Philosopher's Stone,1.6,Philosopher's Stone,Trade 1
-202316,2023,16,Preorder Bonus,0.16,Gib Gub's Handy Acorn,Preorder
+202316,2023,16,Preorder Bonus,0.35,Gib Gub's Handy Acorn,Preorder
 202316,2023,16,Ultra Rare,95.18,Ultra Rare,Ultra Rare
 202316,2023,16,Wish Ring,210,Wish Ring,Premium
 202317,2023,17,1k Bonus,87.88,Ring of the 4th Circle,Premium
@@ -2671,7 +2672,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202317,2023,17,Dwarven Steel,5.1,Dwarven Steel,Trade 1
 202317,2023,17,Elven Bismuth,8.13,Elven Bismuth,Trade 2
 202317,2023,17,Enchanter's Munition,1.6,Enchanter's Munition,Trade 1
-202317,2023,17,Adventurers' Guild Button,0.13,Adventurers' Guild Button,Bonus
+202317,2023,17,Adventurers' Guild Button,3,Adventurers' Guild Button,Bonus
 202317,2023,17,Minotaur Hide,5.1,Minotaur Hide,Trade 1
 202317,2023,17,Mystic Silk,1.6,Mystic Silk,Trade 1
 202317,2023,17,Oil of Enchantment,7.25,Oil of Enchantment,Trade 2
@@ -3079,7 +3080,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202335,2023,35,Elven Bismuth,5,Elven Bismuth,Trade 2
 202335,2023,35,Enchanter's Munition,1.75,Enchanter's Munition,Trade 1
 202335,2023,35,Minotaur Hide,4.25,Minotaur Hide,Trade 1
-202335,2023,35,Mystic Silk,1.75,Mystic Silk,Trade 1
+202335,2023,35,Mystic Silk,1.64,Mystic Silk,Trade 1
 202335,2023,35,Oil of Enchantment,5,Oil of Enchantment,Trade 2
 202335,2023,35,Patron Pin,325,Patron Pin,Premium
 202335,2023,35,PCH,0.75,Potion Healer's Rum,Bonus
@@ -3169,7 +3170,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202339,2023,39,Oil of Enchantment,6,Oil of Enchantment,Trade 2
 202339,2023,39,Patron Pin,253,Patron Pin,Premium
 202339,2023,39,Patron Token 1,130,Charm of Biting,Premium
-202339,2023,39,PCH,1.5,Potion Healer's Rum,Bonus
+202339,2023,39,PCH,1.56,Potion Healer's Rum,Bonus
 202339,2023,39,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
 202339,2023,39,Ultra Rare,96,Ultra Rare,Ultra Rare
 202339,2023,39,Wish Ring,190,Wish Ring,Premium
