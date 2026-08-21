@@ -58,7 +58,7 @@
  * Shown in every dialog, so the copy pasted into the workbook can be told apart
  * from the copy in the repo at a glance. Bump it with any change to this file.
  */
-var PUBLISH_SCRIPT_VERSION = '2026-08-21.1';
+var PUBLISH_SCRIPT_VERSION = '2026-08-21.2';
 
 /**
  * The repository this publishes into. All three values are public facts and
@@ -134,8 +134,17 @@ var PUBLISH_OLD_TAB_RE = /OLD$/;
  * `prices!F/G`'s IFERROR writes when a VLOOKUP misses. workbook-findings.md
  * calls it out precisely because it looks like data: nothing tells you a name
  * went unmatched unless you look. So it is treated as an error here.
+ *
+ * `⚠` is the same class and was found the hard way. The first real publish
+ * shipped `transmuteRecipes.csv` carrying `⚠ check name` where an ingredient
+ * name belonged — a trailing space had been typed into `tokenMetadata`'s
+ * `Charm of Coordination`, breaking the lookup. The native error tokens above
+ * did not match it and the row sailed through; `npm run validate` reported it
+ * only as a WARN, so CI stayed green on that file. Matching the GLYPH rather
+ * than the phrase catches whatever wording the next guard uses. It appears
+ * nowhere in any of the ten shipped CSVs, so it cannot collide with real data.
  */
-var PUBLISH_ERROR_TEXT = ['#N/A', '#REF!', '#VALUE!', '#DIV/0!', '#NAME?', '#NUM!', '#ERROR!', 'No Match Found'];
+var PUBLISH_ERROR_TEXT = ['#N/A', '#REF!', '#VALUE!', '#DIV/0!', '#NAME?', '#NUM!', '#ERROR!', 'No Match Found', '⚠'];
 
 /**
  * Price columns that must hold a number, per Phase 1's settled rule: a
@@ -520,11 +529,89 @@ function publishPlan(entries) {
     changed.push({
       file: e.file, rows: rows, bytes: publishUtf8ByteLength(blob), sha: e.sha,
       previousRows: previousRows, previousSha: previousSha, text: e.text, blob: blob,
+      withheld: publishWithheldRowCount(e.grid),
+      previousWithheld: e.previous ? (e.previous.withheld === undefined ? null : e.previous.withheld) : null,
     });
   }
 
   if (!aborts.length && !changed.length) cautions.push('Nothing changed — every tab already matches the repository.');
-  return { ok: aborts.length === 0, aborts: aborts, cautions: cautions, changed: changed, unchanged: unchanged };
+  var plan = { ok: aborts.length === 0, aborts: aborts, cautions: cautions, changed: changed, unchanged: unchanged };
+  // Raised last: it reads the assembled `changed` list rather than one entry.
+  var withheld = publishWithheldPreviewNotice(plan);
+  if (withheld) cautions.push(withheld);
+  return plan;
+}
+
+/**
+ * The three published files the withheld recompute reads.
+ *
+ * `docs/withheld-recompute-preview.csv` is an audited golden file in the repo,
+ * NOT a tab — so this script can neither publish it nor regenerate it, and
+ * `validate-context.mjs` fails the PR whenever the two disagree. That is the
+ * gap: a publish touching any of these three can red the check through a file
+ * the publish never wrote and cannot fix.
+ *
+ * Found on the first real publish. Two `withheld` rows were deleted in the
+ * sheet, the recompute dropped 68 rows to 66, the preview still said 68, and
+ * the PR sat blocked with nothing in the diff to explain why.
+ *
+ * Regenerating is deliberately NOT automated. The preview is a golden file: if
+ * this script rebuilt it from the same data it just published, the check would
+ * be comparing the data against itself and would never fail again. A human
+ * confirming the drift is understood is the whole value of it.
+ */
+var PUBLISH_WITHHELD_INPUTS = ['contextItems.csv', 'prices.csv', 'auctionMetadata.csv'];
+
+/** Rows whose `category` is `withheld`, or null if the grid has no such column. */
+function publishWithheldRowCount(grid) {
+  if (!grid || !grid.length) return null;
+  var col = publishColumnIndex(grid, 'category');
+  if (col === -1) return null;
+  var n = 0;
+  for (var i = 1; i < grid.length; i++) {
+    if (publishRowIsBlank(grid[i])) continue;
+    if (String(grid[i][col] || '').trim() === 'withheld') n++;
+  }
+  return n;
+}
+
+/**
+ * Tell the operator whether the preview needs regenerating, and how sure we are.
+ *
+ * A changed withheld ROW COUNT is decisive — `validate-context.mjs` compares
+ * counts first, so the check will fail. A changed value cannot be judged from
+ * here (the estimate is a point-in-time mean over prior auctions, which this
+ * script does not compute), so a touched input is reported as a maybe.
+ *
+ * Counting every `withheld` row rather than only those in Closed auctions
+ * slightly over-counts by the validator's definition. Every auction in the file
+ * is Closed today, and erring toward "you may need to regenerate" is the safe
+ * direction for a message whose only cost is being read.
+ */
+function publishWithheldPreviewNotice(plan) {
+  var touched = [], countDelta = null;
+  for (var i = 0; i < plan.changed.length; i++) {
+    var c = plan.changed[i];
+    if (PUBLISH_WITHHELD_INPUTS.indexOf(c.file) === -1) continue;
+    touched.push(c.file);
+    if (c.withheld === null || c.previousWithheld === null || c.withheld === c.previousWithheld) continue;
+    countDelta = { before: c.previousWithheld, after: c.withheld };
+  }
+  if (!touched.length) return null;
+
+  var lead = countDelta
+    ? 'The withheld row count changes ' + countDelta.before + ' -> ' + countDelta.after +
+      ', so docs/withheld-recompute-preview.csv WILL fail the PR check until it is regenerated.'
+    : 'This publish touches ' + touched.join(', ') + ', which feed the withheld estimate, so ' +
+      'docs/withheld-recompute-preview.csv MAY need regenerating.';
+
+  return lead + '\n' +
+    'That file is in the repo, not the sheet, so this publish cannot update it. On the publish branch:\n' +
+    '    git fetch origin && git checkout <the branch this opens>\n' +
+    '    node scripts/gen-withheld-preview.mjs\n' +
+    '    npm run validate\n' +
+    '    git commit -am "Regenerate the withheld preview" && git push\n' +
+    'Read the diff before committing: a cent of drift is the price cascade, dollars are not.';
 }
 
 /** Branch names must be unique per run; the stamp comes from the caller. */
@@ -554,6 +641,15 @@ function publishPullRequestBody(plan) {
   if (plan.cautions.length) {
     lines.push('', '**Cautions raised in the sheet:**');
     for (var j = 0; j < plan.cautions.length; j++) lines.push('- ' + plan.cautions[j].split('\n')[0]);
+  }
+  // The withheld notice goes in full rather than first-line-only: it carries the
+  // commands, and whoever reads this PR is the person who has to run them.
+  var withheld = publishWithheldPreviewNotice(plan);
+  if (withheld) {
+    lines.push('', '### The withheld preview', '', withheld.split('\n')[0], '', '```bash');
+    var rest = withheld.split('\n').slice(1);
+    for (var k = 0; k < rest.length; k++) if (rest[k].indexOf('    ') === 0) lines.push(rest[k].trim());
+    lines.push('```');
   }
   lines.push('', 'Serialised with `getDisplayValues()`, so the text matches Google\'s own',
     '*Download as CSV*. The PR check runs `npm run build`, `npm run validate` and',
@@ -907,6 +1003,10 @@ if (typeof module !== 'undefined') {
     publishCommitMessage: publishCommitMessage,
     publishPullRequestBody: publishPullRequestBody,
     publishDescribePlan: publishDescribePlan,
+    publishWithheldRowCount: publishWithheldRowCount,
+    publishWithheldPreviewNotice: publishWithheldPreviewNotice,
+    PUBLISH_ERROR_TEXT: PUBLISH_ERROR_TEXT,
+    PUBLISH_WITHHELD_INPUTS: PUBLISH_WITHHELD_INPUTS,
     PUBLISH_FILES: PUBLISH_FILES,
     PUBLISH_NEVER: PUBLISH_NEVER,
     PUBLISH_REPO: PUBLISH_REPO,
