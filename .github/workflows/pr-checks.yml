@@ -37,10 +37,18 @@ jobs:
       # gate the deploy workflow doesn't run (the whole reason for this PR
       # check).
       - run: npm run validate
-      # Two suites the data itself cannot cover. The mutation test proves the
+      # Three suites the data itself cannot cover. The mutation test proves the
       # reconciliation checks still fire, by injecting one known defect at a
       # time into a copy of the data — without it a check can rot into a no-op
       # and the run stays green. The Trent suite replays every Trent auction in
       # the repo through the Apps Script importer, which otherwise only ever
-      # runs inside a spreadsheet where nothing can test it.
+      # runs inside a spreadsheet where nothing can test it. The publish suite
+      # does the same for the auto-publish script, and its core assertion —
+      # that a grid of display values re-serialises to the shipped CSV byte for
+      # byte — is what stands between the sheet and eight silently corrupted
+      # data files.
+      #
+      # NOTE for anyone touching the publish suite: this runner checks out with
+      # LF line endings while the maintainer's Windows box has CRLF, so the
+      # suite must not assume either. It detects which and says so in its output.
       - run: npm test
