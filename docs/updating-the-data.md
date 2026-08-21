@@ -93,18 +93,30 @@ From the repo root:
 npm run validate
 ```
 
-You want:
+That runs three validators in sequence: the recipe/schema one, the context one,
+and `validate-prices.mjs`, which reconciles every recorded price against the
+source it came from. **The run must end `0 error(s)`.** An error stops the
+commit; see [Troubleshooting](#troubleshooting) for what each message means. Fix
+it in the Google Sheet and re-export — not in the CSV, or your fix disappears
+next time.
 
-```
---- 0 errors, 0 warnings ---
-```
+`INFO` lines (`·`) are normal and can be ignored — a season with no auction data
+falling back to earlier prices, an auction-number gap left by a deleted `Failed`
+row, the skipped link check.
 
-`INFO` lines are normal and can be ignored — they explain routine things like a
-season with no auction data falling back to an earlier season's prices.
+**Warnings (`!`) are not automatically fine.** Seven of them are standing —
+things known to be odd that nobody has decided about yet — so the useful
+question is not "are there warnings" but *"is this warning new?"* The standing
+set, as of 2026-08-21:
 
-If you see `ERROR` or `WARN`, **stop and fix it before committing.** See
-[Troubleshooting](#troubleshooting) for what each message means. Fix it in the
-Google Sheet and re-export — not in the CSV, or your fix disappears next time.
+| Warning | Why it's there |
+|---|---|
+| `20251 FERRET HORDE AUCTION targetFunding > $8,000` | a genuine $10,250 auction |
+| `202314 "3 Star": 1 lot … but no row in prices.csv` | one lot never summarised |
+| `202316`, `202317`, `202335`, `202339` outside their lot range | four single-price-era rows that don't sit inside their own lots |
+| `202647 "Golden Ticket": priced … with no lots` | recorded off-auction |
+
+Anything else means your export introduced it. Stop and look.
 
 ### Step 5 — Check it in a browser (optional but recommended)
 
@@ -808,6 +820,53 @@ raw materials with no upgrade-from token, add its `Year|Transmute` key to
 The recipe sheet's `Display Name` disagrees with `tokenMetadata`. Usually the
 recipe sheet's lookup formula is stale — refill it.
 
+### `prices.csv has [x, y] but its N lot(s) give [a, b]`
+
+From check 1 of `validate-prices.mjs`. For season 2024 onwards, an item's rows in
+`prices.csv` are the **min and max** of its per-lot rows in `rawPricesData.csv`
+(a single row where every lot fetched the same price). The two files disagree, so
+one of them was pasted from the wrong place — and `rawPricesData` is the one with
+the receipts. Re-derive the summary from the lots.
+
+Season 2023 is exempt: those fifteen auctions record a single averaged price
+instead, so all the validator can say there is whether the number sits inside the
+lot range, and it says it as a warning.
+
+### `auctions X, Y have identical price blocks`
+
+Check 2. Two auctions whose every item and every price agree to the cent — which
+does not happen by chance across twenty items. One block was copied onto the
+other; this is exactly what went wrong with `202510` and `20258`. Find the
+auction whose own results were overwritten and re-export it.
+
+### `$X / N = $Y but Price is $Z`
+
+Check 3. In `rawPricesData.csv`, `Price` is the **per-token** price:
+`trentPrice` divided by the quantity in the lot name. `10x Dwarven Steels #8` is
+ten tokens; `1,000 GP Gold Bar x4 #1 (4 Tokens)` is four, *not* sixteen — the
+`x4` and the `(4 Tokens)` are the same fact written twice. If the message instead
+says **`lot size stated twice and they disagree`**, the lot name itself is
+contradictory: check it against Trent's file rather than picking one.
+
+### `has Price = blank` or `has Price = "-"`
+
+Check 5. A keyed row in a price file with nothing to price. Both causes are
+defects: `-` is a copy/paste artifact from the pivot table, and a blank is a
+placeholder row created when the auction opened and never filled in.
+
+**A blank does not mean "unsold."** The site's parser silently drops any row it
+cannot price, so an unfilled block moves no statistic and looks perfectly healthy
+— 42 empty rows sat in `onyx.csv` for months that way. A genuine no-sale is
+recorded by emitting **no row at all**. Either fill the price in or delete
+the row.
+
+### `auctionStyle … says Onyx but onyx.csv has no rows` (or the reverse)
+
+Check 6. The two must agree in both directions. Either the Onyx results were
+never transcribed, or the style is wrong. Both directions were violated by 16
+auctions before the 2026-08-21 backfill and by none after it, so a fresh
+violation is a fresh mistake.
+
 ### The build fails with `dist/data check FAILED`
 
 You edited a file inside `dist/`. `dist/` is generated output and is overwritten
@@ -846,6 +905,8 @@ This runbook hardcodes things that live in the repo, so it goes stale silently.
 | an npm script name | the standard loop and troubleshooting |
 | the deploy workflow | step 7 |
 | a validator message | the troubleshooting section |
+| a check in `validate-prices.mjs` | its case in `scripts/validate-prices.test.mjs` — that file injects one known defect per check and asserts the check reports it, so a check with no case is a check nobody proves still works. Run it with `npm run test:validators` |
+| the set of standing warnings | the table in step 4 |
 | the `Category` list | the shared rules section |
 | which columns a parser reads | the Required column of that file's table |
 

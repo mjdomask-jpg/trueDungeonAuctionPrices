@@ -10,7 +10,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/check-dist-data.mjs",
-    "validate": "node scripts/validate-recipes.mjs && node scripts/validate-context.mjs",
+    "validate": "node scripts/validate-recipes.mjs && node scripts/validate-context.mjs && node scripts/validate-prices.mjs",
+    "test:validators": "node scripts/validate-prices.test.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },

@@ -33,6 +33,11 @@ jobs:
       # scripts/check-dist-data.mjs — so this one step also typechecks and
       # confirms the data made it into dist/.
       - run: npm run build
-      # The recipe/schema and context validators — the gate the deploy workflow
-      # doesn't run (the whole reason for this PR check).
+      # The recipe/schema, context and price-reconciliation validators — the
+      # gate the deploy workflow doesn't run (the whole reason for this PR
+      # check).
       - run: npm run validate
+      # Mutation test: proves the reconciliation checks still fire, by injecting
+      # one known defect at a time into a copy of the data. Without it a check
+      # can rot into a no-op and the run stays green.
+      - run: npm run test:validators
