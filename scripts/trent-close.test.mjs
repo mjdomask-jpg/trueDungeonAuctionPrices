@@ -354,6 +354,23 @@ console.log('\nContext items\n');
     T.CONTEXT_COLUMNS.join(',') === Object.keys(load(dataDir, 'contextItems.csv')[0]).join(','),
     `script: ${T.CONTEXT_COLUMNS.join(',')}\ncsv:    ${Object.keys(load(dataDir, 'contextItems.csv')[0]).join(',')}`);
 
+
+  // The worksheet is tab-separated, so a tab inside a value would shift every
+  // later column of that row one place right — silently, with nothing on screen
+  // to show it happened. Not hypothetical: contextItems.csv already carries
+  // "HAMSTER with his own pet\t", a real Item name ending in a tab.
+  check('a tab in a value cannot shift the pasted columns',
+    T.tsvCell('HAMSTER with his own pet\t') === 'HAMSTER with his own pet ');
+  check('a newline cannot split one row into two', T.tsvCell('a\nb') === 'a b');
+  check('an ordinary value is left alone', T.tsvCell('Green Key') === 'Green Key');
+  {
+    const tabbed = T.planImport([['Product Name', 'Highest Bid'], bonus, ['Green\tKey', '455']], '2026', tokens);
+    const line = T.contextWorksheetText(tabbed, target).split('\n')[1];
+    const cols = line.split('\t').length;
+    check('every worksheet row has exactly one cell per column',
+      cols === T.CONTEXT_COLUMNS.length, `got ${cols} cells: ${JSON.stringify(line)}`);
+  }
+
   const clean = T.planImport([['Product Name', 'Highest Bid'], bonus, ['Wish Ring', '135']], '2026', tokens);
   check('a clean file produces no worksheet', T.contextWorksheetText(clean, target) === '');
 }
