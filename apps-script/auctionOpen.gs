@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-08-21.1';
+var OPEN_VERSION = '2026-08-22.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -596,17 +596,58 @@ function openPhraseNotes(title) {
 function openInferSeason(title, openDate, metaRows) {
   var m = String(title == null ? '' : title).match(/\b(20\d{2})\b/);
   if (m) return { season: m[1], how: 'from the title' };
-  var latest = null;
-  for (var i = 0; i < metaRows.length; i++) {
-    if (!latest || String(metaRows[i].openDate) > String(latest.openDate)) latest = metaRows[i];
+
+  var spans = openSeasonSpans(metaRows);
+  var date = String(openDate || '');
+  var latest = null, i;
+  for (i = 0; i < spans.length; i++) {
+    if (!latest || spans[i].last > latest.last) latest = spans[i];
+    if (date && date >= spans[i].first && date <= spans[i].last) {
+      return { season: spans[i].season, how: 'from the season running on ' + date };
+    }
   }
   if (!latest) return { season: '', how: 'unknown' };
-  var month = parseInt(String(openDate).slice(5, 7), 10);
-  var rollover = month >= 8 && month <= 11;
+
+  // Not inside any recorded season. Either it is newer than everything — the
+  // rollover case — or it fell in a gap between two seasons, which is the one
+  // window where a date genuinely names no season.
+  if (date && date < latest.last) {
+    return {
+      season: latest.season,
+      how: 'ASSUMED — ' + date + ' falls BETWEEN recorded seasons, so no date can name one. Check it',
+    };
+  }
   return {
-    season: String(latest.auctionSeason),
-    how: rollover ? 'ASSUMED from the last auction — season rollover window, check it' : 'from the last recorded auction',
+    season: latest.season,
+    how: 'ASSUMED from the last recorded auction — nothing is recorded on or after ' + date + '. Check it',
   };
+}
+
+/**
+ * The first and last open date of every recorded season.
+ *
+ * Seasons do not overlap — measured across all nine, every gap between one
+ * season's last auction and the next season's first is positive — so a date
+ * inside the recorded era names exactly one season, and asking which range
+ * contains it beats assuming the newest.
+ *
+ * That assumption was wrong in the first real scan: a thread that opened
+ * 2023-12-18 and had merely been replied to recently was proposed as season
+ * 2026, and silently, because December is nowhere near the autumn rollover the
+ * only check looked for. Old threads get bumped into the window all the time;
+ * "recently active" says nothing about when something opened.
+ */
+function openSeasonSpans(metaRows) {
+  var by = {}, order = [], i;
+  for (i = 0; i < metaRows.length; i++) {
+    var season = String(metaRows[i].auctionSeason || '').trim();
+    var date = String(metaRows[i].openDate || '').trim();
+    if (!season || !date) continue;
+    if (!by[season]) { by[season] = { season: season, first: date, last: date }; order.push(by[season]); }
+    if (date < by[season].first) by[season].first = date;
+    if (date > by[season].last) by[season].last = date;
+  }
+  return order;
 }
 
 // ===========================================================================
@@ -1241,6 +1282,7 @@ if (typeof module !== 'undefined') {
     openPhraseNotes: openPhraseNotes,
     openInferSeason: openInferSeason,
     openScanCutoff: openScanCutoff,
+    openSeasonSpans: openSeasonSpans,
     openSelectFeedItems: openSelectFeedItems,
     openForumProposal: openForumProposal,
     openTrentProposal: openTrentProposal,

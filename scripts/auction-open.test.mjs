@@ -331,10 +331,52 @@ console.log('\nSeason inference\n');
   eq('a year in the title wins', O.openInferSeason('Flik\'s 2027 Onyx Auction', '2026-09-30', META).season, '2027');
   const noYear = O.openInferSeason('Super Condensed Lightning Auction', '2026-09-30', META);
   eq('without one, the last recorded season', noYear.season, '2026');
-  check('  ... announced as an assumption inside the rollover window',
+  check('  ... announced as an assumption when nothing is recorded that late',
     /ASSUMED/.test(noYear.how), noYear.how);
   const midSeason = O.openInferSeason('Super Condensed Lightning Auction', '2026-03-01', META);
-  check('  ... and not flagged outside it', !/ASSUMED/.test(midSeason.how), midSeason.how);
+  eq('  ... but a date inside a recorded season names it outright', midSeason.season, '2026');
+  check('  ... with no assumption to flag', !/ASSUMED/.test(midSeason.how), midSeason.how);
+
+  // The first real scan proposed a thread that opened 2023-12-18 — an old
+  // topic someone had merely replied to recently — as season 2026 auction 48,
+  // and said nothing, because December is nowhere near the autumn rollover the
+  // only check looked for. "Recently active" says nothing about when a thread
+  // opened, and old threads get bumped into the window constantly.
+  const old = O.openInferSeason("Fred's Mary's Hands Auction  Oct 21st - Nov 1st", '2023-12-18', META);
+  eq('a 2023-12-18 open lands in the season that was running then', old.season, '2024');
+  check('  ... rather than in the newest one', !/ASSUMED/.test(old.how), old.how);
+  eq('  ... and is numbered into that season', O.openNextNumber(META, old.season), 42);
+
+  // A date in the gap between two seasons names neither, and says so.
+  const spans = O.openSeasonSpans(META);
+  const s2025 = spans.find((s) => s.season === '2025');
+  const s2026 = spans.find((s) => s.season === '2026');
+  const between = O.openShiftIsoDays(s2025.last, 3);
+  check('the gap between 2025 and 2026 is real', between > s2025.last && between < s2026.first,
+    `${s2025.last} .. ${between} .. ${s2026.first}`);
+  const gap = O.openInferSeason('Super Condensed Auction', between, META);
+  check('a date in that gap is flagged as naming no season',
+    /ASSUMED/.test(gap.how) && /BETWEEN/.test(gap.how), gap.how);
+
+  // Leave-one-out: hide a row, then ask which season its own open date names.
+  // Only a season's first or last auction can fail, because hiding one shrinks
+  // the range past it — and fewer than the 18 that implies, since seasons open
+  // several auctions on the same day and a twin keeps the range where it was.
+  let placed = 0; const missed = [];
+  for (const r of META) {
+    const others = META.filter((x) => x !== r);
+    const got = O.openInferSeason('no year here', r.openDate, others);
+    if (got.season === r.auctionSeason && !/ASSUMED/.test(got.how)) placed++;
+    else missed.push(r);
+  }
+  eq('276 of the 289 recorded rows are placed by their open date alone', placed, 276);
+  check('  ... and all 13 that are not are a season\'s own first or last auction',
+    missed.every((r) => {
+      const span = O.openSeasonSpans(META).find((s) => s.season === r.auctionSeason);
+      return r.openDate === span.first || r.openDate === span.last;
+    }), missed.map((r) => `${r.auctionId} ${r.openDate}`).join(', '));
+  check('  ... which are flagged rather than silently misplaced',
+    missed.every((r) => /ASSUMED/.test(O.openInferSeason('no year here', r.openDate, META.filter((x) => x !== r)).how)), '');
 
   // The rollover is not hypothetical, and it can be quick. Seasons never
   // overlap — a date does sit in exactly one season — but the boundary is only
