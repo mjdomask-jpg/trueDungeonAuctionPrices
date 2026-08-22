@@ -135,30 +135,123 @@ for (const f of manifest.files) {
 // ===========================================================================
 // 3. The per-lot file, in detail
 // ===========================================================================
-console.log('\nThe per-lot file (202647)\n');
+console.log('\nThe per-lot file (202647) — the format being asked for\n');
 {
   const g = grid('alesiev-202647-per-lot.csv');
+  const target = { auctionId: '202647', auctionSeason: '2026', auctionNumber: '47' };
   const plan = F.forumPlanImport(g, '2026', TOKENS);
 
-  // It aborts, and that is correct: nine Random UR lots, six Grunnel Augments
-  // and two Player Augments are contextItems rows, not prices. The importer
-  // stops rather than guessing, and hands the operator a worksheet.
-  eq('the raw file aborts', plan.ok, false);
-  eq('  ... on 17 rows', plan.aborts.length, 17);
-  check('  ... naming Random UR', plan.aborts.some((a) => /Random UR/.test(a)), '');
-  check('  ... and the augments', plan.aborts.some((a) => /Grunnel Augment/.test(a)), '');
-  const worksheet = T.contextWorksheetText(plan, { auctionId: '202647', auctionSeason: '2026', auctionNumber: '47' });
-  check('  ... and offering them as a contextItems block', /Random UR/.test(worksheet), worksheet.slice(0, 120));
+  // Straight from the auctioneer, with no hand editing at all.
+  eq('the raw file imports as sent', plan.ok, true);
+  eq('  ... with nothing to fix first', plan.aborts.length, 0);
+  eq('  ... 211 priced lots', plan.lots, 211);
+  eq('  ... to rawPricesData', F.forumKeepsRawRows(plan), true);
+  eq('  ... 211 per-lot rows', plan.raw.length, 211);
+  eq('  ... and 36 price rows', plan.prices.length, 36);
 
-  // With those rows moved out, as the operator would, it imports cleanly.
-  const CONTEXT = /^(Random UR|Grunnel Augment|Player Augment)$/i;
-  const trimmed = [g[0], ...g.slice(1).filter((r) => !CONTEXT.test(String(r[0] ?? '').trim()))];
-  const clean = F.forumPlanImport(trimmed, '2026', TOKENS);
-  eq('with the context rows moved out, it imports', clean.ok, true);
-  eq('  ... 211 lots', clean.lots, 211);
-  eq('  ... to rawPricesData', F.forumKeepsRawRows(clean), true);
-  eq('  ... 211 per-lot rows', clean.raw.length, 211);
-  eq('  ... and 36 price rows', clean.prices.length, 36);
+  // The 17 rows that are not prices are recognised, not rejected.
+  eq('17 rows are routed as context items', plan.context.length, 17);
+  const rows = F.forumContextRows(plan.context, target);
+  eq('  ... becoming 9 contextItems rows', rows.length, 9);
+
+  const CI = load(dataDir, 'contextItems.csv').filter((c) => c.auctionId === '202647');
+  const emitted = rows.map((r) => r[6]).sort((a, b) => a - b);
+  // Golden Ticket is a resolvable token and comes through the price path, so it
+  // is not one of the rows this block is responsible for.
+  const recorded = CI.filter((c) => c.Item !== 'Golden Ticket').map((c) => money(c.priceAugmented)).sort((a, b) => a - b);
+  eq('  ... whose prices match contextItems exactly', emitted.join(','), recorded.join(','));
+
+  const randomUR = rows.find((r) => r[4] === 'Random UR');
+  eq('Random UR is aggregated to one row', randomUR[5], 9);
+  eq('  ... summing to what the sheet records', randomUR[6], 497);
+  eq('  ... as a token', randomUR[3], 'token');
+
+  // The lots of an aggregated item do NOT all sell at one price, and this file
+  // is the proof: eight at $55 and one at $57. Summing each lot's own price is
+  // what makes that come out right; quantity × a representative price is wrong
+  // by $2 here — which is the error the sheet itself carried until it was
+  // corrected from $495 to $497.
+  const urLots = plan.context.filter((l) => /random ur/i.test(l.name)).map((l) => l.bid);
+  eq('the nine lots are not all the same price', new Set(urLots).size, 2);
+  eq('  ... 8 at $55', urLots.filter((p) => p === 55).length, 8);
+  eq('  ... and 1 at $57', urLots.filter((p) => p === 57).length, 1);
+  eq('  ... which sums to the recorded total', urLots.reduce((a, b) => a + b, 0), 497);
+  check('  ... and 9 × any single price does NOT',
+    ![55, 57].some((p) => p * 9 === 497), '9 × 55 = 495, 9 × 57 = 513');
+
+  const breakdown = F.forumAggregateBreakdown(plan.context);
+  eq('the dialog shows how the total was reached', breakdown.length, 1);
+  eq('  ... spelled out', breakdown[0], 'Random UR: 8 @ $55 + 1 @ $57 = $497');
+
+  const grunnel = rows.filter((r) => r[3] === 'grunnel');
+  eq('each Grunnel Augment keeps its own row', grunnel.length, 6);
+  check('  ... at the six recorded prices',
+    grunnel.map((r) => r[6]).sort((a, b) => a - b).join(',') === '72,103,112,137,161,455',
+    grunnel.map((r) => r[6]).join(','));
+  check('  ... with the Item left blank for the operator', grunnel.every((r) => r[4] === ''), '');
+  eq('  ... and two player augments as tokens', rows.filter((r) => r[3] === 'token' && r[4] === '').length, 2);
+
+  check('the operator is told which rows still need a name',
+    (plan.cautions || []).some((c) => /8 of them need a name/.test(c)), (plan.cautions || []).join(' | '));
+
+  // The routing is a short list of KNOWN names, not a licence to guess. A name
+  // nobody has classified still stops the run.
+  const withUnknown = [g[0], ['Mystery Widget', '1', '25'], ...g.slice(1)];
+  const stopped = F.forumPlanImport(withUnknown, '2026', TOKENS);
+  eq('an unrecognised name still aborts', stopped.ok, false);
+  check('  ... naming it', stopped.aborts.some((a) => /Mystery Widget/.test(a)), stopped.aborts.join(' | '));
+}
+
+// ===========================================================================
+// 3b. Aggregating mixed prices, on cases the fixtures do not contain
+// ===========================================================================
+console.log('\nMixed prices in an aggregated row\n');
+{
+  const target = { auctionId: 'X', auctionSeason: '2026', auctionNumber: '1' };
+  const run = (rows) => F.forumContextRows(
+    F.forumReadStaging([['Item', 'Amount'], ...rows]).context, target);
+
+  // Three different prices, none of them a clean multiple of the total.
+  let r = run([['Random UR', '55'], ['Random UR', '57'], ['Random UR', '60']]);
+  eq('three prices sum', r[0][6], 172);
+  eq('  ... with the quantity counted', r[0][5], 3);
+
+  // Cents, where a float sum would drift.
+  r = run([['Random UR', '0.1'], ['Random UR', '0.2']]);
+  eq('cents do not drift', r[0][6], 0.3);
+
+  // One lot.
+  r = run([['Random UR', '55']]);
+  eq('a single lot is still a row', r[0][6], 55);
+  eq('  ... of quantity 1', r[0][5], 1);
+
+  // A quantity written into the name instead of spread over rows. Both
+  // spellings mean nine tokens, and counting rows would call this one.
+  r = run([['9x Random UR', '497']]);
+  eq('"9x Random UR" on one row is nine tokens', r[0][5], 9);
+  eq('  ... at the stated total', r[0][6], 497);
+
+  // Mixed spellings in one file.
+  r = run([['3x Random UR', '165'], ['Random UR', '57']]);
+  eq('mixed spellings add up', r[0][5], 4);
+  eq('  ... and so do their prices', r[0][6], 222);
+
+  const b = F.forumAggregateBreakdown(
+    F.forumReadStaging([['Item', 'Amount'], ['Random UR', '55'], ['Random UR', '55'], ['Random UR', '57']]).context);
+  eq('the breakdown groups equal prices', b[0], 'Random UR: 2 @ $55 + 1 @ $57 = $167');
+
+  // Grunnel augments are NOT aggregated, so mixed prices stay separate rows.
+  const g = F.forumContextRows(
+    F.forumReadStaging([['Item', 'Amount'], ['Grunnel Augment', '161'], ['Grunnel Augment', '72']]).context, target);
+  eq('a non-aggregated name keeps one row per lot', g.length, 2);
+  eq('  ... each at its own price', g.map((x) => x[6]).join(','), '161,72');
+
+  // Context routing is per-lot only. An aggregated file has no lots to add up.
+  const aggCtx = F.forumReadStaging([['Auction Item', 'Low Bid', 'High Bid'], ['Random UR', '41', '43']]);
+  eq('an aggregated file does not route context names', aggCtx.context.length, 0);
+  eq('  ... they stay lots, for the ordinary unresolved path', aggCtx.lots.length, 2);
+  eq('  ... and is not summed', F.forumAggregateBreakdown(
+    F.forumReadStaging([['Item', 'Amount'], ['Grunnel Augment', '161']]).context).length, 0);
 }
 
 // ===========================================================================
