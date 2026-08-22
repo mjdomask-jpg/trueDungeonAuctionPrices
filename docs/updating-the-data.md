@@ -199,6 +199,173 @@ open the live site and confirm your change is visible.
 
 ---
 
+## Watching for new auctions
+
+`apps-script/auctionOpen.gs` watches the two places an 8K auction opens —
+Trent's shop page and the forum's two auction categories — and proposes the
+`auctionMetadata` row each new one needs. It replaces checking the forum by
+hand, and it removes the two mistakes that come with typing a row from scratch:
+a reused `auctionNumber`, and an `openDate` remembered rather than read.
+
+**It never writes to `auctionMetadata` on its own.** Proposals land in a review
+tab. You tick the ones that are real, fill in what only you know, and a second
+menu item appends them. That is not caution for its own sake: category 584
+carries charity auctions, eBay listings, cancelled auctions and pure discussion
+threads alongside the real ones, and no test on a thread title separates them.
+Measured against both live category feeds, the "looks like an 8K auction" test
+catches 28 of the 35 recorded auctions still listed there and *also* fires on 21
+threads that are not auctions at all. So it sorts; it does not filter, and it
+does not create.
+
+**The two categories are watched differently, and it is worth knowing why.** 584
+is the auction category, so a thread there is proposed whether or not its title
+mentions 8K. **602 is the general discussion forum** — it holds one recorded
+auction and a great many threads about rules and Gen Con — so a topic there is
+only looked at if its title says 8K, condensed or Onyx. Without that a scan
+returns fourteen threads of noise every time. Each scan reports how many it
+skipped for that reason.
+
+### Installing it (once)
+
+The script goes into the **same** Apps Script project as `trentClose.gs`, as a
+third file. Do the Trent install first if you have not
+([Importing a Trent close](#importing-a-trent-close)).
+
+1. **Extensions → Apps Script** from the workbook.
+2. **File → New → Script**, name it `auctionOpen`, and replace its contents with
+   the whole of `site/apps-script/auctionOpen.gs`.
+3. Save, then reload the spreadsheet. Two new items appear under **TD
+   auctions**: *Scan for new auctions…* and *Promote approved auctions…*.
+4. The first run asks for authorisation again — this script fetches web pages,
+   which the Trent importer never did, so Google asks separately.
+
+You do **not** create the review tab. The scan makes `auctionOpenReview` the
+first time it runs, and that tab is the only thing this script creates without
+being asked.
+
+### Using it
+
+**Extensions → TD auctions → Scan for new auctions…**
+
+It fetches Trent's page and both category feeds, then a page for each forum
+topic it has not seen, and rewrites `auctionOpenReview`. The summary says what
+it proposed and what it skipped. Nothing else has changed.
+
+Then, in `auctionOpenReview`:
+
+1. **Read the `verdict` and `notes` columns first.** `candidate` means the title
+   mentions 8K, condensed or Onyx; `no 8K signal` means it does not — which is
+   *not* the same as "not an auction". Seven of the recorded auctions would read
+   `no 8K signal` today, because their titles were edited after they closed.
+2. **Fill in `auctionStyle`, `completionStyle`, `augmentated` and
+   `targetFunding`.** The scan leaves these blank for forum auctions on purpose.
+   Guessing them from the thread title was measured and it is not good enough:
+   `augmentated` comes out right on 127 of 178 recorded auctions, and
+   `auctionStyle` is wrong on 11 of the 66 it would guess at — it reads "Non
+   Onyx" and "No Onyx SC" as Onyx, and three auctions titled "Super Condensed"
+   are recorded as `Ultra Condensed`. A wrong value you skim past is worse than
+   a blank one you have to fill. The phrases it found are in `notes` as
+   evidence.
+3. **Check the `season`.** `notes` says where it came from. `season ASSUMED …`
+   means there was no year in the title and it fell back to the last recorded
+   auction's season — which is wrong for every auction of a new season until you
+   record one by hand. Seasons have started as little as **nine days** after the
+   previous one's last auction, so between roughly August and November, check
+   this every time.
+4. **Check `openDate` against the `first post` time.** The date is the thread's
+   first post, read from the forum's own timestamp. Of seven auctions replayed
+   in the test, five match what you recorded exactly; the two that don't are a
+   thread opened at 22:51 (you dated it the next day) and one of a batch you
+   dated to the day that season's auctions were allowed to start. Both are your
+   call, not the script's — that is why the clock is on screen.
+5. **Tick `Approve?`** on the rows you want.
+
+Then **TD auctions → Promote approved auctions…**. It shows exactly what it will
+append and asks. Numbers are worked out at this point, not at scan time, so a
+row you added by hand in between is taken into account.
+
+Rescanning is safe: your ticks and anything you typed are carried across, and
+rows already promoted stay as a record.
+
+### What it does that you don't have to
+
+| | |
+|---|---|
+| `auctionNumber` | `max` of that season plus one, never `count` plus one. Failed auctions are deleted, so the numbers are sparse — 2026 is missing 3 and 38, 2025 is missing 18, 25 and 31. Counting would propose 46, which already exists. |
+| `auctionId` | The season and the number run together, the way all 289 recorded rows are built. |
+| `openDate` | The forum's exact first-post timestamp, not "5 days ago". For Trent, the start date his page states. |
+| `auctioneer` | The forum display name mapped to the name you already use — `Wade Schwendemann (Dr. Uid)` to `Wade S`, `alesiev - Alex` to `alesiev`, `Nick` to `Nick Braun`. A name it cannot map is flagged as new rather than guessed. |
+| Duplicates | A forum auction is identified by its topic id, so a renamed thread is still recognised. Trent's are identified by season and name, because all 111 of his rows share one URL and his numbering restarts each season. |
+| The formula columns | Left alone. See below. |
+
+### The columns it writes, and the seven it must not
+
+It fills in eleven columns: `auctionId`, `auctionSeason`, `auctionNumber`,
+`auctionName`, `auctionStyle`, `completionStyle`, `auctioneer`, `Link`,
+`openDate`, `targetFunding`, `augmentated`.
+
+`daysToClose`, `Status`, `Open Month`, `Close Month`, `augmentedTotal`,
+`fundingNoAugment` and `preorderTotal` are **formulas**, and a literal written
+into any of them would freeze it at whatever the previous auction happened to
+hold. So the script appends by **copying the last row down** — formulas and
+formatting intact, references shifted one row — and then goes cell by cell:
+
+- the eleven columns above are **written**;
+- a column whose source cell holds a **formula** is **left as copied**;
+- a column whose source cell holds a **literal** is **cleared**.
+
+That last rule is the important one, and it is why the script reads the source
+row's formulas rather than working from a list. A copied row arrives holding the
+previous auction's everything — including its `closeDate`. Left in place, a
+brand-new auction would compute `Status = Closed` and never appear as open
+anywhere on the site. Cleared, `Status` reads `Open`, which is what you want
+until you fill `closeDate` in at the close.
+
+The same rule covers `augmentTokens`, `augmentGrunnel` and `augmentWithheld`
+whichever they turn out to be: if they are QUERY formulas they are kept, and if
+they are numbers you type they are cleared rather than inherited.
+
+**One formula the copy gets wrong, and it is the one to watch.** `Open Month` is
+`DATEDIF(<that season's start date>, openDate, "M")+1`, and the baseline is
+hard-coded per block of rows. Copying the previous row down copies the previous
+row's *season baseline*, so the first auction of a new season inherits the old
+one and reads a month or so too high. The promote dialog says so in a CAUTION
+line whenever the season changes. Fix that one cell by hand.
+
+### When it refuses
+
+| It says | What happened |
+|---|---|
+| `topic … is already recorded as 2026xx` | Between the scan and the promote, that auction was added. Nothing is written; untick the row. |
+| `"Trent Auction 33" is already recorded as … for season 2026` | Same, for Trent. Note the season — the same name in a *different* season is a different auction and is allowed. |
+| `no season` / `no openDate` / `no auctionName` | The review row is missing something the sheet needs. Fill it in and promote again. |
+| `no "<column>" column in auctionMetadata` | A column was renamed. Fix the name in the sheet, or `OPEN_METADATA_FIELDS` in the script. |
+| `Trent: could not read an auction number and start date from the page` | Usually he is between auctions and the page has no live one. Not an error. |
+
+### What it does not do
+
+- **It does not close anything.** Prices, `closeDate` and the augment columns are
+  all still the close-side job — Trent's through the importer, everyone else's
+  by hand until Phase 5.
+- **It does not watch anything but those three pages.** An auction announced
+  only in a Discord or a newsletter will not appear.
+- **It does not run on a timer.** It is a menu item, like everything else here.
+
+### Changing the script
+
+`apps-script/auctionOpen.gs` **in the repo is the source of truth**. Edit it
+here, **bump `OPEN_VERSION`**, run `npm run test:open`, then paste the whole file
+over the editor's contents. Every dialog shows the version in its title.
+
+The test replays saved copies of the real pages — in `fixtures/auction-open/`,
+gzipped because Kunena serves ~90 KB of markup for a page whose useful part is
+one `<span>` — against the rows `auctionMetadata.csv` already holds. If the
+forum or the shop changes its markup, that suite is what tells you, and
+re-fetching the fixtures from the URLs in its `manifest.json` is how you update
+it.
+
+---
+
 ## Importing a Trent close
 
 ### Installing it (once)
@@ -347,7 +514,7 @@ in the workbook's script editor. Edit it here, **bump `SCRIPT_VERSION`**, run
 `npm run test:trent`, then paste the whole file over the editor's contents.
 
 **Is the workbook's copy current?** Every dialog shows the version in its title
-— `Import Trent close (script 2026-08-21.6)`. Compare it with `SCRIPT_VERSION`
+— `Import Trent close (script 2026-08-21.7)`. Compare it with `SCRIPT_VERSION`
 at the top of the repo file; if they differ, re-paste. Re-pasting is always
 safe: the script keeps no state between runs, so there is nothing to migrate.
 
@@ -649,6 +816,11 @@ price feeds for the one token-price panel). It does **not** contain any prices.
 
 **Update when:** a new auction opens, an auction closes, or an auction's details
 change.
+
+> **You do not have to type the "opens" half.**
+> [Watching for new auctions](#watching-for-new-auctions) proposes the row —
+> number, id, open date, auctioneer and link — from Trent's page and the forum,
+> and appends the ones you approve without disturbing the formula columns.
 
 ### Columns
 
@@ -1324,6 +1496,8 @@ This runbook hardcodes things that live in the repo, so it goes stale silently.
 | the set of standing warnings | the table in step 4 |
 | `apps-script/trentClose.gs` | run `npm run test:trent`, update [Importing a Trent close](#importing-a-trent-close), and paste the file over the workbook's script editor — the repo copy is the source of truth, and the editor copy is downstream of it |
 | `apps-script/publishToSite.gs` | run `npm run test:publish`, update [Publishing from the sheet](#publishing-from-the-sheet), bump `PUBLISH_SCRIPT_VERSION`, and paste the file over the workbook's editor |
+| `apps-script/auctionOpen.gs` | run `npm run test:open`, update [Watching for new auctions](#watching-for-new-auctions), bump `OPEN_VERSION`, and paste the file over the workbook's editor |
+| **a formula column in `auctionMetadata`** | `OPEN_METADATA_FIELDS` in `apps-script/auctionOpen.gs`. It lists the eleven columns Phase 4 writes; everything else is left for the copied-down formula. A column that becomes a formula and stays on that list gets frozen on every new auction |
 | **which files are sheet-backed** | `PUBLISH_FILES` and `PUBLISH_NEVER` in `apps-script/publishToSite.gs`, plus [Hand-authored files](#hand-authored-files). The publish suite asserts the allow-list equals the CSVs on disk minus the hand-authored two, so adding a data file without updating the list fails `npm test` |
 | the `Category` list | the shared rules section |
 | which columns a parser reads | the Required column of that file's table |
@@ -1349,7 +1523,14 @@ The full tab list is:
 `transmuteRecipes`, `offAuctionPrices`, `rawPricesData`, `trentNormalization`,
 `startDates`, `canonical names`, `trentStaging` — plus two retired tabs,
 **`auctionPricesOLD`** and **`transmutesOLD`**, which still recalculate and must
-never be exported.
+never be exported. **`auctionOpenReview`** joins them the first time
+[the auction scan](#watching-for-new-auctions) runs; it is a working tab and is
+never exported either.
+
+`startDates` is the one to be careful with: `auctionMetadata`'s `Open Month` and
+`Close Month` read a per-season start date from it, hard-coded per block of
+rows. Nothing generates those references, so a new season needs its baseline
+added there and the first row of the season pointed at it.
 
 **Every tab now shares its name with the file it becomes**, so the only change
 step 2 needs is stripping Google's `auctionData - ` prefix. That used to be

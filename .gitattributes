@@ -1,0 +1,6 @@
+# The maintainer's checkout has core.autocrlf = true, so git rewrites line
+# endings on anything it decides is text. Its binary detection is a heuristic,
+# and the auction-open fixtures are gzipped pages whose whole value is being
+# byte-for-byte what the server sent — a single rewritten byte makes them
+# undecompressable. Say so explicitly rather than trusting the guess.
+*.gz binary
