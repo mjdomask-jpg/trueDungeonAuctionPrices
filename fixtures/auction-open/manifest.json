@@ -1,0 +1,79 @@
+{
+  "fetched": "2026-08-21",
+  "note": "Verbatim pages from the two sources Phase 4 watches, gzipped because Kunena serves ~90 KB of markup for a page whose useful part is one span. The bytes are unmodified: nothing is trimmed, because the failure this guards against is a match found EARLIER in the page than the one we want, and a trimmed page cannot show that. Re-fetch from `url` if a parser stops reproducing these.",
+  "trent": {
+    "file": "trent-current-auction.html.gz",
+    "url": "https://trenttokens.com/collections/current-auction",
+    "expect": {
+      "number": "33",
+      "startDate": "2026-03-28",
+      "status": "Closing",
+      "season": "2026",
+      "reserve": "7,500"
+    },
+    "reconciles": "202643",
+    "why": "One page serves every Trent auction in turn, so this fixture is whichever auction was live on the fetch date. 202643 is already recorded, which makes it the duplicate case as well: a scan against this page must propose nothing and say why."
+  },
+  "feeds": [
+    { "file": "forum-feed-584.xml.gz", "catid": "584", "url": "https://truedungeon.com/forum?view=category&catid=584&format=feed&type=rss" },
+    { "file": "forum-feed-602.xml.gz", "catid": "602", "url": "https://truedungeon.com/forum?view=category&catid=602&format=feed&type=rss" }
+  ],
+  "topics": [
+    {
+      "file": "topic-259798.html.gz",
+      "catid": "584",
+      "id": "259798",
+      "reconciles": "202647",
+      "expect": { "openDate": "2026-08-07", "openTime": "19:46", "starter": "alesiev - Alex", "auctioneer": "alesiev" },
+      "why": "the ` - Alex` suffix; also the title drift case — recorded as \"Alesiev's FINAL 2026 Token Auction - With Augments!\", now \"...- EXPECTED 8/21 or 8/22!\""
+    },
+    {
+      "file": "topic-259475.html.gz",
+      "catid": "602",
+      "id": "259475",
+      "reconciles": "202644",
+      "expect": { "openDate": "2026-04-03", "openTime": "17:45", "starter": "alesiev - Alex", "auctioneer": "alesiev" },
+      "why": "category 602 — only two recorded auctions live there, and neither appears in 584's feed at all"
+    },
+    {
+      "file": "topic-255503.html.gz",
+      "catid": "584",
+      "id": "255503",
+      "reconciles": "20231",
+      "expect": { "openDate": "2022-09-29", "openTime": "18:22", "starter": "Utaku Soto", "auctioneer": "Matt Soto" },
+      "why": "the alias table — no rule reaches Utaku Soto from Matt Soto. Also a date the operator moved: recorded 2022-10-04, the day that season's auctions were allowed to start, not the day the thread went up."
+    },
+    {
+      "file": "topic-248428.html.gz",
+      "catid": "584",
+      "id": "248428",
+      "reconciles": "20181",
+      "expect": { "openDate": "2018-09-27", "openTime": "12:05", "starter": "Wade Schwendemann (Dr. Uid)", "auctioneer": "Wade S" },
+      "why": "a trailing parenthetical plus a prefix match, on the oldest page shape there is"
+    },
+    {
+      "file": "topic-258020.html.gz",
+      "catid": "584",
+      "id": "258020",
+      "reconciles": "20251",
+      "expect": { "openDate": "2024-09-17", "openTime": "22:51", "starter": "Amanda (Magellan the Ferret Druid)", "auctioneer": "Amanda" },
+      "why": "22:51 — recorded as the 18th. The parser is right and the sheet is right; the timestamp has to be on screen for a human to see why they differ."
+    },
+    {
+      "file": "topic-248693.html.gz",
+      "catid": "584",
+      "id": "248693",
+      "reconciles": "20191",
+      "expect": { "openDate": "2018-12-15", "openTime": "17:30", "starter": "Nick", "auctioneer": "Nick Braun" },
+      "why": "prefix matching in the other direction — the forum name is shorter than the recorded one"
+    },
+    {
+      "file": "topic-252093.html.gz",
+      "catid": "584",
+      "id": "252093",
+      "reconciles": "20213",
+      "expect": { "openDate": "2020-11-12", "openTime": "16:55", "starter": "ralykam", "auctioneer": "Ralykam" },
+      "why": "case only"
+    }
+  ]
+}

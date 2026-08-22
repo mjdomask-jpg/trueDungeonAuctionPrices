@@ -11,11 +11,12 @@
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/check-dist-data.mjs",
     "validate": "node scripts/validate-recipes.mjs && node scripts/validate-context.mjs && node scripts/validate-prices.mjs",
-    "test": "npm run test:validators && npm run test:context && npm run test:trent && npm run test:publish",
+    "test": "npm run test:validators && npm run test:context && npm run test:trent && npm run test:publish && npm run test:open",
     "test:validators": "node scripts/validate-prices.test.mjs",
     "test:context": "node scripts/validate-context.test.mjs",
     "test:trent": "node scripts/trent-close.test.mjs",
     "test:publish": "node scripts/publish-to-site.test.mjs",
+    "test:open": "node scripts/auction-open.test.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },
