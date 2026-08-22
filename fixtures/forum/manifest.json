@@ -38,7 +38,8 @@
       "file": "alesiev-202646-all-bids-pivot.csv",
       "headers": "Row Labels | Minimum Bid | Maximum Bid | Average Bid",
       "refuse": true,
-      "why": "A pivot over EVERY bid received, not a record of winning bids. Read as winning bids it reconciles with none of that auctioneer's five auctions on a single item, and its ranges are far wider than the recorded prices — which is what a column of losing offers looks like. Nothing in the data says so; the `Average Bid` header is the only warning there is, which is why the importer refuses on the header."
+      "why": "A pivot over EVERY bid received, not a record of winning bids. Read as winning bids it reconciles with none of that auctioneer's five auctions on a single item, and its ranges are far wider than the recorded prices — which is what a column of losing offers looks like. Nothing in the data says so; the `Average Bid` header is the only warning there is, which is why the importer refuses on the header.",
+      "confirmed": "2026-08-22: the maintainer confirmed this file was every bid received, not the winning bids. The refusal is turning away a known-bad shape, not hedging."
     }
   ]
 }
