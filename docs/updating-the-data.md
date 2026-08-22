@@ -369,6 +369,77 @@ it.
 
 ---
 
+## Importing a forum close from a file
+
+Some forum auctioneers send a spreadsheet of their results rather than only
+posting them in the thread. Where that file exists it is the record and the
+thread is the fallback, so it is worth using: the numbers are already numbers.
+
+`apps-script/forumClose.gs` imports one. It is deliberately thin — the quantity
+rule, the name resolution, the per-token division, the min/max and the Onyx
+routing are all [the Trent importer's](#importing-a-trent-close), unchanged. All
+the .gs files share one scope in Apps Script, so it simply calls them. **The
+Trent script must be installed for this one to work.**
+
+### The three shapes, and which to ask for
+
+Three real files from the *same* auctioneer had three different shapes. They are
+not equally good, and the difference was measured against what the sheet already
+records:
+
+| The file's headers | What it is | How it is treated |
+|---|---|---|
+| `Item \| Number \| Amount` | one row per lot | **Ask for this one.** It reproduced `prices.csv` on **19 of 20 items**; the twentieth is a duplicated row in the sheet, not a parse error. |
+| `Auction Item \| Low Bid \| High Bid` | already aggregated | Imported **with a caution**. Agreed on 6 of 13 items and differed on 7, in both directions. Check the numbers. |
+| `… \| Minimum Bid \| Maximum Bid \| Average Bid` | a pivot over **every** bid | **Refused.** See below. |
+
+> **Why an `Average Bid` column gets the file rejected.** It means the file
+> summarises every bid *received*, not the bids that *won*. Read as winning
+> bids it reconciles with none of that auctioneer's five auctions on a single
+> item, and its ranges are far wider than the recorded prices — which is what a
+> column of losing offers looks like. Nothing in the numbers says so; the header
+> is the only warning there is. If you get one, ask for the winning bids.
+
+### Installing it (once)
+
+Add it as a fourth file in the same Apps Script project (**File → New →
+Script**, name it `forumClose`), paste in `site/apps-script/forumClose.gs`, and
+add a tab called exactly **`forumStaging`**. Reload the spreadsheet; two items
+appear under **TD auctions**.
+
+### Using it
+
+1. Paste the auctioneer's file — **including the header row** — into
+   `forumStaging`.
+2. **TD auctions → Dry run — show what the file would import.** Give it the
+   target `auctionId`.
+3. Read the summary. It says which shape it detected, how many lots it read,
+   what goes to each tab, and every row it could not resolve.
+4. Deal with the unresolved rows. They are usually context items rather than
+   mistakes — the per-lot sample aborts on 17 of them: nine `Random UR` lots,
+   six `Grunnel Augment` and two `Player Augment`. The script hands you a
+   `contextItems` block to paste, exactly as the Trent importer does. Move them
+   out of `forumStaging` and run again.
+5. **Import forum close from a file…** when the dry run is clean.
+
+### What it does that the Trent importer does not
+
+| | |
+|---|---|
+| Trailing quantities | `AI 10x` means what `10x AI` means. It is rewritten before parsing, so the shared quantity rule — verified against 18,466 Trent lots — is left alone. |
+| Withheld markers | A price cell reading `Withheld` is reported and skipped, not read as a price or as an unsold lot. `Golden Ticket \| Withheld` is the sample. |
+| `Totals` rows | A pivot's trailing total is not a lot. |
+| Already-aggregated files | Contribute **no `rawPricesData` rows**. Their two values per row are a min and a max, not two sales, and writing them as sales would invent lots that never existed. |
+
+### Changing the script
+
+`apps-script/forumClose.gs` in the repo is the source of truth. Edit it here,
+**bump `FORUM_VERSION`**, run `npm run test:forum`, then paste it over the
+editor's contents. The test replays all three real files in `fixtures/forum/`
+against `prices.csv`.
+
+---
+
 ## Importing a Trent close
 
 ### Installing it (once)
@@ -517,7 +588,7 @@ in the workbook's script editor. Edit it here, **bump `SCRIPT_VERSION`**, run
 `npm run test:trent`, then paste the whole file over the editor's contents.
 
 **Is the workbook's copy current?** Every dialog shows the version in its title
-— `Import Trent close (script 2026-08-21.7)`. Compare it with `SCRIPT_VERSION`
+— `Import Trent close (script 2026-08-22.1)`. Compare it with `SCRIPT_VERSION`
 at the top of the repo file; if they differ, re-paste. Re-pasting is always
 safe: the script keeps no state between runs, so there is nothing to migrate.
 
@@ -1500,6 +1571,7 @@ This runbook hardcodes things that live in the repo, so it goes stale silently.
 | `apps-script/trentClose.gs` | run `npm run test:trent`, update [Importing a Trent close](#importing-a-trent-close), and paste the file over the workbook's script editor — the repo copy is the source of truth, and the editor copy is downstream of it |
 | `apps-script/publishToSite.gs` | run `npm run test:publish`, update [Publishing from the sheet](#publishing-from-the-sheet), bump `PUBLISH_SCRIPT_VERSION`, and paste the file over the workbook's editor |
 | `apps-script/auctionOpen.gs` | run `npm run test:open`, update [Watching for new auctions](#watching-for-new-auctions), bump `OPEN_VERSION`, and paste the file over the workbook's editor |
+| `apps-script/forumClose.gs` | run `npm run test:forum`, update [Importing a forum close from a file](#importing-a-forum-close-from-a-file), bump `FORUM_VERSION`, and paste the file over the workbook's editor |
 | **a formula column in `auctionMetadata`** | `OPEN_METADATA_FIELDS` in `apps-script/auctionOpen.gs`. It lists the eleven columns Phase 4 writes; everything else is left for the copied-down formula. A column that becomes a formula and stays on that list gets frozen on every new auction |
 | **which files are sheet-backed** | `PUBLISH_FILES` and `PUBLISH_NEVER` in `apps-script/publishToSite.gs`, plus [Hand-authored files](#hand-authored-files). The publish suite asserts the allow-list equals the CSVs on disk minus the hand-authored two, so adding a data file without updating the list fails `npm test` |
 | the `Category` list | the shared rules section |
@@ -1524,7 +1596,8 @@ The full tab list is:
 
 `auctionMetadata`, `prices`, `onyx`, `contextItems`, `tokenMetadata`,
 `transmuteRecipes`, `offAuctionPrices`, `rawPricesData`, `trentNormalization`,
-`startDates`, `canonical names`, `trentStaging` — plus two retired tabs,
+`startDates`, `canonical names`, `trentStaging` — plus `forumStaging` (added for
+[the forum file importer](#importing-a-forum-close-from-a-file)) and two retired tabs,
 **`auctionPricesOLD`** and **`transmutesOLD`**, which still recalculate and must
 never be exported. **`auctionOpenReview`** joins them the first time
 [the auction scan](#watching-for-new-auctions) runs; it is a working tab and is

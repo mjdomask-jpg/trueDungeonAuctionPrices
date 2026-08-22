@@ -37,7 +37,7 @@ jobs:
       # gate the deploy workflow doesn't run (the whole reason for this PR
       # check).
       - run: npm run validate
-      # Five suites covering what the data itself cannot. The mutation test
+      # Six suites covering what the data itself cannot. The mutation test
       # proves the reconciliation checks still fire, by injecting one known
       # defect at a time into a copy of the data — without it a check can rot
       # into a no-op and the run stays green. The Trent suite replays every
@@ -49,7 +49,9 @@ jobs:
       # silently corrupted data files. The auction-open suite replays saved
       # copies of Trent's shop page and the forum's feeds and topic pages, so a
       # markup change at either source fails here rather than silently
-      # proposing nothing.
+      # proposing nothing. The forum suite replays three real auctioneer files,
+      # including the one that must be REFUSED — a pivot over every bid rather
+      # than the winning ones, which reconciles with no auction on any item.
       #
       # NOTE for anyone touching the publish suite: this runner checks out with
       # LF line endings while the maintainer's Windows box has CRLF, so the

@@ -1,0 +1,44 @@
+{
+  "source": "Three files from one forum auctioneer (alesiev), converted from .xlsx to CSV without changing a value. They are the whole of Phase 5's spreadsheet-path evidence, and they disagree with each other about what a results file looks like.",
+  "fetched": "2026-08-22",
+  "files": [
+    {
+      "file": "alesiev-202647-per-lot.csv",
+      "headers": "Item | Number | Amount",
+      "shape": "one row per lot",
+      "lots": 228,
+      "reconciles": "202647",
+      "reproduces": 19,
+      "knownDifferences": [
+        "Patron Pin: the importer emits one row for a single-lot item, and the sheet carries two identical rows"
+      ],
+      "why": "The raw per-lot shape. `Number` is the lot number, not a quantity or a price — reading it as a price puts a $1 minimum on every item. This file also carries the 17 rows that belong in contextItems (9 Random UR, 6 Grunnel Augment, 2 Player Augment), so it is the abort case as well as the import case."
+    },
+    {
+      "file": "alesiev-202640-low-high.csv",
+      "headers": "Auction Item | Low Bid | High Bid",
+      "shape": "a low/high pair per item",
+      "lots": 82,
+      "withheld": 1,
+      "reconciles": "202640",
+      "reproduces": 6,
+      "why": "Already aggregated, so it contributes no rawPricesData rows — its two values per row are a min and a max, not two sales. It reconciles with 202640 and with nothing else (7 of 13 items on a min/max comparison against every 2026 auction; the runner-up scores 2), so the auction was MEASURED, not read off the filename, which says \"#1\" and is dated April. But it only agrees with the sheet on 6 of 13 items once the rows are built, and it differs in both directions — so this shape is imported with a caution, not trusted. Most of its names use the trailing-quantity spelling (AI 10x) and the abbreviations, so it is also the normalisation case. Golden Ticket | Withheld is the withheld marker.",
+      "rows": 44,
+      "knownDifferences": [
+        "Alchemist's Ink",
+        "Alchemist's Parchment",
+        "Darkwood Plank",
+        "Minotaur Hide",
+        "Mystic Silk",
+        "Philosopher's Stone",
+        "Wish Ring"
+      ]
+    },
+    {
+      "file": "alesiev-202646-all-bids-pivot.csv",
+      "headers": "Row Labels | Minimum Bid | Maximum Bid | Average Bid",
+      "refuse": true,
+      "why": "A pivot over EVERY bid received, not a record of winning bids. Read as winning bids it reconciles with none of that auctioneer's five auctions on a single item, and its ranges are far wider than the recorded prices — which is what a column of losing offers looks like. Nothing in the data says so; the `Average Bid` header is the only warning there is, which is why the importer refuses on the header."
+    }
+  ]
+}
