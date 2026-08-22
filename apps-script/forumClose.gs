@@ -9,7 +9,7 @@
  * This file is deliberately thin. Everything that matters — the quantity rule,
  * the name resolution, the per-token division, the min/max, the Onyx routing,
  * the abort on an unresolved name — is `trentClose.gs`'s, unchanged and already
- * verified against 18,466 lots. All three .gs files share ONE global scope in
+ * verified against 18,466 lots. All four .gs files share ONE global scope in
  * Apps Script, so those functions are simply in scope here. What this file adds
  * is the part that is genuinely different: reading a file shape that is not
  * Trent's.
@@ -53,7 +53,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var FORUM_VERSION = '2026-08-22.1';
+var FORUM_VERSION = '2026-08-22.2';
 
 /** The tab the operator pastes the auctioneer's file into. */
 var FORUM_STAGING_TAB = 'forumStaging';
@@ -84,7 +84,12 @@ var FORUM_HIGH_HEADERS = ['high bid', 'maximum bid', 'max bid', 'highest bid'];
  * reconciles with NO recorded auction — 0 of 17 items match on min and max
  * against any of the five that auctioneer ran. Its ranges are far wider than
  * the winning prices, which is exactly what a column of losing offers looks
- * like. Nothing in the file says so; only the header gives it away.
+ * like.
+ *
+ * **Confirmed by the maintainer on 2026-08-22: that file was every bid, not the
+ * winners.** So this is not a heuristic hedging against a possibility; it is a
+ * known-bad shape being turned away. Nothing in the numbers says so — only the
+ * header gives it away.
  */
 var FORUM_REFUSE_HEADERS = ['average bid', 'average', 'avg bid', 'avg', 'mean bid'];
 
