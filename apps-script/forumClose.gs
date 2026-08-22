@@ -127,11 +127,28 @@ var FORUM_REFUSE_HEADERS = ['average bid', 'average', 'avg bid', 'avg', 'mean bi
  * names whose meaning is known, not a licence to guess at unknown ones.
  */
 var FORUM_CONTEXT_RULES = {
-  'random ur': { category: 'token', aggregate: true },
-  'random urs': { category: 'token', aggregate: true },
+  'random ur': { category: 'token', aggregate: true, item: 'Random UR' },
+  'random urs': { category: 'token', aggregate: true, item: 'Random UR' },
   'grunnel augment': { category: 'grunnel', aggregate: false },
   'player augment': { category: 'token', aggregate: false },
 };
+
+/**
+ * The `Item` an aggregated row is written under.
+ *
+ * `item` on the rule, not the spelling the file happened to use. `contextItems`
+ * records `Random UR`; a file writing `Random Urs` would otherwise create a
+ * second, near-identical Item that every later grouping treats as a different
+ * thing. The site joins on these names.
+ */
+function forumContextDisplayName(name) {
+  var rule = forumContextRule(name);
+  if (rule && rule.item) return rule.item;
+  return String(name == null ? '' : name)
+    .replace(/^\s*\d+\s*x\s+/i, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim();
+}
 
 /** A row whose price cell says this is withheld, not sold. */
 var FORUM_WITHHELD_RE = /^\s*(withheld|withdrawn|not sold|kept)\s*$/i;
@@ -156,6 +173,31 @@ function forumNormaliseName(name) {
 // ===========================================================================
 // Pure reading
 // ===========================================================================
+
+/**
+ * The key a name is looked up under in FORUM_CONTEXT_RULES.
+ *
+ * A quantity can be spread over rows or written into the name, and a count can
+ * be parenthesised — `Random UR` × 9, `9x Random UR`, `Random Urs (9-10)` are
+ * all the same thing. Matching only the bare spelling would route the first and
+ * abort on the other two, which is a distinction the auctioneer never intended
+ * to make.
+ *
+ * This normalisation is used ONLY to look up this short table. Token resolution
+ * is untouched by it.
+ */
+function forumContextKey(name) {
+  return String(name == null ? '' : name)
+    .toLowerCase()
+    .replace(/^\s*\d+\s*x\s+/, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function forumContextRule(name) {
+  return FORUM_CONTEXT_RULES[forumContextKey(name)] || null;
+}
 
 function forumFindColumn(header, aliases) {
   for (var i = 0; i < header.length; i++) {
@@ -223,9 +265,14 @@ function forumReadStaging(values) {
 
   // Pull the known context names out BEFORE anything tries to resolve them as
   // tokens, so a file full of them imports rather than aborting 17 times.
+  //
+  // Per-lot files only. An aggregated file's two values for a row are a min and
+  // a max, so there are no lots to add up and a total cannot be computed —
+  // summing them would produce a number that means nothing. Those names fall
+  // through to the ordinary unresolved path instead, where the operator decides.
   var context = [], kept = [];
   for (var k = 0; k < lots.length; k++) {
-    if (FORUM_CONTEXT_RULES[lots[k].name.toLowerCase()]) context.push(lots[k]);
+    if (priceCols.length === 1 && forumContextRule(lots[k].name)) context.push(lots[k]);
     else kept.push(lots[k]);
   }
   return {
@@ -250,18 +297,30 @@ function forumContextRows(contextLots, target) {
   var groups = {}, order = [], i;
   for (i = 0; i < contextLots.length; i++) {
     var lot = contextLots[i];
-    var key = lot.name.toLowerCase();
-    if (!groups[key]) { groups[key] = { name: lot.name, rule: FORUM_CONTEXT_RULES[key], lots: [] }; order.push(key); }
+    var key = forumContextKey(lot.name);
+    if (!groups[key]) { groups[key] = { name: forumContextDisplayName(lot.name), rule: forumContextRule(lot.name), lots: [] }; order.push(key); }
     groups[key].lots.push(lot);
   }
   var rows = [];
   for (i = 0; i < order.length; i++) {
     var g = groups[order[i]];
     if (g.rule.aggregate) {
-      var total = 0;
-      for (var j = 0; j < g.lots.length; j++) total = roundCents(total + g.lots[j].bid);
+      // Sum the lots' OWN prices; never quantity × a unit price. The lots of one
+      // aggregated item routinely sell at different prices — 202647's nine
+      // Random URs went eight at $55 and one at $57 — and the sheet records the
+      // total, $497, not nine times anything. A unit-price model would have to
+      // pick a representative and would be wrong by $2 here, which is precisely
+      // the error this file's own history contains: the row read $495 (9 × $55)
+      // until it was corrected.
+      var total = 0, quantity = 0;
+      for (var j = 0; j < g.lots.length; j++) {
+        total = roundCents(total + g.lots[j].bid);
+        // One row per lot is the usual spelling, but `9x Random UR` on a single
+        // row means the same thing, and counting rows would call that one token.
+        quantity += parseQuantity(g.lots[j].name).quantity || 1;
+      }
       rows.push([target.auctionId, target.auctionSeason, target.auctionNumber,
-        g.rule.category, g.name, g.lots.length, total]);
+        g.rule.category, g.name, quantity, total]);
     } else {
       for (var k = 0; k < g.lots.length; k++) {
         rows.push([target.auctionId, target.auctionSeason, target.auctionNumber,
@@ -270,6 +329,41 @@ function forumContextRows(contextLots, target) {
     }
   }
   return rows;
+}
+
+/**
+ * How an aggregated total was arrived at — `8 @ $55 + 1 @ $57 = $497`.
+ *
+ * `contextItems` has no column for this, so it goes in the dialog. A total is
+ * not checkable on its own; the breakdown it came from is, and the plan already
+ * settled that principle for Phase 5's prices — show the distribution beside the
+ * number so an override is a judgement rather than a guess. It applies just as
+ * well to a sum.
+ */
+function forumAggregateBreakdown(contextLots) {
+  var lines = [], groups = {}, order = [], i;
+  for (i = 0; i < contextLots.length; i++) {
+    var key = forumContextKey(contextLots[i].name);
+    var rule = FORUM_CONTEXT_RULES[key];
+    if (!rule || !rule.aggregate) continue;
+    if (!groups[key]) { groups[key] = { name: forumContextDisplayName(contextLots[i].name), prices: [] }; order.push(key); }
+    groups[key].prices.push(contextLots[i].bid);
+  }
+  for (i = 0; i < order.length; i++) {
+    var g = groups[order[i]];
+    var counts = {}, seen = [], total = 0, p;
+    for (var j = 0; j < g.prices.length; j++) {
+      p = g.prices[j];
+      if (counts[p] === undefined) { counts[p] = 0; seen.push(p); }
+      counts[p]++;
+      total = roundCents(total + p);
+    }
+    seen.sort(function (a, b) { return a - b; });
+    var parts = [];
+    for (var k = 0; k < seen.length; k++) parts.push(counts[seen[k]] + ' @ $' + seen[k]);
+    lines.push(g.name + ': ' + parts.join(' + ') + ' = $' + total);
+  }
+  return lines;
 }
 
 /** The same block as tab-separated text, ready to paste. */
@@ -322,7 +416,7 @@ function forumPlanImport(values, targetSeason, tokenMetadataRows) {
   if (staged.context.length) {
     var named = 0;
     for (var n = 0; n < staged.context.length; n++) {
-      if (!FORUM_CONTEXT_RULES[staged.context[n].name.toLowerCase()].aggregate) named++;
+      if (!forumContextRule(staged.context[n].name).aggregate) named++;
     }
     cautions.push(staged.context.length + ' row(s) are context items, not prices, and are NOT written to any tab — ' +
       'copy the block into contextItems' +
@@ -506,6 +600,18 @@ function forumOnyxRows(plan, target) {
 }
 
 
+
+/** The aggregate breakdowns as an HTML list, or empty when there are none. */
+function forumBreakdownHtml(plan) {
+  var lines = forumAggregateBreakdown(plan.context || []);
+  if (!lines.length) return '';
+  var html = '<p style="margin:.5em 0 0">How the summed rows add up:</p><ul style="margin:.2em 0">';
+  for (var i = 0; i < lines.length; i++) {
+    html += '<li><code>' + lines[i].replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</code></li>';
+  }
+  return html + '</ul>';
+}
+
 /**
  * Show both context blocks: the recognised ones with their category filled in,
  * and Phase 2's block for anything that resolved to no token at all.
@@ -521,6 +627,7 @@ function forumShowContext(plan, target) {
     html += '<p>These rows are <b>context items</b>, not prices, and were not written to any tab. ' +
       'The <code>category</code> is already filled in. <b>Rows with a blank <code>Item</code> need a name</b> — ' +
       'the file calls every augment the same thing, and only the auction thread says which token each was.</p>' +
+      forumBreakdownHtml(plan) +
       '<textarea readonly style="width:100%;height:8em;font:12px monospace" onclick="this.select()">' +
       esc(known) + '</textarea>';
   }
@@ -546,7 +653,11 @@ if (typeof module !== 'undefined') {
     forumPlanImport: forumPlanImport,
     forumDescribePlan: forumDescribePlan,
     forumKeepsRawRows: forumKeepsRawRows,
+    forumContextKey: forumContextKey,
+    forumContextDisplayName: forumContextDisplayName,
+    forumContextRule: forumContextRule,
     forumContextRows: forumContextRows,
+    forumAggregateBreakdown: forumAggregateBreakdown,
     forumContextWorksheetText: forumContextWorksheetText,
     FORUM_CONTEXT_RULES: FORUM_CONTEXT_RULES,
     forumFindColumn: forumFindColumn,

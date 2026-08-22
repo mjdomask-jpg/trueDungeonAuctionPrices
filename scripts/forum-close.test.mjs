@@ -166,6 +166,23 @@ console.log('\nThe per-lot file (202647) — the format being asked for\n');
   eq('  ... summing to what the sheet records', randomUR[6], 497);
   eq('  ... as a token', randomUR[3], 'token');
 
+  // The lots of an aggregated item do NOT all sell at one price, and this file
+  // is the proof: eight at $55 and one at $57. Summing each lot's own price is
+  // what makes that come out right; quantity × a representative price is wrong
+  // by $2 here — which is the error the sheet itself carried until it was
+  // corrected from $495 to $497.
+  const urLots = plan.context.filter((l) => /random ur/i.test(l.name)).map((l) => l.bid);
+  eq('the nine lots are not all the same price', new Set(urLots).size, 2);
+  eq('  ... 8 at $55', urLots.filter((p) => p === 55).length, 8);
+  eq('  ... and 1 at $57', urLots.filter((p) => p === 57).length, 1);
+  eq('  ... which sums to the recorded total', urLots.reduce((a, b) => a + b, 0), 497);
+  check('  ... and 9 × any single price does NOT',
+    ![55, 57].some((p) => p * 9 === 497), '9 × 55 = 495, 9 × 57 = 513');
+
+  const breakdown = F.forumAggregateBreakdown(plan.context);
+  eq('the dialog shows how the total was reached', breakdown.length, 1);
+  eq('  ... spelled out', breakdown[0], 'Random UR: 8 @ $55 + 1 @ $57 = $497');
+
   const grunnel = rows.filter((r) => r[3] === 'grunnel');
   eq('each Grunnel Augment keeps its own row', grunnel.length, 6);
   check('  ... at the six recorded prices',
@@ -183,6 +200,58 @@ console.log('\nThe per-lot file (202647) — the format being asked for\n');
   const stopped = F.forumPlanImport(withUnknown, '2026', TOKENS);
   eq('an unrecognised name still aborts', stopped.ok, false);
   check('  ... naming it', stopped.aborts.some((a) => /Mystery Widget/.test(a)), stopped.aborts.join(' | '));
+}
+
+// ===========================================================================
+// 3b. Aggregating mixed prices, on cases the fixtures do not contain
+// ===========================================================================
+console.log('\nMixed prices in an aggregated row\n');
+{
+  const target = { auctionId: 'X', auctionSeason: '2026', auctionNumber: '1' };
+  const run = (rows) => F.forumContextRows(
+    F.forumReadStaging([['Item', 'Amount'], ...rows]).context, target);
+
+  // Three different prices, none of them a clean multiple of the total.
+  let r = run([['Random UR', '55'], ['Random UR', '57'], ['Random UR', '60']]);
+  eq('three prices sum', r[0][6], 172);
+  eq('  ... with the quantity counted', r[0][5], 3);
+
+  // Cents, where a float sum would drift.
+  r = run([['Random UR', '0.1'], ['Random UR', '0.2']]);
+  eq('cents do not drift', r[0][6], 0.3);
+
+  // One lot.
+  r = run([['Random UR', '55']]);
+  eq('a single lot is still a row', r[0][6], 55);
+  eq('  ... of quantity 1', r[0][5], 1);
+
+  // A quantity written into the name instead of spread over rows. Both
+  // spellings mean nine tokens, and counting rows would call this one.
+  r = run([['9x Random UR', '497']]);
+  eq('"9x Random UR" on one row is nine tokens', r[0][5], 9);
+  eq('  ... at the stated total', r[0][6], 497);
+
+  // Mixed spellings in one file.
+  r = run([['3x Random UR', '165'], ['Random UR', '57']]);
+  eq('mixed spellings add up', r[0][5], 4);
+  eq('  ... and so do their prices', r[0][6], 222);
+
+  const b = F.forumAggregateBreakdown(
+    F.forumReadStaging([['Item', 'Amount'], ['Random UR', '55'], ['Random UR', '55'], ['Random UR', '57']]).context);
+  eq('the breakdown groups equal prices', b[0], 'Random UR: 2 @ $55 + 1 @ $57 = $167');
+
+  // Grunnel augments are NOT aggregated, so mixed prices stay separate rows.
+  const g = F.forumContextRows(
+    F.forumReadStaging([['Item', 'Amount'], ['Grunnel Augment', '161'], ['Grunnel Augment', '72']]).context, target);
+  eq('a non-aggregated name keeps one row per lot', g.length, 2);
+  eq('  ... each at its own price', g.map((x) => x[6]).join(','), '161,72');
+
+  // Context routing is per-lot only. An aggregated file has no lots to add up.
+  const aggCtx = F.forumReadStaging([['Auction Item', 'Low Bid', 'High Bid'], ['Random UR', '41', '43']]);
+  eq('an aggregated file does not route context names', aggCtx.context.length, 0);
+  eq('  ... they stay lots, for the ordinary unresolved path', aggCtx.lots.length, 2);
+  eq('  ... and is not summed', F.forumAggregateBreakdown(
+    F.forumReadStaging([['Item', 'Amount'], ['Grunnel Augment', '161']]).context).length, 0);
 }
 
 // ===========================================================================
