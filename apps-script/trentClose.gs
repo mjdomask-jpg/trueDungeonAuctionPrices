@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-21.7';
+var SCRIPT_VERSION = '2026-08-22.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -645,16 +645,22 @@ function describePlan(plan, auctionId) {
  *
  * Every .gs file in an Apps Script project shares ONE global scope, so a second
  * onOpen in another file would not add a second menu — it would replace this
- * function and one menu would silently vanish. Phase 3 (`publishToSite.gs`) and
- * Phase 4 (`auctionOpen.gs`) therefore contribute their items through
- * `addPublishMenu` and `addOpenMenu` instead. The typeof guards keep this file
- * working on its own when either is not installed.
+ * function and one menu would silently vanish. Phase 3 (`publishToSite.gs`),
+ * Phase 4 (`auctionOpen.gs`) and Phase 5 (`forumClose.gs`) therefore contribute
+ * their items through `addPublishMenu`, `addOpenMenu` and `addForumMenu`
+ * instead. The typeof guards keep this file working on its own when any of them
+ * is not installed.
+ *
+ * That shared scope is also why `forumClose.gs` can call this file's parser
+ * directly rather than duplicating it — and why this file must be installed for
+ * it to work at all.
  */
 function onOpen() {
   var menu = SpreadsheetApp.getUi()
     .createMenu('TD auctions')
     .addItem('Import Trent close…', 'importTrentClose')
     .addItem('Dry run — show what would be imported', 'dryRunTrentClose');
+  if (typeof addForumMenu === 'function') addForumMenu(menu);
   if (typeof addOpenMenu === 'function') addOpenMenu(menu);
   if (typeof addPublishMenu === 'function') addPublishMenu(menu);
   menu.addToUi();
