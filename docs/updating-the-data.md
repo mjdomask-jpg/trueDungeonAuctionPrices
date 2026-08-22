@@ -463,6 +463,113 @@ against `prices.csv`.
 
 ---
 
+## Reading a forum close from the thread
+
+Most auctioneers send nothing. The results are in the thread, usually edited
+into post #1 after the auction closes, in whatever shape that auctioneer likes.
+
+`apps-script/forumThread.gs` reads that. **It is an assistant, not an importer.**
+It fetches every page of the thread recorded in `auctionMetadata.Link`, proposes
+a price for each item beside the distribution it came from, and writes the lot
+into a review tab. **It writes nothing to `prices`, `onyx`, `rawPricesData` or
+`contextItems`** — you copy the rows you accept.
+
+That is not caution for its own sake. Measured over 24 real threads spanning 20
+auctioneers, the proposals reproduce `prices.csv` on **331 of 358 items**. The
+other 27 are yours to judge, and the review tab shows you what to judge them on.
+
+### Installing it (once)
+
+Paste `apps-script/forumThread.gs` into the same Apps Script project as the
+other three files, as a new file named `forumThread`. **`trentClose.gs`,
+`forumClose.gs` and `auctionOpen.gs` must all be installed** — this one calls
+the resolver from the first, the auction picker from the second and the fetcher
+from the third. Reload the sheet; the menu gains **Read a forum close from the
+thread…**.
+
+### Using it
+
+1. Make sure the auction has a row in `auctionMetadata` with its forum `Link`.
+   If it does not, run **Scan for new auctions…** first.
+2. **TD auctions → Read a forum close from the thread…**, and give it the
+   `auctionId`.
+3. Read the dialog. Then work through the `forumThreadReview` tab.
+
+### What the review tab holds
+
+| `kind` | What it is | Where it goes |
+|---|---|---|
+| `price` | A proposed price with its distribution | `prices` |
+| `onyx` | A chase Ultra Rare | `onyx` |
+| `context?` | A lot that resolved to no token — usually an augment or a prop | `contextItems`, once you have given it a category |
+| `dropped` | A lot in a `NON-8K STUFF` section | **Nowhere.** Shown so you can see the call was made |
+
+The `flag` column is where the judgement is. `TIE` means the quantity-weighted
+mode had no single winner.
+
+### The four things to check every time
+
+**1. Ties.** The `distribution` column is not decoration — it is the whole
+reason you can override in one cell rather than guess. A row flagged `TIE` went
+to two prices in equal quantity, and there is no rule for that: across the
+recorded corpus ties resolve **8 low, 5 high, and once on the midpoint** ($16
+and $17 recorded as $16.50). The low value is proposed so the cell is never
+blank. Change it freely.
+
+**2. The unread lines.** Every line carrying a price that no grammar could read
+is listed. It is short — 88 lines across all 24 threads — and it is the only
+thing standing between a pattern-matching parser and a silent omission. Skim it.
+
+**3. Withheld candidates.** Sentences that read like something was held back,
+quoted verbatim with their post number, **deduped**. They are quoted rather than
+parsed because the quantities are sometimes ranges ("the 9-10 random URs"), and
+a wrong quantity here becomes a wrong negative number in `contextItems`. **Take
+the item and the quantity only** — the sheet computes the price as
+`-(season average) × quantity`, and a `withheld` row must never carry a price
+read off a post.
+
+**4. The close date is EVIDENCE, not a proposal.** The dialog lists every post
+that says the auction is over, with its date and the sentence. The bracket it
+builds contained the recorded `closeDate` in only **7 of the 15 threads that
+yield one at all**, and where it missed it was usually late — the announcement
+trails the close. Two things it will not tell you: a closing phrase in post #1
+dates nothing (post #1 is edited in place and keeps the thread's *open*
+timestamp, which is why post #1 is skipped), and 9 of the 24 threads say nothing
+at all.
+
+### When it comes back with nothing
+
+Two of the 24 sampled threads have no posted results anywhere — the numbers
+lived in a linked Google Sheet, or were never posted. The dialog says so rather
+than pretending. Ask the auctioneer for the file instead; see
+[Importing a forum close from a file](#importing-a-forum-close-from-a-file).
+
+### Things it gets right that are easy to get wrong
+
+| | |
+|---|---|
+| A repeated table | Some auctioneers repost the whole results table as a bid update — one thread has 80 near-complete copies, and the *biggest* is a mid-auction snapshot with lower prices. Post #1 wins whenever it carries results, because it is edited in place after the close. The dialog says when other copies exist. |
+| `Buy It Out` columns | A money-formatted column is not necessarily the price. One auctioneer's table is `item name \| Buy It Out \| Bid \| Bidder/Buyer Name`, and the winning bid is the *bare* column. Tables are read by their header; a table whose only bid column is a buy-it-out, a minimum or an average is **refused**. |
+| `10x $25` vs `9x $11` | Both are `Nx`, and they mean opposite things. Under a plain heading the price is for the lot; under an `(N - individual)` heading it is per token. Getting it wrong is a factor of ten. |
+| `ONYX or PYP` | Genuinely ambiguous, and listed separately. They are proposed as Onyx because that is what the one recorded precedent did — and that auction *also* recorded their price as its Ultra Rare. Decide. |
+| Onyx section headings | `ONYX ITEMS` routes what follows to `onyx.csv` until the next heading. `Standard Onyx 8k Items` does **not** — there the word describes the order, not the tokens. |
+
+### Changing the script
+
+`apps-script/forumThread.gs` in the repo is the source of truth. Edit it here,
+**bump `THREAD_VERSION`**, run `npm run test:thread`, then paste it over the
+editor's contents. The test replays all 24 threads in `fixtures/forum-threads/`
+against `prices.csv` and `onyx.csv` and asserts the corpus totals, so a rule
+that improves one auctioneer at another's expense shows up as a number.
+
+**Adding an auctioneer's grammar** means adding an entry to `THREAD_RULES`,
+ordered by specificity — the narrower shape must be tried first, or
+`Golden Ticket - $875 Dragon` and `#1-3 : Lich - $100` read as each other. Add a
+fixture for the thread you added it for, and put the auction's measured counts
+in `fixtures/forum-threads/manifest.json`.
+
+---
+
 ## Importing a Trent close
 
 ### Installing it (once)

@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-22.1';
+var SCRIPT_VERSION = '2026-08-22.2';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -661,6 +661,7 @@ function onOpen() {
     .addItem('Import Trent close…', 'importTrentClose')
     .addItem('Dry run — show what would be imported', 'dryRunTrentClose');
   if (typeof addForumMenu === 'function') addForumMenu(menu);
+  if (typeof addThreadMenu === 'function') addThreadMenu(menu);
   if (typeof addOpenMenu === 'function') addOpenMenu(menu);
   if (typeof addPublishMenu === 'function') addPublishMenu(menu);
   menu.addToUi();
