@@ -381,24 +381,46 @@ routing are all [the Trent importer's](#importing-a-trent-close), unchanged. All
 the .gs files share one scope in Apps Script, so it simply calls them. **The
 Trent script must be installed for this one to work.**
 
-### The three shapes, and which to ask for
+### The format to ask for
 
-Three real files from the *same* auctioneer had three different shapes. They are
-not equally good, and the difference was measured against what the sheet already
-records:
+**One row per lot, three columns: `Item | Number | Amount`.** That is the shape
+worked out with the auctioneer over the 2026 season, and it is what this
+importer is built around. Sent as-is it needs no hand editing at all: 211 lots
+reproduce `prices.csv` on **19 of 20 items**, and the rows that are not prices
+are recognised and handed to you as a `contextItems` block.
+
+Two earlier drafts of that conversation are also handled, because they exist:
 
 | The file's headers | What it is | How it is treated |
 |---|---|---|
-| `Item \| Number \| Amount` | one row per lot | **Ask for this one.** It reproduced `prices.csv` on **19 of 20 items**; the twentieth is a duplicated row in the sheet, not a parse error. |
+| `Item \| Number \| Amount` | one row per lot | **Ask for this.** |
 | `Auction Item \| Low Bid \| High Bid` | already aggregated | Imported **with a caution**. Agreed on 6 of 13 items and differed on 7, in both directions. Check the numbers. |
-| `… \| Minimum Bid \| Maximum Bid \| Average Bid` | a pivot over **every** bid | **Refused.** See below. |
+| `… \| Minimum Bid \| Maximum Bid \| Average Bid` | a rejected draft | **Refused**, on the `Average` column. It reconciles with none of that auctioneer's five auctions on a single item. Nothing in the numbers says so — the header is the only warning there is. |
 
-> **Why an `Average Bid` column gets the file rejected.** It means the file
-> summarises every bid *received*, not the bids that *won*. Read as winning
-> bids it reconciles with none of that auctioneer's five auctions on a single
-> item, and its ranges are far wider than the recorded prices — which is what a
-> column of losing offers looks like. Nothing in the numbers says so; the header
-> is the only warning there is. If you get one, ask for the winning bids.
+### The rows that are not prices
+
+A results file carries things that do not belong in the price spine, and the
+importer knows the recurring ones by name rather than stopping on them:
+
+| In the file | Becomes |
+|---|---|
+| `Random UR` × 9 | **one** `token` row, quantity 9, summed — which is how the sheet records it |
+| `Grunnel Augment` × 6 | **six** `grunnel` rows, one per lot, each keeping its own price |
+| `Player Augment` × 2 | two `token` rows |
+
+For 202647 those nine rows carry exactly the prices `contextItems` records —
+47, 51, 72, 103, 112, 137, 161, 455 and 497.
+
+> **Eight of them come through without a name, and that is not a bug.** The file
+> calls all six grunnel augments `Grunnel Augment`; only the auction thread says
+> that they were the Tornado Bucket, the Green Key, the Censer and so on. **The
+> file gives the prices and the thread gives the identities**, so the importer
+> fills in everything except the one fact it does not have. The dialog says how
+> many rows need naming.
+
+Any name that is *not* on that short list still stops the run and is reported —
+an unrecognised name is usually a token spelled a way the resolver does not
+know, and guessing at it would put a wrong price in the spine.
 
 ### Installing it (once)
 
@@ -414,13 +436,14 @@ appear under **TD auctions**.
 2. **TD auctions → Dry run — show what the file would import.** Give it the
    target `auctionId`.
 3. Read the summary. It says which shape it detected, how many lots it read,
-   what goes to each tab, and every row it could not resolve.
-4. Deal with the unresolved rows. They are usually context items rather than
-   mistakes — the per-lot sample aborts on 17 of them: nine `Random UR` lots,
-   six `Grunnel Augment` and two `Player Augment`. The script hands you a
-   `contextItems` block to paste, exactly as the Trent importer does. Move them
-   out of `forumStaging` and run again.
-5. **Import forum close from a file…** when the dry run is clean.
+   what goes to each tab, and anything it could not resolve.
+4. **Import forum close from a file…** when the dry run looks right.
+5. Paste the `contextItems` block it shows you, and fill in the names of any
+   rows that came through blank — see above.
+
+If it *does* stop, the summary names every row it could not place. Deal with
+those and run it again; the script hands you a worksheet for the ones that look
+like context items, exactly as the Trent importer does.
 
 ### What it does that the Trent importer does not
 

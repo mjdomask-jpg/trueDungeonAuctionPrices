@@ -6,13 +6,15 @@
       "file": "alesiev-202647-per-lot.csv",
       "headers": "Item | Number | Amount",
       "shape": "one row per lot",
-      "lots": 228,
+      "lots": 211,
       "reconciles": "202647",
       "reproduces": 19,
       "knownDifferences": [
         "Patron Pin: the importer emits one row for a single-lot item, and the sheet carries two identical rows"
       ],
-      "why": "The raw per-lot shape. `Number` is the lot number, not a quantity or a price — reading it as a price puts a $1 minimum on every item. This file also carries the 17 rows that belong in contextItems (9 Random UR, 6 Grunnel Augment, 2 Player Augment), so it is the abort case as well as the import case."
+      "why": "THE FORMAT TO ASK FOR — the shape the maintainer and this auctioneer settled on after two rejected drafts. `Number` is the lot number, not a quantity or a price; reading it as a price puts a $1 floor under every item. It imports AS SENT: 211 priced lots reproduce prices.csv on 19 of 20 items, and the other 17 rows (9 Random UR, 6 Grunnel Augment, 2 Player Augment) are recognised as context items and handed over as a 9-row contextItems block whose prices match the sheet exactly. The six grunnel rows come through nameless on purpose: the file calls them all \"Grunnel Augment\" and only the thread says which token each was.",
+      "contextLots": 17,
+      "contextRows": 9
     },
     {
       "file": "alesiev-202640-low-high.csv",
