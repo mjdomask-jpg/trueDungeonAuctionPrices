@@ -266,12 +266,15 @@ Then, in `auctionOpenReview`:
    are recorded as `Ultra Condensed`. A wrong value you skim past is worse than
    a blank one you have to fill. The phrases it found are in `notes` as
    evidence.
-3. **Check the `season`.** `notes` says where it came from. `season ASSUMED …`
-   means there was no year in the title and it fell back to the last recorded
-   auction's season — which is wrong for every auction of a new season until you
-   record one by hand. Seasons have started as little as **nine days** after the
-   previous one's last auction, so between roughly August and November, check
-   this every time.
+3. **Check the `season`.** `notes` says where it came from. `from the title` and
+   `from the season running on <date>` are both solid — the second one asks which
+   recorded season was open on that date, and seasons never overlap.
+   **`season ASSUMED …` means nobody can tell from the date**, and there are only
+   two ways to get it: the auction opened after everything recorded (the season
+   rollover — wrong for every auction of a new season until you record one by
+   hand, and seasons have started as little as **nine days** after the previous
+   one's last auction), or it opened in the gap between two seasons. Either way
+   the note says which, and you decide.
 4. **Check `openDate` against the `first post` time.** The date is the thread's
    first post, read from the forum's own timestamp. Of seven auctions replayed
    in the test, five match what you recorded exactly; the two that don't are a
