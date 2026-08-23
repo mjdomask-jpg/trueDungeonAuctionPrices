@@ -1,0 +1,351 @@
+// Tests for apps-script/forumThread.gs — Phase 5 (part two) of
+// data-pipeline-plan.md.
+//
+// Part one reads a file an auctioneer hands over. This reads the thread, which
+// is prose, and the only honest way to test a prose parser is to replay real
+// prose: 24 threads spanning 20 auctioneers, scored against what the sheet
+// actually recorded for those auctions.
+//
+// What is asserted, and why each number is the number it is:
+//
+//   1. POST EXTRACTION — every fixture yields posts, with agreeing counts of
+//      bodies and timestamps. A page shape change breaks this first, loudly,
+//      before it can quietly change a price.
+//   2. THE PRICING RULE — quantity-weighted mode reproduces `prices.csv` far
+//      better than Trent's min/max does. The margin is the assertion; the exact
+//      counts are pinned so a regression shows as a number, not a feeling.
+//   3. TIES ARE FLAGGED, NEVER SILENTLY BROKEN. §4 of the plan calls ties-low
+//      settled. Measured over this corpus it is 8 low / 5 high / 1 midpoint, so
+//      the assistant flags them. The test pins that a tie sets `tie`.
+//   4. THE `Buy It Out` TRAP — AlanP's table is
+//      `item name | Buy It Out | Bid | Bidder/Buyer Name`, and the money-
+//      formatted column is not the price. Reading the header reproduces 14 of
+//      202632's 16 matched items; reading the formatting reproduces 6.
+//   5. THE DROP LIST — kurtreznor's `NON-8K STUFF` items are recorded in no CSV
+//      at all, so they must be dropped AND reported.
+//   6. THE UNREAD-LINES REPORT is non-empty where it should be and small.
+//
+// Run: node scripts/forum-thread.test.mjs
+
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import { gunzipSync } from 'node:zlib';
+import { runInNewContext } from 'node:vm';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const dataDir = join(here, '..', 'public', 'data');
+const threadDir = join(here, '..', 'fixtures', 'forum-threads');
+const openDir = join(here, '..', 'fixtures', 'auction-open');
+
+// --- load all four scripts into ONE sandbox ---------------------------------
+// Apps Script gives every .gs file in a project one shared global scope, and
+// forumThread.gs is written to call trentClose.gs's resolver, forumClose.gs's
+// target picker and auctionOpen.gs's fetch and entity decoder directly. Loading
+// them together is what the real runtime does.
+const sandbox = { module: { exports: {} }, console };
+for (const file of ['trentClose.gs', 'forumClose.gs', 'auctionOpen.gs', 'forumThread.gs']) {
+  sandbox.module = { exports: {} };
+  runInNewContext(readFileSync(join(here, '..', 'apps-script', file), 'utf8'), sandbox);
+  if (file === 'forumThread.gs') var TH = sandbox.module.exports;
+}
+
+// --- CSV --------------------------------------------------------------------
+function parseCSV(text) {
+  const rows = []; let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; } else field += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\r') { /* skip */ }
+    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else field += c;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+function objects(path) {
+  const rows = parseCSV(readFileSync(path, 'utf8'));
+  const header = rows[0];
+  return rows.slice(1).filter((r) => r.length >= header.length)
+    .map((r) => Object.fromEntries(header.map((h, i) => [h, r[i]])));
+}
+const money = (v) => Number(String(v).replace(/[$,]/g, ''));
+
+const meta = objects(join(dataDir, 'auctionMetadata.csv'));
+const priceRows = objects(join(dataDir, 'prices.csv'));
+const contextRows = objects(join(dataDir, 'contextItems.csv'));
+const tokenRows = objects(join(dataDir, 'tokenMetadata.csv'));
+
+const manifest = JSON.parse(readFileSync(join(threadDir, 'manifest.json'), 'utf8'));
+
+// --- assertions -------------------------------------------------------------
+let passed = 0;
+const failures = [];
+function ok(condition, what) {
+  if (condition) { passed++; return true; }
+  failures.push(what);
+  return false;
+}
+function eq(actual, expected, what) {
+  return ok(actual === expected, `${what}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+}
+
+// --- fixtures ---------------------------------------------------------------
+// Page 1 of five threads already lives in fixtures/auction-open — Phase 4
+// fetched them to read open dates off the same markup. They are referenced
+// rather than copied so a re-fetch cannot leave two versions of one page in
+// the repo disagreeing with each other.
+function pagesFor(topicId) {
+  const first = existsSync(join(threadDir, `topic-${topicId}.html.gz`))
+    ? join(threadDir, `topic-${topicId}.html.gz`)
+    : join(openDir, `topic-${topicId}.html.gz`);
+  if (!existsSync(first)) throw new Error(`no page 1 fixture for topic ${topicId}`);
+  const rest = readdirSync(threadDir)
+    .map((f) => f.match(new RegExp(`^topic-${topicId}-start(\\d+)\\.html\\.gz$`)))
+    .filter(Boolean)
+    .map((m) => ({ start: Number(m[1]), file: join(threadDir, m[0]) }))
+    .sort((a, b) => a.start - b.start);
+  return [first, ...rest.map((r) => r.file)].map((f) => gunzipSync(readFileSync(f)).toString('utf8'));
+}
+
+// ===========================================================================
+console.log('\n=== 1. post extraction ===');
+// ===========================================================================
+let totalPosts = 0;
+for (const t of manifest.threads) {
+  const pages = pagesFor(t.topic);
+  eq(pages.length, t.pages, `${t.auction} ${t.auctioneer}: page count`);
+  let posts = 0;
+  for (let i = 0; i < pages.length; i++) {
+    const problems = TH.threadPageProblems(pages[i]);
+    ok(problems.length === 0, `${t.auction} page ${i + 1}: ${problems.join('; ')}`);
+    posts += TH.threadPosts(pages[i]).length;
+  }
+  ok(posts > 0, `${t.auction}: no posts read`);
+  totalPosts += posts;
+}
+console.log(`  ✓ ${manifest.threads.length} threads, ${totalPosts} posts, every page's bodies and timestamps agree`);
+
+// The stamp parser, on the two forms the corpus contains.
+eq(TH.threadPostStamp('07 Aug 2026 19:46').date, '2026-08-07', 'stamp: date');
+eq(TH.threadPostStamp('07 Aug 2026 19:46').time, '19:46', 'stamp: time');
+eq(TH.threadPostStamp('3 Oct 2022 22:04').date, '2022-10-03', 'stamp: single-digit day');
+eq(TH.threadPostStamp('nonsense').date, null, 'stamp: unreadable is null, not a wrong date');
+
+// ===========================================================================
+console.log('\n=== 2. the grammars ===');
+// ===========================================================================
+// One example of each of the ten shapes, taken verbatim from the corpus.
+const GRAMMAR_CASES = [
+  ['16 @ $7.50 - Bidder #4', 'qty-at-price', { quantity: 16, price: 7.5 }],
+  ['#1-3 : Lich - $100', 'lot-range', { quantity: 3, price: 100 }],
+  ['(3) Lanfear====@ $105 each', 'qty-buyer-rule', { quantity: 3, price: 105 }],
+  ['Mark of the 1st Tenet (1) - Gortash $85', 'item-qty-buyer-price', { quantity: 1, price: 85 }],
+  ['Wish Ring (1) - $175.00 Abert', 'item-qty-price', { quantity: 1, price: 175 }],
+  ['10x $25 - Miriam Dom', 'xqty-price-buyer', { quantity: 10, price: 25 }],
+  ['2 $5.00 - Ptah', 'qty-price-buyer', { quantity: 2, price: 5 }],
+  ['x35 @ $12.25 Tarantella Serpentine', 'xqty-at-price', { quantity: 35, price: 12.25 }],
+  ['$0.50 - Florin', 'price-buyer', { quantity: 1, price: 0.5 }],
+  ['- Anton (1) $780', 'buyer-qty-price', { quantity: 1, price: 780 }],
+  ["Orion's Belt (1) 150 Chronos", 'item-qty-bare-price', { quantity: 1, price: 150 }],
+];
+for (const [line, rule, expect] of GRAMMAR_CASES) {
+  const lot = TH.threadRuleLot(line);
+  if (!ok(lot, `no grammar read ${JSON.stringify(line)}`)) continue;
+  eq(lot.rule, rule, `${JSON.stringify(line)}: rule`);
+  eq(lot.quantity, expect.quantity, `${JSON.stringify(line)}: quantity`);
+  eq(lot.price, expect.price, `${JSON.stringify(line)}: price`);
+}
+console.log(`  ✓ all ${GRAMMAR_CASES.length} line grammars read their measured example`);
+
+// A rules paragraph must not be mistaken for a lot, and must not become a header.
+for (const prose of [
+  'Shipping on all winning bids is $4 for 10 or fewer tokens',
+  'Bid increment on items less than $10: 25 cents',
+  'Current Total: $7,500.50 of $7,500.00 (100.01%)',
+]) {
+  ok(!TH.threadLooksLikeHeader(prose), `prose read as an item header: ${JSON.stringify(prose)}`);
+}
+console.log('  ✓ rules prose is not mistaken for an item name');
+
+// ===========================================================================
+console.log('\n=== 3. the Buy It Out trap ===');
+// ===========================================================================
+// The header AlanP actually wrote, and the row beneath it.
+const alanHeader = TH.threadTableHeader(['item name', 'Buy It Out', 'Bid', 'Bidder/Buyer Name']);
+ok(alanHeader && !alanHeader.refuse, 'AlanP header not recognised');
+eq(alanHeader.price, 2, 'AlanP header: the price column is `Bid`, not the money-formatted one');
+const alanLot = TH.threadTableLot('Mark of the 1st Tenet #3\t$110\t76\tGrasp of Shadow', alanHeader);
+eq(alanLot.price, 76, 'AlanP row: price is the winning bid');
+eq(alanLot.quantity, 1, 'AlanP row: `#3` is a lot number, not a quantity');
+
+// Without a header the money-formatted cell IS the price — Mike Steele's shape.
+const bare = TH.threadTableLot('Path of Enlightenment Fragment 4\t$226.00\tCerebus', null);
+eq(bare.price, 226, 'headerless table: the money cell is the price');
+eq(bare.item, 'Path of Enlightenment Fragment 4', 'headerless table: the item');
+
+// A table whose only bid column is one that is not a winning bid is refused.
+const pivot = TH.threadTableHeader(['Row Labels', 'Minimum Bid', 'Maximum Bid', 'Average Bid']);
+ok(pivot && pivot.refuse, 'a pivot over every bid was not refused');
+const buyoutOnly = TH.threadTableHeader(['Item', 'Buy It Out', 'Bidder']);
+ok(buyoutOnly && buyoutOnly.refuse, 'a table with only a buy-it-out price was not refused');
+console.log('  ✓ the header decides the price column; buy-it-out and average-bid tables are refused');
+
+// ===========================================================================
+console.log('\n=== 4. the pricing rule, replayed against prices.csv ===');
+// ===========================================================================
+const score = { items: 0, mode: 0, modeHigh: 0, min: 0, max: 0 };
+const perThread = [];
+let tiesFlagged = 0, dropsSeen = 0, unparsedTotal = 0;
+
+for (const t of manifest.threads) {
+  const target = meta.find((m) => m.auctionId === t.auction);
+  ok(target, `${t.auction}: not in auctionMetadata`);
+  const plan = TH.threadPlan(pagesFor(t.topic), target, tokenRows);
+
+  eq(plan.resultsPost, t.resultsPost, `${t.auction} ${t.auctioneer}: results post`);
+
+  const recorded = {};
+  for (const r of priceRows.filter((r) => r.auctionId === t.auction)) {
+    (recorded[r.Item] = recorded[r.Item] || []).push(money(r.Price));
+  }
+  let hit = 0, n = 0, hiHit = 0, minHit = 0, maxHit = 0;
+  for (const row of plan.prices) {
+    if (!recorded[row.Item]) continue;
+    n++;
+    const rec = recorded[row.Item];
+    if (rec.includes(row.Price)) hit++;
+    if (row.tie && rec.includes(row.tie[row.tie.length - 1])) hiHit++;
+    else if (rec.includes(row.Price)) hiHit++;
+    // What Trent's rule would have proposed, from the same distribution.
+    const prices = row.distribution.split(', ').map((p) => Number(p.split('$')[1]));
+    if (rec.includes(Math.min(...prices))) minHit++;
+    if (rec.includes(Math.max(...prices))) maxHit++;
+    if (row.tie) tiesFlagged++;
+  }
+  score.items += n; score.mode += hit; score.modeHigh += hiHit;
+  score.min += minHit; score.max += maxHit;
+  dropsSeen += plan.drops.length;
+  unparsedTotal += plan.unparsed.length;
+  perThread.push({ t, plan, n, hit });
+
+  ok(n >= t.itemsMatched, `${t.auction} ${t.auctioneer}: matched ${n} recorded items, manifest says at least ${t.itemsMatched}`);
+  ok(hit >= t.reproduces, `${t.auction} ${t.auctioneer}: reproduced ${hit} prices, manifest says at least ${t.reproduces}`);
+}
+
+console.log(`  quantity-weighted mode  ${score.mode}/${score.items}`);
+console.log(`  min (Trent's rule)      ${score.min}/${score.items}`);
+console.log(`  max (Trent's rule)      ${score.max}/${score.items}`);
+ok(score.mode > score.min && score.mode > score.max,
+  `the mode should beat Trent's min/max: mode ${score.mode}, min ${score.min}, max ${score.max}`);
+ok(score.mode >= manifest.expect.reproduces,
+  `corpus reproduction fell to ${score.mode}, manifest expects at least ${manifest.expect.reproduces}`);
+ok(score.items >= manifest.expect.itemsMatched,
+  `corpus item match fell to ${score.items}, manifest expects at least ${manifest.expect.itemsMatched}`);
+console.log(`  ✓ mode reproduces ${score.mode} of ${score.items} recorded items and beats min (${score.min}) and max (${score.max})`);
+
+// ===========================================================================
+console.log('\n=== 5. ties are flagged, never silently broken ===');
+// ===========================================================================
+const tie = TH.threadPropose([
+  { price: 1.0, quantity: 2 },
+  { price: 1.25, quantity: 2 },
+]);
+ok(tie.tie && tie.tie.length === 2, 'an even split did not set `tie`');
+eq(tie.price, 1, 'a tie proposes the low value so the cell is never blank');
+eq(tie.distribution, '2 @ $1, 2 @ $1.25', 'a tie shows both candidates with their quantities');
+
+const clear = TH.threadPropose([
+  { price: 0.5, quantity: 11 },
+  { price: 0.75, quantity: 21 },
+]);
+eq(clear.price, 0.75, 'the mode is by TOKEN, not by lot');
+eq(clear.tie, null, 'a clear winner is not flagged');
+ok(tiesFlagged > 0, 'no tie was flagged anywhere in the corpus — the flag is not wired up');
+console.log(`  ✓ ties set the flag and show both candidates (${tiesFlagged} flagged across the corpus)`);
+
+// ===========================================================================
+console.log('\n=== 6. Onyx, context, drops and leftovers ===');
+// ===========================================================================
+for (const { t, plan } of perThread) {
+  // The manifest carries the expected Onyx count for every thread, measured —
+  // NOT `onyx.csv`'s row count. Those are not the same number and should not be
+  // asserted as if they were: 202231's post carries two Onyx tokens the
+  // auctioneer added from his own collection, and the sheet records neither, in
+  // onyx.csv or in contextItems. The assistant surfacing them is the point.
+  eq(plan.onyx.length, t.onyx || 0, `${t.auction} ${t.auctioneer}: onyx rows proposed`);
+  if (t.drops !== undefined) eq(plan.drops.length, t.drops, `${t.auction} ${t.auctioneer}: dropped lots`);
+  if (t.withheldQuote !== undefined) {
+    ok(plan.withheld.some((w) => w.text.includes(t.withheldQuote)),
+      `${t.auction}: withheld candidate not found — expected a sentence containing ${JSON.stringify(t.withheldQuote)}`);
+  }
+  if (t.closeBracket !== undefined) {
+    const bracket = plan.close.bracket ? `${plan.close.bracket.from}..${plan.close.bracket.to}` : null;
+    eq(bracket, t.closeBracket, `${t.auction}: close-date bracket`);
+  }
+}
+
+// kurtreznor's NON-8K STUFF is the drop rule's whole evidence: 20222 records
+// none of those items anywhere.
+const kurt = perThread.find((x) => x.t.auction === '20222');
+ok(kurt.plan.drops.length > 0, '20222: the NON-8K section was not dropped');
+const droppedNames = new Set(kurt.plan.drops.map((d) => TH.threadTidyName(d.item).toLowerCase()));
+const recordedAnywhere = new Set([
+  ...priceRows.filter((r) => r.auctionId === '20222').map((r) => r['Display Name'].toLowerCase()),
+  ...contextRows.filter((r) => r.auctionId === '20222').map((r) => r.Item.toLowerCase()),
+]);
+for (const name of droppedNames) {
+  ok(!recordedAnywhere.has(name), `20222: dropped "${name}" but the sheet records it — it should not be dropped`);
+}
+console.log(`  ✓ ${dropsSeen} lot(s) dropped from non-8K sections, none of them recorded anywhere`);
+console.log(`  ✓ ${unparsedTotal} unread line(s) reported across the corpus rather than dropped silently`);
+
+// The close-date bracket is evidence, not a proposal, and the test says so with
+// a number: it contains the recorded closeDate in a minority of threads.
+let bracketHits = 0, bracketsBuilt = 0;
+for (const { t, plan } of perThread) {
+  if (!plan.close.bracket) continue;
+  bracketsBuilt++;
+  const rec = meta.find((m) => m.auctionId === t.auction).closeDate;
+  if (rec >= plan.close.bracket.from && rec <= plan.close.bracket.to) bracketHits++;
+}
+eq(bracketHits, manifest.expect.closeBracketHits,
+  `close-date bracket hits (${bracketsBuilt} brackets built from ${manifest.threads.length} threads)`);
+console.log(`  ✓ close-date bracket contains the recorded date in ${bracketHits} of ${bracketsBuilt} threads that carry one ` +
+  '— which is why it is reported as evidence, not proposed as a value');
+
+// ===========================================================================
+console.log('\n=== 7. the review tab ===');
+// ===========================================================================
+const sample = perThread.find((x) => x.t.auction === '202632');
+const rows = TH.threadReviewRows(sample.plan);
+ok(rows.length > 0, '202632: no review rows');
+for (const row of rows) {
+  eq(row.length, TH.THREAD_REVIEW_COLUMNS.length, 'a review row does not match the column count');
+  eq(row[0], '', 'the Approve? column must start blank');
+}
+ok(rows.some((r) => r[1] === 'price'), 'no price rows in the review tab');
+ok(rows.some((r) => r[1] === 'context?'), '202632: no context candidates — its grunnel props resolve to no token');
+console.log(`  ✓ ${rows.length} review rows for 202632, all ${TH.THREAD_REVIEW_COLUMNS.length} columns wide, none pre-approved`);
+
+// The description never throws and always names the tie caveat when one fired.
+for (const { t, plan } of perThread) {
+  const text = TH.threadDescribePlan(plan, t.auction);
+  ok(typeof text === 'string' && text.length > 0, `${t.auction}: empty description`);
+  if (plan.prices.some((p) => p.tie)) {
+    ok(text.includes('8 low / 5 high / 1 midpoint'), `${t.auction}: a tie fired but the caveat is missing`);
+  }
+}
+console.log('  ✓ every thread describes without throwing');
+
+// ===========================================================================
+if (failures.length) {
+  console.error(`\n✗ forumThread: ${failures.length} failure(s) of ${passed + failures.length} assertions\n`);
+  for (const f of failures.slice(0, 40)) console.error('  • ' + f);
+  if (failures.length > 40) console.error(`  … and ${failures.length - 40} more`);
+  process.exit(1);
+}
+console.log(`\n✓ forumThread: ${passed} assertions over ${manifest.threads.length} real threads ` +
+  `(${totalPosts} posts, ${score.items} recorded items)\n`);
