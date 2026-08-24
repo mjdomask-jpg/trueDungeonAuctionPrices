@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-08-22.1';
+var OPEN_VERSION = '2026-08-24.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -215,13 +215,10 @@ var OPEN_REVIEW_COLUMNS = [
  * The `auctionMetadata` columns this phase fills in, and the ones it must leave
  * alone.
  *
- * Only these eleven are typed by a human at open time. `daysToClose`, `Status`,
- * `Open Month`, `Close Month`, `augmentedTotal`, `fundingNoAugment` and
- * `preorderTotal` are all formulas — verified arithmetically against all 289
- * recorded rows: `augmentedTotal` is the sum of the three augment columns with
- * 0 disagreements, `fundingNoAugment` is `targetFunding - augmentedTotal` with
- * 0, and `daysToClose` is `MAX(closeDate - openDate, 1)` with 0. Writing a
- * literal into any of them would replace a formula with a frozen number.
+ * These eleven are the ones a promotion supplies a value for. `daysToClose`,
+ * `Status`, `Open Month`, `Close Month`, `augmentedTotal`, `fundingNoAugment`
+ * and `preorderTotal` are formulas and are never written; writing a literal
+ * into one would replace a formula with a frozen number.
  *
  * `closeDate` stays blank on purpose: `Status` is `IF(closeDate="","Open",
  * "Closed")`, so a blank close date is what makes a new auction read as open.
@@ -230,6 +227,35 @@ var OPEN_METADATA_FIELDS = [
   'auctionId', 'auctionSeason', 'auctionNumber', 'auctionName', 'auctionStyle',
   'completionStyle', 'auctioneer', 'Link', 'openDate', 'targetFunding', 'augmentated',
 ];
+
+/**
+ * Two of those eleven are FORMULAS in the workbook, so the formula wins.
+ *
+ * This was wrong from Phase 4 until 2026-08-24, and the way it was wrong is the
+ * useful part. The original list was verified ARITHMETICALLY — does each
+ * column's value equal what its formula would compute? — over all 289 recorded
+ * rows. That check cannot tell a formula from a literal that agrees with it,
+ * and these two agree with theirs on every row:
+ *
+ *   auctionId    =B2&C2                          always equals season+number
+ *   augmentated  =IF(Q2&R2<>"","Yes","No")       always "No" at open time
+ *
+ * So both looked like inputs and were written as literals, replacing the
+ * copied-down formula on every promoted row. Found by running Phase 7's column
+ * classifier — which reads formulas rather than values — against a real export.
+ *
+ * `auctionId` was cosmetic: the literal is the right string. **`augmentated`
+ * was not.** Its formula flips to `Yes` when augment values are later entered
+ * beside it, and the site reads that column to decide whether an auction was
+ * augmented at all. Frozen as a literal `No` at open time it stays `No` for
+ * ever, and nothing downstream would ever say so.
+ *
+ * The value is still computed and still written WHERE THERE IS NO FORMULA TO
+ * KEEP — a workbook whose `auctionId` column is genuinely typed still gets a
+ * correct id rather than a blank. Which of the two it is gets read, never
+ * assumed, exactly as the augment columns already are.
+ */
+var OPEN_DERIVED_FIELDS = ['auctionId', 'augmentated'];
 
 var OPEN_MONTHS = {
   jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
@@ -992,10 +1018,14 @@ function openMetadataCells(fields, headers) {
  * A copied row arrives carrying the PREVIOUS auction's everything. Three
  * outcomes are possible per column and only one of them is right:
  *
- *   - `write`  — one of the eleven columns this phase fills in.
+ *   - `write`  — one of the eleven columns this phase fills in, where the
+ *                source cell is not already a formula computing it.
  *   - `keep`   — the source cell holds a FORMULA, so the copy is already
  *                correct with its references shifted a row. `Status`,
- *                `daysToClose`, `Open Month` and the funding columns are these.
+ *                `daysToClose`, `Open Month` and the funding columns are these,
+ *                and so are `auctionId` and `augmentated` — the two that this
+ *                phase can also compute, where the formula wins. See
+ *                OPEN_DERIVED_FIELDS.
  *   - `clear`  — the source cell holds a LITERAL that this phase does not
  *                write. That is the previous auction's data and it is not true
  *                of this one. `closeDate` is the dangerous one: left copied,
@@ -1013,11 +1043,42 @@ function openRowActions(headers, sourceFormulas, cells) {
   var actions = [];
   for (var i = 0; i < headers.length; i++) {
     var value = cells[i];
-    if (value !== null && value !== undefined) { actions.push({ action: 'write', value: value }); continue; }
     var formula = String((sourceFormulas || [])[i] || '');
+    // A derived column's formula outranks the value this phase computed for it.
+    // See OPEN_DERIVED_FIELDS: both of these produce exactly what the promotion
+    // would write, which is why writing over them went unnoticed — and why
+    // `augmentated` then stayed frozen at "No" for the life of the auction.
+    if (formula && OPEN_DERIVED_FIELDS.indexOf(String(headers[i]).trim()) !== -1) {
+      actions.push({ action: 'keep', value: null });
+      continue;
+    }
+    if (value !== null && value !== undefined) { actions.push({ action: 'write', value: value }); continue; }
     actions.push(formula ? { action: 'keep', value: null } : { action: 'clear', value: '' });
   }
   return actions;
+}
+
+/**
+ * Which derived columns carry a value from the review tab that the sheet's own
+ * formula is about to win over, phrased for the dialog.
+ *
+ * Only reports where the proposal actually supplies something non-empty — a
+ * blank `augmentated` losing to a formula is the normal case and saying so
+ * every time would train the operator to skip the whole block.
+ */
+function openDerivedOverrides(headers, sourceFormulas, rows) {
+  var out = [];
+  for (var r = 0; r < rows.length; r++) {
+    for (var i = 0; i < headers.length; i++) {
+      var header = String(headers[i]).trim();
+      if (OPEN_DERIVED_FIELDS.indexOf(header) === -1) continue;
+      if (!String((sourceFormulas || [])[i] || '')) continue;
+      var value = rows[r].cells[i];
+      if (value === null || value === undefined || String(value).trim() === '') continue;
+      out.push(rows[r].fields.auctionId + ' ' + header + ': "' + value + '" — the column computes itself');
+    }
+  }
+  return out;
 }
 
 /** Header names this phase expects to find, and does not. */
@@ -1231,6 +1292,16 @@ function promoteAuctionOpens() {
   lines.push('', 'Each row is copied down from the one above, so the formula columns keep their formulas.',
     'Every other column this phase does not fill is cleared — closeDate included, which is what makes Status read "Open".');
 
+  // Say when a typed value is about to lose to a formula, rather than dropping
+  // it silently. `augmentated` is the one that bites: an operator who knows the
+  // auction is augmented types Yes, and the column computes itself from the
+  // augment values instead — which is right, but only obvious if it is said.
+  var derived = openDerivedOverrides(headers, meta.getRange(meta.getLastRow(), 1, 1, headers.length).getFormulas()[0], plan.rows);
+  if (derived.length) {
+    lines.push('', 'COMPUTED BY THE SHEET, so what the review tab says is ignored:');
+    for (i = 0; i < derived.length; i++) lines.push('  • ' + derived[i]);
+  }
+
   var answer = ui.alert('Promote (script ' + OPEN_VERSION + ')', lines.join('\n'), ui.ButtonSet.OK_CANCEL);
   if (answer !== ui.Button.OK) return;
 
@@ -1295,10 +1366,12 @@ if (typeof module !== 'undefined') {
     openPlanPromotion: openPlanPromotion,
     openMetadataCells: openMetadataCells,
     openRowActions: openRowActions,
+    openDerivedOverrides: openDerivedOverrides,
     openHeaderProblems: openHeaderProblems,
     openDescribeScan: openDescribeScan,
     OPEN_REVIEW_COLUMNS: OPEN_REVIEW_COLUMNS,
     OPEN_METADATA_FIELDS: OPEN_METADATA_FIELDS,
+    OPEN_DERIVED_FIELDS: OPEN_DERIVED_FIELDS,
     OPEN_TRENT_DEFAULTS: OPEN_TRENT_DEFAULTS,
     OPEN_TRENT_URL: OPEN_TRENT_URL,
     OPEN_FORUM_CATEGORIES: OPEN_FORUM_CATEGORIES,
