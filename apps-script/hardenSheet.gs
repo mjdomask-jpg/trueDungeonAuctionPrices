@@ -23,11 +23,16 @@
  *
  * NOTHING IS DISCOVERED BY ASSUMPTION. The column layouts are read from each
  * tab's header row, and a formula column is found by looking at what the cells
- * actually contain rather than by a hard-coded letter. That is not fastidiousness
- * — the repo's picture of this workbook comes from an export taken on
- * 2026-08-20 that no longer exists locally, and a script that wrote protections
- * onto hard-coded ranges from a stale map would protect the wrong columns
- * silently.
+ * actually contain rather than by a hard-coded letter.
+ *
+ * That earned itself immediately. Run against a real export on 2026-08-24, the
+ * discovery found TWO formula columns the repo's own map called inputs:
+ * `auctionId` (`=B2&C2`, in all four tabs that carry it) and `augmentated`
+ * (`=IF(Q2&R2<>"","Yes","No")`). Neither was findable by checking values,
+ * because both formulas produce exactly what a human would have typed on all
+ * 289 rows — which is also why `auctionOpen.gs` writes literals over both
+ * without anything noticing. A script working from the stale map would have put
+ * a dropdown on a formula column and left two others unprotected.
  *
  * Shares one global scope with the other .gs files. Every global is prefixed
  * `HARDEN_`/`harden`.
@@ -42,9 +47,9 @@ var HARDEN_VERSION = '2026-08-24.1';
  * recorded as if it had not happened.
  *
  * `contextItems.priceAugmented` is NOT here. Its withheld rows are a formula
- * and its token and grunnel rows are typed, so the column is genuinely mixed —
- * see hardenFormulaColumns, which reports mixed columns rather than acting on
- * them.
+ * and its token and grunnel rows are typed — 95 of 631 populated cells, in the
+ * 2026-08-24 export — so the column is genuinely mixed. `hardenPlan` reports
+ * mixed columns rather than acting on them.
  */
 var HARDEN_PRICE_COLUMNS = [
   { tab: 'prices', header: 'Price' },
@@ -96,9 +101,18 @@ var HARDEN_VOCABULARY = [
     'Fixed Date',                   //  32
     'Semi-Lightning',               //   7
   ] },
-  { tab: 'auctionMetadata', header: 'augmentated', grows: false, values: ['Yes', 'No'] },
   { tab: 'contextItems', header: 'category', grows: false, values: ['token', 'grunnel', 'withheld', 'augment'] },
 ];
+
+// `augmentated` is NOT here, and the reason is worth keeping. It reads like the
+// obvious fourth dropdown — two values, hand-looking, `Yes`/`No` — and it is a
+// FORMULA: `=IF(Q2&R2<>"","Yes","No")`, derived from the augment columns beside
+// it. A dropdown on a formula column offers a choice nobody can take. It is
+// protected instead, which the sweep below does on its own.
+//
+// This was found by running the plan against a real export rather than against
+// the audit, and it is the second thing that export corrected: `auctionId` is a
+// formula too (`=B2&C2`), in all four tabs that carry it.
 
 /**
  * Named ranges that are unused AND WRONG, which is the dangerous combination.
@@ -116,6 +130,20 @@ var HARDEN_VOCABULARY = [
  */
 var HARDEN_DEAD_RANGES = ['trentAuctionData', 'NamedRange1', 'categories'];
 
+/**
+ * Tabs this does not touch: the scratch surfaces the other scripts write.
+ *
+ * `trentStaging` and `forumStaging` hold a paste on its way in, and
+ * `auctionOpenReview` and `forumThreadReview` hold proposals on their way to a
+ * human. Nothing in them is a record of anything, they are rewritten wholesale
+ * on every run, and a warn-only protection over a column the operator is
+ * supposed to be editing is pure friction.
+ *
+ * They are empty in a clean workbook, so this changes nothing today — it stops
+ * the first run that happens to follow an import from hardening a scratch pad.
+ */
+var HARDEN_SKIP_TABS = ['trentStaging', 'forumStaging', 'auctionOpenReview', 'forumThreadReview'];
+
 /** A named range covering a data tab must be whole-column. See hardenNamedRanges. */
 var HARDEN_WHOLE_COLUMN_TABS = [
   'prices', 'onyx', 'rawPricesData', 'auctionMetadata', 'contextItems',
@@ -127,14 +155,18 @@ var HARDEN_WHOLE_COLUMN_TABS = [
  * populated cells carry one.
  *
  * Not 100%, because a column can legitimately be part formula and part typed
- * during a backfill, and not 50%, because that would call `contextItems`'s
- * genuinely mixed `priceAugmented` a formula column and protect cells a human
- * has to edit. Anything between the two thresholds is REPORTED as mixed and
- * left alone — an honest "I do not know what this column is" beats a confident
- * wrong protection.
+ * during a backfill — `transmuteRecipes!ResolvedYear` is 1,943 of 1,985 in the
+ * live workbook and is plainly a formula column.
+ *
+ * The floor is ZERO, not a small share: a column is `typed` only when NOTHING
+ * in it is a formula. A single formula in a column full of typed values is not
+ * a rounding error, it is the thing worth seeing — and treating it as typed
+ * would put numeric validation over a formula and say nothing about it.
+ * Everything in between is REPORTED as mixed and left alone, because an honest
+ * "I do not know what this column is" beats a confident wrong protection.
  */
 var HARDEN_FORMULA_SHARE = 0.9;
-var HARDEN_MIXED_SHARE = 0.1;
+var HARDEN_MIXED_SHARE = 0;
 
 /**
  * How many data rows to read per tab when classifying columns.
@@ -404,7 +436,8 @@ function hardenReadBook() {
   for (var s = 0; s < sheets.length; s++) {
     var sheet = sheets[s];
     var name = sheet.getName();
-    if (OLD_TAB_RE.test(name)) continue;            // retired tabs still recalculate; leave them be
+    if (OLD_TAB_RE.test(name)) continue;                       // retired tabs still recalculate; leave them be
+    if (HARDEN_SKIP_TABS.indexOf(name) !== -1) continue;       // scratch surfaces the other scripts own
     var lastRow = sheet.getLastRow(), lastCol = sheet.getLastColumn();
     if (lastRow < 2 || lastCol < 1) continue;
 
@@ -537,6 +570,7 @@ if (typeof module !== 'undefined') {
     HARDEN_COUNT_COLUMNS: HARDEN_COUNT_COLUMNS,
     HARDEN_VOCABULARY: HARDEN_VOCABULARY,
     HARDEN_DEAD_RANGES: HARDEN_DEAD_RANGES,
+    HARDEN_SKIP_TABS: HARDEN_SKIP_TABS,
     HARDEN_VERSION: HARDEN_VERSION,
   };
 }

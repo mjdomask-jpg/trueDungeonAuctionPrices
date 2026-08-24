@@ -51,19 +51,40 @@ const ok = (c, what) => { if (c) { passed++; return true; } failures.push(what);
 const eq = (a, b, what) => ok(a === b, `${what}: expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
 
 // --- a workbook built from the real CSVs ------------------------------------
-// The columns the 2026-08-20 audit found carrying formulas. They are declared
-// here, in the TEST, and discovered by the script — which is the whole point:
-// if this list goes stale the script still reads the live sheet correctly, and
-// only these fixtures need updating.
+// The formula columns, READ FROM A REAL EXPORT of the workbook on 2026-08-24 —
+// not from the 2026-08-20 audit, which was wrong about them in two ways that
+// mattered:
+//
+//   - `auctionId` is a formula (`=B2&C2`) in ALL FOUR tabs that carry it. The
+//     audit listed it as an input column, and no arithmetic check could have
+//     told the difference: the formula's output is exactly what a human would
+//     type, on all 289 rows.
+//   - `augmentated` is a formula (`=IF(Q2&R2<>"","Yes","No")`), not the
+//     hand-typed Yes/No it looks like. That is why it is not in
+//     HARDEN_VOCABULARY: a dropdown on a formula column offers a choice nobody
+//     can take.
+//
+// The list is declared here, in the TEST, and discovered by the script. That
+// division is the point — when this goes stale the script still reads the live
+// sheet correctly and only these fixtures need updating.
 const FORMULA_COLUMNS = {
-  auctionMetadata: ['daysToClose', 'Status', 'Open Month', 'Close Month',
+  auctionMetadata: ['auctionId', 'daysToClose', 'Status', 'Open Month', 'Close Month',
+    'augmentated', 'augmentTokens', 'augmentGrunnel', 'augmentWithheld',
     'augmentedTotal', 'fundingNoAugment', 'preorderTotal'],
-  prices: ['Display Name', 'Category'],
-  rawPricesData: ['Item', 'Price', 'Category'],
+  prices: ['auctionId', 'Display Name', 'Category'],
+  onyx: ['auctionId'],
+  rawPricesData: ['auctionId', 'Item', 'Price', 'Category'],
+  contextItems: ['auctionId'],
+  tokenMetadata: ['key'],
+  offAuctionPrices: ['Key'],
 };
-// contextItems.priceAugmented is deliberately MIXED: withheld rows are a QUERY,
-// token and grunnel rows are typed.
-const MIXED = { contextItems: 'priceAugmented' };
+// Genuinely mixed columns, also measured from the real export. `priceAugmented`
+// is 95 of 631 populated cells — withheld rows are a QUERY, token and grunnel
+// rows are typed. `offAuctionPrices` carries two more nobody had noticed.
+const MIXED = {
+  contextItems: ['priceAugmented'],
+  offAuctionPrices: ['Category', 'Display Name'],
+};
 
 function buildBook(files) {
   const tabs = {};
@@ -75,7 +96,7 @@ function buildBook(files) {
     const columns = headers.map((h, c) => {
       const values = body.map((r) => r[c] ?? '');
       const isFormula = (FORMULA_COLUMNS[name] || []).includes(h);
-      const isMixed = MIXED[name] === h;
+      const isMixed = (MIXED[name] || []).includes(h);
       const formulas = values.map((v, i) => {
         if (isFormula) return v === '' ? '' : '=VLOOKUP(A1,X,2,FALSE)';
         if (isMixed) return i % 3 === 0 ? '=QUERY(augmentData,"select avg(E)*-1")' : '';
