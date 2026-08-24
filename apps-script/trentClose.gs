@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-24.1';
+var SCRIPT_VERSION = '2026-08-24.2';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -82,12 +82,14 @@ var PRICE_HEADERS = ['highest bid', 'price', 'winning bid'];
  * Measured against all 18,466 rows of `rawPricesData`: these entries plus
  * `tokenMetadata` resolve every one, with zero names mapping to two `Item`s.
  *
- * THE TABLE IS TWO VOCABULARIES, and they do not overlap at all. Trent needs
- * four entries; the other fourteen come from `202647`, which is *not* a Trent
- * auction — it is alesiev's forum auction, the first to supply per-lot data.
- * Keeping both here is deliberate: Phase 5 reads forum results through this
- * same parser, so the forum vocabulary is where it will be needed. But do not
- * read the abbreviations as "how Trent writes lot names", because they are not.
+ * THE TABLE IS THREE VOCABULARIES, and they do not overlap at all. Trent needs
+ * four entries; fourteen come from `202647`, which is *not* a Trent auction —
+ * it is alesiev's forum auction, the first to supply per-lot data; and the gold
+ * bar block below comes from the 2022 forum season, many auctioneers rather
+ * than one. Keeping them together is deliberate: Phase 5 reads forum results
+ * through this same parser, so the forum vocabulary is where it will be needed.
+ * But do not read the abbreviations as "how Trent writes lot names", because
+ * they are not.
  */
 var EXCEPTIONS = {
   // --- Trent ---------------------------------------------------------------
@@ -117,6 +119,26 @@ var EXCEPTIONS = {
   'oe': 'Oil of Enchantment',
   'eb': 'Elven Bismuth',
   'ag': 'Aragonite',
+
+  // --- Gold bar, the 2022 forum season -------------------------------------
+  // The one trade good the forum never spells Trent's way, and the spread is
+  // wide enough that no prefix rule covers it: measured over the fetched 2022
+  // threads, none of these resolved, against a canonical `1,000 GP Gold Bar`
+  // and the `1k gp` above that both did.
+  //
+  // `Reserve` is part of the NAME here, not a status. It reads like one — the
+  // same corpus uses "Reserve" in the bidder column for a lot held at minimum
+  // bid — but the evidence separates them: 30 of the 50 threads say "Reserve
+  // Bar", every one of those auctions records a `1,000 GP Gold Bar` price, none
+  // of them names the bar any other way, and the lines show it sold with a
+  // winner (`1,000 GP Reserve Bar #1-8 - $14 each - Cockatrice`).
+  '1k bar': '1,000 GP Gold Bar',
+  '1k bars': '1,000 GP Gold Bar',
+  '1k gold bar': '1,000 GP Gold Bar',
+  '1k gold reserve bar': '1,000 GP Gold Bar',
+  '1,000 gp bar': '1,000 GP Gold Bar',
+  '1,000 gp bars': '1,000 GP Gold Bar',
+  '1,000 gp reserve bar': '1,000 GP Gold Bar',
 };
 
 /** Patron pin ships with a code and the name carries the year. */
