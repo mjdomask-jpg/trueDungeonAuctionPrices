@@ -1,16 +1,16 @@
 {
-  "source": "24 real auction threads from truedungeon.com, one per recorded auction, spanning 20 of the 33 forum auctioneers. Verbatim pages, gzipped, nothing trimmed — for the same reason fixtures/auction-open gives: the failures this guards against are matches found in the wrong place on the page, and a trimmed page cannot show one.",
+  "source": "26 real auction threads from truedungeon.com, one per recorded auction, spanning 21 of the 33 forum auctioneers. Verbatim pages, gzipped, nothing trimmed — for the same reason fixtures/auction-open gives: the failures this guards against are matches found in the wrong place on the page, and a trimmed page cannot show one.",
   "fetched": "2026-08-22",
   "url": "https://truedungeon.com/forum?view=topic&catid=584&id=<topic>[&start=<n>]",
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 358,
-    "reproduces": 331,
-    "min": 271,
-    "max": 249,
-    "ties": 17,
-    "closeBracketHits": 7,
+    "itemsMatched": 392,
+    "reproduces": 351,
+    "min": 288,
+    "max": 268,
+    "ties": 18,
+    "closeBracketHits": 8,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 7 of the 15 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
   },
   "threads": [
@@ -286,6 +286,31 @@
       "reproduces": 0,
       "closeBracket": "2026-08-15..2026-08-15",
       "why": "The auction part one imports from a file. No per-item results in the thread, but its close-date bracket lands exactly on the recorded date — the plan's second worked example."
+    },
+    {
+      "auction": "202020",
+      "topic": "250724",
+      "auctioneer": "Cliff",
+      "pages": 2,
+      "resultsPost": 1,
+      "itemsMatched": 0,
+      "reproduces": 0,
+      "bags": {
+        "Rare Bag": 100,
+        "Uncommon Bag": 73
+      },
+      "why": "THE CONDENSED-BAG CASE. A Condensed order sells a bag of 120 random Rares and a bag of 240 random Uncommons, which no Super or Ultra Condensed auction has. This auctioneer writes them `8 x 120 Random Rare bag`, and that leading `8 x ` is read by the shared quantity rule as a lot of 8 — so the $100 bag divides to $12.50 unless a bag is exempted. Its two recorded bag prices are reproduced exactly, which is what pins both halves of the fix. itemsMatched is 0 because this auctioneer's other line grammars are not supported; the bags are what this fixture is here for."
+    },
+    {
+      "auction": "20225",
+      "topic": "253785",
+      "auctioneer": "Matt Soto",
+      "pages": 1,
+      "resultsPost": 1,
+      "itemsMatched": 16,
+      "reproduces": 15,
+      "why": "A Condensed auction MISSING its bag rows — one of three found by the new check. Its `TOKEN BAGS` section sells `Bag of 120x Rare Tokens` and `Bag of 240x Uncommon Tokens`, and the Rare Bag is a genuine 4-4 tie ($70 and $65), so it exercises the tie flag on a proposal for data the sheet does not yet hold.",
+      "onyx": 21
     }
   ]
 }
