@@ -49,7 +49,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-22.1';
+var THREAD_VERSION = '2026-08-24.1';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -160,6 +160,55 @@ var THREAD_NOT_A_LOT_RE = /^(grand\s+)?(current\s+)?(running\s+)?(total|totals|s
 
 /** kurtreznor's `ONYX or PYP` marker. See threadResolveLots for what it means. */
 var THREAD_ONYX_OR_PYP_RE = /\bonyx\s*(or|\/)\s*pyp\b/i;
+
+/**
+ * The bags of random Rares and Uncommons a CONDENSED order includes.
+ *
+ * A Condensed auction sells two things a Super or Ultra Condensed one does not:
+ * a bag of 120 random Rares and a bag of 240 random Uncommons. `tokenMetadata`
+ * has carried them for every season since 2012 under their own Category,
+ * `Condensed`, and every auctioneer spells them differently — NINE spellings
+ * across the eight recorded Condensed auctions:
+ *
+ *   Bag of 120 random Rare tokens (rares only) #1-8    Matthew Hayward, Edwin
+ *   Bag of 240 random Uncommon tokens #1-8
+ *   8 x 120 Random Rare bag                            Cliff
+ *   120 Rare 2021 Token Bag (8)                        Casey Wren
+ *   Bag of 120x Rare Tokens                            Matt Soto
+ *   8 bags of 120 rares (no Urs)                       Laz
+ *   120x Random Rare                                   Nick Braun
+ *
+ * TWO of those nine also break the quantity rule, which is the part that
+ * matters. `120x Random Rare` reads as a lot of 120 and `8 x 120 Random Rare
+ * bag` as a lot of 8, so a $65 bag is divided down to $0.54 or $8.13 — a
+ * plausible-looking trade-good price, in the price spine, with nothing to say
+ * it is wrong. The number in a bag's name is its CONTENTS, exactly as the `4`
+ * in `Path to Enlightenment (Fragment 4)` is the fragment: identity, not count.
+ * So a bag never divides.
+ *
+ * Detection is deliberately loose on the noun and strict on the trigger: the
+ * name must mention a bag or one of the two counts before either tier word is
+ * read at all. Without that trigger `Proof set of 2018 Onyx Common/Uncommon/
+ * Rare Tokens` and `Set of 2021 Rare Class Neck Items` would both be swept up,
+ * and both are real lots from these same threads.
+ */
+// `120x?` rather than `120`, because `\b120\b` does not match `120x` — there is
+// no word boundary between a digit and a letter. The two spellings that need
+// this most are the two that also break the quantity rule.
+var THREAD_BAG_TRIGGER_RE = /\bbags?\b|\b(?:120|240)x?\b/i;
+var THREAD_BAG_UNCOMMON_RE = /\buncommons?\b|\bUC\b/i;
+var THREAD_BAG_RARE_RE = /\brares?\b/i;
+var THREAD_BAG_ULTRA_RE = /\bultra[\s-]*rares?\b|\bUR\b|\bPYP\b/i;
+
+/** `'Rare Bag'`, `'Uncommon Bag'`, or null. */
+function threadBagName(name) {
+  var s = String(name == null ? '' : name);
+  if (!THREAD_BAG_TRIGGER_RE.test(s)) return null;
+  if (THREAD_BAG_ULTRA_RE.test(s)) return null;
+  if (THREAD_BAG_UNCOMMON_RE.test(s)) return 'Uncommon Bag';
+  if (THREAD_BAG_RARE_RE.test(s)) return 'Rare Bag';
+  return null;
+}
 
 /** BBCode the forum leaks into rendered text — `[/size]`, `[b]`, `[color=#fff]`. */
 var THREAD_BBCODE_RE = /\[\/?[a-z][a-z0-9]*(=[^\]]*)?\]/gi;
@@ -726,9 +775,16 @@ var THREAD_FALLBACKS = [
  * Lapel Pin (and Code)` needs the parenthetical off AND the year off before any
  * table has a chance at it.
  */
-function threadResolveName(base, season, index) {
+function threadResolveName(base, season, index, bag) {
   var hit = resolveToken(base, season, index);
   if (hit) return { token: hit, as: base };
+  // A recognised bag resolves to its canonical name before any rewrite is
+  // tried, because none of them would reach it: `8 bags of 120 rares (no Urs)`
+  // shares no prefix with `Rare Bag`.
+  if (bag) {
+    hit = resolveToken(bag, season, index);
+    if (hit) return { token: hit, as: bag };
+  }
   var name = base;
   for (var i = 0; i < THREAD_FALLBACKS.length; i++) {
     var next = THREAD_FALLBACKS[i](name).replace(/\s+/g, ' ').trim();
@@ -791,7 +847,12 @@ function threadResolveLots(lots, season, index) {
     // Two places can state a lot size and both count: the item's own name
     // (`10x Darkwood Plank`, the rule verified against 18,466 Trent lots) and
     // the line the lot is on (`10x $25 - Miriam Dom`).
-    var lotSize = (q.quantity || 1) * (lot.lotSize || 1);
+    //
+    // A BAG NEVER DIVIDES. See THREAD_BAG_TRIGGER_RE: the 120 in
+    // `120x Random Rare` is what is inside the bag, and dividing by it turns a
+    // $65 bag into a $0.54 trade good that looks entirely reasonable.
+    var bag = threadBagName(marked.name);
+    var lotSize = bag ? 1 : (q.quantity || 1) * (lot.lotSize || 1);
     var base = stripDecorations(q.name === undefined ? marked.name : q.name);
     // Per TOKEN, never per lot: `10x Darkwood Plank` at $12 is $1.20 recorded.
     var unit = roundCents(lot.price / lotSize);
@@ -814,7 +875,7 @@ function threadResolveLots(lots, season, index) {
     // Resolution alone already does the job: 20264's fourteen augments include
     // `Ring of the 3rd Circle`, which resolves in 2024 and not in 2026, so it
     // lands in the context list on its own.
-    var resolvedName = threadResolveName(base, season, index);
+    var resolvedName = threadResolveName(base, season, index, bag);
     var token = resolvedName ? resolvedName.token : null;
     if (!token) {
       // A context candidate with no name is no use to anybody — it is a
@@ -1264,6 +1325,8 @@ if (typeof module !== 'undefined') {
     threadScanPost: threadScanPost,
     threadResolveLots: threadResolveLots,
     threadPropose: threadPropose,
+    threadBagName: threadBagName,
+    threadResolveName: threadResolveName,
     threadWithheldCandidates: threadWithheldCandidates,
     threadCloseEvidence: threadCloseEvidence,
     threadPlan: threadPlan,

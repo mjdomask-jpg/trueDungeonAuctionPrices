@@ -574,6 +574,7 @@ than pretending. Ask the auctioneer for the file instead; see
 | `10x $25` vs `9x $11` | Both are `Nx`, and they mean opposite things. Under a plain heading the price is for the lot; under an `(N - individual)` heading it is per token. Getting it wrong is a factor of ten. |
 | `ONYX or PYP` | Genuinely ambiguous, and listed separately. They are proposed as Onyx because that is what the one recorded precedent did — and that auction *also* recorded their price as its Ultra Rare. Decide. |
 | Onyx section headings | `ONYX ITEMS` routes what follows to `onyx.csv` until the next heading. `Standard Onyx 8k Items` does **not** — there the word describes the order, not the tokens. |
+| Condensed bags | A **Condensed** order (a style saying Condensed without Super or Ultra) sells a bag of 120 random Rares and a bag of 240 random Uncommons. Nine spellings are recognised, and **a bag never divides** — `120x Random Rare` is one bag containing 120 tokens, not a lot of 120, and reading it the other way turns a $65 bag into a $0.54 trade good. |
 
 ### Changing the script
 
@@ -1755,6 +1756,22 @@ Check 6. The two must agree in both directions. Either the Onyx results were
 never transcribed, or the style is wrong. Both directions were violated by 16
 auctions before the 2026-08-21 backfill and by none after it, so a fresh
 violation is a fresh mistake.
+
+### `auctionStyle … is a Condensed order … but prices.csv has neither`
+
+Check 6, and a **note** rather than an error, so it never blocks a publish.
+
+A Condensed order — a style saying Condensed without *Super* or *Ultra* —
+includes a `Rare Bag` (120 random Rares) and an `Uncommon Bag` (240 random
+Uncommons). Five of the eight recorded Condensed auctions carry both rows;
+**`20192`, `202111` and `20225` carry neither**, which is what this note is
+telling you about.
+
+It is a note because the disagreement can resolve either way. `20225` and
+`202111` do sell bags in their threads, so those are missing rows. `20192`
+sells none at all despite its style, so there the *style* may be what is wrong.
+The check says which auctions to look at; it does not presume which side is
+right.
 
 ### The build fails with `dist/data check FAILED`
 

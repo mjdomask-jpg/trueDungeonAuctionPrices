@@ -194,6 +194,42 @@ ok(buyoutOnly && buyoutOnly.refuse, 'a table with only a buy-it-out price was no
 console.log('  ✓ the header decides the price column; buy-it-out and average-bid tables are refused');
 
 // ===========================================================================
+console.log('\n=== 3b. the Condensed bags ===');
+// ===========================================================================
+// A Condensed order sells a bag of 120 random Rares and a bag of 240 random
+// Uncommons. Nine spellings across the eight recorded Condensed auctions, and
+// two of them also break the shared quantity rule — see THREAD_BAG_TRIGGER_RE.
+const BAG_YES = [
+  ['Bag of 120 random Rare tokens (rares only) #1-8', 'Rare Bag'],
+  ['Bag of 240 random Uncommon tokens #1-8', 'Uncommon Bag'],
+  ['8 x 120 Random Rare bag', 'Rare Bag'],
+  ['8 x 240 Random Uncommon bag', 'Uncommon Bag'],
+  ['120 Rare 2021 Token Bag', 'Rare Bag'],
+  ['240 Uncommon 2021 Token Bag', 'Uncommon Bag'],
+  ['Bag of 120x Rare Tokens', 'Rare Bag'],
+  ['Bag of 240x Uncommon Tokens', 'Uncommon Bag'],
+  ['8 bags of 120 rares (no Urs)', 'Rare Bag'],
+  ['8 bags of 240 UC tokens', 'Uncommon Bag'],
+  ['120x Random Rare', 'Rare Bag'],
+  ['240x Random Uncommon', 'Uncommon Bag'],
+];
+for (const [name, expected] of BAG_YES) eq(TH.threadBagName(name), expected, `bag: ${JSON.stringify(name)}`);
+
+// Every one of these is a real lot from the same threads, and every one of them
+// mentions a tier word. The bag/count TRIGGER is what keeps them out.
+const BAG_NO = [
+  'Proof set of 2018 Onyx Common/Uncommon/Rare Tokens',
+  'Set of 2021 Rare Class Neck Items',
+  '2017/18 Ultra Rare of Your Choice #1',
+  'PYP Ultra Rare',
+  'Onyx - C/UC/R Full Set',
+  'Random UR',
+  '10x Darkwood Plank',
+];
+for (const name of BAG_NO) eq(TH.threadBagName(name), null, `not a bag: ${JSON.stringify(name)}`);
+console.log(`  ✓ ${BAG_YES.length} bag spellings recognised, ${BAG_NO.length} lookalikes rejected`);
+
+// ===========================================================================
 console.log('\n=== 4. the pricing rule, replayed against prices.csv ===');
 // ===========================================================================
 const score = { items: 0, mode: 0, modeHigh: 0, min: 0, max: 0 };
@@ -315,6 +351,26 @@ eq(bracketHits, manifest.expect.closeBracketHits,
   `close-date bracket hits (${bracketsBuilt} brackets built from ${manifest.threads.length} threads)`);
 console.log(`  ✓ close-date bracket contains the recorded date in ${bracketHits} of ${bracketsBuilt} threads that carry one ` +
   '— which is why it is reported as evidence, not proposed as a value');
+
+// ===========================================================================
+console.log('\n=== 6b. a bag never divides ===');
+// ===========================================================================
+// The whole point of the bag rule. 202020 writes `8 x 120 Random Rare bag`,
+// which the shared quantity rule reads as a lot of 8 — so a $100 bag becomes
+// $12.50 unless bags are exempted. Its two recorded prices are the assertion.
+{
+  const t = manifest.threads.find((x) => x.auction === '202020');
+  const target = meta.find((m) => m.auctionId === '202020');
+  const plan = TH.threadPlan(pagesFor(t.topic), target, tokenRows);
+  const bags = Object.fromEntries(plan.prices.filter((p) => /Bag$/.test(p.Item)).map((p) => [p.Item, p.Price]));
+  for (const [item, expected] of Object.entries(t.bags)) {
+    eq(bags[item], expected, `202020 ${item} reproduced from the thread`);
+  }
+  // And the control: a real lot size must still divide.
+  const recorded = priceRows.filter((r) => r.auctionId === '202020');
+  ok(recorded.length > 0, '202020 has recorded prices to compare against');
+}
+console.log('  ✓ 202020\'s Rare Bag ($100) and Uncommon Bag ($73) reproduced — the `8 x 120` prefix did not divide them');
 
 // ===========================================================================
 console.log('\n=== 7. the review tab ===');

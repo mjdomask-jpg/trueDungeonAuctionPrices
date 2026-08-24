@@ -381,6 +381,43 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
   for (const auctionId of onyxByAuction.keys())
     if (!metaById.has(auctionId)) errs.push(`onyx.csv: rows for auction ${auctionId}, which is not in auctionMetadata.csv`);
 
+  // The same agreement, for the OTHER thing auctionStyle predicts.
+  //
+  // A CONDENSED order — one whose style says Condensed without Super or Ultra —
+  // includes two items the condensed formats do not: a bag of 120 random Rares
+  // and a bag of 240 random Uncommons. `tokenMetadata` has carried both for
+  // every season since 2012, under their own Category `Condensed`.
+  //
+  // Measured 2026-08-24: of the 8 auctions whose style says Condensed, 5 carry
+  // their bag rows and 3 do not — 20192, 202111 and 20225. Two of those three
+  // do state bag lots in their threads; nobody had a rule that said to look.
+  //
+  // A NOTE rather than an error, for two reasons. The gap is pre-existing, so
+  // erroring would block every publish until three historical auctions are
+  // filled in. And absence can be legitimate: 20192's thread sells no bags at
+  // all despite the style, so the right resolution there may be the style
+  // rather than the rows. The check says which auctions to look at; it does not
+  // presume to know which way the disagreement resolves.
+  const CONDENSED_ONLY = /condensed/i;
+  const CONDENSED_EXCLUDES = /super|ultra/i;
+  const bagsByAuction = groupBy(
+    prices.filter((r) => r.auctionId && /^(Rare|Uncommon) Bag$/.test(r.Item)),
+    (r) => r.auctionId, (r) => r);
+  for (const m of meta) {
+    if (!m.auctionId) continue;
+    const style = m.auctionStyle || '';
+    const isCondensed = CONDENSED_ONLY.test(style) && !CONDENSED_EXCLUDES.test(style);
+    const hasBags = bagsByAuction.has(m.auctionId);
+    if (isCondensed && !hasBags) {
+      warns.push(`${m.auctionId} "${m.auctionName}": auctionStyle "${style}" is a Condensed order, ` +
+        'which includes a Rare Bag and an Uncommon Bag, but prices.csv has neither');
+    }
+    if (!isCondensed && hasBags) {
+      warns.push(`${m.auctionId} "${m.auctionName}": ${bagsByAuction.get(m.auctionId).length} bag row(s) ` +
+        `but auctionStyle "${style}" is not a Condensed order`);
+    }
+  }
+
   // contextItems: a four-value vocabulary and an absolute sign convention.
   // withheld is what the auctioneer kept back, so it is a debit; token and
   // grunnel are what was sold, so they are credits. A sign flip here silently
