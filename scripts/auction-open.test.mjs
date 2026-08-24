@@ -528,11 +528,18 @@ console.log('\nPromotion\n');
   // auction's everything, so "no value from this phase" is not the same as
   // "leave it". A formula is kept; a literal is cleared. The formulas are read
   // from the source row rather than assumed.
+  // The formulas the LIVE workbook carries, read from a real export on
+  // 2026-08-24. `auctionId` and `augmentated` are in here because they are
+  // formulas — which this test did not model until that export was checked, so
+  // the assertion below that they are written passed vacuously for as long as
+  // the script was getting them wrong.
   const asFormulas = HEADERS.map((h) => ({
+    auctionId: '=B290&C290',
     daysToClose: '=IFERROR(IF(J290<>"",MAX(J290-I290,1),""),"n/a")',
     Status: '=IF(J290="","Open","Closed")',
     'Open Month': '=DATEDIF(startDate2026,I290,"M")+1',
     'Close Month': '=DATEDIF(startDate2026,J290,"M")+1',
+    augmentated: '=IF(Q290&R290<>"","Yes","No")',
     augmentedTotal: '=SUM(Q290:S290)',
     fundingNoAugment: '=O290-T290',
     preorderTotal: '=QUERY(auctionFullData,"select max(E)*16 where D=\'3x Treasure Chip\'")',
@@ -544,9 +551,43 @@ console.log('\nPromotion\n');
   for (const derived of ['daysToClose', 'Status', 'Open Month', 'Close Month', 'augmentedTotal', 'fundingNoAugment', 'preorderTotal']) {
     eq(`${derived}'s formula is kept`, actions[HEADERS.indexOf(derived)].action, 'keep');
   }
+
+  // The two this phase COMPUTES A VALUE FOR and must still not write, because
+  // the sheet computes them too. `augmentated` is the one that mattered: frozen
+  // as a literal "No" at open time it never flips to "Yes" when augment values
+  // are entered, and that column is what the site reads to decide whether an
+  // auction was augmented at all.
+  for (const derived of O.OPEN_DERIVED_FIELDS) {
+    eq(`${derived} keeps the sheet's formula rather than the value this phase computed`,
+      actions[HEADERS.indexOf(derived)].action, 'keep');
+  }
   for (const literal of O.OPEN_METADATA_FIELDS) {
+    if (O.OPEN_DERIVED_FIELDS.includes(literal)) continue;
     eq(`${literal} is written`, actions[HEADERS.indexOf(literal)].action, 'write');
   }
+
+  // ... and where the column is NOT a formula, the computed value is still
+  // written. A workbook whose auctionId column is genuinely typed gets a
+  // correct id, not a blank — the same read-never-assume rule the augment
+  // columns already follow.
+  const noDerivedFormulas = asFormulas.map((f, i) => (O.OPEN_DERIVED_FIELDS.includes(HEADERS[i]) ? '' : f));
+  const writtenBack = O.openRowActions(HEADERS, noDerivedFormulas, cells);
+  for (const derived of O.OPEN_DERIVED_FIELDS) {
+    eq(`${derived} is written when the sheet holds no formula for it`,
+      writtenBack[HEADERS.indexOf(derived)].action, 'write');
+  }
+  eq('  ... and the id it writes is the computed one',
+    writtenBack[HEADERS.indexOf('auctionId')].value, '202647');
+
+  // A value the operator typed that the sheet is about to compute over is
+  // REPORTED, not dropped in silence.
+  const overrides = O.openDerivedOverrides(HEADERS, asFormulas, plan.rows);
+  check('the ignored augmentated value is named in the dialog',
+    overrides.some((o) => /augmentated: "Yes" — the column computes itself/.test(o)), overrides.join(' | '));
+  check('  ... and so is the auctionId it did not need',
+    overrides.some((o) => /auctionId: "202647"/.test(o)), overrides.join(' | '));
+  eq('nothing is reported when the columns are not formulas',
+    O.openDerivedOverrides(HEADERS, noDerivedFormulas, plan.rows).length, 0);
   for (const stale of ['augmentTokens', 'augmentGrunnel', 'augmentWithheld']) {
     eq(`${stale} is cleared when the sheet holds a literal`, actions[HEADERS.indexOf(stale)].action, 'clear');
   }

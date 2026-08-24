@@ -301,9 +301,9 @@ rows already promoted stay as a record.
 | Duplicates | A forum auction is identified by its topic id, so a renamed thread is still recognised. Trent's are identified by season and name, because all 111 of his rows share one URL and his numbering restarts each season. |
 | The formula columns | Left alone. See below. |
 
-### The columns it writes, and the seven it must not
+### The columns it writes, and the ones it must not
 
-It fills in eleven columns: `auctionId`, `auctionSeason`, `auctionNumber`,
+It computes eleven columns: `auctionId`, `auctionSeason`, `auctionNumber`,
 `auctionName`, `auctionStyle`, `completionStyle`, `auctioneer`, `Link`,
 `openDate`, `targetFunding`, `augmentated`.
 
@@ -313,9 +313,30 @@ into any of them would freeze it at whatever the previous auction happened to
 hold. So the script appends by **copying the last row down** — formulas and
 formatting intact, references shifted one row — and then goes cell by cell:
 
-- the eleven columns above are **written**;
 - a column whose source cell holds a **formula** is **left as copied**;
-- a column whose source cell holds a **literal** is **cleared**.
+- one of the eleven above, where the source cell is *not* already a formula, is
+  **written**;
+- any other column whose source cell holds a **literal** is **cleared**.
+
+> **Two of those eleven are formulas, and the script wrote over both until
+> 2026-08-24.** `auctionId` is `=B2&C2` and `augmentated` is
+> `=IF(Q2&R2<>"","Yes","No")`. The formula wins now.
+>
+> It went unnoticed because both formulas produce exactly what the promotion
+> would have typed — an `auctionId` of season+number, and `No` at open time
+> when there are no augment values yet — so nothing ever disagreed. `auctionId`
+> was cosmetic. **`augmentated` was not:** its formula flips to `Yes` when
+> augment values are entered beside it, and frozen as a literal it stayed `No`
+> for the life of the auction. That column is what the site reads to decide
+> whether an auction was augmented at all.
+>
+> If you promoted an auction before that date and later added augments to it,
+> **check its `augmentated` cell** — it may be a literal `No` that should be a
+> formula. Copy the formula down from a neighbouring row.
+>
+> Where the review tab supplies a value that a formula is about to win over,
+> the promote dialog names it under *COMPUTED BY THE SHEET*, rather than
+> dropping it in silence.
 
 That last rule is the important one, and it is why the script reads the source
 row's formulas rather than working from a list. A copied row arrives holding the
@@ -1779,7 +1800,9 @@ This runbook hardcodes things that live in the repo, so it goes stale silently.
 | `apps-script/publishToSite.gs` | run `npm run test:publish`, update [Publishing from the sheet](#publishing-from-the-sheet), bump `PUBLISH_SCRIPT_VERSION`, and paste the file over the workbook's editor |
 | `apps-script/auctionOpen.gs` | run `npm run test:open`, update [Watching for new auctions](#watching-for-new-auctions), bump `OPEN_VERSION`, and paste the file over the workbook's editor |
 | `apps-script/forumClose.gs` | run `npm run test:forum`, update [Importing a forum close from a file](#importing-a-forum-close-from-a-file), bump `FORUM_VERSION`, and paste the file over the workbook's editor |
-| **a formula column in `auctionMetadata`** | `OPEN_METADATA_FIELDS` in `apps-script/auctionOpen.gs`. It lists the eleven columns Phase 4 writes; everything else is left for the copied-down formula. A column that becomes a formula and stays on that list gets frozen on every new auction |
+| `apps-script/forumThread.gs` | run `npm run test:thread`, update [Reading a forum close from the thread](#reading-a-forum-close-from-the-thread), bump `THREAD_VERSION`, and paste the file over the workbook's editor |
+| `apps-script/hardenSheet.gs` | run `npm run test:harden`, update [Hardening the sheet](#hardening-the-sheet), bump `HARDEN_VERSION`, and paste the file over the workbook's editor |
+| **a formula column in `auctionMetadata`** | `OPEN_DERIVED_FIELDS` in `apps-script/auctionOpen.gs` if Phase 4 also computes a value for it, `OPEN_METADATA_FIELDS` if it does not. A column that becomes a formula and stays on the plain write list gets frozen on every new auction — which is what happened to `augmentated`. **Do not verify this arithmetically**: a formula whose output equals what a human would type agrees with a literal on every row, and that is exactly how `auctionId` and `augmentated` were missed for four months. Run `hardenSheet.gs`'s dry run instead — it classifies columns by reading formulas, not values |
 | **which files are sheet-backed** | `PUBLISH_FILES` and `PUBLISH_NEVER` in `apps-script/publishToSite.gs`, plus [Hand-authored files](#hand-authored-files). The publish suite asserts the allow-list equals the CSVs on disk minus the hand-authored two, so adding a data file without updating the list fails `npm test` |
 | the `Category` list | the shared rules section |
 | which columns a parser reads | the Required column of that file's table |
