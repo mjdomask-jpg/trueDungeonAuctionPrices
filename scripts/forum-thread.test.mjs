@@ -47,6 +47,7 @@ const sandbox = { module: { exports: {} }, console };
 for (const file of ['trentClose.gs', 'forumClose.gs', 'auctionOpen.gs', 'forumThread.gs']) {
   sandbox.module = { exports: {} };
   runInNewContext(readFileSync(join(here, '..', 'apps-script', file), 'utf8'), sandbox);
+  if (file === 'trentClose.gs') var T = sandbox.module.exports;
   if (file === 'forumThread.gs') var TH = sandbox.module.exports;
 }
 
@@ -228,6 +229,61 @@ const BAG_NO = [
 ];
 for (const name of BAG_NO) eq(TH.threadBagName(name), null, `not a bag: ${JSON.stringify(name)}`);
 console.log(`  ✓ ${BAG_YES.length} bag spellings recognised, ${BAG_NO.length} lookalikes rejected`);
+
+// ===========================================================================
+console.log('\n=== 3c. the season vocabulary ===');
+// ===========================================================================
+// Spellings counted across the 2022 season, resolved through the fallback
+// chain — which only ever runs after `resolveToken` has already failed, so
+// none of this can change a name that already resolves.
+const index2022 = T.buildTokenIndex(tokenRows);
+const vocab = (name, season) => {
+  const r = TH.threadResolveName(name, season, index2022, TH.threadBagName(name));
+  return r ? r.token.Item : null;
+};
+
+// THE ONE THAT BITES: two tokens, and one name contains the other.
+// `+1 Turkey Leg of Smiting` is the 2k Bonus, `+1 Turkey Leg` the Preorder
+// Bonus. A rule that tests "turkey leg" first merges 87 lots of 2022 into one
+// price series, and the merged number looks entirely reasonable.
+eq(vocab('Turkey Leg of Smiting', '2022'), '2k Bonus', 'bare "Turkey Leg of Smiting" is the 2k Bonus');
+eq(vocab('+1 Turkey Leg of Smiting (UR)', '2022'), '2k Bonus', 'the (UR) tier marker is not part of the name');
+eq(vocab('+1 Turkey Leg of Smiting (Ultra Rare token)', '2022'), '2k Bonus', 'nor is the spelled-out one');
+eq(vocab('Turkey Leg', '2022'), 'Preorder Bonus', 'bare "Turkey Leg" is the Preorder Bonus — a DIFFERENT token');
+eq(vocab('+1 Turkey Leg (rare)', '2022'), 'Preorder Bonus', 'the (rare) marker distinguishes it from the UR');
+ok(vocab('Turkey Leg of Smiting', '2022') !== vocab('Turkey Leg', '2022'),
+  'the two Turkey Legs must not collapse into one token');
+
+// The Patron code is the value, not the pin, so a code sold without its pin is
+// still the Patron Pin item. Confirmed by the maintainer 2026-08-24.
+for (const name of ['2022 Patron Lapel Pin (w/ all associated Codes)', "Patron's Pin (with codes)",
+  '2022 Patron Lapel Code (No Pins Available)', '2022 Patron Code and sold out Pin']) {
+  eq(vocab(name, '2022'), 'Patron Pin', `patron: ${JSON.stringify(name)}`);
+}
+
+for (const [name, expected] of [
+  ['Treasure Draws', 'Treasure Chip'], ['PYP URs', 'Ultra Rare'],
+  ['Alchemist Ink', "Alchemist's Ink"], ['Alchemist Parchment', "Alchemist's Parchment"],
+  ['Enchanter Munition', "Enchanter's Munition"], ['1,000 GP Bars', '1,000 GP Gold Bar'],
+  ['Orb of Dragonkind [Great Wyrm]', '8k Bonus'],
+  ["Adventurer's Guild button/code", "Adventurers' Guild Button"],
+  ["Adventurers' Guild Membership Buttons and Codes", "Adventurers' Guild Button"],
+]) {
+  eq(vocab(name, '2022'), expected, `vocab: ${JSON.stringify(name)}`);
+}
+
+// A prior-season token in a later auction is an AUGMENT, not a vocabulary gap,
+// and must not resolve for the auction's own season.
+for (const name of ['+4 Rod of the Meek', 'Ring of Expertise', 'Axe of the Dwarvish Kings']) {
+  eq(vocab(name, '2022'), null, `${JSON.stringify(name)} is a 2021 token — an augment in a 2022 auction`);
+}
+
+// A Treasure Draw is three chips, and `3x Treasure Draws` states that twice.
+eq(TH.threadDrawLotSize('3x Treasure Draws', 3), 3, 'the stated 3x is the three chips, not three draws');
+eq(TH.threadDrawLotSize('Treasure Draws', 1), 3, 'a bare Treasure Draw is still three chips');
+eq(TH.threadDrawLotSize('Alchemist Ink', 1), 0, 'nothing else is a draw');
+console.log('  ✓ the two Turkey Legs stay distinct, the Patron code maps to the pin, ' +
+  'prior-season tokens stay unresolved, and a draw is three chips counted once');
 
 // ===========================================================================
 console.log('\n=== 4. the pricing rule, replayed against prices.csv ===');
