@@ -5,11 +5,11 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 392,
-    "reproduces": 351,
-    "min": 288,
-    "max": 268,
-    "ties": 18,
+    "itemsMatched": 418,
+    "reproduces": 373,
+    "min": 310,
+    "max": 282,
+    "ties": 19,
     "closeBracketHits": 8,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 7 of the 15 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
   },
@@ -20,8 +20,8 @@
       "auctioneer": "Wade S",
       "pages": 4,
       "resultsPost": 1,
-      "itemsMatched": 16,
-      "reproduces": 15,
+      "itemsMatched": 17,
+      "reproduces": 16,
       "ties": 1,
       "why": "TWO grammars in one post: a `Item | # | High Bidder | Current Bid` tab table for the premium items, and a headerless `qty | buyer | price` table for the trade goods beneath it. The header does not fit the second, so the reader falls back to reading it positionally — held to the first header those forty lines read as nothing at all. Also the plan's known disagreement: the thread says the Patron Pin went for $2.00 and the sheet records $1.25."
     },
@@ -42,7 +42,7 @@
       "auctioneer": "Matthew Hayward",
       "pages": 3,
       "resultsPost": 1,
-      "itemsMatched": 14,
+      "itemsMatched": 15,
       "reproduces": 14,
       "closeBracket": "2019-10-08..2019-10-09",
       "why": "The lot-RANGE grammar: `#1-3 : Lich - $100` is three tokens, not one. Reproduces every item it matches."
@@ -53,8 +53,8 @@
       "auctioneer": "Azzy",
       "pages": 1,
       "resultsPost": 1,
-      "itemsMatched": 21,
-      "reproduces": 18,
+      "itemsMatched": 23,
+      "reproduces": 20,
       "onyx": 21,
       "ties": 1,
       "why": "`1 $5.00 - Osiris` under an item heading ending in a colon — the count with no `x`, which means the price is each."
@@ -77,8 +77,8 @@
       "auctioneer": "kurtreznor",
       "pages": 2,
       "resultsPost": 1,
-      "itemsMatched": 19,
-      "reproduces": 18,
+      "itemsMatched": 20,
+      "reproduces": 19,
       "onyx": 21,
       "drops": 20,
       "closeBracket": "2021-11-10..2021-11-13",
@@ -90,8 +90,8 @@
       "auctioneer": "Edwin",
       "pages": 5,
       "resultsPost": 1,
-      "itemsMatched": 19,
-      "reproduces": 19,
+      "itemsMatched": 21,
+      "reproduces": 21,
       "closeBracket": "2021-12-14..2021-12-14",
       "why": "Matt Soto's grammar in another hand, with pseudonymous buyers (`16 @ $7.50 - Bidder #4`). Reproduces everything it matches — and its close-date bracket is 24 days early, the worst miss in the corpus and the reason that output is evidence rather than a proposal."
     },
@@ -101,8 +101,8 @@
       "auctioneer": "jpotter",
       "pages": 4,
       "resultsPost": 2,
-      "itemsMatched": 20,
-      "reproduces": 18,
+      "itemsMatched": 21,
+      "reproduces": 19,
       "ties": 2,
       "onyx": 2,
       "why": "RESULTS IN POST #2, and NO DOLLAR SIGN ANYWHERE: `Orion's Belt (1) 150 Chronos`. A `$`-anchored parser reads this thread as empty. Its two Onyx rows — `Onyx Lucky Kilt` and `Onyx Death Knight Mail`, tokens he added from his own collection — are recorded NOWHERE: 202231 has no onyx.csv rows and no contextItems rows at all. Surfacing them is the assistant working, not failing, so the expected count here is what the thread says rather than what the sheet holds."
@@ -113,9 +113,9 @@
       "auctioneer": "Beertram",
       "pages": 4,
       "resultsPost": 1,
-      "itemsMatched": 19,
-      "reproduces": 19,
-      "ties": 1,
+      "itemsMatched": 21,
+      "reproduces": 20,
+      "ties": 2,
       "why": "`Wish Ring (1) - $175.00 Abert` — the most common forum grammar there is, shared with Ralykam and with Wade S from 2025 on."
     },
     {
@@ -159,8 +159,8 @@
       "auctioneer": "Casey Wren",
       "pages": 1,
       "resultsPost": 2,
-      "itemsMatched": 15,
-      "reproduces": 13,
+      "itemsMatched": 17,
+      "reproduces": 15,
       "ties": 1,
       "closeBracket": "2023-10-07..2023-10-07",
       "why": "RESULTS IN POST #2, buyer-first (`- Anton (1) $780`), and the lot size written into the BUYER field: `- 10x Chips = Calnasse (4) $33` is four lots of ten at $3.30 a token."
@@ -171,8 +171,8 @@
       "auctioneer": "Lord Brian",
       "pages": 2,
       "resultsPost": 1,
-      "itemsMatched": 14,
-      "reproduces": 11,
+      "itemsMatched": 15,
+      "reproduces": 12,
       "ties": 2,
       "why": "`(3) Lanfear====@ $105 each`. Two of its three misses are ties that resolved high."
     },
@@ -214,8 +214,8 @@
       "auctioneer": "WM13",
       "pages": 4,
       "resultsPost": 1,
-      "itemsMatched": 12,
-      "reproduces": 11,
+      "itemsMatched": 18,
+      "reproduces": 17,
       "ties": 1,
       "why": "PRICE LAST, BUYER IN THE MIDDLE: `Mark of the 1st Tenet (1) - Gortash $85`. Identical in shape to Beertram's line and reversed in meaning, so rule order is what tells them apart."
     },
@@ -225,7 +225,7 @@
       "auctioneer": "AlanP",
       "pages": 2,
       "resultsPost": 1,
-      "itemsMatched": 16,
+      "itemsMatched": 17,
       "reproduces": 14,
       "why": "THE `Buy It Out` TRAP. The table is headed `item name | Buy It Out | Bid | Bidder/Buyer Name`: the money-formatted column is a buy-it-now price, identical down every row of an item, and the winning bid is the bare column beside it. Reading the formatting scores 6; reading the header scores 14. Its unresolved lines are exactly the five grunnel and augment rows contextItems carries for this auction."
     },
@@ -235,8 +235,8 @@
       "auctioneer": "Beertram",
       "pages": 3,
       "resultsPost": 1,
-      "itemsMatched": 18,
-      "reproduces": 18,
+      "itemsMatched": 20,
+      "reproduces": 20,
       "onyx": 20,
       "withheldQuote": "keeping the 9-10 random URs",
       "why": "The plan's withheld example, verbatim: \"For this auction I am keeping the 9-10 random URs, 2 OE and 2 EB out.\" Quantities as a RANGE, which is why withheld candidates are quoted for a human rather than parsed into a row."
@@ -247,7 +247,7 @@
       "auctioneer": "Flik",
       "pages": 2,
       "resultsPost": 1,
-      "itemsMatched": 18,
+      "itemsMatched": 19,
       "reproduces": 16,
       "onyx": 21,
       "ties": 1,
@@ -293,8 +293,8 @@
       "auctioneer": "Cliff",
       "pages": 2,
       "resultsPost": 1,
-      "itemsMatched": 0,
-      "reproduces": 0,
+      "itemsMatched": 18,
+      "reproduces": 5,
       "bags": {
         "Rare Bag": 100,
         "Uncommon Bag": 73
@@ -307,10 +307,11 @@
       "auctioneer": "Matt Soto",
       "pages": 1,
       "resultsPost": 1,
-      "itemsMatched": 16,
-      "reproduces": 15,
+      "itemsMatched": 19,
+      "reproduces": 18,
       "why": "A Condensed auction MISSING its bag rows — one of three found by the new check. Its `TOKEN BAGS` section sells `Bag of 120x Rare Tokens` and `Bag of 240x Uncommon Tokens`, and the Rare Bag is a genuine 4-4 tie ($70 and $65), so it exercises the tie flag on a proposal for data the sheet does not yet hold.",
-      "onyx": 21
+      "onyx": 21,
+      "ties": 1
     }
   ]
 }

@@ -49,7 +49,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-24.1';
+var THREAD_VERSION = '2026-08-24.2';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -199,6 +199,26 @@ var THREAD_BAG_TRIGGER_RE = /\bbags?\b|\b(?:120|240)x?\b/i;
 var THREAD_BAG_UNCOMMON_RE = /\buncommons?\b|\bUC\b/i;
 var THREAD_BAG_RARE_RE = /\brares?\b/i;
 var THREAD_BAG_ULTRA_RE = /\bultra[\s-]*rares?\b|\bUR\b|\bPYP\b/i;
+
+/**
+ * A Treasure Draw is three Treasure Chips *(confirmed by the maintainer,
+ * 2026-08-24)*, and every one of the 19 occurrences in the 2022 season writes
+ * it `3x Treasure Draws`.
+ *
+ * So the `3x` and "a draw is three chips" are THE SAME FACT WRITTEN TWICE, and
+ * the quantity rule has already applied it: $6.00 with a lot size of 3 gives
+ * the $2.00 the sheet records. Multiplying by three again would divide to
+ * $0.67 — this function exists to make sure that does not happen, and to cover
+ * the bare spelling if one ever appears.
+ *
+ * Returns the lot size a Treasure Draw name implies, or 0 when the name is not
+ * one. `trentClose.gs` reaches the same conclusion the same way for
+ * `1,000 GP Gold Bar x4 #1 (4 Tokens)`, which is 4 tokens and not 16.
+ */
+function threadDrawLotSize(name, alreadyStated) {
+  if (!/treasure draws?/i.test(String(name == null ? '' : name))) return 0;
+  return alreadyStated > 1 ? alreadyStated : 3;
+}
 
 /** `'Rare Bag'`, `'Uncommon Bag'`, or null. */
 function threadBagName(name) {
@@ -751,18 +771,49 @@ function threadScanPost(text) {
  *                         5 auctions, the most common single miss there is.
  */
 var THREAD_FALLBACKS = [
+  // A TIER MARKER IN PARENTHESES IS NOT PART OF THE NAME, and this must run
+  // first or nothing below it matches. `+1 Turkey Leg of Smiting (UR)`,
+  // `+1 Turkey Leg (rare)`, `2022 Patron Lapel Pin (w/ all associated Codes)`.
+  function (s) { return s.replace(/\s*\((?:ur|rare|uncommon|ultra rare(?: token)?|no pins? available|w\/[^)]*|with [^)]*|and [^)]*)\)\s*$/i, ''); },
   function (s) { return s.replace(/\s*[\(\[]?\s*(and|w\/?|with)\s+(vtd\s+)?codes?\s*[\)\]]?\s*$/i, ''); },
   function (s) { return s.replace(/\s*&\s*/g, ' and '); },
+  function (s) { return s.replace(/\[([^\]]*)\]/, '($1)'); },   // [Great Wyrm] -> (Great Wyrm)
   function (s) { return s.replace(/\bpath of enlightenment\b/i, 'Path to Enlightenment'); },
   function (s) { return s.replace(/\s+fragment\s+(\d+)\s*$/i, ' (Fragment $1)'); },
   function (s) { return s.replace(/^.*\b(gold\s+)?reserve bar\b.*$/i, '1,000 GP Gold Bar'); },
+  function (s) { return s.replace(/^.*\b1,?000 gp bars?\b.*$/i, '1,000 GP Gold Bar'); },
+
+  // TWO TOKENS, AND ONE NAME CONTAINS THE OTHER. `+1 Turkey Leg of Smiting` is
+  // the 2k Bonus; `+1 Turkey Leg` is the Preorder Bonus. Threads write both
+  // without the `+1`, so a rule that tests for "turkey leg" first collapses 87
+  // lots across the 2022 season into one price series. Smiting is checked
+  // first, and both are absolute rather than substitutions so they cannot
+  // double-prefix a name that already carries the `+1`.
+  function (s) { return /turkey leg of smiting/i.test(s) ? '+1 Turkey Leg of Smiting' : s; },
+  function (s) { return /turkey leg/i.test(s) ? '+1 Turkey Leg' : s; },
+
+  // A Treasure Draw is three Treasure Chips — see threadDrawLotSize for the
+  // arithmetic, which is the part that matters.
+  function (s) { return /treasure draws?/i.test(s) ? 'Treasure Chip' : s; },
+
+  // The CODE is the value; the pin is not. So a code sold without its pin is
+  // still the Patron Pin item, and `2022 Patron Lapel Code (No Pins Available)`
+  // belongs in that price series rather than beside it. Confirmed by the
+  // maintainer 2026-08-24.
+  function (s) { return /\bpatron\b/i.test(s) && /\b(pin|code)\b/i.test(s) ? 'Patron Pin' : s; },
+
   function (s) { return s.replace(/\bag button\b/i, "Adventurers' Guild Button"); },
-  function (s) { return s.replace(/\bpatron lapel pin\b/i, 'Patron Pin'); },
+  function (s) { return s.replace(/^.*\badventurer'?s'? guild\b.*$/i, "Adventurers' Guild Button"); },
+  function (s) { return s.replace(/\balchemist (ink|parchment)\b/i, function (m, w) { return "Alchemist's " + w; }); },
+  function (s) { return s.replace(/\benchanter munition\b/i, "Enchanter's Munition"); },
   function (s) { return s.replace(/^(19|20)\d{2}\s+/, ''); },
   // `PYP Ultra Rare` is an Ultra Rare. Dropping the marker only where other
   // words survive keeps a bare `PYP` — which EXCEPTIONS already resolves —
   // from becoming an empty string.
   function (s) { return /\bpyp\b/i.test(s) && s.replace(/\bpyp\b/i, '').trim() ? s.replace(/\bpyp\b/i, '') : s; },
+  // What is left of `PYP URs` once the marker is gone. Anchored to the WHOLE
+  // name so `Random UR` — a context item, not a token — stays unresolved.
+  function (s) { return /^\s*urs?\s*$/i.test(s) ? 'Ultra Rare' : s; },
   // `Potion of Condensed Healing` is recorded as `Potion Condensed Healing`.
   function (s) { return s.replace(/\s+of\s+/i, ' '); },
   function (s) { return s.replace(/\s+\d+\s*$/, ''); },
@@ -853,6 +904,10 @@ function threadResolveLots(lots, season, index) {
     // $65 bag into a $0.54 trade good that looks entirely reasonable.
     var bag = threadBagName(marked.name);
     var lotSize = bag ? 1 : (q.quantity || 1) * (lot.lotSize || 1);
+    // A Treasure Draw states its own lot size — three chips — and usually
+    // states it twice. See threadDrawLotSize.
+    var draw = threadDrawLotSize(marked.name, lotSize);
+    if (draw) lotSize = draw;
     var base = stripDecorations(q.name === undefined ? marked.name : q.name);
     // Per TOKEN, never per lot: `10x Darkwood Plank` at $12 is $1.20 recorded.
     var unit = roundCents(lot.price / lotSize);
@@ -1326,6 +1381,7 @@ if (typeof module !== 'undefined') {
     threadResolveLots: threadResolveLots,
     threadPropose: threadPropose,
     threadBagName: threadBagName,
+    threadDrawLotSize: threadDrawLotSize,
     threadResolveName: threadResolveName,
     threadWithheldCandidates: threadWithheldCandidates,
     threadCloseEvidence: threadCloseEvidence,
