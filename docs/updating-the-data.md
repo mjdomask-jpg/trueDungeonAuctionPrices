@@ -538,8 +538,11 @@ and $17 recorded as $16.50). The low value is proposed so the cell is never
 blank. Change it freely.
 
 **2. The unread lines.** Every line carrying a price that no grammar could read
-is listed. It is short — 88 lines across all 24 threads — and it is the only
+is listed. It is short — 108 lines across all 26 threads — and it is the only
 thing standing between a pattern-matching parser and a silent omission. Skim it.
+It grew when `threadLooksLikeHeader` stopped accepting priced lines: those lines
+were always unreadable, they were just being swallowed as section headers
+instead of reported.
 
 **3. Withheld candidates.** Sentences that read like something was held back,
 quoted verbatim with their post number, **deduped**. They are quoted rather than
@@ -551,11 +554,11 @@ read off a post.
 
 **4. The close date is EVIDENCE, not a proposal.** The dialog lists every post
 that says the auction is over, with its date and the sentence. The bracket it
-builds contained the recorded `closeDate` in only **7 of the 15 threads that
+builds contained the recorded `closeDate` in only **8 of the 17 threads that
 yield one at all**, and where it missed it was usually late — the announcement
 trails the close. Two things it will not tell you: a closing phrase in post #1
 dates nothing (post #1 is edited in place and keeps the thread's *open*
-timestamp, which is why post #1 is skipped), and 9 of the 24 threads say nothing
+timestamp, which is why post #1 is skipped), and 9 of the 26 threads say nothing
 at all.
 
 ### When it comes back with nothing
@@ -580,7 +583,7 @@ than pretending. Ask the auctioneer for the file instead; see
 
 `apps-script/forumThread.gs` in the repo is the source of truth. Edit it here,
 **bump `THREAD_VERSION`**, run `npm run test:thread`, then paste it over the
-editor's contents. The test replays all 24 threads in `fixtures/forum-threads/`
+editor's contents. The test replays all 26 threads in `fixtures/forum-threads/`
 against `prices.csv` and `onyx.csv` and asserts the corpus totals, so a rule
 that improves one auctioneer at another's expense shows up as a number.
 
@@ -589,6 +592,28 @@ ordered by specificity — the narrower shape must be tried first, or
 `Golden Ticket - $875 Dragon` and `#1-3 : Lich - $100` read as each other. Add a
 fixture for the thread you added it for, and put the auction's measured counts
 in `fixtures/forum-threads/manifest.json`.
+
+**Write the rule looser than the one example you have.** Auctioneers are not
+consistent with their own formatting, and a rule pinned to a single sample fails
+silently on the same person's next line. Two measured cases:
+
+- `qty-buyer-rule` required the `=` run to touch the `@` (`=+@`). Lord Brian
+  types a space about a third of the time, so `(1) Perrin=== @ $ 15.00 each` was
+  unreadable — seven of 202211's 23 items.
+- `item-price-buyer` expects a space before the buyer, so Flik's
+  `Cloak of Blending - $55 - Quail`, with a dash, matched nothing. That was the
+  whole `Augmented items:` section of 202236 — six tokens, $485. The section
+  *header* was recognised all along; only the line shape was missing.
+
+**A missing grammar does not fail loudly — it renames things.** Until this was
+fixed, a priced line that no rule read fell through to `threadLooksLikeHeader`
+and became the section header, silently renaming every line beneath it. 202211
+lost seven items that way and grew thirteen phantom context candidates named
+after bid lines. `threadLooksLikeHeader` now rejects any line carrying a price,
+so such a line lands in the unread-lines list where § *The unread lines* says it
+belongs. **When a thread's numbers matter, read its results post** — the
+`itemsMatched` count compares NAMES only, so a post whose prices are all read
+from the wrong column still scores full marks.
 
 ---
 

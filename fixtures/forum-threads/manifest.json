@@ -237,8 +237,9 @@
       "resultsPost": 1,
       "itemsMatched": 20,
       "reproduces": 20,
-      "onyx": 20,
+      "onyx": 21,
       "withheldQuote": "keeping the 9-10 random URs",
+      "onyxNote": "21, not the 20 measured before the item-price-dash-buyer grammar existed. `Onyx Greaves of Diffusion - $65 - Allen` puts a DASH before the buyer where the rest of this post puts a space, so it was the one Onyx line no grammar read. onyx.csv records 21 rows for this auction, so 21 is the reconciling number and the old 20 was encoding the miss.",
       "why": "The plan's withheld example, verbatim: \"For this auction I am keeping the 9-10 random URs, 2 OE and 2 EB out.\" Quantities as a RANGE, which is why withheld candidates are quoted for a human rather than parsed into a row."
     },
     {

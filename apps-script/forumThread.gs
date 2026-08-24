@@ -49,7 +49,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-24.2';
+var THREAD_VERSION = '2026-08-24.3';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -431,8 +431,21 @@ var THREAD_RULES = [
     } },
 
   // "(3) Lanfear====@ $105 each" Lord Brian
-  { id: 'qty-buyer-rule', re: /^\((\d+)\)\s*(.*?)\s*=+@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)/,
+  //
+  // `=+\s*@`, not `=+@`: he does not keep the rule-off run tight against the
+  // `@`, and roughly a third of his lines carry a space there — `(1) Perrin===
+  // @ $ 15.00 each`. Demanding they touch cost 202211 seven of its 23 items,
+  // and silently, because a bid line no grammar reads used to be taken for a
+  // section header (see threadLooksLikeHeader).
+  { id: 'qty-buyer-rule', re: /^\((\d+)\)\s*(.*?)\s*=+\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)/,
     take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[3]), buyer: m[2] }; } },
+
+  // "Perrin =@ $ 200"            Lord Brian — one bidder took the whole lot, so
+  // he drops the quantity parenthetical entirely. Anchored on a letter so it
+  // cannot take the `(N) ...` lines the rule above owns, and it still demands
+  // the `=`-run-then-`@` that makes this his format rather than prose.
+  { id: 'buyer-equals-price', re: /^([A-Za-z][^=]*?)\s*=+\s*@\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: null, quantity: 1, price: threadMoney(m[2]), buyer: m[1] }; } },
 
   // "Mark of the 1st Tenet (1) - Gortash $85"   WM13 — buyer middle, price last
   { id: 'item-qty-buyer-price',
@@ -486,6 +499,17 @@ var THREAD_RULES = [
   // "+2 Branding Mace // $42 - Samantha"   Flik
   { id: 'item-slash-price-buyer',
     re: /^(.*?[A-Za-z].*?)\s*\/\/\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–]\s*(.+)$/,
+    take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[2]), buyer: m[3] }; } },
+
+  // "Cloak of Blending - $55 - Quail"   Flik — a DASH before the buyer where
+  // `item-price-buyer` below has a space, and otherwise the same shape. Tried
+  // first because it is the narrower of the two: the rule below cannot read
+  // these lines at all (its `\s+([A-Za-z].*)` will not start on a dash), which
+  // is why 202236's whole `Augmented items:` section — six tokens, $485 — was
+  // read as nothing while its title said "Augmented Auction". The section
+  // HEADER was always recognised; only the line shape was missing.
+  { id: 'item-price-dash-buyer',
+    re: /^(.*?[A-Za-z].*?)\s*[-–—]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–—]\s*([A-Za-z].*)$/,
     take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[2]), buyer: m[3] }; } },
 
   // "Golden Ticket - $875 Dragon" Beertram, Ralykam — quantity implied 1
@@ -640,6 +664,13 @@ function threadLooksLikeHeader(line) {
   var text = String(line).replace(/\s+/g, ' ').trim();
   if (!text || text.length > 60) return false;
   if (!/[A-Za-z]/.test(text)) return false;
+  // A line carrying a price is never an item NAME. Without this a bid line no
+  // grammar could read became the section header and renamed every line under
+  // it — 202211 lost seven items that way and grew thirteen phantom context
+  // candidates literally named after bid lines, e.g. `(1) Perrin=== @ $ 15.00
+  // each`. The design already says where such a line belongs: the caller drops
+  // it into `unparsed`, and "the leftovers are the point".
+  if (/\$\s*\d|\d+\s*@|@\s*\$/.test(text)) return false;
   if (THREAD_PROSE_RE.test(text)) return false;
   if (/[.!?]$/.test(text) && text.split(' ').length > 6) return false;
   return true;
@@ -806,7 +837,11 @@ var THREAD_FALLBACKS = [
   function (s) { return s.replace(/^.*\badventurer'?s'? guild\b.*$/i, "Adventurers' Guild Button"); },
   function (s) { return s.replace(/\balchemist (ink|parchment)\b/i, function (m, w) { return "Alchemist's " + w; }); },
   function (s) { return s.replace(/\benchanter munition\b/i, "Enchanter's Munition"); },
-  function (s) { return s.replace(/^(19|20)\d{2}\s+/, ''); },
+  // A leading year, or a RUN of them: Lord Brian sells one PYP lot covering two
+  // seasons and writes `2021 or 2022 PyP`. Stripping a single year left
+  // `or 2022 PyP`, which resolves to nothing, so 202211's Ultra Rare row — 34
+  // tokens at $105 — was proposed as three phantom augments instead.
+  function (s) { return s.replace(/^(?:(?:19|20)\d{2}\s*(?:or|and|\/|&|[-–])\s*)*(?:19|20)\d{2}\s+/i, ''); },
   // `PYP Ultra Rare` is an Ultra Rare. Dropping the marker only where other
   // words survive keeps a bare `PYP` — which EXCEPTIONS already resolves —
   // from becoming an empty string.
