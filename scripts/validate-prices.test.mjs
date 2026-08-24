@@ -116,6 +116,53 @@ const cases = [
   ['6  unknown context category', () => edit('contextItems.csv', (t) =>
     t.replace('20183,2018,3,withheld,Patron Pin,', '20183,2018,3,retained,Patron Pin,')),
     /category "retained" is not one of/],
+
+  // --- 7. closed vocabularies -----------------------------------------------
+  // The defect Phase 0 actually found, reinjected: a style that differs from
+  // the one beside it only in case. This is the case the dropdown is meant to
+  // prevent and the validator has to catch anyway, because a paste bypasses
+  // the dropdown.
+  ['7  auctionStyle typo differing only in case', () => edit('auctionMetadata.csv', (t) =>
+    t.replace(',Super Condensed,Fixed Date,Wade S,', ',SUper Condensed,Fixed Date,Wade S,')),
+    /auctionStyle "SUper Condensed" \(1 row\(s\)\) differs from "Super Condensed" .* only in case or spacing/],
+
+  // An INTERNAL double space, not a trailing one. `load()` trims every value,
+  // so leading and trailing whitespace provably cannot reach the repo — which
+  // is a real division of labour rather than a gap: whitespace at the ends is
+  // the SHEET's problem (Phase 7's dropdown and numeric validation), and what
+  // gets past the export to here is case and internal spacing.
+  ['7  completionStyle with an internal double space', () => edit('auctionMetadata.csv', (t) =>
+    t.replace(',Super Condensed,Fixed Date,Wade S,', ',Super Condensed,Fixed  Date,Wade S,')),
+    /completionStyle "Fixed {2}Date" .* differs from "Fixed Date" .* only in case or spacing/],
+
+  // A genuinely new auction style must NOT fail — the vocabulary grows, and a
+  // validator that blocked a publish for a new format would be worse than none.
+  ['7  a genuinely new auction style passes', () => edit('auctionMetadata.csv', (t) =>
+    t.replace(',Super Condensed,Fixed Date,Wade S,', ',Quantum Condensed,Fixed Date,Wade S,')),
+    /auctionStyle: 9 distinct value\(s\)/, 'warn'],
+
+  // `Status` is a formula — `IF(closeDate="","Open","Closed")` — so `Failed` is
+  // unrepresentable in the sheet today (workbook-findings.md, Issue 3). The
+  // check exists for the day that changes, and for a hand-edited export.
+  ['7  Status outside its two values', () => edit('auctionMetadata.csv', (t) =>
+    t.replace('2018-09-27,2018-09-30,3,Closed,', '2018-09-27,2018-09-30,3,Failed,')),
+    /Status "Failed" is not Open or Closed/],
+
+  ['7  augmentated says TRUE instead of Yes', () => edit('auctionMetadata.csv', (t) =>
+    t.replace(/,"\$8,000\.00",No,/, ',"$8,000.00",TRUE,')),
+    /augmentated "TRUE" is not Yes or No/],
+
+  // A Category no tokenMetadata row carries is unjoinable — the site reads a
+  // token's category from there, so nothing can look this one up.
+  ['7  price Category not in tokenMetadata', () => edit('prices.csv', (t) =>
+    t.replace('20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2',
+      '20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 9')),
+    /Category "Trade 9" is in no tokenMetadata row/],
+
+  ['7  price Category differing only in case', () => edit('prices.csv', (t) =>
+    t.replace('20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2',
+      '20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",trade 2')),
+    /Category "trade 2" differs from tokenMetadata's "Trade 2" only in case or spacing/],
 ];
 
 // The shipped data must be clean first: every case below asserts that ONE

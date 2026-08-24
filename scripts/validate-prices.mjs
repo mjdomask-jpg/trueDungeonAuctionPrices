@@ -3,8 +3,8 @@
 // The other validators check *shape*: that the CSVs parse, join and stay
 // internally consistent. Nothing compared a recorded price against the source
 // it was derived from, and that is where every defect Phase 0 fixed actually
-// lived. This script closes that gap. Six checks, all file-vs-file, no network
-// and no external dependency:
+// lived. This script closes that gap. Seven checks, all file-vs-file, no
+// network and no external dependency:
 //
 //   1. Trent min/max reconcile   — prices.csv vs rawPricesData.csv
 //   2. Duplicate-block detector  — one auction's prices copied onto another
@@ -12,6 +12,7 @@
 //   4. Metadata hygiene          — ids, dates, daysToClose, numbering, Links
 //   5. Non-numeric prices        — in every keyed price file
 //   6. Onyx and context integrity
+//   7. Closed vocabularies       — Phase 7's dropdowns, backstopped at the gate
 //
 // Exit non-zero on an ERROR. WARNs are things a human should look at that are
 // not provably wrong; INFO is expected-but-worth-stating. Run:
@@ -402,6 +403,107 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
   // lots + onyx rows + unsold === the source file's row count) needs Trent's
   // own close file, which never enters the repo. It belongs to Phase 2, at
   // ingest, while the file is in hand.
+}
+
+// ===========================================================================
+// 7. Closed vocabularies
+// ===========================================================================
+// Phase 7's dropdowns, backstopped where it counts. A dropdown stops someone
+// TYPING `SUper Condensed`; it does not stop a paste, and every routine update
+// to this workbook is a paste. So the vocabulary is checked here too, where the
+// gate actually is.
+//
+// The rule is NOT an allow-list, because two of these columns legitimately
+// grow: `auctionStyle` gained `Safehold Onyx Super Condensed` and `Limited`,
+// one auction each, and a validator that failed on a genuinely new format would
+// block a publish for doing nothing wrong.
+//
+// What is never legitimate is a value that differs from an existing one only in
+// CASE or WHITESPACE. That is a typo by construction — nobody means to record
+// two auction styles that a reader cannot tell apart — and it is exactly the
+// defect Phase 0 found: `SUper Condensed`, which survived a backfill because
+// nothing compared it to the `Super Condensed` sitting beside it.
+//
+// So: a near-miss is an ERROR, a genuinely new value is stated and passes.
+console.log('7. Closed vocabularies (auctionMetadata.csv, prices.csv, onyx.csv, rawPricesData.csv)');
+{
+  const tokens = load('tokenMetadata.csv');
+  const errs = [], warns = [];
+  const fold = (v) => String(v).toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // `Category` is the one closed set that does NOT grow independently: every
+  // category a price can carry has to exist in tokenMetadata, because that is
+  // where the site reads a token's category from. A price row carrying one
+  // tokenMetadata has never heard of is unjoinable, not merely unusual.
+  const known = new Set(tokens.map((t) => t.Category).filter(Boolean));
+  for (const [file, rows] of [['prices.csv', prices], ['rawPricesData.csv', raw]]) {
+    const seen = new Map();
+    for (let i = 0; i < rows.length; i++) {
+      const c = rows[i].Category;
+      if (!rows[i].auctionId || !c || known.has(c)) continue;
+      if (!seen.has(c)) seen.set(c, i + 2);
+    }
+    for (const [c, row] of seen) {
+      const near = [...known].find((k) => fold(k) === fold(c));
+      errs.push(near
+        ? `${file} row ${row}: Category "${c}" differs from tokenMetadata's "${near}" only in case or spacing`
+        : `${file} row ${row}: Category "${c}" is in no tokenMetadata row — nothing can join to it`);
+    }
+  }
+
+  // The four hand-typed vocabulary columns. `Status` and `augmentated` are
+  // genuinely closed — both are the output of a two-way decision — so anything
+  // outside them is an error. `auctionStyle` and `completionStyle` may grow.
+  const COLUMNS = [
+    { field: 'auctionStyle', closed: false },
+    { field: 'completionStyle', closed: false },
+    { field: 'Status', closed: true, allowed: ['Open', 'Closed'] },
+    { field: 'augmentated', closed: true, allowed: ['Yes', 'No'] },
+  ];
+  for (const col of COLUMNS) {
+    const counts = new Map(), firstRow = new Map();
+    for (let i = 0; i < meta.length; i++) {
+      if (!meta[i].auctionId) continue;
+      const v = meta[i][col.field];
+      if (v === undefined || v === '') continue;
+      counts.set(v, (counts.get(v) || 0) + 1);
+      if (!firstRow.has(v)) firstRow.set(v, i + 2);
+    }
+    const values = [...counts.keys()];
+    if (col.closed) {
+      for (const v of values) {
+        if (col.allowed.includes(v)) continue;
+        const near = col.allowed.find((a) => fold(a) === fold(v));
+        errs.push(`auctionMetadata.csv row ${firstRow.get(v)}: ${col.field} "${v}" is not ${col.allowed.join(' or ')}` +
+          (near ? ` — it differs from "${near}" only in case or spacing` : ''));
+      }
+      continue;
+    }
+    // A growing vocabulary: fold every value and complain only where two
+    // spellings collapse together. The one kept is whichever is commoner, so
+    // the message names the odd one out rather than an arbitrary half of a pair.
+    const byFold = new Map();
+    for (const v of values) (byFold.get(fold(v)) ?? byFold.set(fold(v), []).get(fold(v))).push(v);
+    for (const [, spellings] of byFold) {
+      if (spellings.length < 2) continue;
+      spellings.sort((a, b) => counts.get(b) - counts.get(a));
+      const keep = spellings[0];
+      for (const odd of spellings.slice(1)) {
+        errs.push(`auctionMetadata.csv row ${firstRow.get(odd)}: ${col.field} "${odd}" (${counts.get(odd)} row(s)) ` +
+          `differs from "${keep}" (${counts.get(keep)} row(s)) only in case or spacing`);
+      }
+    }
+    const rare = values.filter((v) => counts.get(v) === 1);
+    if (rare.length) {
+      info(`${col.field}: ${values.length} distinct value(s); used once: ${rare.map((v) => `"${v}"`).join(', ')} ` +
+        '(one-offs are normal here — new auction formats appear)');
+    }
+  }
+
+  capped(err, errs); capped(note, warns);
+  if (!errs.length) {
+    ok(`${known.size} token categor(y/ies) cover every price row, and no vocabulary column carries two spellings of one value`);
+  }
 }
 
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${fail} error(s), ${warn} warning(s)`);

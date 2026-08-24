@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-22.2';
+var SCRIPT_VERSION = '2026-08-24.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -663,6 +663,7 @@ function onOpen() {
   if (typeof addForumMenu === 'function') addForumMenu(menu);
   if (typeof addThreadMenu === 'function') addThreadMenu(menu);
   if (typeof addOpenMenu === 'function') addOpenMenu(menu);
+  if (typeof addHardenMenu === 'function') addHardenMenu(menu);
   if (typeof addPublishMenu === 'function') addPublishMenu(menu);
   menu.addToUi();
 }
