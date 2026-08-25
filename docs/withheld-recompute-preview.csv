@@ -1,24 +1,24 @@
 auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT_value,delta,status
 20183,Patron Pin,1,1,-114.3,-365.0,-250.7,recomputed
 20183,4th Tooth of Cavadar,1,1,-92.25,-95.0,-2.75,recomputed
-20222,1k Bonus,4,0,-287.6,-287.6,0.0,no-prior
-20222,Adventurers' Guild Button,1,5,-1.14,-2.85,-1.71,recomputed
+20222,Ring of the 5th Circle,4,5,,-312.0,,FIXED_was_error
+20222,Adventurers' Guild Button,1,5,,-2.85,,FIXED_was_error
 20222,Lenses of Hunting,2,5,,-3.5,,FIXED_was_error
-20222,8k Bonus,1,0,-336.67,-336.67,0.0,no-prior
-20222,Patron Pin,1,5,-463.6,-389.2,74.4,recomputed
-20222,Ultra Rare,6,5,-561.84,-636.0,-74.16,recomputed
-20222,"1,000 GP Gold Bar",9,5,-112.28,-107.55,4.73,recomputed
-20222,Alchemist's Ink,24,5,-170.45,-106.8,63.65,recomputed
-20222,Alchemist's Parchment,17,5,-35.36,-36.55,-1.19,recomputed
-20222,Darkwood Plank,3,5,-4.82,-3.3,1.52,recomputed
-20222,Dwarven Steel,37,5,-181.37,-123.95,57.42,recomputed
-20222,Enchanter's Munition,2,5,-3.23,-2.1,1.13,recomputed
-20222,Minotaur Hide,13,5,-74.88,-40.3,34.58,recomputed
-20222,Mystic Silk,12,5,-19.26,-12.6,6.66,recomputed
-20222,Philosopher's Stone,58,5,-154.11,-142.1,12.01,recomputed
-202217,Patron Pin,1,5,-463.6,-423.0,40.6,recomputed
-202247,Patron Pin,1,5,-463.6,-530.0,-66.4,recomputed
-202249,8k Bonus,1,0,-336.67,-336.67,0.0,no-prior
+20222,Orb of Dragonkind (Great Wyrm),1,5,,-358.2,,FIXED_was_error
+20222,Patron Pin,1,5,,-389.2,,FIXED_was_error
+20222,Ultra Rare,6,5,,-636.0,,FIXED_was_error
+20222,"1,000 GP Gold Bar",9,5,,-107.55,,FIXED_was_error
+20222,Alchemist's Ink,24,5,,-106.8,,FIXED_was_error
+20222,Alchemist's Parchment,17,5,,-36.55,,FIXED_was_error
+20222,Darkwood Plank,3,5,,-3.3,,FIXED_was_error
+20222,Dwarven Steel,37,5,,-123.95,,FIXED_was_error
+20222,Enchanter's Munition,2,5,,-2.1,,FIXED_was_error
+20222,Minotaur Hide,13,5,,-40.3,,FIXED_was_error
+20222,Mystic Silk,12,5,,-12.6,,FIXED_was_error
+20222,Philosopher's Stone,58,5,,-142.1,,FIXED_was_error
+202217,Patron Pin,1,5,,-423.0,,FIXED_was_error
+202247,Patron Pin,1,5,,-530.0,,FIXED_was_error
+202249,Orb of Dragonkind (Great Wyrm),1,5,,-385.0,,FIXED_was_error
 20236,Ring of the 4th Circle,2,5,-169.6,-164.0,5.6,recomputed
 20236,Ring of the 4th Circle,1,5,-84.8,-82.0,2.8,recomputed
 20236,Ultra Rare,4,5,-320.85,-384.0,-63.15,recomputed
