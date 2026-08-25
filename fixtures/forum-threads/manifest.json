@@ -80,9 +80,9 @@
       "itemsMatched": 20,
       "reproduces": 19,
       "onyx": 21,
-      "drops": 20,
+      "offOrder": 20,
       "closeBracket": "2021-11-10..2021-11-13",
-      "why": "THE DROP CASE and THE AMBIGUITY CASE. `NON-8K STUFF` heads twenty of his own tokens that 20222 records nowhere at all — not in prices, not in contextItems. And nine lots are marked `ONYX or PYP`, which the sheet resolved BOTH ways: all nine are onyx.csv rows and their $110 is what prices.csv records as Ultra Rare. Also `x35 @ $12.25` — thirty-five bars at $12.25 each, the opposite of Flik's `10x $25`, and the `@` is the only thing that says so. The 21st Onyx row is the `Common, Uncommon, Rare Sets` line the sheet omitted in 2022 and has included since."
+      "why": "THE OFF-ORDER CASE and THE AMBIGUITY CASE. `NON-8K STUFF` heads twenty of his own tokens. They were discarded until 2026-08-24, on the reasoning that 20222 recorded none of them — but that was an unbackfilled season, not a decision, and the maintainer confirmed they are contextItems: the same names are already recorded as context for other auctions, including `Ioun Stone Gold Nugget`, `Charm of the Faerie`, `+4 Rod of the Meek` and eight `Folio` rows. The heading SCOPES, so they go to context whatever they resolve to; none of these twenty resolve in 2022, so the scoping is here for the next thread's, not for these. And nine lots are marked `ONYX or PYP`, which the sheet resolved BOTH ways: all nine are onyx.csv rows and their $110 is what prices.csv records as Ultra Rare. Also `x35 @ $12.25` — thirty-five bars at $12.25 each, the opposite of Flik's `10x $25`, and the `@` is the only thing that says so. The 21st Onyx row is the `Common, Uncommon, Rare Sets` line the sheet omitted in 2022 and has included since."
     },
     {
       "auction": "202230",

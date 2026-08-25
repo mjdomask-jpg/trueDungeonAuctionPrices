@@ -522,8 +522,16 @@ thread…**.
 |---|---|---|
 | `price` | A proposed price with its distribution | `prices` |
 | `onyx` | A chase Ultra Rare | `onyx` |
-| `context?` | A lot that resolved to no token — usually an augment or a prop | `contextItems`, once you have given it a category |
-| `dropped` | A lot in a `NON-8K STUFF` section | **Nowhere.** Shown so you can see the call was made |
+| `context?` | A lot that resolved to no token — usually an augment or a prop — **or any lot under a `NON-8K STUFF` heading** | `contextItems`, once you have given it a category |
+
+A `NON-8K STUFF` heading used to route its lots to a `dropped` kind that went
+nowhere, on the reasoning that 20222 recorded none of them. That read intent
+from a season nobody had backfilled yet: they are `contextItems`, and the same
+names are already recorded as context for other auctions. Unlike an
+`Augmented Tokens:` heading — which is advisory, because Mike Steele's heads his
+entire 159-lot table — **a non-8K heading scopes**: every lot beneath it becomes
+a context candidate whatever its name resolves to, so a personal sale of a
+current-season token can never be proposed as a price.
 
 The `flag` column is where the judgement is. `TIE` means the quantity-weighted
 mode had no single winner.
