@@ -5,13 +5,13 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 689,
-    "reproduces": 608,
-    "min": 521,
-    "max": 469,
-    "ties": 28,
-    "closeBracketHits": 9,
-    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 9 of the 24 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
+    "itemsMatched": 738,
+    "reproduces": 668,
+    "min": 568,
+    "max": 516,
+    "ties": 30,
+    "closeBracketHits": 10,
+    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 10 of the 25 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
   },
   "threads": [
     {
@@ -411,9 +411,9 @@
       "pages": 4,
       "resultsPost": 1,
       "itemsMatched": 23,
-      "reproduces": 10,
+      "reproduces": 23,
       "ties": 0,
-      "why": "ALL-CAPS BIDDER NAMES. `10 @ $3.00 - THE PRESENCE` and `3 @ $95 FIDDLER'S GREEN` reduce to multi-word all-caps strings, so threadSectionOf read each as a heading that CLOSED the open section — taking the item heading with it, so the line below had no name either. 3 of 23. Also `(xN)` in a heading, which is the stock available and not part of the name, and a PYP block that drops the dash before the buyer. THE PRICES ARE A KNOWN DISAGREEMENT: 13 of 23 differ from prices.csv, almost all of them higher, and Tyler's own rules say the winner pays \"the 2nd highest bid + the bid increment\" — so his table appears to list winning BIDS where the sheet records what was PAID. Pinned at 10 so a regression in the NAMES is still visible."
+      "why": "ALL-CAPS BIDDER NAMES. `10 @ $3.00 - THE PRESENCE` and `3 @ $95 FIDDLER'S GREEN` reduce to multi-word all-caps strings, so threadSectionOf read each as a heading that CLOSED the open section — taking the item heading with it, so the line below had no name either. 3 of 23. Also `(xN)` in a heading, which is the stock available and not part of the name, and a PYP block that drops the dash before the buyer. THIS THREAD WAS ALSO A DATA FINDING: 13 of its 23 prices disagreed with prices.csv, and the parser was right about all of them — the sheet was stale and the maintainer republished it to match (PR #102). It had looked like Tyler's table listing winning BIDS where the sheet recorded what was PAID, which his own rules make plausible. It was not. All 23 now reproduce, which is what this fixture pins."
     },
     {
       "auction": "202325",
@@ -436,6 +436,28 @@
       "reproduces": 19,
       "ties": 0,
       "why": "A FOURTH Casey Wren format: `Item` heading, then `- Buyer (qty) $price`. The one-of-one lots drop the parenthetical — twelve lines of `- Zani $105` — and every one of them is an item in its own right, including `Patron Pin` and `Patron Token 1` (the 2023 Charm of Biting). Also one line where he forgot the `$`: `- Vestia (38) 5.50`. Reproduces all 19 recorded prices."
+    },
+    {
+      "auction": "202312",
+      "topic": "255545",
+      "auctioneer": "Flik",
+      "pages": 2,
+      "resultsPost": 1,
+      "itemsMatched": 22,
+      "reproduces": 22,
+      "ties": 1,
+      "why": "THE OTHER READING OF `Nx`, and the reason 20264 has to stay in this corpus beside it. Flik writes `10x $25` in 2026 meaning ten tokens for $25, and `21x $4.00` here meaning twenty-one at $4 each — same shape, opposite meaning, same auctioneer. Read as a lot the way 20264's is, EVERY trade good in this thread was divided twice (the heading's lot size on top): Alchemist's Ink $0.19 against a recorded $4.25, Ultra Rare $5.94 against $95, 3 of 21 prices right. The parse rated 21 of 22 items matched throughout, because `matched` compares names. Settled by which reading makes the unit prices agree, with the decidable groups in a post voting for the ones whose lines all carry the same count. Also `2023 3x Treasure Chips`: this season's own year in front of a name hides the lot size from parseQuantity, and the chips came out at $8.75 against a recorded $2.92, which is $8.75 / 3."
+    },
+    {
+      "auction": "202310",
+      "topic": "255570",
+      "auctioneer": "Lord Brian",
+      "pages": 4,
+      "resultsPost": 1,
+      "itemsMatched": 23,
+      "reproduces": 21,
+      "ties": 1,
+      "why": "Lord Brian writes his augments with his two separators BOTH ways round — `Item - Buyer = $price` five times and `Item = Buyer - $price` three times — and only the first had a rule. The other three were read by item-buyer-dash-price, whose name group is lazy, so it split on the first dash it found and `2020 UR Semi-Lich Skull = Nynaeve - $60` became an item called `2020 UR Semi`. A proposal under half a word is worse than none. Pins three things at once: the new rule, that a hyphen inside a word is not a separator, and that the YEAR in front of a `UR` marker comes off with it — the two line shapes disagreed about that, so one post proposed `Mad Evoker's Charm` and `2021 UR Mad Evoker's Charm` as two different context items. All eight of the auction's recorded contextItems rows are now reproduced by name and price."
     }
   ]
 }
