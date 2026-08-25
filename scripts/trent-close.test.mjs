@@ -314,6 +314,26 @@ console.log('\nContext items\n');
   check('a real context item resolves to a token in no season at all', !anywhere.length,
     `these did resolve somewhere: ${anywhere.join(', ')}`);
 
+  // A CURLY apostrophe must resolve exactly like a straight one. Forum posts
+  // arrive full of them — 43 of the 94 fetched 2022 thread pages carry at least
+  // one — and the failure is invisible: the name looks right in every dialog,
+  // resolves to nothing, and is then proposed as an AUGMENT. Twenty-five
+  // tokenMetadata names contain an apostrophe, so twenty-five real tokens were
+  // one paste away from being filed as somebody's personal item.
+  const curlyBroken = [];
+  for (const row of tokens) {
+    for (const name of [row['Display Name'], row.Item]) {
+      if (!name || !/'/.test(name)) continue;
+      const straight = T.resolveToken(name, String(row.auctionSeason), index);
+      const curly = T.resolveToken(name.replace(/'/g, '’'), String(row.auctionSeason), index);
+      if (!straight || !curly || straight.Item !== curly.Item) curlyBroken.push(name);
+    }
+  }
+  check('a curly apostrophe resolves the same as a straight one', !curlyBroken.length,
+    `these differ: ${[...new Set(curlyBroken)].join(', ')}`);
+  check('the fold is not vacuous — there are apostrophe names to protect',
+    tokens.filter((r) => /'/.test(r.Item || '')).length >= 10);
+
   const bonus = ['Path to Enlightenment (Fragment 4)', '402'];
   const grid = [['Product Name', 'Highest Bid'], bonus,
     ['Green Key', '455'], ['4x Baby Potatoes', '51'], ['Random UR', '495']];

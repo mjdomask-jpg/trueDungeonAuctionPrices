@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-24.2';
+var SCRIPT_VERSION = '2026-08-24.3';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -229,12 +229,31 @@ function stripOnyxMarker(name) {
   s = s.replace(/\s+onyx\s*$/i, '');             // "+2 Mug of Battle ONYX"
   s = s.replace(/\s*-\s*(19|20)\d{2}\s*$/, '');  // the trailing " - 2023"
   s = s.replace(/\s+/g, ' ').trim();
-  var normalized = ONYX_NORMALIZATION[s.toLowerCase()];
+  var normalized = ONYX_NORMALIZATION[foldName(s)];
   return { isOnyx: true, name: normalized || s };
 }
 
 /**
- * Index `tokenMetadata` rows for lookup: season -> lowercased name -> row.
+ * The single fold applied to every name before it is matched: lowercase, and
+ * the typographic apostrophes down to the keyboard one.
+ *
+ * A curly apostrophe is invisible in a dialog and fatal to a lookup — measured,
+ * `Alchemist’s Ink`, `Philosopher’s Stone`, `Enchanter’s Munition` and
+ * `Adventurers’ Guild Button` ALL failed to resolve while their straight-quote
+ * spellings resolved, and 43 of the 94 fetched 2022 thread pages contain one.
+ * Forum posts get them from whatever editor the auctioneer pasted out of.
+ *
+ * It has to be ONE function used on both sides — index build and lookup — or
+ * the two disagree and the fold silently does nothing. U+2019 is the only one
+ * the corpus actually contains (142 times); U+2018 is the same autocorrect's
+ * opening form and U+02BC is the Unicode-correct apostrophe some editors emit.
+ */
+function foldName(s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/[‘’ʼ]/g, "'");
+}
+
+/**
+ * Index `tokenMetadata` rows for lookup: season -> folded name -> row.
  * Both `Display Name` and `Item` are indexed, so either spelling resolves.
  */
 function buildTokenIndex(rows) {
@@ -247,7 +266,7 @@ function buildTokenIndex(rows) {
     var names = [r['Display Name'], r.Item];
     for (var j = 0; j < names.length; j++) {
       if (!names[j]) continue;
-      var lower = String(names[j]).toLowerCase();
+      var lower = foldName(names[j]);
       if (!index[season].byName[lower]) index[season].names.push(lower);
       index[season].byName[lower] = r;
     }
@@ -272,7 +291,7 @@ function resolveBySeasonNames(base, season, index) {
   if (!entry || !base) return null;
   var byName = entry.byName;
 
-  function look(name) { return name ? byName[String(name).toLowerCase()] || null : null; }
+  function look(name) { return name ? byName[foldName(name)] || null : null; }
 
   var hit = look(base);
   if (hit) return hit;
@@ -304,7 +323,7 @@ function resolveBySeasonNames(base, season, index) {
   // is Aragonite rather than the Adventurers' Guild Button precisely because
   // someone decided that, not because a prefix rule inferred it.
   if (base.length >= MIN_PREFIX_LENGTH) {
-    var lowerBase = base.toLowerCase(), found = null, count = 0;
+    var lowerBase = foldName(base), found = null, count = 0;
     for (var n = 0; n < entry.names.length; n++) {
       if (entry.names[n].indexOf(lowerBase) === 0) { count++; found = entry.names[n]; }
     }
@@ -324,7 +343,7 @@ function resolveBySeasonNames(base, season, index) {
 function resolveToken(base, season, index) {
   var hit = resolveBySeasonNames(base, season, index);
   if (hit) return hit;
-  var lower = String(base || '').toLowerCase();
+  var lower = foldName(base);
   var canonical = EXCEPTIONS[lower] || (PATRON_PIN_RE.test(lower) ? 'Patron Pin' : null);
   return canonical ? resolveBySeasonNames(canonical, season, index) : null;
 }
