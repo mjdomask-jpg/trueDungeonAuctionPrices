@@ -5,13 +5,13 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 576,
-    "reproduces": 513,
-    "min": 435,
-    "max": 405,
-    "ties": 25,
-    "closeBracketHits": 8,
-    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 8 of the 19 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
+    "itemsMatched": 689,
+    "reproduces": 608,
+    "min": 521,
+    "max": 469,
+    "ties": 28,
+    "closeBracketHits": 9,
+    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 9 of the 24 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
   },
   "threads": [
     {
@@ -379,6 +379,63 @@
       "reproduces": 17,
       "onyx": 0,
       "why": "A THIRD Casey Wren format — `Anton $370.00` and `Selvra 5 @ $30.00`, quantity after the buyer — and the lot size stated in the HEADING as `Alchemist Parchment 10x Chip`. parseQuantity reads a lot size off the front of a name, so the suffix has to be moved there: five chips at $30 is fifty tokens at $3.00, which is what prices.csv records. Left alone the heading resolves to nothing and twenty-one trade-good lines are proposed as augments."
+    },
+    {
+      "auction": "202336",
+      "topic": "255867",
+      "auctioneer": "Kusig",
+      "pages": 4,
+      "resultsPost": 1,
+      "itemsMatched": 21,
+      "reproduces": 21,
+      "ties": 2,
+      "onyx": 21,
+      "why": "A TAB-SEPARATED table with no header row: `1 | Wish Ring | @ | $190.00 | - | Garfield`. It read 0 of 21 because the positional reader treats a bare first cell as a quantity and the NEXT cell as the buyer — Wade S's `10 | Echo | $3.25` shape — so the item name went into the buyer field and `8k Exclusives:` became the item for four lots. Then `Onyx:` cleared the heading and the remaining 56 lines were dropped as \"no item name above it\". What separates the two tables is whether anything follows the price. Also `Pick Your Purple URs`, which is PYP written out, and `Common UC Rare Set` for `C/UC/R Set`."
+    },
+    {
+      "auction": "202346",
+      "topic": "256131",
+      "auctioneer": "Kusig",
+      "pages": 7,
+      "resultsPost": 1,
+      "itemsMatched": 22,
+      "reproduces": 19,
+      "ties": 1,
+      "onyx": 21,
+      "why": "The same table as 202336 with two AUGMENT sections, which is what makes it worth keeping separately: `Super Special Relics:` and `Augmented Ultra Rares:` scope to contextItems, and neither closed the `Onyx:` section before — so nine of Kusig's own tokens were proposed as Onyx rows, 28 against the 21 recorded, and four of the 21 came out at the augment's price because both lots resolve to one name (`+2 Sun Scimitar` $51 against a recorded $67). It also pins that an off-order heading OUTRANKS an `(Onyx)` marker: without that the same section splits down the middle on a suffix. The three unreproduced prices are mode-vs-sheet disagreements, not parse failures — a genuine 2-vs-2 tie on the Pointy Stick, and two where the sheet takes the lower of two quantity-weighted prices."
+    },
+    {
+      "auction": "20233",
+      "topic": "255505",
+      "auctioneer": "Tyler",
+      "pages": 4,
+      "resultsPost": 1,
+      "itemsMatched": 23,
+      "reproduces": 10,
+      "ties": 0,
+      "why": "ALL-CAPS BIDDER NAMES. `10 @ $3.00 - THE PRESENCE` and `3 @ $95 FIDDLER'S GREEN` reduce to multi-word all-caps strings, so threadSectionOf read each as a heading that CLOSED the open section — taking the item heading with it, so the line below had no name either. 3 of 23. Also `(xN)` in a heading, which is the stock available and not part of the name, and a PYP block that drops the dash before the buyer. THE PRICES ARE A KNOWN DISAGREEMENT: 13 of 23 differ from prices.csv, almost all of them higher, and Tyler's own rules say the winner pays \"the 2nd highest bid + the bid increment\" — so his table appears to list winning BIDS where the sheet records what was PAID. Pinned at 10 so a regression in the NAMES is still visible."
+    },
+    {
+      "auction": "202325",
+      "topic": "255742",
+      "auctioneer": "Steve",
+      "pages": 2,
+      "resultsPost": 1,
+      "itemsMatched": 23,
+      "reproduces": 22,
+      "ties": 0,
+      "why": "Lord Brian's `(N)Buyer====@price` written three looser ways, each of which costs a whole item because Steve gives an item one or two lines: no `@` at all (`(8) Hermione==========.25`), no leading zero on the price, no closing paren (`(10Moody=========@12.00`), and no parenthetical at all on a one-of-one lot (`Dumbledore========@575.00`, which is the 8k Bonus). He writes no `$` anywhere, which is also why the header guard had to stop looking for one. Carries the malformed-money case: `(28)Harry======@3..75` is 28 of 48 Minotaur Hides and truncated to $3.00 against a recorded $3.75 — refused now, and the item's other line prices it correctly."
+    },
+    {
+      "auction": "202351",
+      "topic": "256881",
+      "auctioneer": "Casey Wren",
+      "pages": 4,
+      "resultsPost": 2,
+      "itemsMatched": 19,
+      "reproduces": 19,
+      "ties": 0,
+      "why": "A FOURTH Casey Wren format: `Item` heading, then `- Buyer (qty) $price`. The one-of-one lots drop the parenthetical — twelve lines of `- Zani $105` — and every one of them is an item in its own right, including `Patron Pin` and `Patron Token 1` (the 2023 Charm of Biting). Also one line where he forgot the `$`: `- Vestia (38) 5.50`. Reproduces all 19 recorded prices."
     }
   ]
 }
