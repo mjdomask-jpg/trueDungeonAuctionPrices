@@ -1,6 +1,21 @@
 auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT_value,delta,status
 20183,Patron Pin,1,1,-114.3,-365.0,-250.7,recomputed
 20183,4th Tooth of Cavadar,1,1,-92.25,-95.0,-2.75,recomputed
+20224,1k Bonus,4,0,,0.0,,FIXED_was_error
+20224,Adventurers' Guild Button,1,2,,-3.0,,FIXED_was_error
+20224,3 Star,2,0,,0.0,,FIXED_was_error
+20224,8k Bonus,1,0,,0.0,,FIXED_was_error
+20224,Patron Pin,1,2,,-435.0,,FIXED_was_error
+20224,Ultra Rare,6,2,,-645.0,,FIXED_was_error
+20224,"1,000 GP Gold Bar",9,2,,-126.0,,FIXED_was_error
+20224,Alchemist's Ink,24,2,,-138.0,,FIXED_was_error
+20224,Alchemist's Parchment,17,2,,-38.25,,FIXED_was_error
+20224,Darkwood Plank,3,2,,-3.37,,FIXED_was_error
+20224,Dwarven Steel,37,2,,-134.12,,FIXED_was_error
+20224,Enchanter's Munition,2,2,,-2.25,,FIXED_was_error
+20224,Minotaur Hide,13,2,,-50.37,,FIXED_was_error
+20224,Mystic Silk,12,2,,-12.0,,FIXED_was_error
+20224,Philosopher's Stone,58,2,,-159.5,,FIXED_was_error
 20236,Ring of the 4th Circle,2,5,-169.6,-164.0,5.6,recomputed
 20236,Ring of the 4th Circle,1,5,-84.8,-82.0,2.8,recomputed
 20236,Ultra Rare,4,5,-320.85,-384.0,-63.15,recomputed
@@ -65,3 +80,6 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 202634,Oil of Enchantment,2,8,-86.79,-87.67,-0.88,recomputed
 202634,Elven Bismuth,2,8,-63.35,-65.28,-1.93,recomputed
 202645,Ring of the 1st Circle,8,10,-898.32,-756.86,141.46,recomputed
+202217,Patron Pin,1,5,,-423.0,,FIXED_was_error
+202247,Patron Pin,1,5,,-530.0,,FIXED_was_error
+202249,8k Bonus,1,0,,0.0,,FIXED_was_error
