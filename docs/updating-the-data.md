@@ -1060,6 +1060,22 @@ validation is. So there are two layers and neither is sufficient alone:
   from an existing one only by case or spacing (`SUper Condensed`) and on a
   `Category` no `tokenMetadata` row carries, while letting a genuinely new
   auction style through with a note.
+- **`npm run validate` § 8 catches one item spelled two ways.**
+  `contextItems.Item` is free text — it has to be, since an augment can be any
+  token ever printed — but two spellings are two series, each with half the
+  history. It folds case, spacing and the curly apostrophe, then folds again to
+  alphanumerics with a trailing plural stripped, and it looks at
+  `tokenMetadata`, `onyx` and `prices` as well as `contextItems`, because the
+  split usually straddles files: `Figurine of Power Phoenix` is a context row
+  while `Figurine of Power: Phoenix` is an Onyx one.
+
+  **Everything here is a NOTE, never an error**, and deliberately so — merging
+  is a judgement a human has to make. `+1 Turkey Leg` and
+  `+1 Turkey Leg of Smiting` are genuinely different tokens whose names contain
+  one another, and collapsing that pair would merge 87 lots of 2022 into one
+  price series. It is also why a pre-existing split does not block a publish:
+  the four it currently reports are real defects in shipped data that want
+  fixing **in the workbook**, not in the repo.
 
 Cells also remain untyped underneath, and the four "plausible wrong number"
 defect classes — a price that is real but wrong — are untouched by any of this.

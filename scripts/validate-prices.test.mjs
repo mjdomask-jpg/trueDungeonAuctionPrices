@@ -163,6 +163,38 @@ const cases = [
     t.replace('20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2',
       '20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",trade 2')),
     /Category "trade 2" differs from tokenMetadata's "Trade 2" only in case or spacing/],
+
+  // § 8. All warnings: these are real defects in shipped data that a human has
+  // to arbitrate, and failing the gate on one would block a publish for a row
+  // nobody has been shown yet.
+  ['8  one context item spelled two ways', () => edit('contextItems.csv', (t) =>
+    t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
+      '202019,2020,19,token,bead of the  lucky traveler,1,$145.00')),
+    /differs from .* only in case, spacing or apostrophe/, 'warn'],
+
+  // A curly apostrophe is an ERROR, not one of the arbitrable near-misses:
+  // there is nothing to weigh up, a name is spelled with the straight one.
+  ['8  a curly apostrophe in a name', () => edit('contextItems.csv', (t) =>
+    t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
+      '202019,2020,19,token,Bead of the Lucky Traveler’s,1,$145.00')),
+    /uses a curly apostrophe — names are spelled with the straight one/],
+
+  ['8  a curly apostrophe in tokenMetadata', () => edit('tokenMetadata.csv', (t) =>
+    t.replace('2019Wish Ring,2019,Wish Ring,Wish Ring',
+      '2019Wish Ring,2019,Wish’ Ring,Wish’ Ring')),
+    /tokenMetadata\.csv row \d+: Item "Wish’ Ring" uses a curly apostrophe/],
+
+  ['8  a trailing plural is a note, not an error', () => edit('contextItems.csv', (t) =>
+    t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
+      '202019,2020,19,token,Bead of the Lucky Travelers,1,$145.00')),
+    /differ only in punctuation or a trailing plural/, 'warn'],
+
+  // The cross-file half: a context item spelled unlike the canonical token.
+  // Confined to contextItems, this pair is invisible.
+  ['8  context item disagrees with tokenMetadata', () => edit('contextItems.csv', (t) =>
+    t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
+      '202019,2020,19,token,Wish  Ring,1,$145.00')),
+    /\[tokenMetadata\.csv\]|\[prices\.csv\]|\[onyx\.csv\]/, 'warn'],
 ];
 
 // The shipped data must be clean first: every case below asserts that ONE

@@ -165,14 +165,23 @@ console.log('\nDiff by git blob sha\n');
       gitSha('') === 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391');
   }
 
-  // The length in the preimage is the BYTE length, and three of the eight
-  // files carry curly quotes, so a character count gives a wrong sha for
-  // exactly those three — they would read as changed on every publish and the
-  // diff would never skip anything.
-  const curly = ['auctionMetadata.csv', 'tokenMetadata.csv', 'transmuteRecipes.csv'];
-  const lengthDiffers = curly.filter((f) => P.publishUtf8ByteLength(readCsv(f)) !== readCsv(f).length);
-  check('UTF-8 byte length differs from character length on the three files with curly quotes',
-    lengthDiffers.length === 3, `only differed on: ${lengthDiffers.join(', ')}`);
+  // The length in the preimage is the BYTE length. Any file carrying a
+  // multi-byte character gets a wrong sha from a character count, so it would
+  // read as changed on every publish and the diff would never skip anything.
+  //
+  // DERIVED, not listed. This named three files until 2026-08-24, when
+  // straightening two curly apostrophes left tokenMetadata and transmuteRecipes
+  // pure ASCII and the hard-coded three became a failing assertion about data
+  // rather than about the code. What the check is really for is that
+  // publishUtf8ByteLength counts bytes — so find the files that can show it.
+  const multiByte = readdirSync(dataDir).filter((f) => f.endsWith('.csv'))
+    .filter((f) => Buffer.byteLength(readCsv(f), 'utf8') !== readCsv(f).length);
+  check('at least one published file carries a multi-byte character, so this is not vacuous',
+    multiByte.length > 0,
+    'every published CSV is pure ASCII — this check can no longer demonstrate anything');
+  const lengthAgrees = multiByte.filter((f) => P.publishUtf8ByteLength(readCsv(f)) === readCsv(f).length);
+  check(`UTF-8 byte length differs from character length on all ${multiByte.length} multi-byte file(s)`,
+    !lengthAgrees.length, `character count would have sufficed for: ${lengthAgrees.join(', ')}`);
   const wrongLen = ['a', 'é', '’', '中', '😀', 'Adventurers’ Guild']
     .filter((s) => P.publishUtf8ByteLength(s) !== Buffer.byteLength(s, 'utf8'));
   check('UTF-8 byte length agrees with Node for 1-, 2-, 3- and 4-byte characters', !wrongLen.length,
