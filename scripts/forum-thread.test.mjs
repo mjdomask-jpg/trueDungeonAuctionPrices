@@ -172,6 +172,26 @@ for (const [line, rule, expect] of GRAMMAR_CASES) {
 }
 console.log(`  ✓ all ${GRAMMAR_CASES.length} line grammars read their measured example`);
 
+// A TRAILING LOT SIZE, and the lot NUMBER that can follow it. Casey Wren lists
+// every lot on its own line — `Darkwood Plank 10x 3` — and 20236 sold planks as
+// ten lots of ten at $14.00 beside seven singles at $1.00. Reading only the
+// singles proposes $1.00 against a recorded $1.40: a plausible wrong number,
+// which is the worst kind, and it is a PRICE, not a context row.
+{
+  const cases = [
+    ['Darkwood Plank 10x 3', '10x Darkwood Plank'],
+    ['Mystic Silk 10x', '10x Mystic Silk'],
+    ['Alchemist Parchment 10x Chip', '10x Alchemist Parchment'],
+    // Not a lot size: no `x`, so the lot number is left for the resolution
+    // fallback, which only runs once the real name has failed.
+    ['Minotaur Hide 3', 'Minotaur Hide 3'],
+    // Names that genuinely end in a number must survive tidying untouched.
+    ['Rod of Seven Parts Segment 5', 'Rod of Seven Parts Segment 5'],
+    ['Patron Token 1', 'Patron Token 1'],
+  ];
+  for (const [raw, want] of cases) eq(TH.threadTidyName(raw), want, `tidy ${JSON.stringify(raw)}`);
+}
+
 // A FOUR-DIGIT YEAR IS NOT A QUANTITY, and this is the misread that multiplies:
 // 2021 of a $50 token is a $101,050 lot. Asserted through threadScanPost rather
 // than threadRuleLot, because the guard is deliberately one level up — every
