@@ -148,6 +148,14 @@ const GRAMMAR_CASES = [
   ['(3) Lanfear====@ $105 each', 'qty-buyer-rule', { quantity: 3, price: 105 }],
   ['Mark of the 1st Tenet (1) - Gortash $85', 'item-qty-buyer-price', { quantity: 1, price: 85 }],
   ['Wish Ring (1) - $175.00 Abert', 'item-qty-price', { quantity: 1, price: 175 }],
+  // 2023's augment shapes. The pair sits in ONE section of 202331: Beertram
+  // drops the dash after the quantity partway down his `AUGMENTATION` block.
+  // The dashed form was already read by `item-qty-price` — pinned here because
+  // that is exactly why only the DASHLESS one needed a rule of its own, and a
+  // future reader should not add a second rule for the line above.
+  ['Greater Ring of Havoc (1) - $265 - Felurian', 'item-qty-price', { quantity: 1, price: 265 }],
+  ['Ioun Stone Platinum Nugget (1) $105 - Cinder', 'item-qty-price-dash-buyer', { quantity: 1, price: 105 }],
+  ['Grunnel Holiday Ornament - Belle Starr - $55.00', 'item-buyer-dash-price', { quantity: 1, price: 55 }],
   ['10x $25 - Miriam Dom', 'xqty-price-buyer', { quantity: 10, price: 25 }],
   ['2 $5.00 - Ptah', 'qty-price-buyer', { quantity: 2, price: 5 }],
   ['x35 @ $12.25 Tarantella Serpentine', 'xqty-at-price', { quantity: 35, price: 12.25 }],
@@ -163,6 +171,25 @@ for (const [line, rule, expect] of GRAMMAR_CASES) {
   eq(lot.price, expect.price, `${JSON.stringify(line)}: price`);
 }
 console.log(`  ✓ all ${GRAMMAR_CASES.length} line grammars read their measured example`);
+
+// A FOUR-DIGIT YEAR IS NOT A QUANTITY, and this is the misread that multiplies:
+// 2021 of a $50 token is a $101,050 lot. Asserted through threadScanPost rather
+// than threadRuleLot, because the guard is deliberately one level up — every
+// rule that reads a leading or parenthesised number can hit it, from either end
+// of the line.
+{
+  const scan = TH.threadScanPost([
+    'Augmented items',
+    '2021 UR Pants of Focus - Lanfear = $50',
+    'Orb of Dragonkind (Dragonelle) (2017) - $705 - Akita',
+  ].join('\n'));
+  const years = scan.lots.filter((l) => l.quantity >= 1900 && l.quantity <= 2100);
+  ok(!years.length, `a year survived as a quantity: ${years.map((l) => l.quantity).join(', ')}`);
+  ok(scan.lots.length >= 2, `expected both dated lots to be read, got ${scan.lots.length}`);
+  // The guard must not flatten a real quantity. contextItems' largest is 230.
+  const real = TH.threadScanPost('Mystic Silk\n230 @ $1.75 - Owl');
+  eq(real.lots[0] && real.lots[0].quantity, 230, 'a large but real quantity is left alone');
+}
 
 // A rules paragraph must not be mistaken for a lot, and must not become a header.
 for (const prose of [
