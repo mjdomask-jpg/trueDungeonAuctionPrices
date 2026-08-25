@@ -485,6 +485,16 @@ var THREAD_RULES = [
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[4]), buyer: m[3] }; } },
 
   // "Wish Ring (1) - $175.00 Abert"   Beertram, Ralykam, Wade S from 2025
+  // "Ioun Stone Platinum Nugget (1) $105 - Cinder"   Beertram — no dash between
+  // the quantity and the price, where `item-qty-price` below requires one. He
+  // writes both shapes in ONE section: 202331's `AUGMENTATION` block opens with
+  // `Greater Ring of Havoc (1) - $265 - Felurian` and then drops the dash for
+  // the next four lines. Demands the `$` and the dash before the buyer, so it
+  // cannot reach for a bare `(1) 175 Abert`.
+  { id: 'item-qty-price-dash-buyer',
+    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–—]\s*([A-Za-z].*)$/,
+    take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[4] }; } },
+
   { id: 'item-qty-price',
     re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*(?:\(\d+\)\s*)?[-–]\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(.*)$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[4] }; } },
@@ -562,6 +572,14 @@ var THREAD_RULES = [
   { id: 'item-price-dash-buyer',
     re: /^(.*?[A-Za-z].*?)\s*[-–—]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–—]\s*([A-Za-z].*)$/,
     take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[2]), buyer: m[3] }; } },
+
+  // "Grunnel Holiday Ornament - Belle Starr - $55.00"   David Harris — the
+  // MIRROR of the rule above: buyer between the dashes, price at the end. The
+  // two cannot be confused, because each demands the `$` on its own side, and
+  // `Cloak of Blending - $55 - Quail` fails this one on the trailing `Quail`.
+  { id: 'item-buyer-dash-price',
+    re: /^(.*?[A-Za-z].*?)\s*[-–—]\s*([A-Za-z][^$]*?)\s*[-–—]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[3]), buyer: m[2] }; } },
 
   // "Golden Ticket - $875 Dragon" Beertram, Ralykam — quantity implied 1
   { id: 'item-price-buyer',
@@ -833,6 +851,18 @@ function threadTidyName(name) {
     .replace(/\s*\([^)]*\bmin(?:imum)?\b[^)]*\)\s*/gi, ' ')
     .replace(/\s*\((?:\d+[^()]*|each|individual)\)\s*$/i, '')
     .replace(/\s*\(w\/?\s*code\)/i, '')
+    // A LEADING tier marker is decoration, exactly like the parentheticals
+    // above. Lord Brian lists 202310's augments as `2021 UR Pants of Focus`,
+    // and the sheet records `Pants of Focus` — left on, the same token reads as
+    // a different item in every auction that labels its tier. Stripped HERE
+    // rather than only in the resolution fallbacks, because a context candidate
+    // reports this name, and the raw line is kept alongside it either way.
+    //
+    // `UR` only, never `PYP`: Ralykam numbers his lots `PYP 1` .. `PYP 16`, and
+    // stripping that prefix leaves a bare `1`. The lookahead is the same guard
+    // from the other end — something with a letter in it has to survive, so a
+    // bare `UR` still reaches the fallback that turns it into `Ultra Rare`.
+    .replace(/^ur\s+(?=.*[A-Za-z])/i, '')
     // A trailing `#3` is the LOT NUMBER, in the name instead of its own column.
     // Left on, every lot of an item becomes a different item and no
     // distribution is ever built. `Path to Enlightenment (Fragment 4)` keeps
@@ -882,6 +912,20 @@ function threadScanPost(text) {
 
     var lot = threadTableLot(raw, columns) || threadRuleLot(line);
     if (lot) {
+      // A FOUR-DIGIT YEAR IS NOT A QUANTITY, and this is the one misread that
+      // does real damage, because it multiplies. Auctioneers date a prior-season
+      // token in front of its name — Lord Brian's `2021 UR Pants of Focus -
+      // Lanfear = $50` — and a rule reading a leading number as the count takes
+      // 2021 of them, turning a $50 lot into a $101,050 one.
+      //
+      // Guarded HERE rather than in one grammar because every rule that reads a
+      // leading or parenthesised number can hit it: 2022's
+      // `Orb of Dragonkind (Dragonelle) (2017) - $705` was the same defect from
+      // the other end of the line. Measured, the band is empty of real data:
+      // the largest quantity contextItems records is 230, the largest this
+      // corpus parses outside the band is 105, and NOTHING falls between 200
+      // and 1899.
+      if (lot.quantity >= 1900 && lot.quantity <= 2100) lot.quantity = 1;
       var fromHeader = !lot.item;
       if (!lot.item) lot.item = header;
       if (!lot.item) { unparsed.push({ line: line, why: 'no item name above it' }); continue; }
@@ -979,6 +1023,12 @@ var THREAD_FALLBACKS = [
   // `or 2022 PyP`, which resolves to nothing, so 202211's Ultra Rare row — 34
   // tokens at $105 — was proposed as three phantom augments instead.
   function (s) { return s.replace(/^(?:(?:19|20)\d{2}\s*(?:or|and|\/|&|[-–])\s*)*(?:19|20)\d{2}\s+/i, ''); },
+  // A leading tier marker, for the case threadTidyName cannot reach: a name
+  // whose year came off HERE, above, leaving `UR Pants of Focus` behind after
+  // tidying already ran. `UR` only — see threadTidyName for why never `PYP`.
+  // Measured safe: no tokenMetadata name begins with `UR` as a word, and none
+  // even begins with those two letters.
+  function (s) { return s.replace(/^ur\s+(?=.*[A-Za-z])/i, ''); },
   // Fred K pluralises it. `PYP's` reaches the rule below as a name whose only
   // surviving word is `'s`, which resolves to nothing, so the possessive and
   // the plural are folded into the bare form first.
