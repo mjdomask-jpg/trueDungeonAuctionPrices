@@ -639,9 +639,45 @@ console.log('8. One item, one spelling (contextItems.csv)');
       '(never merged automatically: "+1 Turkey Leg" and "+1 Turkey Leg of Smiting" are different tokens)');
   }
 
+  // ONE APOSTROPHE, THE STRAIGHT ONE. Maintainer's standard, 2026-08-24.
+  //
+  // `foldName` in trentClose.gs makes a curly apostrophe RESOLVE like a straight
+  // one, which stops a lookup failing. It does not stop the data holding both,
+  // and holding both splits a series here — `Shaman’s Belt` in tokenMetadata
+  // against `Shaman's Belt` in contextItems is exactly that, and is very likely
+  // how a real token came to be filed as a context item in the first place.
+  //
+  // ERROR, not a note: unlike the near-miss pairs above, there is nothing to
+  // arbitrate. A curly apostrophe in a name is always wrong.
+  //
+  // Deliberately NOT auto-normalised anywhere in the pipeline. `Thor’' Mug of
+  // Melee` carries a curly AND a straight one; folding it mechanically gives
+  // `Thor''`, which is still wrong and now looks deliberate. A human has to
+  // read these.
+  const CURLY = /[‘’ʼ´]/;
+  const NAME_FIELDS = ['Item', 'Display Name', 'key', 'Key'];
+  for (const [file, rows] of [
+    ['tokenMetadata.csv', load('tokenMetadata.csv')],
+    ['contextItems.csv', ctx],
+    ['onyx.csv', onyx],
+    ['prices.csv', prices],
+    ['transmuteRecipes.csv', load('transmuteRecipes.csv')],
+  ]) {
+    const seen = new Set();
+    for (const [i, r] of rows.entries()) {
+      for (const f of NAME_FIELDS) {
+        const v = r[f];
+        if (!v || !CURLY.test(v) || seen.has(v)) continue;
+        seen.add(v);
+        errs.push(`${file} row ${i + 2}: ${f} "${v}" uses a curly apostrophe — names are spelled with the straight one`);
+      }
+    }
+  }
+
   capped(err, errs); capped(note, warns);
   const ctxNames = [...source].filter(([, s]) => s === 'contextItems.csv').length;
-  if (!warns.length) ok(`${ctxNames} distinct context item name(s), each spelled one way here and in the price files`);
+  if (errs.length) { /* the errors say it */ }
+  else if (!warns.length) ok(`${ctxNames} distinct context item name(s), each spelled one way here and in the price files`);
   else ok(`${ctxNames} distinct context item name(s) checked against tokenMetadata, onyx and prices`);
 }
 

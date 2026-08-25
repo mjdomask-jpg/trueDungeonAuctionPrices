@@ -172,10 +172,22 @@ const cases = [
       '202019,2020,19,token,bead of the  lucky traveler,1,$145.00')),
     /differs from .* only in case, spacing or apostrophe/, 'warn'],
 
-  ['8  a curly apostrophe splits a series', () => edit('contextItems.csv', (t) =>
+  // A curly apostrophe is an ERROR, not one of the arbitrable near-misses:
+  // there is nothing to weigh up, a name is spelled with the straight one.
+  ['8  a curly apostrophe in a name', () => edit('contextItems.csv', (t) =>
     t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
       '202019,2020,19,token,Bead of the Lucky Traveler’s,1,$145.00')),
-    /only in punctuation or a trailing plural/, 'warn'],
+    /uses a curly apostrophe — names are spelled with the straight one/],
+
+  ['8  a curly apostrophe in tokenMetadata', () => edit('tokenMetadata.csv', (t) =>
+    t.replace('2019Wish Ring,2019,Wish Ring,Wish Ring',
+      '2019Wish Ring,2019,Wish’ Ring,Wish’ Ring')),
+    /tokenMetadata\.csv row \d+: Item "Wish’ Ring" uses a curly apostrophe/],
+
+  ['8  a trailing plural is a note, not an error', () => edit('contextItems.csv', (t) =>
+    t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
+      '202019,2020,19,token,Bead of the Lucky Travelers,1,$145.00')),
+    /differ only in punctuation or a trailing plural/, 'warn'],
 
   // The cross-file half: a context item spelled unlike the canonical token.
   // Confined to contextItems, this pair is invisible.
