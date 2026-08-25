@@ -98,9 +98,15 @@ console.log('Serialisation fidelity\n');
 
   // Name the properties the round-trip is silently asserting, so a future
   // change that breaks one gets a message rather than a byte offset.
+  // A FLOOR, NOT AN EQUALITY, for the same reason as the row-move assertions
+  // below: rawPricesData.csv is one of the eight publishable files, so pinning
+  // its exact length turns any publish that touches it into a red check. What
+  // this is claiming is that the round-trip above ran against something big
+  // enough to be a real exercise — not that the file never grows.
   const raw = readCsv('rawPricesData.csv');
-  check('rawPricesData.csv is the real exercise: 18,466 rows',
-    P.publishParseCsv(raw).length - 1 === 18466, String(P.publishParseCsv(raw).length - 1));
+  const rawRows = P.publishParseCsv(raw).length - 1;
+  check('rawPricesData.csv is the real exercise: ' + rawRows.toLocaleString('en-US') + ' rows',
+    rawRows >= 18466, String(rawRows));
   check('...with quoted fields carrying commas', raw.includes('"1,000 GP Gold Bar'));
   check('the serialiser writes CRLF between rows and NOTHING after the last one',
     P.publishSerializeCsv([['a', 'b'], ['c', 'd']]) === 'a,b\r\nc,d',
@@ -350,9 +356,20 @@ console.log('\nThe publish plan\n');
     return plan.ok && plan.changed[0].blob === blob;
   })());
 
+  // COUNTED, NOT HARD-CODED. These two assertions used to spell out 7753 —
+  // whatever prices.csv happened to hold the day they were written — and both
+  // failed the first time a publish ADDED A ROW, which is the one thing the
+  // pipeline exists to do. A green check is the gate on every publish, so an
+  // assertion that a data file never grows blocks the workbook from reaching
+  // the site and looks like a bug in the publish rather than in the test.
+  //
+  // What is worth pinning is that the message names the file and states the
+  // move; the number belongs to the data.
+  const priceRows = P.publishParseCsv(readCsv('prices.csv')).length - 1;
   const message = P.publishCommitMessage(moved);
   check('the commit message names the file and the row move',
-    /^Publish from sheet: prices\.csv$/m.test(message) && /prices\.csv: 7753 -> 7753 rows/.test(message), message);
+    /^Publish from sheet: prices\.csv$/m.test(message) &&
+    new RegExp(`prices\\.csv: ${priceRows} -> ${priceRows} rows`).test(message), message);
   check('the commit message names the script version', message.includes(P.PUBLISH_SCRIPT_VERSION));
 
   const many = P.publishPlan(['prices.csv', 'onyx.csv', 'contextItems.csv', 'tokenMetadata.csv']
@@ -362,7 +379,8 @@ console.log('\nThe publish plan\n');
   check('all four are in ONE plan, so they land as one commit', many.changed.length === 4);
 
   const body = P.publishPullRequestBody(moved);
-  check('the PR body tabulates every changed file', /\| `prices\.csv` \| 7753 \|/.test(body), body);
+  check('the PR body tabulates every changed file',
+    new RegExp('\\| `prices\\.csv` \\| ' + priceRows + ' \\|').test(body), body);
 
   check('the branch is never the base branch',
     P.publishBranchName('2026-08-21-143000') !== P.PUBLISH_REPO.baseBranch &&
