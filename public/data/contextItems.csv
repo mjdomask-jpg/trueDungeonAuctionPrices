@@ -355,7 +355,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20242,2024,2,token,Gauntlets of Divine Guidance,1,$51.00
 20242,2024,2,token,Figurine of Power Phoenix,1,$46.00
 20242,2024,2,token,Druegar's Death Die,1,$71.00
-20242,2024,2,token,Ioun Stone Kryanite Cube,1,$51.00
+20242,2024,2,token,Ioun Stone Kyanite Cube,1,$51.00
 20242,2024,2,token,Necklace of the Zephyr,1,$51.00
 20242,2024,2,token,Necklace of the Sweetwoods,1,$50.00
 20242,2024,2,token,Greater Bead of Binding,1,$11.00
@@ -434,7 +434,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202415,2024,15,token,Alchemist's Ink (Bundle),1,$14.70
 202415,2024,15,token,Alchemist's Parchment (Bundle),1,$13.30
 202415,2024,15,token,"1,000 GP Gold Bar (Bundle)",1,$405.00
-202415,2024,15,token,Darkwood Plank (Bundle,1,$42.00
+202415,2024,15,token,Darkwood Plank (Bundle),1,$42.00
 202415,2024,15,token,Dwarven Steel (Bundle),1,$24.00
 202415,2024,15,token,Elven Bismuth (Bundle),1,$51.00
 202415,2024,15,token,Minotaur Hide (Bundle),1,$31.00

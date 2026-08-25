@@ -3490,7 +3490,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20242,2024,2,Preorder Bonus,0.5,Averon's Cherry Ale,Preorder
 20242,2024,2,Ultra Rare,90,Ultra Rare,Ultra Rare
 20242,2024,2,Wish Ring,155,Wish Ring,Premium
-20242,2024,2,"1,000 GP Gold Bar",10.2,"1,000 GP Gold Bar",Trade 2
+20242,2024,2,"1,000 GP Gold Bar",9.2,"1,000 GP Gold Bar",Trade 2
 20243,2024,3,1k Bonus,110,Ring of the 3rd Circle,Premium
 20243,2024,3,2k Bonus,80,Mark of the 3rd Tenet,Premium
 20243,2024,3,Treasure Chip,2.83,Treasure Chip (each),Preorder
@@ -3544,8 +3544,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20244,2024,4,Oil of Enchantment,10,Oil of Enchantment,Trade 2
 20244,2024,4,Philosopher's Stone,1.66,Philosopher's Stone,Trade 1
 20244,2024,4,Ultra Rare,85,Ultra Rare,Ultra Rare
+20244,2024,4,"1,000 GP Gold Bar",9.6,"1,000 GP Gold Bar",Trade 2
 20244,2024,4,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
-20244,2024,4,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 20245,2024,5,1k Bonus,120,Ring of the 3rd Circle,Premium
 20245,2024,5,2k Bonus,115,Mark of the 3rd Tenet,Premium
 20245,2024,5,Treasure Chip,2.17,Treasure Chip (each),Preorder
@@ -3839,7 +3839,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202413,2024,13,Aragonite,9.5,Aragonite,Trade 2
 202413,2024,13,Darkwood Plank,1.3,Darkwood Plank,Trade 1
 202413,2024,13,Dwarven Steel,3.5,Dwarven Steel,Trade 1
-202413,2024,13,Elven Bismuth,5.57,Elven Bismuth,Trade 2
+202413,2024,13,Elven Bismuth,5.75,Elven Bismuth,Trade 2
 202413,2024,13,Enchanter's Munition,2.6,Enchanter's Munition,Trade 1
 202413,2024,13,Adventurers' Guild Button,0.25,Adventurers' Guild Button,Bonus
 202413,2024,13,Minotaur Hide,3.5,Minotaur Hide,Trade 1
