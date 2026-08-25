@@ -1,17 +1,17 @@
 {
-  "source": "26 real auction threads from truedungeon.com, one per recorded auction, spanning 21 of the 33 forum auctioneers. Verbatim pages, gzipped, nothing trimmed — for the same reason fixtures/auction-open gives: the failures this guards against are matches found in the wrong place on the page, and a trimmed page cannot show one.",
+  "source": "32 real auction threads from truedungeon.com, one per recorded auction, spanning 22 of the 33 forum auctioneers. Verbatim pages, gzipped, nothing trimmed — for the same reason fixtures/auction-open gives: the failures this guards against are matches found in the wrong place on the page, and a trimmed page cannot show one.",
   "fetched": "2026-08-22",
   "url": "https://truedungeon.com/forum?view=topic&catid=584&id=<topic>[&start=<n>]",
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 418,
-    "reproduces": 373,
-    "min": 310,
-    "max": 282,
-    "ties": 19,
+    "itemsMatched": 575,
+    "reproduces": 512,
+    "min": 434,
+    "max": 404,
+    "ties": 25,
     "closeBracketHits": 8,
-    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 7 of the 15 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
+    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 8 of the 19 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
   },
   "threads": [
     {
@@ -237,8 +237,9 @@
       "resultsPost": 1,
       "itemsMatched": 20,
       "reproduces": 20,
-      "onyx": 20,
+      "onyx": 21,
       "withheldQuote": "keeping the 9-10 random URs",
+      "onyxNote": "21, not the 20 measured before the item-price-dash-buyer grammar existed. `Onyx Greaves of Diffusion - $65 - Allen` puts a DASH before the buyer where the rest of this post puts a space, so it was the one Onyx line no grammar read. onyx.csv records 21 rows for this auction, so 21 is the reconciling number and the old 20 was encoding the miss.",
       "why": "The plan's withheld example, verbatim: \"For this auction I am keeping the 9-10 random URs, 2 OE and 2 EB out.\" Quantities as a RANGE, which is why withheld candidates are quoted for a human rather than parsed into a row."
     },
     {
@@ -312,6 +313,72 @@
       "why": "A Condensed auction MISSING its bag rows — one of three found by the new check. Its `TOKEN BAGS` section sells `Bag of 120x Rare Tokens` and `Bag of 240x Uncommon Tokens`, and the Rare Bag is a genuine 4-4 tie ($70 and $65), so it exercises the tie flag on a proposal for data the sheet does not yet hold.",
       "onyx": 21,
       "ties": 1
+    },
+    {
+      "auction": "20221",
+      "topic": "253708",
+      "auctioneer": "Fred K",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 20,
+      "reproduces": 16,
+      "onyx": 0,
+      "why": "The quantity as a PREFIX rather than a parenthetical, with the dash before the buyer optional: `20 Alchemist's Parchment - Flind $2` and `20 Alchemist Ink Kobold $7.25` are the same lot shape. The bare form cannot say where the item ends and the buyer begins, so it defers to the heading. Also the two headings that quote a floor — `PYP's (68) (Minimum bid $50)` — which threadLooksLikeHeader has to let through on the strength of the parenthetical being a minimum, or the Ultra Rares land under `Orbs of Dragonkind`. Two items still read short: the orb variant is spelled `Great Wrym` and the four prior-season URs at the top are genuine augments."
+    },
+    {
+      "auction": "20226",
+      "topic": "253775",
+      "auctioneer": "Casey Wren",
+      "pages": 2,
+      "resultsPost": 1,
+      "itemsMatched": 23,
+      "reproduces": 22,
+      "onyx": 0,
+      "why": "Casey Wren WITHOUT his leading dash. `Zani (1) $376` under an `Orb of Dragonkind [Great Wyrm] (1)` heading is the same shape as 20242's `- Anton (1) $780`, and requiring the dash read this auction as nothing at all."
+    },
+    {
+      "auction": "202216",
+      "topic": "253774",
+      "auctioneer": "Josh M",
+      "pages": 2,
+      "resultsPost": 1,
+      "itemsMatched": 22,
+      "reproduces": 22,
+      "onyx": 0,
+      "why": "A price with NO dollar sign: `Ring of the 5th Circle (2) - Hank @ 75`. Utterly consistent otherwise, and the missing `$` alone read the auction as 0 of 23. The premium items drop the parenthetical — `Wish Ring - Hand Witch @ 185` — which is why there are two rules. The five unresolved lines are the Mage Medallion order and its augments."
+    },
+    {
+      "auction": "202225",
+      "topic": "253917",
+      "auctioneer": "Casey Wren",
+      "pages": 2,
+      "resultsPost": 2,
+      "itemsMatched": 22,
+      "reproduces": 20,
+      "onyx": 0,
+      "why": "The same shape as 20226 but TAB-separated, which sends it down the positional table reader instead of the line rules. `Calnasse | (5) | $91.00` has a name in the first cell, so read the plain way the BIDDER becomes the item and six trade goods are lost. A parenthesised count in its own cell is what marks it — the only thread in this corpus or the fifty 2022 threads that writes one."
+    },
+    {
+      "auction": "202227",
+      "topic": "253931",
+      "auctioneer": "Laz",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 19,
+      "reproduces": 18,
+      "onyx": 0,
+      "why": "The buyer is a NUMBER. `1 @$310 #007`, `2@40$  012` with the dollar sign after the price, `8@82 001` with none at all, `17  @$.25 #006` with no leading zero, and the `#` optional throughout — one shape under a clean header/detail post, wearing every inconsistency at once."
+    },
+    {
+      "auction": "202247",
+      "topic": "254943",
+      "auctioneer": "Casey Wren",
+      "pages": 4,
+      "resultsPost": 1,
+      "itemsMatched": 22,
+      "reproduces": 17,
+      "onyx": 0,
+      "why": "A THIRD Casey Wren format — `Anton $370.00` and `Selvra 5 @ $30.00`, quantity after the buyer — and the lot size stated in the HEADING as `Alchemist Parchment 10x Chip`. parseQuantity reads a lot size off the front of a name, so the suffix has to be moved there: five chips at $30 is fifty tokens at $3.00, which is what prices.csv records. Left alone the heading resolves to nothing and twenty-one trade-good lines are proposed as augments."
     }
   ]
 }
