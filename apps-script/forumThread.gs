@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-25.1';
+var THREAD_VERSION = '2026-08-25.2';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -144,6 +144,29 @@ var THREAD_SECTIONS = [
   // the price spine.
   { re: /^\W*onyx\s+(items?|urs?|ultra\s*rares?)\b|^\W*onyx\s*:/i, kind: 'onyx' },
   { re: /^\W*augment(ing|ed)?\s*(tokens|items)?\s*[:\-]?\s*$|^\W*grunnel('s)?\s*(items|augments)/i, kind: 'context' },
+
+  // "Augmented Ultra Rares:" and "Super Special Relics:"   Kusig.
+  //
+  // These SCOPE, where the advisory `Augmented Tokens:` above deliberately does
+  // not, and the difference is what the heading NAMES. Mike Steele heads his
+  // entire 159-lot results table `Augmented Tokens:` with nothing closing it, so
+  // scoping on that form costs 16 reproduced items and buys nothing. A heading
+  // that names a TIER is different: it introduces a handful of the auctioneer's
+  // own tokens and is always followed by another heading.
+  //
+  // It has to scope, because in an Onyx auction these lots resolve perfectly
+  // well. 202346's `Onyx:` section ran to the bottom of the post — neither of
+  // these headings closed it — so Kusig's nine augments were proposed as ONYX
+  // rows: 28 against the 21 recorded. Four of the 21 came out at the augment's
+  // price rather than the Onyx lot's, because both lots resolve to one name and
+  // the augment was cheaper — `+2 Sun Scimitar` at $51 against a recorded $67,
+  // `Cloak of Retribution` $42 against $61, `Gauntlets of Divine Guidance` $46
+  // against $61. Wrong numbers in onyx.csv, and nothing downstream can see them.
+  //
+  // The tier vocabulary is deliberately narrow, and `tokens|items` must stay out
+  // of it or Mike Steele's heading matches here instead of above.
+  { re: /^\W*augment(ing|ed)?\s+(ultra\s*rares?|urs?|relics?|legendar(y|ies))\b/i, kind: 'offorder' },
+  { re: /^\W*(super\s+)?special\s+relics?\b/i, kind: 'offorder' },
 ];
 
 /**
@@ -438,6 +461,17 @@ var THREAD_RULES = [
   { id: 'qty-at-price', re: /^(\d+)\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–]\s*(.+)$/,
     take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[2]), buyer: m[3] }; } },
 
+  // "21 @ $95 BAST"              Tyler — the same shape with the dash dropped.
+  //
+  // He uses the dashed form everywhere else in 20233, and drops it for his PYP
+  // block alone, which is five lots and $3,230 of a $7,500 auction. Tried after
+  // the dashed rule, so it only ever sees lines that one refused, and it demands
+  // the `$` and a buyer starting with a letter — without that it would reach for
+  // Laz's `2 @ 40$ 012`, where the trailing number is a bidder id and the rule
+  // below owns it.
+  { id: 'qty-at-price-buyer', re: /^(\d+)\s*@\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s+([A-Za-z].*)$/,
+    take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[2]), buyer: m[3] }; } },
+
   // "1 @$310 #007"               Laz — the buyer is a NUMBER, not a name, and
   // the formatting is inconsistent in every way it can be: `2@$35 #018`,
   // `2@40$  012` with the dollar sign AFTER the price, `8@82 001` with none at
@@ -462,14 +496,38 @@ var THREAD_RULES = [
   // @ $ 15.00 each`. Demanding they touch cost 202211 seven of its 23 items,
   // and silently, because a bid line no grammar reads used to be taken for a
   // section header (see threadLooksLikeHeader).
-  { id: 'qty-buyer-rule', re: /^\((\d+)\)\s*(.*?)\s*=+\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)/,
+  // Steve writes the same shape three looser ways, and every one of them costs
+  // a whole item because his post gives each item exactly one or two lines:
+  //
+  //   (8) Hermione==========.25     no `@` at all, and no leading zero
+  //   (17)Nymphadora=========1.00   no `@`
+  //   (10Moody=========@12.00       the closing paren simply missed
+  //
+  // So the `@` is optional, `.25` is a price, and the `)` may be absent. The
+  // `=`-run is what makes this a bid line rather than prose and it is still
+  // required, which is what keeps the relaxations safe. Between them these three
+  // accounted for `3 Star`, `PCH` and `Preorder Bonus` in 202325, plus 10 of the
+  // 44 gold bars — a quantity the weighted mode votes with.
+  { id: 'qty-buyer-rule', re: /^\((\d+)\)?\s*(.*?)\s*=+\s*@?\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?|\.\d{1,2})/,
     take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[3]), buyer: m[2] }; } },
 
   // "Perrin =@ $ 200"            Lord Brian — one bidder took the whole lot, so
   // he drops the quantity parenthetical entirely. Anchored on a letter so it
   // cannot take the `(N) ...` lines the rule above owns, and it still demands
   // the `=`-run-then-`@` that makes this his format rather than prose.
-  { id: 'buyer-equals-price', re: /^([A-Za-z][^=]*?)\s*=+\s*@\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+  //
+  // The `$` is optional because Steve omits it, and a ONE-OF-ONE lot is exactly
+  // where he drops the parenthetical too — his premium items are written
+  // `Dumbledore========@575.00` under a `Path of Enlightenment Fragment`
+  // heading. That is 202325's `8k Bonus`, `Wish Ring` and `Patron Pin`: three
+  // items, $1,265, and the three most valuable lots in the auction.
+  //
+  // The `@` is optional for the same reason it is optional in the rule above —
+  // he drops it about a third of the time, and in his `Augmented items` block he
+  // drops it every time: `Luna==========65.00`, `Viktor============80.00`. The
+  // `=`-run remains mandatory and is what keeps this off prose. Anchoring on the
+  // end of the line does the rest.
+  { id: 'buyer-equals-price', re: /^([A-Za-z][^=]*?)\s*=+\s*@?\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?|\.\d{1,2})\s*$/,
     take: function (m) { return { item: null, quantity: 1, price: threadMoney(m[2]), buyer: m[1] }; } },
 
   // "Mark of the 1st Tenet (1) - Gortash $85"   WM13 — buyer middle, price last
@@ -543,6 +601,31 @@ var THREAD_RULES = [
       return { item: null, quantity: parseInt(m[2], 10), lotSize: size ? parseInt(size[1], 10) : 1,
         price: threadMoney(m[3]), buyer: buyer };
     } },
+
+  // "- Vestia (38) 5.50"          Casey Wren, the same line with the `$` simply
+  // forgotten — once, in 202351, among thirty that have it. The LEADING DASH is
+  // mandatory here where the rule above makes it optional: without the `$` there
+  // is nothing else to say this is a bid line rather than `Orion's Belt (1) 150`,
+  // and the dash is the mark he opens every bid line of that post with.
+  { id: 'dash-buyer-qty-bare-price', re: /^[-–—]\s*(.+?)\s*\((\d+)\)\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) {
+      var buyer = m[1], size = buyer.match(/^\s*(\d+)\s*x\b/i);
+      return { item: null, quantity: parseInt(m[2], 10), lotSize: size ? parseInt(size[1], 10) : 1,
+        price: threadMoney(m[3]), buyer: buyer };
+    } },
+
+  // "- Zani $105"                 Casey Wren — a ONE-OF-ONE lot, so he drops the
+  // parenthetical the rule above needs. Twelve lines of 202351 are this shape
+  // and every one of them is an item in its own right, because the post gives a
+  // single-lot item exactly one line: `Patron Pin` and `Patron Token 1` (the
+  // 2023 Charm of Biting) are two of the nineteen prices recorded for that
+  // auction, and the other ten are the props and Legendaries his `Emporium`
+  // section sells — $1,290 of context this thread had never yielded.
+  //
+  // Kept narrow by the leading dash and by forbidding a `(` in the buyer, so it
+  // cannot reach a line the parenthetical rules own.
+  { id: 'dash-buyer-price', re: /^[-–—]\s*([A-Za-z][^$(]*?)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: null, quantity: 1, price: threadMoney(m[2]), buyer: m[1] }; } },
 
   // "Selvra 2 @ $20.00" and "Anton $370.00"   Casey Wren again, a THIRD format —
   // 202247 drops the parenthetical and puts the quantity, when there is one,
@@ -633,7 +716,25 @@ var THREAD_RULES = [
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[4] }; } },
 ];
 
+/**
+ * A MALFORMED NUMBER IS NOT A CHEAP PRICE. `3..75` is not a number at all, and
+ * most of these rules do not anchor on the end of the line, so the price group
+ * matched the `3` and stopped — silently, and low.
+ *
+ * 202325's `(28)Harry======@3..75` is 28 of the auction's 48 Minotaur Hides,
+ * so the quantity-weighted mode took $3.00 where the sheet records $3.75. That
+ * is the shape of defect this whole file is built to avoid: a plausible wrong
+ * number, in the price spine, with nothing downstream able to see it.
+ *
+ * Refused rather than repaired. Reading `3..75` as `3.75` is arbitration — the
+ * typo could as easily have been a stray digit — and this file's design already
+ * says where an unreadable line goes: to `unparsed`, where a human sees it. It
+ * costs nothing here, because the item's other line prices it correctly.
+ */
+var THREAD_BROKEN_MONEY_RE = /\d\s*\.\s*\.\s*\d|\d\s*,\s*,\s*\d/;
+
 function threadRuleLot(line) {
+  if (THREAD_BROKEN_MONEY_RE.test(String(line))) return null;
   for (var i = 0; i < THREAD_RULES.length; i++) {
     var m = String(line).match(THREAD_RULES[i].re);
     if (m) {
@@ -716,8 +817,15 @@ function threadTableLot(line, cols) {
     // the first header those forty lines read as nothing at all.
   }
 
+  // A SEPARATOR IN ITS OWN COLUMN IS NOT A FIELD. Kusig tabs around both of his
+  // separators — `1 <tab><tab> Wish Ring <tab><tab> @ <tab> $190.00 <tab> - <tab>
+  // Garfield` — so the dash arrives as a cell of its own, and the trailing-cell
+  // search below would take it for the buyer. `@` was already dropped for the
+  // same reason; the dash forms are the three characters auctioneers use.
   var kept = [];
-  for (i = 0; i < cells.length; i++) if (cells[i] !== '' && cells[i] !== '@') kept.push(cells[i]);
+  for (i = 0; i < cells.length; i++) {
+    if (cells[i] !== '' && cells[i] !== '@' && !/^[-–—]$/.test(cells[i])) kept.push(cells[i]);
+  }
   if (kept.length < 2) return null;
   var money = [];
   for (i = 0; i < kept.length; i++) if (/^\$\s*[\d][\d,]*(\.\d{1,2})?$/.test(kept[i])) money.push(i);
@@ -758,7 +866,30 @@ function threadTableLot(line, cols) {
     for (i = 1; i < at; i++) if (!/^[\d.,$]+$/.test(kept[i])) { buyer = kept[i]; break; }
   } else if (at > 0 && /^\d+$/.test(kept[0])) {
     qty = parseInt(kept[0], 10);
-    for (i = 1; i < at; i++) if (!/^[\d.,$]+$/.test(kept[i])) { buyer = kept[i]; break; }
+    // WHERE THE BUYER SITS DECIDES WHAT THE MIDDLE CELL IS. Two tables begin
+    // with a bare count and they mean opposite things by the cell after it:
+    //
+    //   10 | Echo               | $3.25            Wade S — buyer, item from the heading
+    //   1  | Path to Enlightenment | $616.00 | Taz  Kusig  — ITEM, buyer at the end
+    //
+    // The tell is whether anything follows the price. Read Kusig's shape Wade's
+    // way and the heading supplies the name for every lot, so `8k Exclusives:`
+    // became the item for four of them and `Path to Enlightenment` was filed as
+    // the buyer — the renaming failure this file's own design note warns about,
+    // arriving through the table path rather than through a grammar. It also
+    // silenced everything below the first real section heading: `Onyx:` clears
+    // the heading, so all 21 Onyx lots and all 35 trade-good lots were dropped
+    // as "no item name above it". 202336 and 202346 read 0 of 21 and 0 of 22.
+    var trailing = -1;
+    for (i = at + 1; i < kept.length; i++) {
+      if (!/^[\d.,$]+$/.test(kept[i])) { trailing = i; break; }
+    }
+    if (trailing >= 0) {
+      buyer = kept[trailing];
+      for (i = 1; i < at; i++) if (item === null && !/^[\d.,$]+$/.test(kept[i])) item = kept[i];
+    } else {
+      for (i = 1; i < at; i++) if (!/^[\d.,$]+$/.test(kept[i])) { buyer = kept[i]; break; }
+    }
   } else {
     for (i = 0; i < at; i++) {
       if (item === null && !/^\d+$/.test(kept[i])) item = kept[i];
@@ -805,7 +936,14 @@ function threadLooksLikeHeader(line) {
   // line, both of those headings are prose and 20221 loses its Ultra Rares to
   // whatever heading came before.
   var probe = text.replace(/\([^)]*\bmin(?:imum)?\b[^)]*\)/gi, '').trim();
-  if (/\$\s*\d|\d+\s*@|@\s*\$/.test(probe)) return false;
+  // `@\s*\$?\s*\.?\d`, not `@\s*\$`: A PRICE NEED NOT CARRY A DOLLAR SIGN, and
+  // this guard was written against posts that always do. Steve writes none at
+  // all — `(28)Harry======@3..75` — so the one line of 202325 the grammars
+  // deliberately refuse (see THREAD_BROKEN_MONEY_RE) walked straight into this
+  // function, became the section header, and renamed the Minotaur Hide lot
+  // beneath it. Refusing one bad line therefore LOST the item, which is the
+  // opposite of what refusing it was for.
+  if (/\$\s*\d|\d+\s*@|@\s*\$?\s*\.?\d/.test(probe)) return false;
   if (THREAD_PROSE_RE.test(probe)) return false;
   if (/[.!?]$/.test(text) && text.split(' ').length > 6) return false;
   return true;
@@ -821,6 +959,20 @@ function threadSectionOf(line) {
     if (THREAD_SECTIONS[i].re.test(text)) return THREAD_SECTIONS[i].kind;
   }
   if (THREAD_SECTION_END_RE.test(text)) return 'end';
+  // A LINE CARRYING A PRICE IS NEVER A SECTION HEADING — the same rule
+  // threadLooksLikeHeader already applies, and for the same reason, because the
+  // all-caps test below is every bit as loose as that one was.
+  //
+  // Tyler writes his bidders in capitals, and two of them are two words:
+  // `10 @ $3.00 - THE PRESENCE` and `3 @ $95 FIDDLER'S GREEN` reduce to
+  // `THE PRESENCE` and `FIDDLERS GREEN`, which are all-caps, multi-word and
+  // over eight characters — so each was read as a heading that CLOSED the open
+  // section. The lot itself was then thrown away and, worse, the item heading
+  // went with it, so the next line down ("4 @ $3.25 - AUBERON") had no name
+  // above it either. 20233 read 3 of 23 with 52 phantom context candidates.
+  //
+  // A real all-caps heading never quotes a price, so this costs nothing.
+  if (/\$\s*\d|\d+\s*@|@\s*\$/.test(text)) return null;
   var bare = text.replace(/[^A-Za-z ]/g, '').replace(/\s+/g, ' ').trim();
   if (bare.length >= 8 && bare.indexOf(' ') > 0 && bare === bare.toUpperCase()) return 'end';
   return null;
@@ -849,7 +1001,14 @@ function threadTidyName(name) {
     // in place it shields the `(68)` and the whole heading is proposed as an
     // augment, which is how 20221's Ultra Rares read as eight non-standard lots.
     .replace(/\s*\([^)]*\bmin(?:imum)?\b[^)]*\)\s*/gi, ' ')
-    .replace(/\s*\((?:\d+[^()]*|each|individual)\)\s*$/i, '')
+    // `(x51)` as well as `(51)`. Tyler heads every group with the stock
+    // available and writes the `x` — `Alchemist's Ink (x51)`. Stripped HERE and
+    // not only in the resolution fallbacks, for the same reason the leading tier
+    // marker below is: a context CANDIDATE reports this name, so a token that
+    // fails to resolve is proposed to the maintainer as `Charm of Treasure
+    // Boosting (x3)` and is a different item from the `Charm of Treasure
+    // Boosting` already recorded beside it.
+    .replace(/\s*\((?:x\s*)?(?:\d+[^()]*|each|individual)\)\s*$/i, '')
     .replace(/\s*\(w\/?\s*code\)/i, '')
     // A LEADING tier marker is decoration, exactly like the parentheticals
     // above. Lord Brian lists 202310's augments as `2021 UR Pants of Focus`,
@@ -887,6 +1046,28 @@ function threadTidyName(name) {
     .replace(/^(.*?)\s+(\d+)\s*x(?:\s*chips?)?(?:\s+\d+)?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * `Common UC Rare Set` IS `C/UC/R Set` — the Common, Uncommon and Rare set that
+ * every Onyx order includes, spelled out instead of abbreviated.
+ *
+ * Applied where the ONYX name is final rather than in threadTidyName, because
+ * tidying runs before the `(Onyx)` marker comes off and `Common UC Rare Set
+ * (Onyx)` is not the name this has to match. Not in THREAD_FALLBACKS either: an
+ * Onyx lot never reaches threadResolveName, since `C/UC/R Set` is in no
+ * tokenMetadata row at all — it exists only in onyx.csv — so whatever the thread
+ * writes is what gets proposed.
+ *
+ * Unambiguous rather than inferred: onyx.csv holds 32 rows of it under that one
+ * spelling and no other, and the price agrees exactly on both of Kusig's
+ * auctions ($91 and $51). None of those rows came out of this pipeline, so this
+ * is not the self-confirming trap that turned `Folio of X` into `Folio: X`. It
+ * is still a NAME, and the maintainer can overrule it.
+ */
+function threadOnyxSetName(name) {
+  return String(name == null ? '' : name)
+    .replace(/^\s*commons?[\s/]+u\.?\s*c\.?(?:ommon)?s?[\s/]+r\.?\s*a?r?e?s?[\s/]*set\s*$/i, 'C/UC/R Set');
 }
 
 /**
@@ -987,6 +1168,10 @@ function threadScanPost(text) {
  *                         5 auctions, the most common single miss there is.
  */
 var THREAD_FALLBACKS = [
+  // (`(xN)` — Tyler's stock-available marker — is stripped in threadTidyName,
+  // not here. A fallback would make his items RESOLVE while still REPORTING the
+  // name with the marker on, and a context candidate is reported by name.)
+
   // A TIER MARKER IN PARENTHESES IS NOT PART OF THE NAME, and this must run
   // first or nothing below it matches. `+1 Turkey Leg of Smiting (UR)`,
   // `+1 Turkey Leg (rare)`, `2022 Patron Lapel Pin (w/ all associated Codes)`.
@@ -996,6 +1181,12 @@ var THREAD_FALLBACKS = [
   function (s) { return s.replace(/\[([^\]]*)\]/, '($1)'); },   // [Great Wyrm] -> (Great Wyrm)
   function (s) { return s.replace(/\bpath of enlightenment\b/i, 'Path to Enlightenment'); },
   function (s) { return s.replace(/\s+fragment\s+(\d+)\s*$/i, ' (Fragment $1)'); },
+  // A BARE `Fragment` WITH NO NUMBER. Steve heads the lot `Path of Enlightenment
+  // Fragment` — which fragment is not in doubt, because a season has exactly
+  // one and `Path to Enlightenment` alone already resolves to it. Runs after
+  // the numbered rule above, which has by then turned any `Fragment 1` into
+  // `(Fragment 1)` and put it out of this one's reach.
+  function (s) { return s.replace(/\s+fragments?\s*$/i, ''); },
   function (s) { return s.replace(/^.*\b(gold\s+)?reserve bar\b.*$/i, '1,000 GP Gold Bar'); },
   function (s) { return s.replace(/^.*\b1,?000 gp bars?\b.*$/i, '1,000 GP Gold Bar'); },
 
@@ -1060,6 +1251,12 @@ var THREAD_FALLBACKS = [
   // Fred K pluralises it. `PYP's` reaches the rule below as a name whose only
   // surviving word is `'s`, which resolves to nothing, so the possessive and
   // the plural are folded into the bare form first.
+  // PYP IS AN ABBREVIATION, and Kusig writes it out: `Pick Your Purple URs`.
+  // Folded to `PYP` first so the three rules below — the possessive, the marker
+  // strip and the bare `URs` — all reach it unchanged. Without this his PYP lots
+  // resolve to nothing and 202336 and 202346 each lose their `Ultra Rare` row
+  // while proposing six phantom context candidates named after it.
+  function (s) { return s.replace(/\bpick\s+your\s+purple\b/i, 'PYP'); },
   function (s) { return s.replace(/\bPYP['’]?s\b/i, 'PYP'); },
   // `PYP Ultra Rare` is an Ultra Rare. Dropping the marker only where a WORD
   // survives keeps a bare `PYP` — which EXCEPTIONS already resolves — from
@@ -1182,9 +1379,27 @@ function threadResolveLots(lots, season, index) {
     var unit = roundCents(lot.price / lotSize);
     var quantity = lot.quantity * lotSize;
 
+    // AN OFF-ORDER HEADING OUTRANKS AN `(Onyx)` MARKER, so this test comes
+    // first. The marker says what the token IS; the heading says whose it is,
+    // and only the second decides which file the row belongs in.
+    //
+    // Kusig's `Augmented Ultra Rares:` block mixes the two — `+2 Sun Scimitar`
+    // beside `+2 Chaos Cannon (Onyx)` — and they are all his own tokens. With
+    // the marker tested first, the three that carry it were proposed as ONYX
+    // rows for 202346 while the six that do not went to context: one section,
+    // split down the middle by a suffix. An Onyx auction really does sell an
+    // Onyx `+2 Chaos Cannon`, so the extra row looks entirely correct.
+    if (lot.section === 'offorder') {
+      if (!base) { unnamed.push(lot); continue; }
+      context.push({ name: base, price: lot.price, quantity: lot.quantity, lot: lot,
+        elsewhere: seasonsResolving(base, index, season) });
+      continue;
+    }
+
     if (marked.isOnyx) {
-      if (!onyx[base]) { onyx[base] = { name: base, obs: [] }; onyxOrder.push(base); }
-      onyx[base].obs.push({ price: unit, quantity: quantity, lot: lot });
+      var onyxName = threadOnyxSetName(base);
+      if (!onyx[onyxName]) { onyx[onyxName] = { name: onyxName, obs: [] }; onyxOrder.push(onyxName); }
+      onyx[onyxName].obs.push({ price: unit, quantity: quantity, lot: lot });
       continue;
     }
 
@@ -1205,12 +1420,7 @@ function threadResolveLots(lots, season, index) {
     // a personal sale of a current-season token would be proposed as a price.
     // None of 20222's twenty resolve in 2022, so this changes nothing there —
     // it is here so the next thread's do not silently reach the spine.
-    if (lot.section === 'offorder') {
-      if (!base) { unnamed.push(lot); continue; }
-      context.push({ name: base, price: lot.price, quantity: lot.quantity, lot: lot,
-        elsewhere: seasonsResolving(base, index, season) });
-      continue;
-    }
+    // (The `offorder` test itself now sits above the Onyx marker; see there.)
     var resolvedName = threadResolveName(base, season, index, bag);
     var token = resolvedName ? resolvedName.token : null;
     if (!token) {
@@ -1651,6 +1861,7 @@ if (typeof module !== 'undefined') {
     threadResolveLots: threadResolveLots,
     threadPropose: threadPropose,
     threadBagName: threadBagName,
+    threadOnyxSetName: threadOnyxSetName,
     threadDrawLotSize: threadDrawLotSize,
     threadResolveName: threadResolveName,
     threadWithheldCandidates: threadWithheldCandidates,
