@@ -84,21 +84,45 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202124,2021,24,token,Darkrift Ingot,3,$14.25
 202124,2021,24,token,Death Cloak Fabric,3,$14.25
 202124,2021,24,token,Semi-Lich Dust,3,$14.25
-20224,2022,4,withheld,1k Bonus,4,
-20224,2022,4,withheld,Adventurers' Guild Button,1,
-20224,2022,4,withheld,3 Star,2,
-20224,2022,4,withheld,8k Bonus,1,
-20224,2022,4,withheld,Patron Pin,1,
-20224,2022,4,withheld,Ultra Rare,6,
-20224,2022,4,withheld,"1,000 GP Gold Bar",9,
-20224,2022,4,withheld,Alchemist's Ink,24,
-20224,2022,4,withheld,Alchemist's Parchment,17,
-20224,2022,4,withheld,Darkwood Plank,3,
-20224,2022,4,withheld,Dwarven Steel,37,
-20224,2022,4,withheld,Enchanter's Munition,2,
-20224,2022,4,withheld,Minotaur Hide,13,
-20224,2022,4,withheld,Mystic Silk,12,
-20224,2022,4,withheld,Philosopher's Stone,58,
+20221,2022,1,token,Kvothe's Bloodless,1,$115.00
+20221,2022,1,token,Ioun Stone Mystic Orb,1,$295.00
+20221,2022,1,token,Death Knight Boots,1,$195.00
+20221,2022,1,token,Death Knight Boots,1,$100.00
+20222,2022,2,token,+4 Rod of the Meek,1,$105.00
+20222,2022,2,token,Charm of the Faerie,1,$80.00
+20222,2022,2,token,Dirtdazzy's Boots of Skipping,1,$36.00
+20222,2022,2,token,Ioun Stone Gold Nugget,1,$120.00
+20222,2022,2,token,Shirt of the Fae,1,$21.00
+20222,2022,2,token,Stu-pendous Pendant,1,$80.00
+20222,2022,2,token,Hitchhiking Ghost: Bog,1,$3.25
+20222,2022,2,token,Hitchhiking Ghost: Gog,1,$3.25
+20222,2022,2,token,Hitchhiking Ghost: Mog,1,$3.25
+20222,2022,2,token,Folio of Brawn,1,$5.25
+20222,2022,2,token,Folio of Deftness,1,$0.25
+20222,2022,2,token,Folio of Fitness,1,$0.25
+20222,2022,2,token,Folio of Focus,1,$0.25
+20222,2022,2,token,Folio of Reflexes,1,$5.25
+20222,2022,2,token,Folio of Vitality,4,$21.00
+20222,2022,2,token,Folio of Wisdom,2,$10.50
+20222,2022,2,withheld,1k Bonus,4,-$287.60
+20222,2022,2,withheld,Adventurers' Guild Button,1,-$1.14
+20222,2022,2,withheld,3 Star,2,-$2.13
+20222,2022,2,withheld,8k Bonus,1,-$336.67
+20222,2022,2,withheld,Patron Pin,1,-$463.60
+20222,2022,2,withheld,Ultra Rare,6,-$561.84
+20222,2022,2,withheld,"1,000 GP Gold Bar",9,-$112.28
+20222,2022,2,withheld,Alchemist's Ink,24,-$170.45
+20222,2022,2,withheld,Alchemist's Parchment,17,-$35.36
+20222,2022,2,withheld,Darkwood Plank,3,-$4.82
+20222,2022,2,withheld,Dwarven Steel,37,-$181.37
+20222,2022,2,withheld,Enchanter's Munition,2,-$3.23
+20222,2022,2,withheld,Minotaur Hide,13,-$74.88
+20222,2022,2,withheld,Mystic Silk,12,-$19.26
+20222,2022,2,withheld,Philosopher's Stone,58,-$154.11
+202216,2022,16,token,Mage Medallion,1,$201.00
+202216,2022,16,token,Psyferre's Spectacles,1,$100.00
+202216,2022,16,token,Charm of the Faerie,1,$65.00
+202216,2022,16,token,Master Drinker's Gloves,1,$2.00
 202217,2022,17,token,Shirt of the Elder,1,$1.25
 202217,2022,17,token,Ring of Fervor,1,$6.25
 202217,2022,17,token,Belt of Ogre Mage Power,1,$21.00
@@ -110,6 +134,9 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202217,2022,17,token,Folio of Reflex,3,$9.00
 202217,2022,17,token,Folio of Vitality,2,$6.00
 202217,2022,17,token,Folio of Wisdom,2,$6.00
+202217,2022,17,withheld,Patron Pin,1,-$463.60
+202225,2022,25,token,Ioun Stone Gold Nugget,1,$130.00
+202225,2022,25,token,1st Tooth of Cavadar,1,$151.00
 202231,2022,31,token,Orion's Belt,1,$150.00
 202231,2022,31,token,Bead of the Lucky Traveler,1,$125.00
 202231,2022,31,token,+3 Holy Avenger,1,$160.00
@@ -149,12 +176,23 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202240,2022,40,token,Auri's Candle,1,$130.00
 202240,2022,40,token,+3 Holy Avenger,1,$200.00
 202243,2022,43,token,Orb of Dragonkind (Dragonelle),1,$705.00
+202243,2022,43,token,Charming Ring,1,$80.00
+202243,2022,43,token,Kilt of Barrelbane,1,$100.00
 202246,2022,46,token,Bead of Focus,1,$85.00
+202247,2022,47,token,Mad Evoker's Charm ,1,$71.00
+202247,2022,47,token,Charm of the Faerie ,1,$81.00
+202247,2022,47,token,Bead of Guided Strike,1,$80.00
+202247,2022,47,token,Arcane Bracelets,1,$85.00
+202247,2022,47,token,Lucky Kilt,1,$51.00
+202247,2022,47,token,Enchanter's Whetstone,1,$32.00
+202247,2022,47,token,6th Tooth of Cavadar,1,$26.00
+202247,2022,47,withheld,Patron Pin,1,-$463.60
 202249,2022,49,token,Shaman's Greater Necklace,1,$220.00
 202249,2022,49,token,Belt of the Deadshot,1,$85.00
 202249,2022,49,token,Gloves of the Deadshot,1,$85.00
 202249,2022,49,token,Goggles of the Deadshot,1,$85.00
 202249,2022,49,token,Random Ultra Rare,9,$675.00
+202249,2022,49,withheld,8k Bonus,1,-$336.67
 202250,2022,50,grunnel,Grunnel's Small Favor Scroll,1,$115.00
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Tinker Bit,1,$15.00
@@ -702,41 +740,3 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202647,2026,47,token,4x Baby Potatoes,1,$51.00
 202647,2026,47,token,Random UR,9,$497.00
 202647,2026,47,token,Golden Ticket,1,$652.00
-20221,2022,1,token,Kvothe's Bloodless,1,$115.00
-20221,2022,1,token,Ioun Stone Mystic Orb,1,$295.00
-20221,2022,1,token,Death Knight Boots,1,$195.00
-20221,2022,1,token,Death Knight Boots,1,$100.00
-20222,2022,2,token,+4 Rod of the Meek,1,$105.00
-20222,2022,2,token,Charm of the Faerie,1,$80.00
-20222,2022,2,token,Dirtdazzy's Boots of Skipping,1,$36.00
-20222,2022,2,token,Ioun Stone Gold Nugget,1,$120.00
-20222,2022,2,token,Shirt of the Fae,1,$21.00
-20222,2022,2,token,Stu-pendous Pendant,1,$80.00
-20222,2022,2,token,Hitchhiking Ghost: Bog,1,$3.25
-20222,2022,2,token,Hitchhiking Ghost: Gog,1,$3.25
-20222,2022,2,token,Hitchhiking Ghost: Mog,1,$3.25
-20222,2022,2,token,Folio of Brawn,1,$5.25
-20222,2022,2,token,Folio of Deftness,1,$0.25
-20222,2022,2,token,Folio of Fitness,1,$0.25
-20222,2022,2,token,Folio of Focus,1,$0.25
-20222,2022,2,token,Folio of Reflexes,1,$5.25
-20222,2022,2,token,Folio of Vitality,4,$21.00
-20222,2022,2,token,Folio of Wisdom,2,$10.50
-202216,2022,16,token,Mage Medallion,1,$201.00
-202216,2022,16,token,Psyferre's Spectacles,1,$100.00
-202216,2022,16,token,Charm of the Faerie,1,$65.00
-202216,2022,16,token,Master Drinker's Gloves,1,$2.00
-202225,2022,25,token,Ioun Stone Gold Nugget,1,$130.00
-202225,2022,25,token,1st Tooth of Cavadar,1,$151.00
-202243,2022,43,token,Charming Ring,1,$80.00
-202243,2022,43,token,Kilt of Barrelbane,1,$100.00
-202247,2022,47,token,Mad Evoker's Charm ,1,$71.00
-202247,2022,47,token,Charm of the Faerie ,1,$81.00
-202247,2022,47,token,Bead of Guided Strike,1,$80.00
-202247,2022,47,token,Arcane Bracelets,1,$85.00
-202247,2022,47,token,Lucky Kilt,1,$51.00
-202247,2022,47,token,Enchanter's Whetstone,1,$32.00
-202247,2022,47,token,6th Tooth of Cavadar,1,$26.00
-202217,2022,17,withheld,Patron Pin,1,
-202247,2022,47,withheld,Patron Pin,1,
-202249,2022,49,withheld,8k Bonus,1,
