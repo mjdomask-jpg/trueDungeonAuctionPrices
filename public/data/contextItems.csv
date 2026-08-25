@@ -84,6 +84,78 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202124,2021,24,token,Darkrift Ingot,3,$14.25
 202124,2021,24,token,Death Cloak Fabric,3,$14.25
 202124,2021,24,token,Semi-Lich Dust,3,$14.25
+20224,2022,4,withheld,1k Bonus,4,
+20224,2022,4,withheld,Adventurers' Guild Button,1,
+20224,2022,4,withheld,3 Star,2,
+20224,2022,4,withheld,8k Bonus,1,
+20224,2022,4,withheld,Patron Pin,1,
+20224,2022,4,withheld,Ultra Rare,6,
+20224,2022,4,withheld,"1,000 GP Gold Bar",9,
+20224,2022,4,withheld,Alchemist's Ink,24,
+20224,2022,4,withheld,Alchemist's Parchment,17,
+20224,2022,4,withheld,Darkwood Plank,3,
+20224,2022,4,withheld,Dwarven Steel,37,
+20224,2022,4,withheld,Enchanter's Munition,2,
+20224,2022,4,withheld,Minotaur Hide,13,
+20224,2022,4,withheld,Mystic Silk,12,
+20224,2022,4,withheld,Philosopher's Stone,58,
+202217,2022,17,token,Shirt of the Elder,1,$1.25
+202217,2022,17,token,Ring of Fervor,1,$6.25
+202217,2022,17,token,Belt of Ogre Mage Power,1,$21.00
+202217,2022,17,token,Folio of Brawn,2,$6.00
+202217,2022,17,token,Folio of Deftness,6,$18.00
+202217,2022,17,token,Folio of Fitness,3,$9.00
+202217,2022,17,token,Folio of Focus,4,$12.00
+202217,2022,17,token,Folio of Fortitude,1,$3.00
+202217,2022,17,token,Folio of Reflex,3,$9.00
+202217,2022,17,token,Folio of Vitality,2,$6.00
+202217,2022,17,token,Folio of Wisdom,2,$6.00
+202231,2022,31,token,Orion's Belt,1,$150.00
+202231,2022,31,token,Bead of the Lucky Traveler,1,$125.00
+202231,2022,31,token,+3 Holy Avenger,1,$160.00
+202231,2022,31,token,Sacred Necklace,1,$220.00
+202231,2022,31,token,Belt of the Deadshot,1,$85.00
+202231,2022,31,token,Ioun Stone Infernal Fire Prism,1,$85.00
+202231,2022,31,token,Charm of Quick Strike,1,$90.00
+202231,2022,31,token,Arcane Bracelets,1,$70.00
+202231,2022,31,token,Shirt of Blessed Strength,1,$11.00
+202231,2022,31,token,Auri's Candle,1,$95.00
+202232,2022,32,token,Death Knight Mail,1,$80.00
+202232,2022,32,token,Goggles of Deadshot,1,$90.00
+202232,2022,32,token,Shield of the Scholar,1,$80.00
+202232,2022,32,token,+4 Rod of the Meek,1,$65.00
+202232,2022,32,token,Amulet of Noble Might,1,$250.00
+202233,2022,33,token,"Death Knight Set (Armor, Boots, Gloves)",1,$215.00
+202233,2022,33,token,Pants of Focus,1,$47.50
+202233,2022,33,token,Ring of Expertise,1,$85.00
+202233,2022,33,token,+4 Rod of the Meek,1,$60.00
+202233,2022,33,token,Axe of the Dwarvish Kings,1,$71.00
+202235,2022,35,token,Shaman's Greater Necklace,1,$235.00
+202235,2022,35,token,Amulet of Noble Might,1,$255.00
+202235,2022,35,token,Charming Ring,1,$110.00
+202235,2022,35,token,Complete Charms of Transmorph set (all 10 tokens),1,$95.00
+202236,2022,36,token,Cloak of Blending,1,$55.00
+202236,2022,36,token,Amulet of the Champion,1,$60.00
+202236,2022,36,token,Greater Quicksilver Charm,1,$85.00
+202236,2022,36,token,Bracers of Guided Strike,1,$90.00
+202236,2022,36,token,Bead of the Lucky Traveler,1,$135.00
+202236,2022,36,token,Lucky Plate Armor,1,$60.00
+202239,2022,39,token,Ioun Stone Elfstone Shard,1,$220.00
+202239,2022,39,token,Hardcore Ready Fighter Build (see next message),1,$26.00
+202239,2022,39,token,12 Loaves of Bread,1,$20.00
+202239,2022,39,token,Charming Earcuff,1,$90.00
+202239,2022,39,token,Ioun Stone Charming Cabochon,1,$125.00
+202240,2022,40,token,"Deadshot Set (Belt, Gloves, and Goggles)",1,$215.00
+202240,2022,40,token,Auri's Candle,1,$130.00
+202240,2022,40,token,+3 Holy Avenger,1,$200.00
+202243,2022,43,token,Orb of Dragonkind (Dragonelle),1,$705.00
+202246,2022,46,token,Bead of Focus,1,$85.00
+202249,2022,49,token,Shaman's Greater Necklace,1,$220.00
+202249,2022,49,token,Belt of the Deadshot,1,$85.00
+202249,2022,49,token,Gloves of the Deadshot,1,$85.00
+202249,2022,49,token,Goggles of the Deadshot,1,$85.00
+202249,2022,49,token,Random Ultra Rare,9,$675.00
+202250,2022,50,grunnel,Grunnel's Small Favor Scroll,1,$115.00
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Earcuff of Freedom,1,$5.00
@@ -630,60 +702,41 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202647,2026,47,token,4x Baby Potatoes,1,$51.00
 202647,2026,47,token,Random UR,9,$497.00
 202647,2026,47,token,Golden Ticket,1,$652.00
-202217,2022,17,token,Shirt of the Elder,1,$1.25
-202217,2022,17,token,Ring of Fervor,1,$6.25
-202217,2022,17,token,Belt of Ogre Mage Power,1,$21.00
-202217,2022,17,token,Folio: Brawn,2,$6.00
-202217,2022,17,token,Folio: Deftness,6,$18.00
-202217,2022,17,token,Folio: Fitness,3,$9.00
-202217,2022,17,token,Folio: Focus,4,$12.00
-202217,2022,17,token,Folio: Fortitude,1,$3.00
-202217,2022,17,token,Folio: Reflex,3,$9.00
-202217,2022,17,token,Folio: Vitality,2,$6.00
-202217,2022,17,token,Folio: Wisdom,2,$6.00
-202231,2022,31,token,Orion's Belt,1,$150.00
-202231,2022,31,token,Bead of the Lucky Traveler,1,$125.00
-202231,2022,31,token,+3 Holy Avenger,1,$160.00
-202231,2022,31,token,Sacred Necklace,1,$220.00
-202231,2022,31,token,Belt of the Deadshot,1,$85.00
-202231,2022,31,token,Ioun Stone Infernal Fire Prism,1,$85.00
-202231,2022,31,token,Charm of Quick Strike,1,$90.00
-202231,2022,31,token,Arcane Bracelets,1,$70.00
-202231,2022,31,token,Shirt of Blessed Strength,1,$11.00
-202231,2022,31,token,Auri's Candle,1,$95.00
-202232,2022,32,token,Death Knight Mail,1,$80.00
-202232,2022,32,token,Goggles of Deadshot,1,$90.00
-202232,2022,32,token,Shield of the Scholar,1,$80.00
-202232,2022,32,token,+4 Rod of the Meek,1,$65.00
-202232,2022,32,token,Amulet of Noble Might,1,$250.00
-202233,2022,33,token,"Death Knight Set (Armor, Boots, Gloves)",1,$215.00
-202233,2022,33,token,Pants of Focus,1,$47.50
-202233,2022,33,token,Ring of Expertise,1,$85.00
-202233,2022,33,token,+4 Rod of the Meek,1,$60.00
-202233,2022,33,token,Axe of the Dwarvish Kings,1,$71.00
-202235,2022,35,token,Shaman's Greater Necklace,1,$235.00
-202235,2022,35,token,Amulet of Noble Might,1,$255.00
-202235,2022,35,token,Charming Ring,1,$110.00
-202235,2022,35,token,Complete Charms of Transmorph set (all 10 tokens),1,$95.00
-202236,2022,36,token,Cloak of Blending,1,$55.00
-202236,2022,36,token,Amulet of the Champion,1,$60.00
-202236,2022,36,token,Greater Quicksilver Charm,1,$85.00
-202236,2022,36,token,Bracers of Guided Strike,1,$90.00
-202236,2022,36,token,Bead of the Lucky Traveler,1,$135.00
-202236,2022,36,token,Lucky Plate Armor,1,$60.00
-202239,2022,39,token,Ioun Stone Elfstone Shard,1,$220.00
-202239,2022,39,token,Hardcore Ready Fighter Build (see next message),1,$26.00
-202239,2022,39,token,12 Loaves of Bread,1,$20.00
-202239,2022,39,token,Charming Earcuff,1,$90.00
-202239,2022,39,token,Ioun Stone Charming Cabochon,1,$125.00
-202240,2022,40,token,"Deadshot Set (Belt, Gloves, and Goggles)",1,$215.00
-202240,2022,40,token,Auri's Candle,1,$130.00
-202240,2022,40,token,+3 Holy Avenger,1,$200.00
-202243,2022,43,token,Orb of Dragonkind (Dragonelle),1,$705.00
-202246,2022,46,token,Bead of Focus,1,$85.00
-202249,2022,49,token,Shaman's Greater Necklace,1,$220.00
-202249,2022,49,token,Belt of the Deadshot,1,$85.00
-202249,2022,49,token,Gloves of the Deadshot,1,$85.00
-202249,2022,49,token,Goggles of the Deadshot,1,$85.00
-202249,2022,49,token,Random Ultra Rare,9,$675.00
-202250,2022,50,grunnel,Grunnel's Small Favor Scroll,1,$115.00
+20221,2022,1,token,Kvothe's Bloodless,1,$115.00
+20221,2022,1,token,Ioun Stone Mystic Orb,1,$295.00
+20221,2022,1,token,Death Knight Boots,1,$195.00
+20221,2022,1,token,Death Knight Boots,1,$100.00
+20222,2022,2,token,+4 Rod of the Meek,1,$105.00
+20222,2022,2,token,Charm of the Faerie,1,$80.00
+20222,2022,2,token,Dirtdazzy's Boots of Skipping,1,$36.00
+20222,2022,2,token,Ioun Stone Gold Nugget,1,$120.00
+20222,2022,2,token,Shirt of the Fae,1,$21.00
+20222,2022,2,token,Stu-pendous Pendant,1,$80.00
+20222,2022,2,token,Hitchhiking Ghost: Bog,1,$3.25
+20222,2022,2,token,Hitchhiking Ghost: Gog,1,$3.25
+20222,2022,2,token,Hitchhiking Ghost: Mog,1,$3.25
+20222,2022,2,token,Folio of Brawn,1,$5.25
+20222,2022,2,token,Folio of Deftness,1,$0.25
+20222,2022,2,token,Folio of Fitness,1,$0.25
+20222,2022,2,token,Folio of Focus,1,$0.25
+20222,2022,2,token,Folio of Reflexes,1,$5.25
+20222,2022,2,token,Folio of Vitality,4,$21.00
+20222,2022,2,token,Folio of Wisdom,2,$10.50
+202216,2022,16,token,Mage Medallion,1,$201.00
+202216,2022,16,token,Psyferre's Spectacles,1,$100.00
+202216,2022,16,token,Charm of the Faerie,1,$65.00
+202216,2022,16,token,Master Drinker's Gloves,1,$2.00
+202225,2022,25,token,Ioun Stone Gold Nugget,1,$130.00
+202225,2022,25,token,1st Tooth of Cavadar,1,$151.00
+202243,2022,43,token,Charming Ring,1,$80.00
+202243,2022,43,token,Kilt of Barrelbane,1,$100.00
+202247,2022,47,token,Mad Evoker's Charm ,1,$71.00
+202247,2022,47,token,Charm of the Faerie ,1,$81.00
+202247,2022,47,token,Bead of Guided Strike,1,$80.00
+202247,2022,47,token,Arcane Bracelets,1,$85.00
+202247,2022,47,token,Lucky Kilt,1,$51.00
+202247,2022,47,token,Enchanter's Whetstone,1,$32.00
+202247,2022,47,token,6th Tooth of Cavadar,1,$26.00
+202217,2022,17,withheld,Patron Pin,1,
+202247,2022,47,withheld,Patron Pin,1,
+202249,2022,49,withheld,8k Bonus,1,
