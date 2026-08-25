@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-24.4';
+var THREAD_VERSION = '2026-08-24.5';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -945,6 +945,12 @@ var THREAD_FALLBACKS = [
   // A Treasure Draw is three Treasure Chips — see threadDrawLotSize for the
   // arithmetic, which is the part that matters.
   function (s) { return /treasure draws?/i.test(s) ? 'Treasure Chip' : s; },
+  // Josh M calls the same thing a Treasure Token, and writes the three out:
+  // `3x Treasure Tokens (16) – Reginald @ 7.25` is sixteen lots of three chips
+  // at $2.42, which is what 202216 records. Anchored to the WHOLE name, unlike
+  // the Draw rule above — "treasure token" is the community's generic term for
+  // any token at all, and a loose match would swallow real ones.
+  function (s) { return /^\s*treasure tokens?\s*$/i.test(s) ? 'Treasure Chip' : s; },
 
   // The CODE is the value; the pin is not. So a code sold without its pin is
   // still the Patron Pin item, and `2022 Patron Lapel Code (No Pins Available)`

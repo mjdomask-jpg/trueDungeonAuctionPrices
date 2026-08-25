@@ -5,10 +5,10 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 575,
-    "reproduces": 512,
-    "min": 434,
-    "max": 404,
+    "itemsMatched": 576,
+    "reproduces": 513,
+    "min": 435,
+    "max": 405,
     "ties": 25,
     "closeBracketHits": 8,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 8 of the 19 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
@@ -342,10 +342,10 @@
       "auctioneer": "Josh M",
       "pages": 2,
       "resultsPost": 1,
-      "itemsMatched": 22,
-      "reproduces": 22,
+      "itemsMatched": 23,
+      "reproduces": 23,
       "onyx": 0,
-      "why": "A price with NO dollar sign: `Ring of the 5th Circle (2) - Hank @ 75`. Utterly consistent otherwise, and the missing `$` alone read the auction as 0 of 23. The premium items drop the parenthetical — `Wish Ring - Hand Witch @ 185` — which is why there are two rules. The five unresolved lines are the Mage Medallion order and its augments."
+      "why": "A price with NO dollar sign: `Ring of the 5th Circle (2) - Hank @ 75`. Utterly consistent otherwise, and the missing `$` alone read the auction as 0 of 23. The premium items drop the parenthetical — `Wish Ring - Hand Witch @ 185` — which is why there are two rules. He also calls a Treasure Chip a Treasure Token and writes the three out: `3x Treasure Tokens (16) - Reginald @ 7.25` is sixteen lots of three at $2.42. The four unresolved lines are the Mage Medallion order and its augments."
     },
     {
       "auction": "202225",
