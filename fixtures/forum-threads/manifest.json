@@ -1,17 +1,17 @@
 {
-  "source": "32 real auction threads from truedungeon.com, one per recorded auction, spanning 22 of the 33 forum auctioneers. Verbatim pages, gzipped, nothing trimmed — for the same reason fixtures/auction-open gives: the failures this guards against are matches found in the wrong place on the page, and a trimmed page cannot show one.",
+  "source": "42 real auction threads from truedungeon.com, one per recorded auction, spanning 25 of the 33 forum auctioneers. Verbatim pages, gzipped, nothing trimmed — for the same reason fixtures/auction-open gives: the failures this guards against are matches found in the wrong place on the page, and a trimmed page cannot show one.",
   "fetched": "2026-08-22",
   "url": "https://truedungeon.com/forum?view=topic&catid=584&id=<topic>[&start=<n>]",
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 738,
-    "reproduces": 668,
-    "min": 568,
+    "itemsMatched": 739,
+    "reproduces": 669,
+    "min": 569,
     "max": 516,
     "ties": 30,
-    "closeBracketHits": 10,
-    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 10 of the 25 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
+    "closeBracketHits": 12,
+    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 12 of the 27 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
   },
   "threads": [
     {
@@ -159,11 +159,48 @@
       "auctioneer": "Casey Wren",
       "pages": 1,
       "resultsPost": 2,
-      "itemsMatched": 17,
-      "reproduces": 15,
+      "itemsMatched": 20,
+      "reproduces": 18,
       "ties": 1,
       "closeBracket": "2023-10-07..2023-10-07",
-      "why": "RESULTS IN POST #2, buyer-first (`- Anton (1) $780`), and the lot size written into the BUYER field: `- 10x Chips = Calnasse (4) $33` is four lots of ten at $3.30 a token."
+      "why": "RESULTS IN POST #2, buyer-first (`- Anton (1) $780`), and the lot size written into the BUYER field: `- 10x Chips = Calnasse (4) $33` is four lots of ten at $3.30 a token. Also the `Avron's` typo: he drops a syllable from `Averon's Cherry Ale`, and until the resolver folded it the auction's 32 Preorder Bonus tokens were proposed as an augment named after the misspelling."
+    },
+    {
+      "auction": "20246",
+      "topic": "256967",
+      "auctioneer": "Beertram",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 7,
+      "reproduces": 7,
+      "ties": 0,
+      "onyx": 21,
+      "closeBracket": "2023-10-28..2023-10-28",
+      "why": "THREE MISSPELLINGS AND A BUNDLE, in an auction with only eight distinct names because a Safehold Onyx order keeps its content in onyx.csv. `Ring of the 3th Circle` is the whole 1k Bonus row (8 lots) and `3rd Mark of the Tenet (UR)` the whole 2k Bonus row (4 lots, $415) — an ordinal typo and an ordinal that migrated to the front of the name. `Charm of Brooching (1) - .$140 - Jo` carries a stray dot before the dollar sign. And its Safehold lot lists four parenthesised counts, the last of which a grammar took for the quantity: $1,555 proposed as $7,775."
+    },
+    {
+      "auction": "202413",
+      "topic": "256997",
+      "auctioneer": "Flik",
+      "pages": 2,
+      "resultsPost": 1,
+      "itemsMatched": 20,
+      "reproduces": 18,
+      "ties": 2,
+      "closeBracket": null,
+      "why": "ONE POST, BOTH MEANINGS OF `Nx`, and he says so: `Trade Goods (bidding on 10x lots or the specific amount)`. Above it `4x $130` is four Rings of the 3rd Circle at $130 each; below it `10x $35` is ten Minotaur Hides for $35. Read with one convention throughout, four prices come out wrong by their own lot size. Minotaur Hide is the tie that floating point decided — 36/35 and 3.6/3.5 are the same number and not the same double. Also `Mark of the Third Tenet`, the season's 2k Bonus with its ordinal spelled out."
+    },
+    {
+      "auction": "202415",
+      "topic": "257008",
+      "auctioneer": "Fred K",
+      "pages": 2,
+      "resultsPost": 2,
+      "itemsMatched": 17,
+      "reproduces": 16,
+      "ties": 2,
+      "closeBracket": "2023-10-16..2023-10-17",
+      "why": "NO SEPARATOR AT ALL between item and buyer — `Ring of the 3rd Circle Haliax $101` — so the split comes from the token index (threadBareLot) and, for a name no season knows, from the post's own set of buyers (threadBuyerLot). His trade-good headings declare their abbreviation, `Alchemist Ink (AI)` over eight lines of `AI X10 Wilem $21`. It read 1 of 19 before: `buyer-bare-price` had taken `Wish Ring Manet $146` for a bare buyer under a `PYPs (34)` heading and proposed an Ultra Rare at $146 against the recorded $80."
     },
     {
       "auction": "202422",
