@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-24.7';
+var THREAD_VERSION = '2026-08-25.1';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -876,7 +876,15 @@ function threadTidyName(name) {
     // `Vestia 5 @ $30.00` is fifty tokens at $3.00, which is what is recorded.
     // Left alone the heading resolves to nothing and twenty-one trade-good
     // lines are proposed as augments.
-    .replace(/^(.*?)\s+(\d+)\s*x\s*chips?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
+    // ...and `Darkwood Plank 10x 3` is the same thing with the word `Chip`
+    // dropped and a LOT NUMBER after it. Both are optional here, and the second
+    // is why this cannot wait for the trailing-number fallback: that runs after
+    // resolution, and by then the `10x` has already failed to be read.
+    //
+    // 20236 is the case. Its planks sold as ten lots of ten at $14.00 and seven
+    // singles at $1.00; reading only the singles proposes **$1.00** against a
+    // recorded **$1.40** — a plausible wrong number, which is the worst kind.
+    .replace(/^(.*?)\s+(\d+)\s*x(?:\s*chips?)?(?:\s+\d+)?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -961,12 +969,14 @@ function threadScanPost(text) {
  *
  * Every entry is a spelling counted across the 24 threads, not a guess:
  *
- *   trailing lot number   `PYP 1` .. `PYP 16`   3 auctions, 48 lots. Ralykam
- *                         numbers lots without a `#`, which is the only mark
- *                         `stripDecorations` looks for. Stripped LAST and only
- *                         as a fallback, because `Path to Enlightenment
- *                         (Fragment 4)` also ends in a number and that one is
- *                         the fragment — part one's finding.
+ *   trailing lot number   `PYP 1` .. `PYP 16`, `Ring of the 4th Circle 1` ..
+ *                         `6`. Ralykam and Casey Wren both number lots without
+ *                         a `#`, which is the only mark `stripDecorations`
+ *                         looks for; 20236 alone carries 120 such lines. Only
+ *                         ever a fallback — `Rod of Seven Parts Segment 5` and
+ *                         `Patron Token 1` really do end in a number and
+ *                         resolve before any of this runs. Its POSITION in the
+ *                         list is load-bearing; see the rule.
  *   leading year          `2025 Treasure Chips`, `2023 Patron Lapel Pin`
  *   `of` for `to`         `Path of Enlightenment Fragment 4` — three auctions
  *                         write "of" and the sheet records "to".
@@ -1029,14 +1039,37 @@ var THREAD_FALLBACKS = [
   // Measured safe: no tokenMetadata name begins with `UR` as a word, and none
   // even begins with those two letters.
   function (s) { return s.replace(/^ur\s+(?=.*[A-Za-z])/i, ''); },
+  // A TRAILING LOT NUMBER, and its position in this list is the whole point.
+  //
+  // Casey Wren lists every lot on its own line — `Ring of the 4th Circle 1` ..
+  // `6`, `PYP 1` .. `12` — so 20236 alone carries 120 of these. It used to sit
+  // LAST, where two rules had already destroyed the name before it could act:
+  // the `pyp` rule below turned `PYP 1` into a bare `1`, and the `of` rule near
+  // the end turned `Ring of the 4th Circle 1` into `Ring the 4th Circle 1`,
+  // which strips to a name no season has.
+  //
+  // It cannot move any earlier than this either: the fragment rule above needs
+  // the number, because `Path to Enlightenment Fragment 4` becomes
+  // `(Fragment 4)` and the 4 is part of the item. After the year strip and
+  // before every semantic rewrite is the only place it works.
+  //
+  // Safe here for the reason it was always safe: `resolveToken` runs FIRST and
+  // unchanged, so the four real names ending in a number — `Rod of Seven Parts
+  // Segment 5/6/7` and `Patron Token 1` — resolve before any fallback is tried.
+  function (s) { return s.replace(/\s+\d+\s*$/, ''); },
   // Fred K pluralises it. `PYP's` reaches the rule below as a name whose only
   // surviving word is `'s`, which resolves to nothing, so the possessive and
   // the plural are folded into the bare form first.
   function (s) { return s.replace(/\bPYP['’]?s\b/i, 'PYP'); },
-  // `PYP Ultra Rare` is an Ultra Rare. Dropping the marker only where other
-  // words survive keeps a bare `PYP` — which EXCEPTIONS already resolves —
-  // from becoming an empty string.
-  function (s) { return /\bpyp\b/i.test(s) && s.replace(/\bpyp\b/i, '').trim() ? s.replace(/\bpyp\b/i, '') : s; },
+  // `PYP Ultra Rare` is an Ultra Rare. Dropping the marker only where a WORD
+  // survives keeps a bare `PYP` — which EXCEPTIONS already resolves — from
+  // becoming an empty string. A letter, not merely a non-empty string: with the
+  // looser test `PYP 1` dropped to `1`, and a lot number is not a name.
+  function (s) {
+    if (!/\bpyp\b/i.test(s)) return s;
+    var rest = s.replace(/\bpyp\b/i, '');
+    return /[A-Za-z]/.test(rest) ? rest : s;
+  },
   // What is left of `PYP URs` once the marker is gone. Anchored to the WHOLE
   // name so `Random UR` — a context item, not a token — stays unresolved.
   function (s) { return /^\s*urs?\s*$/i.test(s) ? 'Ultra Rare' : s; },
@@ -1053,7 +1086,6 @@ var THREAD_FALLBACKS = [
   // and Fred K shortens it again to `Condensed Healing`.
   function (s) { return /^\s*condensed healing\s*$/i.test(s) ? 'Potion Condensed Healing' : s; },
   function (s) { return s.replace(/\s+of\s+/i, ' '); },
-  function (s) { return s.replace(/\s+\d+\s*$/, ''); },
 ];
 
 /**
