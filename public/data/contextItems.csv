@@ -239,9 +239,10 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202312,2023,12,token,Redoubt Helm,1,$100.00
 202312,2023,12,token,Butterfly Cloak,1,$41.00
 202312,2023,12,token,Ring of Heroism,1,$150.00
-202312,2023,12,withheld,Patron Pin,1,-$318.11
+202312,2023,12,withheld,Patron Pin,1,-$318.18
 202321,2023,21,token,Golden Ticket Chance,1,$335.00
-202321,2023,21,token,Random Ultra Rare,9,$675.00
+202321,2023,21,token,Random Ultra Rare,7,$525.00
+202321,2023,21,token,Random Ultra Rare,2,$152.00
 202321,2023,21,token,Trick Bag,1,$155.00
 202321,2023,21,token,Treat Bag,1,$180.00
 202321,2023,21,token,Donations,1,$165.00
@@ -267,9 +268,9 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202327,2023,27,token,Axe of the Dwarvish Kings,1,$100.00
 202327,2023,27,token,Shield of the Scholar (Onyx),1,$45.00
 202327,2023,27,token,Cook's Hat,1,$65.00
-202327,2023,27,withheld,Patron Pin,1,-$318.11
-202327,2023,27,withheld,Path to Enlightenment (Fragment 1),1,-$541.64
-202331,2023,31,withheld,Patron Pin,1,-$350.57
+202327,2023,27,withheld,Patron Pin,1,-$318.18
+202327,2023,27,withheld,Path to Enlightenment (Fragment 1),1,-$541.74
+202331,2023,31,withheld,Patron Pin,1,-$350.99
 202331,2023,31,token,Greater Ring of Havoc,1,$265.00
 202331,2023,31,token,Ioun Stone Elfstone Shard,1,$200.00
 202331,2023,31,token,Ioun Stone Platinum Nugget,1,$105.00
@@ -289,7 +290,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202334,2023,34,token,Charm Bracelets,1,$70.00
 202334,2023,34,token,Lucky Charm,1,$71.00
 202334,2023,34,token,Random Ultra Rare,5,$380.00
-202334,2023,34,withheld,Patron Pin,1,-$350.57
+202334,2023,34,withheld,Patron Pin,1,-$350.99
 202336,2023,36,grunnel,Small Favor Scroll,1,$127.00
 202337,2023,37,grunnel,Small Favor Scroll,1,$125.00
 202337,2023,37,token,+2 Chaos Cannon,1,$36.00
@@ -332,7 +333,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202350,2023,50,grunnel,Tesseract,1,$41.00
 202350,2023,50,grunnel,Old Token Mat,1,$6.25
 202350,2023,50,grunnel,Eyebite Plushie,1,$160.00
-202350,2023,50,withheld,Path to Enlightenment (Fragment 1),1,-$541.64
+202350,2023,50,withheld,Path to Enlightenment (Fragment 1),1,-$541.74
 202351,2023,51,grunnel,Small Favor Scroll,1,$105.00
 202351,2023,51,grunnel,Gib Gub's Lost Token,1,$220.00
 202351,2023,51,grunnel,Sellenwa's Seal,1,$56.00
@@ -344,7 +345,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202351,2023,51,token,Silver Ship Passage: Mirthwood,1,$86.00
 202351,2023,51,token,Boots of Protection,1,$120.00
 202351,2023,51,token,Totem of Heroism,1,$505.00
-202351,2023,51,withheld,Path to Enlightenment (Fragment 1),1,-$541.64
+202351,2023,51,withheld,Path to Enlightenment (Fragment 1),1,-$541.74
 20242,2024,2,withheld,Ring of the 3rd Circle,1,-$104.36
 20242,2024,2,withheld,Ring of the 3rd Circle,1,-$104.36
 20242,2024,2,withheld,Mark of the 3rd Tenet,1,-$98.07
@@ -550,7 +551,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20251,2025,1,withheld,Mark of the 2nd Tenet,2,-$162.07
 20251,2025,1,withheld,Patron Pin,1,-$309.45
 20251,2025,1,withheld,Path to Enlightenment (Fragment 3),1,"-$1,331.72"
-20251,2025,1,withheld,Wish Ring,1,-$167.41
+20251,2025,1,withheld,Wish Ring,1,-$167.57
 20251,2025,1,withheld,Aragonite,78,-$766.05
 20251,2025,1,withheld,Alchemist's Ink,78,-$233.67
 20251,2025,1,withheld,Alchemist's Parchment,106,-$244.89
