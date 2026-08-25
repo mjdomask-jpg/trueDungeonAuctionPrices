@@ -3,7 +3,7 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20183,4th Tooth of Cavadar,1,1,-92.25,-95.0,-2.75,recomputed
 20222,1k Bonus,4,0,-287.6,-287.6,0.0,no-prior
 20222,Adventurers' Guild Button,1,5,-1.14,-2.85,-1.71,recomputed
-20222,Lenses of the Owl,2,0,,0.0,,FIXED_was_error
+20222,Lenses of Hunting,2,5,,-3.5,,FIXED_was_error
 20222,8k Bonus,1,0,-336.67,-336.67,0.0,no-prior
 20222,Patron Pin,1,5,-463.6,-389.2,74.4,recomputed
 20222,Ultra Rare,6,5,-561.84,-636.0,-74.16,recomputed
