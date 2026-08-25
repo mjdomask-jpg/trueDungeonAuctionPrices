@@ -18,8 +18,11 @@
  * MEASURED against 24 real threads spanning 20 auctioneers (see
  * `fixtures/forum-threads/`), replayed by `npm run test:thread`:
  *
- *   - **Eleven line grammars, not the four the plan expected**, across twenty
- *     auctioneers. Two of them use more than one inside a single post.
+ *   - **Twenty-three line grammars, not the four the plan expected**, across
+ *     twenty-two auctioneers. Several use more than one inside a single post,
+ *     and three of them — Casey Wren above all — write a different shape in
+ *     each of their auctions, so the count grows with the corpus rather than
+ *     converging on it. Assume the next auctioneer needs a new one.
  *   - **The results are not always in post #1.** Casey Wren and jpotter put
  *     them in post #2. But post #1 wins whenever it carries any, because Mike
  *     Steele reposts his whole table as a bid update and the biggest copy is a
@@ -49,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-24.3';
+var THREAD_VERSION = '2026-08-24.4';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -410,7 +413,7 @@ function threadMoney(text) {
 }
 
 /**
- * The ten line grammars, most specific first. Each returns
+ * The line grammars, most specific first. Each returns
  * `{ item, quantity, price, buyer }`; a null `item` means "the item is the
  * section header above this line".
  *
@@ -422,6 +425,16 @@ var THREAD_RULES = [
   // "16 @ $7.50 - Bidder #4"     Matt Soto (44 auctions), Utaku, Edwin
   { id: 'qty-at-price', re: /^(\d+)\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–]\s*(.+)$/,
     take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[2]), buyer: m[3] }; } },
+
+  // "1 @$310 #007"               Laz — the buyer is a NUMBER, not a name, and
+  // the formatting is inconsistent in every way it can be: `2@$35 #018`,
+  // `2@40$  012` with the dollar sign AFTER the price, `8@82 001` with none at
+  // all, `17  @$.25 #006` with no leading zero, and the `#` optional. All of it
+  // is one shape once the noise is allowed for. Anchored to end on the id so it
+  // cannot read a trailing quantity as a buyer.
+  { id: 'qty-at-price-id',
+    re: /^(\d+)\s*@\s*\$?\s*(\d[\d,]*(?:\.\d{1,2})?|\.\d{1,2})\s*\$?\s*#?\s*(\d{2,4})\s*$/,
+    take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[2]), buyer: '#' + m[3] }; } },
 
   // "#1-3 : Lich - $100"         Matthew Hayward — a LOT RANGE, not a quantity
   { id: 'lot-range', re: /^#(\d+)(?:\s*[-–]\s*(\d+))?\s*:\s*(.+?)\s*[-–]\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)$/,
@@ -450,6 +463,13 @@ var THREAD_RULES = [
   // "Mark of the 1st Tenet (1) - Gortash $85"   WM13 — buyer middle, price last
   { id: 'item-qty-buyer-price',
     re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*[-–]\s*([^$\d][^$]*?)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[4]), buyer: m[3] }; } },
+
+  // "Ring of the 5th Circle (2) - Hank @ 75"   Josh M — buyer then `@` then a
+  // price with NO dollar sign. Nothing else in this post varies; the missing
+  // `$` alone is why 202216 read 0 of 23.
+  { id: 'item-qty-buyer-at-price',
+    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*[-–—]\s*([^@]*?)\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[4]), buyer: m[3] }; } },
 
   // "Wish Ring (1) - $175.00 Abert"   Beertram, Ralykam, Wade S from 2025
@@ -489,12 +509,31 @@ var THREAD_RULES = [
   // Casey Wren writes the lot size into the BUYER field rather than the
   // section heading, so the same `Nx` rule has to be read out of it: four lots
   // of ten at $33 is $3.30 a token, which is what 20242 records.
-  { id: 'buyer-qty-price', re: /^[-–]\s*(.+?)\s*\((\d+)\)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+  // The leading dash is OPTIONAL: he uses it in 20242 and drops it in 20226 and
+  // 202225, where the same line reads `Zani (1) $376`. Requiring it read those
+  // two auctions as 0 of 23 and 0 of 22. Safe to relax because every rule that
+  // could want an `Item (N) $price` line is tried first — item-qty-buyer-price
+  // and item-qty-price both demand a dash after the parenthetical, which these
+  // lines do not have.
+  { id: 'buyer-qty-price', re: /^[-–]?\s*(.+?)\s*\((\d+)\)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
     take: function (m) {
       var buyer = m[1], size = buyer.match(/^\s*(\d+)\s*x\b/i);
       return { item: null, quantity: parseInt(m[2], 10), lotSize: size ? parseInt(size[1], 10) : 1,
         price: threadMoney(m[3]), buyer: buyer };
     } },
+
+  // "Selvra 2 @ $20.00" and "Anton $370.00"   Casey Wren again, a THIRD format —
+  // 202247 drops the parenthetical and puts the quantity, when there is one,
+  // after the buyer. The bare form is one token.
+  //
+  // The bare form is the loosest rule in the table, so it is fenced: the buyer
+  // is at most three words of letters with NO dash and no digits, which keeps
+  // it off `Wish Ring - Tiamat $200` (a dash, so item-buyer-price owns it) and
+  // off prose. THREAD_NOT_A_LOT_RE has already removed the running totals.
+  { id: 'buyer-qty-at-price', re: /^([A-Za-z][^@$\d]*?)\s+(\d+)\s*@\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: null, quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[1] }; } },
+  { id: 'buyer-bare-price', re: /^([A-Za-z][A-Za-z.']*(?:\s+[A-Za-z.']+){0,2})\s+\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: null, quantity: 1, price: threadMoney(m[2]), buyer: m[1] }; } },
 
   // "+2 Branding Mace // $42 - Samantha"   Flik
   { id: 'item-slash-price-buyer',
@@ -516,6 +555,47 @@ var THREAD_RULES = [
   { id: 'item-price-buyer',
     re: /^(.*?[A-Za-z].*?)\s*[-–]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s+([A-Za-z].*)$/,
     take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[2]), buyer: m[3] }; } },
+
+  // "Wish Ring - Hand Witch @ 185"   Josh M again — the same shape as
+  // item-qty-buyer-at-price above with the parenthetical dropped, which is how
+  // he writes the one-off premium items. Greedy name and a dash-free buyer for
+  // the reason item-buyer-price gives below: `Orb of Dragonkind Great Wrym  -
+  // Hank @ 355` must keep the variant in the name.
+  { id: 'item-buyer-at-price',
+    re: /^(.*[A-Za-z].*?)\s*[-–—]\s*([A-Za-z][^-–—@]*?)\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[3]), buyer: m[2] }; } },
+
+  // "20 Alchemist's Parchment - Flind $2" and "20 Alchemist Ink Kobold $7.25"
+  // Fred K — the quantity is a PREFIX on the line rather than a parenthetical,
+  // and the dash before the buyer is optional.
+  //
+  // Two rules because the dashed form can name its own item and the bare one
+  // cannot: `20 Alchemist Ink Kobold $7.25` gives no way to tell where
+  // "Alchemist Ink" ends and "Kobold" begins, so that form defers to the
+  // section header — which is what it is written under. The dashed form must be
+  // tried first or the bare pattern swallows it, dash and all.
+  { id: 'qty-item-buyer-price',
+    re: /^(\d+)\s+(.*[A-Za-z].*?)\s*[-–—]\s*([A-Za-z][^-–—$]*?)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[2], quantity: parseInt(m[1], 10), price: threadMoney(m[4]), buyer: m[3] }; } },
+  // The dash is optional because he also writes the buyer alone: `25 - Kobold
+  // $15` is twenty-five gold bars under a `1000 GP Gold Bars (...)` heading.
+  { id: 'qty-header-buyer-price',
+    re: /^(\d+)\s+[-–—]?\s*([A-Za-z][^$]*?)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[3]), buyer: m[2] }; } },
+
+  // "+1 Turkey Leg of Smiting - Tiamat $65"   Fred K — buyer BEFORE the price,
+  // which is the mirror of item-price-buyer above and why that rule never read
+  // this post.
+  //
+  // The name is matched GREEDILY and the buyer forbidden a dash, because he
+  // writes `Orb of Dragonkind - Great Wrym - Bulette $450`: lazy matching takes
+  // "Orb of Dragonkind" and hands "Great Wrym - Bulette" to the buyer, where
+  // greedy takes the variant into the name and leaves "Bulette", which is what
+  // the line means. Last of the item rules, so every narrower shape has already
+  // had its chance.
+  { id: 'item-buyer-price',
+    re: /^(.*[A-Za-z].*?)\s*[-–—]\s*([A-Za-z][^-–—]*?)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[3]), buyer: m[2] }; } },
 
   // "Orion's Belt (1) 150 Chronos"   jpotter — NO dollar sign anywhere
   { id: 'item-qty-bare-price',
@@ -624,8 +704,21 @@ function threadTableLot(line, cols) {
   // Reading the second table the first way makes `Echo` an item and loses
   // fifteen trade goods; reading the first table the second way makes eight
   // lots into thirty-six tokens.
+  // A PARENTHESISED count in its own cell is a quantity, and the cell before it
+  // is the buyer, not the item: `Calnasse | (5) | $91.00` under a
+  // `+1 Turkey Leg of Smiting (4)` heading is Casey Wren's 202225 shape. Read
+  // positionally the plain way, the first cell is taken for an item and six
+  // trade goods are lost to bidder names. `(N)` is what separates it from Wade
+  // S's `4th Tooth | 1 | Foxtrot | $86`, where the bare `1` is a lot number —
+  // and the parenthesised form appears in exactly one thread across the fixture
+  // corpus and all fifty 2022 threads, so it is not competing with anything.
+  var parenAt = -1;
+  for (i = 1; i < at; i++) if (/^\(\d+\)$/.test(kept[i])) { parenAt = i; break; }
   var xPrefix = at > 0 ? String(kept[0]).match(/^x\s*(\d+)$/i) : null;
-  if (xPrefix) {
+  if (parenAt > 0 && !xPrefix) {
+    qty = parseInt(kept[parenAt].replace(/[()]/g, ''), 10);
+    buyer = kept[parenAt - 1];
+  } else if (xPrefix) {
     // kurtreznor puts the count in its own cell as `x35`, and the `@` beside it
     // means the price is EACH: `x35 @ $12.25` is thirty-five gold bars at
     // $12.25, which is what 20222 records. That is the opposite of Flik's
@@ -670,8 +763,20 @@ function threadLooksLikeHeader(line) {
   // candidates literally named after bid lines, e.g. `(1) Perrin=== @ $ 15.00
   // each`. The design already says where such a line belongs: the caller drops
   // it into `unparsed`, and "the leftovers are the point".
-  if (/\$\s*\d|\d+\s*@|@\s*\$/.test(text)) return false;
-  if (THREAD_PROSE_RE.test(text)) return false;
+  //
+  // The exception is a MINIMUM stated in the heading itself — Fred K writes
+  // `PYP's (68) (Minimum bid $50)` and `AG Badges (16) (min $1 Bid)`, which are
+  // item headings that happen to quote a floor. That parenthetical is removed
+  // before the test rather than allowed through it, so a heading may carry a
+  // minimum and nothing else.
+  //
+  // The prose test runs on the stripped text for the same reason: the word it
+  // objects to is `bid`, and it is inside the parenthetical. Held to the whole
+  // line, both of those headings are prose and 20221 loses its Ultra Rares to
+  // whatever heading came before.
+  var probe = text.replace(/\([^)]*\bmin(?:imum)?\b[^)]*\)/gi, '').trim();
+  if (/\$\s*\d|\d+\s*@|@\s*\$/.test(probe)) return false;
+  if (THREAD_PROSE_RE.test(probe)) return false;
   if (/[.!?]$/.test(text) && text.split(' ').length > 6) return false;
   return true;
 }
@@ -708,6 +813,12 @@ function threadTidyName(name) {
     .replace(/[“”]/g, '"')
     .replace(THREAD_BBCODE_RE, '')
     .replace(/\s*[:–-]\s*$/, '')
+    // A minimum quoted in the heading is not part of the name:
+    // `PYP's (68) (Minimum bid $50)`. Stripped BEFORE the quantity
+    // parenthetical below, which only fires when it is the trailing one — left
+    // in place it shields the `(68)` and the whole heading is proposed as an
+    // augment, which is how 20221's Ultra Rares read as eight non-standard lots.
+    .replace(/\s*\([^)]*\bmin(?:imum)?\b[^)]*\)\s*/gi, ' ')
     .replace(/\s*\((?:\d+[^()]*|each|individual)\)\s*$/i, '')
     .replace(/\s*\(w\/?\s*code\)/i, '')
     // A trailing `#3` is the LOT NUMBER, in the name instead of its own column.
@@ -716,6 +827,14 @@ function threadTidyName(name) {
     // its number because that one is parenthesised and is the FRAGMENT — part
     // one's finding, and the reason this only strips a bare trailing `#N`.
     .replace(/\s+#\s*\d+\s*$/, '')
+    // `Alchemist Parchment 10x Chip` -> `10x Alchemist Parchment`. Casey Wren
+    // condenses his trade goods into chips of ten and says so in the HEADING,
+    // where `parseQuantity` — which reads a lot size off the front of a name —
+    // cannot see it. Moved to the front it both resolves and divides: 202247's
+    // `Vestia 5 @ $30.00` is fifty tokens at $3.00, which is what is recorded.
+    // Left alone the heading resolves to nothing and twenty-one trade-good
+    // lines are proposed as augments.
+    .replace(/^(.*?)\s+(\d+)\s*x\s*chips?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -842,6 +961,10 @@ var THREAD_FALLBACKS = [
   // `or 2022 PyP`, which resolves to nothing, so 202211's Ultra Rare row — 34
   // tokens at $105 — was proposed as three phantom augments instead.
   function (s) { return s.replace(/^(?:(?:19|20)\d{2}\s*(?:or|and|\/|&|[-–])\s*)*(?:19|20)\d{2}\s+/i, ''); },
+  // Fred K pluralises it. `PYP's` reaches the rule below as a name whose only
+  // surviving word is `'s`, which resolves to nothing, so the possessive and
+  // the plural are folded into the bare form first.
+  function (s) { return s.replace(/\bPYP['’]?s\b/i, 'PYP'); },
   // `PYP Ultra Rare` is an Ultra Rare. Dropping the marker only where other
   // words survive keeps a bare `PYP` — which EXCEPTIONS already resolves —
   // from becoming an empty string.
@@ -849,7 +972,18 @@ var THREAD_FALLBACKS = [
   // What is left of `PYP URs` once the marker is gone. Anchored to the WHOLE
   // name so `Random UR` — a context item, not a token — stays unresolved.
   function (s) { return /^\s*urs?\s*$/i.test(s) ? 'Ultra Rare' : s; },
-  // `Potion of Condensed Healing` is recorded as `Potion Condensed Healing`.
+  // The Orb of Dragonkind's variant is parenthesised in `tokenMetadata` and
+  // punctuated three ways in the threads: `[Great Wyrm]` (handled by the
+  // bracket rewrite), `- Great Wrym` and a bare `Great Wrym`. Normalise the
+  // separator and the transposition — `Wrym` for `Wyrm` is the single most
+  // common typo in this corpus, and it is always the dragon.
+  function (s) {
+    return s.replace(/\borb of dragonkind\b\s*[-–—]?\s*\(?\s*([A-Za-z][A-Za-z ]*?)\s*\)?\s*$/i,
+      function (m, v) { return 'Orb of Dragonkind (' + v.replace(/\bwrym\b/i, 'Wyrm') + ')'; });
+  },
+  // `Potion of Condensed Healing` is recorded as `Potion Condensed Healing`,
+  // and Fred K shortens it again to `Condensed Healing`.
+  function (s) { return /^\s*condensed healing\s*$/i.test(s) ? 'Potion Condensed Healing' : s; },
   function (s) { return s.replace(/\s+of\s+/i, ' '); },
   function (s) { return s.replace(/\s+\d+\s*$/, ''); },
 ];

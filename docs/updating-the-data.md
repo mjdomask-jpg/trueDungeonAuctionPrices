@@ -538,7 +538,7 @@ and $17 recorded as $16.50). The low value is proposed so the cell is never
 blank. Change it freely.
 
 **2. The unread lines.** Every line carrying a price that no grammar could read
-is listed. It is short — 108 lines across all 26 threads — and it is the only
+is listed. It is short — 128 lines across all 32 threads — and it is the only
 thing standing between a pattern-matching parser and a silent omission. Skim it.
 It grew when `threadLooksLikeHeader` stopped accepting priced lines: those lines
 were always unreadable, they were just being swallowed as section headers
@@ -554,11 +554,11 @@ read off a post.
 
 **4. The close date is EVIDENCE, not a proposal.** The dialog lists every post
 that says the auction is over, with its date and the sentence. The bracket it
-builds contained the recorded `closeDate` in only **8 of the 17 threads that
+builds contained the recorded `closeDate` in only **8 of the 19 threads that
 yield one at all**, and where it missed it was usually late — the announcement
 trails the close. Two things it will not tell you: a closing phrase in post #1
 dates nothing (post #1 is edited in place and keeps the thread's *open*
-timestamp, which is why post #1 is skipped), and 9 of the 26 threads say nothing
+timestamp, which is why post #1 is skipped), and 13 of the 32 threads say nothing
 at all.
 
 ### When it comes back with nothing
@@ -583,7 +583,7 @@ than pretending. Ask the auctioneer for the file instead; see
 
 `apps-script/forumThread.gs` in the repo is the source of truth. Edit it here,
 **bump `THREAD_VERSION`**, run `npm run test:thread`, then paste it over the
-editor's contents. The test replays all 26 threads in `fixtures/forum-threads/`
+editor's contents. The test replays all 32 threads in `fixtures/forum-threads/`
 against `prices.csv` and `onyx.csv` and asserts the corpus totals, so a rule
 that improves one auctioneer at another's expense shows up as a number.
 
@@ -604,6 +604,20 @@ silently on the same person's next line. Two measured cases:
   `Cloak of Blending - $55 - Quail`, with a dash, matched nothing. That was the
   whole `Augmented items:` section of 202236 — six tokens, $485. The section
   *header* was recognised all along; only the line shape was missing.
+
+**One auctioneer is not one grammar.** Casey Wren writes a different shape in
+each of his four recorded auctions — `- Anton (1) $780`, `Zani (1) $376` with no
+dash, the same line TAB-separated, and `Anton $370.00` with the quantity moved
+after the buyer. Finding his thread in the fixtures is not evidence that his next
+one will read. The count has gone four → eleven → twenty-three as threads were
+added; assume the next auctioneer needs a new rule.
+
+**The heading can carry the lot size.** `Alchemist Parchment 10x Chip` means five
+lots at $30 is fifty tokens at $3.00. `parseQuantity` only reads a lot size off
+the *front* of a name, so `threadTidyName` moves a trailing `Nx Chip` there.
+Left alone the heading resolves to nothing and every line under it is proposed as
+an augment — which is the failure to watch for, because it is silent and looks
+like a finding.
 
 **A missing grammar does not fail loudly — it renames things.** Until this was
 fixed, a priced line that no rule read fell through to `threadLooksLikeHeader`
