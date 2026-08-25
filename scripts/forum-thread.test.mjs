@@ -3,7 +3,7 @@
 //
 // Part one reads a file an auctioneer hands over. This reads the thread, which
 // is prose, and the only honest way to test a prose parser is to replay real
-// prose: 24 threads spanning 20 auctioneers, scored against what the sheet
+// prose: 32 threads spanning 22 auctioneers, scored against what the sheet
 // actually recorded for those auctions.
 //
 // What is asserted, and why each number is the number it is:

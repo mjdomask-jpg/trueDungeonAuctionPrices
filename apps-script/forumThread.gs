@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-24.6';
+var THREAD_VERSION = '2026-08-24.7';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -305,9 +305,10 @@ function threadDecodeEntities(text) {
  * One post's HTML to text, with TABS PRESERVED.
  *
  * `openHtmlToText` collapses every run of whitespace, which is right for
- * Trent's page and fatal here: four of the ten grammars are tab-separated
- * tables pasted out of a spreadsheet, and collapsing the tabs merges the
- * columns into an unreadable run. Table cells are joined with a tab for the
+ * Trent's page and fatal here: several auctioneers paste a tab-separated table
+ * straight out of a spreadsheet — a whole parse path of its own, see
+ * threadTableLot — and collapsing the tabs merges the columns into an
+ * unreadable run. Table cells are joined with a tab for the
  * same reason — Nick Braun's results are a real `<table>`, and without a
  * separator `2019 Orb of Dragonkind` `1` `+$5.00` `$605` `maelios` arrives as
  * one word.
