@@ -591,7 +591,7 @@ than pretending. Ask the auctioneer for the file instead; see
 
 `apps-script/forumThread.gs` in the repo is the source of truth. Edit it here,
 **bump `THREAD_VERSION`**, run `npm run test:thread`, then paste it over the
-editor's contents. The test replays all 32 threads in `fixtures/forum-threads/`
+editor's contents. The test replays all 42 threads in `fixtures/forum-threads/`
 against `prices.csv` and `onyx.csv` and asserts the corpus totals, so a rule
 that improves one auctioneer at another's expense shows up as a number.
 
@@ -617,8 +617,30 @@ silently on the same person's next line. Two measured cases:
 each of his four recorded auctions — `- Anton (1) $780`, `Zani (1) $376` with no
 dash, the same line TAB-separated, and `Anton $370.00` with the quantity moved
 after the buyer. Finding his thread in the fixtures is not evidence that his next
-one will read. The count has gone four → eleven → twenty-three as threads were
-added; assume the next auctioneer needs a new rule.
+one will read. The count has gone four → eleven → twenty-three → twenty-nine as
+threads were added; assume the next auctioneer needs a new rule.
+
+**Two of the rules do not live in `THREAD_RULES`, because a pattern cannot read
+those lines at all.** Fred K writes `Ring of the 3rd Circle Haliax $101` — no
+separator between the item and the buyer, so nothing in the line's shape says
+where one stops. `threadBareLot` asks the token index instead and takes the
+longest leading run of words that resolves for the auction's season;
+`threadBuyerLot` handles the same shape for a name no season knows — an augment,
+by definition — by splitting on the post's own set of buyers, which is why the
+post is scanned twice. Both REFUSE rather than guess: a line they cannot place
+stays in the unread list. `threadBareLot` runs *before* the rule table, because
+the loosest rule there was taking `Wish Ring Manet $146` for a bare buyer and
+proposing an `Ultra Rare` at $146 against a recorded $80.
+
+**A heading may declare things, and all three declarations are load-bearing.**
+`Alchemist Ink (AI)` says what `AI` means for the lines beneath it — read from
+the post, so there is no table of abbreviations to get wrong.
+`Trade Goods (bidding on 10x lots or the specific amount)` says that `Nx` marks
+a lot price below that line, where above it the same auctioneer means a count:
+in 202413 `4x $130` is four Rings at $130 each and `10x $35` is ten Minotaur
+Hides for $35, and reading one convention across the post put four of the
+auction's prices out by their own lot size. `(12 - individual)` says the
+opposite for its own item only.
 
 **The heading can carry the lot size.** `Alchemist Parchment 10x Chip` means five
 lots at $30 is fifty tokens at $3.00. `parseQuantity` only reads a lot size off
