@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-25.2';
+var THREAD_VERSION = '2026-08-25.3';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -660,8 +660,32 @@ var THREAD_RULES = [
   // MIRROR of the rule above: buyer between the dashes, price at the end. The
   // two cannot be confused, because each demands the `$` on its own side, and
   // `Cloak of Blending - $55 - Quail` fails this one on the trailing `Quail`.
+  //
+  // A HYPHEN INSIDE A WORD IS NOT A SEPARATOR, and this rule's name group is
+  // lazy, so it stops at the first dash it can — `2020 UR Semi-Lich Skull =
+  // Nynaeve - $60` was read as an item called `2020 UR Semi` bought by
+  // `Lich Skull = Nynaeve`. A proposal under a name that is half a word is
+  // worse than none: nothing downstream can tell it is wrong. Every real
+  // separator in this corpus carries a space on at least one side, and no
+  // hyphenated word does — `Semi-Lich`, `One-Boot`, `Old-Style`,
+  // `Silver-Ship`. (The rule below is safe without this because its name group
+  // is greedy and takes the LAST dash.)
   { id: 'item-buyer-dash-price',
-    re: /^(.*?[A-Za-z].*?)\s*[-–—]\s*([A-Za-z][^$]*?)\s*[-–—]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    re: /^(.*?[A-Za-z].*?)(?:\s+[-–—]\s*|\s*[-–—]\s+)([A-Za-z][^$]*?)\s*[-–—]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[3]), buyer: m[2] }; } },
+
+  // "2019 UR Ring of the Yeti = Lan - $85"   Lord Brian, the same line with his
+  // two separators the other way round. He writes five of 202310's augments as
+  // `Item - Buyer = $price` and three as `Item = Buyer - $price`, and only the
+  // first had a rule — the other three were being read by the rule above,
+  // splitting on whatever dash came first. That is how `Semi-Lich Skull` lost
+  // its second half.
+  //
+  // The name is GREEDY up to the `=`, so a hyphenated item stays whole, and the
+  // buyer may be a parenthetical: he marks a lot that went at its floor
+  // `= (Min) -`.
+  { id: 'item-equals-buyer-dash-price',
+    re: /^(.*[A-Za-z].*?)\s*=\s*([^=]*?)\s*[-–—]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
     take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[3]), buyer: m[2] }; } },
 
   // "Golden Ticket - $875 Dragon" Beertram, Ralykam — quantity implied 1
@@ -994,6 +1018,17 @@ function threadTidyName(name) {
     .replace(/[‘’]/g, "'")
     .replace(/[“”]/g, '"')
     .replace(THREAD_BBCODE_RE, '')
+    // AN ORPHANED BRACKET IS BBCODE THE AUTHOR MISTYPED. Lord Brian's
+    // `Grunnel's +2 Pointy Stick ]` is a `[/b]` he broke, and the lone `]`
+    // survives the tag strip above — so the 2k Bonus resolved to nothing and
+    // was proposed as an augment at the auction's own recorded 2k price.
+    //
+    // Only when unmatched, so the `[Great Wyrm]` the fallback chain rewrites to
+    // `(Great Wyrm)` keeps both of its brackets.
+    .replace(/[\[\]]/g, function (b, i, whole) {
+      var other = b === '[' ? ']' : '[';
+      return whole.indexOf(other) < 0 ? '' : b;
+    })
     .replace(/\s*[:–-]\s*$/, '')
     // A minimum quoted in the heading is not part of the name:
     // `PYP's (68) (Minimum bid $50)`. Stripped BEFORE the quantity
@@ -1021,7 +1056,16 @@ function threadTidyName(name) {
     // stripping that prefix leaves a bare `1`. The lookahead is the same guard
     // from the other end — something with a letter in it has to survive, so a
     // bare `UR` still reaches the fallback that turns it into `Ultra Rare`.
-    .replace(/^ur\s+(?=.*[A-Za-z])/i, '')
+    //
+    // The YEAR in front of the marker goes with it, and only there. Lord Brian
+    // writes his augments both `2021 UR Pants of Focus - Lanfear = $50` and
+    // `2021 UR Mad Evoker's Charm = (Min) - $30`, and the first form loses its
+    // year to a grammar that reads the leading number as a quantity while the
+    // second keeps it — so ONE auction proposed `Mad Evoker's Charm` and
+    // `2021 UR Mad Evoker's Charm` as two separate context rows. A split of an
+    // item against itself, out of one post. A bare leading year is left alone;
+    // it is only decoration when it is labelling a tier.
+    .replace(/^(?:(?:19|20)\d{2}\s+)?ur\s+(?=.*[A-Za-z])/i, '')
     // A trailing `#3` is the LOT NUMBER, in the name instead of its own column.
     // Left on, every lot of an item becomes a different item and no
     // distribution is ever built. `Path to Enlightenment (Fragment 4)` keeps
@@ -1082,13 +1126,95 @@ function threadScanPost(text) {
   var lots = [], unparsed = [];
   var header = null, section = null, columns = null, refusals = [];
 
+  // DOES `Nx` MARK A LOT PRICE OR A QUANTITY? The line cannot say, and the two
+  // readings differ by a factor of N:
+  //
+  //   Alchemist's Ink (33)   10x $25      Flik 2022 — ten tokens for $25
+  //                          10x $25
+  //                          10x $25.01
+  //                           3x $7.50
+  //   Alchemist's Ink (51)   21x $4.00    Flik 2023 — twenty-one at $4 each
+  //                          20x $4.25
+  //                          10x $4.25
+  //
+  // Identical in shape, opposite in meaning, and the SAME AUCTIONEER writes
+  // both. Read the wrong way round, 202312's every trade good was divided twice
+  // — Alchemist's Ink at $0.19 against a recorded $4.25, Ultra Rare at $5.94
+  // against $95, and eighteen more — while the parse rated 21 of 22 items
+  // matched throughout, because `matched` compares names.
+  //
+  // WHICH READING MAKES THE UNIT PRICES AGREE? Bids on one item in one auction
+  // sit within a bid increment or two of each other, so the reading that spreads
+  // them out is the wrong one. Above: as lots, 2022 gives $2.50/$2.50/$2.50/$2.50
+  // and 2023 gives $0.19/$0.21/$0.43; as quantities, 2022 gives
+  // $25/$25/$25.01/$7.50 and 2023 gives $4.00/$4.25/$4.25. Each year picks
+  // itself.
+  //
+  // Not the sum of the counts against the heading's `(N)`, which was the first
+  // thing tried and is worthless: the auctioneer sells the whole stock either
+  // way, so both readings sum to the total. Flik's 2022 group sums to exactly
+  // its 33.
+  //
+  // Decided per heading, so the transform below is applied optimistically and
+  // undone here once the group is complete. A group of one, or one whose lines
+  // are all identical, is a tie and keeps the long-standing lot reading.
+  // ...and where the spread cannot tell, THE REST OF THE POST VOTES. A group
+  // whose lines all carry the same count — 202312's `2x $8.00` and `2x $8.25`
+  // under `Grunnel's +2 Pointy Stick (4)` — gives the two readings the identical
+  // spread, so nothing local can separate them. But an auctioneer means one
+  // thing by `Nx` throughout a post: every group of Flik's 2022 post that can be
+  // decided reads as a lot, and every group of his 2023 post reads as a
+  // quantity. So the decidable groups settle the undecidable ones, and with no
+  // majority either way it stays the long-standing lot reading.
+  //
+  // Groups under an `(N - individual)` heading never enter this at all — that
+  // heading has already said which it is — so they cannot skew the vote.
+  var xGroup = [], xGroups = [];
+  function xSpread(v) {
+    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+    return lo > 0 ? hi / lo : Infinity;
+  }
+  function closeXGroup() {
+    if (xGroup.length) xGroups.push(xGroup);
+    xGroup = [];
+  }
+  /** 'qty', 'lot', or null when the group cannot say. */
+  function xVerdict(group) {
+    if (group.length < 2) return null;
+    var asLot = [], asQty = [];
+    for (var g = 0; g < group.length; g++) {
+      asLot.push(group[g].price / group[g].lotSize);
+      asQty.push(group[g].price);
+    }
+    var lot = xSpread(asLot), qty = xSpread(asQty);
+    if (qty < lot) return 'qty';
+    if (lot < qty) return 'lot';
+    return null;
+  }
+  function settleXGroups() {
+    var votes = { qty: 0, lot: 0 }, verdicts = [], k;
+    for (k = 0; k < xGroups.length; k++) {
+      var v = xVerdict(xGroups[k]);
+      verdicts.push(v);
+      if (v) votes[v]++;
+    }
+    var fallback = votes.qty > votes.lot ? 'qty' : 'lot';
+    for (k = 0; k < xGroups.length; k++) {
+      if ((verdicts[k] || fallback) !== 'qty') continue;
+      for (var g = 0; g < xGroups[k].length; g++) {
+        xGroups[k][g].quantity = xGroups[k][g].lotSize;
+        xGroups[k][g].lotSize = 1;
+      }
+    }
+  }
+
   for (var i = 0; i < lines.length; i++) {
     var raw = lines[i].replace(/\s+$/, '');
     var line = raw.replace(/^\s+/, '');
     if (!line) continue;
 
     var found = threadSectionOf(line);
-    if (found) { section = found === 'end' ? null : found; header = null; continue; }
+    if (found) { closeXGroup(); section = found === 'end' ? null : found; header = null; continue; }
 
     if (raw.indexOf('\t') >= 0) {
       var cells = raw.split('\t');
@@ -1124,6 +1250,9 @@ function threadScanPost(text) {
       if (lot.xMarked && !(fromHeader && /\b(individual|each)\b/i.test(lot.item))) {
         lot.lotSize = lot.quantity;
         lot.quantity = 1;
+        // Provisional: closeXGroup undoes it if the counts under this heading
+        // add up to the stock the heading says was on offer.
+        if (fromHeader) xGroup.push(lot);
       }
       lot.line = line;
       lot.section = section;
@@ -1131,9 +1260,16 @@ function threadScanPost(text) {
       continue;
     }
 
-    if (threadLooksLikeHeader(line)) { header = line; continue; }
+    if (threadLooksLikeHeader(line)) {
+      closeXGroup();
+      header = line;
+
+      continue;
+    }
     if (/\$\s?\d|\d+\s*@/.test(line)) unparsed.push({ line: line, why: 'carries a price but matched no grammar' });
   }
+  closeXGroup();
+  settleXGroups();
   return { lots: lots, unparsed: unparsed, refusals: refusals };
 }
 
@@ -1248,6 +1384,24 @@ var THREAD_FALLBACKS = [
   // unchanged, so the four real names ending in a number — `Rod of Seven Parts
   // Segment 5/6/7` and `Patron Token 1` — resolve before any fallback is tried.
   function (s) { return s.replace(/\s+\d+\s*$/, ''); },
+
+  // A TRAILING BARE `token`. Josh M writes `Ring of the 4th Circle token`, which
+  // is the 1k Bonus and was proposed instead as an eight-count AUGMENT worth
+  // $640 — a false augment for the auction's own standard content, which is the
+  // most dangerous thing this file produces because the row looks right.
+  //
+  // Safe for the same reason the lot-number strip above is: `resolveToken` runs
+  // first, so the three names that really end in the word — `Stalker Token`,
+  // `Herald Token (20 Unique)` and `Patron Token 1` — resolve before any
+  // fallback runs and never reach this.
+  function (s) { return s.replace(/\s+tokens?\s*$/i, ''); },
+
+  // `GibGub's Handy Acorn` closed up, for `Gib Gub's Handy Acorn` — the
+  // Preorder Bonus. WM13 and David Harris both write it that way, and in both
+  // auctions the lot was proposed as an augment of 32 at the recorded Preorder
+  // Bonus price.
+  function (s) { return s.replace(/\bgib\s*gub(['’]s)?\b/i, "Gib Gub's"); },
+
   // Fred K pluralises it. `PYP's` reaches the rule below as a name whose only
   // surviving word is `'s`, which resolves to nothing, so the possessive and
   // the plural are folded into the bare form first.
@@ -1360,6 +1514,23 @@ function threadResolveLots(lots, season, index) {
       marked.isOnyx = true;
       ambiguous.push({ name: marked.name, price: lot.price, line: lot.line });
     }
+    // THIS SEASON'S OWN YEAR IN FRONT OF A NAME IS DECORATION, and it has to
+    // come off HERE — before `parseQuantity` and `stripDecorations`, both of
+    // which read a lot size off the FRONT of a name and are blocked by anything
+    // standing there.
+    //
+    // 202312's chips are headed `2023 3x Treasure Chips (16)`. The `3x` was
+    // therefore invisible: no lot size, no `stripDecorations`, no resolution —
+    // so the auction's own Treasure Chips were proposed as an AUGMENT at $8.75
+    // against a recorded $2.92, which is exactly $8.75 / 3. The resolution
+    // fallbacks already strip a leading year, but by then the damage is done.
+    //
+    // ONLY the auction's own season. A year that is NOT is the mark of an
+    // augment — a prior season's stock out of the auctioneer's own collection —
+    // and 202331's `2022 10x Treasure Chips (Use by 1/4/23)` is recorded by the
+    // maintainer under exactly that name, year and `10x` and all.
+    var ownYear = String(marked.name).match(/^\s*((?:19|20)\d{2})\s+([\s\S]+)$/);
+    if (ownYear && ownYear[1] === String(season)) marked.name = ownYear[2];
     var q = parseQuantity(marked.name);
     // Two places can state a lot size and both count: the item's own name
     // (`10x Darkwood Plank`, the rule verified against 18,466 Trent lots) and
