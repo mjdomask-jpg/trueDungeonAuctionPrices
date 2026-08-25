@@ -543,5 +543,107 @@ console.log('7. Closed vocabularies (auctionMetadata.csv, prices.csv, onyx.csv, 
   }
 }
 
+// ===========================================================================
+// 8. One item, one spelling (contextItems.csv)
+// ===========================================================================
+// § 7 guards the vocabulary COLUMNS. `contextItems.Item` is not one of those —
+// it is free text, and it has to be, because an augment can be any token ever
+// printed. But free text is not licence to spell one item two ways, and nothing
+// was checking it: the site groups these rows by `Item`, so two spellings are
+// two series, each with half the history.
+//
+// This is a measured defect, not a hypothetical. The 2022 backfill wrote
+// `Folio: Brawn` into eight rows from one auctioneer's shorthand, and a later
+// pass — correcting the prefix to the official `Folio of X` but not the suffix —
+// left `Folio of Reflex` beside `Folio of Reflexes`. A fix aimed at a split
+// created one, and the PR gate would have passed it.
+//
+// TWO SEVERITIES, because the two cases are not equally certain:
+//
+//   ERROR   differs only in CASE or WHITESPACE. A typo by construction — the
+//           same rule § 7 applies, for the same reason.
+//   NOTE    differs only in PUNCTUATION or a trailing plural. Usually one item,
+//           but not always: `+1 Turkey Leg` and `+1 Turkey Leg of Smiting` are
+//           two different tokens whose names contain one another, and merging
+//           that pair would collapse 87 lots of 2022 into one price series. So
+//           this one is surfaced for a human, never asserted.
+// It looks OUTSIDE contextItems too, because the split does. `Figurine of Power
+// Phoenix` sits in contextItems while `Figurine of Power: Phoenix` sits in
+// onyx.csv, and a check confined to one file cannot see that pair at all.
+console.log('8. One item, one spelling (contextItems.csv)');
+{
+  const errs = [], warns = [];
+  // Folds the apostrophe the way the resolver does — see foldName in
+  // trentClose.gs. A curly and a straight apostrophe now RESOLVE alike, which
+  // is why `Shaman's Belt` is findable at all; the data should still not lean
+  // on that, because the two spellings still split a series here.
+  const soft = (v) => String(v).toLowerCase().replace(/[‘’ʼ]/g, "'").replace(/\s+/g, ' ').trim();
+  const hard = (v) => soft(v).replace(/[^a-z0-9]/g, '').replace(/(e?s)$/, '');
+
+  const counts = new Map(), firstRow = new Map(), source = new Map();
+  for (const [i, r] of ctx.entries()) {
+    if (!r.auctionId || !r.Item) continue;
+    counts.set(r.Item, (counts.get(r.Item) || 0) + 1);
+    if (!firstRow.has(r.Item)) firstRow.set(r.Item, i + 2);
+    source.set(r.Item, 'contextItems.csv');
+  }
+  // Every canonical name an item could have been spelled as. Only names that
+  // COLLIDE with a context item are reported, so this adds no noise of its own.
+  for (const [file, rows, fields] of [
+    ['tokenMetadata.csv', load('tokenMetadata.csv'), ['Item', 'Display Name']],
+    ['onyx.csv', onyx, ['Item']],
+    ['prices.csv', prices, ['Item']],
+  ]) {
+    for (const r of rows) {
+      for (const f of fields) {
+        const v = r[f];
+        if (!v || counts.has(v)) continue;
+        counts.set(v, (counts.get(v) || 0) + 1);
+        if (!source.has(v)) source.set(v, file);
+      }
+    }
+  }
+  const names = [...counts.keys()];
+
+  // Group twice. The commonest spelling is the one kept, so the message names
+  // the odd one out rather than an arbitrary half of a pair.
+  const group = (fold) => {
+    const by = new Map();
+    for (const n of names) {
+      const k = fold(n);
+      if (!by.has(k)) by.set(k, []);
+      by.get(k).push(n);
+    }
+    return [...by.values()].filter((g) => g.length > 1)
+      .map((g) => g.sort((a, b) => counts.get(b) - counts.get(a)));
+  };
+  const describe = (n) => `"${n}" [${source.get(n)}` +
+    (firstRow.has(n) ? ` row ${firstRow.get(n)}` : '') + ']';
+  // A group is only ours if a contextItems name is in it — two spellings that
+  // both live in the price files are somebody else's problem, and § 7 owns them.
+  const mine = (g) => g.some((n) => source.get(n) === 'contextItems.csv');
+
+  const softGroups = group(soft).filter(mine);
+  for (const g of softGroups) {
+    for (const odd of g.slice(1)) {
+      warns.push(`Item ${describe(odd)} differs from ${describe(g[0])} only in case, spacing or apostrophe — ` +
+        'the resolver folds these together, but they are still two rows and two series here');
+    }
+  }
+  // Only report a hard collision the soft pass did not already catch.
+  const alreadyFlagged = new Set(softGroups.flat().map(soft));
+  for (const g of group(hard).filter(mine)) {
+    if (alreadyFlagged.has(soft(g[0]))) continue;
+    warns.push(`Item ${describe(g[0])} and ${g.slice(1).map(describe).join(', ')} ` +
+      'differ only in punctuation or a trailing plural — one item under two names, or two items? ' +
+      '(never merged automatically: "+1 Turkey Leg" and "+1 Turkey Leg of Smiting" are different tokens)');
+  }
+
+  capped(err, errs); capped(note, warns);
+  const ctxNames = [...source].filter(([, s]) => s === 'contextItems.csv').length;
+  if (!warns.length) ok(`${ctxNames} distinct context item name(s), each spelled one way here and in the price files`);
+  else ok(`${ctxNames} distinct context item name(s) checked against tokenMetadata, onyx and prices`);
+}
+
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${fail} error(s), ${warn} warning(s)`);
 process.exit(fail ? 1 : 0);
