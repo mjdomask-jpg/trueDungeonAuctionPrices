@@ -6,9 +6,9 @@
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
     "itemsMatched": 737,
-    "reproduces": 653,
-    "min": 557,
-    "max": 504,
+    "reproduces": 666,
+    "min": 566,
+    "max": 515,
     "ties": 30,
     "closeBracketHits": 10,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 10 of the 25 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
@@ -411,9 +411,9 @@
       "pages": 4,
       "resultsPost": 1,
       "itemsMatched": 23,
-      "reproduces": 10,
+      "reproduces": 23,
       "ties": 0,
-      "why": "ALL-CAPS BIDDER NAMES. `10 @ $3.00 - THE PRESENCE` and `3 @ $95 FIDDLER'S GREEN` reduce to multi-word all-caps strings, so threadSectionOf read each as a heading that CLOSED the open section — taking the item heading with it, so the line below had no name either. 3 of 23. Also `(xN)` in a heading, which is the stock available and not part of the name, and a PYP block that drops the dash before the buyer. THE PRICES ARE A KNOWN DISAGREEMENT: 13 of 23 differ from prices.csv, almost all of them higher, and Tyler's own rules say the winner pays \"the 2nd highest bid + the bid increment\" — so his table appears to list winning BIDS where the sheet records what was PAID. Pinned at 10 so a regression in the NAMES is still visible."
+      "why": "ALL-CAPS BIDDER NAMES. `10 @ $3.00 - THE PRESENCE` and `3 @ $95 FIDDLER'S GREEN` reduce to multi-word all-caps strings, so threadSectionOf read each as a heading that CLOSED the open section — taking the item heading with it, so the line below had no name either. 3 of 23. Also `(xN)` in a heading, which is the stock available and not part of the name, and a PYP block that drops the dash before the buyer. THIS THREAD WAS ALSO A DATA FINDING: 13 of its 23 prices disagreed with prices.csv, and the parser was right about all of them — the sheet was stale and the maintainer republished it to match (PR #102). It had looked like Tyler's table listing winning BIDS where the sheet recorded what was PAID, which his own rules make plausible. It was not. All 23 now reproduce, which is what this fixture pins."
     },
     {
       "auction": "202325",
