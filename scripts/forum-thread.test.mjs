@@ -21,8 +21,12 @@
 //      `item name | Buy It Out | Bid | Bidder/Buyer Name`, and the money-
 //      formatted column is not the price. Reading the header reproduces 14 of
 //      202632's 16 matched items; reading the formatting reproduces 6.
-//   5. THE DROP LIST — kurtreznor's `NON-8K STUFF` items are recorded in no CSV
-//      at all, so they must be dropped AND reported.
+//   5. OFF-ORDER LOTS — kurtreznor's `NON-8K STUFF` items are contextItems
+//      candidates, and the heading SCOPES: they go to context whatever their
+//      names resolve to, so a personal sale of a current-season token can never
+//      reach the price spine. They used to be discarded on the reasoning that
+//      20222 recorded none of them, which read intent from an unbackfilled
+//      season.
 //   6. THE UNREAD-LINES REPORT is non-empty where it should be and small.
 //
 // Run: node scripts/forum-thread.test.mjs
@@ -76,7 +80,6 @@ const money = (v) => Number(String(v).replace(/[$,]/g, ''));
 
 const meta = objects(join(dataDir, 'auctionMetadata.csv'));
 const priceRows = objects(join(dataDir, 'prices.csv'));
-const contextRows = objects(join(dataDir, 'contextItems.csv'));
 const tokenRows = objects(join(dataDir, 'tokenMetadata.csv'));
 
 const manifest = JSON.parse(readFileSync(join(threadDir, 'manifest.json'), 'utf8'));
@@ -290,7 +293,7 @@ console.log('\n=== 4. the pricing rule, replayed against prices.csv ===');
 // ===========================================================================
 const score = { items: 0, mode: 0, modeHigh: 0, min: 0, max: 0 };
 const perThread = [];
-let tiesFlagged = 0, dropsSeen = 0, unparsedTotal = 0;
+let tiesFlagged = 0, offOrderSeen = 0, unparsedTotal = 0;
 
 for (const t of manifest.threads) {
   const target = meta.find((m) => m.auctionId === t.auction);
@@ -319,7 +322,7 @@ for (const t of manifest.threads) {
   }
   score.items += n; score.mode += hit; score.modeHigh += hiHit;
   score.min += minHit; score.max += maxHit;
-  dropsSeen += plan.drops.length;
+  offOrderSeen += plan.context.filter((c) => c.lot && c.lot.section === 'offorder').length;
   unparsedTotal += plan.unparsed.length;
   perThread.push({ t, plan, n, hit });
 
@@ -359,7 +362,7 @@ ok(tiesFlagged > 0, 'no tie was flagged anywhere in the corpus — the flag is n
 console.log(`  ✓ ties set the flag and show both candidates (${tiesFlagged} flagged across the corpus)`);
 
 // ===========================================================================
-console.log('\n=== 6. Onyx, context, drops and leftovers ===');
+console.log('\n=== 6. Onyx, context, off-order lots and leftovers ===');
 // ===========================================================================
 for (const { t, plan } of perThread) {
   // The manifest carries the expected Onyx count for every thread, measured —
@@ -368,7 +371,7 @@ for (const { t, plan } of perThread) {
   // auctioneer added from his own collection, and the sheet records neither, in
   // onyx.csv or in contextItems. The assistant surfacing them is the point.
   eq(plan.onyx.length, t.onyx || 0, `${t.auction} ${t.auctioneer}: onyx rows proposed`);
-  if (t.drops !== undefined) eq(plan.drops.length, t.drops, `${t.auction} ${t.auctioneer}: dropped lots`);
+  if (t.offOrder !== undefined) eq(plan.context.filter((c) => c.lot && c.lot.section === 'offorder').length, t.offOrder, `${t.auction} ${t.auctioneer}: off-order context candidates`);
   if (t.withheldQuote !== undefined) {
     ok(plan.withheld.some((w) => w.text.includes(t.withheldQuote)),
       `${t.auction}: withheld candidate not found — expected a sentence containing ${JSON.stringify(t.withheldQuote)}`);
@@ -379,19 +382,28 @@ for (const { t, plan } of perThread) {
   }
 }
 
-// kurtreznor's NON-8K STUFF is the drop rule's whole evidence: 20222 records
-// none of those items anywhere.
+// kurtreznor's NON-8K STUFF. These used to be discarded, on the reasoning that
+// 20222 recorded none of them — but that was an unbackfilled season, not a
+// decision. They are contextItems candidates, and the invariant that matters is
+// the one dropping them used to provide for free: an off-order lot must NEVER
+// reach the price spine, whatever its name resolves to.
 const kurt = perThread.find((x) => x.t.auction === '20222');
-ok(kurt.plan.drops.length > 0, '20222: the NON-8K section was not dropped');
-const droppedNames = new Set(kurt.plan.drops.map((d) => TH.threadTidyName(d.item).toLowerCase()));
-const recordedAnywhere = new Set([
-  ...priceRows.filter((r) => r.auctionId === '20222').map((r) => r['Display Name'].toLowerCase()),
-  ...contextRows.filter((r) => r.auctionId === '20222').map((r) => r.Item.toLowerCase()),
-]);
-for (const name of droppedNames) {
-  ok(!recordedAnywhere.has(name), `20222: dropped "${name}" but the sheet records it — it should not be dropped`);
+const offOrder = kurt.plan.context.filter((c) => c.lot && c.lot.section === 'offorder');
+ok(offOrder.length > 0, '20222: the NON-8K section produced no context candidates');
+const pricedNames = new Set(kurt.plan.prices.map((p) => String(p.Item).toLowerCase()));
+for (const c of offOrder) {
+  ok(!pricedNames.has(TH.threadTidyName(c.name).toLowerCase()),
+    `20222: off-order "${c.name}" reached the price spine`);
 }
-console.log(`  ✓ ${dropsSeen} lot(s) dropped from non-8K sections, none of them recorded anywhere`);
+// And the section really does scope: proving it needs a name that WOULD have
+// resolved, since every one of 20222's own twenty fails to resolve in 2022 and
+// would land in context regardless.
+const scoped = TH.threadResolveLots(
+  [{ item: 'Wish Ring', quantity: 1, price: 99, section: 'offorder', line: 'Wish Ring $99' }],
+  '2022', index2022);
+eq(scoped.context.length, 1, 'an off-order lot whose name resolves still goes to context');
+eq(scoped.order.length, 0, 'an off-order lot whose name resolves must not become a price');
+console.log(`  ✓ ${offOrderSeen} lot(s) under a non-8K heading routed to contextItems, none to the price spine`);
 console.log(`  ✓ ${unparsedTotal} unread line(s) reported across the corpus rather than dropped silently`);
 
 // The close-date bracket is evidence, not a proposal, and the test says so with

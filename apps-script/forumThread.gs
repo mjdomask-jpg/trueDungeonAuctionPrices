@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-24.5';
+var THREAD_VERSION = '2026-08-24.6';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -118,14 +118,25 @@ var THREAD_QUANTITY_HEADERS = ['qty', 'quantity', 'count', 'amount won', 'tokens
 /**
  * Section headers that change where a line's lots are routed.
  *
- * `NON-8K STUFF` is the one that matters. kurtreznor's 2022 thread carries
- * eighteen of his own tokens under it, and `20222` records NONE of them —
- * not in `prices`, not in `contextItems`. They are a personal sale riding
- * alongside the order. They are dropped, and the drop is REPORTED, because a
- * silent skip and a parse failure look identical from the outside.
+ * `NON-8K STUFF` is the one that matters, and it used to route to a `drop`
+ * kind that discarded its lots. The reasoning was that `20222` recorded none
+ * of them — but "not recorded" was the state of a season nobody had backfilled
+ * yet, not a decision, and reading intent from missing data was the error.
+ * They are exactly what `contextItems` is for: the maintainer confirmed it,
+ * and the same names are already recorded as context for other auctions —
+ * `Ioun Stone Gold Nugget`, `Charm of the Faerie`, `+4 Rod of the Meek` and
+ * eight `Folio` rows among them.
+ *
+ * `offorder` SCOPES and `context` does not, which is the whole reason they are
+ * two kinds. "Not part of the 8K order" is a categorical statement about every
+ * lot beneath it, so those lots go to `contextItems` whether or not their names
+ * resolve — otherwise a personal sale of a current-season token lands in the
+ * price spine, which is what dropping them was really guarding against. An
+ * `Augmented Tokens:` heading claims nothing of the sort and must stay
+ * advisory; see threadResolveLots for the 159-lot reason.
  */
 var THREAD_SECTIONS = [
-  { re: /^\W*non[\s-]*8\s*k\b|^\W*(not|nothing) (part of|in) the 8\s*k|^\W*personal (sale|stuff|items)/i, kind: 'drop' },
+  { re: /^\W*non[\s-]*8\s*k\b|^\W*(not|nothing) (part of|in) the 8\s*k|^\W*personal (sale|stuff|items)/i, kind: 'offorder' },
   // "ONYX ITEMS" (Utaku) and "Onyx URs (16)" (Flik). NOT "Standard Onyx 8k
   // Items", which is Flik's heading for the ORDINARY tokens in an Onyx
   // auction — the word onyx there describes the order, not the tokens, and
@@ -840,7 +851,7 @@ function threadTidyName(name) {
 }
 
 /**
- * One post to lots, drops and leftovers.
+ * One post to lots and leftovers.
  *
  * The leftovers are the point. Every line carrying a price that no grammar read
  * is kept and reported — that is the whole reason a pattern-matching approach
@@ -848,7 +859,7 @@ function threadTidyName(name) {
  */
 function threadScanPost(text) {
   var lines = String(text == null ? '' : text).split('\n');
-  var lots = [], drops = [], unparsed = [];
+  var lots = [], unparsed = [];
   var header = null, section = null, columns = null, refusals = [];
 
   for (var i = 0; i < lines.length; i++) {
@@ -882,14 +893,14 @@ function threadScanPost(text) {
       }
       lot.line = line;
       lot.section = section;
-      if (section === 'drop') drops.push(lot); else lots.push(lot);
+      lots.push(lot);
       continue;
     }
 
     if (threadLooksLikeHeader(line)) { header = line; continue; }
     if (/\$\s?\d|\d+\s*@/.test(line)) unparsed.push({ line: line, why: 'carries a price but matched no grammar' });
   }
-  return { lots: lots, drops: drops, unparsed: unparsed, refusals: refusals };
+  return { lots: lots, unparsed: unparsed, refusals: refusals };
 }
 
 // ===========================================================================
@@ -1105,6 +1116,18 @@ function threadResolveLots(lots, season, index) {
     // Resolution alone already does the job: 20264's fourteen augments include
     // `Ring of the 3rd Circle`, which resolves in 2024 and not in 2026, so it
     // lands in the context list on its own.
+    // An `offorder` heading is the auctioneer saying these lots are not part of
+    // the 8K order, which settles the question before resolution gets a vote:
+    // they belong in contextItems whatever their names resolve to. Without this
+    // a personal sale of a current-season token would be proposed as a price.
+    // None of 20222's twenty resolve in 2022, so this changes nothing there —
+    // it is here so the next thread's do not silently reach the spine.
+    if (lot.section === 'offorder') {
+      if (!base) { unnamed.push(lot); continue; }
+      context.push({ name: base, price: lot.price, quantity: lot.quantity, lot: lot,
+        elsewhere: seasonsResolving(base, index, season) });
+      continue;
+    }
     var resolvedName = threadResolveName(base, season, index, bag);
     var token = resolvedName ? resolvedName.token : null;
     if (!token) {
@@ -1251,7 +1274,7 @@ function threadPlan(pages, target, tokenMetadataRows) {
   }
   if (!posts.length) {
     return { ok: false, problems: problems.concat(['no posts could be read from ' + pages.length + ' page(s)']),
-      posts: 0, prices: [], onyx: [], context: [], drops: [], unparsed: [], withheld: [], close: { hits: [], bracket: null } };
+      posts: 0, prices: [], onyx: [], context: [], unparsed: [], withheld: [], close: { hits: [], bracket: null } };
   }
 
   // Which post holds the results.
@@ -1337,7 +1360,6 @@ function threadPlan(pages, target, tokenMetadataRows) {
     onyx: onyx,
     context: resolved.context,
     ambiguous: resolved.ambiguous,
-    drops: scan.drops,
     unparsed: unparsed,
     refusals: scan.refusals,
     withheld: threadWithheldCandidates(posts),
@@ -1361,10 +1383,6 @@ function threadReviewRows(plan) {
       1, plan.context[i].quantity, '',
       plan.context[i].elsewhere.length ? 'resolves in ' + plan.context[i].elsewhere.join(', ') : 'not a token in any season',
       plan.context[i].lot.line]);
-  }
-  for (i = 0; i < plan.drops.length; i++) {
-    rows.push(['', 'dropped', plan.drops[i].item, '', '', plan.drops[i].price,
-      1, plan.drops[i].quantity, '', 'in a NON-8K section — belongs in no CSV', plan.drops[i].line]);
   }
   return rows;
 }
@@ -1425,12 +1443,6 @@ function threadDescribePlan(plan, auctionId) {
         (plan.context[i].elsewhere.length ? '  (resolves in ' + plan.context[i].elsewhere.join(', ') + ')' : ''));
     }
     if (plan.context.length > 20) out.push('  … and ' + (plan.context.length - 20) + ' more');
-    out.push('');
-  }
-  if (plan.drops.length) {
-    out.push('DROPPED — ' + plan.drops.length + ' lot(s) in a non-8K section, recorded nowhere');
-    for (i = 0; i < Math.min(plan.drops.length, 10); i++) out.push('  ' + plan.drops[i].item + ': $' + plan.drops[i].price);
-    if (plan.drops.length > 10) out.push('  … and ' + (plan.drops.length - 10) + ' more');
     out.push('');
   }
   if (plan.withheld.length) {
