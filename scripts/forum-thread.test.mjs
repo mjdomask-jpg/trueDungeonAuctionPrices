@@ -453,6 +453,38 @@ eq(scoped.order.length, 0, 'an off-order lot whose name resolves must not become
 console.log(`  ✓ ${offOrderSeen} lot(s) under a non-8K heading routed to contextItems, none to the price spine`);
 console.log(`  ✓ ${unparsedTotal} unread line(s) reported across the corpus rather than dropped silently`);
 
+// TWO INVARIANTS OVER THE WHOLE CORPUS, because neither shows up in a per-thread
+// count: both concern rows the parser must NOT propose, and a fixture's
+// `itemsMatched` only ever counts rows it does.
+//
+// A NAMED ULTRA RARE IS NEVER A PRICE. The Ultra Rares in an 8K order are sold
+// as PYP, so the spine records the single fungible `Ultra Rare`; a lot naming a
+// specific one is an Onyx lot or an augment. Measured across prices.csv: 7,754
+// rows, 100 named Ultra Rares in tokenMetadata, ZERO rows pairing the two.
+// Violations collected and asserted ONCE, so a failure names every offender at
+// the same time and the headline assertion count stays a count of ideas.
+const namedUR = new Set(tokenRows
+  .filter((t) => t.Category === 'Ultra Rare' && t.Item !== 'Ultra Rare').map((t) => t.Item));
+const urInSpine = [], zeroPriced = [];
+let namedURContext = 0;
+for (const { t, plan } of perThread) {
+  for (const p of plan.prices) {
+    if (namedUR.has(p.Item)) urInSpine.push(`${t.auction} ${p.Item}`);
+    if (!(p.Price > 0)) zeroPriced.push(`${t.auction} ${p.Item} $${p.Price}`);
+  }
+  for (const o of plan.onyx) if (!(o.Price > 0)) zeroPriced.push(`${t.auction} Onyx ${o.Item} $${o.Price}`);
+  namedURContext += plan.context.filter((c) => namedUR.has(c.name)).length;
+}
+ok(!urInSpine.length, 'named Ultra Rare(s) reached the price spine: ' + urInSpine.join(', '));
+ok(namedURContext > 0, 'no named Ultra Rare reached contextItems either — the rule is not being exercised');
+console.log(`  ✓ no named Ultra Rare in any price row; ${namedURContext} of them routed to contextItems`);
+
+// A LOT PRICED AT ZERO WAS NOT SOLD. 202337's `AG Button (and code) (4) - $0` is
+// the auctioneer saying nobody bid. prices.csv bottoms out at $0.03 and holds no
+// zero at all, and a zero proposed into a series drags the whole thing down.
+ok(!zeroPriced.length, 'row(s) proposed at zero: ' + zeroPriced.join(', '));
+console.log('  ✓ no price or Onyx row proposed at zero');
+
 // The close-date bracket is evidence, not a proposal, and the test says so with
 // a number: it contains the recorded closeDate in a minority of threads.
 let bracketHits = 0, bracketsBuilt = 0;

@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-25.3';
+var THREAD_VERSION = '2026-08-25.4';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -1107,7 +1107,8 @@ function threadTidyName(name) {
  * spelling and no other, and the price agrees exactly on both of Kusig's
  * auctions ($91 and $51). None of those rows came out of this pipeline, so this
  * is not the self-confirming trap that turned `Folio of X` into `Folio: X`. It
- * is still a NAME, and the maintainer can overrule it.
+ * is still a NAME, so it was put to the maintainer rather than assumed —
+ * CONFIRMED 2026-08-25. Settled; do not re-derive it from row counts.
  */
 function threadOnyxSetName(name) {
   return String(name == null ? '' : name)
@@ -1480,10 +1481,20 @@ function threadResolveName(base, season, index, bag) {
  * `augment` rows `contextItems` carries for it.
  */
 function threadResolveLots(lots, season, index) {
-  var per = {}, order = [], onyx = {}, onyxOrder = [], context = [], ambiguous = [], unnamed = [];
+  var per = {}, order = [], onyx = {}, onyxOrder = [], context = [], ambiguous = [], unnamed = [], unsold = [];
 
   for (var i = 0; i < lots.length; i++) {
     var lot = lots[i];
+    // A LOT PRICED AT ZERO WAS NOT SOLD. 202337 lists
+    // `AG Button (and code) (4) - $0`, which is the auctioneer saying nobody bid
+    // — and the sheet records no row for it, correctly. Proposed as a price it
+    // would drag that item's whole series toward zero, and it looks like an
+    // ordinary cheap lot.
+    //
+    // Measured rather than assumed: of 7,754 rows in prices.csv the lowest is
+    // $0.03 and NONE is zero. Reported as a leftover, not dropped, because the
+    // line was read perfectly well — what it says is that there was no sale.
+    if (!(Number(lot.price) > 0)) { unsold.push(lot); continue; }
     var tidy = threadTidyName(lot.item);
     var marked = stripOnyxMarker(tidy);
     // `stripOnyxMarker` calls anything containing the word Onyx an Onyx lot,
@@ -1602,10 +1613,33 @@ function threadResolveLots(lots, season, index) {
         elsewhere: seasonsResolving(base, index, season) });
       continue;
     }
+    // A NAMED ULTRA RARE IS NEVER A PRICE ROW. The Ultra Rares an 8K order
+    // contains are sold as PYP — the bidder picks the token afterwards — so the
+    // spine records them under the single fungible item `Ultra Rare`. A lot that
+    // names a SPECIFIC Ultra Rare is therefore something the auctioneer added:
+    // either an Onyx lot, which the marker and the `Onyx:` section above have
+    // already routed, or an augment out of their own collection.
+    //
+    // Measured across the whole of prices.csv rather than assumed: of 7,754
+    // rows, and 100 named Ultra Rares in tokenMetadata, **zero** rows pair the
+    // two. Not one season records a named Ultra Rare as a price.
+    //
+    // 202351's `Bead of Dark Resistance` is the case. A real 2023 Ultra Rare
+    // sold in a Super Condensed auction with no heading to scope it, proposed as
+    // a price and recorded by the maintainer as context — and resolution alone
+    // could never have told, because it resolves perfectly well in season.
+    //
+    // Only the specific ones: `Ultra Rare` itself is the PYP lot and must stay
+    // in the spine, which is exactly what this must not break.
+    if (token.Category === 'Ultra Rare' && token.Item !== 'Ultra Rare') {
+      context.push({ name: base, price: lot.price, quantity: lot.quantity, lot: lot,
+        elsewhere: seasonsResolving(base, index, season) });
+      continue;
+    }
     if (!per[token.Item]) { per[token.Item] = { token: token, obs: [] }; order.push(token.Item); }
     per[token.Item].obs.push({ price: unit, quantity: quantity, lot: lot });
   }
-  return { per: per, order: order, onyx: onyx, onyxOrder: onyxOrder, context: context, ambiguous: ambiguous, unnamed: unnamed };
+  return { per: per, order: order, onyx: onyx, onyxOrder: onyxOrder, context: context, ambiguous: ambiguous, unnamed: unnamed, unsold: unsold };
 }
 
 /**
@@ -1782,6 +1816,9 @@ function threadPlan(pages, target, tokenMetadataRows) {
   var unparsed = scan.unparsed.slice();
   for (i = 0; i < resolved.unnamed.length; i++) {
     unparsed.push({ line: resolved.unnamed[i].line, why: 'read as a lot but its item name came out empty' });
+  }
+  for (i = 0; i < resolved.unsold.length; i++) {
+    unparsed.push({ line: resolved.unsold[i].line, why: 'priced at zero — read as a lot that did not sell' });
   }
 
   var prices = [];

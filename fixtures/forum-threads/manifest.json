@@ -6,8 +6,8 @@
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
     "itemsMatched": 738,
-    "reproduces": 667,
-    "min": 567,
+    "reproduces": 668,
+    "min": 568,
     "max": 516,
     "ties": 30,
     "closeBracketHits": 10,
