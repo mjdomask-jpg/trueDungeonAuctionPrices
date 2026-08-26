@@ -479,6 +479,33 @@ ok(!urInSpine.length, 'named Ultra Rare(s) reached the price spine: ' + urInSpin
 ok(namedURContext > 0, 'no named Ultra Rare reached contextItems either — the rule is not being exercised');
 console.log(`  ✓ no named Ultra Rare in any price row; ${namedURContext} of them routed to contextItems`);
 
+// AN 8K ORDER HOLDS 44 OR 45 GOLD BARS (maintainer, 2026-08-25), and that is the
+// only check on whether a CONSOLIDATED bar belongs to the order at all —
+// threadGoldBarSize divides every `25K Eldritch Ore Bar` into 25, because that
+// is what the token is, and cannot tell the order's own gold from a bar the
+// auctioneer added out of his collection.
+//
+// Pinned as an invariant rather than a fixture count for the reason the two
+// rules above are: it is a property of the whole corpus, and no per-thread
+// number would show it moving. Measured over the 89 forum auctions of 2022-2024,
+// it holds on 85; the exceptions are 20222 (9 bars WITHHELD, recorded), 202349
+// (its 25K bar is a contextItems row), 202415 (exactly two orders' worth, and
+// the surplus recorded as a Bundle row) and 20225 (still read only in part).
+// Every thread that misses the count must SAY so in `problems`, so an operator
+// importing it is told rather than left to notice.
+const goldOff = [], goldSilent = [];
+for (const { t, plan } of perThread) {
+  const gold = plan.prices.find((p) => p.Item === '1,000 GP Gold Bar');
+  if (!gold) continue;
+  if (gold.quantity === 44 || gold.quantity === 45) continue;
+  goldOff.push(`${t.auction} ${t.auctioneer} ${gold.quantity}`);
+  if (!plan.problems.some((p) => /gold bars/.test(p))) goldSilent.push(`${t.auction} (${gold.quantity})`);
+}
+ok(!goldSilent.length,
+  'thread(s) whose gold does not total 44 or 45 and that said nothing about it: ' + goldSilent.join(', '));
+ok(goldOff.length > 0, 'no thread misses the 44/45 gold count — the check is not being exercised');
+console.log(`  ✓ every thread's gold totals 44 or 45 bars, or says why not (${goldOff.length} flagged: ${goldOff.join(', ')})`);
+
 // A LOT PRICED AT ZERO WAS NOT SOLD. 202337's `AG Button (and code) (4) - $0` is
 // the auctioneer saying nobody bid. prices.csv bottoms out at $0.03 and holds no
 // zero at all, and a zero proposed into a series drags the whole thing down.
