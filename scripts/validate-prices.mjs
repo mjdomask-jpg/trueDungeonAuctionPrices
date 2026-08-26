@@ -340,6 +340,39 @@ console.log('5. Non-numeric prices (prices.csv, onyx.csv, rawPricesData.csv)');
 }
 
 // ===========================================================================
+// 5b. An auction that has lost all of its prices
+// ===========================================================================
+// A row in `auctionMetadata` with nothing in `prices.csv` is an auction that
+// silently disappeared from every statistic on the site. It has never been a
+// legitimate state: measured over all 289 auctions of nine seasons, every one
+// carries price rows — a failed auction is DELETED from the metadata rather
+// than left empty, which is the settled convention (maintainer, 2026-08-26).
+//
+// WHY THIS EXISTS. Correcting the 20193/20196 transposition re-keyed 20195's
+// twenty rows onto 20193 instead of swapping the intended pair, leaving 20193
+// with two complete sets and 20195 with none — and the full validator passed
+// with zero errors, because nothing looked at whether an auction still had any
+// prices at all. An auction losing its entire price history is the largest
+// silent data loss this file can be asked to catch, and it was the one shape
+// it could not see.
+//
+// This is a STRUCTURAL check, not a count expectation: it says the rows are
+// gone, not that there are the wrong number of them. Item counts per order are
+// reported as evidence elsewhere and deliberately gate nothing.
+console.log('5b. Every auction still has prices (auctionMetadata.csv vs prices.csv)');
+{
+  const priced = new Set(prices.map((r) => r.auctionId));
+  const errs = [];
+  for (const m of meta) {
+    if (!m.auctionId || priced.has(m.auctionId)) continue;
+    errs.push(`${m.auctionId} "${m.auctionName}" (${m.auctionSeason}, ${m.auctioneer}) is in auctionMetadata ` +
+      'but has NO rows in prices.csv — the auction has lost its prices, or its rows were re-keyed onto another auction');
+  }
+  capped(err, errs);
+  if (!errs.length) ok(`all ${meta.filter((m) => m.auctionId).length} auction(s) in auctionMetadata carry price rows`);
+}
+
+// ===========================================================================
 // 6. Onyx and context integrity
 // ===========================================================================
 console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
