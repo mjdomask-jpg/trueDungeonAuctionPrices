@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-26.2';
+var THREAD_VERSION = '2026-08-26.3';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -1383,8 +1383,11 @@ function threadTidyName(name) {
 }
 
 /**
+ * Onyx names a thread spells differently from `onyx.csv`.
+ *
  * `Common UC Rare Set` IS `C/UC/R Set` — the Common, Uncommon and Rare set that
- * every Onyx order includes, spelled out instead of abbreviated.
+ * every Onyx order includes, spelled out instead of abbreviated. And AlanP's
+ * `Shieldmaiden Bracers` is the sheet's `Shield Maiden Bracers`.
  *
  * Applied where the ONYX name is final rather than in threadTidyName, because
  * tidying runs before the `(Onyx)` marker comes off and `Common UC Rare Set
@@ -1407,7 +1410,14 @@ function threadOnyxSetName(name) {
     // and Beertram and Matt Soto write `- C/UC/R Full Set`. All four lots close
     // at the price onyx.csv records to the cent ($110, $105, $95, $90), and
     // each was the one Onyx row of its auction that never reconciled.
-    .replace(/^\s*[-–—]?\s*(?:full\s+)?c(?:ommons?)?[\s/]+u\.?\s*c?\.?(?:ommons?)?[\s/]+r\.?\s*a?r?e?s?[\s/]*(?:full\s+)?set\s*$/i, 'C/UC/R Set');
+    .replace(/^\s*[-–—]?\s*(?:full\s+)?c(?:ommons?)?[\s/]+u\.?\s*c?\.?(?:ommons?)?[\s/]+r\.?\s*a?r?e?s?[\s/]*(?:full\s+)?set\s*$/i, 'C/UC/R Set')
+    // `Shield Maiden Bracers` IS THE OFFICIAL NAME — maintainer, 2026-08-26.
+    // AlanP closes the space up in both of his 2025 Onyx auctions; Mike Steele
+    // and Wade S keep it, and all ten shipped rows keep it. Put to him rather
+    // than inferred from those row counts, because "match the shipped CSV" is
+    // the heuristic that turned `Folio of X` into `Folio: X` — but here the
+    // sheet and the majority of auctioneers agreed, and he confirmed both.
+    .replace(/^\s*shieldmaiden\s+bracers\s*$/i, 'Shield Maiden Bracers');
 }
 
 /**

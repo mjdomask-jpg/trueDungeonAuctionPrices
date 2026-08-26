@@ -6,9 +6,9 @@
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
     "itemsMatched": 849,
-    "reproduces": 759,
-    "min": 642,
-    "max": 588,
+    "reproduces": 760,
+    "min": 643,
+    "max": 589,
     "ties": 37,
     "closeBracketHits": 13,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 13 of the 30 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed. RE-PIN THESE after adding a fixture: they are sums over the corpus, so the three 2025 threads added in 2026-08 moved itemsMatched by 59 while every existing thread stood still or improved, and a stale floor hides the next regression."
@@ -503,9 +503,9 @@
       "pages": 4,
       "resultsPost": 1,
       "itemsMatched": 20,
-      "reproduces": 12,
+      "reproduces": 13,
       "ties": 1,
-      "why": "A PRICED LINE IS NEVER A SECTION HEADING, and the guard for that used to sit BELOW the section vocabulary — which contains `ultra rares?`. So every one of this thread's thirty-four `Ultra Rare #N <tab> $75 <tab> 57 <tab> Rockmobile` lines was read as a heading that closed the open section, and the auction's whole PYP block disappeared without one line reaching `unparsed`. Also the `x`-first lot size: `1k GP Bars x5 #1` is five bars, nine lots of them, which is the 45 an 8K order holds — the trailing-`Nx` rule only knew `5x`, so the gold row was missing from all three of AlanP's 2025 auctions. Its remaining differences are the maintainer's judgement, not the parse: he splits `Patron Pin w/ Underling Dwarf Fighter` at $102 into two $51 rows, and reads `Adventurer's Guild Codes & Buttons (all 4)` at $2 as $0.50 each."
+      "why": "A PRICED LINE IS NEVER A SECTION HEADING, and the guard for that used to sit BELOW the section vocabulary — which contains `ultra rares?`. So every one of this thread's thirty-four `Ultra Rare #N <tab> $75 <tab> 57 <tab> Rockmobile` lines was read as a heading that closed the open section, and the auction's whole PYP block disappeared without one line reaching `unparsed`. Also the `x`-first lot size: `1k GP Bars x5 #1` is five bars, nine lots of them, which is the 45 an 8K order holds — the trailing-`Nx` rule only knew `5x`, so the gold row was missing from all three of AlanP's 2025 auctions. Two more of its differences were findings rather than parse errors: `(all 4)` in `Adventurer's Guild Codes & Buttons (all 4)` is a lot size, and the sheet's 8k Bonus at $1,400 — the Buy It Out price, where this table shows an unstruck $1,105 bid — was corrected to the thread's number. What is left is the maintainer's judgement and not reachable: he splits `Patron Pin w/ Underling Dwarf Fighter` at $102 into a `Patron Pin` row and a `Patron Token 1` row at $51 each."
     },
     {
       "auction": "202534",
