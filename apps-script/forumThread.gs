@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-25.6';
+var THREAD_VERSION = '2026-08-25.7';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -283,6 +283,15 @@ function threadDrawLotSize(name, alreadyStated) {
  * out of reach.
  */
 var THREAD_GOLD_WORD_RE = /\b(bar|mithral|mithril|eldritch|ore|reserve|gold|gp)\b/i;
+
+/**
+ * The auction styles whose gold is counted against 44 or 45 — every one that
+ * says Super or Ultra, including `Onyx Super Condensed` and the lone
+ * `Safehold Onyx Super Condensed`. A plain `Condensed` or `Onyx Condensed`
+ * order follows a different rule set and is deliberately left out; see the check
+ * itself in threadPlan for what is and is not known about it.
+ */
+var THREAD_GOLD_COUNTED_RE = /(super|ultra)\s+condensed/i;
 function threadGoldBarSize(name) {
   var s = String(name == null ? '' : name);
   if (!THREAD_GOLD_WORD_RE.test(s)) return 0;
@@ -2264,9 +2273,21 @@ function threadPlan(pages, target, tokenMetadataRows) {
   }
   prices.sort(function (a, b) { return a.Item < b.Item ? -1 : a.Item > b.Item ? 1 : 0; });
 
-  // THE GOLD IN AN 8K ORDER IS 44 OR 45 BARS *(maintainer, 2026-08-25)*, so the
-  // bars a thread sells should come to that — and this is the only check there
-  // is on whether a CONSOLIDATED bar belongs to the order at all.
+  // THE GOLD IN A SUPER OR ULTRA CONDENSED 8K ORDER IS 44 OR 45 BARS
+  // *(maintainer, 2026-08-25)*, so the bars such a thread sells should come to
+  // that — and this is the only check there is on whether a CONSOLIDATED bar
+  // belongs to the order at all.
+  //
+  // A PLAIN `Condensed` ORDER FOLLOWS A DIFFERENT RULE SET and is out of scope.
+  // That is the same fact `auctionStyle` already carries elsewhere — Condensed
+  // *without* Super or Ultra means the order included a `Rare Bag` and an
+  // `Uncommon Bag` — and the counts agree that it is different: the five
+  // Condensed threads on disk give 1, 1, 8, 8 and 64 bars, nowhere near 44.
+  //
+  // What they do NOT give is a number to check against instead. Every one of
+  // those five is read too poorly to measure — 202020's 64 bars come out at
+  // $1.75 against a recorded $14, and 202111's grammar is unsupported — so this
+  // says nothing about Condensed rather than guessing at it.
   //
   // threadGoldBarSize divides every one of them, because 25 gold bars is what
   // the token IS. But a `25K Eldritch Ore Bar` the auctioneer added from his own
@@ -2289,7 +2310,7 @@ function threadPlan(pages, target, tokenMetadataRows) {
   // subset of 202415's three 25K and three 5K bars sums to 45 — so this says the
   // sum is wrong and leaves the split to the person reading it. Both totals are
   // accepted: 2022 and 2023 run to 44 and 2024 to 45.
-  for (i = 0; i < prices.length; i++) {
+  for (i = 0; THREAD_GOLD_COUNTED_RE.test(target.auctionStyle) && i < prices.length; i++) {
     if (prices[i].Item !== '1,000 GP Gold Bar') continue;
     var bars = prices[i].quantity;
     if (bars === 44 || bars === 45) break;
