@@ -5,13 +5,13 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 739,
-    "reproduces": 669,
-    "min": 569,
-    "max": 516,
-    "ties": 30,
+    "itemsMatched": 786,
+    "reproduces": 713,
+    "min": 604,
+    "max": 550,
+    "ties": 33,
     "closeBracketHits": 12,
-    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 12 of the 27 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed."
+    "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 12 of the 27 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed. RE-PIN THESE after adding a fixture: they are sums over the corpus, so three new threads moved itemsMatched by 44 while every existing thread stood still, and a stale floor hides the next regression."
   },
   "threads": [
     {
@@ -159,8 +159,8 @@
       "auctioneer": "Casey Wren",
       "pages": 1,
       "resultsPost": 2,
-      "itemsMatched": 20,
-      "reproduces": 18,
+      "itemsMatched": 21,
+      "reproduces": 19,
       "ties": 1,
       "closeBracket": "2023-10-07..2023-10-07",
       "why": "RESULTS IN POST #2, buyer-first (`- Anton (1) $780`), and the lot size written into the BUYER field: `- 10x Chips = Calnasse (4) $33` is four lots of ten at $3.30 a token. Also the `Avron's` typo: he drops a syllable from `Averon's Cherry Ale`, and until the resolver folded it the auction's 32 Preorder Bonus tokens were proposed as an augment named after the misspelling."
@@ -196,7 +196,7 @@
       "auctioneer": "Fred K",
       "pages": 2,
       "resultsPost": 2,
-      "itemsMatched": 17,
+      "itemsMatched": 18,
       "reproduces": 16,
       "ties": 2,
       "closeBracket": "2023-10-16..2023-10-17",
@@ -229,8 +229,8 @@
       "auctioneer": "Ralykam",
       "pages": 1,
       "resultsPost": 1,
-      "itemsMatched": 19,
-      "reproduces": 17,
+      "itemsMatched": 21,
+      "reproduces": 19,
       "why": "`10x 2025 Treasure Chips (5) - $35.00 Oghma` — the lot size in the NAME rather than on the line, which is `parseQuantity`'s rule and is shared with Trent unchanged."
     },
     {

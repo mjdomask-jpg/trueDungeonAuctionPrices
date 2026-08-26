@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-25.5';
+var THREAD_VERSION = '2026-08-25.6';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -255,6 +255,42 @@ var THREAD_BAG_ULTRA_RE = /\bultra[\s-]*rares?\b|\bUR\b|\bPYP\b/i;
 function threadDrawLotSize(name, alreadyStated) {
   if (!/treasure draws?/i.test(String(name == null ? '' : name))) return 0;
   return alreadyStated > 1 ? alreadyStated : 3;
+}
+
+/**
+ * CONSOLIDATED GOLD DIVIDES, ALWAYS — the number in the name is the lot size.
+ *
+ * A `5K Mithral Bar` is five 1,000 GP Gold Bars and a `25K Eldritch Ore Bar` is
+ * twenty-five, so `25K Eldritch Ore Bar - $230` is 25 bars at $9.20. The
+ * maintainer's rule *(2026-08-25)*: **treat these with the same heuristic as any
+ * other trade good — 25K bar price ÷ 25 is the 1,000 GP Gold Bar price.**
+ *
+ * That REPLACES the earlier "an exact multiple means repackaging, under it means
+ * a separate sale" reading, which made the arithmetic decide whether the lot was
+ * gold at all. It no longer does: the name decides, and the price is whatever it
+ * divides to. 20242 records $9.20 and 20244 $9.60 on exactly this basis, both
+ * from a 25K bar priced below the auction's other gold.
+ *
+ * It also fixes a latent misread that predates any of this. `25,000 GP Reserve
+ * Bar` already resolved to `1,000 GP Gold Bar` through the `reserve bar`
+ * fallback but kept a lot size of ONE, so 202349's distribution read
+ * `44 @ $13, 1 @ $250` — a single two-hundred-and-fifty-dollar gold bar sitting
+ * in the spine. The mode saved that auction and would not save the next one.
+ *
+ * `> 1` because `1,000 GP Gold Bar` and `1k Gold Reserve Bar` are the bar
+ * itself and must not divide by one thousand or by one. The gold word is
+ * required and matched on word boundaries, so `Crowbar` and `Golden Fleece` are
+ * out of reach.
+ */
+var THREAD_GOLD_WORD_RE = /\b(bar|mithral|mithril|eldritch|ore|reserve|gold|gp)\b/i;
+function threadGoldBarSize(name) {
+  var s = String(name == null ? '' : name);
+  if (!THREAD_GOLD_WORD_RE.test(s)) return 0;
+  var k = s.match(/(?:^|[^\w])(\d[\d,]*)\s*k\b/i);
+  var gp = s.match(/(?:^|[^\w])(\d[\d,]*)\s*gp\b/i);
+  var n = k ? Number(String(k[1]).replace(/,/g, ''))
+    : gp ? Number(String(gp[1]).replace(/,/g, '')) / 1000 : 0;
+  return n > 1 && n === Math.round(n) ? n : 0;
 }
 
 /** `'Rare Bag'`, `'Uncommon Bag'`, or null. */
@@ -884,16 +920,29 @@ function threadBuyerLot(line, buyers) {
   if (!buyers) return null;
   var text = String(line == null ? '' : line).replace(/\s+/g, ' ').trim();
   if (THREAD_BROKEN_MONEY_RE.test(text)) return null;
-  text = text.replace(/\s*\(?\s*each\s*\)?\s*$/i, '');
+  var each = false;
+  text = text.replace(/\s*\(?\s*each\s*\)?\s*$/i, function () { each = true; return ''; });
   var m = text.match(/^([A-Z0-9].*?)\s+([A-Z][A-Za-z.'-]*)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)$/);
   if (!m) return null;
   if (THREAD_BARE_SEPARATOR_RE.test(m[1])) return null;
   if (!/[A-Za-z]/.test(m[1])) return null;
   if (!buyers[m[2].toLowerCase()]) return null;
   if (THREAD_PROSE_RE.test(text)) return null;
-  var head = m[1], lotSize = 1;
+  var head = m[1], lotSize = 1, quantity = 1;
   head = head.replace(/\s+x\s*(\d+)\s*$/i, function (all, n) { lotSize = parseInt(n, 10); return ''; });
-  return { item: head, quantity: 1, lotSize: lotSize, price: threadMoney(m[3]),
+  // A LEADING COUNT, but only when the line says `each`. `24 Avery Potions Trip
+  // $0.25 (each)` is twenty-four tokens at a quarter; without the count the two
+  // lines of that group weigh 1 against 1 and the mode is a coin toss, where the
+  // recorded price is the one 24 tokens went at. `each` is what licenses it —
+  // the word says the price is per token, so the number in front is how many.
+  // Bounded below 200 for the reason every count here is: a four-digit year in
+  // that position multiplies.
+  head = head.replace(/^(\d{1,3})\s+(?=\D)/, function (all, n) {
+    if (!each) return all;
+    quantity = parseInt(n, 10);
+    return '';
+  });
+  return { item: head, quantity: quantity, lotSize: lotSize, price: threadMoney(m[3]),
     buyer: m[2], rule: 'item-buyer-known' };
 }
 
@@ -1610,6 +1659,10 @@ var THREAD_FALLBACKS = [
   function (s) { return s.replace(/\s+fragments?\s*$/i, ''); },
   function (s) { return s.replace(/^.*\b(gold\s+)?reserve bar\b.*$/i, '1,000 GP Gold Bar'); },
   function (s) { return s.replace(/^.*\b1,?000 gp bars?\b.*$/i, '1,000 GP Gold Bar'); },
+  // A CONSOLIDATED BAR IS GOLD, whatever it is called — `25K Eldritch Ore Bar`,
+  // `5K Mithral Bar`, `5K bar`. The same test that gives the lot size gives the
+  // name, so the two can never disagree: a bar this resolves must also divide.
+  function (s) { return threadGoldBarSize(s) ? '1,000 GP Gold Bar' : s; },
 
   // TWO TOKENS, AND ONE NAME CONTAINS THE OTHER. `+1 Turkey Leg of Smiting` is
   // the 2k Bonus; `+1 Turkey Leg` is the Preorder Bonus. Threads write both
@@ -1646,6 +1699,17 @@ var THREAD_FALLBACKS = [
   // after the typo, one of them at the auction's own recorded $0.50. No CSV
   // anywhere spells it `Avron`, so there is nothing here to arbitrate.
   function (s) { return s.replace(/\bavron(['’]s)?\b/i, "Averon's"); },
+  // `Avery Potions` is Fred K's name for `Averon's Cherry Ale` — CONFIRMED by
+  // the maintainer 2026-08-25, and asked rather than assumed because it is not a
+  // contraction the way his `AI` and `AP` are, and `Averon's` also names a
+  // `+3 Cherry Bomb`, a `Cherry Wine` and a `Cherry Mead`. The evidence that
+  // made it worth asking: his heading says `Avery Potions (44)`, his two lines
+  // are 24 and 20, and the first is priced at the $0.25 the sheet records as
+  // 202415's Preorder Bonus.
+  // Absolute, not a substitution, because the line carries a count in front of
+  // it — `24 Avery Potions` — and a rewrite in place leaves `24 Averon's Cherry
+  // Ale`, which resolves to nothing just as surely.
+  function (s) { return /\bavery\s+potions?\b/i.test(s) ? "Averon's Cherry Ale" : s; },
 
   // AN ORDINAL SPELLED OUT IS THE SAME ORDINAL. Flik writes
   // `Mark of the Third Tenet` where the sheet writes `Mark of the 3rd Tenet` —
@@ -1902,6 +1966,11 @@ function threadResolveLots(lots, season, index) {
     // states it twice. See threadDrawLotSize.
     var draw = threadDrawLotSize(marked.name, lotSize);
     if (draw) lotSize = draw;
+    // A consolidated gold bar states its own lot size and overrides whatever was
+    // read off the line, because the number IS the name: `5K Mithril Bar 1` must
+    // divide by five and not by the trailing lot number. See threadGoldBarSize.
+    var bars = threadGoldBarSize(marked.name);
+    if (bars) lotSize = bars;
     var base = stripDecorations(q.name === undefined ? marked.name : q.name);
     // Per TOKEN, never per lot: `10x Darkwood Plank` at $12 is $1.20 recorded.
     var unit = roundCents(lot.price / lotSize);
@@ -2195,6 +2264,43 @@ function threadPlan(pages, target, tokenMetadataRows) {
   }
   prices.sort(function (a, b) { return a.Item < b.Item ? -1 : a.Item > b.Item ? 1 : 0; });
 
+  // THE GOLD IN AN 8K ORDER IS 44 OR 45 BARS *(maintainer, 2026-08-25)*, so the
+  // bars a thread sells should come to that — and this is the only check there
+  // is on whether a CONSOLIDATED bar belongs to the order at all.
+  //
+  // threadGoldBarSize divides every one of them, because 25 gold bars is what
+  // the token IS. But a `25K Eldritch Ore Bar` the auctioneer added from his own
+  // collection is an augment, and the arithmetic cannot tell it from the order's
+  // own gold — only the TOTAL can. Measured over the 89 forum auctions of
+  // 2022-2024, and it holds on 85 of them; every one of the four exceptions is
+  // explained by a row the maintainer entered by hand:
+  //
+  //   20222   35 bars, 9 short  -> `1,000 GP Gold Bar` x9 recorded as WITHHELD
+  //   202349  69 bars, 24 over  -> its `25,000 GP Reserve Bar` is a contextItems
+  //                               row: 44 of the 69 are the order, the 25K bar
+  //                               is not
+  //   202415  90 bars, 45 over  -> exactly two orders' worth. Post #1 promises
+  //                               to supplement the trade goods from his own
+  //                               collection, and the sheet records
+  //                               `1,000 GP Gold Bar (Bundle)` at 45 x $9
+  //   20225   8 bars            -> a thread the grammars still read only in part
+  //
+  // Reported, never acted on. Which lots are the order's is a judgement — no
+  // subset of 202415's three 25K and three 5K bars sums to 45 — so this says the
+  // sum is wrong and leaves the split to the person reading it. Both totals are
+  // accepted: 2022 and 2023 run to 44 and 2024 to 45.
+  for (i = 0; i < prices.length; i++) {
+    if (prices[i].Item !== '1,000 GP Gold Bar') continue;
+    var bars = prices[i].quantity;
+    if (bars === 44 || bars === 45) break;
+    problems.push('this thread sells ' + bars + ' gold bars and an 8K order holds 44 or 45. ' +
+      (bars > 45
+        ? 'The surplus is the auctioneer\'s own stock — a consolidated bar counted into the ' +
+          'order here may be an augment, and belongs in contextItems rather than the price.'
+        : 'Some gold was withheld, or a line carrying it went unread — check the leftovers.'));
+    break;
+  }
+
   var onyx = [];
   for (i = 0; i < resolved.onyxOrder.length; i++) {
     var o = resolved.onyx[resolved.onyxOrder[i]];
@@ -2417,6 +2523,7 @@ if (typeof module !== 'undefined') {
     threadRuleLot: threadRuleLot,
     threadBareLot: threadBareLot,
     threadBuyerLot: threadBuyerLot,
+    threadGoldBarSize: threadGoldBarSize,
     threadTableHeader: threadTableHeader,
     threadTableLot: threadTableLot,
     threadTidyName: threadTidyName,
