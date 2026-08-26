@@ -24,8 +24,8 @@
       "lots": 82,
       "withheld": 1,
       "reconciles": "202640",
-      "reproduces": 6,
-      "why": "Already aggregated, so it contributes no rawPricesData rows — its two values per row are a min and a max, not two sales. It reconciles with 202640 and with nothing else (7 of 13 items on a min/max comparison against every 2026 auction; the runner-up scores 2), so the auction was MEASURED, not read off the filename, which says \"#1\" and is dated April. But it only agrees with the sheet on 6 of 13 items once the rows are built, and it differs in both directions — so this shape is imported with a caution, not trusted. Most of its names use the trailing-quantity spelling (AI 10x) and the abbreviations, so it is also the normalisation case. Golden Ticket | Withheld is the withheld marker.",
+      "reproduces": 7,
+      "why": "Already aggregated, so it contributes no rawPricesData rows — its two values per row are a min and a max, not two sales. It reconciles with 202640 and with nothing else (7 of 13 items on a min/max comparison against every 2026 auction; the runner-up scores 2), so the auction was MEASURED, not read off the filename, which says \"#1\" and is dated April. But it only agrees with the sheet on 7 of 14 items once the rows are built, and it differs in both directions — so this shape is imported with a caution, not trusted. Most of its names use the trailing-quantity spelling (AI 10x) and the abbreviations, so it is also the normalisation case. Golden Ticket | Withheld is the withheld marker.",
       "rows": 44,
       "knownDifferences": [
         "Alchemist's Ink",

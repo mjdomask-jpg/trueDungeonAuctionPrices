@@ -31,7 +31,7 @@
  *     twentieth is a duplicated row in the sheet rather than a parser error.
  *     **This is the format to ask auctioneers for**, and the one this file is
  *     built around.
- *   - **The low/high shape agrees on 6 of 13 and differs on 7**, in BOTH
+ *   - **The low/high shape agrees on 7 of 14 and differs on 7**, in BOTH
  *     directions — sometimes wider than the recorded range, sometimes
  *     narrower. An earlier draft. Imported with a loud caution rather than
  *     refused, since the sheet's own rows for that auction are not internally
@@ -54,7 +54,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var FORUM_VERSION = '2026-08-22.3';
+var FORUM_VERSION = '2026-08-26.1';
 
 /** The tab the operator pastes the auctioneer's file into. */
 var FORUM_STAGING_TAB = 'forumStaging';
@@ -427,14 +427,14 @@ function forumPlanImport(values, targetSeason, tokenMetadataRows) {
   // An already-aggregated file is a WEAKER source than a per-lot one, and the
   // difference is measured rather than assumed. Replayed against the only
   // auction there is a file for, the per-lot shape reproduces the sheet on 19
-  // of 20 items; the low/high shape agrees on 7 of 13 and disagrees on 6 — in
+  // of 20 items; the low/high shape agrees on 7 of 14 and disagrees on 7 — in
   // BOTH directions, sometimes wider than the sheet and sometimes narrower. One
   // of the two is wrong on those items and the file cannot say which, so this
   // shape is imported only with the operator's eyes on the numbers.
   if (staged.columns === 2) {
     cautions.push('this file is already aggregated to a low/high pair, which is a WEAKER source than a ' +
       'per-lot file and has not been shown to reproduce the sheet. Replayed against the one auction there ' +
-      'is a file for, it agreed on 6 of 13 items and differed on 7 — in both directions, sometimes wider ' +
+      'is a file for, it agreed on 7 of 14 items and differed on 7 — in both directions, sometimes wider ' +
       'than the recorded range and sometimes narrower. Treat these numbers as a draft, check them, and ' +
       'ask for a per-lot file if the auctioneer can send one.');
   }
