@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-26.2';
+var SCRIPT_VERSION = '2026-08-26.3';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -144,6 +144,10 @@ var EXCEPTIONS = {
   '1k gp bar': '1,000 GP Gold Bar',
   '1k gp bars': '1,000 GP Gold Bar',
   '1k gold bar': '1,000 GP Gold Bar',
+  // Ralykam and Dergidan, 2020 — the full four words, which none of the three
+  // shorter forms above covers.
+  '1k gp gold bar': '1,000 GP Gold Bar',
+  '1k gp gold bars': '1,000 GP Gold Bar',
   '1k gold reserve bar': '1,000 GP Gold Bar',
   '1,000 gp bar': '1,000 GP Gold Bar',
   '1,000 gp bars': '1,000 GP Gold Bar',
@@ -232,10 +236,27 @@ function parseQuantity(name) {
  */
 function stripOnyxMarker(name) {
   var s = String(name == null ? '' : name).trim();
+  // `ONXY` — the two letters transposed. Matthew Hayward types it that way on
+  // every UR line of all five of his 2020 Onyx auctions while spelling the
+  // SECTION heading `ONYX` correctly, so the gate below let 100 lots through
+  // as ordinary tokens: five complete Onyx sets, 105 rows, recorded nowhere.
+  // Exactly 100 occurrences in the 143 threads on disk and every one is his;
+  // `onxy` is not a word in any name, so this cannot shadow anything.
+  s = s.replace(/\bonxy\b/gi, 'Onyx');
   if (!/onyx/i.test(s)) return { isOnyx: false, name: s };
   s = s.replace(/\s*\(\s*onyx\s*\)\s*/i, ' ');   // "+2 Sacred Sling (Onyx)"
-  s = s.replace(/^\s*onyx\s+/i, '');             // "Onyx +2 Branding Mace"
+  // "Onyx +2 Branding Mace", and with the season in front of it —
+  // "2020 ONYX C/UC/R Set". The year blocked the strip, so nothing came off the
+  // name, and the guard downstream that requires the marker to have actually
+  // moved then read the set lot as an ordinary token: the 21st row of all five
+  // of Matthew Hayward's Onyx auctions.
+  s = s.replace(/^\s*(?:(?:19|20)\d{2}\s+)?onyx\s+/i, '');
   s = s.replace(/\s+onyx\s*$/i, '');             // "+2 Mug of Battle ONYX"
+  // ...and in the MIDDLE, where it qualifies the set rather than the lot:
+  // 2018's `Proof set of 2018 Onyx Common/Uncommon/Rare Tokens`. Only directly
+  // before `common`, so this cannot reach a token whose own name carries the
+  // word — that is what the three positions above are for.
+  s = s.replace(/\bonyx\s+(?=common)/i, '');
   s = s.replace(/\s*-\s*(19|20)\d{2}\s*$/, '');  // the trailing " - 2023"
   s = s.replace(/\s+/g, ' ').trim();
   var normalized = ONYX_NORMALIZATION[foldName(s)];

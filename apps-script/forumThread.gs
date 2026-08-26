@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-26.4';
+var THREAD_VERSION = '2026-08-26.5';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -84,6 +84,24 @@ var THREAD_NEVER_PRICE_HEADERS = [
   'min bid', 'minimum bid', 'min', 'minimum', 'starting bid', 'start bid',
   'opening bid', 'reserve', 'increment', 'bid increment',
 ];
+
+/**
+ * Merchandise the project does not track, dropped rather than proposed.
+ *
+ * The printed adventure modules are in 31 of the 35 auctions of 2018-2020 —
+ * eight sets a time at $0.25 to $1.75 — and `prices.csv` records none of them
+ * in any season, `tokenMetadata` has no entry for them at all. They are books,
+ * not tokens (maintainer, 2026-08-26: ignore them entirely), and left in they
+ * are the single largest source of context candidates in the early seasons:
+ * around ninety of them, one per lot, under a dozen spellings.
+ *
+ * This is the ONLY list of its kind, and it should stay that way. Everything
+ * else that fails to resolve is reported, because an unread line is the thing
+ * this file exists to surface — see the leftovers in `unparsed`. A name gets in
+ * here only when the maintainer has said the item is not tracked.
+ */
+var THREAD_NOT_TRACKED_RE =
+  /^\s*(?:signed\s+cop(?:y|ies)\s+of\s+(?:both\s+|the\s+)?)?(?:(?:19|20)\d{2}\s+)?(?:complete\s+|full\s+)?(?:set\s+of\s+)?(?:\d+\s*x?\s*)?(?:(?:19|20)\d{2}\s+)?(?:complete\s+)?(?:set\s+of\s+\d+\s+)?adventure\s+modules?\b|^\s*modules?\s*\d*\s*$|^\s*set\s+of\s+(?:19|20)\d{2}\s+modules?\s*$/i;
 
 /** Column headers that DO name what an item sold for. */
 var THREAD_PRICE_HEADERS = [
@@ -292,6 +310,78 @@ var THREAD_GOLD_WORD_RE = /\b(bar|mithral|mithril|eldritch|ore|reserve|gold|gp)\
  * itself in threadPlan for what is and is not known about it.
  */
 var THREAD_GOLD_COUNTED_RE = /(super|ultra)\s+condensed/i;
+
+/**
+ * How many `1,000 GP Gold Bar` a Super/Ultra Condensed order holds, BY SEASON.
+ *
+ * It was 44-or-45 for as long as only 2022-2026 had been read, and the early
+ * seasons say plainly that the number moved:
+ *
+ *     2018-2020   43     19 threads, no other value read in full
+ *     2022-2023   44     78 threads
+ *     2024-2026   45     24 threads
+ *
+ * A ladder, not a constant — so an unqualified 44-or-45 reports every one of
+ * 2018-2020's nineteen threads as a bar short, which is noise on every early
+ * import and hides the real ones. 202019's own bidders say it out loud: *"I saw
+ * the 43 GP bars and another 16"*.
+ *
+ * A total BELOW the band is a parse gap rather than a smaller order — the
+ * threads reading 1, 2, 5 or 8 bars are ones whose gold lines are still partly
+ * unread — which is why only totals in the plausible band were counted when
+ * this table was measured.
+ *
+ * Seasons absent from the table keep the old pair, which is the safe default:
+ * 2021 has never been fetched, and a season after 2026 has not happened.
+ * 2022 carries one thread at 45 against forty-six at 44, so both are accepted
+ * there rather than pinning a number a real auction contradicts.
+ */
+var THREAD_GOLD_BY_SEASON = {
+  2018: [43], 2019: [43], 2020: [43],
+  2022: [44, 45], 2023: [44],
+  2024: [45], 2025: [45], 2026: [45],
+};
+var THREAD_GOLD_DEFAULT = [44, 45];
+
+/** The bar counts an order of this season may hold. */
+function threadGoldExpected(season) {
+  var key = parseInt(season, 10);
+  return THREAD_GOLD_BY_SEASON[key] || THREAD_GOLD_DEFAULT;
+}
+/**
+ * A lot RANGE carried in the item's own name: `Dwarven Steel #1-10`.
+ *
+ * A COUNT, NOT A LOT SIZE — and that is the whole point of it being separate
+ * from threadGoldBarSize and threadDrawLotSize, which both divide.
+ * `Dwarven Steel #1-10 - $3.00 - Eel` is ten pieces of steel at three dollars
+ * EACH; read as a lot size it becomes ten at thirty cents, and read as nothing
+ * at all — which is what happened — it becomes one, so the quantity-weighted
+ * mode weighs a ten-token lot the same as a single.
+ *
+ * The name was being lost with it. edwin, Starkhound and Matthew Hayward all
+ * write their 2018 trade goods this way, and every line came out as an
+ * unresolved context candidate called `Dwarven Steel -10`, `Mystic Silk -64`,
+ * `Minotaur Hide -40` — one phantom item per lot, named after the range.
+ *
+ * Refuses a descending or absurd range, and caps at 250 because the largest
+ * quantity `contextItems` records is 230. That is what keeps a pair of YEARS
+ * out of it: `#2017-2020` would otherwise read as four tokens.
+ */
+function threadNameRange(name) {
+  // The `#` may be repeated on the far end (`#1-#18`, edwin) and a separator
+  // may survive on the right of it (`Dwarven Steel #1-16 -`, where the grammar
+  // took its price out of the middle of the line). Both are the same range.
+  var m = String(name == null ? '' : name).match(/^([\s\S]*?)\s*#\s*(\d+)\s*[-–]\s*#?\s*(\d+)\s*[-–]?\s*$/);
+  if (!m) return null;
+  var from = parseInt(m[2], 10), to = parseInt(m[3], 10);
+  if (!(to >= from)) return null;
+  var count = to - from + 1;
+  if (count > 250) return null;
+  var base = m[1].trim();
+  if (!/[A-Za-z]/.test(base)) return null;
+  return { count: count, name: base };
+}
+
 function threadGoldBarSize(name) {
   var s = String(name == null ? '' : name);
   if (!THREAD_GOLD_WORD_RE.test(s)) return 0;
@@ -559,6 +649,96 @@ var THREAD_RULES = [
       return { item: null, quantity: m[2] ? (parseInt(m[2], 10) - parseInt(m[1], 10) + 1) : 1,
         price: threadMoney(m[4]), buyer: m[3] };
     } },
+
+  // "#1-42 - Eagle - $2.81"       Matthew Hayward again, the lot-range form
+  // above with dashes where the other has a colon. Two lines in the 143 threads
+  // on disk and both his.
+  { id: 'range-dash-buyer-price',
+    re: /^#\s*(\d+)\s*[-–]\s*(\d+)\s*[-–]\s*([A-Za-z][^$]{0,30}?)\s*[-–]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) {
+      return { item: null, quantity: parseInt(m[2], 10) - parseInt(m[1], 10) + 1,
+        price: threadMoney(m[4]), buyer: m[3] };
+    } },
+
+  // "2019/20 Ultra Rare of Your Choice #2-#4 - $130/each – Bidder 32"   Edwin,
+  // 2020 — the item names itself, carries its own range, and says `/each` so
+  // there is nothing to infer about whether the price is per token. 41 lines,
+  // all his. threadNameRange takes the range off the name afterwards; this rule
+  // only has to keep the name intact and get the count right.
+  { id: 'item-range-each-buyer',
+    re: /^(.*[A-Za-z].*?)\s*#\s*(\d+)\s*[-–]\s*#?\s*(\d+)\s*[-–]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*\/?\s*(?:ea|each)?\s*[-–]\s*([A-Za-z].{0,30}?)\s*$/i,
+    take: function (m) {
+      return { item: m[1], quantity: parseInt(m[3], 10) - parseInt(m[2], 10) + 1,
+        price: threadMoney(m[4]), buyer: m[5] };
+    } },
+
+  // "(4) Vikings @ $98 each"      Lord Brian, 2020 — the rule below is his 2022
+  // shape and demands the run of `=` he had stopped using by then. 95 lines,
+  // all 2020. The `(N)` is what makes it safe: without it the text before the
+  // `@` is as likely to be an ITEM as a buyer — 2023 has 55 lines of
+  // `Gib Gub's Handy Acorn @ $1` — so the bare form is deliberately NOT read.
+  { id: 'qty-buyer-at-price-each',
+  // `=` is excluded from the buyer so his 2022 form — `(3) Lanfear====@ $105
+  // each`, where the run of equals signs is the rule-off — still belongs to
+  // qty-buyer-rule below. The suite caught that on the first run.
+    re: /^\((\d+)\)\s*([A-Za-z][^@$=]{0,30}?)\s*@\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(?:ea|each)?\s*$/i,
+    take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[3]), buyer: m[2] }; } },
+
+  // "Qty. 42 : RESERVE - $16.00"  Matthew Hayward, from 2019 on — the same
+  // colon-and-dash punctuation as his lot-range form above, with an explicit
+  // count in front instead of a range. Nine of his auctions across 2018-2020
+  // use it and not one of them read a single line: 20203 alone is 23 recorded
+  // items and 53 unread lines.
+  //
+  // THE PRICE IS PER ITEM, not per lot. His is a uniform-price auction — his
+  // own post says "All winning bidders pay the same amount" — and the sheet
+  // agrees: 20203's `1000 GP Bar` shows `Qty. 1 : Faerie Dragon - $16.00` and
+  // `Qty. 42 : RESERVE - $16.00`, and prices.csv records $16.
+  //
+  // `RESERVE` IS A BUYER, NOT A STATUS. It is the auctioneer covering a lot at
+  // his own reserve, and those lots sold: 20203's whole 8k Bonus row is one
+  // `Qty. 1 : RESERVE - $480.00` line and its 1k Bonus row is
+  // `Qty. 8 : RESERVE - $45.00`, both recorded at exactly those prices. Read
+  // as unsold, two of that auction's most valuable rows disappear.
+  { id: 'qty-colon-buyer-price',
+    re: /^qty\.?\s*(\d+)\s*:\s*(.+?)\s*[-–]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/i,
+    take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[3]), buyer: m[2] }; } },
+
+  // "ONXY Arcane Belt : Zolla - $105.00"   Matthew Hayward's Onyx UR lines, and
+  // "Wish Ring: RESERVE - $240"            his single-lot premium items.
+  //
+  // The sibling of the rule above for a lot that NAMES ITSELF instead of
+  // inheriting a heading — which is what makes a rule this loose safe, the same
+  // reasoning as threadBareLot. It reads 106 lines across the corpus and every
+  // one is his; the only other line matching the shape anywhere is a bidder's
+  // prose in a 2023 thread ("Also want a shot at the Silver-Ship Passage:
+  // Mirthwood - $60.00"), which sits in a post that is not the results post and
+  // so is never read.
+  //
+  // BOTH SIDES MUST CARRY A LETTER. Without that, `Short $ of goal: -$2343`
+  // matches with a single space for the buyer and the minus for the separator —
+  // a funding-progress line proposed as a $2,343 lot.
+  { id: 'item-colon-buyer-price',
+    re: /^([^:]*[A-Za-z][^:]*?)\s*:\s*([^:]*[A-Za-z][^:]*?)\s*[-–]\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[3]), buyer: m[2] }; } },
+
+  // "Orb of Dragonkind (Dragon) : $465 Gargoyle"   Starkhound/Edwin, 2018
+  // "Orb of Dragonkind: $575- Kord"                Azzy, 2019
+  //
+  // The mirror of the rule above — price first, buyer last — and one shape for
+  // both auctioneers once the dash is optional on either side of the price.
+  // Between them these two wrote most of 2018 and 2019, and neither read a line.
+  //
+  // NEITHER SIDE MAY CONTAIN A `$`. Without that the rule reads the running
+  // total: `Current Total: $7,849 of $8,000 Goal` matches with `of $8,000 Goal`
+  // for a buyer, and `Current bids : $5507 of $7850` likewise — a funding line
+  // proposed as a lot in a season where the auctioneer posts one every day.
+  // The buyer is also length-capped, because a bidder's name is short and prose
+  // is not. So constrained it reads 435 lines, every one of them in 2018-2020,
+  // and NOTHING in any of the five swept seasons.
+  { id: 'item-colon-price-buyer',
+    re: /^([^:$]*[A-Za-z][^:$]*?)\s*:\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–]?\s*([A-Za-z][^:$]{0,38}?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[2]), buyer: m[3] }; } },
 
   // "(3) Lanfear====@ $105 each" Lord Brian
   //
@@ -865,6 +1045,23 @@ var THREAD_RULES = [
   { id: 'item-qty-bare-price',
     re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s+([\d][\d,]*(?:\.\d{1,2})?)\s+([A-Za-z].*)$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[4] }; } },
+
+  // "4 125 - Hextor"   Azzy, with the `$` dropped on four lines whose
+  // neighbours all carry it (`3 $125 - WeeJas`).
+  //
+  // LAST, so it only ever sees a line every `$`-anchored rule refused. This is
+  // the third time a missing dollar sign has arrived, and its cost is never the
+  // line: with no `$` and no `@` the header guard cannot see a price either, so
+  // the line became the section heading and RENAMED the eleven PYP lots beneath
+  // it — 202010 proposed `4 125 - Hextor` as a context item worth $1,500.
+  //
+  // Kept tight because a bare number pair is the loosest thing in this file:
+  // a count of at most three digits, a short buyer that starts with a letter
+  // and carries no `$`. So constrained it reads four lines in the 143 threads
+  // on disk and nothing anywhere else.
+  { id: 'qty-bare-price-buyer',
+    re: /^(\d{1,3})\s+(\d[\d,]*(?:\.\d{1,2})?)\s*[-–]\s*([A-Za-z][^$]{0,30}?)\s*$/,
+    take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[2]), buyer: m[3] }; } },
 ];
 
 /**
@@ -1413,6 +1610,15 @@ function threadTidyName(name) {
  */
 function threadOnyxSetName(name) {
   return String(name == null ? '' : name)
+    // (`2020 ONYX C/UC/R Set` reaches here as `C/UC/R Set`: stripOnyxMarker
+    // takes the year and the marker off, which it has to do anyway or the lot
+    // is not recognised as Onyx at all.)
+    //
+    // 2018 SPELLS THE SET OUT IN FULL — `Proof set of 2018 Common/Uncommon/Rare
+    // Tokens`, once stripOnyxMarker has taken the marker out of the middle.
+    // Both of that season's auctioneers who name the set write it this way, and
+    // it is the 21st row of each of their auctions.
+    .replace(/^\s*proof\s+set\s+of\s+(?:(?:19|20)\d{2}\s+)?common[\s\S]*$/i, 'C/UC/R Set')
     // THE WORD `Full` GOES ON EITHER END, AND A DASH MAY LEAD. AlanP writes
     // `Full C/U/R Set` — the same three words abbreviated one letter further —
     // and Beertram and Matt Soto write `- C/UC/R Full Set`. All four lots close
@@ -1811,7 +2017,8 @@ var THREAD_FALLBACKS = [
   // auction reposting its table, and `prices.csv` holds no Patron name but
   // `Patron Pin` and `Patron Token 1`. Unread it was one of the two names that
   // kept 202645 — the densest thread of 2026 — below the parse gate.
-  function (s) { return /\bpatron\b/i.test(s) && /\b(pin|code|package)\b/i.test(s) ? 'Patron Pin' : s; },
+  // `badge` joins them for 2018: Starkhound sells `Patron badge and access`.
+  function (s) { return /\bpatron\b/i.test(s) && /\b(pin|code|package|badge)\b/i.test(s) ? 'Patron Pin' : s; },
 
   // One word may stand between the abbreviation and the noun: WM13 sells
   // `AG Membership Buttons and Codes`, and with the codes stripped by the rule
@@ -1827,7 +2034,32 @@ var THREAD_FALLBACKS = [
   // two Preorder Bonus lots — 32 tokens — were proposed as an augment named
   // after the typo, one of them at the auction's own recorded $0.50. No CSV
   // anywhere spells it `Avron`, so there is nothing here to arbitrate.
-  function (s) { return s.replace(/\bavron(['’]s)?\b/i, "Averon's"); },
+  // `Avron` (Casey Wren, a dropped syllable) and `Avernon` (the early seasons,
+  // an inserted `n`) are both the Preorder Bonus's `Averon`. The second spelling
+  // outnumbers the right one in 2018-2020 — sixteen thread lines to two — and
+  // `tokenMetadata`'s own 2018 row carries it as well. **`Averon's` is the
+  // official spelling** (maintainer, 2026-08-26); the 2018 row is a data fix,
+  // and this makes every thread resolve either way meanwhile.
+  function (s) { return s.replace(/\bav(?:ron|ernon|eron)(['’]s|s)?\b/i, "Averon's"); },
+  // `Dragon Orb` is the Orb of Dragonkind — the 8k Bonus — under Starkhound's
+  // shorthand, in five auctions across 2018 and 2019. Anchored to the whole
+  // name so it cannot reach a real Orb of Dragonkind variant.
+  // A trailing lot number is allowed for, because the strip that would remove
+  // it sits far below this in the chain and the fallbacks are cumulative — by
+  // the time it runs, this rule has already had its one chance.
+  function (s) { return /^\s*dragon\s+orb(\s+\d+)?\s*$/i.test(s) ? 'Orb of Dragonkind' : s; },
+  // `Adventure Guild Button` — the possessive dropped from the FIRST word as
+  // well as the second, which the rule below (anchored on `adventurer`) cannot
+  // reach. Three auctions across 2019 and 2020.
+  function (s) { return s.replace(/\badventurer?'?s?'?\s+guild\b/i, "Adventurers' Guild"); },
+  // "2020 or 2019 UR of Choice" / "2019/20 Ultra Rare of Your Choice" — the PYP
+  // lot under the early seasons' names for it, six auctions' worth. The
+  // auction's own year has already come off the front by the time this runs,
+  // which is why the pattern starts at the `or`.
+  function (s) { return /^\s*(?:or\s+)?(?:(?:19|20)\d{2}\s*[/-]?\s*)*(?:\d{2}\s+)?(?:ur|ultra\s*rare)s?\s+(?:of\s+)?(?:your\s+|of\s+)?(choice|selection)\s*$/i.test(s) ? 'Ultra Rare' : s; },
+  function (s) { return /^\s*1[,.]?000\s*gp\s*$/i.test(s) || /^\s*1k\s*gp\s*$/i.test(s) ? '1,000 GP Gold Bar' : s; },
+  // 2018's Onyx set spelled out in full, by two auctioneers.
+  function (s) { return /^\s*proof\s+set\s+of\s+(?:19|20)\d{2}\s+onyx\s+common/i.test(s) ? 'C/UC/R Set' : s; },
   // `Avery Potions` is Fred K's name for `Averon's Cherry Ale` — CONFIRMED by
   // the maintainer 2026-08-25, and asked rather than assumed because it is not a
   // contraction the way his `AI` and `AP` are, and `Averon's` also names a
@@ -2081,6 +2313,10 @@ function threadResolveLots(lots, season, index) {
     // maintainer under exactly that name, year and `10x` and all.
     var ownYear = String(marked.name).match(/^\s*((?:19|20)\d{2})\s+([\s\S]+)$/);
     if (ownYear && ownYear[1] === String(season)) marked.name = ownYear[2];
+    // A lot RANGE in the name is a COUNT. Taken off before parseQuantity, which
+    // would otherwise never see the name underneath it. See threadNameRange.
+    var nameRange = threadNameRange(marked.name);
+    if (nameRange) marked.name = nameRange.name;
     var q = parseQuantity(marked.name);
     // Two places can state a lot size and both count: the item's own name
     // (`10x Darkwood Plank`, the rule verified against 18,466 Trent lots) and
@@ -2103,7 +2339,7 @@ function threadResolveLots(lots, season, index) {
     var base = stripDecorations(q.name === undefined ? marked.name : q.name);
     // Per TOKEN, never per lot: `10x Darkwood Plank` at $12 is $1.20 recorded.
     var unit = roundCents(lot.price / lotSize);
-    var quantity = lot.quantity * lotSize;
+    var quantity = lot.quantity * lotSize * (nameRange ? nameRange.count : 1);
 
     // AN OFF-ORDER HEADING OUTRANKS AN `(Onyx)` MARKER, so this test comes
     // first. The marker says what the token IS; the heading says whose it is,
@@ -2115,6 +2351,11 @@ function threadResolveLots(lots, season, index) {
     // rows for 202346 while the six that do not went to context: one section,
     // split down the middle by a suffix. An Onyx auction really does sell an
     // Onyx `+2 Chaos Cannon`, so the extra row looks entirely correct.
+    // Merchandise the project does not track — the printed adventure modules.
+    // Dropped here, above every routing decision, so it cannot reach the price
+    // spine, onyx.csv or the context list. See THREAD_NOT_TRACKED_RE.
+    if (THREAD_NOT_TRACKED_RE.test(base) || THREAD_NOT_TRACKED_RE.test(marked.name)) continue;
+
     if (lot.section === 'offorder') {
       if (!base) { unnamed.push(lot); continue; }
       context.push({ name: base, price: lot.price, quantity: lot.quantity, lot: lot,
@@ -2342,16 +2583,28 @@ function threadPlan(pages, target, tokenMetadataRows) {
     return threadResolveName(threadTidyName(name), target.auctionSeason, index, null);
   }
 
-  var scans = [], best = null, scan = null, snapshots = 0;
+  var scans = [], best = null, scan = null, snapshots = 0, first = null, most = null;
   for (i = 0; i < posts.length; i++) {
     var candidate = threadScanPost(posts[i].text, resolveForScan);
     scans.push({ post: posts[i], scan: candidate });
-    if (posts[i].num === 1 && candidate.lots.length > 0) { scan = candidate; best = posts[i]; }
+    if (posts[i].num === 1) first = { post: posts[i], scan: candidate };
+    if (!most || candidate.lots.length > most.scan.lots.length) most = { post: posts[i], scan: candidate };
   }
-  if (!scan) {
-    for (i = 0; i < scans.length; i++) {
-      if (!scan || scans[i].scan.lots.length > scan.lots.length) { scan = scans[i].scan; best = scans[i].post; }
-    }
+  // POST #1 WINS ONLY WHERE IT IS ACTUALLY THE TABLE, not merely where it holds
+  // a line some rule could read. `> 0` was enough while the grammars were
+  // strict, and stopped being enough as they loosened: 202018's post #1 is
+  // jpotter's rules and shipping terms, one line of which a later rule reads,
+  // and it beat the `AUCTION COMPLETED` table in post #2 — 21 recorded items,
+  // read as nothing.
+  //
+  // The same 0.8 the snapshot count below uses, and for the same reason: a
+  // near-complete copy is what "this is the results table" means. Post #1 still
+  // wins every tie, which is the whole point of preferring it — it is edited in
+  // place after the close, where a repost is a mid-auction snapshot.
+  if (first && first.scan.lots.length > 0 && first.scan.lots.length >= most.scan.lots.length * 0.8) {
+    scan = first.scan; best = first.post;
+  } else if (most) {
+    scan = most.scan; best = most.post;
   }
   for (i = 0; i < scans.length; i++) {
     if (scans[i].post.num !== best.num && scans[i].scan.lots.length >= Math.max(3, scan.lots.length * 0.8)) snapshots++;
@@ -2430,12 +2683,14 @@ function threadPlan(pages, target, tokenMetadataRows) {
   // subset of 202415's three 25K and three 5K bars sums to 45 — so this says the
   // sum is wrong and leaves the split to the person reading it. Both totals are
   // accepted: 2022 and 2023 run to 44 and 2024 to 45.
+  var expected = threadGoldExpected(target.auctionSeason);
   for (i = 0; THREAD_GOLD_COUNTED_RE.test(target.auctionStyle) && i < prices.length; i++) {
     if (prices[i].Item !== '1,000 GP Gold Bar') continue;
     var bars = prices[i].quantity;
-    if (bars === 44 || bars === 45) break;
-    problems.push('this thread sells ' + bars + ' gold bars and an 8K order holds 44 or 45. ' +
-      (bars > 45
+    if (expected.indexOf(bars) >= 0) break;
+    problems.push('this thread sells ' + bars + ' gold bars and a ' + target.auctionSeason +
+      ' 8K order holds ' + expected.join(' or ') + '. ' +
+      (bars > expected[expected.length - 1]
         ? 'The surplus is the auctioneer\'s own stock — a consolidated bar counted into the ' +
           'order here may be an augment, and belongs in contextItems rather than the price.'
         : 'Some gold was withheld, or a line carrying it went unread — check the leftovers.'));
@@ -2665,6 +2920,7 @@ if (typeof module !== 'undefined') {
     threadBareLot: threadBareLot,
     threadBuyerLot: threadBuyerLot,
     threadGoldBarSize: threadGoldBarSize,
+    threadGoldExpected: threadGoldExpected,
     threadTableHeader: threadTableHeader,
     threadTableLot: threadTableLot,
     threadTidyName: threadTidyName,

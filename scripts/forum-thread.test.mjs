@@ -513,16 +513,19 @@ for (const { t, plan } of perThread) {
     if (said) goldNoisy.push(`${t.auction} (${target.auctionStyle})`);
     continue;
   }
-  if (gold.quantity === 44 || gold.quantity === 45) continue;
-  goldOff.push(`${t.auction} ${t.auctioneer} ${gold.quantity}`);
+  // The count is per SEASON — 43 in 2018-2020, 44 in 2022-2023, 45 from 2024 —
+  // so the expectation comes from the same table the parser uses rather than
+  // being restated here, where the two could drift apart.
+  if (TH.threadGoldExpected(target.auctionSeason).includes(gold.quantity)) continue;
+  goldOff.push(`${t.auction} ${t.auctioneer} ${gold.quantity} (${target.auctionSeason} expects ${TH.threadGoldExpected(target.auctionSeason).join('/')})`);
   if (!said) goldSilent.push(`${t.auction} (${gold.quantity})`);
 }
 ok(!goldSilent.length,
-  'thread(s) whose gold does not total 44 or 45 and that said nothing about it: ' + goldSilent.join(', '));
+  'thread(s) whose gold misses its season\'s count and that said nothing about it: ' + goldSilent.join(', '));
 ok(!goldNoisy.length,
-  'thread(s) counted against 44/45 that should be out of scope: ' + goldNoisy.join(', '));
-ok(goldOff.length > 0, 'no thread misses the 44/45 gold count — the check is not being exercised');
-console.log(`  ✓ every Super/Ultra Condensed thread's gold totals 44 or 45 bars, or says why not ` +
+  'thread(s) counted against the gold total that should be out of scope: ' + goldNoisy.join(', '));
+ok(goldOff.length > 0, 'no thread misses its season\'s gold count — the check is not being exercised');
+console.log(`  ✓ every Super/Ultra Condensed thread's gold totals its season's count, or says why not ` +
   `(${goldOff.length} flagged: ${goldOff.join(', ')})`);
 
 // A LOT PRICED AT ZERO WAS NOT SOLD. 202337's `AG Button (and code) (4) - $0` is

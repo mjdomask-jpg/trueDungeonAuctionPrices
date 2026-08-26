@@ -5,11 +5,11 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 874,
-    "reproduces": 785,
-    "min": 664,
-    "max": 608,
-    "ties": 37,
+    "itemsMatched": 941,
+    "reproduces": 847,
+    "min": 717,
+    "max": 667,
+    "ties": 38,
     "closeBracketHits": 13,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 13 of the 30 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed. RE-PIN THESE after adding a fixture: they are sums over the corpus, so the three 2025 threads added in 2026-08 moved itemsMatched by 59 while every existing thread stood still or improved, and a stale floor hides the next regression."
   },
@@ -539,6 +539,39 @@
       "itemsMatched": 19,
       "reproduces": 12,
       "why": "A TABLE ROW MUST BE ONE LINE, and this is the thread that proved the `</td><td>` tab was not enough. alesiev centres every cell — `<td><div class=\"bbcode_center\">$41</div></td>` — so the `</div>` emitted a newline before the tab and his seven-column table arrived one cell per line with the tabs stranded on blanks. 0 of 21 items, 119 lines unparsed. Rows are flattened structurally now, in threadHtmlToText, because the shape is HTML rather than an auctioneer's habit. Also `Path Fragment #3`, which is the 8k Bonus and the auction's most valuable lot at $955. What it still cannot do is pick a number: this table gives Qty, Low Bid and High Bid with no per-lot distribution behind them, so the mode has nothing to weigh and it reads the High Bid — the seven items it differs on all lie inside the stated low-high range, which is a judgement the maintainer makes and a parser should not."
+    },
+    {
+      "auction": "20204",
+      "topic": "250559",
+      "auctioneer": "Matthew Hayward",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 23,
+      "reproduces": 23,
+      "why": "THE ONYX AUCTION THE METADATA DOES NOT CALL ONE. Five of Matthew Hayward's 2020 auctions sell a full Onyx set — a `2020 ONYX C/UC/R Set` lot plus twenty named URs — while `auctionStyle` says `Super Condensed` and `onyx.csv` holds nothing for any of them: 105 rows. Three separate misses hid it. He types `ONXY`, transposed, on all 100 UR lines while spelling the section heading correctly; the year in front of `2020 ONYX C/UC/R Set` blocked `stripOnyxMarker`, so nothing came off the name and the guard downstream read the set as an ordinary token; and his `Qty. 42 : RESERVE - $16.00` line shape matched no grammar at all, so the auction read 0 of 23. `RESERVE` is a BUYER — the auctioneer covering a lot at his own reserve — and those lots sold: this auction's whole 8k Bonus row is one RESERVE line.",
+      "onyx": 21
+    },
+    {
+      "auction": "20183",
+      "topic": "246219",
+      "auctioneer": "edwin",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 19,
+      "reproduces": 14,
+      "why": "A LOT RANGE IN THE ITEM'S OWN NAME: `Dwarven Steel #1-10 - $3.00 - Eel` is ten pieces at three dollars EACH. Unread it was worth nothing twice over — the count fell to 1, so the quantity-weighted mode weighed a ten-token lot the same as a single, and the name came out as `Dwarven Steel -10`, a phantom context candidate per lot. edwin, Starkhound and Matthew Hayward all write their 2018 trade goods this way. Also 2018's Onyx set spelled out in full, `Proof set of 2018 Onyx Common/Uncommon/Rare Tokens`, where the marker sits in the MIDDLE of the name.",
+      "onyx": 21
+    },
+    {
+      "auction": "20192",
+      "topic": "248945",
+      "auctioneer": "Azzy",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 18,
+      "reproduces": 17,
+      "why": "PRICE FIRST, BUYER LAST: `Orb of Dragonkind: $575- Kord`, the mirror of the shape above it and one rule with Starkhound's 2018 `Orb of Dragonkind (Dragon) : $465 Gargoyle` once the dash is optional. Between them these two auctioneers wrote most of 2018 and 2019 and neither read a line. NEITHER SIDE MAY CARRY A `$`: without that the rule reads the running total, and Azzy posts one most days — `Current Total: $7,849 of $8,000 Goal` matches with `of $8,000 Goal` for a buyer.",
+      "onyx": 0
     }
   ]
 }
