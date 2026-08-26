@@ -6,9 +6,9 @@
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
     "itemsMatched": 874,
-    "reproduces": 782,
-    "min": 662,
-    "max": 607,
+    "reproduces": 785,
+    "min": 664,
+    "max": 608,
     "ties": 37,
     "closeBracketHits": 13,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 13 of the 30 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed. RE-PIN THESE after adding a fixture: they are sums over the corpus, so the three 2025 threads added in 2026-08 moved itemsMatched by 59 while every existing thread stood still or improved, and a stale floor hides the next regression."
@@ -252,9 +252,9 @@
       "pages": 4,
       "resultsPost": 1,
       "itemsMatched": 21,
-      "reproduces": 19,
+      "reproduces": 21,
       "ties": 1,
-      "why": "PRICE LAST, BUYER IN THE MIDDLE: `Mark of the 1st Tenet (1) - Gortash $85`. Identical in shape to Beertram's line and reversed in meaning, so rule order is what tells them apart. The same auctioneer drops the `$` on one line of his 2025 post (`Elven Bismuth (12) - Alfira 9.25`) and on one here, which is why `item-qty-buyer-bare-price` exists — without it the line carries no `$` and no `@`, so the price guard cannot see a price either and it becomes the section heading. 2026-08-26: two vocabulary misses closed it out to 21 of 21 with nothing unread — WM13 drops the apostrophe from `Drake's Draught` (the whole 32-token Preorder Bonus row, proposed back as an augment) and writes `AG Membership Buttons and Codes` with a word between the abbreviation and the noun. Its five phantom context candidates went with them. What is left is a genuine disagreement about both PREORDER items: the thread sells the chips at $4.00 against a recorded $3.30 and the Draughts at $1.25 against $0.50."
+      "why": "PRICE LAST, BUYER IN THE MIDDLE: `Mark of the 1st Tenet (1) - Gortash $85`. Identical in shape to Beertram's line and reversed in meaning, so rule order is what tells them apart. The same auctioneer drops the `$` on one line of his 2025 post (`Elven Bismuth (12) - Alfira 9.25`) and on one here, which is why `item-qty-buyer-bare-price` exists — without it the line carries no `$` and no `@`, so the price guard cannot see a price either and it becomes the section heading. 2026-08-26: two vocabulary misses closed it out to 21 of 21 with nothing unread — WM13 drops the apostrophe from `Drake's Draught` (the whole 32-token Preorder Bonus row, proposed back as an augment) and writes `AG Membership Buttons and Codes` with a word between the abbreviation and the noun. Its five phantom context candidates went with them. That left a genuine disagreement about both PREORDER items — the thread sold the chips at $4.00 against a recorded $3.30 and the Draughts at $1.25 against $0.50 — and the maintainer moved both to the thread's number, so this now reproduces 21 of 21."
     },
     {
       "auction": "20262",
@@ -263,8 +263,8 @@
       "pages": 5,
       "resultsPost": 1,
       "itemsMatched": 21,
-      "reproduces": 19,
-      "why": "Beertram writes the lot size with the `x` in FRONT — `x10 Treasure Chips (3) - $36` — a third spelling of a fact the corpus already knew two ways (`10x Chips`, `1k GP Bars x5`) and the only one nothing read. Unread, the chips came out at $36 against a recorded $3.50: a clean factor of ten in the price spine, and the auction still rated 21 of 21 names matched. Two lines in the 118 threads on disk, and no shipped name begins with `xN`.",
+      "reproduces": 20,
+      "why": "Beertram writes the lot size with the `x` in FRONT — `x10 Treasure Chips (3) - $36` — a third spelling of a fact the corpus already knew two ways (`10x Chips`, `1k GP Bars x5`) and the only one nothing read. Unread, the chips came out at $36 against a recorded $3.50: a clean factor of ten in the price spine, and the auction still rated 21 of 21 names matched. Two lines in the 118 threads on disk, and no shipped name begins with `xN`. Its Darkwood Plank was also recorded at $1.25 where 106 of the 140 sold at $1.00; the maintainer moved it to $1.00, which is the most-common rule this whole file is built on.",
       "onyx": 21
     },
     {
