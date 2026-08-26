@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-26.1';
+var THREAD_VERSION = '2026-08-26.2';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -331,7 +331,7 @@ var THREAD_BBCODE_RE = /\[\/?[a-z][a-z0-9]*(=[^\]]*)?\]/gi;
 var THREAD_WITHHELD_RE = new RegExp(
   '\\b(keeping|kept|holding back|holding out|withheld|withhold(ing)?|' +
   'not (be )?(includ|auction|sell)|will not be included|excluded|' +
-  'everything except|all except|except (for )?the)\\b', 'i');
+  'everything except|all except|except (for )?the|other than the)\\b', 'i');
 
 /** Phrases that are about bidding, not about withholding. */
 var THREAD_WITHHELD_NOISE_RE = /\b(keep (the )?(bid|bids|it up|going|track|in mind)|keeping (bidder|people|track)|keep this|winning bid)\b/i;
@@ -620,6 +620,24 @@ var THREAD_RULES = [
   // `$` alone is why 202216 read 0 of 23.
   { id: 'item-qty-buyer-at-price',
     re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*[-–—]\s*([^@]*?)\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[4]), buyer: m[3] }; } },
+
+  // "Elven Bismuth (12) - Alfira 9.25"   WM13 — the same shape as
+  // `item-qty-buyer-price` above with the `$` left off, on ONE line of a post
+  // whose other twenty-one carry it. Auctioneers are not consistent with
+  // themselves, and the cost of the omission is not the line: with no rule for
+  // it, `Elven Bismuth (12) - Alfira 9.25` carries no `$` and no `@`, so the
+  // price guard in threadLooksLikeHeader does not see a price either and the
+  // line becomes the SECTION HEADING — the renaming failure, from a missing
+  // dollar sign.
+  //
+  // Kept as a separate rule rather than by making the `$` optional above,
+  // because the dash is what makes it safe: with the buyer required to start
+  // with a letter and the number anchored to the end of the line, it cannot
+  // reach `(1) $105 - Cinder`, `(1) - .$140 - Jo` or `(1) - $175.00 Abert`,
+  // all of which the rules around it read.
+  { id: 'item-qty-buyer-bare-price',
+    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*[-–—]\s*([A-Za-z][^$]*?)\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[4]), buyer: m[3] }; } },
 
   // "Wish Ring (1) - $175.00 Abert"   Beertram, Ralykam, Wade S from 2025
@@ -1351,6 +1369,15 @@ function threadTidyName(name) {
     // parenthesised form (`Alchemist's Ink (x51)`) is stripped above as a stock
     // marker and never reaches this.
     .replace(/^(.*?)\s+x\s*(\d+)(?:\s+\d+)?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
+    // `(all 4)` IS A LOT SIZE, not a stock marker. The parenthetical strip
+    // above wants a leading digit, so AlanP's
+    // `Adventurer's Guild Codes & Buttons (all 4)` kept it, resolved to the
+    // Guild Button and never divided: $2 proposed against a recorded $0.50 in
+    // all three of his 2025 auctions. The word `all` is what makes it a lot —
+    // he is selling the order's four codes as one lot — and it appears on
+    // exactly these three lines in the 106 threads on disk, each dividing to
+    // the recorded price to the cent.
+    .replace(/^(.*?)\s*\(\s*all\s+(\d+)\s*\)\s*$/i, function (m, base, n) { return n + 'x ' + base; })
     .replace(/\s+/g, ' ')
     .trim();
 }
