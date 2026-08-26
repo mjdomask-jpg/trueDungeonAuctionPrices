@@ -25,14 +25,14 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20236,Adventurers' Guild Button,2,5,-10.5,-2.0,8.5,recomputed
 20236,Amulet of Magnifying,1,5,-0.5,-0.8,-0.3,recomputed
 20236,Amulet of Magnifying,1,5,-0.5,-0.8,-0.3,recomputed
-202312,Patron Pin,1,5,-318.11,-434.0,-115.89,recomputed
-202327,Patron Pin,1,5,-318.11,-501.09,-182.98,recomputed
-202327,Path to Enlightenment (Fragment 1),1,5,-541.64,-533.6,8.04,recomputed
-202331,Patron Pin,1,5,-350.57,-488.29,-137.72,recomputed
-202334,Patron Pin,1,5,-350.57,-449.2,-98.63,recomputed
+202312,Patron Pin,1,5,-318.18,-434.0,-115.82,recomputed
+202327,Patron Pin,1,5,-318.18,-501.09,-182.91,recomputed
+202327,Path to Enlightenment (Fragment 1),1,5,-541.74,-533.6,8.14,recomputed
+202331,Patron Pin,1,5,-350.99,-488.29,-137.3,recomputed
+202334,Patron Pin,1,5,-350.99,-449.2,-98.21,recomputed
 202349,Ultra Rare,2,5,-184.41,-174.76,9.65,recomputed
-202350,Path to Enlightenment (Fragment 1),1,5,-541.64,-615.4,-73.76,recomputed
-202351,Path to Enlightenment (Fragment 1),1,5,-541.64,-615.4,-73.76,recomputed
+202350,Path to Enlightenment (Fragment 1),1,5,-541.74,-615.4,-73.66,recomputed
+202351,Path to Enlightenment (Fragment 1),1,5,-541.74,-615.4,-73.66,recomputed
 20242,Ring of the 3rd Circle,1,10,-104.36,-108.6,-4.24,recomputed
 20242,Ring of the 3rd Circle,1,10,-104.36,-108.6,-4.24,recomputed
 20242,Mark of the 3rd Tenet,1,10,-98.07,-90.8,7.27,recomputed
@@ -56,8 +56,8 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20251,Ring of the 2nd Circle,2,10,-157.59,-170.6,-13.01,recomputed
 20251,Mark of the 2nd Tenet,2,10,-162.07,-158.91,3.16,recomputed
 20251,Patron Pin,1,5,-309.45,-352.19,-42.74,recomputed
-20251,Path to Enlightenment (Fragment 3),1,5,-1331.72,-1379.4,-47.68,recomputed
-20251,Wish Ring,1,5,-167.41,-135.2,32.21,recomputed
+20251,Path to Enlightenment (Fragment 3),1,5,-1324.53,-1379.4,-54.87,recomputed
+20251,Wish Ring,1,5,-167.57,-135.2,32.37,recomputed
 20251,Aragonite,78,10,-766.05,-751.53,14.52,recomputed
 20251,Alchemist's Ink,78,10,-233.67,-237.82,-4.15,recomputed
 20251,Alchemist's Parchment,106,10,-244.89,-257.9,-13.01,recomputed
@@ -75,7 +75,7 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20255,Ring of the 2nd Circle,4,9,-315.18,-316.0,-0.82,recomputed
 20255,Mark of the 2nd Tenet,2,8,-162.07,-161.94,0.13,recomputed
 202520,Ring of the 2nd Circle,4,8,-315.18,-307.5,7.68,recomputed
-202545,Path to Enlightenment (Fragment 3),1,5,-1331.72,-1174.0,157.72,recomputed
+202545,Path to Enlightenment (Fragment 3),1,5,,-1115.0,,FIXED_was_error
 20264,Ring of the 1st Circle,4,10,-449.16,-467.48,-18.32,recomputed
 20264,Mark of the 1st Tenet,3,10,-342.24,-364.95,-22.71,recomputed
 20266,Ring of the 1st Circle,4,10,-449.16,-448.2,0.96,recomputed
