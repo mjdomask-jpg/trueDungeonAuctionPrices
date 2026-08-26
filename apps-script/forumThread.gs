@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-26.3';
+var THREAD_VERSION = '2026-08-26.4';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -1369,6 +1369,14 @@ function threadTidyName(name) {
     // parenthesised form (`Alchemist's Ink (x51)`) is stripped above as a stock
     // marker and never reaches this.
     .replace(/^(.*?)\s+x\s*(\d+)(?:\s+\d+)?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
+    // ...and Beertram writes the same `x` at the FRONT — `x10 Treasure Chips`,
+    // three lots of ten and then two more. Third spelling of one fact, and the
+    // only one nothing read: 20262's chips came out at $36 against a recorded
+    // $3.50, a clean factor of ten sitting in the price spine. It appears on
+    // exactly two lines in the 118 threads on disk and no name in
+    // `tokenMetadata`, `contextItems`, `prices` or `onyx` begins with `xN`, so
+    // there is nothing for it to shadow.
+    .replace(/^x\s*(\d+)\s+(?=\S)/i, function (m, n) { return n + 'x '; })
     // `(all 4)` IS A LOT SIZE, not a stock marker. The parenthetical strip
     // above wants a leading digit, so AlanP's
     // `Adventurer's Guild Codes & Buttons (all 4)` kept it, resolved to the
@@ -1790,9 +1798,27 @@ var THREAD_FALLBACKS = [
   // still the Patron Pin item, and `2022 Patron Lapel Code (No Pins Available)`
   // belongs in that price series rather than beside it. Confirmed by the
   // maintainer 2026-08-24.
-  function (s) { return /\bpatron\b/i.test(s) && /\b(pin|code)\b/i.test(s) ? 'Patron Pin' : s; },
+  // ...and `Patron Package` is the same item named for what it ENTITLES you to
+  // rather than for the thing in the envelope. Mike Steele heads 202645's lot
+  // `Patron Package: Wooden Stake Ultra Rare Token, PYP, 2 day early priority
+  // purchasing for all 2026 True Dungeon events sold through TD.Events and
+  // normal Underling of your choice` — 178 characters, and the sheet records
+  // the whole thing as `Patron Pin` at the thread's own $277.
+  //
+  // One auctioneer and one auction, which is usually the mark of a rule not
+  // worth writing. It is written because the corpus decides it rather than the
+  // example: every one of the 64 `Patron Package:` priced lines on disk is that
+  // auction reposting its table, and `prices.csv` holds no Patron name but
+  // `Patron Pin` and `Patron Token 1`. Unread it was one of the two names that
+  // kept 202645 — the densest thread of 2026 — below the parse gate.
+  function (s) { return /\bpatron\b/i.test(s) && /\b(pin|code|package)\b/i.test(s) ? 'Patron Pin' : s; },
 
-  function (s) { return s.replace(/\bag buttons?\b/i, "Adventurers' Guild Button"); },
+  // One word may stand between the abbreviation and the noun: WM13 sells
+  // `AG Membership Buttons and Codes`, and with the codes stripped by the rule
+  // above it still failed on the `Membership`. Over the 118 threads on disk the
+  // looser form catches those two lines and nothing else, which is what keeps
+  // it clear of `ag` on its own — that is Aragonite.
+  function (s) { return s.replace(/\bag\s+(?:\w+\s+)?buttons?\b/i, "Adventurers' Guild Button"); },
   function (s) { return s.replace(/^.*\badventurer'?s'? guild\b.*$/i, "Adventurers' Guild Button"); },
   function (s) { return s.replace(/\balchemist (ink|parchment)\b/i, function (m, w) { return "Alchemist's " + w; }); },
   function (s) { return s.replace(/\benchanter munition\b/i, "Enchanter's Munition"); },

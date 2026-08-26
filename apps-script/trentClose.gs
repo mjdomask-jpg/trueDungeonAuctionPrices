@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-26.1';
+var SCRIPT_VERSION = '2026-08-26.2';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -103,6 +103,11 @@ var EXCEPTIONS = {
   // --- Forum (alesiev, 202647) ---------------------------------------------
   'pyp': 'Ultra Rare',
   'ag codes': "Adventurers' Guild Button",
+  // The SINGULAR was simply not beside the plural, the same hole `1k gp bar`
+  // filled beside `1k gp bars`. Mike Steele sells 202645's four as
+  // `AG Code (and button if you choose)` — the parenthetical comes off in
+  // THREAD_FALLBACKS and left him one word short of the whole row.
+  'ag code': "Adventurers' Guild Button",
   '1k gp': '1,000 GP Gold Bar',
   // Community abbreviations, as printed on the game pieces. Mirrors
   // src/lib/tokenAbbreviations.ts. Note "ag" is Aragonite while "ag codes"
@@ -257,8 +262,36 @@ function foldName(s) {
 }
 
 /**
+ * The apostrophe DROPPED, rather than typed in the wrong character. `foldName`
+ * above settles the curly/straight question; this settles the absent one.
+ *
+ * WM13 sells 202618's whole Preorder Bonus row as `Drakes Draught`, where
+ * `tokenMetadata` calls it `Drake's Draught` — 32 tokens, and the auction's own
+ * standard content proposed back as an augment. It is the same silent
+ * augment-maker as the curly apostrophe and it has been answered one name at a
+ * time until now: `alchemist ink`, `enchanter munition`, `avron`, `gib gub`,
+ * `adventurer's guild` are five hand-written rewrites in `THREAD_FALLBACKS`
+ * that this class keeps needing.
+ *
+ * Safe as a whole-index fold because it merges nothing: over `tokenMetadata`,
+ * `contextItems`, `prices` and `onyx` there are 583 distinct folded names, 77
+ * of them carrying an apostrophe, and dropping it produces **no** pair of
+ * genuinely different names sharing a key. Measured before it was written, for
+ * the `+1 Turkey Leg` reason — a fold that merges two real tokens is worse than
+ * a name that fails to resolve.
+ */
+function foldNameBare(s) {
+  return foldName(s).replace(/'/g, '');
+}
+
+/**
  * Index `tokenMetadata` rows for lookup: season -> folded name -> row.
  * Both `Display Name` and `Item` are indexed, so either spelling resolves.
+ *
+ * `byBare` is the same index with apostrophes dropped. It is a SECOND map
+ * rather than a looser `foldName`, because `foldName` also keys `EXCEPTIONS`
+ * — whose entries include `adventurers' guild button and vtd code` — so
+ * loosening it in place would silently stop that table matching.
  */
 function buildTokenIndex(rows) {
   var index = {};
@@ -266,13 +299,15 @@ function buildTokenIndex(rows) {
     var r = rows[i];
     if (!r.auctionSeason || !r.Item) continue;
     var season = String(r.auctionSeason);
-    if (!index[season]) index[season] = { byName: {}, names: [] };
+    if (!index[season]) index[season] = { byName: {}, names: [], byBare: {} };
     var names = [r['Display Name'], r.Item];
     for (var j = 0; j < names.length; j++) {
       if (!names[j]) continue;
       var lower = foldName(names[j]);
       if (!index[season].byName[lower]) index[season].names.push(lower);
       index[season].byName[lower] = r;
+      var bare = foldNameBare(names[j]);
+      if (!index[season].byBare[bare]) index[season].byBare[bare] = r;
     }
   }
   return index;
@@ -315,6 +350,14 @@ function resolveBySeasonNames(base, season, index) {
     .replace(/\s+/g, ' ')
     .trim();
   if (trimmed && trimmed !== base) { hit = look(trimmed); if (hit) return hit; }
+
+  // The apostrophe dropped — see foldNameBare. An EXACT match with the
+  // apostrophes off runs before the prefix rule below, because that one guesses
+  // and this one does not.
+  if (entry.byBare) {
+    hit = entry.byBare[foldNameBare(base)] || null;
+    if (hit) return hit;
+  }
 
   // Truncations. The bonus tokens get typed short — "Path to Enlightenment"
   // for "Path to Enlightenment (Fragment 4)", "Mark of the 1st" for "Mark of
