@@ -6283,7 +6283,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20262,2026,2,Alchemist's Ink,2,Alchemist's Ink,Trade 1
 20262,2026,2,Alchemist's Parchment,1.5,Alchemist's Parchment,Trade 1
 20262,2026,2,Aragonite,10,Aragonite,Trade 2
-20262,2026,2,Darkwood Plank,1.25,Darkwood Plank,Trade 1
+20262,2026,2,Darkwood Plank,1,Darkwood Plank,Trade 1
 20262,2026,2,Dwarven Steel,1.75,Dwarven Steel,Trade 1
 20262,2026,2,Elven Bismuth,23,Elven Bismuth,Trade 2
 20262,2026,2,Enchanter's Munition,4,Enchanter's Munition,Trade 1
@@ -6807,7 +6807,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202617,2026,17,Preorder Bonus,0.28,Drake's Draught,Preorder
 202617,2026,17,Ultra Rare,56.01,Ultra Rare,Ultra Rare
 202618,2026,18,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
-202618,2026,18,Treasure Chip,3.3,Treasure Chip (each),Preorder
+202618,2026,18,Treasure Chip,4,Treasure Chip (each),Preorder
 202618,2026,18,1k Bonus,105,Ring of the 1st Circle,Premium
 202618,2026,18,2k Bonus,85,Mark of the 1st Tenet,Premium
 202618,2026,18,8k Bonus,"1,605.00",Path to Enlightenment (Fragment 4),Premium
@@ -6824,7 +6824,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202618,2026,18,Oil of Enchantment,35,Oil of Enchantment,Trade 2
 202618,2026,18,Patron Pin,410,Patron Pin,Premium
 202618,2026,18,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
-202618,2026,18,Preorder Bonus,0.5,Drake's Draught,Preorder
+202618,2026,18,Preorder Bonus,1.25,Drake's Draught,Preorder
 202618,2026,18,Ultra Rare,50,Ultra Rare,Ultra Rare
 202618,2026,18,Wish Ring,110,Wish Ring,Premium
 202619,2026,19,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
