@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-25.7';
+var THREAD_VERSION = '2026-08-26.1';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -142,7 +142,7 @@ var THREAD_SECTIONS = [
   // auction — the word onyx there describes the order, not the tokens, and
   // routing them to onyx.csv would move Wish Ring and the Patron Pin out of
   // the price spine.
-  { re: /^\W*onyx\s+(items?|urs?|ultra\s*rares?)\b|^\W*onyx\s*:/i, kind: 'onyx' },
+  { re: /^\W*onyx\s+(items?|tokens?|urs?|ultra\s*rares?)\b|^\W*onyx\s*:/i, kind: 'onyx' },
   { re: /^\W*augment(ing|ed)?\s*(tokens|items)?\s*[:\-]?\s*$|^\W*grunnel('s)?\s*(items|augments)/i, kind: 'context' },
 
   // "Augmented Ultra Rares:" and "Super Special Relics:"   Kusig.
@@ -381,11 +381,37 @@ function threadDecodeEntities(text) {
  * separator `2019 Orb of Dragonkind` `1` `+$5.00` `$605` `maelios` arrives as
  * one word.
  */
+/**
+ * A TABLE ROW IS ONE TAB-SEPARATED LINE, whatever the cells contain.
+ *
+ * `</td><td>` becomes a tab below, which is enough while a cell holds bare
+ * text. alesiev centres his — `<td><div class="bbcode_center">$41</div></td>` —
+ * and the `</div>` emits a newline BEFORE the tab, so his seven-column table
+ * arrived as one cell per line with the tabs stranded on blank lines. Every one
+ * of 202543's 21 items was unreadable and 119 lines went to `unparsed`: the
+ * table reader never saw a row, and no line grammar can read a column.
+ *
+ * So the row is flattened here, structurally, rather than met with a grammar —
+ * the shape is HTML, not an auctioneer's habit, and the reader downstream
+ * already knows what to do with a tab-separated row. Cell markup collapses to
+ * spaces, which is what a cell means; the `</td><td>` rule below still covers a
+ * table written without `<tr>`.
+ */
+function threadFlattenRows(html) {
+  return String(html).replace(/<tr[^>]*>([\s\S]*?)<\/tr\s*>/gi, function (all, row) {
+    var cells = [], cellRe = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]\s*>/gi, c;
+    while ((c = cellRe.exec(row)) !== null) {
+      cells.push(c[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace(/^ | $/g, ''));
+    }
+    return cells.length ? '\n' + cells.join('\t') + '\n' : all;
+  });
+}
+
 function threadHtmlToText(html) {
-  var text = String(html == null ? '' : html)
+  var text = threadFlattenRows(String(html == null ? '' : html)
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' '))
     .replace(/<\/t[dh]\s*>\s*(?=<t[dh])/gi, '\t')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|h[1-6]|li|tr|td|th|table|section|article|blockquote)\s*>/gi, '\n')
@@ -1188,13 +1214,8 @@ function threadLooksLikeHeader(line) {
  */
 function threadSectionOf(line) {
   var text = String(line).replace(/\s+/g, ' ').trim();
-  for (var i = 0; i < THREAD_SECTIONS.length; i++) {
-    if (THREAD_SECTIONS[i].re.test(text)) return THREAD_SECTIONS[i].kind;
-  }
-  if (THREAD_SECTION_END_RE.test(text)) return 'end';
   // A LINE CARRYING A PRICE IS NEVER A SECTION HEADING — the same rule
-  // threadLooksLikeHeader already applies, and for the same reason, because the
-  // all-caps test below is every bit as loose as that one was.
+  // threadLooksLikeHeader already applies, and for the same reason.
   //
   // Tyler writes his bidders in capitals, and two of them are two words:
   // `10 @ $3.00 - THE PRESENCE` and `3 @ $95 FIDDLER'S GREEN` reduce to
@@ -1204,8 +1225,23 @@ function threadSectionOf(line) {
   // went with it, so the next line down ("4 @ $3.25 - AUBERON") had no name
   // above it either. 20233 read 3 of 23 with 52 phantom context candidates.
   //
-  // A real all-caps heading never quotes a price, so this costs nothing.
-  if (/\$\s*\d|\d+\s*@|@\s*\$/.test(text)) return null;
+  // THE GUARD USED TO SIT BELOW THE VOCABULARY, WHICH CLOSED ONE DOOR OF TWO.
+  // The end-vocabulary contains `ultra rares?`, so every one of AlanP's
+  // `Ultra Rare #1 <tab> $75 <tab> 57 <tab> Rockmobile` lines was read as a
+  // heading that closed the open section — and 202540 lost its entire PYP
+  // block, 34 lots and the auction's `Ultra Rare` price, without one line
+  // reaching `unparsed`. A section heading names a division of the post; a
+  // priced line is a lot, whatever words it opens with. Measured over the 106
+  // threads on disk, no real heading quotes a price outside a parenthetical
+  // about the bidding, which is stripped first exactly as
+  // threadLooksLikeHeader strips it.
+  var probe = text.replace(/\([^)]*\b(?:min(?:imum)?|bids?|bidding)\b[^)]*\)/gi, ' ')
+    .replace(/\s+/g, ' ').trim();
+  if (/\$\s*\d|\d+\s*@|@\s*\$/.test(probe)) return null;
+  for (var i = 0; i < THREAD_SECTIONS.length; i++) {
+    if (THREAD_SECTIONS[i].re.test(text)) return THREAD_SECTIONS[i].kind;
+  }
+  if (THREAD_SECTION_END_RE.test(text)) return 'end';
   var bare = text.replace(/[^A-Za-z ]/g, '').replace(/\s+/g, ' ').trim();
   if (bare.length >= 8 && bare.indexOf(' ') > 0 && bare === bare.toUpperCase()) return 'end';
   return null;
@@ -1307,6 +1343,14 @@ function threadTidyName(name) {
     // singles at $1.00; reading only the singles proposes **$1.00** against a
     // recorded **$1.40** — a plausible wrong number, which is the worst kind.
     .replace(/^(.*?)\s+(\d+)\s*x(?:\s*chips?)?(?:\s+\d+)?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
+    // ...and AlanP writes the `x` FIRST — `1k GP Bars x5 #1`, nine lots of five
+    // that come to the 45 gold bars an 8K order holds. Same fact, opposite
+    // order, and unread it cost all three of his 2025 auctions their whole
+    // `1,000 GP Gold Bar` row. Safe as a suffix rule because no name in
+    // `tokenMetadata`, `contextItems` or `prices` ends in ` xN` — the
+    // parenthesised form (`Alchemist's Ink (x51)`) is stripped above as a stock
+    // marker and never reaches this.
+    .replace(/^(.*?)\s+x\s*(\d+)(?:\s+\d+)?\s*$/i, function (m, base, n) { return n + 'x ' + base; })
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -1331,7 +1375,12 @@ function threadTidyName(name) {
  */
 function threadOnyxSetName(name) {
   return String(name == null ? '' : name)
-    .replace(/^\s*commons?[\s/]+u\.?\s*c\.?(?:ommon)?s?[\s/]+r\.?\s*a?r?e?s?[\s/]*set\s*$/i, 'C/UC/R Set');
+    // THE WORD `Full` GOES ON EITHER END, AND A DASH MAY LEAD. AlanP writes
+    // `Full C/U/R Set` — the same three words abbreviated one letter further —
+    // and Beertram and Matt Soto write `- C/UC/R Full Set`. All four lots close
+    // at the price onyx.csv records to the cent ($110, $105, $95, $90), and
+    // each was the one Onyx row of its auction that never reconciled.
+    .replace(/^\s*[-–—]?\s*(?:full\s+)?c(?:ommons?)?[\s/]+u\.?\s*c?\.?(?:ommons?)?[\s/]+r\.?\s*a?r?e?s?[\s/]*(?:full\s+)?set\s*$/i, 'C/UC/R Set');
 }
 
 /**
@@ -1659,6 +1708,14 @@ var THREAD_FALLBACKS = [
   function (s) { return s.replace(/\s*&\s*/g, ' and '); },
   function (s) { return s.replace(/\[([^\]]*)\]/, '($1)'); },   // [Great Wyrm] -> (Great Wyrm)
   function (s) { return s.replace(/\bpath of enlightenment\b/i, 'Path to Enlightenment'); },
+  // `Path Fragment #3` — alesiev drops the middle of the name and keeps only
+  // the two words that bracket it. Left unread it is the whole 8k Bonus row,
+  // the single most valuable lot in the auction ($955), and it was proposed
+  // as a context candidate called `Path Fragment`. The trailing `#3` has
+  // already come off as a lot number by the time this runs, which costs
+  // nothing: a season holds exactly one fragment, which is why the bare
+  // `Fragment` rule below exists at all.
+  function (s) { return s.replace(/\bpath fragment\b/i, 'Path to Enlightenment Fragment'); },
   function (s) { return s.replace(/\s+fragment\s+(\d+)\s*$/i, ' (Fragment $1)'); },
   // A BARE `Fragment` WITH NO NUMBER. Steve heads the lot `Path of Enlightenment
   // Fragment` — which fragment is not in doubt, because a season has exactly

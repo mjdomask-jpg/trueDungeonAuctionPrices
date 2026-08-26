@@ -268,7 +268,7 @@ console.log('\nThe aggregated file (202640)\n');
     (plan.cautions || []).join(' | '));
   check('the shape itself raises a caution', (plan.cautions || []).some((c) => /WEAKER source/.test(c)),
     (plan.cautions || []).join(' | '));
-  check('  ... carrying the measured disagreement', (plan.cautions || []).some((c) => /6 of 13/.test(c)),
+  check('  ... carrying the measured disagreement', (plan.cautions || []).some((c) => /7 of 14/.test(c)),
     (plan.cautions || []).join(' | '));
 
   // Most of this file is not tokens at all — posters, prop sets, a zombie

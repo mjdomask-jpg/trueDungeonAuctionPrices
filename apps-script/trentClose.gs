@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-24.3';
+var SCRIPT_VERSION = '2026-08-26.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -134,6 +134,10 @@ var EXCEPTIONS = {
   // winner (`1,000 GP Reserve Bar #1-8 - $14 each - Cockatrice`).
   '1k bar': '1,000 GP Gold Bar',
   '1k bars': '1,000 GP Gold Bar',
+  // AlanP, all three of his 2025 auctions: `1k GP Bars x5 #1`. `1k gp` alone
+  // was in the list and the two words after it were not.
+  '1k gp bar': '1,000 GP Gold Bar',
+  '1k gp bars': '1,000 GP Gold Bar',
   '1k gold bar': '1,000 GP Gold Bar',
   '1k gold reserve bar': '1,000 GP Gold Bar',
   '1,000 gp bar': '1,000 GP Gold Bar',

@@ -5,12 +5,12 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 786,
-    "reproduces": 713,
-    "min": 604,
-    "max": 550,
-    "ties": 33,
-    "closeBracketHits": 12,
+    "itemsMatched": 848,
+    "reproduces": 755,
+    "min": 638,
+    "max": 585,
+    "ties": 37,
+    "closeBracketHits": 13,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 12 of the 27 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed. RE-PIN THESE after adding a fixture: they are sums over the corpus, so three new threads moved itemsMatched by 44 while every existing thread stood still, and a stale floor hides the next regression."
   },
   "threads": [
@@ -495,6 +495,39 @@
       "reproduces": 21,
       "ties": 1,
       "why": "Lord Brian writes his augments with his two separators BOTH ways round — `Item - Buyer = $price` five times and `Item = Buyer - $price` three times — and only the first had a rule. The other three were read by item-buyer-dash-price, whose name group is lazy, so it split on the first dash it found and `2020 UR Semi-Lich Skull = Nynaeve - $60` became an item called `2020 UR Semi`. A proposal under half a word is worse than none. Pins three things at once: the new rule, that a hyphen inside a word is not a separator, and that the YEAR in front of a `UR` marker comes off with it — the two line shapes disagreed about that, so one post proposed `Mad Evoker's Charm` and `2021 UR Mad Evoker's Charm` as two different context items. All eight of the auction's recorded contextItems rows are now reproduced by name and price."
+    },
+    {
+      "auction": "202540",
+      "topic": "258705",
+      "auctioneer": "AlanP",
+      "pages": 4,
+      "resultsPost": 1,
+      "itemsMatched": 20,
+      "reproduces": 11,
+      "ties": 1,
+      "why": "A PRICED LINE IS NEVER A SECTION HEADING, and the guard for that used to sit BELOW the section vocabulary — which contains `ultra rares?`. So every one of this thread's thirty-four `Ultra Rare #N <tab> $75 <tab> 57 <tab> Rockmobile` lines was read as a heading that closed the open section, and the auction's whole PYP block disappeared without one line reaching `unparsed`. Also the `x`-first lot size: `1k GP Bars x5 #1` is five bars, nine lots of them, which is the 45 an 8K order holds — the trailing-`Nx` rule only knew `5x`, so the gold row was missing from all three of AlanP's 2025 auctions. Its remaining differences are the maintainer's judgement, not the parse: he splits `Patron Pin w/ Underling Dwarf Fighter` at $102 into two $51 rows, and reads `Adventurer's Guild Codes & Buttons (all 4)` at $2 as $0.50 each."
+    },
+    {
+      "auction": "202534",
+      "topic": "258279",
+      "auctioneer": "AlanP",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 20,
+      "reproduces": 17,
+      "onyx": 21,
+      "ties": 2,
+      "why": "The same grammar as 202540 in an Onyx auction, and it needs two more things. `ONYX TOKENS` was not in the Onyx section vocabulary, which only knew `Onyx Items` / `Onyx URs` / `Onyx:` — so `Full C/U/R Set`, the one lot in the block carrying no `ONYX` marker of its own, never reached onyx.csv though its $110 is recorded to the cent. And `Full` goes on either end of that name: Beertram and Matt Soto write `- C/UC/R Full Set`, which had the same miss in 2023. Entered min/max — 36 rows for 20 names — so it is also one of the eight forum closes that need the parse gate's DISTINCT-NAME denominator."
+    },
+    {
+      "auction": "202543",
+      "topic": "258749",
+      "auctioneer": "alesiev",
+      "pages": 6,
+      "resultsPost": 1,
+      "itemsMatched": 19,
+      "reproduces": 12,
+      "why": "A TABLE ROW MUST BE ONE LINE, and this is the thread that proved the `</td><td>` tab was not enough. alesiev centres every cell — `<td><div class=\"bbcode_center\">$41</div></td>` — so the `</div>` emitted a newline before the tab and his seven-column table arrived one cell per line with the tabs stranded on blanks. 0 of 21 items, 119 lines unparsed. Rows are flattened structurally now, in threadHtmlToText, because the shape is HTML rather than an auctioneer's habit. Also `Path Fragment #3`, which is the 8k Bonus and the auction's most valuable lot at $955. What it still cannot do is pick a number: this table gives Qty, Low Bid and High Bid with no per-lot distribution behind them, so the mode has nothing to weigh and it reads the High Bid — the seven items it differs on all lie inside the stated low-high range, which is a judgement the maintainer makes and a parser should not."
     }
   ]
 }
