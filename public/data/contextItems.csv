@@ -476,8 +476,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202424,2024,24,token,+2 Chaos Cannon,1,$31.00
 202424,2024,24,token,+1 Turkey Leg of Smiting,1,$5.25
 202424,2024,24,token,+1 Mighty Short Bow,1,$41.00
-202424,2024,24,token,6th Tooth of Cavadar,1,$11.00
-202424,2024,24,token,7th Tooth of Cavadar,1,$11.00
+202424,2024,24,token,6th Tooth of Cavadar,2,$22.00
+202424,2024,24,token,7th Tooth of Cavadar,2,$22.00
 202424,2024,24,token,6th Charm of Transmorph,1,$6.00
 202424,2024,24,token,10th Charm of Transmorph,1,$6.00
 202424,2024,24,grunnel,Smart Token Prop,1,$51.00
@@ -697,8 +697,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202640,2026,40,grunnel,Odin Poster,1,$70.00
 202640,2026,40,grunnel,Grunnel's +2 Pointy Stick (Token & Prop),1,$40.00
 202640,2026,40,grunnel,Tabors Onyx Dagger #1,1,$215.00
-202645,2026,45,token,Random Ultra Rare,6,$55.00
-202645,2026,45,token,Random Ultra Rare,2,$61.00
+202645,2026,45,token,Random Ultra Rare,6,$330.00
+202645,2026,45,token,Random Ultra Rare,2,$122.00
 202645,2026,45,token,Random Ultra Rare,1,$54.00
 202645,2026,45,token,+2 Staff of Power,1,$29.00
 202645,2026,45,token,Bead of Focus,1,$42.00
@@ -740,5 +740,12 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202647,2026,47,grunnel,Borrowed Ring #4 St Lorca,1,$112.00
 202647,2026,47,token,Censer and 2 of each incense,1,$47.00
 202647,2026,47,token,4x Baby Potatoes,1,$51.00
-202647,2026,47,token,Random UR,9,$497.00
+202647,2026,47,token,Random Ultra Rare,9,$497.00
 202647,2026,47,token,Golden Ticket,1,$652.00
+202644,2026,44,token,Baby Tater That Needs a Name,1,$57.00
+202644,2026,44,token,"""Red Key""",1,$407.00
+202644,2026,44,token,Ella's Final Set of Gnomish Goggles,1,$177.00
+202644,2026,44,token,Tabor's Onyx Dagger #6,1,$257.00
+202644,2026,44,token,Princess Embers' Flaming Hot Cheeto,1,$202.00
+202644,2026,44,token,Random Ultra Rare,9,$432.00
+202644,2026,44,token,Golden Ticket,1,$855.00
