@@ -768,7 +768,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20213,2021,3,3 Star,3,Tankard of Celebration,Bonus
 20213,2021,3,Treasure Chip,4.67,Treasure Chip (each),Preorder
 20213,2021,3,8k Bonus,405,Orb of Dragonkind (Ancient),Premium
-20213,2021,3,Alchemist's Ink,2.75,Alchemist's Ink,Trade 1
+20213,2021,3,Alchemist's Ink,4,Alchemist's Ink,Trade 1
 20213,2021,3,Alchemist's Parchment,4,Alchemist's Parchment,Trade 1
 20213,2021,3,Aragonite,16.5,Aragonite,Trade 2
 20213,2021,3,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -828,24 +828,27 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20215,2021,5,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 20215,2021,5,Ultra Rare,110,Ultra Rare,Ultra Rare
 20215,2021,5,Wish Ring,185,Wish Ring,Premium
-20216,2021,6,1k Bonus,25,7th Tooth of Cavadar,Premium
+20216,2021,6,1k Bonus,20,7th Tooth of Cavadar,Premium
+20216,2021,6,2k Bonus,0.25,Goggles of Ethereal Vision,Premium
+20216,2021,6,3 Star,5,Tankard of Celebration,Bonus
 20216,2021,6,8k Bonus,300,Orb of Dragonkind (Ancient),Premium
-20216,2021,6,Alchemist's Ink,4,Alchemist's Ink,Trade 1
-20216,2021,6,Alchemist's Parchment,5,Alchemist's Parchment,Trade 1
+20216,2021,6,Adventurers' Guild Button,0.25,Adventurers' Guild Button,Bonus
+20216,2021,6,Alchemist's Ink,6,Alchemist's Ink,Trade 1
+20216,2021,6,Alchemist's Parchment,3.25,Alchemist's Parchment,Trade 1
 20216,2021,6,Aragonite,22,Aragonite,Trade 2
 20216,2021,6,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20216,2021,6,Darkwood Plank,1,Darkwood Plank,Trade 1
-20216,2021,6,Dwarven Steel,3,Dwarven Steel,Trade 1
-20216,2021,6,Elven Bismuth,12,Elven Bismuth,Trade 2
-20216,2021,6,Enchanter's Munition,1,Enchanter's Munition,Trade 1
+20216,2021,6,Dwarven Steel,5,Dwarven Steel,Trade 1
+20216,2021,6,Elven Bismuth,11,Elven Bismuth,Trade 2
+20216,2021,6,Enchanter's Munition,1.25,Enchanter's Munition,Trade 1
 20216,2021,6,Minotaur Hide,1,Minotaur Hide,Trade 1
-20216,2021,6,Mystic Silk,1,Mystic Silk,Trade 1
+20216,2021,6,Mystic Silk,0.75,Mystic Silk,Trade 1
 20216,2021,6,Oil of Enchantment,12,Oil of Enchantment,Trade 2
-20216,2021,6,Patron Pin,150,Patron Pin,Premium
-20216,2021,6,PCH,2,Potion Condensed Healing,Bonus
+20216,2021,6,Patron Pin,100,Patron Pin,Premium
+20216,2021,6,PCH,1,Potion Condensed Healing,Bonus
 20216,2021,6,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-20216,2021,6,Ultra Rare,100,Ultra Rare,Ultra Rare
-20216,2021,6,Wish Ring,200,Wish Ring,Premium
+20216,2021,6,Ultra Rare,120,Ultra Rare,Ultra Rare
+20216,2021,6,Wish Ring,185,Wish Ring,Premium
 20217,2021,7,1k Bonus,18,7th Tooth of Cavadar,Premium
 20217,2021,7,2k Bonus,0.25,Goggles of Ethereal Vision,Premium
 20217,2021,7,3 Star,5,Tankard of Celebration,Bonus
@@ -892,7 +895,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20219,2021,9,2k Bonus,0.5,Goggles of Ethereal Vision,Premium
 20219,2021,9,3 Star,3.25,Tankard of Celebration,Bonus
 20219,2021,9,8k Bonus,255,Orb of Dragonkind (Ancient),Premium
-20219,2021,9,Alchemist's Ink,6,Alchemist's Ink,Trade 1
+20219,2021,9,Alchemist's Ink,5.5,Alchemist's Ink,Trade 1
 20219,2021,9,Alchemist's Parchment,5.5,Alchemist's Parchment,Trade 1
 20219,2021,9,Aragonite,23,Aragonite,Trade 2
 20219,2021,9,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
@@ -928,6 +931,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202110,2021,10,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
 202110,2021,10,Ultra Rare,125,Ultra Rare,Ultra Rare
 202110,2021,10,Wish Ring,180,Wish Ring,Premium
+202111,2021,11,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202111,2021,11,1k Bonus,23,7th Tooth of Cavadar,Premium
 202111,2021,11,2k Bonus,0.5,Goggles of Ethereal Vision,Premium
 202111,2021,11,3 Star,4,Tankard of Celebration,Bonus
@@ -943,12 +947,15 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202111,2021,11,Patron Pin,130,Patron Pin,Premium
 202111,2021,11,PCH,1,Potion Condensed Healing,Bonus
 202111,2021,11,Philosopher's Stone,5,Philosopher's Stone,Trade 1
+202111,2021,11,Rare Bag,100,Rare Bag,Condensed
 202111,2021,11,Ultra Rare,120,Ultra Rare,Ultra Rare
+202111,2021,11,Uncommon Bag,60,Uncommon Bag,Condensed
 202111,2021,11,Wish Ring,200,Wish Ring,Premium
 202112,2021,12,1k Bonus,11,7th Tooth of Cavadar,Premium
 202112,2021,12,2k Bonus,0.25,Goggles of Ethereal Vision,Premium
 202112,2021,12,3 Star,0.5,Tankard of Celebration,Bonus
 202112,2021,12,8k Bonus,400,Orb of Dragonkind (Ancient),Premium
+202112,2021,12,Adventurers' Guild Button,0.25,Adventurers' Guild Button,Bonus
 202112,2021,12,Alchemist's Ink,5.25,Alchemist's Ink,Trade 1
 202112,2021,12,Alchemist's Parchment,3.75,Alchemist's Parchment,Trade 1
 202112,2021,12,Aragonite,22,Aragonite,Trade 2
@@ -1061,7 +1068,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202117,2021,17,Mystic Silk,1.5,Mystic Silk,Trade 1
 202117,2021,17,Oil of Enchantment,11,Oil of Enchantment,Trade 2
 202117,2021,17,Patron Pin,1.25,Patron Pin,Premium
-202117,2021,17,PCH,1.75,Potion Condensed Healing,Bonus
+202117,2021,17,PCH,1.25,Potion Condensed Healing,Bonus
 202117,2021,17,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
 202117,2021,17,Ultra Rare,110,Ultra Rare,Ultra Rare
 202117,2021,17,Wish Ring,200,Wish Ring,Premium
@@ -1155,7 +1162,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202122,2021,22,8k Bonus,330,Orb of Dragonkind (Ancient),Premium
 202122,2021,22,Alchemist's Ink,6,Alchemist's Ink,Trade 1
 202122,2021,22,Alchemist's Parchment,3,Alchemist's Parchment,Trade 1
-202122,2021,22,Aragonite,19.5,Aragonite,Trade 2
+202122,2021,22,Aragonite,19,Aragonite,Trade 2
 202122,2021,22,Darkwood Plank,0.5,Darkwood Plank,Trade 1
 202122,2021,22,Dwarven Steel,5,Dwarven Steel,Trade 1
 202122,2021,22,Elven Bismuth,11,Elven Bismuth,Trade 2
