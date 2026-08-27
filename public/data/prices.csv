@@ -1073,7 +1073,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202117,2021,17,Oil of Enchantment,11,Oil of Enchantment,Trade 2
 202117,2021,17,Patron Pin,1.25,Patron Pin,Premium
 202117,2021,17,Patron Token 1,275,Ioun Stone Mystic Orb,Premium
-202117,2021,17,PCH,1.25,Potion Condensed Healing,Bonus
+202117,2021,17,PCH,1.75,Potion Condensed Healing,Bonus
 202117,2021,17,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
 202117,2021,17,Ultra Rare,110,Ultra Rare,Ultra Rare
 202117,2021,17,Wish Ring,200,Wish Ring,Premium
@@ -1094,7 +1094,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202118,2021,18,Oil of Enchantment,11,Oil of Enchantment,Trade 2
 202118,2021,18,Patron Pin,0.25,Patron Pin,Premium
 202118,2021,18,Patron Token 1,280,Ioun Stone Mystic Orb,Premium
-202118,2021,18,PCH,1.75,Potion Condensed Healing,Bonus
+202118,2021,18,PCH,1.25,Potion Condensed Healing,Bonus
 202118,2021,18,Philosopher's Stone,7,Philosopher's Stone,Trade 1
 202118,2021,18,Ultra Rare,105,Ultra Rare,Ultra Rare
 202118,2021,18,Wish Ring,190,Wish Ring,Premium
