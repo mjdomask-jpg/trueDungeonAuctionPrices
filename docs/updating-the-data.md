@@ -586,12 +586,17 @@ than pretending. Ask the auctioneer for the file instead; see
 | `ONYX or PYP` | Genuinely ambiguous, and listed separately. They are proposed as Onyx because that is what the one recorded precedent did — and that auction *also* recorded their price as its Ultra Rare. Decide. |
 | Onyx section headings | `ONYX ITEMS` routes what follows to `onyx.csv` until the next heading. `Standard Onyx 8k Items` does **not** — there the word describes the order, not the tokens. |
 | Condensed bags | A **Condensed** order (a style saying Condensed without Super or Ultra) sells a bag of 120 random Rares and a bag of 240 random Uncommons. Nine spellings are recognised, and **a bag never divides** — `120x Random Rare` is one bag containing 120 tokens, not a lot of 120, and reading it the other way turns a $65 bag into a $0.54 trade good. |
+| A name under an item heading | Where a heading names a token, the lines beneath it are that token's lots and whatever looks like a name on them is a **bidder** — `PYP URs (34)` over `Saruman (4) - $115`. Reading the bidder as the item is how one thread proposed eighty context rows named after Tolkien characters and none of its 22 real items. The test is resolution both ways: the heading resolves, the name does not. |
+| A heading with an aside | `Random URs (9) - First in, first out. Luck of the draw.` is a heading; the sentence after the dash is not part of the name. Unread, its lots inherit the heading *above* — nine Random Ultra Rares landing in an auction's `Ultra Rare` row, and a $205 Golden Ticket bid landing in its gold. **A line carrying a price is still never a heading**, aside or no aside. |
+| `(1) … (8)` down a block | A parenthesised number can be the **lot number** rather than the quantity. A run of consecutive lines under one name numbered exactly 1…N is a numbered list, not eight lots of sizes one to eight; read the other way, one auction's eight Teeth came to 36 and its 44 gold bars to 4 while the parse still rated 20 of 20 names matched. |
+| `Buyout:` | One auctioneer marks both a sale and an offer nobody took with the same word. **A named buyer is what separates them** — `Orb of Dragonkind: Hershey Buyout: $410` sold, `Elven Bismuth Buyout: $12` is the standing price against four lots that went at $8. The offers are left unread on purpose. |
+| `.75` and `$.50` | A price may drop its leading zero, its dollar sign, or both. Four whole rows of one auction sat in `unparsed` for the want of the zero. |
 
 ### Changing the script
 
 `apps-script/forumThread.gs` in the repo is the source of truth. Edit it here,
 **bump `THREAD_VERSION`**, run `npm run test:thread`, then paste it over the
-editor's contents. The test replays all 42 threads in `fixtures/forum-threads/`
+editor's contents. The test replays all 55 threads in `fixtures/forum-threads/`
 against `prices.csv` and `onyx.csv` and asserts the corpus totals, so a rule
 that improves one auctioneer at another's expense shows up as a number.
 

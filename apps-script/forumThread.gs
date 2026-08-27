@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-26.5';
+var THREAD_VERSION = '2026-08-27.1';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -318,6 +318,7 @@ var THREAD_GOLD_COUNTED_RE = /(super|ultra)\s+condensed/i;
  * seasons say plainly that the number moved:
  *
  *     2018-2020   43     19 threads, no other value read in full
+ *     2021        44     22 of the season's 23 readable threads, exactly
  *     2022-2023   44     78 threads
  *     2024-2026   45     24 threads
  *
@@ -332,12 +333,20 @@ var THREAD_GOLD_COUNTED_RE = /(super|ultra)\s+condensed/i;
  * this table was measured.
  *
  * Seasons absent from the table keep the old pair, which is the safe default:
- * 2021 has never been fetched, and a season after 2026 has not happened.
- * 2022 carries one thread at 45 against forty-six at 44, so both are accepted
- * there rather than pinning a number a real auction contradicts.
+ * a season after 2026 has not happened. 2022 carries one thread at 45 against
+ * forty-six at 44, so both are accepted there rather than pinning a number a
+ * real auction contradicts — and 2021 is the same shape, twenty-two threads at
+ * exactly 44 and jpotter's 20215 at 45.
+ *
+ * 2021 ALSO SETTLES WHAT A PLAIN CONDENSED ORDER HOLDS, which the note above
+ * says is unknown: 202111 is the only one in the corpus that reads in full and
+ * it totals **8** bars, which is the number the maintainer's own order
+ * composition gives for a 2021 Condensed order. It is still not checked here —
+ * one thread is not a rule — but a Condensed order reading 8 is no longer a
+ * reason to suspect the parse.
  */
 var THREAD_GOLD_BY_SEASON = {
-  2018: [43], 2019: [43], 2020: [43],
+  2018: [43], 2019: [43], 2020: [43], 2021: [44, 45],
   2022: [44, 45], 2023: [44],
   2024: [45], 2025: [45], 2026: [45],
 };
@@ -681,7 +690,13 @@ var THREAD_RULES = [
   // `=` is excluded from the buyer so his 2022 form — `(3) Lanfear====@ $105
   // each`, where the run of equals signs is the rule-off — still belongs to
   // qty-buyer-rule below. The suite caught that on the first run.
-    re: /^\((\d+)\)\s*([A-Za-z][^@$=]{0,30}?)\s*@\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(?:ea|each)?\s*$/i,
+  // The buyer may open on a DIGIT and the price may drop its leading zero.
+  // Lord Brian's bidders are NFL teams and one of them is the `49ers`, so
+  // `(2) 49ers - @ $115 each` was refused where `(2) Saints - @ $115 each` was
+  // read — and a refused line is not a neutral loss here: taken for a heading
+  // it renamed the twenty-six lots beneath it. `(2) Bears @ $.50 each` is the
+  // same auction's Goggles, its whole `2k Bonus` row.
+    re: /^\((\d+)\)\s*([A-Za-z0-9][^@$=]{0,30}?)\s*@\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?|\.\d{1,2})\s*(?:ea|each)?\s*$/i,
     take: function (m) { return { item: null, quantity: parseInt(m[1], 10), price: threadMoney(m[3]), buyer: m[2] }; } },
 
   // "Qty. 42 : RESERVE - $16.00"  Matthew Hayward, from 2019 on — the same
@@ -798,8 +813,13 @@ var THREAD_RULES = [
   // "Ring of the 5th Circle (2) - Hank @ 75"   Josh M — buyer then `@` then a
   // price with NO dollar sign. Nothing else in this post varies; the missing
   // `$` alone is why 202216 read 0 of 23.
+  // ...and the dash is optional here for the same reason it is optional two
+  // rules down: jpotter writes `Goggles of Ethereal Vision (2) Valomilk @0.75`
+  // with nothing between the count and the buyer. The `@` is what anchors this
+  // rule, not the dash. Two lots of a four-token row, and unread they left the
+  // row a tie between its other two.
   { id: 'item-qty-buyer-at-price',
-    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*[-–—]\s*([^@]*?)\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
+    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*(?:[-–—]\s*)?([^@]*?)\s*@\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[4]), buyer: m[3] }; } },
 
   // "Elven Bismuth (12) - Alfira 9.25"   WM13 — the same shape as
@@ -827,8 +847,17 @@ var THREAD_RULES = [
   // `Greater Ring of Havoc (1) - $265 - Felurian` and then drops the dash for
   // the next four lines. Demands the `$` and the dash before the buyer, so it
   // cannot reach for a bare `(1) 175 Abert`.
+  //
+  // THE DASH IS OPTIONAL. jpotter writes `PYP (6) $110 Baby Ruth` — the same
+  // three fields in the same order with nothing between the price and the
+  // buyer — and unread it cost 20215 its whole PYP block, 34 Ultra Rares of a
+  // $7,500 auction, while the three lots he happened to write another way
+  // proposed $120 against a recorded $110. The `$` is what keeps the rule safe
+  // either way, so relaxing the dash cannot reach the bare `(1) 175 Abert` the
+  // note above is guarding against; a space alone is still required, so it
+  // cannot run the price into the name.
   { id: 'item-qty-price-dash-buyer',
-    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–—]\s*([A-Za-z].*)$/,
+    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)(?:\s*[-–—]\s*|\s+)([A-Za-z].*)$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[4] }; } },
 
   // A STRAY DOT BEFORE THE DOLLAR SIGN IS NOISE, NOT A DECIMAL POINT.
@@ -839,8 +868,37 @@ var THREAD_RULES = [
   // dropping it would read fifty dollars for fifty cents. Same reasoning as
   // THREAD_BROKEN_MONEY_RE — the number itself is intact here, so this is
   // punctuation, not arbitration over a malformed price.
+  //
+  // A PRICE MAY DROP ITS LEADING ZERO, and the `$` with it. Miathin writes
+  // `Mystic Silk (47) - .75 Ted dibiase` — the price group demanded a leading
+  // digit, so `.75` matched nothing and four of 20217's items were lost whole:
+  // its Silk, its Planks, its Munition and its 2k Bonus, each one the auction's
+  // entire row. The alternative is the same one `qty-at-price-id` and
+  // `buyer-equals-price` already carry for `@$.25` and `====.75`; this is the
+  // third punctuation the corpus has produced for one number, after the stray
+  // dot below and THREAD_BROKEN_MONEY_RE's `3..75`.
+  //
+  // It also settles the case the stray-dot note leaves open: `- .50 - Bob` now
+  // reads as fifty cents rather than as noise plus fifty dollars, because the
+  // dot is claimed by the price rather than skipped in front of it. The `$`
+  // lookahead still wins where there is one, so `- .$140 - Jo` is unmoved.
+  //
+  // ...and A STRAY DOT AFTER THE QUANTITY is the same typist. He writes
+  // `Aragonite(3). - 25 undertaker` and `Enchanter's Munition (5).  - .75 Ric
+  // flair` on lines whose neighbours carry neither, which is the ordinary state
+  // of an auctioneer's post.
+  //
+  // ...and the count may carry an `x`. Scott writes `1k GP (x10)-$13.00-Cyclops`
+  // for the one row where a plain `(10)` would have read as his LOT NUMBER —
+  // his own way of telling the two apart, on the four lines that make up
+  // 202113's 44 gold bars. Unread, they weighed one apiece and the row came out
+  // at $13 against a recorded $14; read, the 24 bars at $14 outvote the 20 at
+  // $13 exactly as the sheet has it. `(x10)` is a quantity here and not a lot
+  // size, because it stands where `(10)` stands and means the same thing —
+  // Tyler's `Alchemist's Ink (x51)` is the same spelling on a HEADING, which
+  // carries no price and never reaches these rules.
   { id: 'item-qty-price',
-    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s*(?:\(\d+\)\s*)?[-–]\s*(?:\.(?=\s*\$))?\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(.*)$/,
+    re: /^(.*?[A-Za-z].*?)\s*\(\s*x?\s*(\d+)\s*\)\.?\s*(?:\(\d+\)\s*)?[-–]\s*(?:\.(?=\s*\$))?\s*\$?\s*([\d][\d,]*(?:\.\d{1,2})?|\.\d{1,2})\s*(.*)$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[4] }; } },
 
   // "10x $25 - Miriam Dom" and "2 $5.00 - Ptah"   Flik, Azzy
@@ -1042,8 +1100,11 @@ var THREAD_RULES = [
     take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[3]), buyer: m[2] }; } },
 
   // "Orion's Belt (1) 150 Chronos"   jpotter — NO dollar sign anywhere
+  // The leading zero is optional here too, and for the same reason: Miathin
+  // drops the dash as well as the dollar sign on two of 20217's plank lines —
+  // `Darkwood Plank (50) .75 Hulk Hogan` — which is 74 of the auction's 117.
   { id: 'item-qty-bare-price',
-    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s+([\d][\d,]*(?:\.\d{1,2})?)\s+([A-Za-z].*)$/,
+    re: /^(.*?[A-Za-z].*?)\s*\((\d+)\)\s+([\d][\d,]*(?:\.\d{1,2})?|\.\d{1,2})\s+([A-Za-z].*)$/,
     take: function (m) { return { item: m[1], quantity: parseInt(m[2], 10), price: threadMoney(m[3]), buyer: m[4] }; } },
 
   // "4 125 - Hextor"   Azzy, with the `$` dropped on four lines whose
@@ -1194,6 +1255,148 @@ function threadBuyerLot(line, buyers) {
   });
   return { item: head, quantity: quantity, lotSize: lotSize, price: threadMoney(m[3]),
     buyer: m[2], rule: 'item-buyer-known' };
+}
+
+/**
+ * jpotter's BUY-OUT auction — where the same word marks both a sale and an
+ * offer nobody took.
+ *
+ * 20215 is the only thread in the corpus written this way (38 lines, all his;
+ * the four elsewhere are a parenthetical `(Buyout)` marker and are out of this
+ * pattern's reach), and it read 12 of its 20 items. The idiom puts the word
+ * where every other auctioneer puts a dash:
+ *
+ *     Orb of Dragonkind: Hershey Buyout: $410     sold, buyer before the word
+ *     Patron Pin: Min bid: $100 Buyout: $150 Almond Joy    sold, buyer after
+ *     3X Treasure Chip(16) Nestle Crunch BUYOUT $15
+ *     Elven Bismuth Buyout: $12                   NOT SOLD — the standing offer
+ *     7th Tooth of Cavadar Buyout: $40            NOT SOLD
+ *
+ * READING THE OFFER AS A SALE IS THE WHOLE RISK, and it is the expensive kind
+ * of wrong: his Bismuth offer is $12 against four lots that actually went at
+ * $8 and $8.25, and his Tooth offer is $40 against three at $25-$26. A
+ * plausible number, in the price spine, high by half.
+ *
+ * WHAT SEPARATES THEM IS WHETHER A BUYER IS NAMED — he writes one on every
+ * line that sold and none on the lines that only quote the price. So the test
+ * is resolution, the same evidence threadBareLot splits a nameless line with:
+ * a buyer stands after the price, or the text in front of the word is longer
+ * than the item name it opens with. Where the whole of it resolves there is
+ * nobody there, and the line is refused to `unparsed` — which is where an
+ * unsold lot belongs, since the auctioneer's own floor is not a price anyone
+ * paid.
+ *
+ * A quoted MINIMUM comes off first for the same reason: `Min bid: $100` is
+ * neither the price nor the buyer, and left in place it is the number a
+ * `$`-anchored rule would take.
+ */
+function threadBuyoutLot(line, resolve) {
+  if (!resolve) return null;
+  var text = String(line == null ? '' : line).replace(/\s+/g, ' ').trim();
+  if (THREAD_BROKEN_MONEY_RE.test(text)) return null;
+  text = text.replace(
+    /\bmin(?:imum)?\s*bid\s*:?\s*\$?\s*(?:[\d][\d,]*(?:\.\d{1,2})?|\.\d{1,2})\s*/i, '');
+  var m = text.match(
+    /^(.*?)\s*\bbuy\s?out\b\s*:?\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?|\.\d{1,2})\s*(.*)$/i);
+  if (!m) return null;
+  var head = m[1].replace(/\s*[:,]\s*$/, '').replace(/\s*[-–—]\s*$/, '').trim();
+  var after = m[3].replace(/^[-–—:\s]+/, '').trim();
+  var quantity = 1;
+  head = head.replace(/\s*\(\s*(\d+)\s*\)\s*/, function (all, n) {
+    quantity = parseInt(n, 10);
+    return ' ';
+  }).replace(/\s*:\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!head) return null;
+  var price = threadMoney(m[2]);
+  // A buyer AFTER the price settles it on its own — there is somebody there,
+  // so whatever stands in front is the item.
+  if (/^[A-Za-z]/.test(after) && resolve(head)) {
+    return { item: head, quantity: quantity, price: price, buyer: after, rule: 'buyout-sale' };
+  }
+  if (after) return null;
+  // NOBODY IS NAMED — the line only quotes the price, so it is the offer.
+  // Tested before the split below and not merely left to it, because a shorter
+  // prefix can resolve to something else entirely: `AG code (6): Min Bid: $4
+  // Buyout: $10` is an Adventurers' Guild code with no bidder, and `AG` on its
+  // own is ARAGONITE. Read that way it put six Aragonite at $10 into an
+  // auction whose one real Aragonite line says $20 — outvoting it, since the
+  // mode is weighted by quantity. The collision is a known one and this is the
+  // second place it has had to be arbitrated.
+  if (resolve(head)) return null;
+  // Otherwise the buyer is whatever the item name does not account for.
+  var words = head.split(' ');
+  for (var k = words.length - 1; k >= 1; k--) {
+    var candidate = words.slice(0, k).join(' ');
+    if (!resolve(candidate)) continue;
+    return { item: candidate, quantity: quantity, price: price,
+      buyer: words.slice(k).join(' '), rule: 'buyout-sale' };
+  }
+  return null;
+}
+
+/**
+ * Does this heading NAME A TOKEN? The question the two rules below are gated
+ * on, and it is not the same as asking whether the heading resolves.
+ *
+ * `3x Treasure Chips (16)` names the Treasure Chip — sixteen lots of three,
+ * the 48 chips an order holds — but the lot size is read in
+ * threadResolveLots, long after the scan, so the resolver the scan is given
+ * says no. Tyler heads 20214's chips that way and its 48 chips became two
+ * context rows named `Samwise` and `Shelob`, after the bidders.
+ *
+ * Stripped HERE rather than in the scan's resolver, which threadBareLot also
+ * uses to decide where an item name ends on a line with no separator: that
+ * question is a different one and a looser resolver would answer it worse.
+ * The leading year comes off with the count, for the reason threadResolveLots
+ * gives — it stands in front of the `Nx` and hides it.
+ */
+function threadHeaderNames(line, resolve) {
+  if (!resolve) return false;
+  if (resolve(line)) return true;
+  var bare = String(line == null ? '' : line)
+    .replace(/^\s*(?:(?:19|20)\d{2}\s+)?\d+\s*x\s+/i, '');
+  return bare !== String(line == null ? '' : line) && !!resolve(bare);
+}
+
+/**
+ * A BARE BUYER AND A PRICE, read because the HEADING said what is being sold.
+ *
+ * The other side of the repair in threadScanPost. That one mends a line a rule
+ * misread; this one reads the lines no rule would touch at all, because
+ * without the heading there is nothing in them to tell an item from a bidder:
+ *
+ *     Alchemist Ink (37)              Matt Soto, 202112 — 54 unread lines,
+ *     Magalor - $5.25 (37)            not one of its 20 recorded items
+ *     Orb of Dragonkind
+ *     Seahawks @ $350                 Lord Brian, 202123
+ *
+ * `Magalor - $5.25` and `Gib Gub's Handy Acorn @ $1` are the same shape and
+ * mean opposite things, which is why `qty-buyer-at-price-each` demands a
+ * leading `(N)` and says in as many words that the bare form is deliberately
+ * not read. THE HEADING IS THE MISSING EVIDENCE. Tried only under one that
+ * resolves to a token, and refusing any head that resolves as well, so the two
+ * cases it could confuse are separated by the same test rather than by a guess
+ * about name shapes — the Acorn resolves and Magalor does not.
+ *
+ * It never names an item: the caller's header fallback does that, so this
+ * cannot invent a name, only attribute a price to the heading above it.
+ *
+ * Fenced as threadBuyerLot is, and for the same reason — the buyer must start
+ * on a letter or a digit (Lord Brian's bidders are NFL teams, `49ers` among
+ * them), must be short, and must not read as prose.
+ */
+function threadHeaderLot(line, resolve) {
+  var text = String(line == null ? '' : line).replace(/\s+/g, ' ').trim();
+  if (THREAD_BROKEN_MONEY_RE.test(text)) return null;
+  var m = text.match(
+    /^([A-Za-z0-9][^$@]{0,38}?)\s*[-–—@]\s*@?\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(?:\(\s*(\d+)\s*\))?\s*$/);
+  if (!m) return null;
+  var head = m[1].replace(/\s*[-–—]\s*$/, '');
+  if (!/[A-Za-z0-9]/.test(head)) return null;
+  if (THREAD_PROSE_RE.test(text)) return null;
+  if (resolve && resolve(head)) return null;
+  return { item: null, quantity: m[3] ? parseInt(m[3], 10) : 1,
+    price: threadMoney(m[2]), buyer: head, rule: 'header-buyer-price' };
 }
 
 function threadRuleLot(line) {
@@ -1377,10 +1580,19 @@ var THREAD_PROSE_RE = new RegExp(
   'if you|increment|update|closed|winner|http|rules|posted|sent|will ship|' +
   'tokens? =|per token|reserve the right)', 'i');
 
-function threadLooksLikeHeader(line) {
+/**
+ * The heading with its decorations off, or null when the line is not one.
+ *
+ * It hands the text back rather than a boolean because the lines beneath a
+ * heading inherit its NAME, and the decorations are not part of it: the name
+ * is `Random URs (9)`, not `Random URs (9) - First in, first out. Luck of the
+ * draw.` Left whole, that aside became the item name on five context rows
+ * across three seasons.
+ */
+function threadHeadingText(line) {
   var text = String(line).replace(/\s+/g, ' ').trim();
-  if (!text) return false;
-  if (!/[A-Za-z]/.test(text)) return false;
+  if (!text) return null;
+  if (!/[A-Za-z]/.test(text)) return null;
   // A line carrying a price is never an item NAME. Without this a bid line no
   // grammar could read became the section header and renamed every line under
   // it — 202211 lost seven items that way and grew thirteen phantom context
@@ -1409,17 +1621,76 @@ function threadLooksLikeHeader(line) {
   // too — the word it objects to is `bid`, and it is inside the aside.
   var probe = text.replace(/\([^)]*\b(?:min(?:imum)?|bids?|bidding)\b[^)]*\)/gi, ' ')
     .replace(/\s+/g, ' ').trim();
+  // A HEADING MAY CARRY AN ASIDE AFTER A DASH, and the length limit is what
+  // refused it. Tyler heads two of 20214's blocks that way:
+  //
+  //   Random URs (9) - First in, first out. Luck of the draw.
+  //   Chance at Golden Ticket (1) - if I pull it, it's yours! Anyone feel …
+  //
+  // Neither was read, so both blocks inherited the heading ABOVE them — nine
+  // Random Ultra Rares at $75-$80 went into the auction's `Ultra Rare` row,
+  // taking it to 43 tokens against the 34 an order holds, and the $205 bid for
+  // the Golden Ticket became a 1,000 GP GOLD BAR. A two-hundred-dollar gold bar
+  // in the price spine is the shape of defect this file exists to refuse; only
+  // the 28 bars outvoting it kept the row right.
+  //
+  // The aside is taken off and the tests below run on what is left, exactly as
+  // for the parenthetical above. Safe because the price test has already
+  // refused any line carrying one, so this cannot reach `Item - Buyer $12` —
+  // and a heading is still required to look like a heading afterwards.
+  // THE PRICE TEST RUNS FIRST AND IS NEVER RETRIED. A line carrying a price is
+  // not a heading whatever is done to it, and taking an aside off the end of
+  // one turns the front into a plausible heading: `(2) 49ers - @ $115 each`
+  // reduces to `(2) 49ers`, which became the section header of 202123's PYP
+  // block and renamed twenty-six lots after a bidder — the renaming failure,
+  // re-opened by the very repair meant to close a different one. Fourth path
+  // into it, and the first that a fix on this file's own side let in.
+  if (threadHasPrice(probe)) return null;
+  // Tried when the WHOLE line fails, not only when it is too long: at 55
+  // characters `Random URs (9) - First in, first out. Luck of the draw.` is
+  // inside the limit and is refused by the sentence test at the bottom
+  // instead. Whichever test the aside trips, taking it off is the answer.
+  if (!threadHeadingProbeOk(probe)) {
+    var lead = probe.split(/\s[-–—]\s/)[0].replace(/\s+/g, ' ').trim();
+    if (!lead || lead.length >= probe.length) return null;
+    probe = lead;
+  }
+  return threadHeadingProbeOk(probe) ? probe : null;
+}
+
+/**
+ * True when the line is a heading. `threadHeadingText` is the same test and
+ * hands back the heading with its decorations off, which is the name the lines
+ * beneath it inherit — `Random URs (9)`, not `Random URs (9) - First in, first
+ * out. Luck of the draw.`
+ */
+function threadLooksLikeHeader(line) {
+  return !!threadHeadingText(line);
+}
+
+/**
+ * The tests a heading has to pass, applied to whatever is left of it once the
+ * decorations are off. Split out so the aside above can be taken off and the
+ * same battery run again — one place, so the two attempts cannot drift.
+ */
+/**
+ * `@\s*\$?\s*\.?\d`, not `@\s*\$`: A PRICE NEED NOT CARRY A DOLLAR SIGN, and
+ * this guard was written against posts that always do. Steve writes none at
+ * all — `(28)Harry======@3..75` — so the one line of 202325 the grammars
+ * deliberately refuse (see THREAD_BROKEN_MONEY_RE) walked straight into
+ * threadHeadingText, became the section header, and renamed the Minotaur Hide
+ * lot beneath it. Refusing one bad line therefore LOST the item, which is the
+ * opposite of what refusing it was for.
+ */
+function threadHasPrice(text) {
+  return /\$\s*\d|\d+\s*@|@\s*\$?\s*\.?\d/.test(String(text == null ? '' : text));
+}
+
+function threadHeadingProbeOk(probe) {
   if (!probe || probe.length > 60) return false;
-  // `@\s*\$?\s*\.?\d`, not `@\s*\$`: A PRICE NEED NOT CARRY A DOLLAR SIGN, and
-  // this guard was written against posts that always do. Steve writes none at
-  // all — `(28)Harry======@3..75` — so the one line of 202325 the grammars
-  // deliberately refuse (see THREAD_BROKEN_MONEY_RE) walked straight into this
-  // function, became the section header, and renamed the Minotaur Hide lot
-  // beneath it. Refusing one bad line therefore LOST the item, which is the
-  // opposite of what refusing it was for.
-  if (/\$\s*\d|\d+\s*@|@\s*\$?\s*\.?\d/.test(probe)) return false;
+  if (threadHasPrice(probe)) return false;
   if (THREAD_PROSE_RE.test(probe)) return false;
-  if (/[.!?]$/.test(text) && text.split(' ').length > 6) return false;
+  if (/[.!?]$/.test(probe) && probe.split(' ').length > 6) return false;
   return true;
 }
 
@@ -1490,6 +1761,16 @@ function threadTidyName(name) {
       return whole.indexOf(other) < 0 ? '' : b;
     })
     .replace(/\s*[:–-]\s*$/, '')
+    // A STATUS ON THE HEADING IS NOT PART OF THE ITEM'S NAME. Matt Soto marks
+    // the lots still taking bids when he posts an update —
+    // `Orb of Dragonkind -Still Open`, `PYP Ultra Rare -Still Open` — and the
+    // suffix stops all five of 202119's headings resolving, so the lines
+    // beneath them were proposed as sixteen context rows named after the
+    // heading rather than as the auction's Orb, Tooth, Tankard, Goggles and
+    // Ultra Rares. Written looser than his one wording, because an auctioneer
+    // is not consistent with himself; anchored on the end and on a separator,
+    // so a name that ends in one of these words by accident is out of reach.
+    .replace(/\s*[-–—:(]\s*(?:still\s+)?(?:open|closed|sold(?:\s+out)?|unsold|pending)\s*\)?\s*$/i, '')
     // A minimum quoted in the heading is not part of the name:
     // `PYP's (68) (Minimum bid $50)`. Stripped BEFORE the quantity
     // parenthetical below, which only fires when it is the trailing one — left
@@ -1655,6 +1936,9 @@ function threadScanPost(text, resolve, buyers) {
   var lines = String(text == null ? '' : text).split('\n');
   var lots = [], unparsed = [];
   var header = null, section = null, columns = null, refusals = [], alias = null;
+  // Does the heading in hand NAME A TOKEN? Two rules ask it of every line
+  // beneath the heading, so it is answered once, where the heading changes.
+  var headerNames = false, headerStock = false;
 
   // DOES `Nx` MARK A LOT PRICE OR A QUANTITY? The line cannot say, and the two
   // readings differ by a factor of N:
@@ -1776,6 +2060,15 @@ function threadScanPost(text, resolve, buyers) {
     var raw = lines[i].replace(/\s+$/, '');
     var line = raw.replace(/^\s+/, '');
     if (!line) continue;
+    // AN ARROW POINTING AT THE LINE IS THE AUCTIONEER TALKING, NOT A BUYER.
+    // Tyler annotates one of 20214's gold lots in place —
+    // `Tom Bombadil (28) - $12.75 <-- Error here, Increment should be $1 after
+    // $10, so $13, $14, $15...onwards` — and the aside landed in the buyer
+    // field, which is the one thing that stops the heading repair below: 28 of
+    // the auction's 44 bars, at the very price the sheet records. Three lines
+    // in the corpus carry the arrow and this is the only one with anything
+    // after it.
+    line = line.replace(/\s*<-{1,2}\s.*$/, '');
 
     var found = threadSectionOf(line);
     // Tested before the branch, not inside the header branch, because the line
@@ -1788,7 +2081,10 @@ function threadScanPost(text, resolve, buyers) {
       closeXGroup();
       xSaid = 'lot';
     }
-    if (found) { closeXGroup(); section = found === 'end' ? null : found; header = null; alias = null; continue; }
+    if (found) {
+      closeXGroup(); section = found === 'end' ? null : found;
+      header = null; headerNames = false; headerStock = false; alias = null; continue;
+    }
 
     if (raw.indexOf('\t') >= 0) {
       var cells = raw.split('\t');
@@ -1809,8 +2105,29 @@ function threadScanPost(text, resolve, buyers) {
     if (alias && new RegExp('^' + alias.code + '\\b', 'i').test(bare)) {
       bare = alias.item + bare.slice(alias.code.length);
     }
-    var lot = threadTableLot(raw, columns) || threadBareLot(bare, resolve) ||
-      threadRuleLot(line) || threadBuyerLot(bare, buyers);
+    // ONE BUYER, TWO PRICES, ONE LINE. Matt Soto totals a bidder's two lots
+    // together — `Marilith - $115 (1) & $120 (2)` — and every grammar here
+    // reads one lot per line, so the second half is silently dropped: three of
+    // 202112's 34 Ultra Rares, which is the kind of short count this season's
+    // composition check is meant to treat as evidence of a withholding.
+    //
+    // Split rather than parsed, so the halves go through the ordinary chain and
+    // inherit every guard on it. Only under a heading that names a token, and
+    // only when both halves carry a price — that is what makes the `&` a
+    // conjunction of lots rather than part of a name (`Patron Pin & Code`,
+    // `Adventurer's Guild Codes & Buttons`).
+    var pair = headerNames &&
+      line.match(/^(([^$@]{1,40}?)\s*[-–—@]\s*\$\s*[\d][\d,]*(?:\.\d{1,2})?\s*(?:\(\s*\d+\s*\))?)\s*&\s*(\$\s*[\d].*)$/);
+    if (pair) {
+      line = pair[1];
+      bare = line;
+      lines.splice(i + 1, 0, pair[2].replace(/\s*[-–—@]\s*$/, '') + ' - ' + pair[3]);
+    }
+
+    var lot = threadTableLot(raw, columns) || threadBuyoutLot(bare, resolve) ||
+      threadBareLot(bare, resolve) ||
+      threadRuleLot(line) || threadBuyerLot(bare, buyers) ||
+      (headerNames ? threadHeaderLot(line, resolve) : null);
     if (lot) {
       // A FOUR-DIGIT YEAR IS NOT A QUANTITY, and this is the one misread that
       // does real damage, because it multiplies. Auctioneers date a prior-season
@@ -1843,6 +2160,39 @@ function threadScanPost(text, resolve, buyers) {
       if (lot.quantity > 1 && /\(\s*\d+\s*\)/.test(String(lot.item == null ? '' : lot.item))) {
         lot.quantity = 1;
       }
+      // A NAME UNDER A HEADING THAT NAMES A TOKEN IS THE BUYER, NOT THE ITEM.
+      //
+      // Every grammar here has to guess which side of a line is the item, and
+      // where the line carries no separator the guess is made from name shapes.
+      // Under a heading it does not have to be a guess at all: the heading has
+      // already said what is being sold, and the auctioneers who write
+      //
+      //     PYP URs (34)                     Tyler, 20214
+      //     Saruman (4) - $115
+      //     Arwen (5) - $115
+      //
+      // are naming a BIDDER on every line beneath it. `item-qty-price` reads
+      // `Saruman` as the item, so 20214 proposed eighty context rows literally
+      // named after Tolkien characters and not one of its 22 recorded items —
+      // the renaming failure, arriving through a rule that fired rather than
+      // through one that did not.
+      //
+      // THE DISCRIMINATOR IS RESOLUTION, IN BOTH DIRECTIONS. The heading must
+      // resolve to a token and the rule's item must not. That is what keeps it
+      // away from an augment — `Greater Ring of Havoc (1) - $265 - Felurian`
+      // sits under `AUGMENTATION`, which resolves to nothing, so the repair
+      // never fires — and away from a line that genuinely names a second item
+      // under an item heading, since that name resolves.
+      //
+      // It asserts nothing new. The fallback on the next line already says
+      // "a line under this heading is this heading's item"; this only extends
+      // it to the case where a rule mistakenly took a word for the name. And
+      // the empty buyer is required: a rule that already found a buyer has a
+      // separator to work with and its item field is what the line says.
+      if (lot.item && !lot.buyer && (headerNames || headerStock) && resolve && !resolve(lot.item)) {
+        lot.buyer = lot.item;
+        lot.item = null;
+      }
       var fromHeader = !lot.item;
       if (!lot.item) lot.item = header;
       if (!lot.item) { unparsed.push({ line: line, why: 'no item name above it' }); continue; }
@@ -1862,9 +2212,21 @@ function threadScanPost(text, resolve, buyers) {
       continue;
     }
 
-    if (threadLooksLikeHeader(line)) {
+    var heading = threadHeadingText(line);
+    if (heading) {
       closeXGroup();
-      header = line;
+      header = heading;
+      headerNames = threadHeaderNames(heading, resolve);
+      // A heading that STATES ITS STOCK is naming an item even where nothing
+      // resolves it. `Random URs (9)` and `Chance at Golden Ticket (1)` are
+      // both off-order lots — a Random Ultra Rare is a context item, never a
+      // token — and the lines beneath them carry a bidder and no buyer field,
+      // so without this they were proposed as context rows named `Samwise`,
+      // `Galadriel` and `Tom Bombadil`. The `(N)` is the whole test: an item
+      // heading says how many are on offer, and the headings this must not
+      // reach — `Other tokens for sale` over Lord Brian's augments, or a
+      // section like `AUGMENTATION` — state no count at all.
+      headerStock = /\(\s*\d+\s*\)/.test(heading);
       // `Alchemist Ink (AI)`, `24 Elvish Bismuth (EB) (bids are for each …)`.
       // The code is two to four capitals in their own parentheses; what stands
       // in front of them is the item. Cleared on every heading, so a code never
@@ -1884,6 +2246,45 @@ function threadScanPost(text, resolve, buyers) {
   }
   closeXGroup();
   settleXGroups();
+
+  // A `(N)` THAT COUNTS THE LOTS INSTEAD OF THE TOKENS.
+  //
+  // Scott numbers his premium lots and states quantities for his trade goods,
+  // in one post, with the same punctuation for both:
+  //
+  //     7th Tooth of Cavadar (1)-$17.00-Rogue     eight lots, one token each
+  //     ...
+  //     7th Tooth of Cavadar (8)-$18.00-Wolverine
+  //     Alchemist's Ink (20)-$7.50-Colossus       twenty tokens
+  //     1k GP (x10)-$13.00-Cyclops                ten bars — he writes the `x`
+  //
+  // Read as counts, 202113's eight Teeth came to 36, its eight Tankards to 36,
+  // its four Guild Buttons to 10 and its 44 gold bars to 4 — while the parse
+  // rated 20 of 20 items matched, because `matched` compares NAMES. Four of its
+  // prices came out wrong with it, the mode being weighted by exactly these
+  // numbers.
+  //
+  // THE RUN IS THE EVIDENCE. A block of consecutive lines under one name whose
+  // parentheses are exactly 1, 2, 3 … N, with N the number of lines, is a
+  // numbered list: for it to be quantities the auctioneer would have had to
+  // sell one lot of every size from one to N, in that order. Four such blocks
+  // stand in this post and every one of them lands on the count the order is
+  // known to hold — 8, 8, 4, 4 — which is what a real quantity block never
+  // does. Four lines minimum, because `(1) (2) (3)` is short enough to happen
+  // by accident and the whole corpus outside this post produces no run at all.
+  //
+  // Not decided from the recorded counts, which would be circular, and not from
+  // the `x` he happens to write on the gold — that is one auctioneer's habit,
+  // and the shape here is the thing itself.
+  for (var g0 = 0; g0 < lots.length; ) {
+    var g1 = g0;
+    while (g1 + 1 < lots.length && lots[g1 + 1].item === lots[g0].item &&
+           lots[g0].item != null) g1++;
+    var run = g1 - g0 + 1, numbered = run >= 4, q;
+    for (q = 0; numbered && q < run; q++) if (lots[g0 + q].quantity !== q + 1) numbered = false;
+    if (numbered) for (q = 0; q < run; q++) lots[g0 + q].quantity = 1;
+    g0 = g1 + 1;
+  }
 
   // ANOTHER PASS, while the buyer set is still growing. Who bought anything at
   // all in this post is only known once a pass has finished, and threadBuyerLot
@@ -2208,6 +2609,30 @@ var THREAD_FALLBACKS = [
   // `Potion of Condensed Healing` is recorded as `Potion Condensed Healing`,
   // and Fred K shortens it again to `Condensed Healing`.
   function (s) { return /^\s*condensed healing\s*$/i.test(s) ? 'Potion Condensed Healing' : s; },
+
+  // A COMPOUND WORD SPLIT IN TWO. Miathin writes three of 20217's five plank
+  // lines as `Dark wood plank(30) - .75 honky tonk man` and the other two as
+  // `Darkwood Plank` — 40 of the auction's 117 planks, proposed as an augment
+  // under a name no season knows while the row they belong to counted three.
+  // `validate-prices.mjs` § 8 cannot see this class either: an inserted space
+  // is neither punctuation nor a trailing plural.
+  function (s) { return s.replace(/\bdark\s+wood\b/i, 'Darkwood'); },
+
+  // `Cavader` for `Cavadar`. Lord Brian spells the Tooth that way in both of
+  // 202123's headings, and the six lots beneath them became context rows under
+  // the misspelling while the auction's `1k Bonus` row went unproposed. THE
+  // ORDINAL IS LEFT ALONE — the 5th, 6th and 7th Teeth are three different
+  // tokens in three different seasons, and only the surname is in doubt.
+  function (s) { return s.replace(/\btooth of cavad\w*/i, 'Tooth of Cavadar'); },
+
+  // AN IOUN STONE MAY DROP ITS FAMILY NAME. 2021's Patron Token is the
+  // `Ioun Stone Mystic Orb` and Josh M lists it as a bare `Mystic Orb` —
+  // 202122's whole `Patron Token 1` row, at the $260 the sheet records.
+  // Anchored to the WHOLE name, and it costs nothing in a later season: the
+  // resolver is scoped to the auction's own year, so a `Mystic Orb` in a 2022
+  // thread still resolves to nothing and is proposed as the augment it is.
+  function (s) { return /^\s*mystic orb\s*$/i.test(s) ? 'Ioun Stone Mystic Orb' : s; },
+
   function (s) { return s.replace(/\s+of\s+/i, ' '); },
 ];
 
