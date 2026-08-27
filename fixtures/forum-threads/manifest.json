@@ -5,11 +5,11 @@
   "pagination": "Kunena serves 12 posts to a page. Every page of every thread is here, because two of the assistant's outputs — the close-date evidence and the withheld candidates — live in later posts, not in the results post. `topic-N.html.gz` is page 1 and `topic-N-startM.html.gz` is the page beginning at post M.",
   "sharedWithPhase4": "Page 1 of 248428, 248693, 252093, 255503, 258020, 259475 and 259798 is NOT duplicated here — it already lives in fixtures/auction-open, which Phase 4 fetched from the same markup to read open dates. The test resolves page 1 from either directory. Copying them would leave two versions of one page in the repo, free to disagree after a re-fetch.",
   "expect": {
-    "itemsMatched": 941,
-    "reproduces": 847,
-    "min": 717,
-    "max": 667,
-    "ties": 38,
+    "itemsMatched": 1053,
+    "reproduces": 948,
+    "min": 800,
+    "max": 740,
+    "ties": 41,
     "closeBracketHits": 13,
     "why": "The corpus totals, pinned so a regression reads as a number. `reproduces` is the quantity-weighted mode against prices.csv; `min` and `max` are what Trent's rule would have proposed from the same distributions, and the gap between them is the evidence that a thread wants a mode and a Trent file wants a pair. `closeBracketHits` is 13 of the 30 threads that yield a bracket at all, which is why the close date is reported as evidence and never proposed. RE-PIN THESE after adding a fixture: they are sums over the corpus, so the three 2025 threads added in 2026-08 moved itemsMatched by 59 while every existing thread stood still or improved, and a stale floor hides the next regression."
   },
@@ -572,6 +572,68 @@
       "reproduces": 17,
       "why": "PRICE FIRST, BUYER LAST: `Orb of Dragonkind: $575- Kord`, the mirror of the shape above it and one rule with Starkhound's 2018 `Orb of Dragonkind (Dragon) : $465 Gargoyle` once the dash is optional. Between them these two auctioneers wrote most of 2018 and 2019 and neither read a line. NEITHER SIDE MAY CARRY A `$`: without that the rule reads the running total, and Azzy posts one most days — `Current Total: $7,849 of $8,000 Goal` matches with `of $8,000 Goal` for a buyer.",
       "onyx": 0
+    },
+    {
+      "auction": "20214",
+      "topic": "252126",
+      "auctioneer": "Tyler",
+      "pages": 4,
+      "resultsPost": 1,
+      "itemsMatched": 21,
+      "reproduces": 19,
+      "ties": 2,
+      "why": "A BIDDER UNDER AN ITEM HEADING. `PYP URs (34)` heads thirteen lines of `Saruman (4) - $115`, and `item-qty-price` read every bidder as the item — so this thread proposed eighty context rows named after Tolkien characters and not one of its 22 recorded items, with nothing reaching `unparsed`. The renaming failure arriving through a rule that FIRED rather than one that did not. The repair is that the heading resolves and the name does not."
+    },
+    {
+      "auction": "20215",
+      "topic": "252273",
+      "auctioneer": "jpotter",
+      "pages": 3,
+      "resultsPost": 2,
+      "itemsMatched": 20,
+      "reproduces": 19,
+      "why": "THE BUY-OUT AUCTION, where one word marks both a sale and an offer nobody took. `Orb of Dragonkind: Hershey Buyout: $410` sold; `Elven Bismuth Buyout: $12` is the standing price against four lots that went at $8 and $8.25. A named buyer is what separates them, and the eleven unread lines are the offers, refused on purpose. Also `AG code (6)` — where the shorter prefix `AG` is ARAGONITE, which put six Aragonite at $10 into an auction whose one real Aragonite line says $20."
+    },
+    {
+      "auction": "20217",
+      "topic": "252597",
+      "auctioneer": "Miathin",
+      "pages": 3,
+      "resultsPost": 1,
+      "itemsMatched": 21,
+      "reproduces": 21,
+      "why": "A PRICE THAT DROPS ITS LEADING ZERO AND ITS DOLLAR SIGN: `Mystic Silk (47) - .75 Ted dibiase`. The price group demanded a leading digit, so four items were lost whole — the Silk, the Planks, the Munition and the 2k Bonus, each one the auction's entire row — and its gold read 41 bars of 44. He also strays a dot after the count (`Aragonite(3). - 25 undertaker`). Reproduces all 21 to the cent."
+    },
+    {
+      "auction": "202112",
+      "topic": "253054",
+      "auctioneer": "Matt Soto",
+      "pages": 1,
+      "resultsPost": 1,
+      "itemsMatched": 20,
+      "reproduces": 19,
+      "ties": 1,
+      "why": "THE HEADING IS THE ONLY THING NAMING THE ITEM: `Alchemist Ink (37)` over `Magalor - $5.25 (37)`. Without it a bare buyer and a price is the same shape as 2023's `Gib Gub's Handy Acorn @ $1` and means the opposite, which is why the bare form was deliberately unread — 54 unparsed lines and none of 20 items. Also the one line in the corpus carrying TWO lots for one buyer, `Marilith - $115 (1) & $120 (2)`: unsplit it drops three of the auction's 34 Ultra Rares."
+    },
+    {
+      "auction": "202119",
+      "topic": "253649",
+      "auctioneer": "Matt Soto",
+      "pages": 1,
+      "resultsPost": 1,
+      "itemsMatched": 8,
+      "reproduces": 1,
+      "why": "RULED OUT — THE SOURCE IS GONE. Post #1 was overwritten with a mid-auction copy of 202120's table AFTER this auction closed: it carries 202120's dates, 202120's buyers and 202120's prices (7 of 8 to the cent) and none of its own, and its trade goods are absent entirely because they ran on the auctioneer's own website. Kept as a fixture for the `-Still Open` heading suffix, which is his marker for a lot still taking bids and which cost all five headings their resolution — sixteen context rows named after the heading rather than the auction's Orb and Ultra Rares. THE LOW FLOORS ARE THE POINT: this thread should not reproduce its own sheet."
+    },
+    {
+      "auction": "202123",
+      "topic": "252325",
+      "auctioneer": "Lord Brian",
+      "pages": 1,
+      "resultsPost": 1,
+      "itemsMatched": 22,
+      "reproduces": 22,
+      "why": "The same heading rule with an `@` and no count — `Seahawks @ $350` under `Orb of Dragonkind` — plus a bidder who opens on a DIGIT (`(1) 49ers @ $25 each`), which `qty-buyer-at-price-each` required to be a letter. Reproduces all 22 to the cent, every count matching the order composition. Its twelve context candidates are the off-order block, which is real."
     }
   ]
 }
