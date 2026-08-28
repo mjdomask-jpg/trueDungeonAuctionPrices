@@ -26,7 +26,7 @@ key,auctionSeason,Item,Display Name,Category
 2012Treasure Chip,2012,Treasure Chip,Treasure Chip (each),Preorder
 2012Ultra Rare,2012,Ultra Rare,Ultra Rare,Ultra Rare
 2012Uncommon Bag,2012,Uncommon Bag,Uncommon Bag,Condensed
-2012Wish Ring,2012,Wish Ring,Wish Ring,Premium
+2012Wish Ring,2012,Wish Ring,Wish Ring,Trade 4
 "20131,000 GP Gold Bar",2013,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20131k Bonus,2013,1k Bonus,Rod of Seven Parts Segment 6,Premium
 20133 Star,2013,3 Star,Canteen of Quaffing,Bonus
@@ -52,7 +52,7 @@ key,auctionSeason,Item,Display Name,Category
 2013Treasure Chip,2013,Treasure Chip,Treasure Chip (each),Preorder
 2013Ultra Rare,2013,Ultra Rare,Ultra Rare,Ultra Rare
 2013Uncommon Bag,2013,Uncommon Bag,Uncommon Bag,Condensed
-2013Wish Ring,2013,Wish Ring,Wish Ring,Premium
+2013Wish Ring,2013,Wish Ring,Wish Ring,Trade 4
 2014+2 Keen Longbow,2014,+2 Keen Longbow,+2 Keen Longbow,Ultra Rare
 2014+2 Sacred Sling,2014,+2 Sacred Sling,+2 Sacred Sling,Ultra Rare
 2014+2 Slayer Sword,2014,+2 Slayer Sword,+2 Slayer Sword,Ultra Rare
@@ -86,7 +86,7 @@ key,auctionSeason,Item,Display Name,Category
 2014Uncommon Bag,2014,Uncommon Bag,Uncommon Bag,Condensed
 2014Viper Strike Belt,2014,Viper Strike Belt,Viper Strike Belt,Ultra Rare
 2014Viper Strike Shirt,2014,Viper Strike Shirt,Viper Strike Shirt,Ultra Rare
-2014Wish Ring,2014,Wish Ring,Wish Ring,Premium
+2014Wish Ring,2014,Wish Ring,Wish Ring,Trade 4
 2015+2 Deadly Drow Blood Mace,2015,+2 Deadly Drow Blood Mace,+2 Deadly Drow Blood Mace,Ultra Rare
 2015+2 Deathcleaver,2015,+2 Deathcleaver,+2 Deathcleaver,Ultra Rare
 2015+2 Staff of Focus,2015,+2 Staff of Focus,+2 Staff of Focus,Ultra Rare
@@ -119,7 +119,7 @@ key,auctionSeason,Item,Display Name,Category
 2015Treasure Chip,2015,Treasure Chip,Treasure Chip (each),Preorder
 2015Ultra Rare,2015,Ultra Rare,Ultra Rare,Ultra Rare
 2015Uncommon Bag,2015,Uncommon Bag,Uncommon Bag,Condensed
-2015Wish Ring,2015,Wish Ring,Wish Ring,Premium
+2015Wish Ring,2015,Wish Ring,Wish Ring,Trade 4
 2016+2 Baton of Focus,2016,+2 Baton of Focus,+2 Baton of Focus,Ultra Rare
 "20161,000 GP Gold Bar",2016,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20161k Bonus,2016,1k Bonus,2nd Tooth of Cavadar,Premium
@@ -152,7 +152,7 @@ key,auctionSeason,Item,Display Name,Category
 2016Treasure Chip,2016,Treasure Chip,Treasure Chip (each),Preorder
 2016Ultra Rare,2016,Ultra Rare,Ultra Rare,Ultra Rare
 2016Uncommon Bag,2016,Uncommon Bag,Uncommon Bag,Condensed
-2016Wish Ring,2016,Wish Ring,Wish Ring,Premium
+2016Wish Ring,2016,Wish Ring,Wish Ring,Trade 4
 "20171,000 GP Gold Bar",2017,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20171k Bonus,2017,1k Bonus,3rd Tooth of Cavadar,Premium
 20173 Star,2017,3 Star,Canteen of Quaffing,Bonus
@@ -183,7 +183,7 @@ key,auctionSeason,Item,Display Name,Category
 2017Ultra Rare robe,2017,Ultra Rare robe,Ultra Rare robe,Ultra Rare
 2017Ultra Rare Shield,2017,Ultra Rare Shield,Ultra Rare Shield,Ultra Rare
 2017Uncommon Bag,2017,Uncommon Bag,Uncommon Bag,Condensed
-2017Wish Ring,2017,Wish Ring,Wish Ring,Premium
+2017Wish Ring,2017,Wish Ring,Wish Ring,Trade 4
 2018+2 Archer's Buckler,2018,+2 Archer's Buckler,+2 Archer's Buckler,Ultra Rare
 2018+2 Hammer of Smiting,2018,+2 Hammer of Smiting,+2 Hammer of Smiting,Ultra Rare
 "20181,000 GP Gold Bar",2018,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
@@ -217,7 +217,7 @@ key,auctionSeason,Item,Display Name,Category
 2018Treasure Chip,2018,Treasure Chip,Treasure Chip (each),Preorder
 2018Ultra Rare,2018,Ultra Rare,Ultra Rare,Ultra Rare
 2018Uncommon Bag,2018,Uncommon Bag,Uncommon Bag,Condensed
-2018Wish Ring,2018,Wish Ring,Wish Ring,Premium
+2018Wish Ring,2018,Wish Ring,Wish Ring,Trade 4
 "20191,000 GP Gold Bar",2019,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20191k Bonus,2019,1k Bonus,5th Tooth of Cavadar,Premium
 20192k Bonus,2019,2k Bonus,Mask of Mayhem,Premium
@@ -253,7 +253,7 @@ key,auctionSeason,Item,Display Name,Category
 2019Treasure Chip,2019,Treasure Chip,Treasure Chip (each),Preorder
 2019Ultra Rare,2019,Ultra Rare,Ultra Rare,Ultra Rare
 2019Uncommon Bag,2019,Uncommon Bag,Uncommon Bag,Condensed
-2019Wish Ring,2019,Wish Ring,Wish Ring,Premium
+2019Wish Ring,2019,Wish Ring,Wish Ring,Trade 4
 2020+1 Mighty Short Bow,2020,+1 Mighty Short Bow,+1 Mighty Short Bow,Ultra Rare
 2020+2 Flaming Blade,2020,+2 Flaming Blade,+2 Flaming Blade,Ultra Rare
 2020+2 Holy Avenger,2020,+2 Holy Avenger,+2 Holy Avenger,Ultra Rare
@@ -292,7 +292,7 @@ key,auctionSeason,Item,Display Name,Category
 2020Treasure Chip,2020,Treasure Chip,Treasure Chip (each),Preorder
 2020Ultra Rare,2020,Ultra Rare,Ultra Rare,Ultra Rare
 2020Uncommon Bag,2020,Uncommon Bag,Uncommon Bag,Condensed
-2020Wish Ring,2020,Wish Ring,Wish Ring,Premium
+2020Wish Ring,2020,Wish Ring,Wish Ring,Trade 4
 2021+4 Rod of the Meek,2021,+4 Rod of the Meek,+4 Rod of the Meek,Ultra Rare
 "20211,000 GP Gold Bar",2021,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20211k Bonus,2021,1k Bonus,7th Tooth of Cavadar,Premium
@@ -330,7 +330,7 @@ key,auctionSeason,Item,Display Name,Category
 2021Treasure Chip,2021,Treasure Chip,Treasure Chip (each),Preorder
 2021Ultra Rare,2021,Ultra Rare,Ultra Rare,Ultra Rare
 2021Uncommon Bag,2021,Uncommon Bag,Uncommon Bag,Condensed
-2021Wish Ring,2021,Wish Ring,Wish Ring,Premium
+2021Wish Ring,2021,Wish Ring,Wish Ring,Trade 4
 2022+2 Mug of Battle,2022,+2 Mug of Battle,+2 Mug of Battle,Ultra Rare
 "20221,000 GP Gold Bar",2022,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20221k Bonus,2022,1k Bonus,Ring of the 5th Circle,Premium
@@ -364,7 +364,7 @@ key,auctionSeason,Item,Display Name,Category
 2022Treasure Chip,2022,Treasure Chip,Treasure Chip (each),Preorder
 2022Ultra Rare,2022,Ultra Rare,Ultra Rare,Ultra Rare
 2022Uncommon Bag,2022,Uncommon Bag,Uncommon Bag,Condensed
-2022Wish Ring,2022,Wish Ring,Wish Ring,Premium
+2022Wish Ring,2022,Wish Ring,Wish Ring,Trade 4
 2023+2 Sun Scimitar,2023,+2 Sun Scimitar,+2 Sun Scimitar,Ultra Rare
 "20231,000 GP Gold Bar",2023,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20231k Bonus,2023,1k Bonus,Ring of the 4th Circle,Premium
@@ -399,7 +399,7 @@ key,auctionSeason,Item,Display Name,Category
 2023Treasure Chip,2023,Treasure Chip,Treasure Chip (each),Preorder
 2023Ultra Rare,2023,Ultra Rare,Ultra Rare,Ultra Rare
 2023Uncommon Bag,2023,Uncommon Bag,Uncommon Bag,Condensed
-2023Wish Ring,2023,Wish Ring,Wish Ring,Premium
+2023Wish Ring,2023,Wish Ring,Wish Ring,Trade 4
 2024+2 Savage Sword,2024,+2 Savage Sword,+2 Savage Sword,Ultra Rare
 "20241,000 GP Gold Bar",2024,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20241k Bonus,2024,1k Bonus,Ring of the 3rd Circle,Premium
@@ -434,7 +434,7 @@ key,auctionSeason,Item,Display Name,Category
 2024Treasure Chip,2024,Treasure Chip,Treasure Chip (each),Preorder
 2024Ultra Rare,2024,Ultra Rare,Ultra Rare,Ultra Rare
 2024Uncommon Bag,2024,Uncommon Bag,Uncommon Bag,Condensed
-2024Wish Ring,2024,Wish Ring,Wish Ring,Premium
+2024Wish Ring,2024,Wish Ring,Wish Ring,Trade 4
 2025+2 Rod of Focus,2025,+2 Rod of Focus,+2 Rod of Focus,Ultra Rare
 "20251,000 GP Gold Bar",2025,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 20251k Bonus,2025,1k Bonus,Ring of the 2nd Circle,Premium
@@ -472,7 +472,7 @@ key,auctionSeason,Item,Display Name,Category
 2025Treasure Chip,2025,Treasure Chip,Treasure Chip (each),Preorder
 2025Ultra Rare,2025,Ultra Rare,Ultra Rare,Ultra Rare
 2025Uncommon Bag,2025,Uncommon Bag,Uncommon Bag,Condensed
-2025Wish Ring,2025,Wish Ring,Wish Ring,Premium
+2025Wish Ring,2025,Wish Ring,Wish Ring,Trade 4
 2026+2 Darkbane Crossbow,2026,+2 Darkbane Crossbow,+2 Darkbane Crossbow,Ultra Rare
 "20261,000 GP Gold Bar",2026,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 202610x Treasure Chip,2026,10x Treasure Chip,Treasure Chip (each),Preorder
@@ -512,7 +512,7 @@ key,auctionSeason,Item,Display Name,Category
 2026Ring of the Vampire,2026,Ring of the Vampire,Ring of the Vampire,Ultra Rare
 2026Treasure Chip,2026,Treasure Chip,Treasure Chip (each),Preorder
 2026Ultra Rare,2026,Ultra Rare,Ultra Rare,Ultra Rare
-2026Wish Ring,2026,Wish Ring,Wish Ring,Premium
+2026Wish Ring,2026,Wish Ring,Wish Ring,Trade 4
 "20271,000 GP Gold Bar",2027,"1,000 GP Gold Bar","1,000 GP Gold Bar",Trade 2
 202710x Treasure Chip,2027,10x Treasure Chip,Treasure Chip (each),Preorder
 20271k Bonus,2027,1k Bonus,Ioun Stone Warden Wrath,Premium
@@ -541,4 +541,4 @@ key,auctionSeason,Item,Display Name,Category
 2027Preorder Bonus,2027,Preorder Bonus,Drake's Draught,Preorder
 2027Treasure Chip,2027,Treasure Chip,Treasure Chip (each),Preorder
 2027Ultra Rare,2027,Ultra Rare,Ultra Rare,Ultra Rare
-2027Wish Ring,2027,Wish Ring,Wish Ring,Premium
+2027Wish Ring,2027,Wish Ring,Wish Ring,Trade 4

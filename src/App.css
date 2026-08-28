@@ -314,6 +314,7 @@ td.token .hint-wrap { margin-left: 5px; }
    mode uses a darkened cyan and dark mode uses the bright brand value. */
 [data-category='Trade 1']    { --cat-color: #b45f06; }
 [data-category='Trade 2']    { --cat-color: #b45f06; }
+[data-category='Trade 4']    { --cat-color: #b45f06; }
 [data-category='Ultra Rare']    { --cat-color: #9900ff; }
 [data-category='Premium']       { --cat-color: #ff0000; }
 [data-category='Bonus']         { --cat-color: #34a853; }
@@ -322,6 +323,7 @@ td.token .hint-wrap { margin-left: 5px; }
 
 :root[data-theme='dark'] [data-category='Trade 1']    { --cat-color: #e08b3e; }
 :root[data-theme='dark'] [data-category='Trade 2']    { --cat-color: #e08b3e; }
+:root[data-theme='dark'] [data-category='Trade 4']    { --cat-color: #e08b3e; }
 :root[data-theme='dark'] [data-category='Ultra Rare']    { --cat-color: #c084fc; }
 :root[data-theme='dark'] [data-category='Premium']       { --cat-color: #f87171; }
 :root[data-theme='dark'] [data-category='Bonus']         { --cat-color: #4ade80; }
