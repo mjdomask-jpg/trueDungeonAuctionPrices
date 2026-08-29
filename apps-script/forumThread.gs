@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-27.1';
+var THREAD_VERSION = '2026-08-27.2';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -1906,13 +1906,44 @@ function threadOnyxSetName(name) {
     // at the price onyx.csv records to the cent ($110, $105, $95, $90), and
     // each was the one Onyx row of its auction that never reconciled.
     .replace(/^\s*[-–—]?\s*(?:full\s+)?c(?:ommons?)?[\s/]+u\.?\s*c?\.?(?:ommons?)?[\s/]+r\.?\s*a?r?e?s?[\s/]*(?:full\s+)?set\s*$/i, 'C/UC/R Set')
+    // ...and kurtreznor SPELLS THE THREE WORDS OUT WITH COMMAS AND PLURALS:
+    // `ONYX Common, Uncommon, Rare Sets`. The rule above wants a slash or a
+    // space between the words and singular `Set` at the end, so this is a third
+    // spelling of the same 21st row rather than a variant of the second. One
+    // thread, one lot, $135 — 20222's only unreconciled Onyx row.
+    .replace(/^\s*commons?\s*,\s*uncommons?\s*,\s*rares?\s+sets?\s*$/i, 'C/UC/R Set')
+    // `Belt of the Deadshot` IS THE NAME. `onyx.csv` records it that way 42
+    // times and 25 thread mentions keep the article; exactly two drop it —
+    // ralykam's 202219 and Wade S's 202221 — and each was the one Onyx row of
+    // its auction that could not match, at a price ($115 both) the sheet
+    // already holds. Same shape as the `Shieldmaiden` fold below and decided
+    // the same way: the sheet and the overwhelming majority of auctioneers
+    // agree, so there is nothing to arbitrate.
+    .replace(/^\s*belt\s+of\s+deadshot\s*$/i, 'Belt of the Deadshot')
     // `Shield Maiden Bracers` IS THE OFFICIAL NAME — maintainer, 2026-08-26.
     // AlanP closes the space up in both of his 2025 Onyx auctions; Mike Steele
     // and Wade S keep it, and all ten shipped rows keep it. Put to him rather
     // than inferred from those row counts, because "match the shipped CSV" is
     // the heuristic that turned `Folio of X` into `Folio: X` — but here the
     // sheet and the majority of auctioneers agreed, and he confirmed both.
-    .replace(/^\s*shieldmaiden\s+bracers\s*$/i, 'Shield Maiden Bracers');
+    .replace(/^\s*shieldmaiden\s+bracers\s*$/i, 'Shield Maiden Bracers')
+    // THE SEPARATOR THE MARKER LEFT BEHIND. `threadTidyName` strips a trailing
+    // `-`, `–` or `:`, but it runs BEFORE `stripOnyxMarker` — so Matt Soto's
+    // `+2 Chaos Cannon – Onyx` is tidied while the marker is still on the end,
+    // loses ` Onyx`, and arrives here as `+2 Chaos Cannon –`.
+    //
+    // It is the single biggest reason 2022's Onyx reconciled 60 of 362: that
+    // season is 16 Onyx auctions and he ran most of them, so the dash sat on
+    // roughly 250 rows whose PRICES were already right to the cent. Nothing was
+    // wrong with the data or the reading — every one of those rows failed to
+    // match its own recorded row on a trailing character.
+    //
+    // Only ever reachable for an Onyx lot, because `stripOnyxMarker` is the
+    // only thing that can take a suffix off a name after tidying has run; a lot
+    // it does not touch had its separator removed already.
+    .replace(/\s*[:–—-]\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
