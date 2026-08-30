@@ -30,7 +30,7 @@ The app is a small React + Vite single-page app with client-side routing
 | --- | --- |
 | `src/main.tsx` | Mounts `HashRouter`, wraps the tree in `AuctionDataProvider`, declares routes. |
 | `src/App.tsx` | Layout shell: the `.wrap` container, `SiteHeader`, and an `<Outlet/>` for the routed page. |
-| `src/pages/DashboardPage.tsx` | The price dashboard — season/category controls, stats text, per-category tables. Owns `CATEGORY_ORDER`. |
+| `src/pages/DashboardPage.tsx` | The price dashboard — season/category controls, stats text, per-category tables. |
 | `src/components/` | `SiteHeader`, `ThemeToggle`, and `CategoryTable` (owns `BANDED_CATEGORIES` and the row rendering). |
 | `src/hooks/useTheme.ts` | Light/dark theme state (see §11). |
 | `src/lib/data.ts` | Pure parse/filter/join/aggregate logic (below). |
@@ -197,9 +197,16 @@ the underlying statistics:
 
 The rows are rendered as **one table per category** (not a single combined table):
 
-- **Table order** follows the fixed `CATEGORY_ORDER` in `src/pages/DashboardPage.tsx`: Trade 1,
+- **Table order** follows the fixed `CATEGORY_ORDER` in `src/lib/categories.ts`: Trade 1,
   Trade 2, Ultra Rare, Premium, Bonus, Preorder, Golden Ticket (unknown categories appended
   alphabetically). Each table has the category name as an `<h2>` header above it.
+- **A category can be folded into another for display.** `sectionCategory` (same
+  module) maps `Trade 4` -> `Premium`, so Wish Ring — a Trade 4 rung by the
+  canonical game term, but bought and priced as an 8K-order Premium — sits in
+  the Premium table instead of a table of one row. The Prices page groups, lists
+  and filters on the section, so `Trade 4` is not offered in the category picker;
+  the Trends year-over-year view groups on it too. Everywhere the raw category is
+  the fact on show (the explorer's chips, filters and sorting) keeps `Trade 4`.
 - **Rows within a table** are sorted **alphabetically by `Display Name`** (token
   name), independent of the `Item` grouping key.
 - **Columns** (left to right): `Token` (the `Display Name`), then **Last 5

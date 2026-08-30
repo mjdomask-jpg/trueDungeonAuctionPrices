@@ -5,7 +5,7 @@ import { useFilters } from '../data/filtersContext';
 import { applyViewFilters } from '../lib/context';
 import { CompareTable } from '../components/CompareTable';
 import { FilterBar } from '../components/FilterBar';
-import { compareCategories } from '../lib/categories';
+import { compareCategories, sectionCategory } from '../lib/categories';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 type SortMode = 'category' | 'movers';
@@ -61,11 +61,14 @@ export function CompareTrends() {
     (newerIsB ? r.nameB ?? r.nameA : r.nameA ?? r.nameB) ?? r.item;
 
   // Category sections, ordered by CATEGORY_ORDER; rows within a section by name.
+  // Grouped by SECTION, so a category folded into another (Trade 4 -> Premium)
+  // reads as part of it rather than as a section of one row.
   const groups = useMemo(() => {
     const byCat = new Map<string, CompareRow[]>();
     for (const r of rows) {
-      if (!byCat.has(r.category)) byCat.set(r.category, []);
-      byCat.get(r.category)!.push(r);
+      const cat = sectionCategory(r.category);
+      if (!byCat.has(cat)) byCat.set(cat, []);
+      byCat.get(cat)!.push(r);
     }
     const order = [...byCat.keys()].sort(compareCategories);
     return order.map((cat) => ({
