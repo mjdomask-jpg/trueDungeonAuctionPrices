@@ -108,6 +108,21 @@ const cases = [
     L[i] = L[i].replace(/^((?:[^,]*,){3}(?:"[^"]*"|[^,]*),)[^,]*/, '$1'); return L.join('\n');
   }), /has Price = blank/],
 
+  // 5c is the check § 6's row-count warning was shaped around rather than
+  // catching: 202219 held 40 rows and the warning called that "two sets".
+  ['5c an Onyx item recorded twice for one auction', () => edit('onyx.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('20222,2022,2,+2 Chaos Cannon,'));
+    L.splice(i + 1, 0, L[i].replace(/,\$[\d.]+,/, ',$999.00,')); return L.join('\n');
+  }), /records 1 Onyx item\(s\) more than once/],
+
+  // The doubled BLOCK — the shape the allowance used to bless — must be caught
+  // as a whole, not just as one duplicated row.
+  ['5c a second auction\'s rows pasted onto one', () => edit('onyx.csv', (t) => {
+    const L = lines(t);
+    const donor = L.filter((l) => l.startsWith('20224,2022,4,'));
+    return [...L, ...donor.map((l) => l.replace(/^20224,2022,4,/, '20222,2022,2,'))].join('\n');
+  }), /20222 .*records \d+ Onyx item\(s\) more than once/],
+
   ['6  Onyx marker left in Item', () => edit('onyx.csv', (t) =>
     t.replace('20222,2022,2,+2 Chaos Cannon,', '20222,2022,2,+2 Chaos Cannon (Onyx),')),
     /the Onyx marker was not stripped from Item/],
@@ -120,7 +135,7 @@ const cases = [
   ['6  half an Onyx set', () => edit('onyx.csv', (t) => {
     let n = 0;
     return lines(t).filter((l) => !(l.startsWith('20222,') && n++ < 5)).join('\n');
-  }), /Onyx rows — expected 20–21 for one set/, 'warn'],
+  }), /Onyx rows — expected 20 or 21 for one set/, 'warn'],
 
   ['6  withheld recorded as a credit', () => edit('contextItems.csv', (t) =>
     t.replace('20183,2018,3,withheld,Patron Pin,1,-$114.30', '20183,2018,3,withheld,Patron Pin,1,$114.30')),
