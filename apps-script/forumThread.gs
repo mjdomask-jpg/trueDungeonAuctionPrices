@@ -52,7 +52,7 @@
  * are used unchanged. Every global below is prefixed `THREAD_`/`thread`.
  */
 
-var THREAD_VERSION = '2026-08-27.2';
+var THREAD_VERSION = '2026-08-29.1';
 
 /** Where proposals land for approval. Never written to by anything else. */
 var THREAD_REVIEW_TAB = 'forumThreadReview';
@@ -751,8 +751,18 @@ var THREAD_RULES = [
   // The buyer is also length-capped, because a bidder's name is short and prose
   // is not. So constrained it reads 435 lines, every one of them in 2018-2020,
   // and NOTHING in any of the five swept seasons.
+  // THE NAME MAY CONTAIN A COLON, and the separator is the LAST one before the
+  // price. The item group excluded colons outright, so
+  // `ONYX Figurine of Power: Raven : $90 Dragon` matched nothing at all — the
+  // one line of 20184 that reached `unparsed`, and its whole Onyx Figurine row.
+  // `Figurine of Power: X` is a whole family of tokens and `Silver Ship
+  // Passage: X` another, both of which `contextItems` records with the colon.
+  //
+  // Greedy up to the `$`, which is the same reasoning `item-buyer-price` gives
+  // for its own greedy name: take the LAST separator, not the first, or a name
+  // that legitimately contains one loses its second half.
   { id: 'item-colon-price-buyer',
-    re: /^([^:$]*[A-Za-z][^:$]*?)\s*:\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–]?\s*([A-Za-z][^:$]{0,38}?)\s*$/,
+    re: /^([^$]*[A-Za-z][^$]*)\s*:\s*\$\s*([\d][\d,]*(?:\.\d{1,2})?)\s*[-–]?\s*([A-Za-z][^:$]{0,38}?)\s*$/,
     take: function (m) { return { item: m[1], quantity: 1, price: threadMoney(m[2]), buyer: m[3] }; } },
 
   // "(3) Lanfear====@ $105 each" Lord Brian
@@ -1906,12 +1916,27 @@ function threadOnyxSetName(name) {
     // at the price onyx.csv records to the cent ($110, $105, $95, $90), and
     // each was the one Onyx row of its auction that never reconciled.
     .replace(/^\s*[-–—]?\s*(?:full\s+)?c(?:ommons?)?[\s/]+u\.?\s*c?\.?(?:ommons?)?[\s/]+r\.?\s*a?r?e?s?[\s/]*(?:full\s+)?set\s*$/i, 'C/UC/R Set')
+    // ...and 2018 also shortens it to a bare `Proof Set`. Starkhound writes
+    // `2018 Onyx Proof Set : $100 Bigfoot`, which reaches here as `Proof Set`
+    // once stripOnyxMarker has taken the year and the marker off — the rule
+    // above wants the words spelled out, so it was the one Onyx row of 20184
+    // that could not match. **`Proof Set` IS the `C/UC/R Set`** (maintainer,
+    // 2026-08-29). It appears in exactly this one line in the whole corpus, and
+    // only 2018 uses the term at all.
+    .replace(/^\s*proof\s+sets?\s*$/i, 'C/UC/R Set')
     // ...and kurtreznor SPELLS THE THREE WORDS OUT WITH COMMAS AND PLURALS:
     // `ONYX Common, Uncommon, Rare Sets`. The rule above wants a slash or a
     // space between the words and singular `Set` at the end, so this is a third
     // spelling of the same 21st row rather than a variant of the second. One
     // thread, one lot, $135 — 20222's only unreconciled Onyx row.
     .replace(/^\s*commons?\s*,\s*uncommons?\s*,\s*rares?\s+sets?\s*$/i, 'C/UC/R Set')
+    // `FLOURITE` FOR `FLUORITE` — the vowels transposed, the same kind of typo
+    // as `Wrym` for `Wyrm` and decided the same way: `onyx.csv` records
+    // `Ioun Stone Fluorite Cube` in all 8 of its rows and the threads write the
+    // mineral correctly 28 times against 7. It is the one unreconciled Onyx row
+    // of all three 2018 auctions, at prices ($91, $81, $75) the sheet already
+    // holds — so nothing is in doubt but the spelling.
+    .replace(/\bflourite\b/i, 'Fluorite')
     // `Belt of the Deadshot` IS THE NAME. `onyx.csv` records it that way 42
     // times and 25 thread mentions keep the article; exactly two drop it —
     // ralykam's 202219 and Wade S's 202221 — and each was the one Onyx row of
