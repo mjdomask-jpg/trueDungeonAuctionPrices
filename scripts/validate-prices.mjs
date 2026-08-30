@@ -373,6 +373,53 @@ console.log('5b. Every auction still has prices (auctionMetadata.csv vs prices.c
 }
 
 // ===========================================================================
+// 5c. The same two questions of onyx.csv
+// ===========================================================================
+// § 5b asks whether an auction still has its prices. It cannot see the same
+// loss in `onyx.csv`: 202234 lost ALL twenty of its Onyx rows to 202219 and
+// § 5b never fired, because it reads `prices.csv` and 202234's price rows were
+// intact. Two checks, and only the first of them would have caught that.
+//
+// AN ONYX ITEM RECORDED TWICE FOR ONE AUCTION IS THE SHAPE THAT CANNOT BE
+// LEGITIMATE. `prices.csv` deliberately allows exactly two rows for one item —
+// the min/max entry convention, which 105 auctions use — and that is why § 5b's
+// note says 20193's duplicates could not be caught by counting. `onyx.csv` has
+// no such convention: measured over all 1,118 rows of nine seasons, 52 of the
+// 53 Onyx auctions carry each item exactly once, and the 53rd is 202219, which
+// holds twenty pairs because 202234's twenty rows were keyed onto it. One
+// offender, and it is the bug.
+//
+// So this is the counting check § 5b could not be, and it is only available
+// here because the file has no two-row convention to hide behind.
+console.log('5c. No auction records an Onyx item twice (onyx.csv)');
+{
+  const seen = new Map();
+  for (const r of onyx) {
+    if (!r.auctionId || !r.Item) continue;
+    const key = `${r.auctionId} ${r.Item}`;
+    seen.set(key, (seen.get(key) || 0) + 1);
+  }
+  const errs = [];
+  const byAuction = new Map();
+  for (const [key, n] of seen) {
+    if (n < 2) continue;
+    const [id, item] = key.split(' ');
+    if (!byAuction.has(id)) byAuction.set(id, []);
+    byAuction.get(id).push(`${item} x${n}`);
+  }
+  for (const [id, items] of byAuction) {
+    const m = metaById.get(id);
+    errs.push(`${id} "${m ? m.auctionName : '?'}" records ${items.length} Onyx item(s) more than once ` +
+      `(${items.slice(0, 3).join(', ')}${items.length > 3 ? ', …' : ''}) — an Onyx order holds each item once, ` +
+      'so these are two auctions\' rows superimposed, or one pasted twice');
+  }
+  capped(err, errs);
+  if (!errs.length) {
+    ok(`each of ${new Set(onyx.map((r) => r.auctionId)).size} Onyx auction(s) records every item exactly once`);
+  }
+}
+
+// ===========================================================================
 // 6. Onyx and context integrity
 // ===========================================================================
 console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
@@ -390,16 +437,25 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
     if (/onyx/i.test(r.Item)) errs.push(`${where}: the Onyx marker was not stripped from Item`);
   }
   // An Onyx set is one full set of the season's chase URs plus the C/UC/R Set
-  // row, so the row count is tightly constrained: measured across all 48
-  // auctions it is 21 (x32), 20 (x15) or 40 (x1, a genuine two-set auction).
-  // Anything else is either a partial transcription or a doubled block — which
-  // is exactly how the placeholder blocks presented, as 42 rows that looked
-  // like two sets until you noticed half of them had no price.
+  // row, so the row count is tightly constrained: measured across all 53
+  // auctions of nine seasons it is 21 (x38) or 20 (x14).
+  //
+  // THE 40 IS NOT A TWO-SET AUCTION, and this check used to say it was. That
+  // allowance was written from one observation — 202219, the only auction in
+  // the corpus with 40 rows — and it is the defect: 202219 holds its own twenty
+  // rows AND 202234's, superimposed, while 202234 holds none. So the check was
+  // shaped around the very row it should have caught, and 2022's Onyx
+  // reconciliation carried it for three seasons as "the known 202219
+  // double-recording problem".
+  //
+  // NO AUCTION IN THE CORPUS SELLS TWO ONYX SETS. Removing 40 and 42 costs
+  // nothing real and the doubled-block case they were meant to describe is now
+  // caught precisely, and as an ERROR, by § 5c.
   const onyxByAuction = groupBy(onyx.filter((r) => r.auctionId), (r) => r.auctionId, (r) => r);
-  const SET_SIZES = new Set([20, 21, 40, 42]);
+  const SET_SIZES = new Set([20, 21]);
   for (const [auctionId, rows] of [...onyxByAuction].sort())
     if (!SET_SIZES.has(rows.length))
-      warns.push(`${auctionId}: ${rows.length} Onyx rows — expected 20–21 for one set or 40–42 for two`);
+      warns.push(`${auctionId}: ${rows.length} Onyx rows — expected 20 or 21 for one set`);
 
   // auctionStyle and the rows must agree in both directions. 16 auctions
   // violated this before the 2026-08-21 backfill; the count is zero today, so
