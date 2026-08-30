@@ -12,7 +12,7 @@ import { TenXToggle } from '../components/TenXToggle';
 import { OpenAuctionsBanner } from '../components/OpenAuctionsBanner';
 import { useTenX } from '../hooks/useTenX';
 import { useRoutedView } from '../hooks/useRoutedView';
-import { compareCategories } from '../lib/categories';
+import { compareCategories, sectionCategory } from '../lib/categories';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { PageIntro } from '../components/PageIntro';
 
@@ -86,23 +86,27 @@ export default function DashboardPage() {
   // Trade 1 rows become their 10x bundle here when the toggle is on; every other
   // category (and thus the category list) is unchanged.
   const displayRows = useMemo(() => asTenXRows(rows, tenX), [rows, tenX]);
+  // Picker, filter and tables all read the SECTION a category belongs to, not
+  // the raw category, so a category folded into another (Trade 4 -> Premium)
+  // never appears as an option that would strand its rows in a table of one.
   const categories = useMemo(
-    () => ['All', ...[...new Set(displayRows.map((r) => r.category))].sort()],
+    () => ['All', ...[...new Set(displayRows.map((r) => sectionCategory(r.category)))].sort()],
     [displayRows],
   );
 
   const filtered = displayRows.filter(
-    (r) => effectiveCategory === 'All' || r.category === effectiveCategory,
+    (r) => effectiveCategory === 'All' || sectionCategory(r.category) === effectiveCategory,
   );
 
-  // Group the filtered rows into per-category tables, ordered by CATEGORY_ORDER
+  // Group the filtered rows into per-section tables, ordered by CATEGORY_ORDER
   // (unlisted categories appended alphabetically). Rows within each table are
   // sorted alphabetically by token (display) name.
   const groups = useMemo(() => {
     const byCat = new Map<string, ItemRow[]>();
     for (const r of filtered) {
-      if (!byCat.has(r.category)) byCat.set(r.category, []);
-      byCat.get(r.category)!.push(r);
+      const cat = sectionCategory(r.category);
+      if (!byCat.has(cat)) byCat.set(cat, []);
+      byCat.get(cat)!.push(r);
     }
     const order = [...byCat.keys()].sort(compareCategories);
     return order.map((cat) => ({

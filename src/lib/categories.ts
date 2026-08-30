@@ -19,3 +19,19 @@ export function compareCategories(a: string, b: string): number {
   if (ib !== -1) return 1;
   return a.localeCompare(b);
 }
+
+// Section grouping. A couple of categories are real in the data but not worth a
+// table of their own on a page that groups by category: Wish Ring carries
+// `Trade 4` (the canonical game rung — see docs/data-backlog.md items 3 and 4),
+// yet it is bought as an 8K-order exclusive and prices like a Premium, so a
+// lone one-row "Trade 4" table reads as an oddity rather than a distinction.
+// The Prices page and the Trends year-over-year view group and filter on this;
+// everywhere the raw category is the fact being shown — the explorer's chips,
+// filters and sorting — keeps `category` itself.
+const CATEGORY_SECTION: Record<string, string> = {
+  'Trade 4': 'Premium',
+};
+
+export function sectionCategory(category: string): string {
+  return CATEGORY_SECTION[category] ?? category;
+}
