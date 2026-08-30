@@ -90,9 +90,22 @@ const cases = [
     t.replace('202642,2026,42,Aragonite,15,', '202642,2026,42,Aragonite,-,')),
     /has Price = "-"/],
 
+  // A PRICE IS NOT ALWAYS DOLLAR-FORMATTED, and this case used to assume it
+  // was. `,\$[\d.]+,` matched nothing the day onyx.csv exported as plain
+  // numbers, so the edit silently landed on nothing and the case reported
+  // STALE — which is the harness working, but it blocked a publish whose data
+  // was correct.
+  //
+  // Both formats are live and always have been: `prices.csv` is plain in all
+  // 7,767 of its rows, and 2020's 105 onyx rows were plain while the rest of
+  // that file was not. `money()` strips `$` and `,` precisely because the
+  // export's number formatting is not something this repo controls.
+  //
+  // So the field is cleared by POSITION rather than by shape — the fifth
+  // column, whatever it holds — with the Item before it allowed to be quoted.
   ['5  a blank price', () => edit('onyx.csv', (t) => {
     const L = lines(t); const i = L.findIndex((l) => l.startsWith('20222,'));
-    L[i] = L[i].replace(/,\$[\d.]+,/, ',,'); return L.join('\n');
+    L[i] = L[i].replace(/^((?:[^,]*,){3}(?:"[^"]*"|[^,]*),)[^,]*/, '$1'); return L.join('\n');
   }), /has Price = blank/],
 
   ['6  Onyx marker left in Item', () => edit('onyx.csv', (t) =>
