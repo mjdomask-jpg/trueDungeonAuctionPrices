@@ -14,7 +14,8 @@ Design doc with wireframes and the full reasoning:
 | Step | What | State |
 |---|---|---|
 | **0** | Extract `RecipeDrawer` + `lineTag` out of `BuildCalculator` | **done, verified, merged** ([#136](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/136), squashed as `6203c40`) |
-| **1** | Pricing branches in the engine + `lib/shoppingList.ts` | **next — start here** |
+| **0a** | Delete the `tierLine` branch #137 emptied | **done, verified, CI green — [#139](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/139) awaiting merge** |
+| **1** | Pricing branches in the engine + `lib/shoppingList.ts` | **next — start here, once #139 lands** |
 | 2 | Route, view toggle, chip strip, drawer wired to multi-select | not started |
 | 3 | The two ingredient tables | not started |
 | 4 | Final table, Copy, Download CSV | not started |
@@ -64,7 +65,7 @@ The four branches, and their status **as of `93fcec9` on `main`**:
 |---|---|---|---|
 | 1 | **Trade goods → current season, always** — whatever year the recipe came from, including expired and 2027-preview ones | 1,125 | **BUILD THIS** |
 | 2 | **Ultra Rare, in print** (nominal ≥ `latestPriced − 1`) **→ current season price** | 27 | **BUILD THIS** |
-| 3 | **Ultra Rare, out of print → pooled over its own two-year window**, tagged `OOP` | 40 | **engine already does it** ([#137](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/137)) |
+| 3 | **Ultra Rare, out of print → pooled over its own two-year window**, tagged `OOP` | 40 | **engine already does it** ([#137](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/137)) — **plus the 10 pinned lines, which it does NOT yet do; see the decision below** |
 | 4 | **Ultra Rare older than the auction data → clamp to the earliest priced season** | 18 | **engine already does it** (D4's clamp) |
 
 Merge keys: **trade goods on the item name alone** (branch 1 guarantees one
@@ -105,10 +106,39 @@ lines** across all 174 recipes (80 pool, 45 season). The rule order is:
 The comment numbers read out of sequence **on purpose** — they match the plan's
 rule IDs. Do not "tidy" them.
 
-### ⚠ OPEN QUESTION — the first thing to ask the maintainer
+### DECIDED 2026-08-31 — pinned Ultra Rare lines pool too
 
-**#137's argument applies just as well to PINNED Ultra Rare lines, and nobody
-has decided whether it should.**
+**Maintainer's call: yes. A pinned UR line reads its two-season pool, exactly
+as a blank one does.** The reasoning that carried it: the pin names *which
+token* the recipe needs; the pool names *where that token could be bought*.
+Those are different questions, and rule 1 was answering the second with the
+first. §10.2's F1 does not bite, because pooling does not change vintage — it
+reads both seasons of the *same* vintage, which is precisely what F1 protects.
+
+**What step 1 must therefore build.** Rule 3 has to be reachable from a pinned
+line, and its pool has to key off the LINE's year rather than the recipe's:
+
+```ts
+this.prices.poolPrice(good, [l.nominalYear, l.nominalYear + 1])
+```
+
+That expression is **identical to today's behaviour for blank lines** —
+`resolveGoodYear('')` returns `recipeYear`, so `l.nominalYear === recipe.year`
+there — so the change is purely additive. Two things to get right:
+
+- `isPoolableUltraRare` currently returns `false` on any pin (`transmutes.ts`
+  around line 689). That guard is what has to go, not the pin branch itself:
+  rule 1 must still short-circuit for pinned NON-UR lines (Safehold V and the
+  rest of the 34 pins).
+- The **clamp** under the pool reads `recipe.year`. For a pinned line it must
+  read `l.nominalYear` too, or a pinned 2027 line (Coin of Wealth) whose pool
+  is empty falls back to the wrong season. Currently that line prices at
+  $59.69 via the pin branch; whatever the new path does, it must still.
+
+The historical argument, the ten affected lines and the −$47.13 / −$35.93
+measurement that informed the call are preserved below.
+
+**The case as it was put:**
 
 Rule 1 (explicit `ItemYear`) short-circuits before rule 3, so a pinned UR still
 reads **one** season. The reasoning that justified #137 — a UR has a vintage, so
@@ -144,10 +174,14 @@ different question." That was written about the Phase-7 `priceYear` override —
 which *does* change vintage — and pooling does not; it reads both seasons of the
 *same* vintage. So F1 may not actually bite here.
 
-**Do not decide this alone.** It changes the Build Calculator as well as the
-Shopping List. If the answer is yes, branch 3 covers pinned lines too and the
-engine needs one more change; if no, branch 3 must explicitly *exclude* pinned
-lines and the Deathward Greaves drift below is intentional.
+The answer was **yes**, so branch 3 covers pinned lines, the engine needs the
+one change described above, and the Deathward Greaves drift recorded further
+down **closes** rather than being intentional. This moves the Build Calculator
+as well as the Shopping List, by design.
+
+⚠ The ten prices in that table were measured **before #137 merged** on some
+rows. Re-derive them against `main` as part of step 1's test suite rather than
+pinning a test to them as written.
 
 ### The default price basis, and the volatility flag
 
@@ -297,7 +331,13 @@ in `transmutes.ts`, and the equivalent branch in both `lib/lineTag.ts` and
 `TransmuteRow.tsx`. Keep `WINDOW_TAG` as a named constant — the other
 `basis === 'window'` branch still uses it.
 
-Ask before doing it; it is not part of step 1 and touches the Recipes view.
+**DONE — [#139](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/139)**, landed on its own so step 1's diff stays pure. Removed the
+field, its assignment, and the branch in both `lineTag` and `priceTag`; kept
+`WINDOW_TAG`, because 470 non-UR lines still price over a window and the other
+branch names it. Verified by running the engine over all 174 recipes before and
+after: **1,985 lines identical** on unit price, basis, `pricedYear` and tag
+wording, under both price toggles. The plan doc's note at
+`transmutes-expansion-plan.md` §10.6 was updated to match.
 
 ---
 
@@ -346,19 +386,19 @@ Ask before doing it; it is not part of step 1 and touches the Recipes view.
 
 ## Next: step 1
 
-**Ask the maintainer the pinned-Ultra-Rare question first** (⚠ above). It decides
-whether branch 3 has one more case in it.
-
-Then:
+The pinned-UR question is **answered — pool them** (see the DECIDED section
+above for exactly what that means in the engine). Nothing else is blocking.
 
 1. Add **branch 1** (trade goods → current season, always) and **branch 2**
-   (in-print URs → current season) to the engine. Branches 3 and 4 already exist
-   — do not reimplement them.
+   (in-print URs → current season) to the engine, and open rule 3 to pinned
+   lines. Branches 3 and 4 otherwise already exist — do not reimplement them.
 2. Build `src/lib/shoppingList.ts`: `{recipe, qty}[]` + on-hand + overrides in,
    merged rows and totals out. Includes D5 chain detection.
-3. New test suite pinning both new branches, the pre-2018 clamp, and the figures
-   in the "Numbers" section above. Wire it into `npm test` alongside the existing
-   eight.
+3. New test suite pinning both new branches, the pinned-UR pool, the pre-2018
+   clamp, and the figures in the "Numbers" section above. Wire it into
+   `npm test` alongside the existing eight — which are now **nine** once #139's
+   sibling suites are counted; check the chain in `package.json` rather than
+   trusting this number.
 4. Derive the volatility threshold and bring the maintainer the hit-list.
 
 **No UI in step 1.** The maintainer signs off on a table of numbers, which is the
