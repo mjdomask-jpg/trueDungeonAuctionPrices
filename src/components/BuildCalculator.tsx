@@ -8,6 +8,7 @@ import { PriceInput } from './PriceInput';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
 import { lineTag } from '../lib/lineTag';
+import { loadCalcRecipe, saveCalcRecipe } from '../lib/calcStorage';
 import { RecipeDrawer } from './RecipeDrawer';
 import {
   RESALE, WASH_THRESHOLD, breakEvenHoldings, comparePaths, quickSaleValue, type PathKey,
@@ -30,8 +31,11 @@ import {
 //    can't drift. Any line's unit price can be overridden when the market differs
 //    from our estimate (plan §3.2/§3.4) via an inline editor on the $/ea cell.
 //
-// State is ephemeral (plan Q4): on-hand counts and overrides live in React state
-// keyed by line index, reset when the recipe changes.
+// State is ephemeral (plan Q4) with ONE exception: on-hand counts and overrides
+// live in React state keyed by line index and reset when the recipe changes,
+// but WHICH RECIPE is remembered across visits (lib/calcStorage.ts). That file
+// records why the line — the index keying makes the counts unsafe to restore
+// across a data change, and they are one All tap from being re-entered anyway.
 //
 // Phase 3 adds the decision layer on top: what the finished token sells for
 // (pre-filled from its own auction price where it has one, editable otherwise),
@@ -73,7 +77,15 @@ const range = (lo: number, hi: number) => {
 
 export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const narrow = useMediaQuery(NARROW);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // Hoisted above the state below, which needs it in its initialiser.
+  const all = useMemo(() => engine.allCosts(), [engine]);
+  // Read ONCE, in the initialiser, and resolved against the engine here rather
+  // than in lib/calcStorage: a key stranded by a renamed transmute has to
+  // behave as "nothing was selected", not as a selection that renders nothing.
+  const [selectedKey, setSelectedKey] = useState<string | null>(() => {
+    const saved = loadCalcRecipe();
+    return saved && all.some((c) => c.key === saved) ? saved : null;
+  });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [onHand, setOnHand] = useState<Record<string, number>>({});
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
@@ -90,7 +102,6 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const [footInView, setFootInView] = useState(false);
   const [roomToPin, setRoomToPin] = useState(false);
 
-  const all = useMemo(() => engine.allCosts(), [engine]);
   const cost = useMemo(
     () => (selectedKey ? all.find((c) => c.key === selectedKey) ?? null : null),
     [all, selectedKey],
@@ -101,8 +112,20 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     [selectedKey],
   );
 
+  // Which recipe you were looking at is the one thing that persists, because
+  // it is the one thing that is tedious to get back — it lives behind a
+  // drawer, eleven tier filters and a year accordion. Nothing else does: see
+  // lib/calcStorage.ts for why saving the on-hand counts would be a hazard
+  // rather than a convenience.
+  useEffect(() => {
+    saveCalcRecipe(selectedKey);
+  }, [selectedKey]);
+
   // A fresh recipe starts clean — no on-hand carried over, no stale overrides,
   // and the buy price back to whatever the new token's own auction sales say.
+  // This fires on MOUNT too, including when a recipe has just been restored —
+  // which is exactly right, and is why persisting the recipe alone needs no
+  // first-run guard: what it clears is what should start empty.
   useEffect(() => {
     setOnHand({});
     setOverrides({});

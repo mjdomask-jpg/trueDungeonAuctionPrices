@@ -64,6 +64,7 @@ try {
     shoppingList: await import(url('shoppingList.ts')),
     shoppingExport: await import(url('shoppingExport.ts')),
     shoppingStorage: await import(url('shoppingStorage.ts')),
+    calcStorage: await import(url('calcStorage.ts')),
   };
 } catch (e) {
   console.error('could not load src/lib:', e.message);
@@ -81,6 +82,7 @@ const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, st
 const { toCSV, toTSV, toRows, toSheet, csvFile, guardFormula, exportFilename, EXPORT_COLUMNS } =
   lib.shoppingExport;
 const { loadShopping, saveShopping, clearShopping } = lib.shoppingStorage;
+const { loadCalcRecipe, saveCalcRecipe } = lib.calcStorage;
 
 const read = (f) => readFileSync(join(dataDir, f), 'utf8');
 const sales = parseSales(read('prices.csv'));
@@ -884,6 +886,75 @@ check('Infinity does not survive JSON and does not survive validation either',
 check('an unknown row id is kept rather than pruned — D2 depends on it',
   withStore(JSON.stringify({ picks: [], onHand: { 'T|Gone': 7 }, overrides: {}, netCrafted: false }),
     () => loadShopping().onHand['T|Gone'] === 7));
+
+// =========================================================================
+console.log('\n=== 13. the Build Calculator remembers its recipe, and only that ===');
+
+// A KEY-AWARE stand-in, unlike the one above: the point of most of this
+// section is which slot each module writes to.
+const keyedStore = () => {
+  const held = new Map();
+  return {
+    getItem: (k) => (held.has(k) ? held.get(k) : null),
+    setItem: (k, v) => held.set(k, v),
+    removeItem: (k) => held.delete(k),
+    get keys() { return [...held.keys()]; },
+  };
+};
+const withKeyed = (fn) => {
+  const g = globalThis;
+  const had = 'window' in g ? g.window : undefined;
+  const s = keyedStore();
+  g.window = { localStorage: s };
+  try { return fn(s); } finally { if (had === undefined) delete g.window; else g.window = had; }
+};
+
+check('a recipe key round-trips',
+  withKeyed(() => { saveCalcRecipe("2026|Val's +4 Keen Fellbane Crossbow");
+    return loadCalcRecipe() === "2026|Val's +4 Keen Fellbane Crossbow"; }));
+
+// Two tools, two questions. One slot would mean clearing the Shopping List
+// also emptied the calculator — and the plan explicitly does not share a
+// number between them.
+check('the two tools write to DIFFERENT slots — neither clears the other',
+  withKeyed((s) => {
+    saveShopping({ picks: [{ key: '2026|X', qty: 1 }], onHand: {}, overrides: {}, netCrafted: false });
+    saveCalcRecipe('2026|Y');
+    const both = s.keys.length === 2;
+    clearShopping();
+    return both && loadCalcRecipe() === '2026|Y' && loadShopping() === null;
+  }), 'both keys present, and clearing one leaves the other');
+
+check('null removes the entry rather than storing an empty string',
+  withKeyed((s) => { saveCalcRecipe('2026|X'); saveCalcRecipe(null);
+    return s.keys.length === 0 && loadCalcRecipe() === null; }));
+
+check('an empty slot, a blank value and an absurd one all load as nothing',
+  withKeyed((s) => {
+    if (loadCalcRecipe() !== null) return false;
+    s.setItem('td-calc-v1', '');
+    if (loadCalcRecipe() !== null) return false;
+    s.setItem('td-calc-v1', 'x'.repeat(5000));
+    return loadCalcRecipe() === null;
+  }));
+
+check('storage that THROWS on access is survived, not crashed on',
+  (() => {
+    const g = globalThis; const had = 'window' in g ? g.window : undefined;
+    g.window = { get localStorage() { throw new Error('blocked'); } };
+    try { const r = loadCalcRecipe(); saveCalcRecipe('2026|X'); return r === null; }
+    catch { return false; }
+    finally { if (had === undefined) delete g.window; else g.window = had; }
+  })());
+
+// The module deliberately does not know what a recipe is; the CALLER resolves
+// the key and drops what it cannot find, so a transmute renamed in the CSV
+// reads as "nothing was selected" rather than as a selection rendering
+// nothing. This asserts the half that lives here: a stale key loads happily.
+check('a key naming no recipe still loads — resolving it is the caller\'s job',
+  withKeyed(() => { saveCalcRecipe('2019|A Token That Was Renamed');
+    return loadCalcRecipe() === '2019|A Token That Was Renamed' &&
+      !costs.some((c) => c.key === '2019|A Token That Was Renamed'); }));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — shoppingList: ${pass} passed, ${fail} failed`);
