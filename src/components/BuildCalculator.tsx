@@ -6,8 +6,9 @@ import { OmniSuggestions } from './OmniSuggestions';
 import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
 import { PriceInput } from './PriceInput';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
-import { orderSeason, tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
-import type { RecipeStatus } from '../lib/recipeWindows';
+import { tierAbbrev, type BuildCost, type CostEngine, type PricedLine } from '../lib/transmutes';
+import { lineTag } from '../lib/lineTag';
+import { RecipeDrawer } from './RecipeDrawer';
 import {
   RESALE, WASH_THRESHOLD, breakEvenHoldings, comparePaths, quickSaleValue, type PathKey,
 } from '../lib/buildCalc';
@@ -45,12 +46,6 @@ type Override = { avg: number | null; min: number | null };
 // the box — which has to be distinguishable from 'auto', or clearing the field
 // would snap it straight back to the auction price.
 type MarketInput = 'auto' | number | null;
-type PickItem =
-  | { type: 'pair'; source: BuildCost; upgrade: BuildCost }
-  | { type: 'single'; cost: BuildCost };
-
-// Tier display order for the drawer's filter chips (game power ladder).
-const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic', 'Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
 
 // The two paths that compete. "Buy it" names what you keep when you hold
 // something, since that retained pile is the whole reason it beats selling up.
@@ -76,43 +71,10 @@ const range = (lo: number, hi: number) => {
 };
 
 
-// Compact provenance for one ingredient: its own season when it differs from the
-// recipe's, then where the price came from. Mirrors TransmuteRow's priceTag,
-// including its rule that the recipe's prevailing basis is stated once in the
-// footer rather than on every line — and its one exception, the Ultra Rare
-// tier lines, which always name their basis so a Relic's windowed UR and its
-// Legendary's pooled one are not two different numbers under the same year.
-const WINDOW_TAG = 'over its build window';
-
-function lineTag(l: PricedLine, recipeYear: number, status: RecipeStatus): string {
-  const parts: string[] = [];
-  if (l.nominalYear !== recipeYear) parts.push(String(l.nominalYear));
-  if (l.isSource) parts.push('source · built');
-  else if (l.source === 'auction') parts.push('auction');
-  else if (l.source === 'offAuction') parts.push('non-auction item');
-  else if (l.source === 'derived') parts.push('derived');
-  else if (l.source === 'build') parts.push('built');
-  else parts.push('no price');
-  if (l.seasonMapped) parts.push(`from ${l.pricedYear}`);
-  else if (l.floated && status !== 'active') parts.push("today's price");
-  else if (l.basis === 'window' && status !== 'expired') parts.push(WINDOW_TAG);
-  else if (status === 'expired' && l.basis === 'season' && !l.seasonMapped) parts.push('season priced');
-  if (l.pricedAs && l.pricedAs !== l.good) parts.push(`priced as ${l.pricedAs}`);
-  if (l.basis === 'window' && l.tierLine && !parts.includes(WINDOW_TAG)) parts.push(WINDOW_TAG);
-  if (l.basis === 'pool' && l.poolYears?.length) parts.push(`${l.poolYears.join('–')} pooled`);
-  if (l.bound === 'ceiling') parts.push('ceiling');
-  return parts.join(' · ');
-}
-
 export function BuildCalculator({ engine }: { engine: CostEngine }) {
   const narrow = useMediaQuery(NARROW);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [tier, setTier] = useState('All');
-  const [showExpired, setShowExpired] = useState(false);
-  // null = default (only the focus year open); a Set once the user toggles one.
-  const [openYears, setOpenYears] = useState<Set<number> | null>(null);
   const [onHand, setOnHand] = useState<Record<string, number>>({});
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
   const [editing, setEditing] = useState<string | null>(null);
@@ -133,11 +95,11 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
     () => (selectedKey ? all.find((c) => c.key === selectedKey) ?? null : null),
     [all, selectedKey],
   );
-  const years = useMemo(() => engine.seasons(), [engine]);
-  const tiers = useMemo(() => {
-    const present = new Set(all.map((c) => c.level));
-    return ['All', ...TIER_ORDER.filter((t) => present.has(t)), ...[...present].filter((t) => !TIER_ORDER.includes(t))];
-  }, [all]);
+  // The drawer needs one selected key, as the set it lights rows from.
+  const selectedKeys = useMemo(
+    () => new Set(selectedKey ? [selectedKey] : []),
+    [selectedKey],
+  );
 
   // A fresh recipe starts clean — no on-hand carried over, no stale overrides,
   // and the buy price back to whatever the new token's own auction sales say.
@@ -219,50 +181,12 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   // The drawer opens on the current recipe's year (or the latest priced season
   // before anything is picked), like the Recipes view; other years collapse.
   const focusYear = cost ? cost.year : engine.prices.latestPriced;
-  const q = search.trim().toLowerCase();
-  const filtering = q.length > 0 || tier !== 'All';
-  const isYearOpen = (y: number) => (filtering ? true : openYears ? openYears.has(y) : y === focusYear);
-  const toggleYear = (y: number) =>
-    setOpenYears((prev) => {
-      const base = prev ?? new Set<number>(focusYear != null ? [focusYear] : []);
-      const next = new Set(base);
-      if (next.has(y)) next.delete(y); else next.add(y);
-      return next;
-    });
 
-  // Drawer contents: each year's recipes, honoring search + tier filter. With no
-  // filter we keep the Recipes-view ordering (Relic→Legendary pairs first).
-  const drawerYears = useMemo(() => {
-    const matches = (c: BuildCost) =>
-      (tier === 'All' || c.level === tier) &&
-      (!q || c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q));
-    return years
-      .map((year) => {
-        // Expired recipes stay PICKABLE — people audit old builds — they are
-        // just out of the way until asked for.
-        const costs = all.filter((c) => c.year === year && (showExpired || c.status !== 'expired'));
-        let items: PickItem[];
-        if (filtering) {
-          items = costs.filter(matches).map((c) => ({ type: 'single', cost: c }));
-        } else {
-          items = [];
-          for (const g of orderSeason(costs)) {
-            if (g.kind === 'pairs') g.pairs.forEach((p) => items.push({ type: 'pair', source: p.source, upgrade: p.upgrade }));
-            else g.rows.forEach((c) => items.push({ type: 'single', cost: c }));
-          }
-        }
-        return { year, items };
-      })
-      .filter((y) => y.items.length);
-  }, [all, years, q, tier, filtering, showExpired]);
-
-  const expiredCount = useMemo(() => all.filter((c) => c.status === 'expired').length, [all]);
-
+  // One recipe at a time here, so picking replaces the selection and closes the
+  // drawer. The drawer clears its own search and tier on the way out.
   const pick = (c: BuildCost) => {
     setSelectedKey(c.key);
     setDrawerOpen(false);
-    setSearch('');
-    setTier('All');
   };
 
   // --- Phase 9: which of the two legal paths this recipe is priced on -----
@@ -391,26 +315,6 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
       rows.forEach((r) => { if (r.priced) next[r.key] = full ? r.req : 0; });
       return next;
     });
-
-  // --- Drawer option row -------------------------------------------------
-  const optRow = (c: BuildCost, opts: { indented?: boolean; from?: string | null } = {}) => (
-    <button
-      key={c.key}
-      type="button"
-      className={`calc-opt${opts.indented ? ' leg' : ''}${c.key === selectedKey ? ' sel' : ''}`}
-      onClick={() => pick(c)}
-    >
-      <span className="tchip" data-tier={c.level}>{c.level}</span>
-      <span className="calc-opt-nm">
-        {c.displayName}
-        {/* Expired recipes are pickable but never a surprise: the tag rides the
-            name so it is there in the list and again on the row you land on. */}
-        {c.status === 'expired' && <span className="calc-opt-exp">expired</span>}
-        {opts.from && <span className="calc-opt-up">↳ upgrades from {opts.from}</span>}
-      </span>
-      <span className="calc-opt-c">{moneyCalc(c.fullAvg)}</span>
-    </button>
-  );
 
   return (
     <div className="calc">
@@ -861,72 +765,16 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
         </div>
       )}
 
-      {/* Slide-in recipe picker. */}
-      <div className={`calc-scrim${drawerOpen ? ' on' : ''}`} onClick={() => setDrawerOpen(false)} aria-hidden="true" />
-      <aside className={`calc-drawer${drawerOpen ? ' on' : ''}`} aria-label="Browse recipes" aria-hidden={!drawerOpen}>
-        <div className="calc-dhead">
-          <b>Recipes</b>
-          <button type="button" className="calc-dx" aria-label="Close" onClick={() => setDrawerOpen(false)}>✕</button>
-        </div>
-        <div className="calc-dbody">
-          <label className="search">
-            <span className="sr-only">Search recipes</span>
-            <input type="text" placeholder="Search recipes" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </label>
-          <div className="calc-tiers" role="group" aria-label="Filter by tier">
-            {tiers.map((t) => (
-              <button key={t} type="button" className={`calc-tchip${t === tier ? ' on' : ''}`}
-                aria-pressed={t === tier} onClick={() => setTier(t)}>{t}</button>
-            ))}
-          </div>
-          {expiredCount > 0 && (
-            <div className="calc-dfilter">
-              <span className="calc-dfilter-lab">
-                {showExpired
-                  ? `Showing all ${all.length} recipes`
-                  : `Showing the ${all.length - expiredCount} active recipes`}
-              </span>
-              <button type="button" className="calc-dfilter-btn" aria-pressed={showExpired}
-                onClick={() => setShowExpired((v) => !v)}>
-                {showExpired ? 'Hide expired' : `Show all (+${expiredCount} expired)`}
-              </button>
-            </div>
-          )}
-          <div className="calc-dlist">
-            {drawerYears.length === 0 ? (
-              <p className="empty">No recipes match.</p>
-            ) : (
-              drawerYears.map(({ year, items }) => {
-                const count = items.reduce((n, it) => n + (it.type === 'pair' ? 2 : 1), 0);
-                const open = isYearOpen(year);
-                return (
-                  <div key={year} className="calc-dyear">
-                    <button type="button" className="calc-yhead" aria-expanded={open} onClick={() => toggleYear(year)}>
-                      <i className="calc-chev" aria-hidden="true">▸</i>
-                      <span className="calc-yv">{year}</span>
-                      <span className="calc-yc">{count} recipe{count === 1 ? '' : 's'}</span>
-                    </button>
-                    {open && (
-                      <div className="calc-ysec">
-                        {items.map((it, idx) =>
-                          it.type === 'pair' ? (
-                            <div key={it.upgrade.key} className="calc-pair">
-                              {optRow(it.source)}
-                              {optRow(it.upgrade, { indented: true, from: it.source.displayName })}
-                            </div>
-                          ) : (
-                            <div key={it.cost.key + idx}>{optRow(it.cost)}</div>
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </aside>
+      {/* Slide-in recipe picker, shared with the Shopping List. */}
+      <RecipeDrawer
+        engine={engine}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        selectedKeys={selectedKeys}
+        onPick={pick}
+        focusYear={focusYear}
+        clearFiltersOnPick
+      />
     </div>
   );
 }
