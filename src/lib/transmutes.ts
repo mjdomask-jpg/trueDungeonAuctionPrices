@@ -552,12 +552,6 @@ export type PricedLine = {
   window?: PricingWindow; // the date range, when basis is 'window'
   poolYears?: number[]; // the seasons unioned, when basis is 'pool'
   datelessSales: number; // sales admitted by D5's season fallback
-  // A blank Ultra Rare line — the kind rule 3 pools across two seasons when
-  // the recipe is active. Set regardless of which branch actually priced it,
-  // because the UI needs to name the basis on these lines whatever it turns
-  // out to be: the SAME line reads as a two-season pool on a Legendary and as
-  // a date window on a Relic, and both print the same `pricedYear`.
-  tierLine: boolean;
   // Set when the line names a specific token that has no price of its own and
   // was priced as its tier instead — the site is reporting the tier's auction
   // average, and a specific token on the secondary market may cost more.
@@ -861,7 +855,6 @@ export class CostEngine {
         basis: 'season',
         floated: false,
         datelessSales: 0,
-        tierLine: this.isPoolableUltraRare(l),
       };
 
       // Any line naming a producible transmute recurses; everything else is a

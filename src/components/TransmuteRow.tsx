@@ -19,8 +19,8 @@ import type { RecipeStatus } from '../lib/recipeWindows';
 // Same rule the est. badge already follows against the season note.
 // Phase 7: `priceYear` is the pinned season, or null for the natural basis. It
 // moves what counts as a deviation without changing the rule.
-// Named because two rules can reach for it and only one may win — see the tier
-// line note below. Mirrored in BuildCalculator's lineTag.
+// Named rather than inlined because it is the wording the Shopping List has to
+// match too. Mirrored in lib/lineTag.ts.
 const WINDOW_TAG = 'over its build window';
 
 function priceTag(l: PricedLine, recipeYear: number, status: RecipeStatus, priceYear: number | null): string {
@@ -59,15 +59,6 @@ function priceTag(l: PricedLine, recipeYear: number, status: RecipeStatus, price
   // named Ultra Rare) says so, so the number is never mistaken for a sale of
   // that token (§3.4a).
   if (l.pricedAs && l.pricedAs !== l.good) parts.push(`priced as ${l.pricedAs}`);
-  // Ultra Rare lines are the one place deviation-only costs the reader real
-  // information, so they always name their basis even when it matches the
-  // recipe's. A 2022 Relic's UR is averaged over the build window while its
-  // paired Legendary's is pooled over 2022–2023, and BOTH print pricedYear
-  // 2022 — so untagged the two read as the same basis giving different money
-  // ($90.03 vs $92.96, the window picking up season-2024 auctions that closed
-  // in autumn 2023, before the recipe expired). One of the pair was already
-  // tagged; this is the other half.
-  if (l.basis === 'window' && l.tierLine && !parts.includes(WINDOW_TAG)) parts.push(WINDOW_TAG);
   // "Any Ultra Rare from {years}" (§3.4b), which is also what the two-season
   // pool means: the token is redeemable across both of them.
   if (l.basis === 'pool' && l.poolYears?.length) parts.push(`${l.poolYears.join('–')} pooled`);
