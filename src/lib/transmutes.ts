@@ -737,10 +737,10 @@ export class CostEngine {
     //    this cost in season X. It sits BELOW the pin above it on purpose
     //    (F1): a pin names WHICH token the recipe needs (an Ultra Rare one
     //    season older, the 2023 Safehold V), not merely which market to read,
-    //    so repricing it would quietly answer a different question. It sits
-    //    ABOVE the Ultra Rare pool (rule 3) for the same reason the window
-    //    does -- the pool is what a UR resolves to when the basis is "today",
-    //    and here the basis is a named season, so the pool collapses into it.
+    //    so repricing it would quietly answer a different question. It stays
+    //    ABOVE the Ultra Rare pool, which now follows immediately: the pool is
+    //    what a UR resolves to when the basis is the recipe's own era, and here
+    //    the reader has named a season instead, so the pool collapses into it.
     if (this.priceYear !== null) {
       const p = this.prices.leafPrice(good, this.priceYear, this.variantFor(this.priceYear));
       // No `floated`: floating is the D3 story about an active recipe drifting
@@ -752,18 +752,30 @@ export class CostEngine {
       // that could be priced before must still be priced after.
     }
 
-    // 2. On an expired recipe the date window governs every remaining line.
-    //    Because the window already spans the debut season through Y+1, the
-    //    two-year UR availability rule is satisfied by the window itself.
-    if (status === 'expired' && window) {
-      const p = this.prices.leafPrice(good, l.nominalYear, 'full', window);
-      if (p) return { price: p, floated: false };
-    }
-
     // 3. A blank Ultra Rare line pools its recipe year and the next (D4) --
     //    what a UR resolves to when the basis is "today", holding the era's
     //    baseline while the trade goods around it float.
-    if (status !== 'expired' && this.isPoolableUltraRare(l)) {
+    //
+    //    This sits ABOVE the window, and applies whatever the recipe's status,
+    //    because the two rules answer different questions and only the pool can
+    //    answer this one. The window asks WHEN you could buy an ingredient, and
+    //    for a 2022 Relic that is 2021-11-06 to 2023-11-24 -- correct, and
+    //    correct for trade goods, which have no vintage: an Oct-2023 auction is
+    //    a real chance to buy a Darkwood Plank and craft before the 1 Dec 2023
+    //    deadline. A UR is not fungible that way. Seasons run autumn to autumn,
+    //    so by Nov 2023 season 2024 is two months into selling, and its URs
+    //    redeem for a 2024 or 2023 token -- never the 2022 one this recipe
+    //    names (§3.4c). A date filter cannot see that; only the season can.
+    //
+    //    §10.2 used to claim the window "already spans Y -> Y+1, so the
+    //    two-year UR rule is satisfied by the window itself". It spans them,
+    //    but it does not STOP there -- measured, every expired window from 2018
+    //    on admits a third season, 20 of season 2024's 41 auctions in the 2022
+    //    case. Sufficiency was mistaken for exactness. The pool is a strict
+    //    subset of the window in every year (0 pooled sales fall outside), so
+    //    reading it first only ever drops sales that could not have produced
+    //    the token; no line that was priced before is unpriced now.
+    if (this.isPoolableUltraRare(l)) {
       const pooled = this.prices.poolPrice(good, [recipe.year, recipe.year + 1]);
       if (pooled) return { price: pooled, floated: false };
       // Neither season sold one: every recipe before 2018, since auction data
@@ -774,6 +786,15 @@ export class CostEngine {
       // thing to that era's baseline the data holds is 2018's ($112).
       const clamped = this.prices.leafPrice(good, recipe.year, 'full');
       if (clamped) return { price: clamped, floated: false };
+    }
+
+    // 2. On an expired recipe the date window governs every remaining line --
+    //    every line the pool above did not claim, which is every line without a
+    //    vintage. The window's dates are unchanged: the debut season's first
+    //    auction through the 1 Dec expiry minus the shipping cutoff.
+    if (status === 'expired' && window) {
+      const p = this.prices.leafPrice(good, l.nominalYear, 'full', window);
+      if (p) return { price: p, floated: false };
     }
 
     // 4. Otherwise an ACTIVE recipe prices at today's prices (D3): someone

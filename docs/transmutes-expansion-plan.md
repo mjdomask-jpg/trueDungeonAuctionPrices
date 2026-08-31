@@ -894,12 +894,17 @@ all of season Y, all of Y+1, and the head of Y+2.
 **Per-line rules layered on the recipe's basis:**
 
 1. **An explicit `ItemYear`** (34 lines) is a pin and never floats. Unchanged behavior.
-2. **A blank `Ultra Rare` line pools its recipe year ∪ year+1** (D4).
-3. **On an expired recipe the date window governs every line.** Because the window
-   already spans Y → Y+1, the UR two-year availability rule is satisfied by the window
-   itself — §3.4(c) predicted exactly this ("UR two-year pricing folds in free if
-   Phase 4 shipped"). The pool in rule 2 is what a UR resolves to when the basis is
-   "today", not a second mechanism competing with the window.
+2. **A blank `Ultra Rare` line pools its recipe year ∪ year+1** (D4) — **whatever
+   the recipe's status, and BEFORE rule 3.** *(Corrected 2026-08-30. This rule
+   originally ran only on active recipes.)*
+3. **On an expired recipe the date window governs every REMAINING line** — every
+   line without a vintage, which rule 2 has already claimed. ~~Because the window
+   already spans Y → Y+1, the UR two-year availability rule is satisfied by the
+   window itself~~ — **false, and the reason rule 2 now runs first.** The window
+   spans Y → Y+1 but does not stop there: seasons run autumn to autumn, so its
+   1 Dec expiry sits two months into season Y+2's auctions, whose URs redeem for
+   Y+2 or Y+1 and can never produce the year-Y token. Measured, every expired
+   window from 2018 on admits that third season. See §10.6.6's correction.
 4. **Transmute lines recurse** into their own recipe, which carries its own status and
    basis. This is what produces era-mixed upgrade pairs (§10.0).
 5. **Dateless auctions contribute via their season**, decided per auction row (D5).
@@ -1056,15 +1061,46 @@ off-auction item that cannot be windowed.
 > ingredient at the same `pricedYear`, and the pair silently disagrees:
 > 2022 Greater Charm Bracelets prices its Ultra Rare over the build window at
 > **$90.03**, while Luna's Greater Charm Bracelets — Legendary, so never
-> expiring, so active — pools 2022–2023 for **$92.96**. The gap is real and
-> correct: the window runs to 2023-11-24 (expiry minus the shipping cutoff) and
-> so admits **33 season-2024 sales** that closed in autumn 2023, when the UR
-> market had softened to $70–$91. Pooling by season cannot see them. But only
-> one side of the pair was tagged, so the two read as the same basis returning
-> different money. `PricedLine.tierLine` marks a blank UR line whichever branch
-> priced it, and `priceTag`/`lineTag` emit `over its build window` on it even
-> when that matches the recipe. Blast radius is **37 lines, one per expired
-> recipe** — never thirteen, so §10.6.6's original complaint still holds.
+> expiring, so active — pools 2022–2023 for **$92.96**. ~~The gap is real and
+> correct~~ — **it was not; see the correction below.** The window runs to
+> 2023-11-24 and so admits **33 season-2024 sales** that closed in autumn 2023,
+> when the UR market had softened to $70–$91. `PricedLine.tierLine` marks a
+> blank UR line whichever branch priced it, and `priceTag`/`lineTag` emit
+> `over its build window` on it even when that matches the recipe. Blast radius
+> is **37 lines, one per expired recipe** — never thirteen, so §10.6.6's
+> original complaint still holds.
+
+> **Corrected 2026-08-30 (same day) — the gap was a DEFECT, and the tag was
+> exposing it rather than explaining it.** Maintainer-confirmed rule: a UR won
+> in season N redeems for a token from N or N−1. Inverted — which is the form
+> the recipe needs — **a season-Y token is obtainable from season Y or Y+1, and
+> nowhere else.** A season-2024 lot yields a 2023 or 2024 token, so it can never
+> produce `Charm Bracelets`, and must not price that line.
+>
+> The window's DATES are right and are unchanged: a 2022 recipe could be built
+> from 2021-11-06 (players buy in anticipation from the season's first auction)
+> until the 1 Dec 2023 deadline, minus the 7-day shipping cutoff. The defect is
+> that `rowsInWindow` filters on close date ALONE. Seasons run autumn to autumn,
+> so by 2023-11-24 season 2024 has been selling for two months — **20 of its 41
+> auctions sit inside the window**, and season 2023 had already ended on
+> 2023-09-15. Every expired window from 2018 on admits a third season this way.
+>
+> So the fix is scoped to the INGREDIENT, not the window: a blank UR line reads
+> the two-season pool before the window, whatever the recipe's status; every
+> other line keeps the full craft-window dates, because a Darkwood Plank bought
+> at an Oct-2023 auction genuinely does craft a 2022 Relic. The pool is a strict
+> subset of the window in every year (0 pooled sales fall outside), so this only
+> ever drops lots that could not have produced the token and unprices nothing.
+>
+> §3.4(c) and §10.2 rule 3 both claimed the window "already spans Y → Y+1, so
+> the two-year UR rule is satisfied by the window itself." It spans them; it
+> does not STOP there. Sufficiency was mistaken for exactness, and neither the
+> upper bound nor the season boundaries were ever measured against the data.
+>
+> Consequence for the tag above: with both sides pooled, the Relic and the
+> Legendary now read `2022–2023 pooled` alike, and `tierLine`'s branch falls to
+> **0 live lines**. It is left in place for now only because it is entangled
+> with the `lib/lineTag.ts` lift on the in-flight Shopping List branch.
 
 **7. `min` moves much harder than `avg`.** Windowing unions ~2 years of sales, so
 an expired recipe's min is the cheapest sale in that whole range: Σ min falls
