@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RecipeDrawer } from './RecipeDrawer';
 import { ShoppingTable } from './ShoppingTable';
 import { ShoppingFinal } from './ShoppingFinal';
 import { Money } from './Money';
 import { buildShoppingList, type ShoppingPick } from '../lib/shoppingList';
+import { loadShopping, saveShopping, clearShopping } from '../lib/shoppingStorage';
 import { moneyCalc } from '../lib/format';
 import type { IngredientPath } from '../lib/substitutions';
 import type { BuildCost, CostEngine } from '../lib/transmutes';
@@ -14,8 +15,14 @@ import type { BuildCost, CostEngine } from '../lib/transmutes';
 // answers "across everything I plan to make, what do I still have to buy and
 // what will it cost?" — which players keep in personal spreadsheets today.
 //
-// Steps 2-4: the selection surface, the two working tables, and the takeaway
-// list with its exports. Only localStorage (step 5) remains.
+// Steps 2-5: the selection surface, the two working tables, the takeaway list
+// with its exports, and the autosave underneath all of it.
+//
+// The plan SURVIVES A RELOAD, in localStorage and nowhere else — see
+// lib/shoppingStorage.ts for why there is no share link and why a server-side
+// code is impossible on static hosting rather than merely unbuilt. Three pieces
+// of state are saved: the picks, the on-hand counts and the corrected prices.
+// Everything else here describes the screen rather than the plan.
 //
 // PRICING IS NOT NEGOTIABLE HERE. The parent builds this view's engine with
 // `basis: 'today'` and no pinned price year, because the whole premise is that
@@ -33,18 +40,37 @@ type Pick = { key: string; qty: number };
 export function ShoppingList({ engine, path }: { engine: CostEngine; path: IngredientPath }) {
   // An ARRAY, not a Map: the chips read in the order they were added, which is
   // the order the reader built the plan in. A Map would key-order them.
-  const [picks, setPicks] = useState<Pick[]>([]);
+  // Read ONCE, in the initialiser, rather than in an effect: an effect would
+  // render the empty list first and then replace it, which reads as the plan
+  // having been lost for a frame.
+  const saved = useRef(loadShopping()).current;
+  const [picks, setPicks] = useState<Pick[]>(saved?.picks ?? []);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [chipsExpanded, setChipsExpanded] = useState(false);
   // Both keyed by ROW ID, not by recipe or by index. That is what lets a typed
   // number survive its recipe being removed and re-added, and what lets one
   // Darkwood Plank entry serve every recipe that wants Darkwood Planks (D2).
-  const [onHand, setOnHand] = useState<Record<string, number>>({});
-  const [overrides, setOverrides] = useState<Record<string, number>>({});
+  const [onHand, setOnHand] = useState<Record<string, number>>(saved?.onHand ?? {});
+  const [overrides, setOverrides] = useState<Record<string, number>>(saved?.overrides ?? {});
   const [editing, setEditing] = useState<string | null>(null);
   // D5. Off by default and reversible: netting silently is how a plan stops
   // being checkable, so this is offered and never assumed.
-  const [netCrafted, setNetCrafted] = useState(false);
+  const [netCrafted, setNetCrafted] = useState(saved?.netCrafted ?? false);
+
+  // Autosave. Every dependency here is part of the PLAN; which chips are
+  // expanded and which price editor is open are facts about the screen and are
+  // deliberately absent, so opening a price editor does not write to disk.
+  //
+  // An EMPTY plan removes the entry rather than storing an empty one. That is
+  // not tidiness: this effect runs immediately after Clear, so without the
+  // branch it would write `{"picks":[],...}` straight back over the removal and
+  // leave a trace of a list the reader had just thrown away.
+  useEffect(() => {
+    const empty = picks.length === 0 &&
+      Object.keys(onHand).length === 0 && Object.keys(overrides).length === 0 && !netCrafted;
+    if (empty) clearShopping();
+    else saveShopping({ picks, onHand, overrides, netCrafted });
+  }, [picks, onHand, overrides, netCrafted]);
 
   const byKey = useMemo(() => {
     const m = new Map<string, BuildCost>();
@@ -70,6 +96,22 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
     setPicks((prev) => prev.map((p) => (p.key === key ? { ...p, qty: Math.max(0, qty) } : p)));
 
   const remove = (key: string) => setPicks((prev) => prev.filter((p) => p.key !== key));
+
+  // Autosave makes this necessary rather than merely convenient: without it a
+  // finished plan follows the reader into next season with no way out but
+  // removing twenty chips one at a time. The on-hand counts and corrected
+  // prices go with it — they describe THIS plan, and keeping them would seed
+  // the next one with numbers nobody typed for it.
+  const clearAll = () => {
+    setPicks([]);
+    setOnHand({});
+    setOverrides({});
+    setNetCrafted(false);
+    setEditing(null);
+    // The stored entry is removed by the autosave effect above, which sees the
+    // emptied state. Calling clearShopping() here as well would be undone by
+    // that same effect a moment later.
+  };
 
   const shopping = useMemo(() => {
     const items: ShoppingPick[] = [];
@@ -171,6 +213,9 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
             )}
             <button type="button" className="calc-browse" onClick={() => setDrawerOpen(true)}>
               + Add recipe
+            </button>
+            <button type="button" className="sl-clear" onClick={clearAll}>
+              Clear list
             </button>
           </div>
 

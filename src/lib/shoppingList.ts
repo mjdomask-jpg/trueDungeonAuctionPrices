@@ -11,6 +11,7 @@
 // (D10), so the Build Calculator and this list can never quote a player two
 // different numbers for the same ingredient.
 
+import { TRADE_1 } from './data';
 import { isTradeCategory, type BuildCost, type CostEngine, type PricedLine } from './transmutes';
 import { onPath, type IngredientPath } from './substitutions';
 
@@ -375,6 +376,36 @@ function orderedNotes(r: ShoppingRow, d: Draft): ShoppingNote[] {
     out.push({ kind: 'outOfPrint', years: [r.nominalYear, r.nominalYear + 1] });
   }
   return out;
+}
+
+// --- The 10x lot -----------------------------------------------------------
+
+/**
+ * Trade 1 tokens sell both singly and as **10x bundles** — ten of the token
+ * mailed as one lot, to save postage — and `data.ts` records that most auctions
+ * now list the bundle. Every price on this site is per single token, so the
+ * list's arithmetic is right; what it does not say is that you cannot walk in
+ * and buy twelve Alchemist's Inks. You buy two lots and end up with twenty.
+ *
+ * A HINT, deliberately, not a rounding rule: it never moves a total. Rounding
+ * fourteen goods up to lots would inflate the plan by a third on a small list
+ * and would be wrong for anyone buying singles, which auctions still sell.
+ *
+ * 8 of the 14 trade goods are Trade 1 — Alchemist's Ink, Alchemist's Parchment,
+ * Darkwood Plank, Dwarven Steel, Enchanter's Munition, Minotaur Hide, Mystic
+ * Silk, Philosopher's Stone. Trade 2-4 (Gold Bar, Aragonite, Elven Bismuth, Oil
+ * of Enchantment, Golden Fleece, Wish Ring) do not bundle, so they get nothing.
+ */
+export const LOT_SIZE = 10;
+
+export type LotHint = { lots: number; tokens: number; over: number };
+
+/** Null when the row does not bundle or there is nothing left to buy. */
+export function lotHintFor(row: ShoppingRow): LotHint | null {
+  if (row.category !== TRADE_1 || row.need <= 0) return null;
+  const lots = Math.ceil(row.need / LOT_SIZE);
+  const tokens = lots * LOT_SIZE;
+  return { lots, tokens, over: tokens - row.need };
 }
 
 // --- Wording -------------------------------------------------------------

@@ -1,7 +1,7 @@
 import { Money } from './Money';
 import { PriceInput } from './PriceInput';
 import { moneyCalc } from '../lib/format';
-import { noteLabel, stalenessNote, type ShoppingRow } from '../lib/shoppingList';
+import { noteLabel, stalenessNote, lotHintFor, type ShoppingRow } from '../lib/shoppingList';
 
 // One of the Shopping List's two ingredient tables.
 //
@@ -91,6 +91,21 @@ export function ShoppingTable({
                 {r.staleness && (
                   <span className="sl-stale">{stalenessNote(r.staleness, moneyCalc)}</span>
                 )}
+                {/* Trade 1 tokens are mostly auctioned as 10x bundles, so the
+                    number in the "buy" column is not a number you can actually
+                    ask for. A HINT only — it never moves a total, because
+                    auctions still sell singles and rounding fourteen goods up
+                    to lots would inflate a small plan by a third. */}
+                {(() => {
+                  const lot = lotHintFor(r);
+                  if (!lot) return null;
+                  return (
+                    <span className="sl-lot">
+                      usually sold in 10x lots — <b>{lot.lots}</b> lot{lot.lots === 1 ? '' : 's'}
+                      {lot.over > 0 && <> gets you {lot.tokens}, {lot.over} more than you need</>}
+                    </span>
+                  );
+                })()}
               </span>
 
               <span className="cl-hand">

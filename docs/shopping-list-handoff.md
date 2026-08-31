@@ -4,6 +4,12 @@ Working notes for the Shopping List view (a third view on the Transmutes page).
 **Written for a session that has none of the originating conversation.** Updated
 in place at the end of every step, not appended to.
 
+> **The build is finished.** The settled description of what shipped lives in
+> **`shopping-list.md`** — read that first. This file is kept for the
+> measurements, the rejected alternatives and the reasoning behind each
+> decision, which are the parts a future change needs and which do not belong
+> in a reference doc.
+
 Design doc with wireframes and the full reasoning:
 <https://claude.ai/code/artifact/601e1397-67c5-43c6-bf8a-1e9bb6bed41d>
 
@@ -19,8 +25,8 @@ Design doc with wireframes and the full reasoning:
 | **1a** | Backlog entry: `IngredientType` authored two ways | **done, merged** ([#141](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/141), `72f026b`) |
 | **2** | Route, view toggle, chip strip, drawer wired to multi-select | **done, verified, merged** ([#142](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/142), squashed as `a990f58`) |
 | **3** | The two ingredient tables | **done, verified, merged** ([#143](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/143), squashed as `e67b682`) |
-| **4** | Final table, Copy, Download CSV | **built, verified, PR open** |
-| 5 | `localStorage` autosave, 10x hint, docs | **next** |
+| **4** | Final table, Copy, Download CSV | **done, verified, merged** ([#144](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/144), squashed as `86bfb60`) |
+| **5** | `localStorage` autosave, 10x hint, docs | **built, verified, PR open — the last one** |
 
 **Two standing rules the maintainer set for this build:**
 
@@ -841,25 +847,92 @@ Test suite is at **76 assertions**; section 10 covers the export.
 **XLSX stays deferred** — it needs either a ~400KB dependency or a hand-rolled
 zip writer.
 
-## Next: step 5
+## Step 5 — what was built
 
-`localStorage` autosave, the 10x hint, and the docs pass. Notes:
+### `lib/shoppingStorage.ts` — the contents are DATA, not state
 
-- **Save/recall is `localStorage` ONLY.** Share links were dropped (a
-  quartermaster's list makes a punishing URL) and a server-side code system is
-  impossible on GitHub Pages — static hosting has no write path, and a repo
-  token in client JS would be public.
-- What needs persisting is exactly three pieces of state in `ShoppingList.tsx`:
-  `picks`, `onHand` and `overrides`. All three are already keyed so they survive
-  a re-render; `onHand` and `overrides` are keyed by ROW ID, which is stable
-  across pick changes.
-- Wrap every read and write in try/catch. A private window, cleared site data or
-  a browser set to block storage each make the accessor throw rather than return
-  empty.
-- **The docs pass owes `ui-conventions.md` a line** about the chip steppers
-  growing by size rather than by an `::after` overlay, and why — see step 2.
-- `updating-the-data.md` does NOT need touching: nothing in steps 1-4 changed
+`localStorage` under `td-shopping-v1`. Persisted: `picks`, `onHand`,
+`overrides`, `netCrafted`. NOT persisted: which chips are expanded and which
+price editor is open — those describe the screen, so opening a price editor does
+not write to disk.
+
+Two things drove the shape, and both are tested:
+
+- **The accessor itself can throw**, not merely return null. A private window or
+  a browser set to block storage raises on `window.localStorage`, so the guard
+  is inside the `try`, not around `getItem`.
+- **The contents are hand-editable, survive deploys, and may have been written
+  by a version of this file that no longer exists.** Every field is
+  re-validated; anything that fails is **dropped rather than repaired**, because
+  a half-repaired plan is harder to notice than an empty one. A fractional
+  quantity is floored — it would otherwise multiply through every total and
+  surface as `$12.3456` rather than as an error.
+
+An **unknown row id is kept**, deliberately: that is what lets an on-hand count
+survive a recipe being removed and added back, which is D2's whole point.
+
+**An emptied plan removes the entry** rather than storing an empty one. That is
+not tidiness — the autosave effect runs immediately after Clear, so without the
+branch it wrote `{"picks":[],…}` straight back over the removal. Caught in the
+browser, not in review.
+
+**`Clear list` is new and was not in the decisions.** Autosave makes it
+necessary rather than convenient: without it a finished plan follows the reader
+into next season with no way out but removing twenty chips one at a time. It
+takes the on-hand counts and prices with it — they describe *that* plan, and
+keeping them would seed the next one with numbers nobody typed for it.
+
+### The 10x lot hint
+
+Trade 1 tokens sell mostly as **10x bundles** (`data.ts` records this — ten
+mailed as one lot to save postage), so the count in the *buy* column is not a
+number anyone can ask for. The hint does the arithmetic:
+
+```
+usually sold in 10x lots — 1 lot gets you 10, 5 more than you need
+```
+
+**8 of the 14 goods** are Trade 1 and get it; Trade 2–4 do not bundle and get
+nothing. It is a HINT and **never moves a total** — auctions still sell singles,
+and rounding fourteen goods up to lots would inflate a small plan by a third. A
+test pins both halves.
+
+### Docs
+
+- **`docs/shopping-list.md`** (new) — the settled description of what shipped.
+  Added to `CLAUDE.md`'s doc map. This handoff now points at it and keeps only
+  the measurements, rejected alternatives and reasoning.
+- **`docs/ui-conventions.md`** — the line owed since step 2, on why the chip
+  controls grow by size rather than by an `::after` overlay, and the general
+  rule it implies: overlay inside a fixed row, grow for real where the container
+  wraps.
+- `updating-the-data.md` deliberately untouched: nothing in steps 1–5 changed
   the data layer.
+
+### Verified in the browser
+
+| | |
+|---|---|
+| autosave | writes on the first pick; `{"picks":[{"key":"2026|+3 Fellbane Crossbow","qty":1}],…}` |
+| survives reload | chip, on-hand `4`, override `$7.25` and its `Price adjusted` note all restored |
+| lot hint | `1 lot gets you 10, 5 more than you need` at need 5; `1 lot` at need 10 |
+| Clear | empties the view and leaves `localStorage` at `null`, still empty after a reload |
+
+Test suite finishes at **90 assertions**.
+
+## The build is complete
+
+All five steps are merged or in flight. What was deliberately left undone, so
+nobody re-derives it:
+
+- **XLSX export** — needs a ~400KB dependency or a hand-rolled zip writer.
+- **The Excel CSV check** — the formula guard's file half is unverified because
+  there is no Excel on this machine. One line to fix if it misbehaves; see
+  `shopping-list.md`.
+- **Share links and server-side save codes** — dropped and impossible
+  respectively, not pending.
+- **A React test harness** — still none. Component behaviour is verified in the
+  browser; everything pure is in the 90-assertion suite.
 
 ### D10, as it now stands
 
