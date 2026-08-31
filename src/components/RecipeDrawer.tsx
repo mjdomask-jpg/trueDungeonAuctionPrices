@@ -39,10 +39,18 @@ export type RecipeDrawerProps = {
    *  selection (the calculator); false where the reader is adding several in a
    *  row and would lose their query mid-list. */
   clearFiltersOnPick?: boolean;
+  /** Multi-select only. Given both of these, an already-picked row grows a
+   *  -/+ stepper in place, so the reader can set "three of these" without
+   *  tapping the row three times or leaving the drawer to do it. Omit them
+   *  both and the drawer is exactly the single-select picker it was — the
+   *  calculator passes neither. */
+  quantities?: ReadonlyMap<string, number>;
+  onQuantityChange?: (key: string, qty: number) => void;
 };
 
 export function RecipeDrawer({
   engine, open, onClose, selectedKeys, onPick, focusYear, clearFiltersOnPick = false,
+  quantities, onQuantityChange,
 }: RecipeDrawerProps) {
   const [search, setSearch] = useState('');
   const [tier, setTier] = useState('All');
@@ -105,24 +113,48 @@ export function RecipeDrawer({
   };
 
   // --- Drawer option row -------------------------------------------------
-  const optRow = (c: BuildCost, opts: { indented?: boolean; from?: string | null } = {}) => (
-    <button
-      key={c.key}
-      type="button"
-      className={`calc-opt${opts.indented ? ' leg' : ''}${selectedKeys.has(c.key) ? ' sel' : ''}`}
-      onClick={() => pick(c)}
-    >
+  const optBody = (c: BuildCost, from?: string | null) => (
+    <>
       <span className="tchip" data-tier={c.level}>{c.level}</span>
       <span className="calc-opt-nm">
         {c.displayName}
         {/* Expired recipes are pickable but never a surprise: the tag rides the
             name so it is there in the list and again on the row you land on. */}
         {c.status === 'expired' && <span className="calc-opt-exp">expired</span>}
-        {opts.from && <span className="calc-opt-up">↳ upgrades from {opts.from}</span>}
+        {from && <span className="calc-opt-up">↳ upgrades from {from}</span>}
       </span>
       <span className="calc-opt-c">{moneyCalc(c.fullAvg)}</span>
-    </button>
+    </>
   );
+
+  const optRow = (c: BuildCost, opts: { indented?: boolean; from?: string | null } = {}) => {
+    const cls = `calc-opt${opts.indented ? ' leg' : ''}${selectedKeys.has(c.key) ? ' sel' : ''}`;
+    const qty = quantities?.get(c.key);
+    // A stepper only where there is something to step. An unpicked row is
+    // still a plain button, so the first tap stays one tap.
+    if (!onQuantityChange || qty === undefined) {
+      return (
+        <button key={c.key} type="button" className={cls} onClick={() => pick(c)}>
+          {optBody(c, opts.from)}
+        </button>
+      );
+    }
+    return (
+      <div key={c.key} className={`${cls} stepped${qty <= 0 ? ' off' : ''}`}>
+        <button type="button" className="calc-opt-hit" onClick={() => pick(c)}
+          aria-label={`Add another ${c.displayName}`}>
+          {optBody(c, opts.from)}
+        </button>
+        <span className="sl-step" role="group" aria-label={`Quantity of ${c.displayName}`}>
+          <button type="button" onClick={() => onQuantityChange(c.key, qty - 1)}
+            aria-label={`One fewer ${c.displayName}`} disabled={qty <= 0}>−</button>
+          <b>{qty}</b>
+          <button type="button" onClick={() => onQuantityChange(c.key, qty + 1)}
+            aria-label={`One more ${c.displayName}`}>+</button>
+        </span>
+      </div>
+    );
+  };
 
   return (
     <>
