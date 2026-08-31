@@ -2670,3 +2670,27 @@ table.an-opens col.col-days { width: 16%; }
   .sl-final-t tbody th { min-width: 10em; }
   .sl-final-n { max-width: none; }
 }
+
+/* --- Shopping List: the 10x lot hint and Clear (step 5) ----------------- */
+
+/* Sits under the notes on a Trade 1 row. Quieter than the staleness flag: that
+   one says a price is wrong, this one says the shape of the purchase differs
+   from the count beside it. */
+.sl-lot { display: block; font-size: 11px; color: var(--text-d); margin-top: 2px; }
+.sl-lot b { color: var(--text); font-weight: 600; }
+
+/* Destructive, so it does not look like the button beside it until you are on
+   it. `.calc-browse` is the affirmative action in that strip; this is the one
+   that throws the plan away. */
+.sl-clear {
+  border: 1px dashed var(--border); background: none; cursor: pointer; color: var(--text-d);
+  font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px;
+}
+.sl-clear:hover { border-color: #b45309; border-style: solid; color: #b45309; }
+:root:not([data-theme='light']) .sl-clear:hover { border-color: #e0a44a; color: #e0a44a; }
+:root[data-theme='light'] .sl-clear:hover { border-color: #b45309; color: #b45309; }
+.sl-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+@media (max-width: 640px) {
+  .sl-clear { min-height: 40px; }
+}

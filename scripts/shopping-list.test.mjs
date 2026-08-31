@@ -63,6 +63,7 @@ try {
     transmutes: await import(url('transmutes.ts')),
     shoppingList: await import(url('shoppingList.ts')),
     shoppingExport: await import(url('shoppingExport.ts')),
+    shoppingStorage: await import(url('shoppingStorage.ts')),
   };
 } catch (e) {
   console.error('could not load src/lib:', e.message);
@@ -75,8 +76,10 @@ const {
   PriceIndex, CostEngine, parseRecipes, parseTokenMetadata, parseOffAuctionPrices,
   parseDerivedRules, isTradeCategory,
 } = lib.transmutes;
-const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote } = lib.shoppingList;
+const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote,
+  lotHintFor, LOT_SIZE } = lib.shoppingList;
 const { toCSV, toTSV, toRows, guardFormula, exportFilename, EXPORT_COLUMNS } = lib.shoppingExport;
+const { loadShopping, saveShopping, clearShopping } = lib.shoppingStorage;
 
 const read = (f) => readFileSync(join(dataDir, f), 'utf8');
 const sales = parseSales(read('prices.csv'));
@@ -630,6 +633,125 @@ check('what the reader typed reaches the file — on hand and an adjusted price 
 check('the filename is dated so two exports in a season do not collide',
   exportFilename('csv', new Date('2026-08-31T12:00:00Z')) === 'td-shopping-list-2026-08-31.csv',
   exportFilename('csv', new Date('2026-08-31T12:00:00Z')));
+
+// =========================================================================
+console.log('\n=== 11. the 10x lot hint ===');
+
+// Trade 1 tokens sell mostly as 10x bundles, so the "buy" count is not a number
+// you can actually ask for. 8 of the 14 goods bundle; Trade 2-4 do not.
+const lotRows = many.trade.filter((r) => lotHintFor(r) !== null);
+check('the hint fires on the 8 Trade 1 goods and on nothing else',
+  lotRows.length === 8 && lotRows.every((r) => r.category === 'Trade 1') &&
+  many.trade.filter((r) => r.category !== 'Trade 1').every((r) => lotHintFor(r) === null),
+  lotRows.map((r) => `${r.good} (${r.category})`).join(', '));
+
+check('it rounds UP to whole lots and reports the overshoot',
+  lotRows.every((r) => {
+    const h = lotHintFor(r);
+    return h.lots === Math.ceil(r.need / LOT_SIZE) && h.tokens === h.lots * LOT_SIZE &&
+      h.over === h.tokens - r.need && h.over >= 0 && h.over < LOT_SIZE;
+  }),
+  lotRows.slice(0, 3).map((r) => { const h = lotHintFor(r); return `need ${r.need} -> ${h.lots} lots (${h.tokens}), ${h.over} over`; }).join('\n'));
+
+// It is a HINT. Rounding fourteen goods up to lots would inflate a small plan
+// by a third, and would be wrong for anyone buying singles.
+const oneRecipe = buildShoppingList([pick('2026|Deathward Greaves', 1)], engine);
+const lotted = oneRecipe.trade.reduce((t, r) => {
+  const h = lotHintFor(r);
+  return t + (h && r.unitAvg !== null ? h.tokens * r.unitAvg : (r.extAvg ?? 0));
+}, 0);
+check('...and it never moves a total — the list still costs what the singles cost',
+  oneRecipe.totals.tradeAvg < lotted && lotHintFor(oneRecipe.trade[0]) !== undefined,
+  `as listed ${money(oneRecipe.totals.tradeAvg)}, if rounded to lots ${money(lotted)}`);
+
+check('a covered row gets no hint — there is nothing left to buy',
+  bigStash.all.every((r) => lotHintFor(r) === null),
+  bigStash.all.filter((r) => lotHintFor(r)).length);
+
+// =========================================================================
+console.log('\n=== 12. localStorage: the contents are DATA, not state ===');
+
+// Nothing here touches a real browser; loadShopping is exercised through a
+// stand-in Storage so the validation can be driven with values a person could
+// have hand-edited into devtools.
+const fakeStore = (initial) => {
+  let held = initial;
+  return {
+    getItem: () => held,
+    setItem: (_k, v) => { held = v; },
+    removeItem: () => { held = null; },
+    get value() { return held; },
+  };
+};
+const withStore = (raw, fn) => {
+  const g = globalThis;
+  const had = 'window' in g ? g.window : undefined;
+  const s = fakeStore(raw);
+  g.window = { localStorage: s };
+  try { return fn(s); } finally { if (had === undefined) delete g.window; else g.window = had; }
+};
+
+check('a round trip preserves the plan exactly',
+  withStore(null, (s) => {
+    saveShopping({ picks: [{ key: '2026|X', qty: 2 }], onHand: { 'T|Ink': 3 }, overrides: { 'T|Ink': 9.5 }, netCrafted: true });
+    const back = loadShopping();
+    return back.picks.length === 1 && back.picks[0].qty === 2 &&
+      back.onHand['T|Ink'] === 3 && back.overrides['T|Ink'] === 9.5 && back.netCrafted === true &&
+      typeof s.value === 'string';
+  }));
+
+check('storage that THROWS on access is survived, not crashed on',
+  (() => {
+    const g = globalThis; const had = 'window' in g ? g.window : undefined;
+    g.window = { get localStorage() { throw new Error('blocked'); } };
+    try {
+      const r = loadShopping();
+      saveShopping({ picks: [], onHand: {}, overrides: {}, netCrafted: false });
+      clearShopping();
+      return r === null;
+    } finally { if (had === undefined) delete g.window; else g.window = had; }
+  })(),
+  'a private window raises on the property access itself, not on getItem');
+
+check('corrupt JSON loads as nothing rather than throwing',
+  withStore('{not json', () => loadShopping() === null));
+check('a non-object payload loads as nothing', withStore('42', () => loadShopping() === null));
+check('an empty slot loads as nothing', withStore(null, () => loadShopping() === null));
+
+// Every field is re-validated: this survives deploys and is hand-editable.
+const junk = JSON.stringify({
+  picks: [
+    { key: '2026|Good', qty: 2 },
+    { key: '', qty: 1 },                 // no key
+    { key: '2026|Bad', qty: -3 },        // negative
+    { key: '2026|Frac', qty: 2.7 },      // fractional — would show as $12.3456
+    { qty: 1 },                          // no key at all
+    null, 'nope', 5,
+  ],
+  onHand: { 'T|Ink': 3, 'T|Bad': -1, 'T|NaN': 'x', '': 9 },
+  overrides: { 'T|Ink': 9.5, 'T|Inf': Infinity },
+  netCrafted: 'yes',                     // not a boolean
+});
+const cleaned = withStore(junk, () => loadShopping());
+check('malformed picks are DROPPED, not repaired, and a fractional quantity is floored',
+  cleaned.picks.length === 2 &&
+  cleaned.picks[0].key === '2026|Good' && cleaned.picks[0].qty === 2 &&
+  cleaned.picks[1].key === '2026|Frac' && cleaned.picks[1].qty === 2,
+  JSON.stringify(cleaned.picks));
+check('negative, non-numeric and unkeyed entries never reach the page',
+  Object.keys(cleaned.onHand).length === 1 && cleaned.onHand['T|Ink'] === 3 &&
+  Object.keys(cleaned.overrides).length === 1 && cleaned.overrides['T|Ink'] === 9.5,
+  JSON.stringify({ onHand: cleaned.onHand, overrides: cleaned.overrides }));
+check('netCrafted is only true when it is literally true',
+  cleaned.netCrafted === false, cleaned.netCrafted);
+check('Infinity does not survive JSON and does not survive validation either',
+  cleaned.overrides['T|Inf'] === undefined);
+
+// A row id that no longer matches anything is KEPT on purpose: that is what
+// lets an on-hand count survive a recipe being removed and added back (D2).
+check('an unknown row id is kept rather than pruned — D2 depends on it',
+  withStore(JSON.stringify({ picks: [], onHand: { 'T|Gone': 7 }, overrides: {}, netCrafted: false }),
+    () => loadShopping().onHand['T|Gone'] === 7));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — shoppingList: ${pass} passed, ${fail} failed`);

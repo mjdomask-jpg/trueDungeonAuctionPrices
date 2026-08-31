@@ -95,6 +95,16 @@ the circle they can see, not the invisible box around it. It is 22px on mobile
 for that reason. Grow the visible control first, then let the overlay carry the
 remainder.
 
+**And where controls are packed too tightly to overlay, grow them for real.**
+The Shopping List's selection chips carry three controls — `−`, `+` and `✕` —
+2 to 8px apart. Overlaying each to 44px would make them overlap, and the rule
+above says a tap landing on whichever element is later in the DOM is worse than
+a small target. So `.sl-chip`'s controls take a real 40×40 below 640px
+(`.sl-step button`, `.sl-chip-x`) rather than an `::after`. That is affordable
+only because a chip strip **wraps**: growing a control inside a fixed row would
+disturb the rhythm, which is the whole reason the overlay exists. Ask which
+constraint actually applies before reaching for either.
+
 ### A popover inherits the label it sits inside
 
 **Rule: the bubble resets its own typography. Never fix this at a call site.**
