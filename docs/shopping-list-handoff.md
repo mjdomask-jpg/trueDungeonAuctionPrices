@@ -15,9 +15,10 @@ Design doc with wireframes and the full reasoning:
 |---|---|---|
 | **0** | Extract `RecipeDrawer` + `lineTag` out of `BuildCalculator` | **done, verified, merged** ([#136](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/136), squashed as `6203c40`) |
 | **0a** | Delete the `tierLine` branch #137 emptied | **done, verified, merged** ([#139](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/139), squashed as `32d25fc`) |
-| **1** | Pricing branches in the engine + `lib/shoppingList.ts` + the basis selector | **built, verified, PR open ([#140](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/140))** |
-| 2 | Route, view toggle, chip strip, drawer wired to multi-select | **next** |
-| 3 | The two ingredient tables | not started |
+| **1** | Pricing branches in the engine + `lib/shoppingList.ts` + the basis selector | **done, verified, merged** ([#140](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/140), squashed as `01b754e`) |
+| **1a** | Backlog entry: `IngredientType` authored two ways | **done, merged** ([#141](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/141), `72f026b`) |
+| **2** | Route, view toggle, chip strip, drawer wired to multi-select | **built, verified, PR open** |
+| 3 | The two ingredient tables | **next** |
 | 4 | Final table, Copy, Download CSV | not started |
 | 5 | `localStorage` autosave, 10x hint, docs | not started |
 
@@ -641,21 +642,94 @@ cheapest place to catch a wrong rule.
 
 ---
 
-## Next: step 2
+## Step 2 — what was built
 
-Route, view toggle, chip strip, and the drawer wired to multi-select. The drawer
-already has the seam for it — the parent owns `selectedKeys`, and quantity
-steppers go on additively without changing that contract (see step 0 above).
+The selection surface. Picking, quantities, pausing and removing all work end to
+end and feed `lib/shoppingList.ts`; step 3's tables are the only thing missing,
+and the view says so on screen rather than pretending to be finished.
 
-A and B are answered, so nothing blocks it. Two things step 2 inherits:
+**`src/components/ShoppingList.tsx`** (new) — chip strip, summary bar, drawer
+wiring. Selection is `Pick[]`, an **array not a Map**, so the chips read in the
+order the plan was built rather than in key order.
 
-- The Shopping List does **not** get the basis control. It is locked to
-  `'today'` — that is the founding domain rule, and D8 already excluded the
-  price-year pin for the same reason. The last-5 toggle still comes along.
-- `buildShoppingList` takes the engine, so it inherits whatever basis that
-  engine was built with. `TransmutesPage` must construct the Shopping List's
-  engine with `basis: 'today'` rather than reusing the Recipes view's, the same
-  way `calculator ? null : priceYear` already works.
+**`RecipeDrawer`** grew two optional props, `quantities` and `onQuantityChange`.
+Given both, a picked row grows a −/+ stepper in place; given neither it is
+exactly the single-select picker it was, and the calculator passes neither. One
+real constraint fell out: **a stepper cannot live inside the row's own
+`<button>`** — nested buttons are invalid and the inner one never receives its
+click — so a stepping row becomes a `div` wrapping the same content in a
+`.calc-opt-hit` button. Unpicked rows stay plain buttons, so the first tap is
+still one tap.
+
+**`TransmutesPage`** — `'shopping'` added to `useRoutedView` (the route was
+already `transmutes/:view`, so nothing in `main.tsx` changed), a third toggle
+button with the short label `Shopping` under 640px, and its own `PageIntro`.
+The Wish Ring toggle was **lifted out of `optionControls`** into a `pathToggle`
+node, because the Shopping List renders it too — it changes what is *on* the
+list, so it is not a Recipes-view preference.
+
+`recipesView` replaces `!calculator` as the gate on the basis selector, the
+price-year pin, the search box and the options block. That was the bug waiting
+to happen: `!calculator` would have handed the Shopping List the whole Recipes
+options bar, including the basis control it must not have.
+
+### Verified in the browser, all three views
+
+| | |
+|---|---|
+| pick a recipe | chip + summary bar + 13 merged trade-good rows |
+| re-pick the same one | **increments** to 2, $197 → $395 — never removes |
+| add a second recipe | 3 tokens / 2 recipes / $590, and trade goods stay **13** while other items go 0 → 2 |
+| ten recipes | **14** trade goods against **16** other items — the founding measurement, live |
+| − to zero | chip dims to 0.55, name struck through, bar reads `· 1 paused`, total drops, row **stays** |
+| + from zero | restores exactly |
+| ✕ | removes |
+| above 8 chips | collapses to 8 + `+2 more`; expands; `Show fewer` |
+| 375px | no overflow, chip 301px, every tap target **40×40** |
+
+Recipes and Build Calculator both re-checked after the `pathToggle` extraction:
+basis select still on `era`, calculator still has no basis select and keeps its
+recent-prices toggle. No console errors on any view.
+
+### The tap targets are grown by SIZE, against the usual house rule
+
+`docs/ui-conventions.md` says touch targets grow by an `::after` overlay at
+negative inset, not by padding. These do not, deliberately, and the same
+document says why: the three controls in a chip sit 2–8px apart, and
+**overlapping hit areas hand a tap to whichever element is later in the DOM**,
+which it calls worse than leaving the target small. A chip strip wraps, so
+growing it costs the layout nothing. They reach 40×40 against the site's ~44px
+convention. Worth a line in `ui-conventions.md` when step 5 does the docs pass.
+
+### What step 2 deliberately did NOT do
+
+The totals bar reads `shopping.totals.grandAvg` already, because it is the
+cheapest possible proof the whole pipeline works end to end. Everything else
+the decisions call for — the two tables, On Hand, price overrides, the D5
+netting offer, notes, Copy/CSV — is step 3 and 4 and is untouched. The
+placeholder line under the chips states the row counts so the numbers are
+visible without the tables existing.
+
+## Next: step 3
+
+The two ingredient tables. Everything they need is already computed and
+unrendered: `shopping.trade`, `shopping.additional`, per-row `need`/`spare`/
+`extAvg`, the closed `notes` vocabulary in its fixed order, `staleness` on
+trade-good rows, and `shopping.chains` for D5's netting offer.
+
+Three things step 3 should know:
+
+- **`onHand` and `overrides` are keyed by ROW ID**, not by recipe. The ids are
+  stable across re-renders and independent of pick order, which is what lets a
+  typed number survive a recipe being removed (D2).
+- **D5's netting is computed but not offered.** `shopping.chains` lists every
+  pair; `buildShoppingList` applies it only under `netCraftedSources`. The UI
+  for that is step 3's, and the decision is that it stays explicit and
+  reversible, never automatic.
+- **The staleness flag has a hit-list of two today** — Elven Bismuth and Oil of
+  Enchantment, both understated by their season average. The row states a fact,
+  never a forecast: *"season avg $31.67 · recent sales $63.25 — this one is
+  moving."*
 
 ### D10, as it now stands
 

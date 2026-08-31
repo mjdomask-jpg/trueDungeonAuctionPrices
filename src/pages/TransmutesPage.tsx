@@ -4,30 +4,40 @@ import { useCostEngine } from '../hooks/useCostEngine';
 import { useRoutedView } from '../hooks/useRoutedView';
 import { TransmuteSeason } from '../components/TransmuteSeason';
 import { BuildCalculator } from '../components/BuildCalculator';
+import { ShoppingList } from '../components/ShoppingList';
 import { PageIntro } from '../components/PageIntro';
 import { HintPopover } from '../components/HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
 import type { PricingBasis } from '../lib/transmutes';
 
-// Transmutes / build-vs-buy. Two views behind a toggle:
+// Transmutes / build-vs-buy. Three views behind a toggle:
 //   Recipes (Phase 4) — every craftable token's estimated build cost, priced
 //     from its debut-year auction sales, seasons collapsible.
 //   Build Calculator (Phase 2 of the expansion plan) — pick one recipe, enter
 //     what you already own, and see what completing the transmute still costs.
-// Both read the same cost engine; the toggle is the URL (/transmutes/:view) so
-// each view is a shareable link and the top-level nav stays at five entries.
+//   Shopping List — pick MANY recipes and get one merged buy-list across all of
+//     them, which is the question a player planning a season actually has.
+// All three read the same cost engine; the toggle is the URL
+// (/transmutes/:view) so each view is a shareable link and the top-level nav
+// stays at five entries.
 
-type View = 'recipes' | 'calculator';
+type View = 'recipes' | 'calculator' | 'shopping';
 
 export default function TransmutesPage() {
   const narrow = useMediaQuery(NARROW);
   const [view, setView] = useRoutedView<View>({
-    views: ['recipes', 'calculator'],
+    views: ['recipes', 'calculator', 'shopping'],
     fallback: 'recipes',
     pathFor: (v) => `/transmutes/${v}`,
   });
   const calculator = view === 'calculator';
+  const shopping = view === 'shopping';
+  // The Recipes view is the only one that gets to choose a basis or pin a
+  // season. The other two ask "what would this cost me now", which is one
+  // question with one answer (D8/D11) — offering the choice there would let a
+  // reader put a shopping list on 2019 prices and go shopping with it.
+  const recipesView = view === 'recipes';
   const [recentPrices, setRecentPrices] = useState(false);
   // One control, three answers, because they are three answers to ONE question
   // — which market is this priced against — and splitting them across two
@@ -60,8 +70,8 @@ export default function TransmutesPage() {
 
   const { engine, loading, error, ready } = useCostEngine({
     recentPrices,
-    priceYear: calculator ? null : priceYear,
-    basis: calculator ? 'today' : basis,
+    priceYear: recipesView ? priceYear : null,
+    basis: recipesView ? basis : 'today',
   });
 
   const seasons = useMemo(() => (engine ? engine.seasons() : []), [engine]);
@@ -129,12 +139,12 @@ export default function TransmutesPage() {
   // never carries a pin (F3), so there it is always live.
   const pricedSeasons = engine ? engine.prices.pricedSeasons : [];
   const showRecentToggle =
-    calculator || priceYear === null || priceYear >= (engine?.prices.latestPriced ?? 0);
+    !recipesView || priceYear === null || priceYear >= (engine?.prices.latestPriced ?? 0);
   // Under 'era' an expired recipe is priced over a date window, which is its
   // own aggregation and has no last-5 reading; the toggle still governs the
   // active and future recipes above it, so it stays — but the hint has to stop
   // promising it reaches everything.
-  const recentReachesAll = basis === 'today' || calculator;
+  const recentReachesAll = !recipesView || basis === 'today';
 
   // The one option BOTH views answer to, so it is declared once and rendered in
   // each. It governs the calculator whether or not it is on screen there — the
@@ -172,6 +182,28 @@ export default function TransmutesPage() {
     </div>
   );
 
+  // Phase 9's Wish Ring choice, declared here rather than inline because the
+  // Shopping List renders it too: it changes what is ON the list, so it is not
+  // a Recipes-view preference.
+  const pathToggle = anyGoldPath && (
+    <div className="toggle path-toggle" role="group" aria-label="How Legendary recipes are priced">
+      <span className="toggle-label">
+        Legendary Recipes
+        <HintPopover label="About the Wish Ring or GP choice">
+          Legendary recipes accept either 1 Wish Ring or 15,000 GP. Choose to show the
+          Wish Ring as a separate line item or to price the transmute with an additional
+          15,000 GP on top of the 25,000. Players often have GP on hand, not Wish Rings.
+        </HintPopover>
+      </span>
+      <div className="toggle-buttons">
+        <button type="button" data-label="Wish Ring" className={path === 'ring' ? 'on' : undefined}
+          aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
+        <button type="button" data-label="15,000 GP" className={path === 'gp' ? 'on' : undefined}
+          aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
+      </div>
+    </div>
+  );
+
   // The things you can change about how the list is priced and filtered.
   // Held as one node so the phone can fold them behind a disclosure without a
   // second copy of the markup drifting from this one.
@@ -193,24 +225,7 @@ export default function TransmutesPage() {
         </div>
       )}
 
-      {anyGoldPath && (
-        <div className="toggle path-toggle" role="group" aria-label="How Legendary recipes are priced">
-          <span className="toggle-label">
-            Legendary Recipes
-            <HintPopover label="About the Wish Ring or GP choice">
-              Legendary recipes accept either 1 Wish Ring or 15,000 GP. Choose to show the
-              Wish Ring as a separate line item or to price the transmute with an additional
-              15,000 GP on top of the 25,000. Players often have GP on hand, not Wish Rings.
-            </HintPopover>
-          </span>
-          <div className="toggle-buttons">
-            <button type="button" data-label="Wish Ring" className={path === 'ring' ? 'on' : undefined}
-              aria-pressed={path === 'ring'} onClick={() => setPath('ring')}>Wish Ring</button>
-            <button type="button" data-label="15,000 GP" className={path === 'gp' ? 'on' : undefined}
-              aria-pressed={path === 'gp'} onClick={() => setPath('gp')}>15,000 GP</button>
-          </div>
-        </div>
-      )}
+      {pathToggle}
 
       {/* Phase 7. A select rather than a segmented pair: nine seasons plus Auto
           is far past what the .toggle-buttons shape can hold, and it is the
@@ -272,7 +287,20 @@ export default function TransmutesPage() {
 
   return (
     <>
-      {calculator ? (
+      {shopping ? (
+        <PageIntro short="Pick everything you plan to make and get one merged list of what to buy.">
+          Add every transmute you plan to make — with <strong>how many of each</strong> — and this
+          merges their ingredients into <strong>one buy-list</strong>. Trade goods collapse onto a
+          single row per good however many recipes want them; everything else is listed by the
+          season its token comes from. Everything is priced at{' '}
+          <strong>today's</strong> prices, because that is what you would pay to buy it now — so
+          unlike <button type="button" className="linklike" onClick={() => setView('recipes')}>Recipes</button>,
+          there is no season to pin. Tokens that are no longer sold keep their own market and say
+          so. Use <strong>−</strong> and <strong>+</strong> to change a quantity; taking one to
+          zero <strong>pauses</strong> it without losing your place, and <strong>✕</strong> removes
+          it.
+        </PageIntro>
+      ) : calculator ? (
         <PageIntro short="Pick a recipe, enter what you already own, and see what completing the transmute costs.">
           Open <strong>Browse recipes</strong> to pick one, then enter{' '}
           <strong>how many of each ingredient you already have</strong> — the calculator subtracts
@@ -329,6 +357,11 @@ export default function TransmutesPage() {
               <span className="lbl-full">Build Calculator</span>
               <span className="lbl-short">Calculator</span>
             </button>
+            <button type="button" data-label="Shopping List" data-short="Shopping" className={view === 'shopping' ? 'on' : undefined}
+              aria-pressed={view === 'shopping'} onClick={() => setView('shopping')}>
+              <span className="lbl-full">Shopping List</span>
+              <span className="lbl-short">Shopping</span>
+            </button>
           </div>
         </div>
 
@@ -338,7 +371,7 @@ export default function TransmutesPage() {
             open: a disclosure there reads as a dropdown menu, and its count
             badge shifts the controls beside it every time an option changes.
             Three visible toggles are the plainer thing. */}
-        {!calculator && (narrow ? (
+        {recipesView && (narrow ? (
           <details className="filterset options">
             <summary>
               Options
@@ -347,12 +380,17 @@ export default function TransmutesPage() {
             <div className="filterset-body">{optionControls}</div>
           </details>
         ) : optionControls)}
+        {/* The Shopping List keeps the Wish Ring choice — it changes what is on
+            the list — and the last-5 toggle, because "what does it cost now"
+            still has to say which sales answer that. It does NOT get the basis
+            selector. */}
+        {shopping && <>{pathToggle}{recentToggle}</>}
         {/* 1a: the calculator gets this one control in the global bar rather
             than a third pair on its tools strip — the strip only exists once a
             recipe is picked, and the browse drawer's prices answer to this
             too. */}
         {calculator && recentToggle}
-        {!calculator && (
+        {recipesView && (
           <label className="search">
             <span className="sr-only">Search transmutes</span>
             <input
@@ -367,6 +405,8 @@ export default function TransmutesPage() {
 
       {calculator ? (
         <BuildCalculator engine={engine!} />
+      ) : shopping ? (
+        <ShoppingList engine={engine!} path={path} />
       ) : (
         <>
           {/* A bare count while idle, so it earns `.stats` and drops on phones to

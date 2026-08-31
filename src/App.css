@@ -2456,3 +2456,91 @@ table.an-opens col.col-days { width: 16%; }
   background: rgba(150, 60, 60, 0.14); color: #8a3535; white-space: nowrap; }
 :root[data-theme='dark'] .calc-opt-exp { background: rgba(240, 120, 120, 0.16); color: #f08a8a; }
 
+
+/* --- Shopping List (step 2: the selection surface) ---------------------- */
+
+/* The summary bar. Two jobs on one line: what the plan IS, and what it costs.
+   They separate to the edges rather than sitting together, because the money is
+   the thing a reader comes back to and it should always be in the same place. */
+.sl-bar {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin-top: 10px; padding: 10px 14px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+}
+.sl-sum { color: var(--text); font-size: 14px; }
+.sl-sum b { color: var(--text-h); }
+.sl-paused { color: var(--text-d); }
+.sl-total { display: flex; align-items: baseline; gap: 8px; }
+.sl-total-l { color: var(--text-d); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.sl-total b { font-size: 20px; color: var(--text-h); font-variant-numeric: tabular-nums; }
+
+/* Selection as wrapping CHIPS, not rows: selection is input and the list below
+   is output, so the input must not grow until it owns the screen. */
+.sl-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; align-items: center; }
+.sl-chip {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+  padding: 4px 4px 4px 10px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--card); font-size: 13px; color: var(--text-h);
+}
+.sl-chip-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 15em; }
+/* Paused: dimmed AND struck through. Dimming alone reads as "disabled by the
+   app"; the strike says a person did it on purpose and it is reversible. */
+.sl-chip.off { opacity: 0.55; }
+.sl-chip.off .sl-chip-nm { text-decoration: line-through; }
+.sl-chip-x {
+  border: none; background: none; cursor: pointer; color: var(--text-d);
+  font-size: 12px; line-height: 1; padding: 6px; border-radius: 999px;
+}
+.sl-chip-x:hover { background: var(--row-hover); color: var(--text-h); }
+.sl-chip-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The −/+ stepper, shared by the chips and the drawer's picked rows. */
+.sl-step { display: inline-flex; align-items: center; gap: 2px; }
+.sl-step button {
+  min-width: 24px; height: 24px; padding: 0; cursor: pointer; font: inherit; font-size: 14px;
+  line-height: 1; border: 1px solid var(--border); background: var(--bg);
+  color: var(--text-h); border-radius: 6px;
+}
+.sl-step button:hover:not(:disabled) { background: var(--row-hover); border-color: var(--accent); }
+.sl-step button:disabled { opacity: 0.4; cursor: default; }
+.sl-step button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sl-step b { min-width: 1.6em; text-align: center; font-variant-numeric: tabular-nums; }
+
+.sl-more {
+  border: 1px dashed var(--border); background: none; cursor: pointer; color: var(--text-d);
+  font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px;
+}
+.sl-more:hover { border-color: var(--accent); color: var(--accent); }
+.sl-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.sl-todo { margin-top: 16px; }
+
+/* A drawer row carrying a stepper is a div, not a button — nested buttons are
+   invalid markup and the inner one never gets its click. The hit area keeps the
+   old row's layout so the two shapes look identical in the list. */
+.calc-opt.stepped { justify-content: space-between; padding-right: 6px; }
+.calc-opt.stepped.off { opacity: 0.55; }
+.calc-opt-hit {
+  display: flex; align-items: baseline; gap: 9px; flex: 1; min-width: 0;
+  background: none; border: none; cursor: pointer; padding: 0; text-align: left;
+  color: inherit; font: inherit;
+}
+.calc-opt-hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 6px; }
+
+/* Phones: the name gives up its width first, and the tap targets grow to the
+   ~44px the rest of the site uses (docs/ui-conventions.md; `.controls` raises
+   --control-h the same way). These grow by SIZE rather than by the ::after
+   overlay that document usually prescribes, and deliberately: the three
+   controls in a chip sit 2-8px apart, and overlapping hit areas hand a tap to
+   whichever is later in the DOM — which it calls worse than leaving the target
+   small. A chip strip wraps, so growing it costs the layout nothing. */
+@media (max-width: 640px) {
+  .sl-chip-nm { max-width: 10em; }
+  .sl-total b { font-size: 17px; }
+  .sl-chip { gap: 4px; padding-left: 12px; }
+  .sl-step { gap: 4px; }
+  .sl-step button { min-width: 40px; height: 40px; font-size: 17px; }
+  .sl-chip-x { min-width: 40px; height: 40px; font-size: 14px; }
+  /* The drawer's stepped rows get it too — same thumbs, same buttons. */
+  .calc-opt.stepped .sl-step button { min-width: 40px; height: 40px; font-size: 17px; }
+}
