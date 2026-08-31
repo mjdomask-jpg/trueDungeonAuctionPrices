@@ -78,7 +78,8 @@ const {
 } = lib.transmutes;
 const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote,
   lotHintFor, LOT_SIZE } = lib.shoppingList;
-const { toCSV, toTSV, toRows, guardFormula, exportFilename, EXPORT_COLUMNS } = lib.shoppingExport;
+const { toCSV, toTSV, toRows, toSheet, csvFile, guardFormula, exportFilename, EXPORT_COLUMNS } =
+  lib.shoppingExport;
 const { loadShopping, saveShopping, clearShopping } = lib.shoppingStorage;
 
 const read = (f) => readFileSync(join(dataDir, f), 'utf8');
@@ -632,17 +633,40 @@ const exported = buildShoppingList(all2026, engine, {
   overrides: { [many.trade[1].id]: 9.99 },
 });
 const csv = toCSV(exported), tsv = toTSV(exported), grid = toRows(exported);
+const sheet = toSheet(exported);
+// Where the table starts inside the sheet: the "Making" heading, one row per
+// transmute, and the blank row that separates the preamble from the header.
+const TABLE_AT = exported.making.length + 2;
 
-check('both writers emit the same grid: one header row plus one row per list row',
+check('the TABLE is one header row plus one row per list row',
   grid.length === exported.all.length + 1 &&
-  grid[0].join('|') === [...EXPORT_COLUMNS].join('|') &&
-  csv.trimEnd().split('\r\n').length === grid.length &&
-  tsv.split('\n').length === grid.length,
-  `${grid.length} grid, ${csv.trimEnd().split('\r\n').length} csv, ${tsv.split('\n').length} tsv`);
+  grid[0].join('|') === [...EXPORT_COLUMNS].join('|'),
+  `${grid.length} rows, header ${grid[0].join('|')}`);
 
-check('every row has exactly as many cells as there are columns',
+check('every table row has exactly as many cells as there are columns',
   grid.every((r) => r.length === EXPORT_COLUMNS.length),
   grid.filter((r) => r.length !== EXPORT_COLUMNS.length).length);
+
+// The sheet leads with what the plan is FOR. Above the header, deliberately:
+// a file of forty trade goods says nothing about what any of them is for.
+check('the sheet opens with the plan, then a blank row, then the table',
+  sheet[0][0] === 'Making' &&
+  sheet.slice(1, TABLE_AT - 1).every((r, i) =>
+    r.length === 2 && r[0] === exported.making[i].displayName && r[1] === String(exported.making[i].qty)) &&
+  sheet[TABLE_AT - 1].length === 0 &&
+  sheet[TABLE_AT].join('|') === [...EXPORT_COLUMNS].join('|'),
+  JSON.stringify(sheet.slice(0, 3)));
+
+check('both writers emit that same sheet, line for line',
+  csv.trimEnd().split('\r\n').length === sheet.length &&
+  tsv.split('\n').length === sheet.length,
+  `${sheet.length} sheet, ${csv.trimEnd().split('\r\n').length} csv, ${tsv.split('\n').length} tsv`);
+
+// A list with nothing active has no preamble to write — an orphan "Making"
+// heading over an empty run would be worse than none.
+check('...and a list with every recipe paused writes the table alone',
+  toSheet(buildShoppingList([pick('2026|Deathward Greaves', 0)], engine))[0].join('|') ===
+    [...EXPORT_COLUMNS].join('|'));
 
 // The one name in the corpus with a comma in it. An unquoted writer shifts
 // every column after it on that row, silently.
@@ -651,7 +675,7 @@ check('the ONE name containing a comma is quoted in the CSV, so its row keeps it
   goldRow !== undefined && csv.includes('"1,000 GP Gold Bar"'),
   csv.split('\r\n').find((l) => l.includes('GP Gold Bar')));
 check('...and every CSV data row still parses to the right number of cells',
-  csv.trimEnd().split('\r\n').every((line) => {
+  csv.trimEnd().split('\r\n').slice(TABLE_AT).every((line) => {
     let cells = 1, inQ = false;
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
@@ -686,18 +710,57 @@ check('prices and costs export as plain NUMBERS, not as "$44.08"',
 
 // No cell may contain the delimiter of its own format unescaped.
 check('no TSV cell contains a raw tab or newline',
-  grid.slice(1).every((r) => r.every((c) => !/[\t\r\n]/.test(c))) &&
-  tsv.split('\n').every((line) => line.split('\t').length === EXPORT_COLUMNS.length),
-  tsv.split('\n').find((l) => l.split('\t').length !== EXPORT_COLUMNS.length));
+  sheet.every((r) => r.every((c) => !/[\t\r\n]/.test(c))) &&
+  tsv.split('\n').slice(TABLE_AT).every((line) => line.split('\t').length === EXPORT_COLUMNS.length),
+  tsv.split('\n').slice(TABLE_AT).find((l) => l.split('\t').length !== EXPORT_COLUMNS.length));
 
 // The export must carry the state the reader typed, or it is a export of a
 // different list from the one on screen.
 const onHandCol = EXPORT_COLUMNS.indexOf('On hand');
-check('what the reader typed reaches the file — on hand and an adjusted price both',
+check('what the reader typed reaches the file — the on-hand count and the corrected price',
   grid.slice(1).some((r) => r[onHandCol] === '3') &&
-  grid.slice(1).some((r) => r[priceCol] === '9.99') &&
-  grid.slice(1).some((r) => r[EXPORT_COLUMNS.indexOf('Notes')].includes('Price adjusted')),
+  grid.slice(1).some((r) => r[priceCol] === '9.99'),
   grid.slice(1).filter((r) => r[onHandCol] !== '0').map((r) => r.join(' | ')).slice(0, 2).join('\n'));
+
+// The Flags column is a NARROW replacement for Notes, not a shorter one: two
+// values, both of which change what you should buy rather than explaining why
+// a row is on the list.
+const flagCol = EXPORT_COLUMNS.indexOf('Flags');
+const flagged = grid.slice(1).map((r, i) => ({ row: exported.all[i], flags: r[flagCol] }));
+check('Flags carries exactly the two purchase-changing facts, and nothing else',
+  flagged.every(({ row, flags }) => {
+    const want = [
+      ...(row.outOfPrint && row.nominalYear !== null ? ['Out of print'] : []),
+      ...(row.staleness ? ['Price moving'] : []),
+    ].join(' · ');
+    return flags === want;
+  }),
+  flagged.filter((f) => f.flags).map((f) => `${f.row.displayName}: ${f.flags}`).join(', '));
+check('...and both of them actually occur in this corpus, or the check above proves nothing',
+  flagged.some((f) => f.flags.includes('Out of print')) &&
+  flagged.some((f) => f.flags.includes('Price moving')),
+  flagged.filter((f) => f.flags).length + ' flagged rows');
+// Staleness is only measured on trade goods; out-of-print is only tagged on
+// Ultra Rares, which are never trade goods. So the Flags cell holds at most
+// one value today, and the file holds no `·` at all — pinned because the
+// separator's first real use should be a visible change rather than a
+// surprise, and because it is what leaves the CSV pure ASCII.
+check('the two flags are mutually exclusive by construction, so no cell joins them',
+  exported.all.every((r) => !(r.staleness && r.outOfPrint)) &&
+  flagged.every((f) => !f.flags.includes(' · ')),
+  flagged.filter((f) => f.flags.includes(' · ')).map((f) => f.row.displayName).join(', '));
+check('the per-recipe breakdown does NOT go to the file — it is the wall the column dropped',
+  !csv.includes('For ') && !tsv.includes('Source for '),
+  csv.split('\r\n').find((l) => l.includes('For ')));
+
+// Excel opens a .csv in the system codepage, so the FILE needs a BOM or its
+// UTF-8 arrives as Windows-1252: `x` as `A-`, `.` as `A.`, `--` as `a€"`.
+check('the downloaded file leads with a UTF-8 BOM; toCSV itself does not',
+  csvFile(exported).charCodeAt(0) === 0xfeff && csv.charCodeAt(0) !== 0xfeff &&
+  csvFile(exported).slice(1) === csv,
+  `csvFile starts 0x${csvFile(exported).charCodeAt(0).toString(16)}, toCSV 0x${csv.charCodeAt(0).toString(16)}`);
+check('...and the clipboard does NOT get one — it carries text, not bytes',
+  tsv.charCodeAt(0) !== 0xfeff && !tsv.includes('﻿'), tsv.charCodeAt(0));
 
 check('the filename is dated so two exports in a season do not collide',
   exportFilename('csv', new Date('2026-08-31T12:00:00Z')) === 'td-shopping-list-2026-08-31.csv',

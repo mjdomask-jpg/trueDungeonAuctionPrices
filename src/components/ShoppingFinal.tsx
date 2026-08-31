@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Money } from './Money';
 import { moneyCalc } from '../lib/format';
 import { stalenessNote, type ShoppingList } from '../lib/shoppingList';
-import { toTSV, toCSV, exportFilename } from '../lib/shoppingExport';
+import { toTSV, csvFile, exportFilename } from '../lib/shoppingExport';
 
 // The takeaway list: every row in one table, in D6's order, plus the two ways
 // of getting it out of the browser.
@@ -46,7 +46,10 @@ export function ShoppingFinal({ list }: { list: ShoppingList }) {
   };
 
   const download = () => {
-    const blob = new Blob([toCSV(list)], { type: 'text/csv;charset=utf-8' });
+    // csvFile, not toCSV: the file needs a BOM or Excel reads its UTF-8 as
+    // Windows-1252 and every × and · arrives mangled. The `charset` below is
+    // not stored anywhere in the file and cannot do that job.
+    const blob = new Blob([csvFile(list)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
