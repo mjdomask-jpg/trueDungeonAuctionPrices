@@ -135,6 +135,15 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
 
   const setHave = (id: string, n: number) =>
     setOnHand((p) => ({ ...p, [id]: Math.max(0, n) }));
+  // One update for a whole table's All/None. Merged into the existing record
+  // rather than replacing it: the two tables share this state, so writing a
+  // fresh object from one table's rows would wipe the other's counts.
+  const setHaveMany = (entries: [string, number][]) =>
+    setOnHand((p) => {
+      const next = { ...p };
+      for (const [id, n] of entries) next[id] = Math.max(0, n);
+      return next;
+    });
   const setOv = (id: string, n: number | null) =>
     setOverrides((p) => (n === null ? p : { ...p, [id]: n }));
   const clearOv = (id: string) =>
@@ -144,13 +153,19 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
     editing: { rowId: editing, set: setEditing },
     onHand: (id: string) => Math.max(0, onHand[id] ?? 0),
     setOnHand: setHave,
+    setOnHandMany: setHaveMany,
     setOverride: setOv,
     clearOverride: clearOv,
   };
 
   // D5's pairs, in the reader's words. `chains` only ever holds rows the list
   // itself contains both halves of, so this is never speculative.
-  const chainUnits = shopping.chains.reduce((t, c) => t + Math.min(c.needed, c.crafted), 0);
+  // `netted` is what the toggle actually contributes — capped at what each row
+  // still lacks — so the offer, the applied banner and the per-row badges all
+  // quote one number. It can be 0 when the reader has already typed in enough
+  // of the source by hand, and the copy drops the count rather than offering
+  // to count nothing.
+  const chainUnits = shopping.chains.reduce((t, c) => t + c.netted, 0);
 
   const chip = (p: Pick) => {
     const cost = byKey.get(p.key);
@@ -226,8 +241,14 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
             <div className={`sl-chain${netCrafted ? ' on' : ''}`}>
               <span>
                 {netCrafted ? (
-                  <>Counting <b>{chainUnits}</b> item{chainUnits === 1 ? '' : 's'} you are already
-                    crafting as on hand — {shopping.chains.map((c) => c.good).join(', ')}.</>
+                  chainUnits === 0 ? (
+                    <>Counting the ones you are already crafting as on hand — but you have
+                      already entered enough {shopping.chains.map((c) => c.good).join(', ')} by
+                      hand, so this is adding nothing.</>
+                  ) : (
+                    <>Counting <b>{chainUnits}</b> item{chainUnits === 1 ? '' : 's'} you are already
+                      crafting as on hand — {shopping.chains.map((c) => c.good).join(', ')}.</>
+                  )
                 ) : (
                   <>This list buys <b>{shopping.chains.map((c) => c.good).join(', ')}</b> and also
                     crafts {shopping.chains.length === 1 ? 'it' : 'them'}. Count the ones you are
@@ -235,7 +256,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                 )}
               </span>
               <button type="button" onClick={() => setNetCrafted((v) => !v)}>
-                {netCrafted ? 'Undo' : `Count ${chainUnits} as on hand`}
+                {netCrafted ? 'Undo' : chainUnits === 0 ? 'Count these as on hand' : `Count ${chainUnits} as on hand`}
               </button>
             </div>
           )}

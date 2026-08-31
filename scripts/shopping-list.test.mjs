@@ -74,7 +74,7 @@ try {
 const { parseSales, parseMeta } = lib.data;
 const {
   PriceIndex, CostEngine, parseRecipes, parseTokenMetadata, parseOffAuctionPrices,
-  parseDerivedRules, isTradeCategory,
+  parseDerivedRules, isTradeCategory, TIER_PROXY,
 } = lib.transmutes;
 const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote,
   lotHintFor, LOT_SIZE } = lib.shoppingList;
@@ -346,8 +346,65 @@ check('...and netting it on removes exactly the ones being crafted',
   netted.totals.grandAvg < chained.totals.grandAvg,
   `need ${chained.all.find((r) => r.id === chained.chains[0].rowId).need} -> ${nettedRow.need}`);
 
+// ...and SAYS so. The on-hand box on screen holds what the player typed, so a
+// netted row reads "on hand 0, needed 3, buy 1" with nothing accounting for
+// the missing two unless the row carries a note of its own.
+const nettedNote = nettedRow.notes.find((n) => n.kind === 'netted');
+check('...and the row says where the on-hand count came from',
+  !!nettedNote && nettedNote.qty === Math.min(chained.chains[0].crafted, chained.chains[0].needed) &&
+  nettedRow.onHand === nettedNote.qty,
+  JSON.stringify({ notes: nettedRow.notes.map(noteLabel), onHand: nettedRow.onHand }));
+check('...a note that names the toggle rather than restating the arithmetic',
+  noteLabel({ kind: 'netted', qty: 2 }) === "2 counted as on hand — you're crafting them" &&
+  noteLabel({ kind: 'netted', qty: 1 }) === "1 counted as on hand — you're crafting it",
+  noteLabel({ kind: 'netted', qty: 2 }));
+check('a row nobody is crafting never carries the note, netting on or off',
+  !chained.all.some((r) => r.notes.some((n) => n.kind === 'netted')) &&
+  netted.all.filter((r) => r.notes.some((n) => n.kind === 'netted')).length === chained.chains.length,
+  netted.all.filter((r) => r.notes.some((n) => n.kind === 'netted')).map((r) => r.good).join(', '));
+
+// Crafting MORE of a source than the list consumes must not invent a surplus.
+// The toggle is derived, not typed, so D2's no-clamping rule does not cover it:
+// counting both of two crafted items against a row that wants one used to
+// report "1 spare" — stock the player does not hold.
+const overCraft = buildShoppingList(
+  chainPicks.map((p, i) => (i === 1 ? { ...p, qty: 2 } : p)), engine, { netCraftedSources: true });
+const overRow = overCraft.all.find((r) => r.id === chained.chains[0].rowId);
+check('netting never counts in more of a source than the row asks for',
+  overCraft.chains[0].crafted === 2 && overCraft.chains[0].netted === overRow.quantity &&
+  overRow.onHand === overRow.quantity && overRow.spare === 0 &&
+  !overRow.notes.some((n) => n.kind === 'spare'),
+  JSON.stringify({ chain: overCraft.chains[0], onHand: overRow.onHand, spare: overRow.spare }));
+check('...and the offer quotes the same number the row applies',
+  overCraft.chains.reduce((t, c) => t + c.netted, 0) ===
+  overCraft.all.reduce((t, r) => t + (r.notes.find((n) => n.kind === 'netted')?.qty ?? 0), 0),
+  JSON.stringify(overCraft.chains.map((c) => c.netted)));
+
+// A count typed by hand comes off what the toggle has left to contribute, or
+// the two would stack and cover the row twice over.
+const typedFirst = buildShoppingList(chainPicks, engine, {
+  netCraftedSources: true, onHand: { [chained.chains[0].rowId]: chained.chains[0].needed },
+});
+const typedRow = typedFirst.all.find((r) => r.id === chained.chains[0].rowId);
+check('a hand-typed count reduces what netting adds, rather than stacking with it',
+  typedFirst.chains[0].netted === 0 && typedRow.onHand === chained.chains[0].needed &&
+  !typedRow.notes.some((n) => n.kind === 'netted'),
+  JSON.stringify({ netted: typedFirst.chains[0].netted, onHand: typedRow.onHand }));
+
+// `Priced as X` is suppressed where the row's Category already says X. Today
+// that is EVERY case it can produce — TIER_PROXY holds one entry, Ultra Rare
+// -> Ultra Rare — but the suppression is keyed on the value rather than on the
+// note being deleted, so a future proxy naming something else still discloses.
+check('TIER_PROXY still maps only Ultra Rare onto itself — the premise of the above',
+  Object.entries(TIER_PROXY).length === 1 && TIER_PROXY['Ultra Rare'] === 'Ultra Rare',
+  JSON.stringify(TIER_PROXY));
+check('"Priced as X" never repeats the row\'s own Category',
+  !many.all.some((r) => r.notes.some((n) => n.kind === 'pricedAs' && n.good === r.category)),
+  many.all.filter((r) => r.notes.some((n) => n.kind === 'pricedAs'))
+    .map((r) => `${r.displayName} [${r.category}]`).join(', ') || '(none survive)');
+
 // The closed note vocabulary, in its fixed order.
-const ORDER = ['adjusted', 'sourceFor', 'for', 'pricedAs', 'spare', 'outOfPrint'];
+const ORDER = ['adjusted', 'sourceFor', 'netted', 'for', 'pricedAs', 'spare', 'outOfPrint'];
 const orderOK = many.all.every((r) => {
   const idx = r.notes.map((n) => ORDER.indexOf(n.kind));
   return idx.every((v) => v >= 0) && idx.every((v, i) => i === 0 || idx[i - 1] <= v);

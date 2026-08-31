@@ -1200,10 +1200,23 @@ td.diff.down { color: var(--diff-down); }
   .cl-buy { grid-area: buy; align-self: center; }
   .cl-unit { display: none; }
   .cl-fin { grid-area: fin; align-self: center; }
-  .cl-price-m { display: inline-block; background: none; border: none; padding: 4px 4px; cursor: pointer; color: var(--text); font: inherit; font-size: 11px; text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 2px; }
+  .cl-price-m { display: inline-block; background: none; border: none; padding: 3px 4px; cursor: pointer; color: var(--text); font: inherit; font-size: 11px; line-height: 1.35; text-decoration: underline dotted; text-decoration-color: var(--border); text-underline-offset: 2px; }
   .cl-price-m:hover { color: var(--accent); }
-  /* Bigger, easier-to-tap edit pen on phones. */
-  .cl-price-m .cl-edit-i { font-size: 16px; margin-left: 7px; vertical-align: -2px; opacity: 0.9; }
+  /* Bigger, easier-to-tap edit pen on phones — but a 16px glyph in a 10.5px
+     line box made the LAST meta line visibly taller than the ones above it,
+     since an inline box grows the line to fit its own line-height. Zeroing
+     that lets the glyph overhang: it draws at full size and contributes no
+     height. Measured at 375px, that line went 28.99px -> 20.84px against
+     17.85px for the text lines above it.
+
+     The 3px left over is the price button's own vertical padding, and it
+     STAYS. Trimming to 1.5px would make the line exactly uniform and take the
+     tap target down to 17.85px — smaller than it is today, to close a gap of
+     a sixth of a line. Rendering the button `display: inline` instead was
+     measured too and is worse, not better: 41.44px against 38.69px on a
+     two-line meta. */
+  .cl-price-m .cl-edit-i { font-size: 16px; line-height: 0; margin-left: 7px; vertical-align: -2px; opacity: 0.9; }
+  .cl-meta { line-height: 1.7; }
   /* iOS zooms the page in on any focused control under 16px and never zooms
      back out (see the note above the narrow-screen block). The calculator's
      two money fields and its on-hand box all sat under the threshold. */
@@ -2563,9 +2576,40 @@ table.an-opens col.col-days { width: 16%; }
   border-radius: 999px; padding: 1px 8px; margin-left: 4px; vertical-align: 1px;
 }
 .sl-thint { display: block; font-weight: 400; font-size: 11.5px; color: var(--text); margin-top: 2px; }
+/* The header's right-hand side: the master On hand control and the subtotal.
+   The control is the calculator's `.calc-tool` / `.calc-seg` pair unchanged —
+   it is the same control doing the same job, and the per-row pills below it
+   are its per-row form. Bottom-aligned so the segment sits on the subtotal's
+   baseline rather than the label's. */
+.sl-thead-r { display: flex; align-items: flex-end; gap: 16px; }
+.sl-thead-r .calc-tool-lab { font-size: 10.5px; }
 .sl-sub { white-space: nowrap; }
 .sl-sub-l { color: var(--text-d); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
 .sl-sub b { font-size: 15px; color: var(--text-h); font-variant-numeric: tabular-nums; }
+
+/* Disabled where D5's netting already covers the row — see ShoppingTable. */
+.calc-all:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.calc-all:disabled:hover { border-color: var(--border); color: var(--text-h); }
+
+/* What netting is contributing to this row, beside the box that does NOT show
+   it. Wraps to its own line inside the on-hand cell, so it only costs height
+   on the handful of rows that have one. */
+.sl-line .cl-hand { flex-wrap: wrap; }
+.sl-netted {
+  flex-basis: 100%; text-align: center; font-size: 10px; color: var(--accent);
+  margin-top: 2px; font-variant-numeric: tabular-nums;
+}
+
+/* The "+3 more" that uncaps a row's per-recipe notes. It sits inside the meta
+   line and must not disturb it — same size, same colour, no box of its own —
+   so it reads as the end of the sentence rather than as a control parked in
+   the middle of one. */
+.sl-note-more {
+  font: inherit; background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); text-decoration: underline dotted; text-underline-offset: 2px;
+}
+.sl-note-more:hover { text-decoration-style: solid; }
+.sl-note-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
 /* The category tag on an Additional Items row. Additional Items is the table
    that mixes tiers, so the row has to say which — the trade-good table never
@@ -2610,6 +2654,13 @@ table.an-opens col.col-days { width: 16%; }
 
 @media (max-width: 640px) {
   .sl-table { padding: 4px 8px 8px; }
+  /* The header's right-hand side takes a full line to itself on a phone, so
+     the On hand label sits BESIDE its segment rather than above it. Stacked,
+     the control cost 31.5px of header on a 375px screen before a single row
+     was visible; alongside, 7.5px — and the line still measures 305px inside
+     375, so nothing wraps. */
+  .sl-thead-r { width: 100%; justify-content: space-between; gap: 10px; }
+  .sl-thead-r .calc-tool { flex-direction: row; align-items: center; gap: 8px; }
   .sl-foot-row.total b { font-size: 19px; }
   .sl-chain { font-size: 12.5px; }
   .sl-chain button { width: 100%; }
