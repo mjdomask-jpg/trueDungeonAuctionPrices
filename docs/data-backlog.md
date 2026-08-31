@@ -90,3 +90,42 @@ No field expresses both, and picking one loses the other.
 
 **Done looks like:** a decision on whether tier and acquisition are separate
 fields. Related to item 3 — likely resolved together.
+
+---
+
+## 5. `IngredientType` is authored inconsistently for the same token
+
+**Now:** `Charm of Synergy` appears on two recipes in `transmuteRecipes.csv` and
+is authored two different ways:
+
+| Row | Recipe | `IngredientType` |
+|---|---|---|
+| 414 | `2017\|Giln's Redoubt Shield` | `Ultra Rare` |
+| 1910 | `2027\|Smith's Charm of Unified Synergy (Set 2)` | *(blank)* |
+
+`tokenMetadata.csv` row 165 says the token's category is `Ultra Rare`, so the
+metadata is unambiguous and only the recipe cells disagree.
+
+**Why it matters:** `IngredientType` is not decoration — it selects a pricing
+branch. The engine's `isUltraRare` originally read the authored cell alone, so
+the same ingredient on two recipes took two different routes through
+`leafForGood`: one reached the Ultra Rare rules (in-print check, two-season
+pool, D4 clamp) and the other did not.
+
+**It costs nothing today**, which is exactly what makes it worth recording.
+`Charm of Synergy` carries its own hand-authored `offAuctionPrices.csv` row at
+$140.00, so the direct lookup succeeds on both recipes, `TIER_PROXY` is never
+consulted, and the two agree by accident rather than by rule. The day that
+off-auction row is removed — or the day a token authored this way has no price
+of its own — the two recipes would quietly price the same ingredient
+differently.
+
+`isUltraRare` now reads the **resolved** category (`prices.category(...) ||
+l.ingredientType`), symmetric with `isTradeGood`, so the engine is correct
+whichever way a cell is filled in. That is a guard, not a fix: the data still
+says two things about one token.
+
+**Done looks like:** `IngredientType` populated on every line naming a specific
+member of an auctioned tier, or a validator rule asserting that a given `Item`
+carries one `IngredientType` everywhere it appears. The second is cheap and
+would have caught this — `validate-recipes.mjs` already walks every line.
