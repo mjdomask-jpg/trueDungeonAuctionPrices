@@ -445,7 +445,9 @@ mockups with the maintainer. Notes on the shipped design:
   source" is just setting that line to All, so the Recipes view's build/upgrade split
   falls out of the on-hand math rather than being a separate mode.
 - State is ephemeral (Q4): on-hand counts + overrides live in React state keyed by
-  line index, reset when the recipe changes. No `localStorage` yet.
+  line index, reset when the recipe changes. **As built (2026-08-31): the selected
+  RECIPE persists in `localStorage`; those two still do not, because the line-index
+  keying makes them unsafe to restore across a recipe data change.**
 - Per-line price override is an inline avg/min editor on the $/ea cell with a Reset;
   overridden lines carry a "your price" tag. This is the general tool §3.2/§3.4 want.
 - Headline is **"Cost to finish"** (avg + min) with a **"You're providing $Z of
@@ -733,6 +735,12 @@ All four resolved in favor of the recommendation; the phase order in §5 stands.
    Phase 8 (trenttokens snapshot / proxy) is deferred until appetite is reconfirmed.
 4. **Calculator input persistence → ephemeral for v1.** On-hand quantities live in
    React state only; `localStorage` persistence is a fast follow if wanted.
+   **Partly revisited 2026-08-31**: the selected RECIPE now persists
+   (`lib/calcStorage.ts`, `td-calc-v1`); the on-hand quantities and overrides
+   still do not, and now on a reason rather than on scope. They are keyed by
+   line index, so restoring them across a `transmuteRecipes.csv` change would
+   put a saved count against a different ingredient — silently, and in the
+   reader's favour. See `docs/shopping-list.md` § Saving.
 
 ### Resolved 2026-08-13 (Q6, Q7 — see §10 for the full decision record)
 

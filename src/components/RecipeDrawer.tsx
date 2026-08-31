@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { moneyCalc } from '../lib/format';
-import { orderSeason, type BuildCost, type CostEngine } from '../lib/transmutes';
+import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { orderSeason, tierAbbrev, type BuildCost, type CostEngine } from '../lib/transmutes';
 
 // The slide-in recipe picker, lifted out of BuildCalculator so the Shopping List
 // can use the same one rather than a copy that drifts from it within a season.
@@ -46,12 +47,18 @@ export type RecipeDrawerProps = {
    *  calculator passes neither. */
   quantities?: ReadonlyMap<string, number>;
   onQuantityChange?: (key: string, qty: number) => void;
+  /** Multi-select only. Take a recipe out of the plan without leaving the
+   *  drawer. Without it, correcting a mis-tap means closing the drawer,
+   *  finding the chip in a strip that may be twenty long, removing it, and
+   *  reopening the drawer at the top — five steps to undo one. */
+  onRemove?: (key: string) => void;
 };
 
 export function RecipeDrawer({
   engine, open, onClose, selectedKeys, onPick, focusYear, clearFiltersOnPick = false,
-  quantities, onQuantityChange,
+  quantities, onQuantityChange, onRemove,
 }: RecipeDrawerProps) {
+  const narrow = useMediaQuery(NARROW);
   const [search, setSearch] = useState('');
   const [tier, setTier] = useState('All');
   const [showExpired, setShowExpired] = useState(false);
@@ -115,7 +122,14 @@ export function RecipeDrawer({
   // --- Drawer option row -------------------------------------------------
   const optBody = (c: BuildCost, from?: string | null) => (
     <>
-      <span className="tchip" data-tier={c.level}>{c.level}</span>
+      {/* On phones the chip is a tier code, as the Recipes view's rows and the
+          calculator's already are — a spelled-out "Legendary" costs a quarter
+          of a drawer row. The full name stays in the accessibility tree so the
+          tier is never carried by a letter and a colour alone. */}
+      <span className="tchip" data-tier={c.level}>
+        <span aria-hidden="true">{narrow ? tierAbbrev(c.level) : c.level}</span>
+        <span className="sr-only">{c.level}</span>
+      </span>
       <span className="calc-opt-nm">
         {c.displayName}
         {/* Expired recipes are pickable but never a surprise: the tag rides the
@@ -139,19 +153,37 @@ export function RecipeDrawer({
         </button>
       );
     }
+    // Removing, at two widths. A desktop row has space for a fourth control,
+    // so it carries the same ✕ the chips outside the drawer do and one tap
+    // removes from any quantity. A phone row does not — tier chip, name,
+    // price and a three-part stepper already fill 360px — so there the −
+    // becomes a ✕ once the count reaches zero. That is where the reader is
+    // already heading: taking a count to 0 is the thing people do expecting it
+    // to remove, and the row stays in the list to be re-added with one tap.
+    const zeroed = qty <= 0;
+    const removeHere = onRemove && narrow && zeroed;
     return (
-      <div key={c.key} className={`${cls} stepped${qty <= 0 ? ' off' : ''}`}>
+      <div key={c.key} className={`${cls} stepped${zeroed ? ' off' : ''}`}>
         <button type="button" className="calc-opt-hit" onClick={() => pick(c)}
           aria-label={`Add another ${c.displayName}`}>
           {optBody(c, opts.from)}
         </button>
         <span className="sl-step" role="group" aria-label={`Quantity of ${c.displayName}`}>
-          <button type="button" onClick={() => onQuantityChange(c.key, qty - 1)}
-            aria-label={`One fewer ${c.displayName}`} disabled={qty <= 0}>−</button>
+          {removeHere ? (
+            <button type="button" className="sl-step-x" onClick={() => onRemove(c.key)}
+              aria-label={`Remove ${c.displayName}`}>✕</button>
+          ) : (
+            <button type="button" onClick={() => onQuantityChange(c.key, qty - 1)}
+              aria-label={`One fewer ${c.displayName}`} disabled={zeroed}>−</button>
+          )}
           <b>{qty}</b>
           <button type="button" onClick={() => onQuantityChange(c.key, qty + 1)}
             aria-label={`One more ${c.displayName}`}>+</button>
         </span>
+        {onRemove && !narrow && (
+          <button type="button" className="sl-chip-x" onClick={() => onRemove(c.key)}
+            aria-label={`Remove ${c.displayName}`}>✕</button>
+        )}
       </div>
     );
   };

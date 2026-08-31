@@ -64,6 +64,7 @@ try {
     shoppingList: await import(url('shoppingList.ts')),
     shoppingExport: await import(url('shoppingExport.ts')),
     shoppingStorage: await import(url('shoppingStorage.ts')),
+    calcStorage: await import(url('calcStorage.ts')),
   };
 } catch (e) {
   console.error('could not load src/lib:', e.message);
@@ -74,12 +75,14 @@ try {
 const { parseSales, parseMeta } = lib.data;
 const {
   PriceIndex, CostEngine, parseRecipes, parseTokenMetadata, parseOffAuctionPrices,
-  parseDerivedRules, isTradeCategory,
+  parseDerivedRules, isTradeCategory, TIER_PROXY,
 } = lib.transmutes;
 const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote,
   lotHintFor, LOT_SIZE } = lib.shoppingList;
-const { toCSV, toTSV, toRows, guardFormula, exportFilename, EXPORT_COLUMNS } = lib.shoppingExport;
+const { toCSV, toTSV, toRows, toSheet, csvFile, guardFormula, exportFilename, EXPORT_COLUMNS } =
+  lib.shoppingExport;
 const { loadShopping, saveShopping, clearShopping } = lib.shoppingStorage;
+const { loadCalcRecipe, saveCalcRecipe } = lib.calcStorage;
 
 const read = (f) => readFileSync(join(dataDir, f), 'utf8');
 const sales = parseSales(read('prices.csv'));
@@ -302,6 +305,18 @@ const paused = buildShoppingList([pick('2026|Deathward Greaves', 0)], engine);
 check('quantity 0 pauses a pick rather than removing it',
   paused.paused.length === 1 && paused.all.length === 0, JSON.stringify(paused.totals));
 
+// What the plan is FOR, for the takeaway list's heading and the exports'
+// preamble. A paused recipe is not being made, so it is not in here.
+check('the list reports what it is being built for, in the order it was added',
+  many.making.length === all2026.length &&
+  many.making.every((m, i) => m.transmute === all2026[i].cost.transmute &&
+    m.qty === all2026[i].qty && m.year === all2026[i].cost.year && !!m.displayName),
+  JSON.stringify(many.making.slice(0, 3)));
+check('...and a paused recipe is not something you are making',
+  paused.making.length === 0 &&
+  buildShoppingList([pick('2026|Deathward Greaves', 3)], engine).making[0].qty === 3,
+  JSON.stringify(paused.making));
+
 // D3: min is a footnote total, never a column.
 check('D3 — a minimum-prices total is reported alongside the average one',
   many.totals.grandMin > 0 && many.totals.grandMin < many.totals.grandAvg,
@@ -346,8 +361,65 @@ check('...and netting it on removes exactly the ones being crafted',
   netted.totals.grandAvg < chained.totals.grandAvg,
   `need ${chained.all.find((r) => r.id === chained.chains[0].rowId).need} -> ${nettedRow.need}`);
 
+// ...and SAYS so. The on-hand box on screen holds what the player typed, so a
+// netted row reads "on hand 0, needed 3, buy 1" with nothing accounting for
+// the missing two unless the row carries a note of its own.
+const nettedNote = nettedRow.notes.find((n) => n.kind === 'netted');
+check('...and the row says where the on-hand count came from',
+  !!nettedNote && nettedNote.qty === Math.min(chained.chains[0].crafted, chained.chains[0].needed) &&
+  nettedRow.onHand === nettedNote.qty,
+  JSON.stringify({ notes: nettedRow.notes.map(noteLabel), onHand: nettedRow.onHand }));
+check('...a note that names the toggle rather than restating the arithmetic',
+  noteLabel({ kind: 'netted', qty: 2 }) === "2 counted as on hand — you're crafting them" &&
+  noteLabel({ kind: 'netted', qty: 1 }) === "1 counted as on hand — you're crafting it",
+  noteLabel({ kind: 'netted', qty: 2 }));
+check('a row nobody is crafting never carries the note, netting on or off',
+  !chained.all.some((r) => r.notes.some((n) => n.kind === 'netted')) &&
+  netted.all.filter((r) => r.notes.some((n) => n.kind === 'netted')).length === chained.chains.length,
+  netted.all.filter((r) => r.notes.some((n) => n.kind === 'netted')).map((r) => r.good).join(', '));
+
+// Crafting MORE of a source than the list consumes must not invent a surplus.
+// The toggle is derived, not typed, so D2's no-clamping rule does not cover it:
+// counting both of two crafted items against a row that wants one used to
+// report "1 spare" — stock the player does not hold.
+const overCraft = buildShoppingList(
+  chainPicks.map((p, i) => (i === 1 ? { ...p, qty: 2 } : p)), engine, { netCraftedSources: true });
+const overRow = overCraft.all.find((r) => r.id === chained.chains[0].rowId);
+check('netting never counts in more of a source than the row asks for',
+  overCraft.chains[0].crafted === 2 && overCraft.chains[0].netted === overRow.quantity &&
+  overRow.onHand === overRow.quantity && overRow.spare === 0 &&
+  !overRow.notes.some((n) => n.kind === 'spare'),
+  JSON.stringify({ chain: overCraft.chains[0], onHand: overRow.onHand, spare: overRow.spare }));
+check('...and the offer quotes the same number the row applies',
+  overCraft.chains.reduce((t, c) => t + c.netted, 0) ===
+  overCraft.all.reduce((t, r) => t + (r.notes.find((n) => n.kind === 'netted')?.qty ?? 0), 0),
+  JSON.stringify(overCraft.chains.map((c) => c.netted)));
+
+// A count typed by hand comes off what the toggle has left to contribute, or
+// the two would stack and cover the row twice over.
+const typedFirst = buildShoppingList(chainPicks, engine, {
+  netCraftedSources: true, onHand: { [chained.chains[0].rowId]: chained.chains[0].needed },
+});
+const typedRow = typedFirst.all.find((r) => r.id === chained.chains[0].rowId);
+check('a hand-typed count reduces what netting adds, rather than stacking with it',
+  typedFirst.chains[0].netted === 0 && typedRow.onHand === chained.chains[0].needed &&
+  !typedRow.notes.some((n) => n.kind === 'netted'),
+  JSON.stringify({ netted: typedFirst.chains[0].netted, onHand: typedRow.onHand }));
+
+// `Priced as X` is suppressed where the row's Category already says X. Today
+// that is EVERY case it can produce — TIER_PROXY holds one entry, Ultra Rare
+// -> Ultra Rare — but the suppression is keyed on the value rather than on the
+// note being deleted, so a future proxy naming something else still discloses.
+check('TIER_PROXY still maps only Ultra Rare onto itself — the premise of the above',
+  Object.entries(TIER_PROXY).length === 1 && TIER_PROXY['Ultra Rare'] === 'Ultra Rare',
+  JSON.stringify(TIER_PROXY));
+check('"Priced as X" never repeats the row\'s own Category',
+  !many.all.some((r) => r.notes.some((n) => n.kind === 'pricedAs' && n.good === r.category)),
+  many.all.filter((r) => r.notes.some((n) => n.kind === 'pricedAs'))
+    .map((r) => `${r.displayName} [${r.category}]`).join(', ') || '(none survive)');
+
 // The closed note vocabulary, in its fixed order.
-const ORDER = ['adjusted', 'sourceFor', 'for', 'pricedAs', 'spare', 'outOfPrint'];
+const ORDER = ['adjusted', 'sourceFor', 'netted', 'for', 'pricedAs', 'spare', 'outOfPrint'];
 const orderOK = many.all.every((r) => {
   const idx = r.notes.map((n) => ORDER.indexOf(n.kind));
   return idx.every((v) => v >= 0) && idx.every((v, i) => i === 0 || idx[i - 1] <= v);
@@ -563,17 +635,40 @@ const exported = buildShoppingList(all2026, engine, {
   overrides: { [many.trade[1].id]: 9.99 },
 });
 const csv = toCSV(exported), tsv = toTSV(exported), grid = toRows(exported);
+const sheet = toSheet(exported);
+// Where the table starts inside the sheet: the "Making" heading, one row per
+// transmute, and the blank row that separates the preamble from the header.
+const TABLE_AT = exported.making.length + 2;
 
-check('both writers emit the same grid: one header row plus one row per list row',
+check('the TABLE is one header row plus one row per list row',
   grid.length === exported.all.length + 1 &&
-  grid[0].join('|') === [...EXPORT_COLUMNS].join('|') &&
-  csv.trimEnd().split('\r\n').length === grid.length &&
-  tsv.split('\n').length === grid.length,
-  `${grid.length} grid, ${csv.trimEnd().split('\r\n').length} csv, ${tsv.split('\n').length} tsv`);
+  grid[0].join('|') === [...EXPORT_COLUMNS].join('|'),
+  `${grid.length} rows, header ${grid[0].join('|')}`);
 
-check('every row has exactly as many cells as there are columns',
+check('every table row has exactly as many cells as there are columns',
   grid.every((r) => r.length === EXPORT_COLUMNS.length),
   grid.filter((r) => r.length !== EXPORT_COLUMNS.length).length);
+
+// The sheet leads with what the plan is FOR. Above the header, deliberately:
+// a file of forty trade goods says nothing about what any of them is for.
+check('the sheet opens with the plan, then a blank row, then the table',
+  sheet[0][0] === 'Making' &&
+  sheet.slice(1, TABLE_AT - 1).every((r, i) =>
+    r.length === 2 && r[0] === exported.making[i].displayName && r[1] === String(exported.making[i].qty)) &&
+  sheet[TABLE_AT - 1].length === 0 &&
+  sheet[TABLE_AT].join('|') === [...EXPORT_COLUMNS].join('|'),
+  JSON.stringify(sheet.slice(0, 3)));
+
+check('both writers emit that same sheet, line for line',
+  csv.trimEnd().split('\r\n').length === sheet.length &&
+  tsv.split('\n').length === sheet.length,
+  `${sheet.length} sheet, ${csv.trimEnd().split('\r\n').length} csv, ${tsv.split('\n').length} tsv`);
+
+// A list with nothing active has no preamble to write — an orphan "Making"
+// heading over an empty run would be worse than none.
+check('...and a list with every recipe paused writes the table alone',
+  toSheet(buildShoppingList([pick('2026|Deathward Greaves', 0)], engine))[0].join('|') ===
+    [...EXPORT_COLUMNS].join('|'));
 
 // The one name in the corpus with a comma in it. An unquoted writer shifts
 // every column after it on that row, silently.
@@ -582,7 +677,7 @@ check('the ONE name containing a comma is quoted in the CSV, so its row keeps it
   goldRow !== undefined && csv.includes('"1,000 GP Gold Bar"'),
   csv.split('\r\n').find((l) => l.includes('GP Gold Bar')));
 check('...and every CSV data row still parses to the right number of cells',
-  csv.trimEnd().split('\r\n').every((line) => {
+  csv.trimEnd().split('\r\n').slice(TABLE_AT).every((line) => {
     let cells = 1, inQ = false;
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
@@ -617,18 +712,57 @@ check('prices and costs export as plain NUMBERS, not as "$44.08"',
 
 // No cell may contain the delimiter of its own format unescaped.
 check('no TSV cell contains a raw tab or newline',
-  grid.slice(1).every((r) => r.every((c) => !/[\t\r\n]/.test(c))) &&
-  tsv.split('\n').every((line) => line.split('\t').length === EXPORT_COLUMNS.length),
-  tsv.split('\n').find((l) => l.split('\t').length !== EXPORT_COLUMNS.length));
+  sheet.every((r) => r.every((c) => !/[\t\r\n]/.test(c))) &&
+  tsv.split('\n').slice(TABLE_AT).every((line) => line.split('\t').length === EXPORT_COLUMNS.length),
+  tsv.split('\n').slice(TABLE_AT).find((l) => l.split('\t').length !== EXPORT_COLUMNS.length));
 
 // The export must carry the state the reader typed, or it is a export of a
 // different list from the one on screen.
 const onHandCol = EXPORT_COLUMNS.indexOf('On hand');
-check('what the reader typed reaches the file — on hand and an adjusted price both',
+check('what the reader typed reaches the file — the on-hand count and the corrected price',
   grid.slice(1).some((r) => r[onHandCol] === '3') &&
-  grid.slice(1).some((r) => r[priceCol] === '9.99') &&
-  grid.slice(1).some((r) => r[EXPORT_COLUMNS.indexOf('Notes')].includes('Price adjusted')),
+  grid.slice(1).some((r) => r[priceCol] === '9.99'),
   grid.slice(1).filter((r) => r[onHandCol] !== '0').map((r) => r.join(' | ')).slice(0, 2).join('\n'));
+
+// The Flags column is a NARROW replacement for Notes, not a shorter one: two
+// values, both of which change what you should buy rather than explaining why
+// a row is on the list.
+const flagCol = EXPORT_COLUMNS.indexOf('Flags');
+const flagged = grid.slice(1).map((r, i) => ({ row: exported.all[i], flags: r[flagCol] }));
+check('Flags carries exactly the two purchase-changing facts, and nothing else',
+  flagged.every(({ row, flags }) => {
+    const want = [
+      ...(row.outOfPrint && row.nominalYear !== null ? ['Out of print'] : []),
+      ...(row.staleness ? ['Price moving'] : []),
+    ].join(' · ');
+    return flags === want;
+  }),
+  flagged.filter((f) => f.flags).map((f) => `${f.row.displayName}: ${f.flags}`).join(', '));
+check('...and both of them actually occur in this corpus, or the check above proves nothing',
+  flagged.some((f) => f.flags.includes('Out of print')) &&
+  flagged.some((f) => f.flags.includes('Price moving')),
+  flagged.filter((f) => f.flags).length + ' flagged rows');
+// Staleness is only measured on trade goods; out-of-print is only tagged on
+// Ultra Rares, which are never trade goods. So the Flags cell holds at most
+// one value today, and the file holds no `·` at all — pinned because the
+// separator's first real use should be a visible change rather than a
+// surprise, and because it is what leaves the CSV pure ASCII.
+check('the two flags are mutually exclusive by construction, so no cell joins them',
+  exported.all.every((r) => !(r.staleness && r.outOfPrint)) &&
+  flagged.every((f) => !f.flags.includes(' · ')),
+  flagged.filter((f) => f.flags.includes(' · ')).map((f) => f.row.displayName).join(', '));
+check('the per-recipe breakdown does NOT go to the file — it is the wall the column dropped',
+  !csv.includes('For ') && !tsv.includes('Source for '),
+  csv.split('\r\n').find((l) => l.includes('For ')));
+
+// Excel opens a .csv in the system codepage, so the FILE needs a BOM or its
+// UTF-8 arrives as Windows-1252: `x` as `A-`, `.` as `A.`, `--` as `a€"`.
+check('the downloaded file leads with a UTF-8 BOM; toCSV itself does not',
+  csvFile(exported).charCodeAt(0) === 0xfeff && csv.charCodeAt(0) !== 0xfeff &&
+  csvFile(exported).slice(1) === csv,
+  `csvFile starts 0x${csvFile(exported).charCodeAt(0).toString(16)}, toCSV 0x${csv.charCodeAt(0).toString(16)}`);
+check('...and the clipboard does NOT get one — it carries text, not bytes',
+  tsv.charCodeAt(0) !== 0xfeff && !tsv.includes('﻿'), tsv.charCodeAt(0));
 
 check('the filename is dated so two exports in a season do not collide',
   exportFilename('csv', new Date('2026-08-31T12:00:00Z')) === 'td-shopping-list-2026-08-31.csv',
@@ -752,6 +886,75 @@ check('Infinity does not survive JSON and does not survive validation either',
 check('an unknown row id is kept rather than pruned — D2 depends on it',
   withStore(JSON.stringify({ picks: [], onHand: { 'T|Gone': 7 }, overrides: {}, netCrafted: false }),
     () => loadShopping().onHand['T|Gone'] === 7));
+
+// =========================================================================
+console.log('\n=== 13. the Build Calculator remembers its recipe, and only that ===');
+
+// A KEY-AWARE stand-in, unlike the one above: the point of most of this
+// section is which slot each module writes to.
+const keyedStore = () => {
+  const held = new Map();
+  return {
+    getItem: (k) => (held.has(k) ? held.get(k) : null),
+    setItem: (k, v) => held.set(k, v),
+    removeItem: (k) => held.delete(k),
+    get keys() { return [...held.keys()]; },
+  };
+};
+const withKeyed = (fn) => {
+  const g = globalThis;
+  const had = 'window' in g ? g.window : undefined;
+  const s = keyedStore();
+  g.window = { localStorage: s };
+  try { return fn(s); } finally { if (had === undefined) delete g.window; else g.window = had; }
+};
+
+check('a recipe key round-trips',
+  withKeyed(() => { saveCalcRecipe("2026|Val's +4 Keen Fellbane Crossbow");
+    return loadCalcRecipe() === "2026|Val's +4 Keen Fellbane Crossbow"; }));
+
+// Two tools, two questions. One slot would mean clearing the Shopping List
+// also emptied the calculator — and the plan explicitly does not share a
+// number between them.
+check('the two tools write to DIFFERENT slots — neither clears the other',
+  withKeyed((s) => {
+    saveShopping({ picks: [{ key: '2026|X', qty: 1 }], onHand: {}, overrides: {}, netCrafted: false });
+    saveCalcRecipe('2026|Y');
+    const both = s.keys.length === 2;
+    clearShopping();
+    return both && loadCalcRecipe() === '2026|Y' && loadShopping() === null;
+  }), 'both keys present, and clearing one leaves the other');
+
+check('null removes the entry rather than storing an empty string',
+  withKeyed((s) => { saveCalcRecipe('2026|X'); saveCalcRecipe(null);
+    return s.keys.length === 0 && loadCalcRecipe() === null; }));
+
+check('an empty slot, a blank value and an absurd one all load as nothing',
+  withKeyed((s) => {
+    if (loadCalcRecipe() !== null) return false;
+    s.setItem('td-calc-v1', '');
+    if (loadCalcRecipe() !== null) return false;
+    s.setItem('td-calc-v1', 'x'.repeat(5000));
+    return loadCalcRecipe() === null;
+  }));
+
+check('storage that THROWS on access is survived, not crashed on',
+  (() => {
+    const g = globalThis; const had = 'window' in g ? g.window : undefined;
+    g.window = { get localStorage() { throw new Error('blocked'); } };
+    try { const r = loadCalcRecipe(); saveCalcRecipe('2026|X'); return r === null; }
+    catch { return false; }
+    finally { if (had === undefined) delete g.window; else g.window = had; }
+  })());
+
+// The module deliberately does not know what a recipe is; the CALLER resolves
+// the key and drops what it cannot find, so a transmute renamed in the CSV
+// reads as "nothing was selected" rather than as a selection rendering
+// nothing. This asserts the half that lives here: a stale key loads happily.
+check('a key naming no recipe still loads — resolving it is the caller\'s job',
+  withKeyed(() => { saveCalcRecipe('2019|A Token That Was Renamed');
+    return loadCalcRecipe() === '2019|A Token That Was Renamed' &&
+      !costs.some((c) => c.key === '2019|A Token That Was Renamed'); }));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — shoppingList: ${pass} passed, ${fail} failed`);

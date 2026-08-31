@@ -142,6 +142,27 @@ control, mirroring its `aria-label` — see `ThemeToggle`. That is labelling, no
 help. The test is whether a user who cannot see the tooltip loses information.
 For a sun/moon toggle, no. For "what does `est.` mean", yes.
 
+### An oversized glyph inside running text does not get to grow its line
+
+**Rule: a big icon sitting in a small line of text carries `line-height: 0` so
+it overhangs instead of pushing the line taller.**
+
+Same physics as the rule above, one level down. A line box grows to fit the
+tallest inline box on it, so a 16px edit pen dropped into a 10.5px meta line
+takes that line to **28.99px** while every other line of the same paragraph
+measures 17.85px — and because the pen rides on the *last* line, the effect
+reads as one line of a wrapped block being randomly taller. Measured on the
+Shopping List's ingredient rows at 375px.
+
+Zeroing the glyph's `line-height` makes its inline box contribute no height; it
+still draws at full size, overhanging the leading. That took the line to
+20.84px. The 3px left is the button's own vertical padding and it **stays** —
+trimming it would make the line exactly uniform at the cost of a tap target
+smaller than it is today, to close a gap of a sixth of a line.
+
+Do not reach for `display: inline` to dodge the padding instead: measured, it
+is worse, not better (41.44px against 38.69px on a two-line meta).
+
 ### A `?` next to a `<select>` goes OUTSIDE the `<label>`
 
 **Rule: when the control a popover explains is a `<select>`, the help trigger must
@@ -335,6 +356,23 @@ Pick the breakpoint in React via `useMediaQuery`, not in CSS — hiding columns
 with `display: none` fights `table-layout: fixed` and the colspan'd group
 headers, which map by *rendered* column index.
 
+**Column widths are percentages on the `<thead>` cells. A `min-width` on a cell
+does nothing.** The global `table` rule sets `table-layout: fixed` site-wide, so
+a column's width comes from the first row and nothing else — a `min-width`
+further down is not a floor, it is ignored. Left alone, every column takes an
+equal share of the table, which is only right when the columns hold comparable
+things: the Shopping List's takeaway table gave its wrapping item column the
+same 225px as a two-digit `Buy`, so the item wrapped to three lines beside a
+half-empty numeric column. If a table has one column that wraps and three that
+do not, say so in percentages.
+
+**Where a column will not fit a phone, fold its value into a neighbouring
+cell's subline rather than dropping it or restoring a scroll.** The takeaway
+table's `Season` moves under the item name below 640px (`Premium · 2026`), the
+way the ingredient rows move `$/ea` into their meta line. Render it always and
+hide it in CSS: it is a presentation swap, not a data one, so nothing in the
+component has to know which one is showing.
+
 **Table headers do not stick by default, and adding `position: sticky` to a `th`
 will not change that.** `.tablewrap` sets `overflow-x: auto`, and CSS forces
 `overflow-y` to compute to `auto` alongside it, which makes the wrap the nearest
@@ -394,6 +432,17 @@ Two rules for maintaining it:
 - **The full tier name stays in the accessibility tree.** The chip renders the
   code in an `aria-hidden` span beside an `.sr-only` span carrying the real name,
   so the tier is never conveyed by a letter and a colour alone.
+
+**Every surface that shows a tier chip abbreviates it**, not just the Recipes
+rows: `TransmuteRow`, the calculator's current-recipe chip and `RecipeDrawer`'s
+option rows all do. The drawer was the odd one out until 2026-08-31, which is
+the failure mode to watch for — a chip added to a new surface will spell the
+tier out unless it is asked not to.
+
+**Filter chips are the exception and stay spelled out.** `RecipeDrawer`'s tier
+filter row is eleven buttons whose text is the only thing naming them; `El` and
+`Ex` as a *choice* are cryptic with no legend beside them. The rule applies to a
+chip labelling a row you can already read, not to a control you pick from.
 
 ## Colour and contrast
 

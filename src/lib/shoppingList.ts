@@ -29,6 +29,7 @@ export type ShoppingSection = 'trade' | 'additional';
 export type ShoppingNote =
   | { kind: 'adjusted' }
   | { kind: 'sourceFor'; transmute: string; qty: number }
+  | { kind: 'netted'; qty: number }
   | { kind: 'for'; transmute: string; qty: number }
   | { kind: 'pricedAs'; good: string }
   | { kind: 'spare'; qty: number }
@@ -77,6 +78,15 @@ export type ChainLink = {
   good: string;
   needed: number; // how many the source lines ask for
   crafted: number; // how many the player is already making
+  /** What turning the toggle on actually contributes to this row: the crafted
+   *  ones, capped at what the row still lacks. Reported whether the toggle is
+   *  on or off, so the offer and the applied state quote the same number.
+   *
+   *  The cap matters. Crafting two of something the list wants one of used to
+   *  add BOTH to the row's on-hand, which then reported "1 spare" — a surplus
+   *  the player does not own and cannot sell, invented by the toggle. Unlike
+   *  D2's rule, nothing here is a number anyone typed. */
+  netted: number;
 };
 
 export type ShoppingTotals = {
@@ -89,11 +99,21 @@ export type ShoppingTotals = {
   unpricedRows: number;
 };
 
+/** One transmute the plan is working towards, for the takeaway list's heading
+ *  and for the exports' preamble. The YEAR is carried because two vintages of
+ *  one transmute are two different recipes with two different bills, and a
+ *  summary that collapsed them would be summarising the wrong thing. */
+export type ShoppingMaking = { transmute: string; displayName: string; year: number; qty: number };
+
 export type ShoppingList = {
   trade: ShoppingRow[];
   additional: ShoppingRow[];
   /** Both tables in the final list's own order (D6). */
   all: ShoppingRow[];
+  /** What the plan is FOR, in the order the reader added it — the same order
+   *  the chips read in, because that is the order they built it in. Active
+   *  picks only; a paused one is not being made. */
+  making: ShoppingMaking[];
   chains: ChainLink[];
   totals: ShoppingTotals;
   /** Picks at quantity 0. They stay in the list as an explicit paused state
@@ -290,15 +310,28 @@ export function buildShoppingList(
   for (const d of drafts.values()) {
     if (!d.row.isSource) continue;
     const crafted = crafting.get(d.row.good) ?? 0;
-    if (crafted > 0) chains.push({ rowId: d.row.id, good: d.row.good, needed: d.row.quantity, crafted });
+    if (crafted === 0) continue;
+    const typed = Math.max(0, onHand[d.row.id] ?? 0);
+    chains.push({
+      rowId: d.row.id,
+      good: d.row.good,
+      needed: d.row.quantity,
+      crafted,
+      netted: Math.min(crafted, Math.max(0, d.row.quantity - typed)),
+    });
   }
-  const netted = new Map(chains.map((c) => [c.rowId, c.crafted]));
+  const netted = new Map(chains.map((c) => [c.rowId, c.netted]));
 
   const rows: ShoppingRow[] = [];
   for (const d of drafts.values()) {
     const r = d.row;
     const typed = Math.max(0, onHand[r.id] ?? 0);
-    r.onHand = typed + (netCraftedSources ? (netted.get(r.id) ?? 0) : 0);
+    // What D5's toggle is adding to this row, if anything. Carried into the
+    // notes rather than left implicit: the on-hand BOX shows what the player
+    // typed, so without a note a netted row reads "on hand 0, needed 3, buy 1"
+    // and the missing two are unaccounted for on screen.
+    const nettedQty = netCraftedSources ? (netted.get(r.id) ?? 0) : 0;
+    r.onHand = typed + nettedQty;
 
     const override = overrides[r.id];
     if (override !== undefined && isFinite(override)) {
@@ -319,7 +352,7 @@ export function buildShoppingList(
     r.extMin = r.unitMin === null ? null : r.unitMin * r.need;
     if (r.section === 'trade') r.staleness = stalenessOf(r.good, engine);
 
-    r.notes = orderedNotes(r, d);
+    r.notes = orderedNotes(r, d, nettedQty);
     rows.push(r);
   }
 
@@ -340,6 +373,12 @@ export function buildShoppingList(
     trade,
     additional,
     all,
+    making: active.map((p) => ({
+      transmute: p.cost.transmute,
+      displayName: p.cost.displayName,
+      year: p.cost.year,
+      qty: p.qty,
+    })),
     chains,
     paused,
     totals: {
@@ -364,13 +403,23 @@ function isOutOfPrint(l: PricedLine, engine: CostEngine): boolean {
 }
 
 /** The closed vocabulary, always in this order. */
-function orderedNotes(r: ShoppingRow, d: Draft): ShoppingNote[] {
+function orderedNotes(r: ShoppingRow, d: Draft, nettedQty: number): ShoppingNote[] {
   const out: ShoppingNote[] = [];
   if (r.overridden) out.push({ kind: 'adjusted' });
   for (const [transmute, qty] of [...d.sourceFor].sort()) out.push({ kind: 'sourceFor', transmute, qty });
+  // Directly after the source notes, because it explains them: this row is a
+  // source for something in the list, and the toggle has decided you are
+  // making those rather than buying them.
+  if (nettedQty > 0) out.push({ kind: 'netted', qty: nettedQty });
   for (const [transmute, qty] of [...d.wanted].sort()) out.push({ kind: 'for', transmute, qty });
+  // `Priced as X` is dropped where the row's own category already says X.
+  // TIER_PROXY holds exactly one entry today — Ultra Rare -> Ultra Rare — so
+  // every note this vocabulary can currently produce sits beside a Category
+  // cell reading the same words. The test is on the VALUE rather than a
+  // deletion of the note, so a future proxy that named something else would
+  // still be disclosed.
   const pricedAs = r.notes.find((n) => n.kind === 'pricedAs');
-  if (pricedAs) out.push(pricedAs);
+  if (pricedAs && pricedAs.good !== r.category) out.push(pricedAs);
   if (r.spare > 0) out.push({ kind: 'spare', qty: r.spare });
   if (r.outOfPrint && r.nominalYear !== null) {
     out.push({ kind: 'outOfPrint', years: [r.nominalYear, r.nominalYear + 1] });
@@ -423,6 +472,7 @@ export function noteLabel(n: ShoppingNote): string {
   switch (n.kind) {
     case 'adjusted': return 'Price adjusted';
     case 'sourceFor': return `Source for ${n.transmute} ×${n.qty}`;
+    case 'netted': return `${n.qty} counted as on hand — you're crafting ${n.qty === 1 ? 'it' : 'them'}`;
     case 'for': return `For ${n.transmute} ×${n.qty}`;
     case 'pricedAs': return `Priced as ${n.good}`;
     case 'spare': return `${n.qty} spare`;

@@ -8,7 +8,9 @@ spreadsheets before it existed, which is the shape the output is aimed at.
 
 Built over five steps; `shopping-list-handoff.md` holds the working notes,
 including every measurement and the reasoning behind each decision. This file
-is the settled version.
+is the settled version, refined 2026-08-31 — the All/None controls, the capped
+notes, the takeaway table's columns and the exports' shape all date from that
+pass and are described in place below.
 
 ---
 
@@ -62,6 +64,28 @@ it upgrades into asks you to buy the Relic twice, and the drawer lists such
 pairs adjacently so people hit it. The list detects them and offers a one-tap
 *"count the ones you're crafting as on hand"*, with `Undo`.
 
+What it contributes is **capped at what the row still lacks**, and the row says
+so — a `+N crafting` badge beside the on-hand box and a note in the meta line.
+Both are necessary: the box holds what you *typed*, so without them a netted
+row reads *"on hand 0, needed 3, buy 1"* with the missing two explained
+nowhere. The cap is why crafting two of something the list wants one of no
+longer reports *"1 spare"*, which was surplus nobody owned. `ChainLink.netted`
+is the single number the offer, the badge and the note all quote. D2's
+no-clamping rule is untouched: nothing here is a number anyone typed.
+
+**All | None, at two scales.** A master control in each table header and the
+calculator's pill on every row — the same control, and the master is simply the
+pill applied to every line. *All* fills to `max(typed, quantity − netted)`: it
+never cuts a stash bigger than the plan needs, and never types in a count you
+do not own. Both are two-state, so neither side lights while you are part-way
+through entering what you hold. Below 360px the per-row pill hides and the
+master is the fallback.
+
+**The per-recipe notes cap at two**, with a `+N more` expander per row. Six
+recipes already made that line wrap twice on a phone. Only the `For X ×N` and
+`Source for X ×N` notes count against the cap — the rest are status, one of
+each at most, and hiding those would trade a wall for a puzzle.
+
 **Sources do not recurse.** A source is one Additional Item, category
 `Transmute`, priced at its build cost. Its own bill of materials is the Build
 Calculator's business.
@@ -91,10 +115,30 @@ by a third.
 
 ## Getting it out
 
-**Copy as TSV** and **Download CSV**. Both carry more than the on-screen table:
-`Item, Category, Season, Needed, On hand, To buy, $ each, Cost, Notes`. Prices
+**Copy as TSV** and **Download CSV**. Both open with **what the plan is for** —
+the transmutes and their quantities, then a blank row — and then the table:
+`Item, Category, Season, Needed, On hand, To buy, $ each, Cost, Flags`. Prices
 export as plain **numbers**, because a shopping list you cannot sum is not worth
-exporting.
+exporting. `toRows` is the table alone; `toSheet` is the whole thing.
+
+The preamble sits **above** the header on purpose. It is where a person opening
+the file looks, and forty trade goods say nothing about what any of them is
+for. The cost is real and accepted: a spreadsheet's header auto-detection sees
+row 1, so filters need setting up by hand.
+
+**Flags replaced Notes**, and is a narrow replacement rather than a shortened
+one. The per-recipe breakdown is a wall in a spreadsheet as much as on screen,
+and the working tables are where it belongs. Two values survive, because they
+change what you should *buy* rather than explaining why a row exists: `Out of
+print` — in a bare grid a 2012 Ultra Rare looks exactly like one still on sale
+— and `Price moving`. The staleness *numbers* stay on the page; the price they
+are about is in the cell beside the flag.
+
+Those two cannot currently co-occur: staleness is measured only on trade goods,
+out-of-print tagged only on Ultra Rares, which are never trade goods. So the
+separator in that cell has never been used and the file is pure ASCII apart
+from its BOM. Both facts are pinned by tests, so the separator's first real use
+is a visible change rather than a surprise.
 
 Three measured facts about the data shape the writers:
 
@@ -112,11 +156,24 @@ The formula guard is an **apostrophe prefix on the Copy path only**, where
 Excel and Google Sheets consume it on paste. The CSV ships clean quoted values,
 because a file is read by many things that would show the apostrophe literally.
 
-> ⚠ **Untested against real Excel.** The bytes are provably what was specified,
-> but nobody has opened the `.csv` in Excel. Google Sheets and LibreOffice show
-> `+3 Mithral Bracers` as text. If Excel shows `#NAME?`, apply `guardFormula`
-> inside `csvCell` too — one line, and the tests isolate the behaviour so it
-> cannot leak into the TSV path.
+The guard covers the **preamble** too, for free: `guardFormula` runs per cell,
+so `+3 Fellbane Crossbow` is protected there as well as in the table.
+
+**Confirmed in Excel**: a name starting `+` reads as text on both paths. That
+was the open question, and it is closed.
+
+### The file's ENCODING is a separate problem from its text
+
+Excel showed `For +3 Fellbane Crossbow Ã—3 Â· … â€"` — its UTF-8 bytes read as
+Windows-1252. The `type: 'text/csv;charset=utf-8'` on the Blob is **not stored
+in the file**; it tells the browser what it is being handed, and nothing
+downstream ever sees it. Excel opens a `.csv` in the system ANSI codepage.
+
+`csvFile` prepends a **BOM** and is the only thing that should ever be written
+to disk. Google Sheets and LibreOffice consume it silently. Only the file gets
+it — the clipboard carries text rather than bytes, which is why Copy as TSV
+never had the problem and why a BOM pasted into a cell would be a stray
+character rather than an encoding hint.
 
 **XLSX is deferred**: it needs either a ~400KB dependency or a hand-rolled zip
 writer.
@@ -140,6 +197,41 @@ are hand-editable and survive deploys. Every field is re-validated on the way
 in, and anything that fails is dropped rather than repaired. An emptied plan
 removes the entry instead of storing an empty one.
 
+A pick whose key no longer names a recipe — a transmute renamed in the CSV —
+is **kept in storage but dropped from the display**, counts included. It
+renders no chip and prices nothing, so counting it made the headline read
+"9 recipes" over seven chips and offered `+2 more` that revealed nothing.
+Keeping it means a pick stranded by a temporary data change comes back rather
+than being quietly destroyed.
+
+### The Build Calculator saves too, and saves less
+
+`lib/calcStorage.ts`, `td-calc-v1`, **the selected recipe and nothing else**.
+Its own slot, because two tools answering two questions must not clear each
+other — pinned by a test, since the older stand-in Storage ignores the key and
+could not have caught a collision.
+
+The on-hand counts and overrides deliberately do not persist, and that is a
+hazard rather than a preference: the calculator keys both by **line index**, so
+a line inserted or reordered in `transmuteRecipes.csv` between deploys would
+restore a count against the wrong ingredient — silently, and in the reader's
+favour, making their cost to finish too low. Doing it safely means storing the
+line names alongside and dropping the lot when they stop matching: a real
+mechanism guarding a convenience that is one `All` tap away. The recipe is the
+part that is actually tedious to get back, behind a drawer, eleven tier filters
+and a year accordion.
+
+Saving only the key also means **no first-run guard**: the effect that clears
+state when the recipe changes fires on mount too, and what it clears is exactly
+what should start empty. Resolving the key is the *caller's* job — a stale one
+reads as "nothing was selected", and the save effect then writes the resolved
+null, so the entry removes itself.
+
+The two tools do **not** share an on-hand number. The Shopping List records a
+stash and allows overcounts; the calculator is a what-if sandbox that clamps to
+what one recipe needs. One number serving both would have to give up one of
+those.
+
 ---
 
 ## Where the code is
@@ -147,16 +239,34 @@ removes the entry instead of storing an empty one.
 | | |
 |---|---|
 | `lib/shoppingList.ts` | merging, totals, chains, notes, staleness, the lot hint |
-| `lib/shoppingExport.ts` | TSV and CSV writers, the formula guard |
+| `lib/shoppingExport.ts` | TSV and CSV writers, the formula guard, the BOM |
 | `lib/shoppingStorage.ts` | load/save/clear, and the validation |
+| `lib/calcStorage.ts` | the Build Calculator's one saved value |
 | `components/ShoppingList.tsx` | selection, chips, state, autosave |
 | `components/ShoppingTable.tsx` | one ingredient table, rendered twice |
 | `components/ShoppingFinal.tsx` | the takeaway list and the two buttons |
 | `components/RecipeDrawer.tsx` | shared with the Build Calculator |
-| `scripts/shopping-list.test.mjs` | 90 assertions, the ninth `npm test` suite |
+| `scripts/shopping-list.test.mjs` | 115 assertions, the ninth `npm test` suite |
 
 The row markup reuses the Build Calculator's classes (`calc-line`, `cl-main`
 and friends) rather than copying them, so the two cannot disagree about the
 phone reflow. `RecipeDrawer`'s `quantities`/`onQuantityChange` props are
 optional; passing neither leaves it the single-select picker the calculator
-uses.
+uses; `onRemove` is optional in the same way.
+
+**Table widths are percentages on `<thead>` cells, not min-widths.** The global
+`table` rule in `App.css` sets `table-layout: fixed` site-wide, so a min-width
+on a cell does nothing at all — the takeaway table gave all five columns an
+equal share until this was noticed, which is why the staleness sentence wrapped
+while `Buy` held 225px for a two-digit number.
+
+---
+
+## Deferred
+
+| | |
+|---|---|
+| **A Combined / Pivot view** | The per-recipe breakdown as columns, one per transmute, instead of notes. **Desktop only** — twenty recipes is twenty columns and there is no phone form of it. The `+N more` expander is the interim answer |
+| **Notes as a pivot view** | The same idea for the takeaway table, which now shows no notes at all. Revisit together with the above |
+| **Drawer row names ellipsize** | A picked row in the drawer truncates long names (`Val's +4 Ke…`) because the stepper takes ~180px. Abbreviating the tier chip on phones bought some of it back, not all; fixing the rest means reworking the row's flex layout |
+| **XLSX export** | ~400KB dependency, or a hand-rolled zip writer |

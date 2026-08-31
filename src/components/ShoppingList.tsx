@@ -122,19 +122,36 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
     return buildShoppingList(items, engine, { path, onHand, overrides, netCraftedSources: netCrafted });
   }, [picks, byKey, engine, path, onHand, overrides, netCrafted]);
 
-  const making = picks.filter((p) => p.qty > 0);
-  const paused = picks.filter((p) => p.qty <= 0);
+  // A pick whose key no longer resolves to a recipe. The stored plan survives
+  // deploys and is hand-editable, so a transmute renamed in the CSV leaves one
+  // behind — and an unresolvable pick renders no chip, prices nothing and
+  // contributes nothing to the list. It must not be COUNTED either, or the
+  // headline reads "9 recipes" over seven chips and "+2 more" reveals nothing.
+  // Dropped from the display only: storage keeps it, so a pick stranded by a
+  // temporary data change comes back rather than being quietly destroyed.
+  const known = picks.filter((p) => byKey.has(p.key));
+  const making = known.filter((p) => p.qty > 0);
+  const paused = known.filter((p) => p.qty <= 0);
   const tokens = making.reduce((t, p) => t + p.qty, 0);
 
   // Newest season the reader is likely to be shopping for, matching the
   // calculator's default rather than the 2027 preview at the top of the list.
   const focusYear = engine.prices.latestPriced;
 
-  const visible = chipsExpanded ? picks : picks.slice(0, CHIP_LIMIT);
-  const hidden = picks.length - visible.length;
+  const visible = chipsExpanded ? known : known.slice(0, CHIP_LIMIT);
+  const hidden = known.length - visible.length;
 
   const setHave = (id: string, n: number) =>
     setOnHand((p) => ({ ...p, [id]: Math.max(0, n) }));
+  // One update for a whole table's All/None. Merged into the existing record
+  // rather than replacing it: the two tables share this state, so writing a
+  // fresh object from one table's rows would wipe the other's counts.
+  const setHaveMany = (entries: [string, number][]) =>
+    setOnHand((p) => {
+      const next = { ...p };
+      for (const [id, n] of entries) next[id] = Math.max(0, n);
+      return next;
+    });
   const setOv = (id: string, n: number | null) =>
     setOverrides((p) => (n === null ? p : { ...p, [id]: n }));
   const clearOv = (id: string) =>
@@ -144,13 +161,19 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
     editing: { rowId: editing, set: setEditing },
     onHand: (id: string) => Math.max(0, onHand[id] ?? 0),
     setOnHand: setHave,
+    setOnHandMany: setHaveMany,
     setOverride: setOv,
     clearOverride: clearOv,
   };
 
   // D5's pairs, in the reader's words. `chains` only ever holds rows the list
   // itself contains both halves of, so this is never speculative.
-  const chainUnits = shopping.chains.reduce((t, c) => t + Math.min(c.needed, c.crafted), 0);
+  // `netted` is what the toggle actually contributes — capped at what each row
+  // still lacks — so the offer, the applied banner and the per-row badges all
+  // quote one number. It can be 0 when the reader has already typed in enough
+  // of the source by hand, and the copy drops the count rather than offering
+  // to count nothing.
+  const chainUnits = shopping.chains.reduce((t, c) => t + c.netted, 0);
 
   const chip = (p: Pick) => {
     const cost = byKey.get(p.key);
@@ -174,7 +197,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
 
   return (
     <div className="shopping">
-      {picks.length === 0 ? (
+      {known.length === 0 ? (
         <div className="calc-empty">
           <p>Pick the transmutes you plan to make and we'll work out what to buy.</p>
           <button type="button" className="calc-browse big" onClick={() => setDrawerOpen(true)}>
@@ -206,7 +229,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                 +{hidden} more
               </button>
             )}
-            {chipsExpanded && picks.length > CHIP_LIMIT && (
+            {chipsExpanded && known.length > CHIP_LIMIT && (
               <button type="button" className="sl-more" onClick={() => setChipsExpanded(false)}>
                 Show fewer
               </button>
@@ -226,8 +249,14 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
             <div className={`sl-chain${netCrafted ? ' on' : ''}`}>
               <span>
                 {netCrafted ? (
-                  <>Counting <b>{chainUnits}</b> item{chainUnits === 1 ? '' : 's'} you are already
-                    crafting as on hand — {shopping.chains.map((c) => c.good).join(', ')}.</>
+                  chainUnits === 0 ? (
+                    <>Counting the ones you are already crafting as on hand — but you have
+                      already entered enough {shopping.chains.map((c) => c.good).join(', ')} by
+                      hand, so this is adding nothing.</>
+                  ) : (
+                    <>Counting <b>{chainUnits}</b> item{chainUnits === 1 ? '' : 's'} you are already
+                      crafting as on hand — {shopping.chains.map((c) => c.good).join(', ')}.</>
+                  )
                 ) : (
                   <>This list buys <b>{shopping.chains.map((c) => c.good).join(', ')}</b> and also
                     crafts {shopping.chains.length === 1 ? 'it' : 'them'}. Count the ones you are
@@ -235,7 +264,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                 )}
               </span>
               <button type="button" onClick={() => setNetCrafted((v) => !v)}>
-                {netCrafted ? 'Undo' : `Count ${chainUnits} as on hand`}
+                {netCrafted ? 'Undo' : chainUnits === 0 ? 'Count these as on hand' : `Count ${chainUnits} as on hand`}
               </button>
             </div>
           )}
@@ -286,6 +315,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
         focusYear={focusYear}
         quantities={quantities}
         onQuantityChange={setQty}
+        onRemove={remove}
       />
     </div>
   );
