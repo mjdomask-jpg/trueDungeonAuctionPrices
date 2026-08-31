@@ -17,9 +17,9 @@ Design doc with wireframes and the full reasoning:
 | **0a** | Delete the `tierLine` branch #137 emptied | **done, verified, merged** ([#139](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/139), squashed as `32d25fc`) |
 | **1** | Pricing branches in the engine + `lib/shoppingList.ts` + the basis selector | **done, verified, merged** ([#140](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/140), squashed as `01b754e`) |
 | **1a** | Backlog entry: `IngredientType` authored two ways | **done, merged** ([#141](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/141), `72f026b`) |
-| **2** | Route, view toggle, chip strip, drawer wired to multi-select | **built, verified, PR open** |
-| 3 | The two ingredient tables | **next** |
-| 4 | Final table, Copy, Download CSV | not started |
+| **2** | Route, view toggle, chip strip, drawer wired to multi-select | **done, verified, merged** ([#142](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/142), squashed as `a990f58`) |
+| **3** | The two ingredient tables | **built, verified, PR open** |
+| 4 | Final table, Copy, Download CSV | **next** |
 | 5 | `localStorage` autosave, 10x hint, docs | not started |
 
 **Two standing rules the maintainer set for this build:**
@@ -710,26 +710,71 @@ netting offer, notes, Copy/CSV — is step 3 and 4 and is untouched. The
 placeholder line under the chips states the row counts so the numbers are
 visible without the tables existing.
 
-## Next: step 3
+## Step 3 — what was built
 
-The two ingredient tables. Everything they need is already computed and
-unrendered: `shopping.trade`, `shopping.additional`, per-row `need`/`spare`/
-`extAvg`, the closed `notes` vocabulary in its fixed order, `staleness` on
-trade-good rows, and `shopping.chains` for D5's netting offer.
+**`src/components/ShoppingTable.tsx`** (new), rendered twice. The row SHAPE is
+the Build Calculator's, **class for class** — `calc-line`, `cl-main`, `cl-hand`,
+`cl-buy`, `cl-unit`, `cl-fin`. That is the decision ("mobile mirrors the
+calculator's proven reflow exactly"), not laziness, and it paid immediately: the
+phone reflow that hides the `$/ea` column and moves the price into the meta line
+came for free and was verified working without a line of new mobile CSS.
 
-Three things step 3 should know:
+Two things differ, both deliberate:
 
-- **`onHand` and `overrides` are keyed by ROW ID**, not by recipe. The ids are
-  stable across re-renders and independent of pick order, which is what lets a
-  typed number survive a recipe being removed (D2).
-- **D5's netting is computed but not offered.** `shopping.chains` lists every
-  pair; `buildShoppingList` applies it only under `netCraftedSources`. The UI
-  for that is step 3's, and the decision is that it stays explicit and
-  reversible, never automatic.
-- **The staleness flag has a hit-list of two today** — Elven Bismuth and Oil of
-  Enchantment, both understated by their season average. The row states a fact,
-  never a forecast: *"season avg $31.67 · recent sales $63.25 — this one is
-  moving."*
+- **No min column (D3).** Min is a footnote total under the whole list, and the
+  price editor edits ONE number. The calculator edits avg and min; two editable
+  prices per row across fourteen goods is a lot of input for a figure that only
+  ever appears in a footnote.
+- **On hand does not clamp (D2).** The `+` is *not* disabled at the required
+  quantity, and the input keeps what you typed. Verified: 25 on hand against 20
+  needed keeps 25, shows `5 spare`, and reads `covered`.
+
+`noteLabel` and `stalenessNote` live in **`lib/shoppingList.ts`, not in the
+component**, because step 4's Copy and CSV carry the same strings — a
+spreadsheet whose Notes column disagreed with the page would be worse than one
+with no notes. The staleness flag was briefly assembled in the component as
+well; that is exactly the drift the rule exists to stop, so it now renders
+`stalenessNote` directly.
+
+### Verified in the browser
+
+| | |
+|---|---|
+| two tables | Trade goods 13 · subtotal, Additional items · subtotal, category tag on the second only |
+| merging | one `20 × 1,000 GP Gold Bar` row reading `For Craven's Vampire Ring ×15 · For Ring of the Vampire Lord ×5` |
+| **D5 netting** | Relic + the Legendary it feeds → `$2,016` → **`$1,388`**, removing exactly the duplicated $628 Relic. `Undo` restores it |
+| **D2 no clamp** | 25 on hand vs 20 needed → input keeps 25, `5 spare`, buy `✓`, cost `covered` |
+| override | `$2.57 → $5.00` puts `Price adjusted` first in the notes and moves the total by exactly 15 × $2.43; `Reset to $2.57` restores |
+| staleness | fires on Elven Bismuth and Oil of Enchantment only |
+| notes order | `Price adjusted · For X ×N · 5 spare` — the fixed vocabulary order, live |
+| 375px | no overflow; `$/ea` column hides and the mobile price button appears, inherited from the calculator |
+
+Test suite is at **65 assertions** — section 9 pins the shared wording, because
+step 4 is about to depend on it in a second place.
+
+### One console-error false alarm, recorded so the next session does not chase it
+
+The pane reported `Failed to reload /src/components/ShoppingList.tsx` and a 404
+that **survived a reload**. It was retained HMR history from the moment
+`ShoppingList` imported `ShoppingTable` before that file existed. A fresh tab
+was clean. `read_console_messages` keeps its buffer across `location.reload()` —
+open a new tab to tell a live error from a stale one.
+
+## Next: step 4
+
+The final combined table, Copy as TSV, and Download CSV. What is ready:
+
+- **`shopping.all`** is already in D6's order — every trade good first,
+  alphabetical, Trade rungs intermixed, then everything else by category. It is
+  built and currently unrendered; the two tables render `trade` and `additional`
+  separately.
+- **`noteLabel` and `stalenessNote`** are the shared wording, tested.
+- **The Excel formula guard** is still to do: 33 item names start with `+`, zero
+  with `-`, `=` or `@`. Apostrophe prefix on the **Copy** path only, where paste
+  consumes it correctly; CSV ships clean quoted values. Revisit with a real file
+  if Excel misbehaves.
+- **XLSX stays deferred** — it needs either a ~400KB dependency or a hand-rolled
+  zip writer.
 
 ### D10, as it now stands
 

@@ -377,6 +377,36 @@ function orderedNotes(r: ShoppingRow, d: Draft): ShoppingNote[] {
   return out;
 }
 
+// --- Wording -------------------------------------------------------------
+
+/**
+ * One note as the reader sees it.
+ *
+ * Here rather than in a component because the SAME strings go into the Copy
+ * and Download CSV paths, and a spreadsheet whose Notes column disagreed with
+ * the page would be worse than one with no notes at all. The vocabulary being
+ * closed is the point (a free-text column cannot be filtered), so its rendering
+ * is closed too.
+ */
+export function noteLabel(n: ShoppingNote): string {
+  switch (n.kind) {
+    case 'adjusted': return 'Price adjusted';
+    case 'sourceFor': return `Source for ${n.transmute} ×${n.qty}`;
+    case 'for': return `For ${n.transmute} ×${n.qty}`;
+    case 'pricedAs': return `Priced as ${n.good}`;
+    case 'spare': return `${n.qty} spare`;
+    case 'outOfPrint': return 'Out of print';
+  }
+}
+
+/** The staleness row's sentence. States a FACT and stops: the measured season
+ *  average, the measured recent one, and that the good is moving. It must not
+ *  say which way it will go next — trade-good prices do not follow a reliable
+ *  seasonal shape, and a page that guessed would be read as a forecast. */
+export function stalenessNote(s: Staleness, money: (n: number) => string): string {
+  return `season avg ${money(s.seasonAvg)} · recent sales ${money(s.recentAvg)} — this one is moving`;
+}
+
 const byItem = (a: ShoppingRow, b: ShoppingRow) => a.displayName.localeCompare(b.displayName);
 
 const byCategoryThenItem = (a: ShoppingRow, b: ShoppingRow) =>

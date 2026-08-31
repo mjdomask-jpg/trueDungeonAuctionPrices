@@ -74,7 +74,7 @@ const {
   PriceIndex, CostEngine, parseRecipes, parseTokenMetadata, parseOffAuctionPrices,
   parseDerivedRules, isTradeCategory,
 } = lib.transmutes;
-const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD } = lib.shoppingList;
+const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote } = lib.shoppingList;
 
 const read = (f) => readFileSync(join(dataDir, f), 'utf8');
 const sales = parseSales(read('prices.csv'));
@@ -509,6 +509,46 @@ check('...and the difference is the right way round: the pin under-quotes what y
 // Neither basis may cost a line its price.
 check('no line loses its price under either basis',
   eraLines.every(({ l }) => l.unitAvg !== null) && allLines.every(({ l }) => l.unitAvg !== null));
+
+// =========================================================================
+console.log('\n=== 9. the wording the tables and the CSV share ===');
+
+const m = (n) => `$${n.toFixed(2)}`;
+check('every note in the closed vocabulary renders, and none renders as undefined',
+  [
+    [{ kind: 'adjusted' }, 'Price adjusted'],
+    [{ kind: 'sourceFor', transmute: 'Charm of Fate', qty: 2 }, 'Source for Charm of Fate ×2'],
+    [{ kind: 'for', transmute: 'Omni Cube', qty: 3 }, 'For Omni Cube ×3'],
+    [{ kind: 'pricedAs', good: 'Ultra Rare' }, 'Priced as Ultra Rare'],
+    [{ kind: 'spare', qty: 5 }, '5 spare'],
+    [{ kind: 'outOfPrint', years: [2022, 2023] }, 'Out of print'],
+  ].every(([n, want]) => noteLabel(n) === want),
+  [{ kind: 'adjusted' }, { kind: 'spare', qty: 5 }].map(noteLabel).join(' | '));
+
+// The flag states a fact and stops. It must not acquire a direction: trade-good
+// prices do not follow a reliable seasonal shape, so anything forward-looking
+// here would be read as a forecast the data cannot support.
+const bismuth = stalenessOf('Elven Bismuth', engine);
+check('the staleness sentence names both measured numbers and predicts nothing',
+  /^season avg \$[\d.,]+ · recent sales \$[\d.,]+ — this one is moving$/.test(stalenessNote(bismuth, m)),
+  stalenessNote(bismuth, m));
+
+// Every note a real list produces must come from the vocabulary — the tables
+// join these with " · " and the CSV puts them in one cell, so an unrendered
+// kind would show as "undefined" in both.
+const everyNote = many.all.flatMap((r) => r.notes);
+check(`all ${everyNote.length} notes on a ${all2026.length}-recipe list render to real text`,
+  everyNote.length > 0 && everyNote.every((n) => typeof noteLabel(n) === 'string' && noteLabel(n).length > 0),
+  everyNote.filter((n) => !noteLabel(n)).map((n) => n.kind).join(', '));
+
+// D5's arithmetic, which the offer's button label quotes.
+check('a netted chain removes exactly what is being crafted, and no more',
+  chained.chains.every((c) => {
+    const before = chained.all.find((r) => r.id === c.rowId);
+    const after = netted.all.find((r) => r.id === c.rowId);
+    return before.need - after.need === Math.min(c.crafted, before.need);
+  }),
+  JSON.stringify(chained.chains));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — shoppingList: ${pass} passed, ${fail} failed`);

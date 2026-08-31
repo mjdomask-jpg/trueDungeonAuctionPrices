@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { RecipeDrawer } from './RecipeDrawer';
+import { ShoppingTable } from './ShoppingTable';
+import { Money } from './Money';
 import { buildShoppingList, type ShoppingPick } from '../lib/shoppingList';
 import { moneyCalc } from '../lib/format';
 import type { IngredientPath } from '../lib/substitutions';
@@ -11,10 +13,9 @@ import type { BuildCost, CostEngine } from '../lib/transmutes';
 // answers "across everything I plan to make, what do I still have to buy and
 // what will it cost?" — which players keep in personal spreadsheets today.
 //
-// Step 2 of the build: the selection surface. Picking, quantities, pausing and
-// removing all work end to end and feed `lib/shoppingList.ts`; the two
-// ingredient tables that consume its rows land in step 3, so the totals bar is
-// currently the only thing reading them.
+// Steps 2 and 3: the selection surface, and the two tables that consume it.
+// What remains is the combined final table with Copy/CSV (step 4) and
+// localStorage (step 5).
 //
 // PRICING IS NOT NEGOTIABLE HERE. The parent builds this view's engine with
 // `basis: 'today'` and no pinned price year, because the whole premise is that
@@ -35,6 +36,15 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
   const [picks, setPicks] = useState<Pick[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [chipsExpanded, setChipsExpanded] = useState(false);
+  // Both keyed by ROW ID, not by recipe or by index. That is what lets a typed
+  // number survive its recipe being removed and re-added, and what lets one
+  // Darkwood Plank entry serve every recipe that wants Darkwood Planks (D2).
+  const [onHand, setOnHand] = useState<Record<string, number>>({});
+  const [overrides, setOverrides] = useState<Record<string, number>>({});
+  const [editing, setEditing] = useState<string | null>(null);
+  // D5. Off by default and reversible: netting silently is how a plan stops
+  // being checkable, so this is offered and never assumed.
+  const [netCrafted, setNetCrafted] = useState(false);
 
   const byKey = useMemo(() => {
     const m = new Map<string, BuildCost>();
@@ -67,8 +77,8 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
       const cost = byKey.get(p.key);
       if (cost) items.push({ cost, qty: p.qty });
     }
-    return buildShoppingList(items, engine, { path });
-  }, [picks, byKey, engine, path]);
+    return buildShoppingList(items, engine, { path, onHand, overrides, netCraftedSources: netCrafted });
+  }, [picks, byKey, engine, path, onHand, overrides, netCrafted]);
 
   const making = picks.filter((p) => p.qty > 0);
   const paused = picks.filter((p) => p.qty <= 0);
@@ -80,6 +90,25 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
 
   const visible = chipsExpanded ? picks : picks.slice(0, CHIP_LIMIT);
   const hidden = picks.length - visible.length;
+
+  const setHave = (id: string, n: number) =>
+    setOnHand((p) => ({ ...p, [id]: Math.max(0, n) }));
+  const setOv = (id: string, n: number | null) =>
+    setOverrides((p) => (n === null ? p : { ...p, [id]: n }));
+  const clearOv = (id: string) =>
+    setOverrides((p) => { const { [id]: _drop, ...rest } = p; return rest; });
+
+  const tableProps = {
+    editing: { rowId: editing, set: setEditing },
+    onHand: (id: string) => Math.max(0, onHand[id] ?? 0),
+    setOnHand: setHave,
+    setOverride: setOv,
+    clearOverride: clearOv,
+  };
+
+  // D5's pairs, in the reader's words. `chains` only ever holds rows the list
+  // itself contains both halves of, so this is never speculative.
+  const chainUnits = shopping.chains.reduce((t, c) => t + Math.min(c.needed, c.crafted), 0);
 
   const chip = (p: Pick) => {
     const cost = byKey.get(p.key);
@@ -145,14 +174,59 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
             </button>
           </div>
 
-          {/* Step 3 fills this in. Kept as an explicit placeholder rather than
-              an empty div so the view is honest about being half-built. */}
-          <p className="empty sl-todo">
-            {shopping.totals.rows} ingredient row{shopping.totals.rows === 1 ? '' : 's'} to buy —
-            {' '}{shopping.trade.length} trade good{shopping.trade.length === 1 ? '' : 's'} and{' '}
-            {shopping.additional.length} other item{shopping.additional.length === 1 ? '' : 's'}.
-            The tables land next.
-          </p>
+          {/* D5. Adding a Relic AND the Legendary it upgrades into asks you to
+              buy the Relic twice, and the drawer lists those pairs adjacently
+              so people will hit it. Offered, never applied on its own. */}
+          {shopping.chains.length > 0 && (
+            <div className={`sl-chain${netCrafted ? ' on' : ''}`}>
+              <span>
+                {netCrafted ? (
+                  <>Counting <b>{chainUnits}</b> item{chainUnits === 1 ? '' : 's'} you are already
+                    crafting as on hand — {shopping.chains.map((c) => c.good).join(', ')}.</>
+                ) : (
+                  <>This list buys <b>{shopping.chains.map((c) => c.good).join(', ')}</b> and also
+                    crafts {shopping.chains.length === 1 ? 'it' : 'them'}. Count the ones you are
+                    crafting as on hand?</>
+                )}
+              </span>
+              <button type="button" onClick={() => setNetCrafted((v) => !v)}>
+                {netCrafted ? 'Undo' : `Count ${chainUnits} as on hand`}
+              </button>
+            </div>
+          )}
+
+          <ShoppingTable
+            title="Trade goods"
+            hint="one row per good, however many recipes want it"
+            rows={shopping.trade}
+            {...tableProps}
+          />
+          <ShoppingTable
+            title="Additional items"
+            hint="one row per token and season"
+            rows={shopping.additional}
+            showCategory
+            {...tableProps}
+          />
+
+          <div className="sl-foot">
+            <div className="sl-foot-row total">
+              <span>Total still to buy</span>
+              <span><b><Money format={moneyCalc} value={shopping.totals.grandAvg} /></b></span>
+            </div>
+            {/* D3: min is a footnote, not a column. Stating the basis in prose
+                rather than doubling every row's width is the Phase 3 precedent
+                the calculator's own footer already follows. */}
+            <p className="sl-foot-note">
+              <Money format={moneyCalc} value={shopping.totals.grandMin} /> at minimum prices —
+              what it costs if every good goes for the cheapest it has recently sold at, which is
+              a floor rather than a forecast.
+              {shopping.totals.unpricedRows > 0 && (
+                <> {shopping.totals.unpricedRows} row
+                  {shopping.totals.unpricedRows === 1 ? ' has' : 's have'} no price and count as $0.</>
+              )}
+            </p>
+          </div>
         </>
       )}
 
