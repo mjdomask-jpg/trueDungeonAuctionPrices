@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { RecipeDrawer } from './RecipeDrawer';
 import { ShoppingTable } from './ShoppingTable';
+import { ShoppingFinal } from './ShoppingFinal';
 import { Money } from './Money';
 import { buildShoppingList, type ShoppingPick } from '../lib/shoppingList';
 import { moneyCalc } from '../lib/format';
@@ -13,9 +14,8 @@ import type { BuildCost, CostEngine } from '../lib/transmutes';
 // answers "across everything I plan to make, what do I still have to buy and
 // what will it cost?" — which players keep in personal spreadsheets today.
 //
-// Steps 2 and 3: the selection surface, and the two tables that consume it.
-// What remains is the combined final table with Copy/CSV (step 4) and
-// localStorage (step 5).
+// Steps 2-4: the selection surface, the two working tables, and the takeaway
+// list with its exports. Only localStorage (step 5) remains.
 //
 // PRICING IS NOT NEGOTIABLE HERE. The parent builds this view's engine with
 // `basis: 'today'` and no pinned price year, because the whole premise is that
@@ -208,6 +208,8 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
             showCategory
             {...tableProps}
           />
+
+          <ShoppingFinal list={shopping} />
 
           <div className="sl-foot">
             <div className="sl-foot-row total">

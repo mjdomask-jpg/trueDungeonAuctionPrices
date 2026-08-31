@@ -18,9 +18,9 @@ Design doc with wireframes and the full reasoning:
 | **1** | Pricing branches in the engine + `lib/shoppingList.ts` + the basis selector | **done, verified, merged** ([#140](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/140), squashed as `01b754e`) |
 | **1a** | Backlog entry: `IngredientType` authored two ways | **done, merged** ([#141](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/141), `72f026b`) |
 | **2** | Route, view toggle, chip strip, drawer wired to multi-select | **done, verified, merged** ([#142](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/142), squashed as `a990f58`) |
-| **3** | The two ingredient tables | **built, verified, PR open** |
-| 4 | Final table, Copy, Download CSV | **next** |
-| 5 | `localStorage` autosave, 10x hint, docs | not started |
+| **3** | The two ingredient tables | **done, verified, merged** ([#143](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/143), squashed as `e67b682`) |
+| **4** | Final table, Copy, Download CSV | **built, verified, PR open** |
+| 5 | `localStorage` autosave, 10x hint, docs | **next** |
 
 **Two standing rules the maintainer set for this build:**
 
@@ -760,21 +760,106 @@ that **survived a reload**. It was retained HMR history from the moment
 was clean. `read_console_messages` keeps its buffer across `location.reload()` —
 open a new tab to tell a live error from a stale one.
 
-## Next: step 4
+## Step 4 — what was built
 
-The final combined table, Copy as TSV, and Download CSV. What is ready:
+**`src/lib/shoppingExport.ts`** (new, pure and tested) and
+**`src/components/ShoppingFinal.tsx`** (the takeaway list plus the two buttons).
 
-- **`shopping.all`** is already in D6's order — every trade good first,
-  alphabetical, Trade rungs intermixed, then everything else by category. It is
-  built and currently unrendered; the two tables render `trade` and `additional`
-  separately.
-- **`noteLabel` and `stalenessNote`** are the shared wording, tested.
-- **The Excel formula guard** is still to do: 33 item names start with `+`, zero
-  with `-`, `=` or `@`. Apostrophe prefix on the **Copy** path only, where paste
-  consumes it correctly; CSV ships clean quoted values. Revisit with a real file
-  if Excel misbehaves.
-- **XLSX stays deferred** — it needs either a ~400KB dependency or a hand-rolled
-  zip writer.
+### Three measured facts shaped the writers
+
+Re-derived against the shipped CSVs over all 323 display names a row can carry:
+
+| | |
+|---|---|
+| names starting `+` | **33** (`+3 Mithral Bracers`) — a FORMULA to Excel |
+| names starting `-`, `=`, `@` | **0** |
+| names containing a **comma** | **1** — `1,000 GP Gold Bar` |
+| names containing a quote, tab or newline | **0** |
+
+That single comma is the whole case for quoting, and it is the same token
+`CLAUDE.md` warns about for *reading* CSVs. One is enough: an unquoted writer
+silently shifts every column after it on that row. The writers handle quotes,
+tabs and newlines anyway — a token printed next season is not obliged to keep
+that count at zero.
+
+**Numbers export as numbers**, not as `"$44.08"`. A currency-formatted string
+arrives in a spreadsheet as text, and a shopping list you cannot sum is not
+worth exporting.
+
+### The formula guard, as decided and as verified
+
+Apostrophe on the **Copy** path only; the CSV ships clean quoted values. Both
+halves were verified by driving the real buttons and intercepting the clipboard
+and the Blob:
+
+```
+TSV  '+3 Mithral Bracers→Transmute→2012→1→0→1→307.74→…
+CSV  +3 Mithral Bracers,Transmute,2012,1,0,1,307.74,…
+CSV  "1,000 GP Gold Bar",Trade 2,,20,0,20,8.82,176.33,…
+```
+
+Every one of the 17 rows parses to exactly **9 cells** in both formats, with the
+comma name quoted in CSV and left alone in TSV.
+
+### ⚠ The one thing NOT verified, and it was foreseen
+
+The original decision said "revisit at step 4 **with a real file** if Excel
+misbehaves". **That has not happened — there is no Excel on this machine.** What
+is proven is that the bytes are exactly what the decision specified; what is
+unproven is how Excel treats `+3 Mithral Bracers` arriving from a `.csv`.
+Google Sheets and LibreOffice show it as text. If Excel shows `#NAME?` on those
+33 names, the fix is one line — apply `guardFormula` in `csvCell` too — and the
+tests already isolate the behaviour so the change cannot leak into the TSV path.
+
+### The takeaway list
+
+A separate section below the two working tables, not a third mode: up there you
+enter what you own and correct prices, down here is what you carry to the
+auction. **Collapsed by default** so it does not double the page length, with
+the buttons — the actual job — outside it and always reachable.
+
+It shows **covered rows too**, dimmed. Dropping them would make the on-screen
+list disagree with the file, and an export that quietly omits rows is a worse
+failure than one carrying a few zeroes.
+
+Columns are wider than the table shows: `Item, Category, Season, Needed, On
+hand, To buy, $ each, Cost, Notes`. Season is blank on a trade good, which is
+what makes out-of-print items filterable in a spreadsheet. The staleness
+sentence rides in the Notes cell rather than taking a column that would be empty
+86% of the time.
+
+### Verified in the browser
+
+Both buttons driven for real, with a `+`-prefixed item and the comma name in the
+list. Filename `td-shopping-list-2026-08-31.csv`, MIME `text/csv;charset=utf-8`,
+17 rows × 9 cells in both formats, on-hand entries and adjusted prices present in
+the output. At 375px: no body overflow, the table scrolls **inside its own box**,
+buttons split the width. Fresh-tab console clean.
+
+Test suite is at **76 assertions**; section 10 covers the export.
+
+**XLSX stays deferred** — it needs either a ~400KB dependency or a hand-rolled
+zip writer.
+
+## Next: step 5
+
+`localStorage` autosave, the 10x hint, and the docs pass. Notes:
+
+- **Save/recall is `localStorage` ONLY.** Share links were dropped (a
+  quartermaster's list makes a punishing URL) and a server-side code system is
+  impossible on GitHub Pages — static hosting has no write path, and a repo
+  token in client JS would be public.
+- What needs persisting is exactly three pieces of state in `ShoppingList.tsx`:
+  `picks`, `onHand` and `overrides`. All three are already keyed so they survive
+  a re-render; `onHand` and `overrides` are keyed by ROW ID, which is stable
+  across pick changes.
+- Wrap every read and write in try/catch. A private window, cleared site data or
+  a browser set to block storage each make the accessor throw rather than return
+  empty.
+- **The docs pass owes `ui-conventions.md` a line** about the chip steppers
+  growing by size rather than by an `::after` overlay, and why — see step 2.
+- `updating-the-data.md` does NOT need touching: nothing in steps 1-4 changed
+  the data layer.
 
 ### D10, as it now stands
 

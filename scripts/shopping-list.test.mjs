@@ -62,6 +62,7 @@ try {
     data: await import(url('data.ts')),
     transmutes: await import(url('transmutes.ts')),
     shoppingList: await import(url('shoppingList.ts')),
+    shoppingExport: await import(url('shoppingExport.ts')),
   };
 } catch (e) {
   console.error('could not load src/lib:', e.message);
@@ -75,6 +76,7 @@ const {
   parseDerivedRules, isTradeCategory,
 } = lib.transmutes;
 const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote } = lib.shoppingList;
+const { toCSV, toTSV, toRows, guardFormula, exportFilename, EXPORT_COLUMNS } = lib.shoppingExport;
 
 const read = (f) => readFileSync(join(dataDir, f), 'utf8');
 const sales = parseSales(read('prices.csv'));
@@ -549,6 +551,85 @@ check('a netted chain removes exactly what is being crafted, and no more',
     return before.need - after.need === Math.min(c.crafted, before.need);
   }),
   JSON.stringify(chained.chains));
+
+// =========================================================================
+console.log('\n=== 10. Copy as TSV and Download CSV ===');
+
+const exported = buildShoppingList(all2026, engine, {
+  onHand: { [many.trade[0].id]: 3 },
+  overrides: { [many.trade[1].id]: 9.99 },
+});
+const csv = toCSV(exported), tsv = toTSV(exported), grid = toRows(exported);
+
+check('both writers emit the same grid: one header row plus one row per list row',
+  grid.length === exported.all.length + 1 &&
+  grid[0].join('|') === [...EXPORT_COLUMNS].join('|') &&
+  csv.trimEnd().split('\r\n').length === grid.length &&
+  tsv.split('\n').length === grid.length,
+  `${grid.length} grid, ${csv.trimEnd().split('\r\n').length} csv, ${tsv.split('\n').length} tsv`);
+
+check('every row has exactly as many cells as there are columns',
+  grid.every((r) => r.length === EXPORT_COLUMNS.length),
+  grid.filter((r) => r.length !== EXPORT_COLUMNS.length).length);
+
+// The one name in the corpus with a comma in it. An unquoted writer shifts
+// every column after it on that row, silently.
+const goldRow = exported.all.find((r) => r.good === '1,000 GP Gold Bar');
+check('the ONE name containing a comma is quoted in the CSV, so its row keeps its columns',
+  goldRow !== undefined && csv.includes('"1,000 GP Gold Bar"'),
+  csv.split('\r\n').find((l) => l.includes('GP Gold Bar')));
+check('...and every CSV data row still parses to the right number of cells',
+  csv.trimEnd().split('\r\n').every((line) => {
+    let cells = 1, inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i + 1] === '"') i++; else inQ = !inQ; }
+      else if (c === ',' && !inQ) cells++;
+    }
+    return cells === EXPORT_COLUMNS.length;
+  }),
+  csv.trimEnd().split('\r\n').slice(0, 3).join('\n'));
+
+// Excel reads a cell starting with + - = @ as a formula. 33 display names in
+// this corpus start with `+`.
+const plusNames = exported.all.filter((r) => /^[+\-=@]/.test(r.displayName));
+check('names beginning with a formula character are guarded on the COPY path',
+  plusNames.length === 0 || plusNames.every((r) => tsv.includes(`'${r.displayName}\t`)),
+  `${plusNames.length} such rows; ` + plusNames.slice(0, 3).map((r) => r.displayName).join(', '));
+check('...and are NOT apostrophe-prefixed in the CSV, where quoting is the format\'s own answer',
+  plusNames.every((r) => !csv.includes(`'${r.displayName}`)),
+  plusNames.slice(0, 3).map((r) => r.displayName).join(', '));
+check('guardFormula covers all four characters, and leaves ordinary text alone',
+  guardFormula('+3 Mithral Bracers') === "'+3 Mithral Bracers" &&
+  guardFormula('-1') === "'-1" && guardFormula('=SUM(A1)') === "'=SUM(A1)" &&
+  guardFormula('@x') === "'@x" && guardFormula("Alchemist's Ink") === "Alchemist's Ink",
+  guardFormula('+3 Mithral Bracers'));
+
+// A shopping list you cannot sum is not worth exporting.
+const priceCol = EXPORT_COLUMNS.indexOf('$ each'), costCol = EXPORT_COLUMNS.indexOf('Cost');
+check('prices and costs export as plain NUMBERS, not as "$44.08"',
+  grid.slice(1).every((r) => (r[priceCol] === '' || /^\d+\.\d{2}$/.test(r[priceCol])) &&
+                             (r[costCol] === '' || /^\d+\.\d{2}$/.test(r[costCol]))),
+  grid.slice(1, 4).map((r) => `${r[priceCol]} | ${r[costCol]}`).join('\n'));
+
+// No cell may contain the delimiter of its own format unescaped.
+check('no TSV cell contains a raw tab or newline',
+  grid.slice(1).every((r) => r.every((c) => !/[\t\r\n]/.test(c))) &&
+  tsv.split('\n').every((line) => line.split('\t').length === EXPORT_COLUMNS.length),
+  tsv.split('\n').find((l) => l.split('\t').length !== EXPORT_COLUMNS.length));
+
+// The export must carry the state the reader typed, or it is a export of a
+// different list from the one on screen.
+const onHandCol = EXPORT_COLUMNS.indexOf('On hand');
+check('what the reader typed reaches the file — on hand and an adjusted price both',
+  grid.slice(1).some((r) => r[onHandCol] === '3') &&
+  grid.slice(1).some((r) => r[priceCol] === '9.99') &&
+  grid.slice(1).some((r) => r[EXPORT_COLUMNS.indexOf('Notes')].includes('Price adjusted')),
+  grid.slice(1).filter((r) => r[onHandCol] !== '0').map((r) => r.join(' | ')).slice(0, 2).join('\n'));
+
+check('the filename is dated so two exports in a season do not collide',
+  exportFilename('csv', new Date('2026-08-31T12:00:00Z')) === 'td-shopping-list-2026-08-31.csv',
+  exportFilename('csv', new Date('2026-08-31T12:00:00Z')));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — shoppingList: ${pass} passed, ${fail} failed`);
