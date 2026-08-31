@@ -13,7 +13,7 @@ Design doc with wireframes and the full reasoning:
 
 | Step | What | State |
 |---|---|---|
-| **0** | Extract `RecipeDrawer` + `lineTag` out of `BuildCalculator` | **code complete, browser check outstanding** |
+| **0** | Extract `RecipeDrawer` + `lineTag` out of `BuildCalculator` | **done and verified** |
 | 1 | Pricing branches in the engine + `lib/shoppingList.ts` | not started |
 | 2 | Route, view toggle, chip strip, drawer wired to multi-select | not started |
 | 3 | The two ingredient tables | not started |
@@ -184,17 +184,37 @@ about. Hence:
 - Drawer CSS is flat and `position: fixed`, so returning a fragment instead of
   two siblings inside `.calc` changes no selector.
 
-**Still outstanding: the interactive browser pass.** `preview_start` refused
-because another session held port 5173, and adding a second launch config did
-not help — it checks 5173 whichever config you name. There is **no React test
-harness** in this repo (all eight suites are pure-node validators), so this
-cannot be covered by a unit test without adding a dependency. What needs
-clicking:
+**Interactive pass — done, all green.** Driven against the dev server (no
+screenshots: this box's Browser pane cannot capture localhost).
 
-1. Drawer opens; years, search, tier chips, show-expired, accordions all work.
-2. Picking selects the recipe, closes the drawer, and clears search + tier.
-3. Reopening lights the selected row (`.calc-opt.sel`).
-4. The ingredient table's `.cl-meta` provenance strings are unchanged.
+| Check | Result |
+|---|---|
+| Scrim and drawer are still direct children of `.calc` | ✓ — the fragment changed no DOM nesting |
+| Drawer opens; 16 years listed, 103 active / 71 expired | ✓ — matches the engine measurement |
+| Focus year expanded by default, others collapsed | ✓ 2026, 28 options |
+| Search | ✓ "vampire" → 2 recipes, matching years auto-expand |
+| Tier chips, composed with search | ✓ +Relic → 1 recipe, `aria-pressed` correct |
+| **Pick → selects, closes, clears search AND tier** | ✓ all four |
+| Reopen lights the selected row | ✓ exactly one `.calc-opt.sel` |
+| Focus year follows the selection | ✓ |
+| Relic→Legendary pairing survived | ✓ 2 pairs, indented rows, "↳ upgrades from" |
+| **✕ and scrim close WITHOUT clearing filters** | ✓ search "omni" survived — only pick clears |
+| Show-expired toggle | ✓ 174 recipes, expired tags render |
+| Year accordion adds to the focus year | ✓ 2026 + 2014 both open |
+| Provenance strings render | ✓ incl. "auction · priced as Ultra Rare · 2026–2027 pooled" |
+| Panel still functional | ✓ All on a row → "covered", $628 → $615 |
+| Mobile 375px | ✓ drawer 345px, fits, no sideways scroll, 44px search |
+| Browser console / server logs | ✓ clean, no React warnings |
+
+**The strongest check is not in that table.** `lineTag`'s call site is
+character-for-character identical (`lineTag(r.line, cost.year, cost.status)`)
+and the function is byte-identical, and its output depends on nothing else — so
+provenance wording is provably unchanged for all 174 recipes, not just the one
+that was clicked.
+
+There is **no React test harness** in this repo (all eight suites are pure-node
+validators), so none of the above could be covered by a unit test without adding
+a dependency.
 
 ---
 
@@ -216,6 +236,12 @@ clicking:
   so Ultra Rare lines always name their basis. Display-only, no pricing changed.
 - **Don't measure season behaviour on the last five auctions.** 2026's tail is
   eight sales over five months. Use quarters.
+- **A `navigate` to a URL differing only in the hash is a no-op** on this
+  HashRouter app, so React state survives what looks like a fresh page load and
+  a test silently inherits the previous run's selection. Use `location.reload()`.
+- **`preview_start` refuses whenever port 5173 is held by another session's dev
+  server**, and adding a second launch config does not help — it checks 5173
+  whichever config you name. The port has to be freed.
 - Analysis harness for the engine lives in the scratchpad, not the repo: copy
   `src/lib/*.ts` out, rewrite the internal imports to carry `.ts`, and run with
   `node --experimental-strip-types`. ESM will not resolve extensionless
