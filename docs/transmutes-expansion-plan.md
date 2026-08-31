@@ -1098,9 +1098,13 @@ off-auction item that cannot be windowed.
 > upper bound nor the season boundaries were ever measured against the data.
 >
 > Consequence for the tag above: with both sides pooled, the Relic and the
-> Legendary now read `2022–2023 pooled` alike, and `tierLine`'s branch falls to
-> **0 live lines**. It is left in place for now only because it is entangled
-> with the `lib/lineTag.ts` lift on the in-flight Shopping List branch.
+> Legendary now read `2022–2023 pooled` alike, and `tierLine`'s branch fell to
+> **0 live lines**. **Deleted 2026-08-31** once the `lib/lineTag.ts` lift had
+> merged — the field, its assignment, and the branch in both `lineTag` and
+> `priceTag`. `WINDOW_TAG` stays: 470 non-UR lines still reach the window and
+> the other branch names it. Verified by re-running the engine over all 174
+> recipes before and after: 1,985 lines identical on price, basis and tag
+> wording, under both price toggles.
 
 **7. `min` moves much harder than `avg`.** Windowing unions ~2 years of sales, so
 an expired recipe's min is the cheapest sale in that whole range: Σ min falls
