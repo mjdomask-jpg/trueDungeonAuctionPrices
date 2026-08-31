@@ -1049,6 +1049,23 @@ the bill of materials; a line is tagged only where it deviates — which is how
 2022 Greater Charm Bracelets ends up flagging only its Golden Fleece, an
 off-auction item that cannot be windowed.
 
+> **Amended 2026-08-30 — Ultra Rare tier lines are the exception, and always
+> name their basis.** Deviation-only is right for the twelve trade-good lines
+> and wrong for the one UR line, because that line is the one a reader compares
+> ACROSS recipes. An expired Relic and the Legendary it feeds hold the same
+> ingredient at the same `pricedYear`, and the pair silently disagrees:
+> 2022 Greater Charm Bracelets prices its Ultra Rare over the build window at
+> **$90.03**, while Luna's Greater Charm Bracelets — Legendary, so never
+> expiring, so active — pools 2022–2023 for **$92.96**. The gap is real and
+> correct: the window runs to 2023-11-24 (expiry minus the shipping cutoff) and
+> so admits **33 season-2024 sales** that closed in autumn 2023, when the UR
+> market had softened to $70–$91. Pooling by season cannot see them. But only
+> one side of the pair was tagged, so the two read as the same basis returning
+> different money. `PricedLine.tierLine` marks a blank UR line whichever branch
+> priced it, and `priceTag`/`lineTag` emit `over its build window` on it even
+> when that matches the recipe. Blast radius is **37 lines, one per expired
+> recipe** — never thirteen, so §10.6.6's original complaint still holds.
+
 **7. `min` moves much harder than `avg`.** Windowing unions ~2 years of sales, so
 an expired recipe's min is the cheapest sale in that whole range: Σ min falls
 12.3% on active recipes and 9.9% on expired ones, against 2.1% and 1.1% for avg.
