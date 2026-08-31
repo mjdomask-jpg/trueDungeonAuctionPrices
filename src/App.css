@@ -2540,6 +2540,20 @@ table.an-opens col.col-days { width: 16%; }
 }
 .calc-opt-hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 6px; }
 
+/* The ✕ that takes a recipe out of the plan from inside the drawer. On desktop
+   it is a fourth control on the row, styled as the chips' own ✕ so the two
+   places that remove a recipe look alike. On phones it replaces the − at zero
+   (see RecipeDrawer), where it wears the stepper's shape instead — it is
+   standing in that button's place and must sit in its footprint. */
+.sl-step-x {
+  min-width: 24px; height: 24px; padding: 0; cursor: pointer; font: inherit; font-size: 12px;
+  line-height: 1; border: 1px solid var(--border); background: var(--bg);
+  color: var(--text-d); border-radius: 6px;
+}
+.sl-step-x:hover { border-color: #b45309; color: #b45309; }
+:root:not([data-theme='light']) .sl-step-x:hover { border-color: #e0a44a; color: #e0a44a; }
+.sl-step-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 /* Phones: the name gives up its width first, and the tap targets grow to the
    ~44px the rest of the site uses (docs/ui-conventions.md; `.controls` raises
    --control-h the same way). These grow by SIZE rather than by the ::after
@@ -2548,14 +2562,23 @@ table.an-opens col.col-days { width: 16%; }
    whichever is later in the DOM — which it calls worse than leaving the target
    small. A chip strip wraps, so growing it costs the layout nothing. */
 @media (max-width: 640px) {
-  .sl-chip-nm { max-width: 10em; }
+  /* A chip takes the WHOLE line. Sized to their contents they wrapped one per
+     line anyway — a name plus three controls does not leave room for a second
+     — so the ragged right edge and the 10em truncation were both buying
+     nothing. Full width spends that space on the name instead, and it is the
+     only reason a chip ever had to ellipsize here. */
+  .sl-chip { width: 100%; gap: 4px; padding-left: 12px; }
+  .sl-chip-nm { max-width: none; flex: 1; min-width: 0; }
   .sl-total b { font-size: 17px; }
-  .sl-chip { gap: 4px; padding-left: 12px; }
+  /* +N more / Show fewer gets its own line, full width — the strip's other
+     two buttons then share the line below it. */
+  .sl-more { flex: 0 0 100%; min-height: 40px; }
   .sl-step { gap: 4px; }
   .sl-step button { min-width: 40px; height: 40px; font-size: 17px; }
   .sl-chip-x { min-width: 40px; height: 40px; font-size: 14px; }
   /* The drawer's stepped rows get it too — same thumbs, same buttons. */
   .calc-opt.stepped .sl-step button { min-width: 40px; height: 40px; font-size: 17px; }
+  .sl-step-x { min-width: 40px; height: 40px; font-size: 15px; }
 }
 
 /* --- Shopping List: the two ingredient tables (step 3) ------------------ */

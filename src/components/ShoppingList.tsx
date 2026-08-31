@@ -122,16 +122,24 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
     return buildShoppingList(items, engine, { path, onHand, overrides, netCraftedSources: netCrafted });
   }, [picks, byKey, engine, path, onHand, overrides, netCrafted]);
 
-  const making = picks.filter((p) => p.qty > 0);
-  const paused = picks.filter((p) => p.qty <= 0);
+  // A pick whose key no longer resolves to a recipe. The stored plan survives
+  // deploys and is hand-editable, so a transmute renamed in the CSV leaves one
+  // behind — and an unresolvable pick renders no chip, prices nothing and
+  // contributes nothing to the list. It must not be COUNTED either, or the
+  // headline reads "9 recipes" over seven chips and "+2 more" reveals nothing.
+  // Dropped from the display only: storage keeps it, so a pick stranded by a
+  // temporary data change comes back rather than being quietly destroyed.
+  const known = picks.filter((p) => byKey.has(p.key));
+  const making = known.filter((p) => p.qty > 0);
+  const paused = known.filter((p) => p.qty <= 0);
   const tokens = making.reduce((t, p) => t + p.qty, 0);
 
   // Newest season the reader is likely to be shopping for, matching the
   // calculator's default rather than the 2027 preview at the top of the list.
   const focusYear = engine.prices.latestPriced;
 
-  const visible = chipsExpanded ? picks : picks.slice(0, CHIP_LIMIT);
-  const hidden = picks.length - visible.length;
+  const visible = chipsExpanded ? known : known.slice(0, CHIP_LIMIT);
+  const hidden = known.length - visible.length;
 
   const setHave = (id: string, n: number) =>
     setOnHand((p) => ({ ...p, [id]: Math.max(0, n) }));
@@ -189,7 +197,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
 
   return (
     <div className="shopping">
-      {picks.length === 0 ? (
+      {known.length === 0 ? (
         <div className="calc-empty">
           <p>Pick the transmutes you plan to make and we'll work out what to buy.</p>
           <button type="button" className="calc-browse big" onClick={() => setDrawerOpen(true)}>
@@ -221,7 +229,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                 +{hidden} more
               </button>
             )}
-            {chipsExpanded && picks.length > CHIP_LIMIT && (
+            {chipsExpanded && known.length > CHIP_LIMIT && (
               <button type="button" className="sl-more" onClick={() => setChipsExpanded(false)}>
                 Show fewer
               </button>
@@ -307,6 +315,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
         focusYear={focusYear}
         quantities={quantities}
         onQuantityChange={setQty}
+        onRemove={remove}
       />
     </div>
   );
