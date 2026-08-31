@@ -2703,7 +2703,22 @@ table.an-opens col.col-days { width: 16%; }
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-d);
   border-bottom-width: 2px; white-space: nowrap;
 }
-.sl-final-t tbody th { color: var(--text-h); min-width: 12em; }
+/* The item column carries the name, its category, the two purchase-changing
+   flags and the staleness sentence, so it WRAPS and everything else stays
+   narrow and nowrap. That is what took the horizontal scroll out: the Notes
+   column was the only thing here wide enough to need one.
+
+   The widths are percentages because the GLOBAL `table` rule (see the top of
+   this file) sets table-layout: fixed for the whole site — so a min-width
+   here does nothing, and without these five columns each took an equal fifth:
+   225px at 1280, which wrapped the staleness sentence while Buy sat at 225px
+   for a two-digit number. */
+.sl-final-t tbody th { color: var(--text-h); }
+.sl-final-t thead th:nth-child(1) { width: 46%; }
+.sl-final-t thead th:nth-child(2) { width: 12%; }
+.sl-final-t thead th:nth-child(3) { width: 10%; }
+.sl-final-t thead th:nth-child(4) { width: 15%; }
+.sl-final-t thead th:nth-child(5) { width: 17%; }
 .sl-final-t .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* Covered rows stay in the table so it agrees with the file, but they are not
    what the reader is scanning for. */
@@ -2711,15 +2726,48 @@ table.an-opens col.col-days { width: 16%; }
 .sl-final-cat {
   display: block; font-size: 10px; color: var(--text-d); margin-top: 1px;
 }
-.sl-final-n { color: var(--text); font-size: 11.5px; max-width: 26em; }
+/* Out of print, on the row rather than in a note. In a bare table a 2012 Ultra
+   Rare looks exactly like one still on sale, and that is a bad purchase rather
+   than a missing annotation — so it is the one flag that gets a colour. */
+.sl-final-flag {
+  margin-left: 6px; padding: 0 6px; border-radius: 20px; font-size: 9.5px;
+  background: var(--accent-bg); color: var(--accent); white-space: nowrap;
+}
+.sl-final-t .sl-stale { margin-top: 2px; font-size: 10.5px; }
+/* The Season column's phone-only stand-in — see ShoppingFinal. */
+.sl-final-yr { display: none; }
 .sl-final-note { margin: 10px 0 0; font-size: 11.5px; color: var(--text-d); line-height: 1.5; }
+
+/* What the plan is for, above what it costs. A plain list, not a table: it is
+   read as a heading for the thing below it rather than scanned or summed. */
+.sl-making { margin: 10px 0 4px; }
+.sl-making h4 {
+  margin: 0 0 4px; font-size: 11px; font-weight: 600; color: var(--text-d);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.sl-making ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.sl-making li { font-size: 13px; color: var(--text-h); }
+.sl-making li b { font-variant-numeric: tabular-nums; }
 
 @media (max-width: 640px) {
   .sl-final { padding: 12px; }
   .sl-export-b { width: 100%; }
   .sl-export-b button { flex: 1; padding: 10px 12px; }
-  .sl-final-t tbody th { min-width: 10em; }
-  .sl-final-n { max-width: none; }
+  /* Season folds into the item's subline: at 390px the extra column cost the
+     item names three and four lines each. The <th scope="row"> is child 1, so
+     the Season cell is the second child of both rows. */
+  .sl-final-t thead th:nth-child(2), .sl-final-t tbody td:nth-child(2) { display: none; }
+  .sl-final-yr { display: inline; }
+  /* The four that remain take the freed width, weighted towards the item.
+     At an equal share it got 77px and "Ring of the 1st Circle" ran to three
+     lines; at 43% it gets 136px and the table loses 455px of height. */
+  .sl-final-t thead th:nth-child(1) { width: 43%; }
+  .sl-final-t thead th:nth-child(3) { width: 12%; }
+  .sl-final-t thead th:nth-child(4) { width: 21%; }
+  .sl-final-t thead th:nth-child(5) { width: 24%; }
+  /* One per line on a phone: side by side they read as one run of text. */
+  .sl-making ul { display: block; }
+  .sl-making li + li { margin-top: 2px; }
 }
 
 /* --- Shopping List: the 10x lot hint and Clear (step 5) ----------------- */

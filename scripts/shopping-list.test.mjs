@@ -302,6 +302,18 @@ const paused = buildShoppingList([pick('2026|Deathward Greaves', 0)], engine);
 check('quantity 0 pauses a pick rather than removing it',
   paused.paused.length === 1 && paused.all.length === 0, JSON.stringify(paused.totals));
 
+// What the plan is FOR, for the takeaway list's heading and the exports'
+// preamble. A paused recipe is not being made, so it is not in here.
+check('the list reports what it is being built for, in the order it was added',
+  many.making.length === all2026.length &&
+  many.making.every((m, i) => m.transmute === all2026[i].cost.transmute &&
+    m.qty === all2026[i].qty && m.year === all2026[i].cost.year && !!m.displayName),
+  JSON.stringify(many.making.slice(0, 3)));
+check('...and a paused recipe is not something you are making',
+  paused.making.length === 0 &&
+  buildShoppingList([pick('2026|Deathward Greaves', 3)], engine).making[0].qty === 3,
+  JSON.stringify(paused.making));
+
 // D3: min is a footnote total, never a column.
 check('D3 — a minimum-prices total is reported alongside the average one',
   many.totals.grandMin > 0 && many.totals.grandMin < many.totals.grandAvg,

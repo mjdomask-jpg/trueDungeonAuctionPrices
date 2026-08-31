@@ -202,7 +202,8 @@ export function ShoppingTable({
                   return (
                     <span className="sl-lot">
                       usually sold in 10x lots — <b>{lot.lots}</b> lot{lot.lots === 1 ? '' : 's'}
-                      {lot.over > 0 && <> gets you {lot.tokens}, {lot.over} more than you need</>}
+                      {lot.over > 0 && <> {lot.lots === 1 ? 'gets' : 'get'} you {lot.tokens},{' '}
+                        {lot.over} more than you need</>}
                     </span>
                   );
                 })()}

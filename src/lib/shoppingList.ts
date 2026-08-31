@@ -99,11 +99,21 @@ export type ShoppingTotals = {
   unpricedRows: number;
 };
 
+/** One transmute the plan is working towards, for the takeaway list's heading
+ *  and for the exports' preamble. The YEAR is carried because two vintages of
+ *  one transmute are two different recipes with two different bills, and a
+ *  summary that collapsed them would be summarising the wrong thing. */
+export type ShoppingMaking = { transmute: string; displayName: string; year: number; qty: number };
+
 export type ShoppingList = {
   trade: ShoppingRow[];
   additional: ShoppingRow[];
   /** Both tables in the final list's own order (D6). */
   all: ShoppingRow[];
+  /** What the plan is FOR, in the order the reader added it — the same order
+   *  the chips read in, because that is the order they built it in. Active
+   *  picks only; a paused one is not being made. */
+  making: ShoppingMaking[];
   chains: ChainLink[];
   totals: ShoppingTotals;
   /** Picks at quantity 0. They stay in the list as an explicit paused state
@@ -363,6 +373,12 @@ export function buildShoppingList(
     trade,
     additional,
     all,
+    making: active.map((p) => ({
+      transmute: p.cost.transmute,
+      displayName: p.cost.displayName,
+      year: p.cost.year,
+      qty: p.qty,
+    })),
     chains,
     paused,
     totals: {
