@@ -79,7 +79,11 @@ const range = (lo: number, hi: number) => {
 // Compact provenance for one ingredient: its own season when it differs from the
 // recipe's, then where the price came from. Mirrors TransmuteRow's priceTag,
 // including its rule that the recipe's prevailing basis is stated once in the
-// footer rather than on every line.
+// footer rather than on every line — and its one exception, the Ultra Rare
+// tier lines, which always name their basis so a Relic's windowed UR and its
+// Legendary's pooled one are not two different numbers under the same year.
+const WINDOW_TAG = 'over its build window';
+
 function lineTag(l: PricedLine, recipeYear: number, status: RecipeStatus): string {
   const parts: string[] = [];
   if (l.nominalYear !== recipeYear) parts.push(String(l.nominalYear));
@@ -91,9 +95,10 @@ function lineTag(l: PricedLine, recipeYear: number, status: RecipeStatus): strin
   else parts.push('no price');
   if (l.seasonMapped) parts.push(`from ${l.pricedYear}`);
   else if (l.floated && status !== 'active') parts.push("today's price");
-  else if (l.basis === 'window' && status !== 'expired') parts.push('over its build window');
+  else if (l.basis === 'window' && status !== 'expired') parts.push(WINDOW_TAG);
   else if (status === 'expired' && l.basis === 'season' && !l.seasonMapped) parts.push('season priced');
   if (l.pricedAs && l.pricedAs !== l.good) parts.push(`priced as ${l.pricedAs}`);
+  if (l.basis === 'window' && l.tierLine && !parts.includes(WINDOW_TAG)) parts.push(WINDOW_TAG);
   if (l.basis === 'pool' && l.poolYears?.length) parts.push(`${l.poolYears.join('–')} pooled`);
   if (l.bound === 'ceiling') parts.push('ceiling');
   return parts.join(' · ');
