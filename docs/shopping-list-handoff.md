@@ -14,9 +14,9 @@ Design doc with wireframes and the full reasoning:
 | Step | What | State |
 |---|---|---|
 | **0** | Extract `RecipeDrawer` + `lineTag` out of `BuildCalculator` | **done, verified, merged** ([#136](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/136), squashed as `6203c40`) |
-| **0a** | Delete the `tierLine` branch #137 emptied | **done, verified, CI green — [#139](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/139) awaiting merge** |
-| **1** | Pricing branches in the engine + `lib/shoppingList.ts` | **next — start here, once #139 lands** |
-| 2 | Route, view toggle, chip strip, drawer wired to multi-select | not started |
+| **0a** | Delete the `tierLine` branch #137 emptied | **done, verified, merged** ([#139](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/139), squashed as `32d25fc`) |
+| **1** | Pricing branches in the engine + `lib/shoppingList.ts` + the basis selector | **built, verified, PR open ([#140](https://github.com/mjdomask-jpg/trueDungeonAuctionPrices/pull/140))** |
+| 2 | Route, view toggle, chip strip, drawer wired to multi-select | **next** |
 | 3 | The two ingredient tables | not started |
 | 4 | Final table, Copy, Download CSV | not started |
 | 5 | `localStorage` autosave, 10x hint, docs | not started |
@@ -384,10 +384,247 @@ wording, under both price toggles. The plan doc's note at
 
 ---
 
-## Next: step 1
+## Step 1 — what was built
 
-The pinned-UR question is **answered — pool them** (see the DECIDED section
-above for exactly what that means in the engine). Nothing else is blocking.
+Four things, one PR. `tsc -b`, lint, `npm run validate` (0 errors), all **nine**
+test suites and `npm run build` all pass.
+
+### 1. The rule chain, restructured
+
+`leafForGood` now reads, in order:
+
+```
+ 1.  pin, for NON-Ultra-Rare lines only    never floats (24 lines)
+ 1b. priceYear (Phase 7), unpinned only    the reader named a season
+ S2/3/4. the Ultra Rare rules, as ONE SET, pinned or blank:
+         in print  -> current season       (27 lines)
+         otherwise -> two-season pool      (40 lines)
+         beneath   -> D4's clamp           (18 lines)
+ S1. trade goods -> current season         (1,736 lines; 1,125 pickable)
+ 2.  expired recipe -> date window         every remaining line
+ 4.  active recipe -> today's prices (D3)
+ 5.  defensive fallback
+```
+
+**The Ultra Rare rules had to become one SET, not two branches.** Splitting
+them by how the year was authored produced a real defect during the build: a
+*pinned* 2025 line pooled while a *blank* 2025 line read the current season —
+two prices for one vintage, decided by nothing but which cell an author filled
+in. "Pinned Ultra Rares pool **exactly as a blank one does**" is the whole rule,
+not just its pool half, so the pin now falls through to the set rather than
+short-circuiting above it. A test pins this directly.
+
+`recipe` is no longer a parameter of `leafFor`/`leafForGood`: **every rule now
+keys on the LINE**. That fell out rather than being aimed at — old rule 3 read
+`recipe.year` where it meant `l.nominalYear`, the same number on a blank line
+and the wrong one on a pin.
+
+`isTradeCategory` is **exported** from `transmutes.ts` and used by both the
+engine's S1 and the Shopping List's merge key. They are the same question asked
+twice — "trade goods merge on name alone" is only sound while S1 gives each one
+a single price — so they must not be allowed to drift.
+
+`isUltraRare` reads the **resolved category**, symmetric with `isTradeGood`,
+not the authored `IngredientType` alone. See the data note below.
+
+### 2. `src/lib/shoppingList.ts`
+
+`{cost, qty}[]` + on-hand + overrides in; merged rows, chains and totals out.
+Implements D2 (no clamp), D3 (min as a footnote total), D4 (sources are one row
+at build cost, no recursion), D5 (chain detection, reported not applied), D6
+(its own sort order), D7 (one global Wish Ring toggle via `onPath`), and the
+closed note vocabulary in its fixed order. No React, no fetching.
+
+### 3. `scripts/shopping-list.test.mjs` — the ninth suite
+
+**48 assertions**, wired into `npm test`. It is the first suite that tests
+`src/lib` rather than a `.gs`/`.mjs` file, so it copies the sources to a temp
+dir with `.ts` appended to their internal imports and runs them through node's
+own type stripping — the technique `CLAUDE.md` already prescribes. No new
+dependency, nothing in the repo written to. `today` is **pinned to 2026-08-31**
+or every status assertion decays as the calendar moves.
+
+### 4. The staleness threshold — DERIVED, with its hit-list
+
+**35%**, exported as `STALE_THRESHOLD`. Measured over **117 good-seasons** (13
+of the 14 goods across 9 seasons; Golden Fleece has no auction rows at all and
+can never be measured). The divergences fall into two populations with a wide
+empty band between them:
+
+```
+ordinary season noise      0% .. 27%
+sustained regime change   46% .. 100%
+```
+
+**Every cutoff from 20% to 50% produces the identical 2026 hit-list**, so the
+number is not load-bearing for what ships; what it changes is how often the flag
+fires historically (13.7% of good-seasons at 20%, 6.8% at 35–45%, 5.1% at 50%).
+35% sits on the flat middle of that range and is the smallest cutoff at which
+only *sustained* repricings fire. A test pins the derivation, not just the
+number, so a future season that narrows the gap fails loudly.
+
+**The 2026 hit-list is two goods, and the handoff only knew about one:**
+
+| good | season avg | recent (last-5) | divergence |
+|---|---|---|---|
+| Elven Bismuth | $31.67 | $63.25 | **+100%** |
+| **Oil of Enchantment** | $43.40 | $67.75 | **+56%** |
+
+Both are **understated** by their season average, so the Full-season default
+under-quotes them. Historically the flag would also have fired on Enchanter's
+Munition 2020–2024 (now calm at 2%) and on both of the above from 2025.
+
+⚠ The earlier note that Elven Bismuth's recent price was **$52.67** does not
+reproduce; measured against `prices.csv` it is **$63.25** on last-5 and $61.93
+over 180 days. Use the measured figures.
+
+---
+
+## RESOLVED — A and B, by making the basis a user choice
+
+**Decided 2026-08-31.** Both consequences below were real, and both are now
+answered by one control rather than by picking a winner between two questions.
+
+### D11 — the pricing basis is selectable, and it is not the year pin
+
+`CostOptions.basis: 'today' | 'era'`, carried on `BuildCost` so a view can state
+it in prose instead of inferring it from `status` (which is what the notes used
+to do, and why they went stale the moment the rules changed).
+
+```
+'today'  everything at the current season, EXCEPT tokens that can no longer be
+         bought at all -- an out-of-print Ultra Rare keeps its own vintage's
+         market. Engine DEFAULT: it is what the Shopping List and the Build
+         Calculator both ask, and what D3 already does for the 91 active recipes.
+'era'    each recipe on its own basis -- today's prices while craftable, its
+         build window once expired, a forward estimate while it is a preview.
+```
+
+**Verified: `basis: 'era'` reproduces the pre-#140 engine exactly** — 1,977 of
+1,985 lines identical under both price toggles, and the 8 that differ are
+precisely the pinned Ultra Rares signed off separately. The historical view
+loses nothing, and that is a provable claim rather than a hopeful one.
+
+**It is NOT the same axis as `priceYear`, and that is why all three exist.**
+Pinning 2026 quotes season 2026 for tokens that season never sold; `'today'`
+moves only what is actually purchasable. Measured: they differ on **150 lines,
+$4,781.56, 90 of them Ultra Rares** — e.g. a 2012 Ring of Evasion reads $111.50
+under "today's prices" (its own 2012–13 market) and $59.50 under a 2026 pin,
+which claims you can buy a 2012 Ultra Rare at this year's price. You cannot.
+`recentPrices` is a third axis again: it chooses the SAMPLE inside a season.
+
+**The control is not a new one.** `TransmutesPage`'s existing `Price data from`
+select had `Auto (each recipe)` as its first option — precisely the ambiguous
+mode. That entry became two:
+
+```
+Each recipe's own era     <- DEFAULT on the Recipes view
+Today's prices
+2026 prices … 2018 prices
+```
+
+State is a single `pricing: 'today' | 'era' | number`, with `priceYear` and
+`basis` derived from it, so no invalid combination can be selected. The
+calculator forces `'today'` exactly as it already forces `priceYear: null` (F3).
+
+**Both S1 and S2 are gated on the basis; the pool beneath them is not.** S2 had
+to be gated as well as S1 or the 2027 preview would not restore — 8 of the 12
+future recipes' Ultra Rare lines are in-print 2027s. The two-season pool stays
+ungated because "which two seasons could this vintage have come from" is a fact
+about the token and is true under either basis (#137).
+
+### ⚠ How far the basis actually reaches — an earlier claim was WRONG
+
+It is tempting to say the control only touches the expired section. It does not,
+and a test now pins the real numbers:
+
+| | |
+|---|---|
+| an active recipe's own **trade goods** | identical under both bases, all **1,014** lines |
+| active recipes whose **total** moves | **49 of 91** |
+| ...via an expired **sub-recipe** | 42 lines |
+| ...via an **in-print Ultra Rare** (S2) | 13 lines |
+
+An active Legendary is routinely built from an expired Relic, so it inherits
+that Relic's basis. Anyone reasoning about blast radius from "S1 is a no-op on
+active recipes" — which is true of the leaf lines — will get this wrong.
+
+### The prose the old behaviour had made false
+
+#140 as first written shipped **two untrue sentences**, both now fixed and both
+conditional on the basis:
+
+- `TransmuteRow.tsx` told every reader of all 71 expired recipes that ingredients
+  were priced over the build window "**rather than at today's prices, which
+  nobody could have paid for it**" — while printing today's prices above it.
+- `TransmutesPage`'s filter hint said the same thing.
+
+A third was stale independently of #140: the Ultra Rare note had said "priced at
+the auction average for **the transmute window**" since before #137 made them
+pool. Also fixed. The recent-prices hint is now conditional too — under `'today'`
+the toggle really does reach every recipe, and it used to claim expired ones
+ignore it.
+
+---
+
+## The two consequences, as they were found
+
+### A. Every expired recipe reprices in the Recipes view
+
+Branch S1 sits above the expired window by design (D1a), so all **611** expired
+trade-good lines now read 2026 prices instead of their build window's. All 71
+expired recipes move; the total goes **$21,634.75 → $21,894.31 (+1.2%)**.
+
+That is correct for the Shopping List — a Darkwood Plank has no vintage, and the
+only one you can buy is the one on sale now. It is *wrong* for the Recipes view,
+whose expired section answers "what did this cost when it was craftable". The
+accuracy release built the date window for exactly that question.
+
+**Resolved by D11:** the Recipes view defaults to `'era'` and keeps the window;
+`'today'` is one option away for the reader who wants the other answer.
+
+### B. The 2027 preview drops 7.8%, and its toggle starts working
+
+| | before | after |
+|---|---|---|
+| Full season (default) | $11,492.18 | **$10,601.30** (−7.8%) |
+| Recent prices ON | $11,492.18 | **$12,039.66** |
+
+The 2027 preview used to clamp forward to **2026-last-5** through
+`pricingSeason`, and — note the identical figures — **the recent-prices toggle
+did nothing to it at all**. S1 replaces that clamp with the current season under
+the ordinary toggle, so the default becomes the full-season average and the
+toggle becomes live.
+
+**Resolved by D11:** under `'era'` the forward last-5 estimate is restored, so
+the Recipes view's preview is unchanged from before #140. Under `'today'` the
+preview reads the current season and the recent-prices toggle governs it like
+everything else — which is the honest answer for someone shopping now.
+
+---
+
+## A data inconsistency found on the way (not fixed here)
+
+`Charm of Synergy` is authored **two different ways** in `transmuteRecipes.csv`:
+
+- row 414, `2017|Giln's Redoubt Shield` — `IngredientType = Ultra Rare`
+- row 1910, `2027|Smith's Charm of Unified Synergy (Set 2)` — **blank**
+
+`tokenMetadata.csv` says the token is Ultra Rare, so reading the resolved
+category (which `isUltraRare` now does) makes the two agree. **It costs nothing
+today** — the token has its own hand-authored off-auction price of $140.00, so
+both lines price identically and never reach the tier — but it would start
+costing something the day that off-auction row went away. Worth an entry in
+`docs/data-backlog.md`; not worth a data edit inside a pricing PR.
+
+This also corrects the handoff's own pinned-UR table: it listed the two-season
+pool for that line as **$111.50**, which is the *Ultra Rare tier's* 2017–2018
+pool. The rule chain never reaches the tier, so the line stays at **$140.00**
+and the row is a genuine no-op.
+
+---
+
+## Superseded: what step 1 was told to do
 
 1. Add **branch 1** (trade goods → current season, always) and **branch 2**
    (in-print URs → current season) to the engine, and open rule 3 to pinned
@@ -396,10 +633,36 @@ above for exactly what that means in the engine). Nothing else is blocking.
    merged rows and totals out. Includes D5 chain detection.
 3. New test suite pinning both new branches, the pinned-UR pool, the pre-2018
    clamp, and the figures in the "Numbers" section above. Wire it into
-   `npm test` alongside the existing eight — which are now **nine** once #139's
-   sibling suites are counted; check the chain in `package.json` rather than
-   trusting this number.
+   `npm test` alongside the existing eight.
 4. Derive the volatility threshold and bring the maintainer the hit-list.
 
 **No UI in step 1.** The maintainer signs off on a table of numbers, which is the
 cheapest place to catch a wrong rule.
+
+---
+
+## Next: step 2
+
+Route, view toggle, chip strip, and the drawer wired to multi-select. The drawer
+already has the seam for it — the parent owns `selectedKeys`, and quantity
+steppers go on additively without changing that contract (see step 0 above).
+
+A and B are answered, so nothing blocks it. Two things step 2 inherits:
+
+- The Shopping List does **not** get the basis control. It is locked to
+  `'today'` — that is the founding domain rule, and D8 already excluded the
+  price-year pin for the same reason. The last-5 toggle still comes along.
+- `buildShoppingList` takes the engine, so it inherits whatever basis that
+  engine was built with. `TransmutesPage` must construct the Shopping List's
+  engine with `basis: 'today'` rather than reusing the Recipes view's, the same
+  way `calculator ? null : priceYear` already works.
+
+### D10, as it now stands
+
+D10 said "no `CostOptions` flag; both views read the same pricing". D11 adds a
+flag, deliberately. The distinction the maintainer drew: D10 exists to stop two
+views **silently** quoting different numbers for one ingredient, and `priceYear`
+was already a `CostOptions` field doing this openly. A user-chosen, labelled,
+stated-in-prose basis is not the failure D10 was written against. What survives
+of D10 is the part that matters: the Shopping List and the Build Calculator both
+read `'today'`, and neither offers the choice.

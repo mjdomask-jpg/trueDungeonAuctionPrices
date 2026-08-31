@@ -524,6 +524,22 @@ export class PriceIndex {
  */
 export const TIER_PROXY: Readonly<Record<string, string>> = { 'Ultra Rare': 'Ultra Rare' };
 
+/**
+ * Whether a category names a trade good — the fungible crafting materials
+ * (`Trade 1` .. `Trade 4` today; there are exactly 14 of them across all 174
+ * recipes, and 8 of those are Trade 1).
+ *
+ * A pattern rather than a list because the rungs are a game ladder that grows:
+ * a Trade 5 good would otherwise price on the wrong rule until someone
+ * remembered to edit a constant. Exported because the engine's pricing rule
+ * S1 and the Shopping List's merge key are the SAME question asked twice --
+ * "trade goods merge on name alone" is only sound because branch S1 gives
+ * every one of them a single price, so the two must never drift apart.
+ */
+export function isTradeCategory(category: string): boolean {
+  return /^Trade \d+$/.test(category);
+}
+
 // --- The cost engine -----------------------------------------------------
 
 export type PricedLine = {
@@ -595,6 +611,10 @@ export type BuildCost = {
   // Accuracy release (§10). `status` decides the pricing basis: active and
   // future recipes price at today's prices, expired ones over `window`.
   status: RecipeStatus;
+  /** The basis this cost was computed on, so a view can say so in prose
+   *  rather than inferring it from `status` -- which is what the notes used to
+   *  do, and what made them go stale the moment the rules changed. */
+  basis: PricingBasis;
   window: PricingWindow | null;
   expires: string | null; // resolved expiry date; null = never expires
   // Phase 7. The season every unpinned line was priced from, when the reader
@@ -602,6 +622,30 @@ export type BuildCost = {
   // bill of materials rather than tagging every line (§10.6.6).
   priceYear: number | null;
 };
+
+/**
+ * Which market a recipe is priced against — the axis the Recipes view's
+ * "Price data from" control selects, and the one thing that decides whether an
+ * expired recipe answers "what did this cost when it was craftable" or "what
+ * would it cost me to buy now".
+ *
+ *   'today'  everything at the current season, EXCEPT tokens that can no
+ *            longer be bought at all: an out-of-print Ultra Rare keeps its own
+ *            vintage's market, because quoting it at today's price would claim
+ *            you can buy a 2012 Ultra Rare for $59.50 and you cannot.
+ *   'era'    each recipe on its own basis -- today's prices while it is still
+ *            craftable, its build window once it has expired, a forward
+ *            estimate while it is still a preview.
+ *
+ * Note this is NOT the same axis as `priceYear`. Pinning 2026 prices every
+ * unpinned line from season 2026 including the ones that season never sold;
+ * 'today' moves only what is actually purchasable now. Measured, they differ
+ * on 150 lines worth $4,781.56, 90 of them Ultra Rares.
+ *
+ * Orthogonal again to `recentPrices`, which chooses the SAMPLE inside a season
+ * rather than the season.
+ */
+export type PricingBasis = 'today' | 'era';
 
 export type CostOptions = {
   /** Use each season's last-5-auctions window where available. Applies to any
@@ -612,6 +656,12 @@ export type CostOptions = {
   /** 'YYYY-MM-DD'. Injectable so tests and the harness can pin a date; the
    *  app leaves it to the viewer's own clock. */
   today?: string;
+  /** Which market to price against. Defaults to 'today', because that is the
+   *  question the Build Calculator and the Shopping List both ask and it is
+   *  already what D3 does for the 91 active recipes. The Recipes view passes
+   *  'era' explicitly: 41% of what it lists is expired, and that section
+   *  exists to show what a build cost while it was possible. */
+  basis?: PricingBasis;
   /** Phase 7 (§3.6). A season to price every UNPINNED line from, replacing the
    *  basis the recipe's own status would have chosen. null = Auto, the natural
    *  basis. Prices only (F2): status, windows, badges and the recipe list all
@@ -632,12 +682,14 @@ export class CostEngine {
   private recentPrices: boolean;
   private today: string;
   private priceYear: number | null;
+  private basis: PricingBasis;
 
   constructor(recipes: Recipe[], prices: PriceIndex, opts: CostOptions = {}) {
     this.prices = prices;
     this.recentPrices = opts.recentPrices ?? false;
     this.today = opts.today ?? todayISO();
     this.priceYear = opts.priceYear ?? null;
+    this.basis = opts.basis ?? 'today';
     for (const r of recipes) {
       this.recipes.set(r.key, r);
       this.byName.set(r.transmute, [...(this.byName.get(r.transmute) ?? []), r.year]);
@@ -676,12 +728,62 @@ export class CostEngine {
     return this.recentPrices && nominalYear >= this.prices.latestPriced ? 'last5' : 'full';
   }
 
-  /** A blank `Ultra Rare` line. The tier and the token share one canonical
-   *  name (§4.1), so the line names the tier itself; a pinned `ItemYear` takes
-   *  the pin branch above this one and never reaches the pool. */
-  private isPoolableUltraRare(l: RecipeLine): boolean {
-    if (l.goodYear.trim() !== '') return false; // a pin never reaches the pool
-    return l.good === 'Ultra Rare' || l.ingredientType === 'Ultra Rare';
+  /** An `Ultra Rare` line, pinned or blank. The tier and the token share one
+   *  canonical name (§4.1), so a blank line names the tier itself.
+   *
+   *  A pin USED to disqualify a line here, on the reading that rule 1 answers
+   *  the whole question. It does not: the pin names WHICH token the recipe
+   *  needs, and the pool names WHERE that token could be bought, which are
+   *  different questions. Pooling does not change the vintage — it reads both
+   *  seasons of the SAME vintage — so §10.2's F1, which protects a pin's
+   *  vintage from being repriced, is not engaged. */
+  private isUltraRare(l: RecipeLine): boolean {
+    if (l.good === 'Ultra Rare') return true;
+    // The RESOLVED category, symmetric with isTradeGood, rather than the
+    // authored `IngredientType` alone. The same token is authored both ways in
+    // the sheet -- `Charm of Synergy` carries IngredientType=Ultra Rare on
+    // Giln's Redoubt Shield and a blank cell on Smith's Charm of Unified
+    // Synergy (Set 2) -- and reading only the cell made one recipe's copy of an
+    // ingredient take a different pricing branch from the other's. It costs
+    // nothing today, because that token has its own off-auction price and
+    // never reaches the tier, but it is the kind of divergence that is
+    // invisible until the day the off-auction row goes away.
+    return (this.prices.category(l.good, l.nominalYear) || l.ingredientType) === 'Ultra Rare';
+  }
+
+  /** The 14 trade goods, by the category the data itself carries rather than a
+   *  hardcoded list. A pattern, so a Trade 5 rung prices correctly the season
+   *  it appears rather than the season someone remembers to edit this line. */
+  private isTradeGood(l: RecipeLine): boolean {
+    return isTradeCategory(this.prices.category(l.good, l.nominalYear) || l.ingredientType);
+  }
+
+  /** Rules 3 and 4 for one Ultra Rare line: the two seasons in which its
+   *  vintage could actually have been bought, falling back to the clamp when
+   *  neither of them sold one.
+   *
+   *  Keyed on the LINE's year, not the recipe's. They are the same number on a
+   *  blank line — `resolveGoodYear('')` returns the recipe's year — so this is
+   *  unchanged for the 78 blank lines and is what makes the pinned ones work. */
+  private poolOrClamp(good: string, year: number): LeafPrice | null {
+    const pooled = this.prices.poolPrice(good, [year, year + 1]);
+    if (pooled) return pooled;
+    // Neither season sold one: every recipe before 2018, since auction data
+    // starts there. Clamp to the line's own year -- which lands on the
+    // earliest priced season -- rather than dropping through to the float.
+    // Floating here is precisely the failure D4 exists to prevent: it would
+    // put a 2014 Legendary's Ultra Rare at the 2026 price ($60) when the
+    // closest thing to that era's baseline the data holds is 2018's ($112).
+    return this.prices.leafPrice(good, year, 'full');
+  }
+
+  /** Today's market: what a player who is buying NOW actually pays. */
+  private atCurrentSeason(good: string, l: RecipeLine): { price: LeafPrice | null; floated: boolean } {
+    const season = this.prices.latestPriced;
+    return {
+      price: this.prices.leafPrice(good, season, this.variantFor(season)),
+      floated: season !== l.nominalYear,
+    };
   }
 
   /**
@@ -689,14 +791,20 @@ export class CostEngine {
    * The order below IS the rule set, and it is deliberately a chain of
    * fallbacks rather than a lookup table: whichever branch fires, a line that
    * could be priced before must still be priced after.
+   *
+   * The recipe itself is no longer a parameter: every rule here keys on the
+   * LINE (its own year, its category, its pin), and the only thing the recipe
+   * still contributes is the `status` and `window` computed from it once in
+   * `cost`. That fell out of the Shopping List work rather than being aimed
+   * at -- rule 3 used to read `recipe.year` where it meant `l.nominalYear`,
+   * which is the same number on a blank line and the wrong one on a pin.
    */
   private leafFor(
     l: RecipeLine,
-    recipe: Recipe,
     status: RecipeStatus,
     window: PricingWindow | null,
   ): { price: LeafPrice | null; floated: boolean } {
-    const direct = this.leafForGood(l.good, l, recipe, status, window);
+    const direct = this.leafForGood(l.good, l, status, window);
     if (direct.price) return direct;
 
     // A line naming a specific member of an auctioned tier falls back to the
@@ -705,7 +813,7 @@ export class CostEngine {
     // without changing what it CHARGES, and it cannot unprice a line.
     const proxy = TIER_PROXY[l.ingredientType];
     if (proxy && proxy !== l.good) {
-      const viaTier = this.leafForGood(proxy, l, recipe, status, window);
+      const viaTier = this.leafForGood(proxy, l, status, window);
       if (viaTier.price) return { ...viaTier, price: { ...viaTier.price, pricedAs: proxy } };
     }
     return direct;
@@ -715,14 +823,21 @@ export class CostEngine {
   private leafForGood(
     good: string,
     l: RecipeLine,
-    recipe: Recipe,
     status: RecipeStatus,
     window: PricingWindow | null,
   ): { price: LeafPrice | null; floated: boolean } {
     // 1. An explicit ItemYear is a pin and never floats (34 lines). A pin
     //    names a season on purpose, so neither the float nor the window may
     //    override it -- that would make authoring the cell meaningless.
-    if (l.goodYear.trim() !== '')
+    //    An Ultra Rare pin is the exception, and falls through to the Ultra
+    //    Rare rules below: the pin says WHICH token the recipe needs, and
+    //    those rules say WHERE that token can be bought, which is a different
+    //    question and the only one a price can answer. Neither of them changes
+    //    the vintage, so F1 -- which exists to stop a pin being repriced into
+    //    a different token -- is not engaged. A pinned Ultra Rare therefore
+    //    prices exactly as a blank one of the same vintage does; the pin still
+    //    wins outright for the 24 pinned lines that are not Ultra Rare.
+    if (l.goodYear.trim() !== '' && !this.isUltraRare(l))
       return { price: this.prices.leafPrice(good, l.nominalYear, this.variantFor(l.nominalYear)), floated: false };
 
     // 1b. Phase 7: an explicit price year replaces the RECIPE's basis -- both
@@ -735,7 +850,10 @@ export class CostEngine {
     //    ABOVE the Ultra Rare pool, which now follows immediately: the pool is
     //    what a UR resolves to when the basis is the recipe's own era, and here
     //    the reader has named a season instead, so the pool collapses into it.
-    if (this.priceYear !== null) {
+    //    Gated on the line being unpinned, which the branch above used to do
+    //    by short-circuiting. A pinned Ultra Rare now reaches this point, and
+    //    F1 still says its vintage is not the reader's to move.
+    if (this.priceYear !== null && l.goodYear.trim() === '') {
       const p = this.prices.leafPrice(good, this.priceYear, this.variantFor(this.priceYear));
       // No `floated`: floating is the D3 story about an active recipe drifting
       // to today, and per-line tags are deviation-only (§10.6.6). Under a
@@ -746,40 +864,79 @@ export class CostEngine {
       // that could be priced before must still be priced after.
     }
 
-    // 3. A blank Ultra Rare line pools its recipe year and the next (D4) --
-    //    what a UR resolves to when the basis is "today", holding the era's
-    //    baseline while the trade goods around it float.
+    // S2/3/4. THE ULTRA RARE RULES, in vintage order. Applied as one set to
+    //    every Ultra Rare line, pinned or blank, because they answer a single
+    //    question -- where can a token of this vintage actually be bought --
+    //    and splitting them by how the year was authored made a pinned 2025
+    //    line pool while a blank 2025 line read the current season.
     //
-    //    This sits ABOVE the window, and applies whatever the recipe's status,
-    //    because the two rules answer different questions and only the pool can
-    //    answer this one. The window asks WHEN you could buy an ingredient, and
-    //    for a 2022 Relic that is 2021-11-06 to 2023-11-24 -- correct, and
-    //    correct for trade goods, which have no vintage: an Oct-2023 auction is
-    //    a real chance to buy a Darkwood Plank and craft before the 1 Dec 2023
-    //    deadline. A UR is not fungible that way. Seasons run autumn to autumn,
-    //    so by Nov 2023 season 2024 is two months into selling, and its URs
-    //    redeem for a 2024 or 2023 token -- never the 2022 one this recipe
-    //    names (§3.4c). A date filter cannot see that; only the season can.
+    //    S2: a vintage that is STILL IN PRINT prices at the current season
+    //    (27 lines). "In print" is `nominalYear >= latestPriced - 1`, from the
+    //    same domain rule the pool rests on: a season-Y token is obtainable
+    //    from season Y or Y+1. Read forwards, a 2025 token is still coming out
+    //    of season 2026's lots, so it is on sale right now and today's price
+    //    IS its price. Pooling it would average today's market with a closed
+    //    season's for something you can buy this afternoon.
+    if (this.isUltraRare(l)) {
+      //    S2 is gated on the basis, and the pool beneath it is NOT. That is
+      //    the difference between the two questions: "is this token on sale
+      //    now" is only asked when the reader is buying now, while "which two
+      //    seasons could this vintage ever have come from" is a fact about the
+      //    token and is true under either basis (#137).
+      if (this.basis === 'today' && l.nominalYear >= this.prices.latestPriced - 1) {
+        const { price, floated } = this.atCurrentSeason(good, l);
+        if (price) return { price, floated };
+      }
+      //    S3: an out-of-print vintage pools its own year and the next (D4),
+      //    holding the era's baseline while the trade goods around it float.
+      //    S4, beneath it in poolOrClamp, is the pre-2018 clamp.
+      //
+      //    The pool sits ABOVE the expired window, and applies whatever the
+      //    recipe's status, because the two answer different questions and
+      //    only the pool can answer this one. The window asks WHEN you could
+      //    buy an ingredient, and for a 2022 Relic that is 2021-11-06 to
+      //    2023-11-24 -- correct, and correct for trade goods, which have no
+      //    vintage. A UR is not fungible that way. Seasons run autumn to
+      //    autumn, so by Nov 2023 season 2024 is two months into selling, and
+      //    its URs redeem for a 2024 or 2023 token -- never the 2022 one this
+      //    recipe names (§3.4c). A date filter cannot see that; only the
+      //    season can.
+      //
+      //    §10.2 used to claim the window "already spans Y -> Y+1, so the
+      //    two-year UR rule is satisfied by the window itself". It spans them,
+      //    but it does not STOP there -- measured, every expired window from
+      //    2018 on admits a third season, 20 of season 2024's 41 auctions in
+      //    the 2022 case. Sufficiency was mistaken for exactness. The pool is
+      //    a strict subset of the window in every year (0 pooled sales fall
+      //    outside), so reading it first only ever drops sales that could not
+      //    have produced the token; no line priced before is unpriced now.
+      const p = this.poolOrClamp(good, l.nominalYear);
+      if (p) return { price: p, floated: false };
+    }
+
+    // S1. A TRADE GOOD prices at the current season, whatever the recipe's
+    //    own era (1,736 lines; 1,125 of them on a recipe you can still make).
+    //    This is the Shopping List's founding rule and it is not a view
+    //    preference: a trade good has no vintage at all -- an Alchemist's Ink
+    //    is an Alchemist's Ink -- so there is no sense in which the 2019 one
+    //    is the one a 2019 recipe needs. Whoever is reading, the only Ink they
+    //    can obtain is the one on sale now, at the price it is on sale for.
     //
-    //    §10.2 used to claim the window "already spans Y -> Y+1, so the
-    //    two-year UR rule is satisfied by the window itself". It spans them,
-    //    but it does not STOP there -- measured, every expired window from 2018
-    //    on admits a third season, 20 of season 2024's 41 auctions in the 2022
-    //    case. Sufficiency was mistaken for exactness. The pool is a strict
-    //    subset of the window in every year (0 pooled sales fall outside), so
-    //    reading it first only ever drops sales that could not have produced
-    //    the token; no line that was priced before is unpriced now.
-    if (this.isPoolableUltraRare(l)) {
-      const pooled = this.prices.poolPrice(good, [recipe.year, recipe.year + 1]);
-      if (pooled) return { price: pooled, floated: false };
-      // Neither season sold one: every recipe before 2018, since auction data
-      // starts there. Clamp to the recipe's own year -- which lands on the
-      // earliest priced season -- rather than dropping through to the float.
-      // Floating here is precisely the failure D4 exists to prevent: it would
-      // put a 2014 Legendary's Ultra Rare at the 2026 price ($60) when the closest
-      // thing to that era's baseline the data holds is 2018's ($112).
-      const clamped = this.prices.leafPrice(good, recipe.year, 'full');
-      if (clamped) return { price: clamped, floated: false };
+    //    It sits ABOVE the expired window and the future clamp, which is the
+    //    whole point (D1a): both of those answer "what did this cost then",
+    //    and for a fungible good "then" is not a property of the ingredient.
+    //    It sits BELOW the pin, because a pinned trade good would be a
+    //    deliberate authoring act -- there are zero today, and the new test
+    //    suite asserts the 14-goods-one-price guarantee directly rather than
+    //    resting it on this ordering.
+    //    Gated on the basis: under 'era' a trade good falls through to the
+    //    expired window or the forward clamp below, which is what the Recipes
+    //    view's historical section is for. Under 'today' it is the rule that
+    //    makes an expired recipe's bill of materials something you could
+    //    actually go and buy.
+    if (this.basis === 'today' && this.isTradeGood(l)) {
+      const { price, floated } = this.atCurrentSeason(good, l);
+      if (price) return { price, floated };
     }
 
     // 2. On an expired recipe the date window governs every remaining line --
@@ -820,7 +977,7 @@ export class CostEngine {
         level: recipe.level, lines: [], ownAvg: 0, ownMin: 0, sourceAvg: 0, sourceMin: 0,
         fullAvg: 0, fullMin: 0, hasSource: false, unpricedLines: 0, estimate: true,
         ceiling: false, cycle: true, marketAvg: null, marketMin: null,
-        status: 'active', window: null, expires: null, priceYear: this.priceYear,
+        status: 'active', window: null, expires: null, priceYear: this.priceYear, basis: this.basis,
       };
     }
     this.visiting.add(memoKey);
@@ -883,7 +1040,7 @@ export class CostEngine {
         if (sub.unpricedLines) unpriced += sub.unpricedLines;
         if (base.seasonMapped) base.note = `built from the ${sub.year} recipe`;
       } else {
-        const { price: p, floated } = this.leafFor(l, recipe, status, window);
+        const { price: p, floated } = this.leafFor(l, status, window);
         if (p) {
           base.source = p.source;
           base.pricedYear = p.pricedYear;
@@ -952,6 +1109,7 @@ export class CostEngine {
       window,
       expires: expiryOf(recipe),
       priceYear: this.priceYear,
+      basis: this.basis,
       ceiling: anyCeiling,
       cycle: anyCycle,
       marketAvg: market ? market.stats.avg : null,
