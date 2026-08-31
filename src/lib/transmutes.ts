@@ -611,6 +611,10 @@ export type BuildCost = {
   // Accuracy release (§10). `status` decides the pricing basis: active and
   // future recipes price at today's prices, expired ones over `window`.
   status: RecipeStatus;
+  /** The basis this cost was computed on, so a view can say so in prose
+   *  rather than inferring it from `status` -- which is what the notes used to
+   *  do, and what made them go stale the moment the rules changed. */
+  basis: PricingBasis;
   window: PricingWindow | null;
   expires: string | null; // resolved expiry date; null = never expires
   // Phase 7. The season every unpinned line was priced from, when the reader
@@ -618,6 +622,30 @@ export type BuildCost = {
   // bill of materials rather than tagging every line (§10.6.6).
   priceYear: number | null;
 };
+
+/**
+ * Which market a recipe is priced against — the axis the Recipes view's
+ * "Price data from" control selects, and the one thing that decides whether an
+ * expired recipe answers "what did this cost when it was craftable" or "what
+ * would it cost me to buy now".
+ *
+ *   'today'  everything at the current season, EXCEPT tokens that can no
+ *            longer be bought at all: an out-of-print Ultra Rare keeps its own
+ *            vintage's market, because quoting it at today's price would claim
+ *            you can buy a 2012 Ultra Rare for $59.50 and you cannot.
+ *   'era'    each recipe on its own basis -- today's prices while it is still
+ *            craftable, its build window once it has expired, a forward
+ *            estimate while it is still a preview.
+ *
+ * Note this is NOT the same axis as `priceYear`. Pinning 2026 prices every
+ * unpinned line from season 2026 including the ones that season never sold;
+ * 'today' moves only what is actually purchasable now. Measured, they differ
+ * on 150 lines worth $4,781.56, 90 of them Ultra Rares.
+ *
+ * Orthogonal again to `recentPrices`, which chooses the SAMPLE inside a season
+ * rather than the season.
+ */
+export type PricingBasis = 'today' | 'era';
 
 export type CostOptions = {
   /** Use each season's last-5-auctions window where available. Applies to any
@@ -628,6 +656,12 @@ export type CostOptions = {
   /** 'YYYY-MM-DD'. Injectable so tests and the harness can pin a date; the
    *  app leaves it to the viewer's own clock. */
   today?: string;
+  /** Which market to price against. Defaults to 'today', because that is the
+   *  question the Build Calculator and the Shopping List both ask and it is
+   *  already what D3 does for the 91 active recipes. The Recipes view passes
+   *  'era' explicitly: 41% of what it lists is expired, and that section
+   *  exists to show what a build cost while it was possible. */
+  basis?: PricingBasis;
   /** Phase 7 (§3.6). A season to price every UNPINNED line from, replacing the
    *  basis the recipe's own status would have chosen. null = Auto, the natural
    *  basis. Prices only (F2): status, windows, badges and the recipe list all
@@ -648,12 +682,14 @@ export class CostEngine {
   private recentPrices: boolean;
   private today: string;
   private priceYear: number | null;
+  private basis: PricingBasis;
 
   constructor(recipes: Recipe[], prices: PriceIndex, opts: CostOptions = {}) {
     this.prices = prices;
     this.recentPrices = opts.recentPrices ?? false;
     this.today = opts.today ?? todayISO();
     this.priceYear = opts.priceYear ?? null;
+    this.basis = opts.basis ?? 'today';
     for (const r of recipes) {
       this.recipes.set(r.key, r);
       this.byName.set(r.transmute, [...(this.byName.get(r.transmute) ?? []), r.year]);
@@ -842,7 +878,12 @@ export class CostEngine {
     //    IS its price. Pooling it would average today's market with a closed
     //    season's for something you can buy this afternoon.
     if (this.isUltraRare(l)) {
-      if (l.nominalYear >= this.prices.latestPriced - 1) {
+      //    S2 is gated on the basis, and the pool beneath it is NOT. That is
+      //    the difference between the two questions: "is this token on sale
+      //    now" is only asked when the reader is buying now, while "which two
+      //    seasons could this vintage ever have come from" is a fact about the
+      //    token and is true under either basis (#137).
+      if (this.basis === 'today' && l.nominalYear >= this.prices.latestPriced - 1) {
         const { price, floated } = this.atCurrentSeason(good, l);
         if (price) return { price, floated };
       }
@@ -888,7 +929,12 @@ export class CostEngine {
     //    deliberate authoring act -- there are zero today, and the new test
     //    suite asserts the 14-goods-one-price guarantee directly rather than
     //    resting it on this ordering.
-    if (this.isTradeGood(l)) {
+    //    Gated on the basis: under 'era' a trade good falls through to the
+    //    expired window or the forward clamp below, which is what the Recipes
+    //    view's historical section is for. Under 'today' it is the rule that
+    //    makes an expired recipe's bill of materials something you could
+    //    actually go and buy.
+    if (this.basis === 'today' && this.isTradeGood(l)) {
       const { price, floated } = this.atCurrentSeason(good, l);
       if (price) return { price, floated };
     }
@@ -931,7 +977,7 @@ export class CostEngine {
         level: recipe.level, lines: [], ownAvg: 0, ownMin: 0, sourceAvg: 0, sourceMin: 0,
         fullAvg: 0, fullMin: 0, hasSource: false, unpricedLines: 0, estimate: true,
         ceiling: false, cycle: true, marketAvg: null, marketMin: null,
-        status: 'active', window: null, expires: null, priceYear: this.priceYear,
+        status: 'active', window: null, expires: null, priceYear: this.priceYear, basis: this.basis,
       };
     }
     this.visiting.add(memoKey);
@@ -1063,6 +1109,7 @@ export class CostEngine {
       window,
       expires: expiryOf(recipe),
       priceYear: this.priceYear,
+      basis: this.basis,
       ceiling: anyCeiling,
       cycle: anyCycle,
       marketAvg: market ? market.stats.avg : null,

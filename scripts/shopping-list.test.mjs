@@ -414,6 +414,102 @@ check('the last-5 toggle moves trade goods on expired recipes too, not just acti
 check('and no line loses its price under the toggle',
   recentCosts.flatMap((c) => c.lines).every((l) => l.unitAvg !== null));
 
+// =========================================================================
+console.log('\n=== 8. the pricing basis ===');
+
+const era = new CostEngine(recipes, prices, { today: TODAY, basis: 'era' });
+const eraCosts = recipes.map((r) => era.cost(r.transmute, r.year)).filter(Boolean);
+const eraLines = eraCosts.flatMap((c) => c.lines.map((l) => ({ c, l })));
+const eraByKey = new Map(eraCosts.map((c) => [c.key, c]));
+
+check("'today' is the engine default — the Shopping List and calculator never have to ask",
+  new CostEngine(recipes, prices, { today: TODAY }).cost('Deathward Greaves', 2026).basis === 'today');
+check('a cost carries the basis it was computed on, so a view can state it in prose',
+  eraByKey.get('2026|Deathward Greaves').basis === 'era');
+
+// The point of 'era': the Recipes view's historical section keeps answering
+// "what did this cost when it was craftable".
+const eraExpiredTrade = eraLines.filter(({ c, l }) => c.status === 'expired' && isTradeCategory(l.category));
+// 469 of the 611 land on the window itself. The other 142 belong to the 12
+// pre-2018 recipes, whose windows (2012-01-01 .. 2013-11-24 and friends) hold
+// no auctions at all, so they fall back to the season path — documented
+// behaviour, and the reason this asserts "not the current season" rather than
+// "windowed", which would have been the tidier claim and the wrong one.
+check("under 'era' NO expired trade good is priced from the current season",
+  eraExpiredTrade.length === 611 && eraExpiredTrade.every(({ l }) => l.pricedYear !== L),
+  `${eraExpiredTrade.filter(({ l }) => l.pricedYear === L).length} of ${eraExpiredTrade.length} still on ${L}`);
+check("...469 of them over the build window, the rest on the pre-2018 fallback",
+  eraExpiredTrade.filter(({ l }) => l.basis === 'window').length === 469,
+  eraExpiredTrade.filter(({ l }) => l.basis === 'window').length);
+check("...and under 'today' every one of the 611 IS on the current season",
+  expiredTrade.every(({ l }) => l.basis !== 'window' && l.pricedYear === L));
+
+// The 2027 preview keeps its forward last-5 estimate under 'era' (consequence
+// B), which needs S2 gated as well as S1 — 8 of the 12 future recipes' Ultra
+// Rare lines are in-print 2027s and would otherwise take S2.
+const eraFuture = eraCosts.filter((c) => c.status === 'future');
+const nowFuture = costs.filter((c) => c.status === 'future');
+const total = (cs) => cs.reduce((t, c) => t + c.fullAvg, 0);
+check("under 'era' the 2027 preview keeps its forward last-5 estimate",
+  eraFuture.flatMap((c) => c.lines).some((l) => l.variant === 'last5') &&
+  !nowFuture.flatMap((c) => c.lines).some((l) => l.variant === 'last5'),
+  `era ${eraFuture.flatMap((c) => c.lines).filter((l) => l.variant === 'last5').length} last5 lines, ` +
+  `today ${nowFuture.flatMap((c) => c.lines).filter((l) => l.variant === 'last5').length}`);
+check("...so the two bases really do disagree about it",
+  Math.abs(total(eraFuture) - total(nowFuture)) > 500,
+  `era ${money(total(eraFuture))} vs today ${money(total(nowFuture))}`);
+
+// How far the basis actually REACHES. An active recipe's own trade goods are
+// identical either way — D3 already floats them to today — but its TOTAL can
+// still move, and pinning the mechanism matters because the tempting summary
+// ("the control only touches expired recipes") is false.
+const activeTrade = costs.filter((c) => c.status === 'active')
+  .flatMap((c) => c.lines.map((l, i) => ({ l, e: eraByKey.get(c.key).lines[i] })))
+  .filter(({ l }) => isTradeCategory(l.category));
+check("an ACTIVE recipe's own trade goods are identical under both bases — all 1,014",
+  activeTrade.length === 1014 && activeTrade.every(({ l, e }) => l.unitAvg === e.unitAvg),
+  `${activeTrade.filter(({ l, e }) => l.unitAvg !== e.unitAvg).length} of ${activeTrade.length} differ`);
+
+const activeDiff = costs.filter((c) => c.status === 'active')
+  .filter((c) => !near(c.fullAvg, eraByKey.get(c.key).fullAvg, 0.005));
+const activeLineDiff = costs.filter((c) => c.status === 'active')
+  .flatMap((c) => c.lines.map((l, i) => ({ l, e: eraByKey.get(c.key).lines[i] })))
+  .filter(({ l, e }) => l.unitAvg !== e.unitAvg);
+check('...but 49 of the 91 still move, through an expired SUB-RECIPE or an in-print Ultra Rare',
+  activeDiff.length === 49 &&
+  activeLineDiff.filter(({ l }) => l.source === 'build').length === 42 &&
+  activeLineDiff.filter(({ l }) => l.source !== 'build').length === 13,
+  `${activeDiff.length} recipes; ${activeLineDiff.filter(({ l }) => l.source === 'build').length} sub-builds, ` +
+  `${activeLineDiff.filter(({ l }) => l.source !== 'build').length} leaf lines`);
+check('...and every one of those leaf lines is an in-print Ultra Rare, which is S2 answering to the basis',
+  activeLineDiff.filter(({ l }) => l.source !== 'build')
+    .every(({ l }) => isUR(l) && l.nominalYear >= L - 1),
+  activeLineDiff.filter(({ l }) => l.source !== 'build').slice(0, 4)
+    .map(({ l, e }) => `${l.good} ${l.nominalYear}: ${money(l.unitAvg)} vs ${money(e.unitAvg)}`).join('\n'));
+
+// The basis is NOT the year pin. Pinning the latest season quotes it for
+// tokens that season never sold; 'today' moves only what is purchasable.
+const pinLatest = new CostEngine(recipes, prices, { today: TODAY, priceYear: L });
+let pinDiff = 0, pinDiffUR = 0;
+for (const c of costs) {
+  const p = pinLatest.cost(c.transmute, c.year);
+  c.lines.forEach((l, i) => {
+    if (l.unitAvg === p.lines[i].unitAvg) return;
+    pinDiff++;
+    if (isUR(l)) pinDiffUR++;
+  });
+}
+check(`"today's prices" is NOT "${L} prices" — they differ on 150 lines, 90 of them Ultra Rares`,
+  pinDiff === 150 && pinDiffUR === 90, `${pinDiff} lines, ${pinDiffUR} Ultra Rare`);
+check('...and the difference is the right way round: the pin under-quotes what you cannot buy',
+  costs.flatMap((c) => c.lines.map((l, i) => ({ l, p: pinLatest.cost(c.transmute, c.year).lines[i] })))
+    .filter(({ l, p }) => isUR(l) && l.unitAvg !== p.unitAvg)
+    .every(({ l, p }) => p.unitAvg < l.unitAvg));
+
+// Neither basis may cost a line its price.
+check('no line loses its price under either basis',
+  eraLines.every(({ l }) => l.unitAvg !== null) && allLines.every(({ l }) => l.unitAvg !== null));
+
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — shoppingList: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

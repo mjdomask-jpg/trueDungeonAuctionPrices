@@ -261,11 +261,19 @@ export function TransmuteRow({
               the year they were priced from.
             </p>
           )}
-          {cost.priceYear === null && cost.status === 'expired' && cost.window && (
+          {cost.priceYear === null && cost.status === 'expired' && cost.basis === 'era' && cost.window && (
             <p className="tx-bom-note">
               No longer craftable. Ingredients are priced over the window this recipe could
               actually be built in — {cost.window.from} to {cost.window.to} — rather than at
               today's prices, which nobody could have paid for it.
+            </p>
+          )}
+          {cost.priceYear === null && cost.status === 'expired' && cost.basis === 'today' && (
+            <p className="tx-bom-note">
+              No longer craftable, but priced at <b>today's</b> prices — what these ingredients
+              would cost you now, not what they cost while this was buildable. A trade good has
+              no vintage, so the only Darkwood Plank anyone can buy is this year's. Tokens that
+              are no longer sold keep their own market and say so on the line.
             </p>
           )}
           {cost.priceYear === null && cost.status === 'active' && cost.lines.some((l) => l.floated) && (
@@ -276,9 +284,12 @@ export function TransmuteRow({
           )}
           {cost.lines.some((l) => l.category === 'Ultra Rare') && (
             <p className="tx-bom-note">
-              Ultra Rares priced at the auction average for
-              {cost.priceYear === null ? ' the transmute window' : ` ${cost.priceYear}`}. Secondary
-              market prices for specific Ultra Rares may vary.
+              {cost.priceYear !== null
+                ? `Ultra Rares priced at ${cost.priceYear}'s auction average.`
+                : 'Ultra Rares are priced over the two seasons a token of that vintage could ' +
+                  'have been won in, or at this season\u2019s average while it is still in print. ' +
+                  'Each line names which.'}{' '}
+              Secondary market prices for specific Ultra Rares may vary.
             </p>
           )}
           {cost.marketAvg != null && (

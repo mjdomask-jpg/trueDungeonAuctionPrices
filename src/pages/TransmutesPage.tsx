@@ -8,6 +8,7 @@ import { PageIntro } from '../components/PageIntro';
 import { HintPopover } from '../components/HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
+import type { PricingBasis } from '../lib/transmutes';
 
 // Transmutes / build-vs-buy. Two views behind a toggle:
 //   Recipes (Phase 4) — every craftable token's estimated build cost, priced
@@ -28,11 +29,24 @@ export default function TransmutesPage() {
   });
   const calculator = view === 'calculator';
   const [recentPrices, setRecentPrices] = useState(false);
-  // Phase 7 (§3.6). null = Auto: every recipe on its natural basis, active at
-  // today's prices and expired over its build window. A season pins all of
-  // them to that season instead. Recipes view only (F3) — the calculator is a
-  // "what do I still owe on this build" tool, so it always asks today.
-  const [priceYear, setPriceYear] = useState<number | null>(null);
+  // One control, three answers, because they are three answers to ONE question
+  // — which market is this priced against — and splitting them across two
+  // widgets would let a reader set a combination that means nothing.
+  //
+  //   'era'    each recipe on its own basis: today's prices while it is still
+  //            craftable, its build window once expired. The default, because
+  //            41% of what this view lists is expired and that section exists
+  //            to show what a build cost while it was possible.
+  //   'today'  everything at the current market, except tokens that can no
+  //            longer be bought at all. NOT the same as pinning the latest
+  //            season: that would quote a 2012 Ultra Rare at the 2026 price.
+  //   number   Phase 7 (§3.6) — every unpinned line from one named season.
+  //
+  // Recipes view only (F3). The calculator is a "what do I still owe on this
+  // build" tool, so it always asks today.
+  const [pricing, setPricing] = useState<PricingBasis | number>('era');
+  const priceYear = typeof pricing === 'number' ? pricing : null;
+  const basis: PricingBasis = pricing === 'today' ? 'today' : 'era';
   // Phase 9. One control for the whole list rather than 43 of them: on this
   // view the reader is scanning recipes, not building one, and the question
   // "what do these cost if I pay in Gold Bars" is asked of all of them at once.
@@ -47,6 +61,7 @@ export default function TransmutesPage() {
   const { engine, loading, error, ready } = useCostEngine({
     recentPrices,
     priceYear: calculator ? null : priceYear,
+    basis: calculator ? 'today' : basis,
   });
 
   const seasons = useMemo(() => (engine ? engine.seasons() : []), [engine]);
@@ -77,7 +92,9 @@ export default function TransmutesPage() {
     if (year < earliestPriced)
       return `Estimated — no auction data before ${earliestPriced}, so these costs are priced from ${earliestPriced} data`;
     if (year > latestPriced)
-      return `Preview — priced from ${latestPriced} recent sales; costs will firm up as ${year} auctions close.`;
+      return basis === 'today'
+        ? `Preview — priced at ${latestPriced} prices, because that is the only market there is for it yet; costs will firm up as ${year} auctions close.`
+        : `Preview — priced from ${latestPriced} recent sales; costs will firm up as ${year} auctions close.`;
     return undefined;
   };
 
@@ -113,6 +130,11 @@ export default function TransmutesPage() {
   const pricedSeasons = engine ? engine.prices.pricedSeasons : [];
   const showRecentToggle =
     calculator || priceYear === null || priceYear >= (engine?.prices.latestPriced ?? 0);
+  // Under 'era' an expired recipe is priced over a date window, which is its
+  // own aggregation and has no last-5 reading; the toggle still governs the
+  // active and future recipes above it, so it stays — but the hint has to stop
+  // promising it reaches everything.
+  const recentReachesAll = basis === 'today' || calculator;
 
   // The one option BOTH views answer to, so it is declared once and rendered in
   // each. It governs the calculator whether or not it is on screen there — the
@@ -127,10 +149,15 @@ export default function TransmutesPage() {
       <span className="toggle-label">
         Today's prices from
         <HintPopover label="About the price basis">
-          Recipes you can still craft are priced at <b>today's</b> prices. This picks what
-          “today” means: the whole current season, or just its <b>last five auctions</b>,
-          which reacts faster when a trade good is moving. Expired recipes ignore it —
-          they are priced over the window they could actually be built in.
+          This picks what “today” means: the whole current season, or just its <b>last five
+          auctions</b>, which reacts faster when a trade good is moving.
+          {recentReachesAll ? (
+            <> It reaches every recipe, because they are all priced against today's market.</>
+          ) : (
+            <> Recipes you can still craft are priced at <b>today's</b> prices, so it moves
+              those. Expired recipes ignore it — they are priced over the window they could
+              actually be built in.</>
+          )}
         </HintPopover>
       </span>
       <div className="toggle-buttons">
@@ -192,21 +219,36 @@ export default function TransmutesPage() {
         <div className="toggle price-year">
           <span className="toggle-label">
             <label htmlFor="price-year">Price data from</label>
-            <HintPopover label="About pricing everything from one season">
-              By default each recipe is priced on its own basis — <b>today's</b> prices if you
-              can still craft it, its <b>build window</b> if it has expired. Pick a season to
-              price every recipe from that season's auctions instead, which is how you compare
-              what a build cost then against what it costs now. Ingredients a recipe pins to a
-              particular season (an Ultra Rare from the year before, a named older token) keep
-              that season, and say so on the line.
+            <HintPopover label="About which market recipes are priced against">
+              <b>Each recipe's own era</b> prices every recipe on its own basis — today's
+              prices if you can still craft it, the <b>build window</b> it could actually be
+              built in if it has expired. That is what a build cost at the time.
+              <br /><br />
+              <b>Today's prices</b> asks the other question: what would it cost to buy these
+              ingredients now. Trade goods have no vintage, so an expired recipe's Darkwood
+              Planks are simply today's Darkwood Planks. Tokens you can no longer buy at all —
+              an out-of-print Ultra Rare — keep their own market, because nobody can buy a
+              2012 Ultra Rare at this year's price.
+              <br /><br />
+              Picking a <b>season</b> prices every recipe from that season's auctions instead,
+              which is how you compare what a build cost then against now. Unlike the two
+              above it will quote a season for tokens that season never sold.
+              <br /><br />
+              Ingredients a recipe pins to a particular season (an Ultra Rare from the year
+              before, a named older token) keep that season under every setting, and say so on
+              the line.
             </HintPopover>
           </span>
           <select
             id="price-year"
-            value={priceYear ?? 'auto'}
-            onChange={(e) => setPriceYear(e.target.value === 'auto' ? null : Number(e.target.value))}
+            value={pricing}
+            onChange={(e) => {
+              const v = e.target.value;
+              setPricing(v === 'today' || v === 'era' ? v : Number(v));
+            }}
           >
-            <option value="auto">Auto (each recipe)</option>
+            <option value="era">Each recipe's own era</option>
+            <option value="today">Today's prices</option>
             {[...pricedSeasons].reverse().map((y) => (
               <option key={y} value={y}>{y} prices</option>
             ))}
@@ -222,7 +264,7 @@ export default function TransmutesPage() {
   // filtered list reads as the full one (same reason FilterBar counts).
   const activeOptions =
     (activeOnly ? 1 : 0) + (path !== DEFAULT_PATH ? 1 : 0) +
-    (recentPrices && showRecentToggle ? 1 : 0) + (priceYear !== null ? 1 : 0);
+    (recentPrices && showRecentToggle ? 1 : 0) + (pricing !== 'era' ? 1 : 0);
 
   if (error) return <p className="err">Failed to load data: {error}</p>;
   if (loading) return <p className="empty">Loading auction data…</p>;
