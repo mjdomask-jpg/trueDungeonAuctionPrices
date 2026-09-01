@@ -201,9 +201,10 @@ open the live site and confirm your change is visible.
 
 ## Watching for new auctions
 
-`apps-script/auctionOpen.gs` watches the two places an 8K auction opens —
-Trent's shop page and the forum's two auction categories — and proposes the
-`auctionMetadata` row each new one needs. It replaces checking the forum by
+`apps-script/auctionOpen.gs` watches the three places an 8K auction opens —
+Trent's shop page, the forum's two auction categories, and
+**[alesievauctions.com](https://alesievauctions.com/auctions)** — and proposes
+the `auctionMetadata` row each new one needs. It replaces checking the forum by
 hand, and it removes the two mistakes that come with typing a row from scratch:
 a reused `auctionNumber`, and an `openDate` remembered rather than read.
 
@@ -224,6 +225,41 @@ auction and a great many threads about rules and Gen Con — so a topic there is
 only looked at if its title says 8K, condensed or Onyx. Without that a scan
 returns fourteen threads of noise every time. Each scan reports how many it
 skipped for that reason.
+
+### The auction site is a different kind of source
+
+**alesievauctions.com is not read the way the other two are, and the difference
+shows up in your work.** It is a purpose-built auction site: it renders one card
+per auction out of its own database, and the things you otherwise have to type —
+the style, whether it is Lightning, whether it is augmented, the target — are
+*chips on the card* rather than words in a title. So for this source the scan
+**fills those four columns in** instead of leaving them blank.
+
+That is not a change of policy. The forum's four stay blank because guessing
+them from a thread title is measurably bad, and a badge the site ticks is not a
+guess. Where the evidence goes back to being as weak as the forum's, so does the
+behaviour: a badge that is missing, ambiguous or contradicts its own label
+leaves the cell **blank with a note**, exactly as a thread title does.
+
+Three more things worth knowing:
+
+- **Every card is a candidate.** There is no equivalent of category 584's
+  charity auctions and eBay listings, so nothing is triaged. The title is still
+  checked for the phrases that matter (charity, cancelled, pre-order, Golden
+  Ticket) and they appear in `notes`.
+- **One fetch, no per-auction pages.** Everything a row needs is on the listing.
+- **The `Ends:` line is deliberately ignored.** It is the *scheduled* end;
+  `closeDate` is when the auction actually closed, and they differ whenever an
+  auction is extended, ends early on funding, or fails. It goes in `notes`. A
+  blank `closeDate` is also what makes `Status` compute `Open`.
+
+> **If a scan reports "NO auction cards were found", do not read that as "no new
+> auctions".** The page is server-rendered today, which is the only reason this
+> works at all — Apps Script runs no JavaScript, so a site that switched to
+> rendering its cards in the browser would come back as an empty shell that
+> parses to nothing and looks exactly like a quiet week. That is why the scan
+> says the page was fetched, how big it was, and that it found nothing, rather
+> than staying silent.
 
 ### Installing it (once)
 
@@ -247,8 +283,9 @@ being asked.
 
 **Extensions → TD auctions → Scan for new auctions…**
 
-It fetches Trent's page and both category feeds, then a page for each forum
-topic it has not seen, and rewrites `auctionOpenReview`. The summary says what
+It fetches Trent's page, both category feeds and the auction site's listing,
+then a page for each forum topic it has not seen, and rewrites
+`auctionOpenReview`. The summary says what
 it proposed and what it skipped. Nothing else has changed.
 
 Then, in `auctionOpenReview`:
@@ -257,6 +294,8 @@ Then, in `auctionOpenReview`:
    mentions 8K, condensed or Onyx; `no 8K signal` means it does not — which is
    *not* the same as "not an auction". Seven of the recorded auctions would read
    `no 8K signal` today, because their titles were edited after they closed.
+   Rows from **alesievauctions.com** are always `candidate`; the `source`
+   column says which source a row came from.
 2. **Fill in `auctionStyle`, `completionStyle`, `augmentated` and
    `targetFunding`.** The scan leaves these blank for forum auctions on purpose.
    Guessing them from the thread title was measured and it is not good enough:
@@ -266,6 +305,22 @@ Then, in `auctionOpenReview`:
    are recorded as `Ultra Condensed`. A wrong value you skim past is worse than
    a blank one you have to fill. The phrases it found are in `notes` as
    evidence.
+
+   **For alesievauctions.com rows these arrive filled in from the card's
+   badges** — `Onyx` gives `Onyx Ultra Condensed` and anything else gives the
+   `Ultra Condensed` baseline, a `Lightning` badge gives `Lightning` and its
+   absence `Fixed Date`, the `Augmented` badge gives `augmentated`, and the
+   `Target` line gives `targetFunding`. Read `notes` anyway: any of them can
+   still come through blank, and when one does the note says which shape on the
+   page it could not read. Trent's four are prefilled too, from his 111 recorded
+   rows rather than from the page.
+
+   > **A rescan does not overwrite these four once they hold anything.** That
+   > protects what you typed — but it also means a prefilled value from an
+   > earlier scan is kept even if the site has since changed. When the two
+   > differ the row's `notes` say so, beginning **KEPT WHAT THIS TAB ALREADY
+   > HELD**; the tab still wins, so if the page is the one that is right, clear
+   > the cell and rescan.
 3. **Check the `season`.** `notes` says where it came from. `from the title` and
    `from the season running on <date>` are both solid — the second one asks which
    recorded season was open on that date, and seasons never overlap.
@@ -275,7 +330,9 @@ Then, in `auctionOpenReview`:
    hand, and seasons have started as little as **nine days** after the previous
    one's last auction), or it opened in the gap between two seasons. Either way
    the note says which, and you decide.
-4. **Check `openDate` against the `first post` time.** The date is the thread's
+4. **Check `openDate` against the `first post` time.** For an
+   alesievauctions.com row this is the card's `Starts:` date and time; for a
+   forum row it is the thread's
    first post, read from the forum's own timestamp. Of seven auctions replayed
    in the test, five match what you recorded exactly; the two that don't are a
    thread opened at 22:51 (you dated it the next day) and one of a batch you
@@ -296,9 +353,10 @@ rows already promoted stay as a record.
 |---|---|
 | `auctionNumber` | `max` of that season plus one, never `count` plus one. Failed auctions are deleted, so the numbers are sparse — 2026 is missing 3 and 38, 2025 is missing 18, 25 and 31. Counting would propose 46, which already exists. |
 | `auctionId` | The season and the number run together, the way all 289 recorded rows are built. |
-| `openDate` | The forum's exact first-post timestamp, not "5 days ago". For Trent, the start date his page states. |
-| `auctioneer` | The forum display name mapped to the name you already use — `Wade Schwendemann (Dr. Uid)` to `Wade S`, `alesiev - Alex` to `alesiev`, `Nick` to `Nick Braun`. A name it cannot map is flagged as new rather than guessed. |
-| Duplicates | A forum auction is identified by its topic id, so a renamed thread is still recognised. Trent's are identified by season and name, because all 111 of his rows share one URL and his numbering restarts each season. |
+| `openDate` | The forum's exact first-post timestamp, not "5 days ago". For Trent, the start date his page states. For the auction site, the card's `Starts:` date — its `Ends:` line is read and then deliberately not used. |
+| `auctioneer` | The forum display name — or the auction site's `Sponsor:` line — mapped to the name you already use: `Wade Schwendemann (Dr. Uid)` to `Wade S`, `alesiev - Alex` to `alesiev`, `Alesiev (Alex)` to `alesiev`, `Nick` to `Nick Braun`. A name it cannot map is flagged as new rather than guessed. |
+| `auctionStyle`, `completionStyle`, `augmentated`, `targetFunding` | For the auction site only, read from the card's badges and `Target` line. Blank with a note wherever a badge is missing or contradicts itself. Blank for forum auctions always. |
+| Duplicates | A forum auction is identified by its topic id, so a renamed thread is still recognised. An auction-site auction is identified by the id in its URL, which is the strongest of the three. Trent's are identified by season and name, because all 111 of his rows share one URL and his numbering restarts each season. |
 | The formula columns | Left alone. See below. |
 
 ### The columns it writes, and the ones it must not

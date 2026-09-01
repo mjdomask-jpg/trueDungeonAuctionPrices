@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-08-21",
+  "fetched": "2026-08-21, plus alesievauctions.com 2026-08-31",
   "note": "Verbatim pages from the two sources Phase 4 watches, gzipped because Kunena serves ~90 KB of markup for a page whose useful part is one span. The bytes are unmodified: nothing is trimmed, because the failure this guards against is a match found EARLIER in the page than the one we want, and a trimmed page cannot show that. Re-fetch from `url` if a parser stops reproducing these.",
   "trent": {
     "file": "trent-current-auction.html.gz",
@@ -13,6 +13,49 @@
     },
     "reconciles": "202643",
     "why": "One page serves every Trent auction in turn, so this fixture is whichever auction was live on the fetch date. 202643 is already recorded, which makes it the duplicate case as well: a scan against this page must propose nothing and say why."
+  },
+  "alesiev": {
+    "file": "alesiev-auctions.html.gz",
+    "url": "https://alesievauctions.com/auctions",
+    "fetched": "2026-08-31",
+    "why": "The site went live carrying exactly these two auctions and nothing else, so this fixture is the whole listing rather than a sample of it. Neither auction is in auctionMetadata yet — this is the first source whose fixture CANNOT be checked against a recorded row, because there is no recorded row to check against. What replaces that is the badge vocabulary: 'Onyx' vs 'Non-Onyx' on two otherwise identical cards is the pair the parser has to tell apart, and the styles it produces are asserted to be values auctionMetadata already uses.",
+    "note": "`Aleisev's` is the site's own spelling in both titles and is NOT a parse error. The titles are copied verbatim, typo and all, because auctionName records what the auction was called.",
+    "expect": [
+      {
+        "id": "29",
+        "title": "Aleisev's Augmented TD Con Invite Patron (8K) Onyx Option A - PRE-ORDER!",
+        "sponsor": "Alesiev (Alex)",
+        "auctioneer": "alesiev",
+        "startDate": "2026-09-19",
+        "startTime": "11:00",
+        "endDate": "2026-09-26",
+        "target": "8,000",
+        "status": "Upcoming",
+        "itemCount": "197",
+        "auctionStyle": "Onyx Ultra Condensed",
+        "completionStyle": "Lightning",
+        "augmentated": "Yes",
+        "targetFunding": "$8,000.00",
+        "why": "the Onyx card — its badge is `tag-badge tag-badge-active` and reads `Onyx`"
+      },
+      {
+        "id": "28",
+        "title": "Aleisev's Augmented TD Con Invite Patron (8K) Option B - PRE-ORDER!",
+        "sponsor": "Alesiev (Alex)",
+        "auctioneer": "alesiev",
+        "startDate": "2026-09-19",
+        "startTime": "00:00",
+        "endDate": "2026-09-26",
+        "target": "8,000",
+        "status": "Upcoming",
+        "itemCount": "163",
+        "auctionStyle": "Ultra Condensed",
+        "completionStyle": "Lightning",
+        "augmentated": "Yes",
+        "targetFunding": "$8,000.00",
+        "why": "the non-Onyx card — same sponsor, same day, same target, and its badge is `tag-badge` with no `-active` and reads `Non-Onyx`. It also starts at 12:00:00 AM, which is the same calendar day as its sibling and the reason numbering orders on the time as well as the date."
+      }
+    ]
   },
   "feeds": [
     { "file": "forum-feed-584.xml.gz", "catid": "584", "url": "https://truedungeon.com/forum?view=category&catid=584&format=feed&type=rss" },
