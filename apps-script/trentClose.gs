@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-01.1';
+var SCRIPT_VERSION = '2026-09-01.2';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -230,7 +230,14 @@ function parseQuantity(name) {
  * lots sit exactly there, the next distinct totals are $0.26 and $0.30, and
  * nothing is below it. A lot closing at $0.25 drew no competing bid.
  *
- * INFERRED FROM THE DATA, not read from Trent's published auction rules.
+ * CONFIRMED by the maintainer on 2026-09-01: $0.25 is the minimum bid across
+ * all three sources — Trent, the forum, and alesievauctions.com. It was
+ * inferred from the shape of the corpus when this rule was written, and the
+ * inference held.
+ *
+ * That it is ONE number across all three is why this constant needs no
+ * per-source variant, and it is also why forumClose.gs gets the rule for free:
+ * it routes its lots through processAuction() below, the same as Trent's.
  */
 var BID_FLOOR = 0.25;
 

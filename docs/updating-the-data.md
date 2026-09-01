@@ -885,8 +885,16 @@ only the validator and the replay in `trent-close.test.mjs` fails. Section 1
 also prints the number of excluded lots on every run, so a rule that starts
 swallowing more than it should is visible rather than silent.
 
-> **The $0.25 floor is inferred from the data, not read from Trent's published
-> auction rules.** If that turns out to be wrong, the exclusion goes with it.
+> **Confirmed 2026-09-01:** $0.25 is the minimum bid across **all three
+> sources** — Trent, the forum, and alesievauctions.com. The floor was originally
+> inferred from the shape of the corpus, and the inference held.
+
+Because it is one number rather than three, the rule needs no per-source
+variant — and the **forum file importer already applies it**, since
+`forumClose.gs` routes its lots through the same `processAuction()` that Trent's
+importer uses. `forumThread.gs` needs nothing: it writes proposals to a review
+tab and no summary rows. Close handling for alesievauctions.com is not built
+yet; if it is built on `processAuction()` it inherits the rule too.
 
 ### When it refuses
 
