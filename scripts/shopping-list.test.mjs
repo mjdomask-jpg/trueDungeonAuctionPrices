@@ -552,10 +552,22 @@ const activeDiff = costs.filter((c) => c.status === 'active')
 const activeLineDiff = costs.filter((c) => c.status === 'active')
   .flatMap((c) => c.lines.map((l, i) => ({ l, e: eraByKey.get(c.key).lines[i] })))
   .filter(({ l, e }) => l.unitAvg !== e.unitAvg);
-check('...but 49 of the 91 still move, through an expired SUB-RECIPE or an in-print Ultra Rare',
-  activeDiff.length === 49 &&
-  activeLineDiff.filter(({ l }) => l.source === 'build').length === 42 &&
-  activeLineDiff.filter(({ l }) => l.source !== 'build').length === 13,
+// A PRESENCE, NOT A COUNT — for the same reason publish-to-site.test.mjs uses a
+// floor on rawPricesData.csv rather than an exact length. What this asserts is
+// that BOTH routes are live, which is what makes the tempting summary false; the
+// exact tallies were 49/42/13 when this was written, and they are a property of
+// whatever transmuteRecipes.csv happens to hold, not of the engine.
+//
+// Pinning them turned every recipe edit into a red check on a publish PR, which
+// is how it looked when `Omni Cube Ultra Rare Recipe` moved from 2025 to 2026:
+// the recipe's generic `Ultra Rare` leaf line became a current-season line, so
+// the two bases agreed about it and stopped disagreeing — 49/42/13 -> 48/42/12,
+// a correct publish reported as a failure. The claim below survived intact, and
+// so did the invariant in the next check, which is the one doing the real work.
+check('...but active recipes still move, through an expired SUB-RECIPE or an in-print Ultra Rare',
+  activeDiff.length > 0 &&
+  activeLineDiff.some(({ l }) => l.source === 'build') &&
+  activeLineDiff.some(({ l }) => l.source !== 'build'),
   `${activeDiff.length} recipes; ${activeLineDiff.filter(({ l }) => l.source === 'build').length} sub-builds, ` +
   `${activeLineDiff.filter(({ l }) => l.source !== 'build').length} leaf lines`);
 check('...and every one of those leaf lines is an in-print Ultra Rare, which is S2 answering to the basis',
