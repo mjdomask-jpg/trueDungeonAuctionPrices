@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-08-31.2';
+var OPEN_VERSION = '2026-08-31.3';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -970,6 +970,33 @@ function openRecordedTopics(metaRows) {
 }
 
 /**
+ * Every `auctionId` `auctionMetadata` records, as a lookup.
+ *
+ * Used to tell a review row's `promoted <id>` marker whether it is still
+ * telling the truth. See `openMergeReview`.
+ */
+function openRecordedAuctionIds(metaRows) {
+  var seen = {};
+  for (var i = 0; i < metaRows.length; i++) {
+    var id = String(metaRows[i].auctionId || '').trim();
+    if (id) seen[id] = true;
+  }
+  return seen;
+}
+
+/**
+ * The `auctionId` a review row's status claims it was promoted as, or null.
+ *
+ * Anchored on `promoted` so the `was promoted …` form this file writes for a
+ * marker that has gone stale does not match — that one is a record, not a
+ * claim, and must not be re-checked and re-cleared on every subsequent scan.
+ */
+function openPromotedId(status) {
+  var m = String(status == null ? '' : status).match(/^promoted\s+(\S+)/i);
+  return m ? m[1] : null;
+}
+
+/**
  * Every alesievauctions.com auction id `auctionMetadata` already records.
  *
  * The forum's duplicate defence is the topic id and Trent's is season-and-name;
@@ -1515,8 +1542,26 @@ function openReviewKey(row) {
  * deliberately leaves empty — is carried across for a proposal that is still
  * proposed. Rows already promoted stay, greyed by their `status`, so the tab
  * doubles as a record of what this phase has done.
+ *
+ * `recordedIds` is every `auctionId` `auctionMetadata` currently holds, and it
+ * is what stops a `promoted <id>` marker from outliving the row it names. A
+ * marker naming an id that is no longer recorded is making a false claim, and
+ * it is a claim with teeth: `openIsApproved` refuses any row whose status
+ * starts with `promoted`, so the operator can tick such a row all day and the
+ * promote step will silently ignore it.
+ *
+ * **A deleted row is not necessarily a mistake.** Current practice is to DELETE
+ * a failed auction's row rather than mark it — `Status` is
+ * `IF(closeDate="","Open","Closed")` and cannot express `Failed` — so
+ * "promoted, then gone" is exactly what a failed auction looks like, as well as
+ * what deleted test data looks like. Nothing here can tell those apart, so the
+ * marker is cleared, the tick is forced OFF, and the note says both readings.
+ * The operator decides whether to approve it again.
+ *
+ * Omit `recordedIds` and no marker is ever questioned, which is what this did
+ * before.
  */
-function openMergeReview(existingRows, proposals) {
+function openMergeReview(existingRows, proposals, recordedIds) {
   var byKey = {}, i;
   for (i = 0; i < existingRows.length; i++) {
     var key = openReviewKey(existingRows[i]);
@@ -1530,6 +1575,18 @@ function openMergeReview(existingRows, proposals) {
     if (old) {
       row[0] = old[0];
       row[1] = old[1];
+      var staleId = openPromotedId(old[1]);
+      if (staleId && recordedIds && !recordedIds[staleId]) {
+        // The marker outlived the row it names. Clear it so the row can be
+        // approved again — and force the tick OFF, so re-approving is a
+        // decision the operator makes after reading the note rather than one
+        // an old tick makes for them.
+        row[0] = false;
+        row[1] = '';
+        row[16] = String(row[16] || '') + ' · WAS PROMOTED as ' + staleId +
+          ', and no row with that auctionId is in ' + OPEN_TABS.metadata +
+          ' now. The marker has been cleared so this can be approved again — but if that auction FAILED and its row was deleted on purpose, leave it unticked.';
+      }
       // What the tab already holds wins, because for the forum it is by
       // definition something the operator typed. For the two sources that
       // PREFILL these columns it could instead be a stale value from an earlier
@@ -1553,8 +1610,20 @@ function openMergeReview(existingRows, proposals) {
     rows.push(row);
   }
   for (i = 0; i < existingRows.length; i++) {
-    var k = openReviewKey(existingRows[i]);
-    if (!seen[k] && /^promoted/.test(String(existingRows[i][1] || ''))) keptPromoted.push(existingRows[i]);
+    var k = existingRows[i] && openReviewKey(existingRows[i]);
+    if (seen[k] || !/^(?:was )?promoted/i.test(String(existingRows[i][1] || ''))) continue;
+    // A promoted row nothing proposes any more is history and is kept. If its
+    // id has also gone from auctionMetadata the status is rewritten rather than
+    // cleared: there is nothing here to approve, so the useful thing is a row
+    // that no longer claims to be something it is not. `was promoted` still
+    // matches the retention test above, so it survives every later rescan.
+    var kept = existingRows[i].slice();
+    var goneId = openPromotedId(kept[1]);
+    if (goneId && recordedIds && !recordedIds[goneId]) {
+      kept[0] = false;
+      kept[1] = 'was promoted ' + goneId + ' — no longer in ' + OPEN_TABS.metadata;
+    }
+    keptPromoted.push(kept);
   }
   return rows.concat(keptPromoted);
 }
@@ -1899,7 +1968,7 @@ function scanAuctionOpens() {
     (selection.skipped.overflow ? ', ' + selection.skipped.overflow + ' left for the next run (fetch cap)' : '') + '.');
   plan.notes.push('Read ' + alesievCards.length + ' auction card(s) from ' + OPEN_ALESIEV_LISTING_URL + '.');
 
-  openWriteReview(plan.proposals);
+  openWriteReview(plan.proposals, openRecordedAuctionIds(metaRows));
   ui.alert('Scan complete (script ' + OPEN_VERSION + ')', openDescribeScan(plan), ui.ButtonSet.OK);
 }
 
@@ -1908,7 +1977,7 @@ function scanAuctionOpens() {
  * Creates the tab when it is missing; a new tab is the only thing this phase
  * makes without being asked.
  */
-function openWriteReview(proposals) {
+function openWriteReview(proposals, recordedIds) {
   var ss = SpreadsheetApp.getActive();
   var sheet = ss.getSheetByName(OPEN_TABS.review);
   var existing = [];
@@ -1918,7 +1987,7 @@ function openWriteReview(proposals) {
     var values = sheet.getDataRange().getValues();
     if (values.length > 1) existing = openNormaliseReviewValues(values.slice(1), ss.getSpreadsheetTimeZone());
   }
-  var rows = openMergeReview(existing, proposals);
+  var rows = openMergeReview(existing, proposals, recordedIds);
 
   // clear() leaves data validation behind, so a shorter rescan would strand
   // checkboxes below the last row — tickable, and attached to nothing.
@@ -2049,6 +2118,8 @@ if (typeof module !== 'undefined') {
     openAlesievProposal: openAlesievProposal,
     openAlesievTitleConflicts: openAlesievTitleConflicts,
     openRecordedAlesiev: openRecordedAlesiev,
+    openRecordedAuctionIds: openRecordedAuctionIds,
+    openPromotedId: openPromotedId,
     openNextNumber: openNextNumber,
     openAuctionId: openAuctionId,
     openTopicId: openTopicId,
