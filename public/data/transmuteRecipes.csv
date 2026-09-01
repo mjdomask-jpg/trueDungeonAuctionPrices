@@ -990,10 +990,10 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2023|Arcanum Shirt|Mystic Silk||FALSE,2023,Eldritch,Arcanum Shirt,Mystic Silk,,2023,Mystic Silk,1,FALSE,,
 2023|Arcanum Shirt|Oil of Enchantment||FALSE,2023,Eldritch,Arcanum Shirt,Oil of Enchantment,,2023,Oil of Enchantment,1,FALSE,,
 2023|Arcanum Shirt|Philosopher's Stone||FALSE,2023,Eldritch,Arcanum Shirt,Philosopher's Stone,,2023,Philosopher's Stone,1,FALSE,,
-2023|Arcanum Shirt|Ultra Rare||FALSE,2023,Eldritch,Arcanum Shirt,Ultra Rare,,2023,Ultra Rare,1,FALSE,,
-2023|Arcanum Shirt|Ultra Rare|-1|FALSE,2023,Eldritch,Arcanum Shirt,Ultra Rare,-1,2022,Ultra Rare,1,FALSE,,
-2023|Arcanum Shirt|Ultra Rare|-2|FALSE,2023,Eldritch,Arcanum Shirt,Ultra Rare,-2,2021,Ultra Rare,1,FALSE,,
-2023|Arcanum Shirt|Ultra Rare|-3|FALSE,2023,Eldritch,Arcanum Shirt,Ultra Rare,-3,2020,Ultra Rare,1,FALSE,,
+2023|Arcanum Shirt|Shirt of the Shrewd||FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Shrewd,,2023,Shirt of the Shrewd,1,FALSE,,Ultra Rare
+2023|Arcanum Shirt|Shirt of the Imbiber|-1|FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Imbiber,-1,2022,Shirt of the Imbiber,1,FALSE,,Ultra Rare
+2023|Arcanum Shirt|Shirt of the Nimble|-2|FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Nimble,-2,2021,Shirt of the Nimble,1,FALSE,,Ultra Rare
+2023|Arcanum Shirt|Shirt of the Oaf|-3|FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Oaf,-3,2020,Shirt of the Oaf,1,FALSE,,Ultra Rare
 2023|Hat of the Lucky Pirate|Darkwood Plank||FALSE,2023,Enhanced,Hat of the Lucky Pirate,Darkwood Plank,,2023,Darkwood Plank,1,FALSE,,
 2023|Hat of the Lucky Pirate|Monster Trophy||FALSE,2023,Enhanced,Hat of the Lucky Pirate,Monster Trophy,,2023,Monster Trophy,1,FALSE,,
 2023|Hat of the Lucky Pirate|Mystic Silk||FALSE,2023,Enhanced,Hat of the Lucky Pirate,Mystic Silk,,2023,Mystic Silk,1,FALSE,,
@@ -1040,7 +1040,7 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 "2023|Vim's Boots of Protection|1,000 GP Gold Bar||FALSE",2023,Legendary,Vim's Boots of Protection,"1,000 GP Gold Bar",,2023,"1,000 GP Gold Bar",15,FALSE,,
 2023|Vim's Boots of Protection|Wish Ring||FALSE,2023,Legendary,Vim's Boots of Protection,Wish Ring,,2023,Wish Ring,1,FALSE,,
 2023|Vim's Boots of Protection|Boots of Protection||TRUE,2023,Legendary,Vim's Boots of Protection,Boots of Protection,,2023,Boots of Protection (transmute),1,TRUE,,
-2023|Charm of Avarice Recipe 3|Ultra Rare||FALSE,2023,Legendary,Charm of Avarice Recipe 3,Ultra Rare,,2023,Ultra Rare,11,FALSE,,Ultra Rare
+2023|Charm of Avarice Recipe 3|Ultra Rare||FALSE,2023,Legendary,Charm of Avarice Recipe 3,Ultra Rare,,2023,Ultra Rare,12,FALSE,,Ultra Rare
 2023|Charm of Avarice Recipe 3|Alchemist's Ink||FALSE,2023,Legendary,Charm of Avarice Recipe 3,Alchemist's Ink,,2023,Alchemist's Ink,10,FALSE,,
 2023|Charm of Avarice Recipe 3|Alchemist's Parchment||FALSE,2023,Legendary,Charm of Avarice Recipe 3,Alchemist's Parchment,,2023,Alchemist's Parchment,10,FALSE,,
 2023|Charm of Avarice Recipe 3|Darkwood Plank||FALSE,2023,Legendary,Charm of Avarice Recipe 3,Darkwood Plank,,2023,Darkwood Plank,10,FALSE,,
@@ -1453,7 +1453,7 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2025|Omni Orb|Oil of Enchantment||FALSE,2025,Omni,Omni Orb,Oil of Enchantment,,2025,Oil of Enchantment,1,FALSE,,
 2025|Omni Orb|Philosopher's Stone||FALSE,2025,Omni,Omni Orb,Philosopher's Stone,,2025,Philosopher's Stone,10,FALSE,,
 "2025|Omni Orb|1,000 GP Gold Bar||FALSE",2025,Omni,Omni Orb,"1,000 GP Gold Bar",,2025,"1,000 GP Gold Bar",1,FALSE,,
-2025|Omni Cube Ultra Rare Recipe|Ultra Rare||FALSE,2025,Omni,Omni Cube Ultra Rare Recipe,Ultra Rare,,2025,Ultra Rare,11,FALSE,,
+2025|Omni Cube Ultra Rare Recipe|Ultra Rare||FALSE,2025,Omni,Omni Cube Ultra Rare Recipe,Ultra Rare,,2025,Ultra Rare,12,FALSE,,
 2025|Bead of Asgard|Alchemist's Ink||FALSE,2025,Relic,Bead of Asgard,Alchemist's Ink,,2025,Alchemist's Ink,1,FALSE,,
 2025|Bead of Asgard|Alchemist's Parchment||FALSE,2025,Relic,Bead of Asgard,Alchemist's Parchment,,2025,Alchemist's Parchment,1,FALSE,,
 2025|Bead of Asgard|Aragonite||FALSE,2025,Relic,Bead of Asgard,Aragonite,,2025,Aragonite,1,FALSE,,
@@ -1574,10 +1574,10 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2026|Deathward Greaves|Oil of Enchantment||FALSE,2026,Arcanum,Deathward Greaves,Oil of Enchantment,,2026,Oil of Enchantment,1,FALSE,,
 2026|Deathward Greaves|Philosopher's Stone||FALSE,2026,Arcanum,Deathward Greaves,Philosopher's Stone,,2026,Philosopher's Stone,1,FALSE,,
 "2026|Deathward Greaves|1,000 GP Gold Bar||FALSE",2026,Arcanum,Deathward Greaves,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",1,FALSE,,
-2026|Deathward Greaves|Ultra Rare||FALSE,2026,Arcanum,Deathward Greaves,Ultra Rare,,2026,Ultra Rare,1,FALSE,,
-2026|Deathward Greaves|Ultra Rare|-1|FALSE,2026,Arcanum,Deathward Greaves,Ultra Rare,-1,2025,Ultra Rare,1,FALSE,,
-2026|Deathward Greaves|Ultra Rare|-2|FALSE,2026,Arcanum,Deathward Greaves,Ultra Rare,-2,2024,Ultra Rare,1,FALSE,,
-2026|Deathward Greaves|Ultra Rare|-3|FALSE,2026,Arcanum,Deathward Greaves,Ultra Rare,-3,2023,Ultra Rare,1,FALSE,,
+2026|Deathward Greaves|Greaves of Diffusion||FALSE,2026,Arcanum,Deathward Greaves,Greaves of Diffusion,,2026,Greaves of Diffusion,1,FALSE,,Ultra Rare
+2026|Deathward Greaves|Greaves of Deflection|-1|FALSE,2026,Arcanum,Deathward Greaves,Greaves of Deflection,-1,2025,Greaves of Deflection,1,FALSE,,Ultra Rare
+2026|Deathward Greaves|Greaves of the Stalwart|-2|FALSE,2026,Arcanum,Deathward Greaves,Greaves of the Stalwart,-2,2024,Greaves of the Stalwart,1,FALSE,,Ultra Rare
+2026|Deathward Greaves|Greaves of Absorption|-3|FALSE,2026,Arcanum,Deathward Greaves,Greaves of Absorption,-3,2023,Greaves of Absorption,1,FALSE,,Ultra Rare
 2026|Ring of the Sacred Circle|Alchemist's Ink||FALSE,2026,Arcanum,Ring of the Sacred Circle,Alchemist's Ink,,2026,Alchemist's Ink,1,FALSE,,
 2026|Ring of the Sacred Circle|Alchemist's Parchment||FALSE,2026,Arcanum,Ring of the Sacred Circle,Alchemist's Parchment,,2026,Alchemist's Parchment,1,FALSE,,
 2026|Ring of the Sacred Circle|Aragonite||FALSE,2026,Arcanum,Ring of the Sacred Circle,Aragonite,,2026,Aragonite,1,FALSE,,
@@ -1952,9 +1952,9 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2027|Coin of Wealth|Oil of Enchantment||FALSE,2027,Mythic,Coin of Wealth,Oil of Enchantment,,2027,Oil of Enchantment,10,FALSE,,
 2027|Coin of Wealth|Philosopher's Stone||FALSE,2027,Mythic,Coin of Wealth,Philosopher's Stone,,2027,Philosopher's Stone,100,FALSE,,
 "2027|Coin of Wealth|1,000 GP Gold Bar||FALSE",2027,Mythic,Coin of Wealth,"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",100,FALSE,,
-2027|Coin of Wealth|Ultra Rare|2023|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2023,2023,Ultra Rare,1,FALSE,,
-2027|Coin of Wealth|Ultra Rare|2025|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2025,2025,Ultra Rare,1,FALSE,,
-2027|Coin of Wealth|Ultra Rare|2027|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2027,2027,Ultra Rare,1,FALSE,,
+2027|Coin of Wealth|Ultra Rare|2023|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2023,2023,Ultra Rare,1,FALSE,,Ultra Rare
+2027|Coin of Wealth|Ultra Rare|2025|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2025,2025,Ultra Rare,1,FALSE,,Ultra Rare
+2027|Coin of Wealth|Ultra Rare|2027|FALSE,2027,Mythic,Coin of Wealth,Ultra Rare,2027,2027,Ultra Rare,1,FALSE,,Ultra Rare
 2027|Coin of Wealth|Charm of Avarice|2015|TRUE,2027,Mythic,Coin of Wealth,Charm of Avarice,2015,2015,Charm of Avarice,1,TRUE,,
 2027|Greater Arcane Necklace of Baubles|Necklace of Baubles||FALSE,2027,Relic,Greater Arcane Necklace of Baubles,Necklace of Baubles,,2027,Necklace of Baubles,1,FALSE,,Ultra Rare
 2027|Greater Arcane Necklace of Baubles|Alchemist's Ink||FALSE,2027,Relic,Greater Arcane Necklace of Baubles,Alchemist's Ink,,2027,Alchemist's Ink,5,FALSE,,
