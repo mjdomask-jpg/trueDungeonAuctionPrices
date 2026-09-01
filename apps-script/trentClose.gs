@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-08-26.3';
+var SCRIPT_VERSION = '2026-09-01.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -223,6 +223,41 @@ function parseQuantity(name) {
   var conflict = tokenN !== null && midN !== null && tokenN !== midN;
   var lotSize = tokenN !== null ? tokenN : (midN !== null ? midN : 1);
   return { quantity: leadN * lotSize, conflict: conflict, tokenN: tokenN, midN: midN };
+}
+
+/**
+ * $0.25 is the opening bid — the lowest lot total anywhere in the corpus. 166
+ * lots sit exactly there, the next distinct totals are $0.26 and $0.30, and
+ * nothing is below it. A lot closing at $0.25 drew no competing bid.
+ *
+ * INFERRED FROM THE DATA, not read from Trent's published auction rules.
+ */
+var BID_FLOOR = 0.25;
+
+/**
+ * A lot that closes at the opening bid AND holds more than one token is not a
+ * market observation, so it may not set the published min or max. Its per-token
+ * price is the unbid floor divided by the lot size, which is below any price
+ * the auction could have transacted — you cannot bid less than $0.25.
+ *
+ * Both halves matter. 165 of the 166 at-floor lots hold a SINGLE token, where
+ * $0.25 is exactly what somebody paid (the Adventurers' Guild Button closes
+ * there routinely), and excluding those would discard a real fact about the
+ * token. Only the multi-token case divides. The corpus holds exactly one:
+ * 20253 `Darkwood Plank (3 Tokens)` at $0.25, which published $0.08/token
+ * against eleven 10x lots of the same token at $0.83-$1.03, and that $0.08 then
+ * became the season minimum feeding every transmute recipe (Safehold II takes
+ * 50 planks: $4.00 instead of $50.00).
+ *
+ * The lot is still WRITTEN to rawPricesData — nothing is hidden, and the
+ * Quartiles view still charts it. What it may not do is set a summary bound.
+ *
+ * Applied identically in scripts/validate-prices.mjs § 1, which reconciles what
+ * this function produces. If the two ever disagree, one of two checks catches
+ * it: that section fails, or this file's replay test does.
+ */
+function isBidFloorArtifact(lotTotal, quantity) {
+  return typeof lotTotal === 'number' && lotTotal <= BID_FLOOR && quantity > 1;
 }
 
 /**
@@ -580,8 +615,11 @@ function processAuction(lots, season, index) {
       Price: unit,
       Category: token.Category,
     });
-    if (!perItem[token.Item]) { perItem[token.Item] = { token: token, prices: [] }; order.push(token.Item); }
+    // The lot is always recorded in rawPricesData. Whether it may set the
+    // published min/max is a separate question — see isBidFloorArtifact.
+    if (!perItem[token.Item]) { perItem[token.Item] = { token: token, prices: [], eligible: [] }; order.push(token.Item); }
     perItem[token.Item].prices.push(unit);
+    if (!isBidFloorArtifact(lot.bid, q.quantity)) perItem[token.Item].eligible.push(unit);
   }
 
   // Min and max per item — and a SINGLE row where an item had only ONE LOT.
@@ -604,10 +642,15 @@ function processAuction(lots, season, index) {
     var t = perItem[item].token;
     prices.push({ Item: t.Item, Price: price, 'Display Name': t['Display Name'], Category: t.Category });
   };
-  for (var a = 0; a < order.length; a++) emit(order[a], Math.max.apply(null, perItem[order[a]].prices));
+  // Summarise the ELIGIBLE lots, falling back to all of them so an item sold
+  // only as at-floor multi-token lots still publishes what it fetched. The
+  // lot-count test rides on the same basis: it is asking how many observations
+  // the summary rests on.
+  var summaryOf = function (e) { return e.eligible.length ? e.eligible : e.prices; };
+  for (var a = 0; a < order.length; a++) emit(order[a], Math.max.apply(null, summaryOf(perItem[order[a]])));
   for (var b = 0; b < order.length; b++) {
-    var e = perItem[order[b]];
-    if (e.prices.length > 1) emit(order[b], Math.min.apply(null, e.prices));
+    var e = summaryOf(perItem[order[b]]);
+    if (e.length > 1) emit(order[b], Math.min.apply(null, e));
   }
 
   return { aborts: aborts, raw: raw, prices: prices, onyx: onyx, unsold: unsold, unresolved: unresolved };

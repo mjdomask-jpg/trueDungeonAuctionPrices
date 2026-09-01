@@ -98,6 +98,64 @@ const groupBy = (rows, k, v) => {
   return m;
 };
 
+// Lot quantity, used by § 1 and § 3. Trent sells multi-token lots; the per-token
+// Price is the lot price divided by the quantity stated in the lot name.
+// Verified against all 18,466 rows.
+//
+//   lead    = a leading "N x "                 -> per-unit multiplier
+//   lotSize = "(N Tokens)" or a mid-name "xN"  -- these state the SAME number
+//   qty     = lead x (lotSize or 1)
+//
+// "1,000 GP Gold Bar x4 #1 (4 Tokens)" is 4, not 16 — the x4 and the (4 Tokens)
+// are one fact written twice. "3X Treasure Chips x 4 #1 (4 Tokens)" is 12: a
+// leading 3 times a lot size of 4. Where the two spellings of lot size
+// disagree, say so and never guess.
+function parseLotQuantity(name) {
+  let s = name ?? '';
+  const lead = s.match(/^(\d+)\s*[xX]\s+/);
+  const leadN = lead ? parseInt(lead[1], 10) : 1;
+  if (lead) s = s.slice(lead[0].length);
+  const tokens = s.match(/\(\s*(\d+)\s*Tokens?\s*\)/i);
+  const tokenN = tokens ? parseInt(tokens[1], 10) : null;
+  const mid = s.match(/\s[xX]\s*(\d+)(?![\d.])/);
+  const midN = mid ? parseInt(mid[1], 10) : null;
+  const conflict = tokenN != null && midN != null && tokenN !== midN;
+  const lotSize = tokenN ?? midN ?? 1;
+  return { quantity: leadN * lotSize, conflict, tokenN, midN };
+}
+
+// $0.25 is the opening bid. It is the lowest lot total anywhere in the corpus
+// (166 lots sit there; the next distinct totals are $0.26 and $0.30, and nothing
+// is below it), so a lot closing at $0.25 drew no competing bid.
+//
+// INFERRED FROM THE DATA, not read from Trent's published auction rules. If that
+// turns out to be wrong, this whole exclusion goes with it.
+const BID_FLOOR = 0.25;
+
+// A lot that closes at the opening bid AND holds more than one token is not a
+// market observation. Its per-token price is the unbid floor divided by the lot
+// size, which is below any price the auction could have transacted: you cannot
+// bid less than $0.25 for anything.
+//
+// Both halves matter. 165 of the 166 at-floor lots hold a SINGLE token, where
+// $0.25 is exactly what somebody paid — the Adventurers' Guild Button closes
+// there routinely, and excluding those would throw away a real fact about that
+// token. Only the multi-token case divides, and the corpus holds exactly one:
+// 20253 "Darkwood Plank (3 Tokens)" at $0.25, which published $0.08/token
+// against eleven 10x lots of the same token at $0.83-$1.03.
+//
+// The rule is deliberately mechanical rather than statistical. A Tukey fence on
+// the minimum moves 34 of 173 season pools, most of them by 1.01x-1.2x, and
+// those are legitimate cheap sales (2022 "1,000 GP Gold Bar" $10.00 -> $11.00 —
+// somebody really paid $10.00). And "drop the odd remainder lot" is simply not
+// true of the data: across 716 groups the remainder lot's median is 97% of the
+// standard lot's per-token rate and 35% of them clear ABOVE it.
+//
+// Applied identically in apps-script/trentClose.gs, which is what WRITES these
+// summary rows. If the two ever disagree, one of two checks catches it: this
+// section fails, or the trent-close replay in scripts/trent-close.test.mjs does.
+const isBidFloorArtifact = (l) => l.lot != null && l.lot <= BID_FLOOR && l.quantity > 1;
+
 // ===========================================================================
 // 1. Trent min/max reconcile
 // ===========================================================================
@@ -111,31 +169,51 @@ const groupBy = (rows, k, v) => {
 // outside its own range is a WARN, not an error: it is not provably a
 // transcription defect the way a broken min/max is, and four such rows are
 // live today.
+//
+// The set equality is computed over the ELIGIBLE lots, not over every lot —
+// see isBidFloorArtifact above. That widens the contract rather than loosening
+// it: the assertion is still exact equality to the cent, so a mistyped price
+// still fails here. What changed is that the basis is now stated in one named
+// predicate instead of being silently assumed to be "all lots". Relaxing the
+// comparison instead (nearest lot, a percentage tolerance) would also stop
+// catching the transcription defects this section exists for.
 console.log('1. Trent min/max reconcile (prices.csv vs rawPricesData.csv)');
 const MINMAX_FROM_SEASON = 2024;
-const rawLots = groupBy(raw.filter((r) => r.auctionId && r.Item), key, (r) => money(r.Price));
+const rawLots = groupBy(raw.filter((r) => r.auctionId && r.Item), key, (r) => ({
+  unit: money(r.Price),
+  lot: money(r.trentPrice),
+  quantity: parseLotQuantity(r.trentName).quantity,
+}));
 const priceRows = groupBy(prices.filter((r) => r.auctionId && r.Item), key, (r) => money(r.Price));
 const rawAuctionIds = new Set(raw.map((r) => r.auctionId).filter(Boolean));
 {
   const errs = [], warns = [];
-  let checked = 0;
+  let checked = 0, excludedLots = 0;
   for (const [k, lots] of rawLots) {
     const [auctionId, item] = k.split('|');
     const season = Number(metaById.get(auctionId)?.auctionSeason ?? auctionId.slice(0, 4));
-    const values = lots.filter((v) => v != null);
-    if (!values.length) continue;
+    const priced = lots.filter((l) => l.unit != null);
+    if (!priced.length) continue;
     const recorded = priceRows.get(k);
     if (!recorded) {
-      warns.push(`${auctionId} "${item}": ${values.length} lot(s) in rawPricesData but no row in prices.csv — the item is missing from the site entirely`);
+      warns.push(`${auctionId} "${item}": ${priced.length} lot(s) in rawPricesData but no row in prices.csv — the item is missing from the site entirely`);
       continue;
     }
     checked++;
+    // Never exclude the whole group: an item sold only as at-floor multi-token
+    // lots still has to publish the price it actually fetched.
+    const eligible = priced.filter((l) => !isBidFloorArtifact(l));
+    const basis = (eligible.length ? eligible : priced).map((l) => l.unit);
+    const excluded = priced.length - basis.length;
+    if (excluded) excludedLots += excluded;
+    const values = basis;
     const min = Math.min(...values), max = Math.max(...values);
     if (season >= MINMAX_FROM_SEASON) {
       const want = min === max ? [min] : [min, max];
       const got = [...new Set(recorded.filter((v) => v != null))].sort((a, b) => a - b);
       if (got.length !== want.length || got.some((v, i) => Math.abs(v - want[i]) > 0.005))
-        errs.push(`${auctionId} "${item}": prices.csv has [${got.join(', ')}] but its ${values.length} lot(s) give [${want.join(', ')}]`);
+        errs.push(`${auctionId} "${item}": prices.csv has [${got.join(', ')}] but its ${values.length} eligible lot(s) give [${want.join(', ')}]`
+          + (excluded ? ` (${excluded} at-the-$${BID_FLOOR}-floor multi-token lot(s) excluded — see isBidFloorArtifact)` : ''));
     } else {
       for (const v of recorded) {
         if (v == null) continue;
@@ -153,6 +231,10 @@ const rawAuctionIds = new Set(raw.map((r) => r.auctionId).filter(Boolean));
   }
   capped(err, errs); capped(note, warns);
   if (!errs.length) ok(`${checked} (auction, item) group(s) across ${rawAuctionIds.size} auction(s) with per-lot data reconcile to their lots`);
+  // Surfaced every run, not silent: an exclusion that grows without anyone
+  // noticing is how a rule stops being the narrow mechanical one it claims to
+  // be. One lot corpus-wide is the measured figure today.
+  if (excludedLots) info(`${excludedLots} lot(s) excluded from the reconcile basis as at-the-$${BID_FLOOR}-floor multi-token lots (isBidFloorArtifact)`);
 }
 
 // ===========================================================================
@@ -192,31 +274,10 @@ console.log('2. Duplicate-block detector (prices.csv)');
 // ===========================================================================
 // 3. Quantity guard
 // ===========================================================================
-// Trent sells multi-token lots; the per-token Price is the lot price divided by
-// the quantity stated in the lot name. Verified against all 18,466 rows.
-//
-//   lead    = a leading "N x "                 -> per-unit multiplier
-//   lotSize = "(N Tokens)" or a mid-name "xN"  -- these state the SAME number
-//   qty     = lead x (lotSize or 1)
-//
-// "1,000 GP Gold Bar x4 #1 (4 Tokens)" is 4, not 16 — the x4 and the (4 Tokens)
-// are one fact written twice. "3X Treasure Chips x 4 #1 (4 Tokens)" is 12: a
-// leading 3 times a lot size of 4. Where the two spellings of lot size
-// disagree, say so and never guess.
+// The lot-name quantity parse this section asserts on lives above, next to the
+// helpers, because § 1 needs it too: an at-the-floor lot is only excluded from
+// the reconcile basis when it holds more than one token.
 console.log('3. Quantity guard (rawPricesData.csv)');
-function parseLotQuantity(name) {
-  let s = name ?? '';
-  const lead = s.match(/^(\d+)\s*[xX]\s+/);
-  const leadN = lead ? parseInt(lead[1], 10) : 1;
-  if (lead) s = s.slice(lead[0].length);
-  const tokens = s.match(/\(\s*(\d+)\s*Tokens?\s*\)/i);
-  const tokenN = tokens ? parseInt(tokens[1], 10) : null;
-  const mid = s.match(/\s[xX]\s*(\d+)(?![\d.])/);
-  const midN = mid ? parseInt(mid[1], 10) : null;
-  const conflict = tokenN != null && midN != null && tokenN !== midN;
-  const lotSize = tokenN ?? midN ?? 1;
-  return { quantity: leadN * lotSize, conflict, tokenN, midN };
-}
 {
   const errs = [];
   let checked = 0;
