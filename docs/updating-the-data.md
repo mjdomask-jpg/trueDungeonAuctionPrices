@@ -344,6 +344,23 @@ Then **TD auctions → Promote approved auctions…**. It shows exactly what it 
 append and asks. Numbers are worked out at this point, not at scan time, so a
 row you added by hand in between is taken into account.
 
+> **If a promoted `openDate` reads `Sat Sep 19 2026 01:00:00 GMT-0500 (Central
+> Daylight Time)`, that is a bug fixed in script `2026-08-31.2`, and it is not
+> anything you did.** Sheets was quietly turning the review tab's
+> `2026-09-19` into a real date cell, and the promote step then wrote out the
+> raw JavaScript date rather than the text it had put there. Two things to do:
+>
+> 1. **Update the script** (paste the current `auctionOpen.gs` over the old
+>    one) and rescan. The review tab is rewritten with those columns as plain
+>    text, so it cannot happen again, and a promote now **refuses** any
+>    `openDate` that is not `YYYY-MM-DD` rather than writing it.
+> 2. **Repair any row already promoted**: retype the date in `auctionMetadata`'s
+>    `openDate` cell as `YYYY-MM-DD`. Until you do, that row's `daysToClose`
+>    and `Open Month` are computing from text, and the published CSV carries
+>    the long string into the site's date parsing. `targetFunding` on the same
+>    rows is worth a glance too — the same coercion turned `$8,000.00` into
+>    `8000`, which the currency format hides.
+
 Rescanning is safe: your ticks and anything you typed are carried across, and
 rows already promoted stay as a record.
 

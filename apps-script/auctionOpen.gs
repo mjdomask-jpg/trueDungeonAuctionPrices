@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-08-31.1';
+var OPEN_VERSION = '2026-08-31.2';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -319,6 +319,25 @@ var OPEN_PHRASE_HINTS = [
   { re: /cancell?ed|failed|not funded|didn.t fund/i, note: 'says cancelled or failed' },
 ];
 
+/**
+ * Review columns that are written to the tab as PLAIN TEXT.
+ *
+ * 1-based, to match `getRange`. Without this Sheets reads what the scan writes
+ * and decides it knows better: `2026-09-19` becomes a date, `11:00` becomes a
+ * time, `$8,000.00` becomes the number 8000 — and `getValues()` then hands
+ * back a Date or a number where the promote step expected the string it wrote.
+ * That produced an `openDate` of "Sat Sep 19 2026 01:00:00 GMT-0500 (Central
+ * Daylight Time)" in `auctionMetadata`.
+ *
+ * The number format has to be set BEFORE the values go in; setting it
+ * afterwards reformats a value that has already been converted.
+ *
+ * This is the belt. `openIsoFromCell` and `openMoneyFromCell` are the braces,
+ * because a tab written before this existed still holds coerced cells, and
+ * because the operator can retype any of these by hand.
+ */
+var OPEN_REVIEW_TEXT_COLUMNS = [5, 6, 8, 12, 16];
+
 /** The review tab's columns, in order. */
 var OPEN_REVIEW_COLUMNS = [
   'Approve?', 'status', 'verdict', 'source', 'openDate', 'first post',
@@ -472,6 +491,86 @@ function openIsoFromRfc822(value) {
   var m = String(value).match(/(\d{1,2})\s+(\w{3})\s+(\d{4})/);
   if (!m) return null;
   return openIsoFromForumDate(m[1].length === 1 ? '0' + m[1] : m[1], m[2], m[3]);
+}
+
+/**
+ * A review-tab cell to the ISO date the scan put there.
+ *
+ * This exists because of a bug that reached `auctionMetadata` before it was
+ * caught, and the shape of it is worth keeping in mind for any cell this
+ * pipeline round-trips through a sheet.
+ *
+ * `openWriteReview` writes `openDate` as the STRING '2026-09-19'. Sheets does
+ * not store it as one: it recognises the shape, coerces the cell to a real
+ * date, and `getValues()` hands back a **JavaScript Date object** — at midnight
+ * in the SPREADSHEET's timezone, which is not necessarily the script's. The old
+ * `String(row[4])` then produced
+ *
+ *   Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)
+ *
+ * which is `Date.prototype.toString()`, and that went into the cell. It is not
+ * a date Sheets can parse, so `daysToClose` and `Open Month` stop computing and
+ * the exported CSV carries that string into the site's date parsing.
+ *
+ * Four inputs are accepted, and the last two are repair paths rather than
+ * expected shapes: a Date, an ISO string, a Date that has ALREADY been
+ * stringified (so a review tab written by the broken version fixes itself on
+ * the next scan), and `M/D/YYYY` as Sheets displays a date in a US locale.
+ *
+ * A Date is read with LOCAL getters, which are the script's timezone. That is
+ * right whenever the script and the spreadsheet share a timezone, and
+ * `openNormaliseReviewValues` converts using the spreadsheet's own timezone
+ * before this is ever reached, for when they do not. Anything unrecognised is
+ * returned untouched so the caller can refuse it — see `openPlanPromotion`,
+ * which will not promote an openDate that is not ISO.
+ */
+function openIsoFromCell(value) {
+  if (value && typeof value.getFullYear === 'function' && typeof value.getTime === 'function' && isFinite(value.getTime())) {
+    var y = value.getFullYear(), mo = value.getMonth() + 1, d = value.getDate();
+    return y + '-' + (mo < 10 ? '0' : '') + mo + '-' + (d < 10 ? '0' : '') + d;
+  }
+  var s = String(value == null ? '' : value).trim();
+  if (!s) return '';
+
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+  if (m) return m[1] + '-' + (m[2].length === 1 ? '0' : '') + m[2] + '-' + (m[3].length === 1 ? '0' : '') + m[3];
+
+  // `Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)` — a Date that
+  // has already been through String(). Repairing it rather than refusing it is
+  // what lets a tab written by the broken version come good on a rescan.
+  m = s.match(/^\w{3}\s+(\w{3})\s+(\d{1,2})\s+(\d{4})\b/);
+  if (m) {
+    var mon = OPEN_MONTHS[String(m[1]).toLowerCase()];
+    if (mon) return m[3] + '-' + mon + '-' + (m[2].length === 1 ? '0' : '') + m[2];
+  }
+
+  // A date the operator typed, shown back by Sheets in a US locale. M/D/YYYY is
+  // assumed, as it is everywhere else in this file — and a first field over 12
+  // cannot be a month, so it is refused rather than read as D/M and guessed at.
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+  if (m && parseInt(m[1], 10) >= 1 && parseInt(m[1], 10) <= 12) return openIsoFromSlashes(m[1], m[2], m[3]);
+
+  return s;
+}
+
+/**
+ * A review-tab cell to the money string the sheet records.
+ *
+ * The same coercion, one column over and less obvious: `$8,000.00` written as a
+ * string becomes a currency cell, and `getValues()` returns the NUMBER 8000.
+ * `String(8000)` is "8000", which lands in a currency-formatted
+ * `targetFunding` cell and still DISPLAYS as $8,000.00 — so this one hides,
+ * and it also made the drift note in `openMergeReview` fire on every rescan by
+ * comparing "8000" against a freshly parsed "$8,000.00".
+ */
+function openMoneyFromCell(value) {
+  if (typeof value === 'number' && isFinite(value)) {
+    var neg = value < 0;
+    var fixed = Math.abs(value).toFixed(2).split('.');
+    var whole = fixed[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg ? '-$' : '$') + whole + '.' + fixed[1];
+  }
+  return String(value == null ? '' : value).trim();
 }
 
 // ===========================================================================
@@ -1438,11 +1537,14 @@ function openMergeReview(existingRows, proposals) {
       // flipped on the site would otherwise be invisible here for ever.
       var changed = [];
       for (var c = 12; c <= 15; c++) {
-        var held = String(old[c] == null ? '' : old[c]).trim();
+        // Column 16 is targetFunding, which Sheets returns as a number once it
+        // has made a currency cell of it. Compared raw, "8000" differs from
+        // "$8,000.00" and the drift note fires on every single rescan.
+        var held = c === 15 ? openMoneyFromCell(old[c]) : String(old[c] == null ? '' : old[c]).trim();
         if (!held) continue;
         var fresh = String(row[c] == null ? '' : row[c]).trim();
         if (fresh && fresh !== held) changed.push(OPEN_REVIEW_COLUMNS[c] + ' is "' + held + '" here, "' + fresh + '" on the page');
-        row[c] = old[c];
+        row[c] = held;
       }
       if (changed.length) {
         row[16] = String(row[16] || '') + ' · KEPT WHAT THIS TAB ALREADY HELD — ' + changed.join('; ');
@@ -1476,7 +1578,7 @@ function openIsApproved(row) {
 function openPlanPromotion(reviewRows, metaRows, headers) {
   var approved = [], i;
   for (i = 0; i < reviewRows.length; i++) if (openIsApproved(reviewRows[i])) approved.push({ index: i, row: reviewRows[i] });
-  approved.sort(function (a, b) { return String(a.row[4]).localeCompare(String(b.row[4])); });
+  approved.sort(function (a, b) { return openIsoFromCell(a.row[4]).localeCompare(openIsoFromCell(b.row[4])); });
 
   var recordedTopics = openRecordedTopics(metaRows);
   var recordedTrent = openRecordedTrentNames(metaRows);
@@ -1490,12 +1592,24 @@ function openPlanPromotion(reviewRows, metaRows, headers) {
     var name = String(row[7] || '').trim();
     var season = String(row[8] || '').trim();
     var link = String(row[11] || '').trim();
+    // Read, not stringified. A cell Sheets coerced to a Date stringifies to
+    // "Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)" — see
+    // openIsoFromCell.
+    var openDate = openIsoFromCell(row[4]);
     var topicId = openTopicId(link);
     var siteId = openAlesievId(link);
     var label = name || link || ('review row ' + (approved[i].index + 2));
 
     if (!season) { problems.push(label + ': no season'); continue; }
-    if (!String(row[4] || '').trim()) { problems.push(label + ': no openDate'); continue; }
+    if (!openDate) { problems.push(label + ': no openDate'); continue; }
+    // The guard, and the point of it: converting is best-effort, refusing is
+    // not. Anything that is not an ISO date is stopped HERE rather than written
+    // into a column `daysToClose` and `Open Month` compute from and the site
+    // parses as a date.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(openDate)) {
+      problems.push(label + ': openDate is "' + openDate + '", which is not a YYYY-MM-DD date. Fix that cell in ' + OPEN_TABS.review + ' and promote again');
+      continue;
+    }
     if (!name) { problems.push(label + ': no auctionName'); continue; }
     if (topicId && recordedTopics[topicId]) { problems.push(label + ': topic ' + topicId + ' is already recorded as ' + recordedTopics[topicId]); continue; }
     if (siteId && recordedSite[siteId]) { problems.push(label + ': ' + OPEN_ALESIEV_SOURCE + ' auction ' + siteId + ' is already recorded as ' + recordedSite[siteId]); continue; }
@@ -1517,8 +1631,8 @@ function openPlanPromotion(reviewRows, metaRows, headers) {
       completionStyle: String(row[13] || '').trim(),
       auctioneer: String(row[6] || '').trim(),
       Link: link,
-      openDate: String(row[4] || '').trim(),
-      targetFunding: String(row[15] || '').trim(),
+      openDate: openDate,
+      targetFunding: openMoneyFromCell(row[15]),
       augmentated: String(row[14] || '').trim(),
     };
     if (!fields.auctionStyle) warnings.push(label + ': auctionStyle is blank');
@@ -1684,6 +1798,30 @@ function openHeaders(name) {
   return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
 }
 
+/**
+ * Dates and times Sheets handed back as Date objects, rendered as the strings
+ * the scan originally wrote them as.
+ *
+ * The timezone is the SPREADSHEET's, not the script's, and that is the whole
+ * reason this is here rather than left to `openIsoFromCell`'s local getters. A
+ * date-only cell comes back as midnight in the spreadsheet's timezone; if the
+ * script's timezone is behind it, midnight lands on the previous day and the
+ * date is off by one. The two are usually the same and this usually changes
+ * nothing — but the promotion that produced "01:00:00" proves they can differ
+ * here, and being off by a day is worse than being off by an hour.
+ *
+ * Mutates the rows in place and returns them; they are a throwaway copy of the
+ * grid in both callers.
+ */
+function openNormaliseReviewValues(rows, timeZone) {
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    if (row[4] instanceof Date) row[4] = Utilities.formatDate(row[4], timeZone, 'yyyy-MM-dd');
+    if (row[5] instanceof Date) row[5] = Utilities.formatDate(row[5], timeZone, 'HH:mm');
+  }
+  return rows;
+}
+
 /** One GET. Returns null rather than throwing, so one dead source is not a dead run. */
 function openFetch(url) {
   var response = UrlFetchApp.fetch(url, {
@@ -1778,7 +1916,7 @@ function openWriteReview(proposals) {
     sheet = ss.insertSheet(OPEN_TABS.review);
   } else {
     var values = sheet.getDataRange().getValues();
-    if (values.length > 1) existing = values.slice(1);
+    if (values.length > 1) existing = openNormaliseReviewValues(values.slice(1), ss.getSpreadsheetTimeZone());
   }
   var rows = openMergeReview(existing, proposals);
 
@@ -1788,6 +1926,12 @@ function openWriteReview(proposals) {
   sheet.clear();
   sheet.getRange(1, 1, 1, OPEN_REVIEW_COLUMNS.length).setValues([OPEN_REVIEW_COLUMNS]).setFontWeight('bold');
   if (rows.length) {
+    // Formats first. Sheets decides what a value IS as it is written, so a
+    // number format applied afterwards only restyles something already
+    // converted. See OPEN_REVIEW_TEXT_COLUMNS.
+    for (var t = 0; t < OPEN_REVIEW_TEXT_COLUMNS.length; t++) {
+      sheet.getRange(2, OPEN_REVIEW_TEXT_COLUMNS[t], rows.length, 1).setNumberFormat('@');
+    }
     sheet.getRange(2, 1, rows.length, OPEN_REVIEW_COLUMNS.length).setValues(rows);
     sheet.getRange(2, 1, rows.length, 1).insertCheckboxes();
   }
@@ -1821,7 +1965,9 @@ function promoteAuctionOpens() {
   if (headerProblems.length) { ui.alert('Cannot run', headerProblems.join('\n'), ui.ButtonSet.OK); return; }
 
   var reviewValues = review.getDataRange().getValues();
-  var reviewRows = reviewValues.length > 1 ? reviewValues.slice(1) : [];
+  var reviewRows = reviewValues.length > 1
+    ? openNormaliseReviewValues(reviewValues.slice(1), ss.getSpreadsheetTimeZone())
+    : [];
   var metaRows = openReadTab(OPEN_TABS.metadata);
   var plan = openPlanPromotion(reviewRows, metaRows, headers);
 
@@ -1886,6 +2032,8 @@ if (typeof module !== 'undefined') {
     openIsoFromSlashes: openIsoFromSlashes,
     openIsoFromForumDate: openIsoFromForumDate,
     openIsoFromRfc822: openIsoFromRfc822,
+    openIsoFromCell: openIsoFromCell,
+    openMoneyFromCell: openMoneyFromCell,
     openShiftIsoDays: openShiftIsoDays,
     openParseTrentPage: openParseTrentPage,
     openParseFeed: openParseFeed,
@@ -1931,6 +2079,7 @@ if (typeof module !== 'undefined') {
     openHeaderProblems: openHeaderProblems,
     openDescribeScan: openDescribeScan,
     OPEN_REVIEW_COLUMNS: OPEN_REVIEW_COLUMNS,
+    OPEN_REVIEW_TEXT_COLUMNS: OPEN_REVIEW_TEXT_COLUMNS,
     OPEN_METADATA_FIELDS: OPEN_METADATA_FIELDS,
     OPEN_DERIVED_FIELDS: OPEN_DERIVED_FIELDS,
     OPEN_TRENT_DEFAULTS: OPEN_TRENT_DEFAULTS,

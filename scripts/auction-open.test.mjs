@@ -968,5 +968,133 @@ console.log('\nalesievauctions.com\n');
 }
 
 // ===========================================================================
+// 12. The round trip through the review tab — what Sheets does to a value
+// ===========================================================================
+//
+// A REGRESSION SECTION. This is a bug that reached auctionMetadata.
+//
+// openWriteReview writes openDate as the string '2026-09-19'. Sheets does not
+// keep it as one — it recognises the shape, makes the cell a real date, and
+// getValues() hands back a JavaScript Date at midnight in the SPREADSHEET's
+// timezone. `String(row[4])` on that produced
+//
+//   Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)
+//
+// and that went into the sheet, where daysToClose and Open Month compute from
+// it and the exported CSV feeds it to the site's date parsing. The same
+// coercion turns targetFunding's `$8,000.00` into the number 8000, which hides
+// because the destination cell's currency format displays it correctly anyway.
+//
+// The tests below are constructed rather than replayed, because what has to be
+// pinned is a Google Sheets behaviour that nothing in this repo can execute.
+// Every value here is exactly what getValues() returns for a cell the scan
+// wrote itself.
+console.log('\nSheet coercion on the round trip\n');
+{
+  // A date cell, as getValues() returns it. Built from local components so the
+  // assertion holds in whatever timezone this test runs in.
+  const asDate = new Date(2026, 8, 19, 1, 0, 0);
+  eq('a Date cell reads back as its ISO date', O.openIsoFromCell(asDate), '2026-09-19');
+  eq('  ... at 23:00 too, not the next day', O.openIsoFromCell(new Date(2026, 8, 19, 23, 0, 0)), '2026-09-19');
+  eq('  ... and at 00:00', O.openIsoFromCell(new Date(2026, 8, 19, 0, 0, 0)), '2026-09-19');
+
+  // The exact string that reached auctionMetadata. A tab still holding it comes
+  // good rather than staying broken.
+  eq('the stringified Date that caused this is repaired',
+    O.openIsoFromCell('Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)'), '2026-09-19');
+  eq('  ... in any month', O.openIsoFromCell('Mon Dec 01 2025 00:00:00 GMT-0600 (Central Standard Time)'), '2025-12-01');
+
+  eq('an ISO string passes through', O.openIsoFromCell('2026-09-19'), '2026-09-19');
+  eq('  ... zero-padded if it is not', O.openIsoFromCell('2026-9-1'), '2026-09-01');
+  eq('a US display date is read as M/D/YYYY', O.openIsoFromCell('9/19/2026'), '2026-09-19');
+  eq('  ... but a first field over 12 is refused, not guessed at',
+    O.openIsoFromCell('19/9/2026'), '19/9/2026');
+  eq('an empty cell is empty', O.openIsoFromCell(''), '');
+  eq('  ... and so is a blank one', O.openIsoFromCell(null), '');
+  eq('anything else is handed back untouched, for the caller to refuse',
+    O.openIsoFromCell('next Tuesday'), 'next Tuesday');
+
+  eq('a currency cell reads back as the money string', O.openMoneyFromCell(8000), '$8,000.00');
+  eq('  ... with cents', O.openMoneyFromCell(7500.5), '$7,500.50');
+  eq('  ... under a thousand', O.openMoneyFromCell(750), '$750.00');
+  eq('  ... and a money string passes through', O.openMoneyFromCell('$8,000.00'), '$8,000.00');
+}
+
+{
+  // End to end: a review row exactly as getValues() returns it after Sheets has
+  // had its way with the two columns.
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+    .proposals.find((p) => /\/29$/.test(p.link));
+  const coerced = O.openReviewRow(proposal);
+  coerced[0] = true;
+  coerced[4] = new Date(2026, 8, 19, 1, 0, 0); // Sheets made a date of it
+  coerced[15] = 8000;                          // and a number of the target
+
+  const promotion = O.openPlanPromotion([coerced], META, HEADERS);
+  eq('a coerced row still promotes', promotion.rows.length, 1);
+  eq('  ... with an ISO openDate', promotion.rows[0].fields.openDate, '2026-09-19');
+  check('  ... and NOT the Date.toString() that reached the sheet',
+    !/GMT|Daylight|Standard/.test(promotion.rows[0].fields.openDate),
+    promotion.rows[0].fields.openDate);
+  eq('  ... and the target as money, not as 8000', promotion.rows[0].fields.targetFunding, '$8,000.00');
+
+  // Belt and braces: converting is best effort, refusing is not.
+  const unreadable = coerced.slice();
+  unreadable[4] = 'sometime in September';
+  const refused = O.openPlanPromotion([unreadable], META, HEADERS);
+  eq('an openDate that cannot be read is refused, not written', refused.rows.length, 0);
+  check('  ... naming the tab to fix it in',
+    refused.problems.some((p) => /not a YYYY-MM-DD date/.test(p) && /auctionOpenReview/.test(p)),
+    refused.problems.join(' | '));
+
+  // Every openDate that survives promotion is ISO, whatever the cell held.
+  const shapes = ['2026-09-19', new Date(2026, 8, 19, 1, 0, 0), '9/19/2026',
+    'Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)'];
+  for (const shape of shapes) {
+    const row = coerced.slice();
+    row[4] = shape;
+    const p = O.openPlanPromotion([row], META, HEADERS);
+    eq(`openDate from ${JSON.stringify(String(shape)).slice(0, 34)}…`,
+      p.rows[0]?.fields.openDate, '2026-09-19');
+  }
+
+  // Two coerced rows still sort by date rather than by their string form.
+  const earlier = coerced.slice();
+  earlier[4] = new Date(2026, 8, 3, 1, 0, 0);
+  earlier[11] = 'https://alesievauctions.com/auctions/27';
+  const both = O.openPlanPromotion([coerced, earlier], META, HEADERS);
+  eq('two coerced rows both promote', both.rows.length, 2);
+  eq('  ... the earlier one first', both.rows[0].fields.openDate, '2026-09-03');
+  eq('  ... taking the lower number', both.rows[0].fields.auctionNumber, '48');
+}
+
+{
+  // The columns that must never be coerced in the first place. This is the
+  // belt; openIsoFromCell and openMoneyFromCell are the braces.
+  const cols = O.OPEN_REVIEW_TEXT_COLUMNS;
+  const at = (name) => O.OPEN_REVIEW_COLUMNS.indexOf(name) + 1;
+  check('openDate is written as text', cols.includes(at('openDate')), cols.join(','));
+  check('  ... so is the open time', cols.includes(at('first post')), cols.join(','));
+  check('  ... and targetFunding', cols.includes(at('targetFunding')), cols.join(','));
+  check('  ... and auctionName, which can begin with a + or an =',
+    cols.includes(at('auctionName')), cols.join(','));
+  check('every text column is a real column, 1-based for getRange',
+    cols.every((c) => c >= 1 && c <= O.OPEN_REVIEW_COLUMNS.length), cols.join(','));
+
+  // The drift note must not fire just because Sheets stored the same money as
+  // a number. It did before openMoneyFromCell, on every rescan.
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+    .proposals.find((p) => /\/29$/.test(p.link));
+  const held = O.openReviewRow(proposal);
+  held[15] = 8000;
+  const merged = O.openMergeReview([held], [proposal]);
+  check('a currency cell stored as a number is not read as drift',
+    !/KEPT WHAT THIS TAB/.test(String(merged[0][16])), String(merged[0][16]));
+  eq('  ... and is carried across as money', merged[0][15], '$8,000.00');
+}
+
+// ===========================================================================
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
