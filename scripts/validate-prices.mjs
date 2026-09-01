@@ -128,8 +128,10 @@ function parseLotQuantity(name) {
 // (166 lots sit there; the next distinct totals are $0.26 and $0.30, and nothing
 // is below it), so a lot closing at $0.25 drew no competing bid.
 //
-// INFERRED FROM THE DATA, not read from Trent's published auction rules. If that
-// turns out to be wrong, this whole exclusion goes with it.
+// CONFIRMED by the maintainer on 2026-09-01: $0.25 is the minimum bid across
+// all three sources — Trent, the forum, and alesievauctions.com. It was inferred
+// from the shape of the corpus when this rule was written, and the inference
+// held. One number, not three, so nothing here needs to vary by source.
 const BID_FLOOR = 0.25;
 
 // A lot that closes at the opening bid AND holds more than one token is not a
