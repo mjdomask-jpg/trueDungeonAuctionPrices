@@ -978,22 +978,22 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2022|Ioun Stone Mystic Orb|Minotaur Hide||FALSE,2022,Ultra Rare,Ioun Stone Mystic Orb,Minotaur Hide,,2022,Minotaur Hide,11,FALSE,,
 2022|Ioun Stone Mystic Orb|Mystic Silk||FALSE,2022,Ultra Rare,Ioun Stone Mystic Orb,Mystic Silk,,2022,Mystic Silk,11,FALSE,,
 2022|Ioun Stone Mystic Orb|Philosopher's Stone||FALSE,2022,Ultra Rare,Ioun Stone Mystic Orb,Philosopher's Stone,,2022,Philosopher's Stone,11,FALSE,,
-2023|Arcanum Shirt|Alchemist's Ink||FALSE,2023,Eldritch,Arcanum Shirt,Alchemist's Ink,,2023,Alchemist's Ink,1,FALSE,,
-2023|Arcanum Shirt|Alchemist's Parchment||FALSE,2023,Eldritch,Arcanum Shirt,Alchemist's Parchment,,2023,Alchemist's Parchment,1,FALSE,,
-2023|Arcanum Shirt|Aragonite||FALSE,2023,Eldritch,Arcanum Shirt,Aragonite,,2023,Aragonite,1,FALSE,,
-2023|Arcanum Shirt|Darkwood Plank||FALSE,2023,Eldritch,Arcanum Shirt,Darkwood Plank,,2023,Darkwood Plank,1,FALSE,,
-2023|Arcanum Shirt|Dwarven Steel||FALSE,2023,Eldritch,Arcanum Shirt,Dwarven Steel,,2023,Dwarven Steel,1,FALSE,,
-2023|Arcanum Shirt|Elven Bismuth||FALSE,2023,Eldritch,Arcanum Shirt,Elven Bismuth,,2023,Elven Bismuth,1,FALSE,,
-2023|Arcanum Shirt|Enchanter's Munition||FALSE,2023,Eldritch,Arcanum Shirt,Enchanter's Munition,,2023,Enchanter's Munition,1,FALSE,,
-2023|Arcanum Shirt|Golden Fleece||FALSE,2023,Eldritch,Arcanum Shirt,Golden Fleece,,2023,Golden Fleece,1,FALSE,,
-2023|Arcanum Shirt|Minotaur Hide||FALSE,2023,Eldritch,Arcanum Shirt,Minotaur Hide,,2023,Minotaur Hide,1,FALSE,,
-2023|Arcanum Shirt|Mystic Silk||FALSE,2023,Eldritch,Arcanum Shirt,Mystic Silk,,2023,Mystic Silk,1,FALSE,,
-2023|Arcanum Shirt|Oil of Enchantment||FALSE,2023,Eldritch,Arcanum Shirt,Oil of Enchantment,,2023,Oil of Enchantment,1,FALSE,,
-2023|Arcanum Shirt|Philosopher's Stone||FALSE,2023,Eldritch,Arcanum Shirt,Philosopher's Stone,,2023,Philosopher's Stone,1,FALSE,,
-2023|Arcanum Shirt|Shirt of the Shrewd||FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Shrewd,,2023,Shirt of the Shrewd,1,FALSE,,Ultra Rare
-2023|Arcanum Shirt|Shirt of the Imbiber|-1|FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Imbiber,-1,2022,Shirt of the Imbiber,1,FALSE,,Ultra Rare
-2023|Arcanum Shirt|Shirt of the Nimble|-2|FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Nimble,-2,2021,Shirt of the Nimble,1,FALSE,,Ultra Rare
-2023|Arcanum Shirt|Shirt of the Oaf|-3|FALSE,2023,Eldritch,Arcanum Shirt,Shirt of the Oaf,-3,2020,Shirt of the Oaf,1,FALSE,,Ultra Rare
+2023|Arcanum Shirt|Alchemist's Ink||FALSE,2023,Arcanum,Arcanum Shirt,Alchemist's Ink,,2023,Alchemist's Ink,1,FALSE,,
+2023|Arcanum Shirt|Alchemist's Parchment||FALSE,2023,Arcanum,Arcanum Shirt,Alchemist's Parchment,,2023,Alchemist's Parchment,1,FALSE,,
+2023|Arcanum Shirt|Aragonite||FALSE,2023,Arcanum,Arcanum Shirt,Aragonite,,2023,Aragonite,1,FALSE,,
+2023|Arcanum Shirt|Darkwood Plank||FALSE,2023,Arcanum,Arcanum Shirt,Darkwood Plank,,2023,Darkwood Plank,1,FALSE,,
+2023|Arcanum Shirt|Dwarven Steel||FALSE,2023,Arcanum,Arcanum Shirt,Dwarven Steel,,2023,Dwarven Steel,1,FALSE,,
+2023|Arcanum Shirt|Elven Bismuth||FALSE,2023,Arcanum,Arcanum Shirt,Elven Bismuth,,2023,Elven Bismuth,1,FALSE,,
+2023|Arcanum Shirt|Enchanter's Munition||FALSE,2023,Arcanum,Arcanum Shirt,Enchanter's Munition,,2023,Enchanter's Munition,1,FALSE,,
+2023|Arcanum Shirt|Golden Fleece||FALSE,2023,Arcanum,Arcanum Shirt,Golden Fleece,,2023,Golden Fleece,1,FALSE,,
+2023|Arcanum Shirt|Minotaur Hide||FALSE,2023,Arcanum,Arcanum Shirt,Minotaur Hide,,2023,Minotaur Hide,1,FALSE,,
+2023|Arcanum Shirt|Mystic Silk||FALSE,2023,Arcanum,Arcanum Shirt,Mystic Silk,,2023,Mystic Silk,1,FALSE,,
+2023|Arcanum Shirt|Oil of Enchantment||FALSE,2023,Arcanum,Arcanum Shirt,Oil of Enchantment,,2023,Oil of Enchantment,1,FALSE,,
+2023|Arcanum Shirt|Philosopher's Stone||FALSE,2023,Arcanum,Arcanum Shirt,Philosopher's Stone,,2023,Philosopher's Stone,1,FALSE,,
+2023|Arcanum Shirt|Shirt of the Shrewd||FALSE,2023,Arcanum,Arcanum Shirt,Shirt of the Shrewd,,2023,Shirt of the Shrewd,1,FALSE,,Ultra Rare
+2023|Arcanum Shirt|Shirt of the Imbiber|-1|FALSE,2023,Arcanum,Arcanum Shirt,Shirt of the Imbiber,-1,2022,Shirt of the Imbiber,1,FALSE,,Ultra Rare
+2023|Arcanum Shirt|Shirt of the Nimble|-2|FALSE,2023,Arcanum,Arcanum Shirt,Shirt of the Nimble,-2,2021,Shirt of the Nimble,1,FALSE,,Ultra Rare
+2023|Arcanum Shirt|Shirt of the Oaf|-3|FALSE,2023,Arcanum,Arcanum Shirt,Shirt of the Oaf,-3,2020,Shirt of the Oaf,1,FALSE,,Ultra Rare
 2023|Hat of the Lucky Pirate|Darkwood Plank||FALSE,2023,Enhanced,Hat of the Lucky Pirate,Darkwood Plank,,2023,Darkwood Plank,1,FALSE,,
 2023|Hat of the Lucky Pirate|Monster Trophy||FALSE,2023,Enhanced,Hat of the Lucky Pirate,Monster Trophy,,2023,Monster Trophy,1,FALSE,,
 2023|Hat of the Lucky Pirate|Mystic Silk||FALSE,2023,Enhanced,Hat of the Lucky Pirate,Mystic Silk,,2023,Mystic Silk,1,FALSE,,
@@ -1453,7 +1453,7 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2025|Omni Orb|Oil of Enchantment||FALSE,2025,Omni,Omni Orb,Oil of Enchantment,,2025,Oil of Enchantment,1,FALSE,,
 2025|Omni Orb|Philosopher's Stone||FALSE,2025,Omni,Omni Orb,Philosopher's Stone,,2025,Philosopher's Stone,10,FALSE,,
 "2025|Omni Orb|1,000 GP Gold Bar||FALSE",2025,Omni,Omni Orb,"1,000 GP Gold Bar",,2025,"1,000 GP Gold Bar",1,FALSE,,
-2025|Omni Cube Ultra Rare Recipe|Ultra Rare||FALSE,2025,Omni,Omni Cube Ultra Rare Recipe,Ultra Rare,,2025,Ultra Rare,12,FALSE,,
+2026|Omni Cube Ultra Rare Recipe|Ultra Rare||FALSE,2026,Omni,Omni Cube Ultra Rare Recipe,Ultra Rare,,2026,Ultra Rare,12,FALSE,,Ultra Rare
 2025|Bead of Asgard|Alchemist's Ink||FALSE,2025,Relic,Bead of Asgard,Alchemist's Ink,,2025,Alchemist's Ink,1,FALSE,,
 2025|Bead of Asgard|Alchemist's Parchment||FALSE,2025,Relic,Bead of Asgard,Alchemist's Parchment,,2025,Alchemist's Parchment,1,FALSE,,
 2025|Bead of Asgard|Aragonite||FALSE,2025,Relic,Bead of Asgard,Aragonite,,2025,Aragonite,1,FALSE,,
