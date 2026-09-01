@@ -1096,5 +1096,120 @@ console.log('\nSheet coercion on the round trip\n');
 }
 
 // ===========================================================================
+// 13. A `promoted` marker that outlived the row it names
+// ===========================================================================
+//
+// `openIsApproved` refuses any row whose status starts with `promoted`, so the
+// marker is not decoration — it is a lock. When the auctionMetadata row it
+// names is deleted, the lock stays on and ticking the row does nothing at all,
+// silently. That is what a real cleanup of promoted test data left behind.
+//
+// The awkward part, and the reason the note matters more than the clearing:
+// current practice DELETES a failed auction's row rather than marking it —
+// `Status` is `IF(closeDate="","Open","Closed")` and cannot express `Failed` —
+// so "promoted, then gone" is equally what a failed auction looks like.
+// Nothing here can tell deleted test data from a failed auction, so the row is
+// reopened, the tick is forced off, and the note says both readings.
+console.log('\nStale promoted markers\n');
+{
+  eq('a marker yields the id it claims', O.openPromotedId('promoted 202648'), '202648');
+  eq('  ... case-insensitively', O.openPromotedId('Promoted 202648'), '202648');
+  eq('a status that is not a marker yields nothing', O.openPromotedId(''), null);
+  eq('  ... nor does a bare word with no id', O.openPromotedId('promoted'), null);
+  // The rewritten form must NOT match, or every later rescan re-clears it.
+  eq('the `was promoted` form is a record, not a claim',
+    O.openPromotedId('was promoted 202648 — no longer in auctionMetadata'), null);
+
+  const ids = O.openRecordedAuctionIds(META);
+  eq('every recorded auctionId is in the lookup', Object.keys(ids).length, new Set(META.map((r) => r.auctionId)).size);
+  check('  ... including the newest', ids['202647'] === true, '');
+  check('  ... and not one that was never recorded', ids['202648'] === undefined, '');
+
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const proposals = O.openPlanScan({ metaRows: META, alesievCards: cards }).proposals;
+  const proposal = proposals.find((p) => /\/29$/.test(p.link));
+
+  // The case that prompted this: promoted, then the row deleted from the sheet.
+  const locked = O.openReviewRow(proposal);
+  locked[1] = 'promoted 202649';
+  locked[0] = true;
+
+  const before = O.openMergeReview([locked], [proposal]);
+  eq('with no id list nothing is questioned — the old behaviour', before[0][1], 'promoted 202649');
+  check('  ... and the row stays locked', !O.openIsApproved(before[0]), '');
+
+  const after = O.openMergeReview([locked], [proposal], ids);
+  eq('a marker naming an unrecorded id is cleared', after[0][1], '');
+  eq('  ... but the tick is forced OFF, so re-approving is a decision', after[0][0], false);
+  check('  ... and is NOT approved until the operator ticks it', !O.openIsApproved(after[0]), '');
+  const reticked = after[0].slice();
+  reticked[0] = true;
+  check('  ... after which it is', O.openIsApproved(reticked), '');
+
+  check('the note says the marker was cleared and why',
+    /WAS PROMOTED as 202649/.test(String(after[0][16])) &&
+    /no row with that auctionId is in auctionMetadata/.test(String(after[0][16])),
+    String(after[0][16]));
+  check('  ... and warns that a FAILED auction looks identical',
+    /FAILED and its row was deleted on purpose, leave it unticked/.test(String(after[0][16])),
+    String(after[0][16]));
+
+  // A marker that is still true is left completely alone.
+  const live = O.openReviewRow(proposal);
+  live[1] = 'promoted 202647';
+  const untouched = O.openMergeReview([live], [proposal], ids);
+  eq('a marker whose row IS recorded is untouched', untouched[0][1], 'promoted 202647');
+  check('  ... and stays locked', !O.openIsApproved(untouched[0]), '');
+  check('  ... with no note about it', !/WAS PROMOTED/.test(String(untouched[0][16])), String(untouched[0][16]));
+
+  // Both auctions at once, which is the shape of the real cleanup.
+  const bothLocked = proposals.map((p) => {
+    const row = O.openReviewRow(p);
+    row[1] = 'promoted ' + p.auctionId;
+    return row;
+  });
+  const reopened = O.openMergeReview(bothLocked, proposals, ids);
+  eq('both rows come back', reopened.length, 2);
+  check('  ... both unlocked', reopened.every((r) => r[1] === ''), reopened.map((r) => r[1]).join(' | '));
+  check('  ... both unticked', reopened.every((r) => r[0] === false), '');
+}
+
+{
+  // A promoted row nothing proposes any more — the card has come off the
+  // listing. It is history and is kept, but it must stop claiming to be
+  // something it is not.
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+    .proposals.find((p) => /\/29$/.test(p.link));
+  const ids = O.openRecordedAuctionIds(META);
+
+  const orphan = O.openReviewRow(proposal);
+  orphan[1] = 'promoted 202649';
+  const kept = O.openMergeReview([orphan], [], ids);
+  eq('an unproposed promoted row is still kept as history', kept.length, 1);
+  eq('  ... with the status rewritten rather than cleared',
+    kept[0][1], 'was promoted 202649 — no longer in auctionMetadata');
+  eq('  ... and unticked', kept[0][0], false);
+
+  // And it must survive the NEXT rescan, or the history disappears one scan
+  // later. `was promoted` still matches the retention test.
+  const again = O.openMergeReview(kept, [], ids);
+  eq('it survives the next rescan too', again.length, 1);
+  eq('  ... unchanged, because it no longer makes a claim to check',
+    again[0][1], 'was promoted 202649 — no longer in auctionMetadata');
+
+  // A still-recorded promoted row that is no longer proposed is untouched.
+  const stillGood = O.openReviewRow(proposal);
+  stillGood[1] = 'promoted 202647';
+  const goodKept = O.openMergeReview([stillGood], [], ids);
+  eq('a recorded one is kept verbatim', goodKept[0][1], 'promoted 202647');
+
+  // A row that was never promoted and is no longer proposed still drops out —
+  // the tab is not an archive of everything ever seen.
+  const nonPromoted = O.openReviewRow(proposal);
+  eq('an unpromoted row nothing proposes drops out', O.openMergeReview([nonPromoted], [], ids).length, 0);
+}
+
+// ===========================================================================
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

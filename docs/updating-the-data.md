@@ -364,6 +364,26 @@ row you added by hand in between is taken into account.
 Rescanning is safe: your ticks and anything you typed are carried across, and
 rows already promoted stay as a record.
 
+**A promoted row is locked, and the lock is released if you delete the row it
+made.** `status` reads `promoted 202649` after a promotion, and a row in that
+state is ignored by the promote step no matter how many times you tick it. So
+if you delete that auction from `auctionMetadata`, the next scan notices its
+`auctionId` is gone, **clears the marker, unticks the row and says so in
+`notes`** — otherwise the row would sit there looking approvable and quietly
+doing nothing.
+
+> **Read that note before re-approving.** Deleting a promoted row is also how a
+> **failed** auction is recorded — `Status` is
+> `IF(closeDate = "", "Open", "Closed")` and cannot say `Failed`, so the row is
+> removed instead. The script cannot tell a failed auction from deleted test
+> data, so it reopens the row either way and leaves the decision to you. If the
+> auction failed, leave it unticked.
+
+If the auction has also come off its listing so nothing proposes it any more,
+the row is kept as history with its status rewritten to
+`was promoted 202649 — no longer in auctionMetadata`. That form is not a claim,
+so it is left alone by every later scan.
+
 ### What it does that you don't have to
 
 | | |
