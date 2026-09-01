@@ -74,14 +74,21 @@ function priceTag(l: PricedLine, recipeYear: number, status: RecipeStatus, price
 // an indent and an "upgrades from" tag. `seasonFallback` suppresses the per-row
 // estimate badge when the WHOLE season is priced by fallback (the season note
 // already says so); ceiling badges still show, since that's a different caveat.
+//
+// `showYear` is for rows shown OUTSIDE a season accordion. Every other caller
+// sits under a season heading that states the vintage, so the row does not
+// repeat it; the Premium Trade Goods band has no heading to lean on and mixes
+// three vintages, where two rows would otherwise both read "Omni Cube".
 export function TransmuteRow({
   cost,
   paired = false,
   seasonFallback = false,
+  showYear = false,
 }: {
   cost: BuildCost;
   paired?: boolean;
   seasonFallback?: boolean;
+  showYear?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const narrow = useMediaQuery(NARROW);
@@ -115,6 +122,7 @@ export function TransmuteRow({
             <span aria-hidden="true">{narrow ? tierAbbrev(cost.level) : cost.level}</span>
             <span className="sr-only">{cost.level}</span>
           </span>
+          {showYear && <span className="tx-ryear">{cost.year}</span>}
           <span className="tx-name">
             {cost.displayName}
             {paired && src && <span className="tx-upfrom">upgrades from {src}</span>}

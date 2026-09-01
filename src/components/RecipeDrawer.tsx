@@ -62,6 +62,10 @@ export function RecipeDrawer({
   const [search, setSearch] = useState('');
   const [tier, setTier] = useState('All');
   const [showExpired, setShowExpired] = useState(false);
+  // The Premium Trade Goods band, collapsed at rest like the year sections and
+  // like its counterpart on the Recipes view. Closed by default because the
+  // drawer opens onto the focus year, which is what a picker is usually after.
+  const [bandOpen, setBandOpen] = useState(false);
   // null = default (only the focus year open); a Set once the user toggles one.
   const [openYears, setOpenYears] = useState<Set<number> | null>(null);
 
@@ -85,6 +89,21 @@ export function RecipeDrawer({
 
   // Drawer contents: each year's recipes, honoring search + tier filter. With no
   // filter we keep the Recipes-view ordering (Relic→Legendary pairs first).
+  // The trade rungs, lifted out of their seasons exactly as the Recipes view
+  // lifts them: latest vintage of each, and `bandKeys` keeps them from also
+  // appearing under a year. They answer to this drawer's own filters — search,
+  // the tier chips and Show expired — so a row cannot be visible here while the
+  // controls say it is filtered out.
+  const bandKeys = useMemo(() => engine.bandKeys(), [engine]);
+  const band = useMemo(() => {
+    const matches = (c: BuildCost) =>
+      (tier === 'All' || c.level === tier) &&
+      (!q || c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q));
+    return engine.tradeRungCosts()
+      .filter((c) => showExpired || c.status !== 'expired')
+      .filter(matches);
+  }, [engine, q, tier, showExpired]);
+
   const drawerYears = useMemo(() => {
     const matches = (c: BuildCost) =>
       (tier === 'All' || c.level === tier) &&
@@ -93,7 +112,7 @@ export function RecipeDrawer({
       .map((year) => {
         // Expired recipes stay PICKABLE — people audit old builds — they are
         // just out of the way until asked for.
-        const costs = all.filter((c) => c.year === year && (showExpired || c.status !== 'expired'));
+        const costs = all.filter((c) => c.year === year && !bandKeys.has(c.key) && (showExpired || c.status !== 'expired'));
         let items: PickItem[];
         if (filtering) {
           items = costs.filter(matches).map((c) => ({ type: 'single', cost: c }));
@@ -107,7 +126,7 @@ export function RecipeDrawer({
         return { year, items };
       })
       .filter((y) => y.items.length);
-  }, [all, years, q, tier, filtering, showExpired]);
+  }, [all, years, q, tier, filtering, showExpired, bandKeys]);
 
   const expiredCount = useMemo(() => all.filter((c) => c.status === 'expired').length, [all]);
 
@@ -120,7 +139,11 @@ export function RecipeDrawer({
   };
 
   // --- Drawer option row -------------------------------------------------
-  const optBody = (c: BuildCost, from?: string | null) => (
+  //
+  // `showYear` is for the band, whose rows sit outside any year section: two of
+  // them are an Omni Cube, and without the vintage they read as duplicates. Rows
+  // under a year heading do not repeat it.
+  const optBody = (c: BuildCost, from?: string | null, showYear = false) => (
     <>
       {/* On phones the chip is a tier code, as the Recipes view's rows and the
           calculator's already are — a spelled-out "Legendary" costs a quarter
@@ -130,6 +153,7 @@ export function RecipeDrawer({
         <span aria-hidden="true">{narrow ? tierAbbrev(c.level) : c.level}</span>
         <span className="sr-only">{c.level}</span>
       </span>
+      {showYear && <span className="calc-opt-yr">{c.year}</span>}
       <span className="calc-opt-nm">
         {c.displayName}
         {/* Expired recipes are pickable but never a surprise: the tag rides the
@@ -141,7 +165,7 @@ export function RecipeDrawer({
     </>
   );
 
-  const optRow = (c: BuildCost, opts: { indented?: boolean; from?: string | null } = {}) => {
+  const optRow = (c: BuildCost, opts: { indented?: boolean; from?: string | null; showYear?: boolean } = {}) => {
     const cls = `calc-opt${opts.indented ? ' leg' : ''}${selectedKeys.has(c.key) ? ' sel' : ''}`;
     const qty = quantities?.get(c.key);
     // A stepper only where there is something to step. An unpicked row is
@@ -149,7 +173,7 @@ export function RecipeDrawer({
     if (!onQuantityChange || qty === undefined) {
       return (
         <button key={c.key} type="button" className={cls} onClick={() => pick(c)}>
-          {optBody(c, opts.from)}
+          {optBody(c, opts.from, opts.showYear)}
         </button>
       );
     }
@@ -166,7 +190,7 @@ export function RecipeDrawer({
       <div key={c.key} className={`${cls} stepped${zeroed ? ' off' : ''}`}>
         <button type="button" className="calc-opt-hit" onClick={() => pick(c)}
           aria-label={`Add another ${c.displayName}`}>
-          {optBody(c, opts.from)}
+          {optBody(c, opts.from, opts.showYear)}
         </button>
         <span className="sl-step" role="group" aria-label={`Quantity of ${c.displayName}`}>
           {removeHere ? (
@@ -221,7 +245,25 @@ export function RecipeDrawer({
             </div>
           )}
           <div className="calc-dlist">
-            {drawerYears.length === 0 ? (
+            {/* Pinned above the years, matching the Recipes view. Forced open while
+                filtering, exactly as the year sections are — a match the reader
+                cannot see is the same as no match. */}
+            {band.length > 0 && (
+              <div className="calc-dyear calc-dband">
+                <button type="button" className="calc-yhead" aria-expanded={bandOpen || filtering}
+                  onClick={() => setBandOpen((v) => !v)}>
+                  <i className={`calc-chev ${bandOpen || filtering ? 'open' : ''}`} aria-hidden="true">▸</i>
+                  <span className="calc-yv">Premium Trade Goods</span>
+                  <span className="calc-yc">{band.length} recipe{band.length === 1 ? '' : 's'}</span>
+                </button>
+                {(bandOpen || filtering) && (
+                  <div className="calc-ysec">
+                    {band.map((c) => <div key={c.key}>{optRow(c, { showYear: true })}</div>)}
+                  </div>
+                )}
+              </div>
+            )}
+            {drawerYears.length === 0 && band.length === 0 ? (
               <p className="empty">No recipes match.</p>
             ) : (
               drawerYears.map(({ year, items }) => {

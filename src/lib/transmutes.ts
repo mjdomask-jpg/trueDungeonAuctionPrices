@@ -1169,6 +1169,39 @@ export class CostEngine {
   costsForSeason(year: number): BuildCost[] {
     return this.allCosts().filter((c) => c.year === year);
   }
+
+  /**
+   * The trade-rung recipes shown in their own band above the seasons: the
+   * LATEST vintage of each, newest first.
+   *
+   * They earn a band because a season heading answers the wrong question about
+   * them. Every rung of the trade ladder is a transmute, and unlike the power
+   * ladder the rungs do not belong to the season they were introduced in: the
+   * Golden Fleece recipe never expires and is the same 10 Monster Trophies in
+   * every season, so filing it under 2017 buries a thing you can make today
+   * eleven accordions down, under a season note about 2018 price data that is
+   * false for it.
+   *
+   * Latest vintage only, by decision. The Omni recipes DO expire and are
+   * reissued per season, so the band would otherwise carry an expired 2024 pair
+   * next to the 2025 one and have to explain the difference. Older vintages stay
+   * in their own season, which is where a reader comparing seasons will look;
+   * `bandKeys` is how the page keeps them from appearing twice.
+   */
+  tradeRungCosts(): BuildCost[] {
+    const latest = new Map<string, BuildCost>();
+    for (const c of this.allCosts()) {
+      if (!isTradeCategory(c.level)) continue;
+      const held = latest.get(c.transmute);
+      if (!held || c.year > held.year) latest.set(c.transmute, c);
+    }
+    return [...latest.values()].sort((a, b) => b.year - a.year || a.transmute.localeCompare(b.transmute));
+  }
+
+  /** Keys the band has claimed, so the season list can drop them. */
+  bandKeys(): Set<string> {
+    return new Set(this.tradeRungCosts().map((c) => c.key));
+  }
 }
 
 // --- Season ordering (Phase 4 page layout) -------------------------------
@@ -1217,6 +1250,7 @@ const TIER_ABBREV: Record<string, string> = {
   Exalted: 'Ex',
   Legendary: 'L',
   Mythic: 'M',
+  'Trade 3': 'T3',
   'Trade 5': 'T5',
   Paragon: 'Par',
   "Ultra Rare": 'UR',

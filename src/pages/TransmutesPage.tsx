@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { useCostEngine } from '../hooks/useCostEngine';
 import { useRoutedView } from '../hooks/useRoutedView';
 import { TransmuteSeason } from '../components/TransmuteSeason';
+import { TransmuteRow } from '../components/TransmuteRow';
 import { BuildCalculator } from '../components/BuildCalculator';
 import { ShoppingList } from '../components/ShoppingList';
 import { PageIntro } from '../components/PageIntro';
 import { HintPopover } from '../components/HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { DEFAULT_PATH, goldPathFor, onPath, type IngredientPath } from '../lib/substitutions';
-import type { PricingBasis } from '../lib/transmutes';
+import type { BuildCost, PricingBasis } from '../lib/transmutes';
 
 // Transmutes / build-vs-buy. Three views behind a toggle:
 //   Recipes (Phase 4) — every craftable token's estimated build cost, priced
@@ -65,6 +66,11 @@ export default function TransmutesPage() {
   const [activeOnly, setActiveOnly] = useState(false);
 
   const [search, setSearch] = useState('');
+  // The band collapses like a season. Closed by default: it is pinned for
+  // FINDABILITY, which a header at the top of the page already gives it, and
+  // leaving it open would spend four rows of a phone screen on it before the
+  // reader has asked. Matches the seasons, where only one is open at rest.
+  const [bandOpen, setBandOpen] = useState(false);
   // null = default view (newest season open); a Set once the user toggles one.
   const [openSeasons, setOpenSeasons] = useState<Set<number> | null>(null);
 
@@ -77,20 +83,30 @@ export default function TransmutesPage() {
   const seasons = useMemo(() => (engine ? engine.seasons() : []), [engine]);
   const q = search.trim().toLowerCase();
 
+  // One filter, applied identically to the band and to every season, so a row
+  // cannot answer to the controls differently depending on where it is shown.
+  const visible = useMemo(() => (all: BuildCost[]) => {
+    const matched = q
+      ? all.filter((c) => c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q))
+      : all;
+    const live = activeOnly ? matched.filter((c) => c.status !== 'expired') : matched;
+    return path === DEFAULT_PATH ? live : live.map((c) => onPath(c, path));
+  }, [q, activeOnly, path]);
+
+  // The trade rungs, pinned above the seasons. `bandKeys` is what stops them
+  // being listed twice; the season counts drop to match (2026: 29 -> 28).
+  const band = useMemo(() => (engine ? visible(engine.tradeRungCosts()) : []), [engine, visible]);
+  const bandKeys = useMemo(() => (engine ? engine.bandKeys() : new Set<string>()), [engine]);
+
   // Costs per season, filtered by the search box. Memoized on the engine, so
   // toggling a season open doesn't recompute every season's aggregation.
   const bySeason = useMemo(() => {
     if (!engine) return [];
-    return seasons.map((year) => {
-      const all = engine.costsForSeason(year);
-      const matched = q
-        ? all.filter((c) => c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q))
-        : all;
-      const visible = activeOnly ? matched.filter((c) => c.status !== 'expired') : matched;
-      const costs = path === DEFAULT_PATH ? visible : visible.map((c) => onPath(c, path));
-      return { year, costs };
-    });
-  }, [engine, seasons, q, path, activeOnly]);
+    return seasons.map((year) => ({
+      year,
+      costs: visible(engine.costsForSeason(year).filter((c) => !bandKeys.has(c.key))),
+    }));
+  }, [engine, seasons, visible, bandKeys]);
 
   const noteFor = (year: number): string | undefined => {
     if (!engine) return undefined;
@@ -122,7 +138,7 @@ export default function TransmutesPage() {
       return next;
     });
 
-  const total = useMemo(() => bySeason.reduce((n, s) => n + s.costs.length, 0), [bySeason]);
+  const total = useMemo(() => band.length + bySeason.reduce((n, s) => n + s.costs.length, 0), [band, bySeason]);
   const expiredCount = useMemo(
     () => (engine ? engine.allCosts().filter((c) => c.status === 'expired').length : 0),
     [engine],
@@ -419,7 +435,49 @@ export default function TransmutesPage() {
             {searching && ` · ${shown.length} season${shown.length === 1 ? '' : 's'} with matches`}
           </p>
 
-          {searching && shown.length === 0 && <p className="empty">No transmutes match “{search}”.</p>}
+          {searching && shown.length === 0 && band.length === 0 && <p className="empty">No transmutes match “{search}”.</p>}
+
+          {/* The trade rungs, above the seasons rather than inside one. Every rung
+              of the trade ladder is a transmute, but unlike the power ladder they
+              are not OF the season they debuted in — the Golden Fleece recipe never
+              expires and is the same 10 Monster Trophies every year, so filing it
+              under 2017 buried it eleven accordions down beneath a season note
+              about 2018 price data that was false for it. Always open: it is four
+              rows, and a collapsed pin would defeat the point of pinning it. */}
+          {band.length > 0 && (
+            <section className="tx-band">
+              {/* The hint is a SIBLING of the toggle, not inside it: a button cannot
+                  contain another button, which is the same constraint TransmuteRow
+                  solves with an overlay. A flex row puts them on one line and leaves
+                  the whole title clickable except the hint itself. */}
+              <div className="tx-bhead-row">
+                <button
+                  type="button"
+                  className="tx-bhead"
+                  aria-expanded={bandOpen || searching}
+                  onClick={() => setBandOpen((v) => !v)}
+                >
+                  <i className={`tx-chev ${bandOpen || searching ? 'open' : ''}`} aria-hidden="true">▸</i>
+                  <span className="tx-btitle">Premium Trade Goods</span>
+                  <span className="tx-scount">{band.length} transmute{band.length === 1 ? '' : 's'}</span>
+                </button>
+                <HintPopover label="About premium trade goods">
+                  The upper rungs of the <b>trade good ladder</b> — Trade 3 and Trade 5 — which
+                  are crafted rather than sold at auction. They sit here rather than under a
+                  season because they are not tied to one: the Golden Fleece recipe never
+                  expires. The Omni recipes DO expire and are reissued each year, so only the
+                  <b> latest</b> of each is shown here; older ones stay in their own season.
+                </HintPopover>
+              </div>
+              {/* Forced open while searching, exactly as the seasons are — a match
+                  the reader cannot see is the same as no match. */}
+              {(bandOpen || searching) && (
+                <div className="tx-band-body">
+                  {band.map((c) => <TransmuteRow key={c.key} cost={c} showYear />)}
+                </div>
+              )}
+            </section>
+          )}
 
           {shown.map(({ year, costs }) => (
             <TransmuteSeason

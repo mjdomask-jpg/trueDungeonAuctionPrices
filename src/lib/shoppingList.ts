@@ -210,9 +210,23 @@ export function stalenessOf(good: string, engine: CostEngine): Staleness | null 
  * Everything else merges on name AND vintage, because for those the year is
  * part of the identity: in-print versus out-of-print is a function of it, and
  * a 2023 Ultra Rare genuinely is a different purchase from a 2025 one.
+ *
+ * So the test is not "is this a trade good" but "did S1 actually price it" --
+ * and since the trade ladder was modelled properly those are different
+ * questions. Every rung is a transmute, and the two that are never sold (Trade
+ * 3's Fleece can be, Trade 5's Omni cannot) fall through to their BUILD cost,
+ * which has none of the three properties this key assumes. A build has a
+ * vintage: a 2024 Omni Orb costs $264.86 and a 2025 one $318.73, so merging
+ * them on name alone would sum two different things. It moves with the basis,
+ * unlike an S1 price. And it is not drawn from a closed vocabulary, so it grows
+ * the table the trade section exists to keep bounded.
  */
+export function mergesAsTradeGood(l: PricedLine): boolean {
+  return isTradeCategory(l.category) && l.source !== 'build';
+}
+
 export function mergeKey(l: PricedLine): string {
-  return isTradeCategory(l.category) ? `T|${l.good}` : `A|${l.good}|${l.nominalYear}`;
+  return mergesAsTradeGood(l) ? `T|${l.good}` : `A|${l.good}|${l.nominalYear}`;
 }
 
 type Draft = {
@@ -267,8 +281,8 @@ export function buildShoppingList(
             // and it does NOT recurse — its own bill of materials is the
             // Build Calculator's business, not the shopping list's.
             category: l.isSource || l.source === 'build' ? 'Transmute' : l.category,
-            section: isTradeCategory(l.category) ? 'trade' : 'additional',
-            nominalYear: isTradeCategory(l.category) ? null : l.nominalYear,
+            section: mergesAsTradeGood(l) ? 'trade' : 'additional',
+            nominalYear: mergesAsTradeGood(l) ? null : l.nominalYear,
             quantity: 0,
             onHand: 0,
             need: 0,
