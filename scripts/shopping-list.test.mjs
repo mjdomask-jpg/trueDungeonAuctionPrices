@@ -148,12 +148,18 @@ check('trade-good lines exist, and the pickable ones are a subset',
 
 // This one IS kept as an equality, and the distinction is the point of this
 // pass. The counts above are incidental — how many lines happen to reference a
-// trade good. GOODS is a closed vocabulary: Trade 1-5 is a fixed set, and a
-// fifteenth appearing is a real event somebody should look at, not the routine
-// drift of a recipe edit. The literal lives HERE and nowhere else; the two other
-// places that used to repeat `14` now read goods.length.
+// trade good. GOODS is a closed vocabulary: Trade 1-5 is a fixed set, and a new
+// one appearing is a real event somebody should look at, not the routine drift
+// of a recipe edit. The literal lives HERE and nowhere else; the two other
+// places that used to repeat it now read goods.length.
+//
+// It went 14 -> 15 when the trade ladder was modelled properly and the Omni
+// tokens took their canonical Trade 5 category. Exactly the event this check is
+// for, and it fired. Note the vocabulary counts goods that are CONSUMED by some
+// recipe: Omni Orb is (four 2026 Mythics upgrade from one), Omni Cube is not, so
+// only the Orb joined. Golden Fleece was already here under Trade 3.
 const goods = [...new Set(tradeLines.map(({ l }) => l.good))].sort();
-const GOOD_COUNT = 14;
+const GOOD_COUNT = 15;
 check(`exactly ${GOOD_COUNT} distinct trade goods`, goods.length === GOOD_COUNT, goods.join(', '));
 
 // The premise under the Shopping List's merge key. If this ever fails, rows
@@ -598,16 +604,28 @@ check("...so the two bases really do disagree about it",
   Math.abs(total(eraFuture) - total(nowFuture)) > 500,
   `era ${money(total(eraFuture))} vs today ${money(total(nowFuture))}`);
 
-// How far the basis actually REACHES. An active recipe's own trade goods are
+// How far the basis actually REACHES. An active recipe's trade goods are
 // identical either way — D3 already floats them to today — but its TOTAL can
 // still move, and pinning the mechanism matters because the tempting summary
 // ("the control only touches expired recipes") is false.
+//
+// The invariant is S1's, not the category's, and since the trade ladder was
+// modelled those differ: a trade good nobody sells falls through to its BUILD
+// cost, which moves with the basis like any other build. So the check is that
+// every line which DOES move is one of those, which still catches the bug it was
+// written for — an S1-priced trade good starting to drift — while admitting the
+// four Omni Orb lines that legitimately do. The presence check beneath it keeps
+// this from passing vacuously if the built ones ever stop moving.
 const activeTrade = costs.filter((c) => c.status === 'active')
   .flatMap((c) => c.lines.map((l, i) => ({ l, e: eraByKey.get(c.key).lines[i] })))
   .filter(({ l }) => isTradeCategory(l.category));
-check("an ACTIVE recipe's own trade goods are identical under both bases — every one of them",
-  activeTrade.length > 0 && activeTrade.every(({ l, e }) => l.unitAvg === e.unitAvg),
-  `${activeTrade.filter(({ l, e }) => l.unitAvg !== e.unitAvg).length} of ${activeTrade.length} differ`);
+const tradeDrift = activeTrade.filter(({ l, e }) => l.unitAvg !== e.unitAvg);
+check("an ACTIVE recipe's trade goods are identical under both bases — every one S1 priced",
+  activeTrade.length > 0 && tradeDrift.every(({ l }) => l.source === 'build'),
+  `${tradeDrift.filter(({ l }) => l.source !== 'build').length} MARKET-priced of ${activeTrade.length} differ`);
+check('...and the ones that do move are BUILT trade goods, which S1 never reached',
+  tradeDrift.length > 0 && tradeDrift.every(({ l }) => l.source === 'build'),
+  tradeDrift.slice(0, 4).map(({ l, e }) => `${l.good} ${money(l.unitAvg)} vs ${money(e.unitAvg)}`).join(', '));
 
 const activeDiff = costs.filter((c) => c.status === 'active')
   .filter((c) => !near(c.fullAvg, eraByKey.get(c.key).fullAvg, 0.005));

@@ -681,6 +681,39 @@ td.diff.down { color: var(--diff-down); }
 .tx-sbody { padding: 2px 12px 14px; }
 .tx-season-toggle { margin: 8px 6px 0; font-size: 13px; }
 
+/* The Premium Trade Goods band: the Trade 3 and Trade 5 recipes, pinned above
+   the season accordions because they are not OF a season. Built from the same
+   card as .tx-season so it reads as a peer of the sections beneath it, but with
+   no chevron and no toggle — it is four rows and it is always open, which is the
+   whole reason it was lifted out of 2017. The trade-brown left edge is the same
+   value the Trade 3/Trade 5 tier chips inside it carry, so the band and its rows
+   agree about what they are without a second label saying so. */
+.tx-band {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid #b45f06; border-radius: 12px;
+  margin-top: 14px; overflow: hidden; box-shadow: var(--shadow);
+}
+:root[data-theme='dark'] .tx-band { border-left-color: #e08b3e; }
+/* The header is a flex ROW holding the toggle and the hint side by side, because
+   the hint is its own button and cannot nest inside one. Baseline alignment per
+   the site rule above .tx-shead: a 20px display title, a 13px count and the hint
+   glyph are three type sizes on one line. */
+.tx-bhead-row { display: flex; align-items: baseline; gap: 8px; padding-right: 16px; }
+.tx-bhead {
+  display: flex; align-items: baseline; gap: 10px; flex: 1; background: none;
+  border: none; padding: 14px 16px; cursor: pointer; text-align: left;
+  color: var(--text-h); font-family: inherit;
+}
+.tx-bhead:hover { background: var(--row-hover); }
+.tx-bhead > .tx-chev { align-self: center; }
+.tx-btitle { font-size: 20px; font-weight: 600; font-family: var(--display); }
+.tx-band-body { padding: 2px 12px 14px; }
+/* The vintage, for band rows only — two of them are an Omni Cube and without it
+   they read as duplicates. Sized and coloured like .tx-scount so it reads as the
+   same kind of fact the season heading carries, and `flex: none` keeps it off the
+   name's shrink budget at 320px. */
+.tx-ryear { font-size: 13px; color: var(--text); font-family: var(--sans); flex: none; }
+
 .tx-group.ladder { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 4px; }
 .tx-group-label {
   font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
@@ -774,9 +807,10 @@ td.diff.down { color: var(--diff-down); }
 
 /* Tier chips. Each transmute tier has its OWN in-game colour (these mark
    transmutes apart from blind-pack tokens). Enhanced + Exalted share light
-   blue; Ultra Rare reuses the Ultra Rare category purple and Omni the Trade brown, matching
-   the dashboard. Filled pills so the chip *is* the tier colour. Light and dark
-   are tuned separately for text contrast and edge visibility on each card.
+   blue; Ultra Rare reuses the Ultra Rare category purple, and Omni and the
+   Trade 3 rung both take the Trade brown, matching the dashboard. Filled
+   pills so the chip *is* the tier colour. Light and dark are tuned
+   separately for text contrast and edge visibility on each card.
    Mythic is "white" and Safehold "light gray" — kept apart by giving Mythic a
    pure-white fill with a defined ring (an outlined white pill) and Safehold a
    solid gray fill. */
@@ -795,7 +829,11 @@ td.diff.down { color: var(--diff-down); }
 .tchip[data-tier='Safehold']  { background: #d6dae0; color: #363c46; border-color: #bdc3cb; }
 .tchip[data-tier='Ultra Rare']    { background: #9900ff; color: #fff; }
 .tchip[data-tier='Paragon']   { background: #a52121; color: #fff; }
-.tchip[data-tier='Omni']      { background: #b45f06; color: #fff; }
+/* The trade rungs take the trade-good brown the Prices, Trends and Auction Data
+   views already use for Trade 1/2/4. Trade 5 is the Omni tokens, which wore this
+   same brown under the level `Omni` before the trade ladder was modelled. */
+.tchip[data-tier='Trade 3'],
+.tchip[data-tier='Trade 5']   { background: #b45f06; color: #fff; }
 
 :root[data-theme='dark'] .tchip[data-tier='Enhanced'],
 :root[data-theme='dark'] .tchip[data-tier='Exalted']   { background: #bcdcf5; color: #0a2f56; border-color: transparent; }
@@ -807,7 +845,8 @@ td.diff.down { color: var(--diff-down); }
 :root[data-theme='dark'] .tchip[data-tier='Safehold']  { background: #c2c8d1; color: #23262e; border-color: transparent; }
 :root[data-theme='dark'] .tchip[data-tier='Ultra Rare']    { background: #c084fc; color: #3b0764; }
 :root[data-theme='dark'] .tchip[data-tier='Paragon']   { background: #cf3a3a; color: #fff; }
-:root[data-theme='dark'] .tchip[data-tier='Omni']      { background: #e08b3e; color: #3a1f04; }
+:root[data-theme='dark'] .tchip[data-tier='Trade 3'],
+:root[data-theme='dark'] .tchip[data-tier='Trade 5']   { background: #e08b3e; color: #3a1f04; }
 
 /* --- Build Calculator (transmutes expansion, Phase 2) ------------------- */
 /* Compact single-screen redesign: a slide-in drawer picks the recipe; a dense
@@ -1142,6 +1181,15 @@ td.diff.down { color: var(--diff-down); }
 .calc-yv { font-weight: 600; font-family: var(--display); }
 .calc-yc { color: var(--text); font-size: 12px; margin-left: auto; }
 .calc-ysec { padding: 2px 0 6px; }
+
+/* The drawer's Premium Trade Goods band. Built from the year section so it reads
+   as a peer of the sections beneath it, plus the trade-brown left edge the
+   Recipes view's band carries and the Trade 3/Trade 5 chips inside it wear. */
+.calc-dband { border-left: 3px solid #b45f06; padding-left: 5px; }
+:root[data-theme='dark'] .calc-dband { border-left-color: #e08b3e; }
+/* The vintage, band rows only — two of them are an Omni Cube. `flex: none` keeps
+   it off the name's shrink budget, since .calc-opt-nm is the row's ellipsis. */
+.calc-opt-yr { font-size: 12px; color: var(--text); font-family: var(--sans); flex: none; }
 .calc-opt { display: flex; align-items: baseline; gap: 9px; width: 100%; background: none; border: 1px solid transparent; border-radius: 8px; cursor: pointer; padding: 7px 8px; text-align: left; color: var(--text-h); font: inherit; }
 .calc-opt:hover { background: var(--row-hover); border-color: var(--border); }
 .calc-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

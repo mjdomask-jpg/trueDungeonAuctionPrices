@@ -7,7 +7,6 @@ Key,Year,Category,Item,Display Name,max Price,avg Price,min Price
 2024Golden Fleece,2024,Trade 3,Golden Fleece,Golden Fleece,50,45,40
 2025Golden Fleece,2025,Trade 3,Golden Fleece,Golden Fleece,70,60,50
 2026Golden Fleece,2026,Trade 3,Golden Fleece,Golden Fleece,90,85,75
-2027Golden Fleece,2027,Trade 3,Golden Fleece,Golden Fleece,60,55,50
 2023Stalker Token,2023,Treasure Chest,Stalker Token,Stalker Token,5,4,3
 2026Herald Token (20 Unique),2026,Treasure Chest,Herald Token (20 Unique),Herald Token (20 Unique),20,15,10
 2026Melonbrant Concentrate,2026,Silver Ship Games,Melonbrant Concentrate,Melonbrant Concentrate,50,40,29
@@ -25,3 +24,11 @@ Key,Year,Category,Item,Display Name,max Price,avg Price,min Price
 2015Charm of Avarice,2015,Legendary,Charm of Avarice,Charm of Avarice,1200,1100,1000
 2017Charm of Synergy,2017,Ultra Rare,Charm of Synergy,Charm of Synergy,160,140,120
 2018Charm of Awakened Synergy,2018,Relic,Charm of Awakened Synergy,Charm of Awakened Synergy,500,475,450
+2019Monster Trophy,2019,Treasure Chest,Monster Trophy,Monster Trophy,7,6,5
+2020Monster Trophy,2020,Treasure Chest,Monster Trophy,Monster Trophy,6,5,4
+2021Monster Trophy,2021,Treasure Chest,Monster Trophy,Monster Trophy,5,4,3
+2022Monster Trophy,2022,Treasure Chest,Monster Trophy,Monster Trophy,5,4,3
+2023Monster Trophy,2023,Treasure Chest,Monster Trophy,Monster Trophy,4,3.5,3
+2024Monster Trophy,2024,Treasure Chest,Monster Trophy,Monster Trophy,5,4.5,4
+2025Monster Trophy,2025,Treasure Chest,Monster Trophy,Monster Trophy,7,6,5
+2026Monster Trophy,2026,Treasure Chest,Monster Trophy,Monster Trophy,9,8.5,7.5

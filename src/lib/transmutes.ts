@@ -1022,7 +1022,28 @@ export class CostEngine {
       // Where a good is both craftable and auctioned, buildCost wins by
       // decision; `marketAvg`/`marketMin` still carry the market price so the
       // UI can show both sides of the build-vs-buy call.
-      const sub = this.isTransmute(l.good) ? this.cost(l.good, l.nominalYear) : null;
+      //
+      // A TRADE GOOD asks the question differently, and the answer is MARKET
+      // FIRST, BUILD ONLY AS A FALLBACK.
+      //
+      // Every rung of the trade ladder is a transmute -- Trade 1/2 from the blind
+      // packs, Trade 3 from a Trade 2 good or from Monster Trophies, Trade 5 (the
+      // Omni tokens) from the rungs below. So 'is it craftable' does not separate
+      // them from anything; what separates them is whether you can BUY one.
+      //
+      // Where a price exists, S1's reasoning governs: buying is anticipatory, so a
+      // player stocking up on Fleece before the January window pays what a Fleece
+      // costs NOW, and a recipe line asking for one is asking that question. What
+      // it would cost this reader to assemble one instead is the Fleece recipe's
+      // own row, where marketAvg puts both sides together. Letting the recursion
+      // pre-empt that pinned every Fleece line to the 2017 recipe's vintage --
+      // measured, $60 against the $85 a Fleece actually costs today.
+      //
+      // Where no price exists the recipe is all there is, and it must still be
+      // reached: Omni Orb is never sold, and four 2026 Mythics upgrade from one.
+      // A blanket trade-good exemption cost them $637 each and an unpriced line.
+      const tradeLeaf = this.isTransmute(l.good) && this.isTradeGood(l) ? this.leafFor(l, status, window) : null;
+      const sub = this.isTransmute(l.good) && !tradeLeaf?.price ? this.cost(l.good, l.nominalYear) : null;
       if (sub) {
         // Full chain: owning the source outright is the top-level toggle, so a
         // nested source is always built.
@@ -1040,7 +1061,7 @@ export class CostEngine {
         if (sub.unpricedLines) unpriced += sub.unpricedLines;
         if (base.seasonMapped) base.note = `built from the ${sub.year} recipe`;
       } else {
-        const { price: p, floated } = this.leafFor(l, status, window);
+        const { price: p, floated } = tradeLeaf ?? this.leafFor(l, status, window);
         if (p) {
           base.source = p.source;
           base.pricedYear = p.pricedYear;
@@ -1089,7 +1110,17 @@ export class CostEngine {
     // The build-vs-buy comparison has to be quoted in the same season as the
     // build, or a pinned 2019 build cost would be weighed against a 2026 asking
     // price. Unlike a line, this is not an authored pin, so it always moves.
-    const marketYear = this.priceYear ?? recipe.year;
+    //
+    // Which season the build IS in follows its status, not `recipe.year`: rule 4
+    // floats every line of an ACTIVE recipe to today, so quoting the market at
+    // recipe.year weighs a build made of today's prices against an asking price
+    // from the recipe's debut. The gap is invisible while every active recipe is
+    // recent, and the never-expiring ones are where it bites: the 2017 Golden
+    // Fleece recipe read "build $85, buy ~$60" -- 2026's trophies against 2019's
+    // Fleece, clamped back to 2017 -- a verdict that was pure authoring artifact.
+    // An expired recipe keeps recipe.year, which is what its window is built from,
+    // and a future one keeps it too and clamps forward exactly as its lines do.
+    const marketYear = this.priceYear ?? (status === 'active' ? this.prices.latestPriced : recipe.year);
     const market = this.prices.leafPrice(recipe.transmute, marketYear, this.variantFor(marketYear));
     const out: BuildCost = {
       key: memoKey,
@@ -1138,6 +1169,39 @@ export class CostEngine {
   costsForSeason(year: number): BuildCost[] {
     return this.allCosts().filter((c) => c.year === year);
   }
+
+  /**
+   * The trade-rung recipes shown in their own band above the seasons: the
+   * LATEST vintage of each, newest first.
+   *
+   * They earn a band because a season heading answers the wrong question about
+   * them. Every rung of the trade ladder is a transmute, and unlike the power
+   * ladder the rungs do not belong to the season they were introduced in: the
+   * Golden Fleece recipe never expires and is the same 10 Monster Trophies in
+   * every season, so filing it under 2017 buries a thing you can make today
+   * eleven accordions down, under a season note about 2018 price data that is
+   * false for it.
+   *
+   * Latest vintage only, by decision. The Omni recipes DO expire and are
+   * reissued per season, so the band would otherwise carry an expired 2024 pair
+   * next to the 2025 one and have to explain the difference. Older vintages stay
+   * in their own season, which is where a reader comparing seasons will look;
+   * `bandKeys` is how the page keeps them from appearing twice.
+   */
+  tradeRungCosts(): BuildCost[] {
+    const latest = new Map<string, BuildCost>();
+    for (const c of this.allCosts()) {
+      if (!isTradeCategory(c.level)) continue;
+      const held = latest.get(c.transmute);
+      if (!held || c.year > held.year) latest.set(c.transmute, c);
+    }
+    return [...latest.values()].sort((a, b) => b.year - a.year || a.transmute.localeCompare(b.transmute));
+  }
+
+  /** Keys the band has claimed, so the season list can drop them. */
+  bandKeys(): Set<string> {
+    return new Set(this.tradeRungCosts().map((c) => c.key));
+  }
 }
 
 // --- Season ordering (Phase 4 page layout) -------------------------------
@@ -1150,8 +1214,11 @@ export class CostEngine {
 // successive "sets" at one tier), then the rest of the ladder. Mythic is last
 // despite its power because only the largest spenders build them.
 const FLAT_LEVEL_ORDER = ['Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic'];
-// Tokens outside the normal upgrade ladder, in maintainer-specified order.
-const LADDER_LEVEL_ORDER = ['Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
+// Tokens outside the normal POWER ladder, in maintainer-specified order. The
+// trade rungs sit here because they are a separate ladder, not because they are
+// unranked: Trade 3 is the Golden Fleece and Trade 5 the Omni tokens, which
+// carried the level `Omni` until the trade ladder was modelled properly.
+const LADDER_LEVEL_ORDER = ['Safehold', 'Ultra Rare', 'Paragon', 'Trade 3', 'Trade 5'];
 
 export type UpgradePair = { source: BuildCost; upgrade: BuildCost };
 
@@ -1183,7 +1250,8 @@ const TIER_ABBREV: Record<string, string> = {
   Exalted: 'Ex',
   Legendary: 'L',
   Mythic: 'M',
-  Omni: 'O',
+  'Trade 3': 'T3',
+  'Trade 5': 'T5',
   Paragon: 'Par',
   "Ultra Rare": 'UR',
   Relic: 'R',
