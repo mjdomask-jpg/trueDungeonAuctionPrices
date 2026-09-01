@@ -52,6 +52,27 @@ const cases = [
     lines(t).filter((l) => !l.startsWith('202642,2026,42,Aragonite,')).join('\n')),
     /202642 "Aragonite": 12 lot\(s\) in rawPricesData but no row in prices\.csv/, 'warn'],
 
+  // The two halves of isBidFloorArtifact, pinned in both directions. Together
+  // they say: an at-the-floor lot may not set the published min WHEN IT DIVIDES,
+  // and must still set it when it does not.
+  //
+  // 20253 "Darkwood Plank (3 Tokens)" went for $0.25 — the opening bid — beside
+  // eleven 10x lots at $0.83-$1.03, and published $0.08/token. Restoring that
+  // $0.08 must fail: it is the floor divided by the lot size, not a price.
+  ['1  a floor artifact published as the min', () => edit('prices.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith("20253,2025,3,Darkwood Plank,0.83,"));
+    L[i] = L[i].replace(',Darkwood Plank,0.83,', ',Darkwood Plank,0.08,'); return L.join('\n');
+  }), /20253 "Darkwood Plank": prices\.csv has \[0\.08, 1\.03\] but its 11 eligible lot\(s\) give \[0\.83, 1\.03\]/],
+
+  // The mirror. 20245's Adventurers' Guild Button also closed a lot at $0.25,
+  // but that lot held ONE token, so $0.25 is exactly what somebody paid and it
+  // is still the min. Raising it to the next value — what a predicate that had
+  // lost its `quantity > 1` clause would produce — must fail.
+  ['1  a single-token floor lot is still eligible', () => edit('prices.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith("20245,2024,5,Adventurers' Guild Button,0.25,"));
+    L[i] = L[i].replace(",Adventurers' Guild Button,0.25,", ",Adventurers' Guild Button,0.5,"); return L.join('\n');
+  }), /20245 "Adventurers' Guild Button": prices\.csv has \[0\.5, 0\.75\] but its 4 eligible lot\(s\) give \[0\.25, 0\.75\]/],
+
   ['2  price block copied onto another auction', () => edit('prices.csv', (t) => {
     const L = lines(t);
     const donor = L.filter((l) => l.startsWith('202641,'));

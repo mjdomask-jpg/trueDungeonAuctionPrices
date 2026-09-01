@@ -831,10 +831,62 @@ per-token division, the min/max, the Onyx split — and writes the rows itself.
 | Lot names | Resolved to the canonical `Item` against that season's `tokenMetadata`, with a short exception list for the irregular ones. **The old `trentNormalization` tab is not used and does not need a new row per lot.** |
 | Quantity | `10x Dwarven Steels #7` is ten tokens, `1,000 GP Gold Bar x4 #1 (4 Tokens)` is four — the `x4` and the `(4 Tokens)` are one fact written twice, not sixteen tokens. |
 | Per-token price | The lot price divided by that quantity, rounded half away from zero to match every existing row. |
-| `auctionPrices` | Min and max per item — **one** row where an item had a single lot. |
+| `auctionPrices` | Min and max per item — **one** row where an item had a single lot. A lot that closed at the **$0.25 opening bid while holding more than one token** is written to `rawPricesData` but may not set the min or max — see [The bid-floor exclusion](#the-bid-floor-exclusion). |
 | Onyx lots | `+2 Sacred Sling - 2023 (Onyx)` is routed to `onyx` with the marker and the year stripped. They arrive inline in Trent's file. |
 | Unsold lots | A blank bid is the real no-sale signal. **No row is written**, and the count is reported. |
 | The auction key | Derived from the auction you picked, applied to every row. You never choose a paste target, which is what makes "pasted into the wrong auction" impossible rather than merely detectable. |
+
+### The bid-floor exclusion
+
+`$0.25` is the opening bid. It is the lowest lot total anywhere in the corpus —
+166 lots sit exactly there, the next distinct totals are `$0.26` and `$0.30`, and
+nothing is below it — so a lot closing at `$0.25` drew **no competing bid**.
+
+For a lot holding **one** token that is still a real price: somebody paid $0.25.
+165 of those 166 lots are that shape, and the Adventurers' Guild Button closes
+there routinely. Those are left alone.
+
+For a lot holding **more than one** token, the floor gets divided by the lot
+size and produces a per-token figure below anything the auction could have
+transacted — you cannot bid less than $0.25 for anything. The corpus holds
+exactly one: `20253` `Darkwood Plank (3 Tokens)` at $0.25, which published
+**$0.08/token** beside eleven `10x Darkwood Planks` lots at $0.83–$1.03. That
+$0.08 then became the 2025 season minimum for the token and flowed into every
+transmute recipe that uses it — Safehold II takes 50 planks, so its best-case
+line read **$4.00 instead of $50.00**.
+
+So: **the lot is still recorded in `rawPricesData`** and the Quartiles view still
+charts it. What it may not do is set a published bound.
+
+> **One cell in the workbook still has to be fixed by hand.** The rule changes
+> what `trentClose.gs` writes *from now on*; it cannot reach back into a row
+> imported before it existed. `prices.csv` in the repo has been corrected to
+> `0.83`, but the workbook's **`prices`** tab still holds `0.08` for `20253`
+> `Darkwood Plank`, and **the next publish from the sheet would put it back**.
+> Find the `20253` / `Darkwood Plank` row whose price is `0.08` and set it to
+> `0.83`. Until that is done, a publish will fail the PR check — which is the
+> gate working, not a broken publish. (Not `auctionPricesOLD`.)
+
+The rule is deliberately mechanical rather than statistical, because the obvious
+statistical rules do not survive the data:
+
+- **A Tukey fence on the minimum** moves 34 of 173 season pools, and most of
+  those moves are 1.01×–1.2× — legitimate cheap sales. 2022's `1,000 GP Gold Bar`
+  would go $10.00 → $11.00, and somebody really did pay $10.00.
+- **"Drop the odd remainder lot"** is simply false. Across 716 groups the
+  remainder lot's median is **97%** of the standard lot's per-token rate and
+  **35% of them clear above it**.
+
+It lives in two places that must agree: `isBidFloorArtifact` in
+[`trentClose.gs`](../apps-script/trentClose.gs), which writes the summary rows,
+and the same predicate in `validate-prices.mjs` § 1, which reconciles them. You
+cannot change one and quietly ship it — fix only the writer and § 1 fails; fix
+only the validator and the replay in `trent-close.test.mjs` fails. Section 1
+also prints the number of excluded lots on every run, so a rule that starts
+swallowing more than it should is visible rather than silent.
+
+> **The $0.25 floor is inferred from the data, not read from Trent's published
+> auction rules.** If that turns out to be wrong, the exclusion goes with it.
 
 ### When it refuses
 
