@@ -129,3 +129,68 @@ says two things about one token.
 member of an auctioned tier, or a validator rule asserting that a given `Item`
 carries one `IngredientType` everywhere it appears. The second is cheap and
 would have caught this — `validate-recipes.mjs` already walks every line.
+
+---
+
+## 6. A failed auction has no representation, so its row is deleted
+
+**Now:** `Status` is a formula — `IF(closeDate = "", "Open", "Closed")` — so the
+column has exactly two reachable values and **`Failed` is not one of them**. All
+289 rows read `Closed`, and none has a blank `closeDate`.
+
+An auction that fails to fund is therefore handled by **deleting its
+`auctionMetadata` row**. That is current practice and it works, in the sense
+that nothing downstream is wrong.
+
+**Why it matters:** three things follow from it, and the third is new.
+
+1. **Auction numbers are permanently burned.** Six are missing across the
+   recorded era — 2020 has no 8, 2025 no 18, 25 or 31, 2026 no 3 or 38 — and the
+   sequence is legitimately sparse rather than corrupt. This is why
+   `auctionOpen.gs` numbers from `max + 1` and never `count + 1`; counting
+   would propose 2026's 46, which exists. The gap is the *only* surviving trace
+   that an auction happened at all.
+2. **Failure-rate data is lost for good.** Which auctioneers' auctions fail, and
+   whether `Lightning` fails more often than `Fixed Date`, are questions the
+   data cannot answer and never will for auctions already deleted. Nothing on
+   the site asks them today, which is exactly why the loss is invisible.
+3. **The auction-open scanner cannot tell a failure from a mistake.** Since
+   `2026-08-31.3`, `openMergeReview` clears a `promoted <id>` marker whose
+   `auctionId` is no longer in `auctionMetadata`, so the review row can be
+   approved again. But "promoted, then the row is gone" is *equally* a failed
+   auction and deleted test data, and nothing in the script can separate them.
+   So it reopens the row, forces the tick off, and asks the operator in a note —
+   every time, for ever. A `Failed` state would make that question answerable
+   instead of asked.
+
+**One correction to the plan.** `data-pipeline-plan.md`'s Phase 4 follow-on
+question says retaining failed rows "would cost nothing visually" because
+`Failed` has no dedicated UI and is only ever "not `Closed`". That is not right
+as written. `openAuctions()` in `src/lib/data.ts` filters `status === 'Open'`,
+and it feeds the live-auction banner on both the Dashboard and the Explorer with
+an "opened N days ago" line. A retained failed row keeps a blank `closeDate`, so
+`Status` computes `Open`, and the auction would sit on that banner **for ever**
+with a counter that climbs. Retaining rows is only free once a third state
+exists — which is the point of this item, not an argument against it.
+
+**Done looks like:** a state a failed auction can actually be in, without the
+banner adopting it. The two shapes worth weighing:
+
+- **A separate column** — `outcome`, say, holding `Funded` / `Failed` /
+  `Cancelled`, left blank for the ordinary case. `Status` keeps its formula and
+  its meaning, `openAuctions()` gains an `outcome !== 'Failed'` guard, and the
+  row survives with its `openDate`, `auctioneer` and `completionStyle` intact —
+  which is all the failure-rate analysis needs.
+- **Widening `Status` itself**, which means giving up the formula and typing the
+  column by hand. Cheaper in columns and worse in every other way: it removes
+  the guarantee that `Status` and `closeDate` agree, and `auctionOpen.gs`'s
+  promote step relies on that formula being copied down rather than written
+  (see `OPEN_DERIVED_FIELDS`).
+
+Either way it is a **data-model change with a UI consequence**, so it wants
+deciding rather than drifting: `validate-prices.mjs` would need the new
+vocabulary in its § 7 checks, `publishToSite.gs`'s allow-list would need the
+column, and the eight sheet-backed CSVs would gain one field. Deleting the row
+stays perfectly serviceable until someone wants to ask a question about
+failures — the cost is that by then the answers for past seasons are already
+gone.
