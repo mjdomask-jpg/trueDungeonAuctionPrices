@@ -6,11 +6,17 @@
 //
 // Three kinds of test:
 //
-//   1. REPLAY. fixtures/auction-open/ holds verbatim pages from both sources.
-//      Every one of them is an auction auctionMetadata.csv already records, so
-//      the parse is checked against the shipped row rather than against a
-//      hand-written expectation. That is the same idea as Phase 2's replay,
-//      scaled to what a page can prove.
+//   1. REPLAY. fixtures/auction-open/ holds verbatim pages from all three sources.
+//      Every one from Trent and the forum is an auction auctionMetadata.csv
+//      already records, so the parse is checked against the shipped row rather
+//      than against a hand-written expectation. That is the same idea as
+//      Phase 2's replay, scaled to what a page can prove.
+//
+//      alesievauctions.com is the exception and section 11 says why: its two
+//      auctions have not opened yet, so there is no recorded row to replay
+//      against. What stands in for one is that the two cards differ in a
+//      single badge, and that the values the badges produce are asserted to be
+//      strings auctionMetadata already uses.
 //
 //   2. RULES. Numbering, duplicate detection, auctioneer matching, season
 //      inference and the review-tab merge, checked against the whole of
@@ -635,6 +641,458 @@ console.log('\nPromotion\n');
 
   const untickedOnly = O.openPlanPromotion([O.openReviewRow(proposal)], without, HEADERS);
   eq('nothing is promoted without a tick', untickedOnly.rows.length, 0);
+}
+
+// ===========================================================================
+// 11. alesievauctions.com — the auction site
+// ===========================================================================
+//
+// The first source whose fixture cannot be replayed against a recorded row:
+// both auctions on it are still upcoming, so auctionMetadata has nothing to
+// compare to. Three things stand in for that:
+//
+//   - the two cards differ in exactly one badge (Onyx vs Non-Onyx) and are
+//     otherwise identical, which is the discrimination the parser exists for;
+//   - the values it proposes are asserted to be strings auctionMetadata
+//     ALREADY uses, because a plausible invention like `Onyx Ultra-Condensed`
+//     would pass here and fail § 7 of validate-prices at the PR gate instead;
+//   - the shapes nobody has observed — a conflicting badge, a card with no
+//     badges — are constructed here, since the whole risk of reading a page
+//     someone else owns is the day it changes shape.
+console.log('\nalesievauctions.com\n');
+{
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const want = manifest.alesiev.expect;
+  eq('every card on the listing is read', cards.length, want.length);
+
+  for (let i = 0; i < want.length; i++) {
+    const card = cards[i], w = want[i];
+    eq(`card ${w.id}: id from the link`, card.id, w.id);
+    eq('  ... title', card.title, w.title);
+    eq('  ... sponsor', card.sponsor, w.sponsor);
+    eq('  ... start date to ISO', card.startDate, w.startDate);
+    eq('  ... start time to 24h', card.startTime, w.startTime);
+    eq('  ... scheduled end, which is read and then NOT used', card.endDate, w.endDate);
+    eq('  ... target', card.target, w.target);
+    eq('  ... status chip', card.status, w.status);
+    eq('  ... item count', card.itemCount, w.itemCount);
+
+    const f = O.openAlesievFields(card);
+    eq('  ... auctionStyle from the badges', f.auctionStyle, w.auctionStyle);
+    eq('  ... completionStyle from the badges', f.completionStyle, w.completionStyle);
+    eq('  ... augmentated from the badges', f.augmentated, w.augmentated);
+    eq("  ... targetFunding in the sheet's format", f.targetFunding, w.targetFunding);
+  }
+
+  // The two cards are the same auction twice apart from one badge. If the
+  // parser ever reads them the same way it has stopped reading the badge.
+  check('the two cards differ in style and nothing else',
+    O.openAlesievFields(cards[0]).auctionStyle !== O.openAlesievFields(cards[1]).auctionStyle &&
+    cards[0].sponsor === cards[1].sponsor && cards[0].target === cards[1].target,
+    'the Onyx and non-Onyx cards must not resolve to the same style');
+
+  // `Non-Onyx` read as Onyx is the exact mistake the forum path measured on
+  // titles — it is wrong on 11 of the 66 styles it would guess at, largely on
+  // this. A badge is anchored, so it cannot make it.
+  const nonOnyx = cards.find((c) => c.id === '28');
+  check('the Non-Onyx badge is present and inactive',
+    nonOnyx.tags.some((t) => /^non-onyx$/i.test(t.label) && !t.active),
+    JSON.stringify(nonOnyx.tags));
+  eq('  ... and reads as NOT Onyx', O.openAlesievTag(nonOnyx, 'onyx').state, false);
+  eq('  ... not as Onyx by a loose match', O.openAlesievFields(nonOnyx).auctionStyle, O.OPEN_ALESIEV_BASELINE_STYLE);
+
+  // A value invented here fails at the PUBLISH gate, not here, so the
+  // vocabulary is checked against the file that defines it.
+  const styles = new Set(META.map((r) => r.auctionStyle));
+  const completions = new Set(META.map((r) => r.completionStyle));
+  check('both proposed styles are already in auctionMetadata',
+    styles.has(O.OPEN_ALESIEV_BASELINE_STYLE) && styles.has(O.OPEN_ALESIEV_ONYX_STYLE),
+    `${O.OPEN_ALESIEV_BASELINE_STYLE} / ${O.OPEN_ALESIEV_ONYX_STYLE} against ${[...styles].join(', ')}`);
+  check('both proposed completion styles are too',
+    completions.has('Lightning') && completions.has('Fixed Date'),
+    [...completions].join(', '));
+  check('every style the badges can produce is one of those two',
+    cards.every((c) => !O.openAlesievFields(c).auctionStyle || styles.has(O.openAlesievFields(c).auctionStyle)), '');
+
+  // The site's own titles carry a typo and a straight apostrophe. Both are
+  // preserved: auctionName records what the auction was called, and § 8 of
+  // validate-prices makes a curly apostrophe an error with nothing to
+  // arbitrate, so an entity that decoded to one would fail the publish.
+  check('titles decode to a STRAIGHT apostrophe',
+    cards.every((c) => c.title.includes("'") && !/[‘’]/.test(c.title)),
+    cards.map((c) => c.title).join(' | '));
+
+  eq('12:00:00 AM is midnight, not noon', O.openTimeTo24h('9/19/2026, 12:00:00 AM'), '00:00');
+  eq('12:00:00 PM is noon', O.openTimeTo24h('9/19/2026, 12:00:00 PM'), '12:00');
+  eq('11:59:00 PM is 23:59', O.openTimeTo24h('9/26/2026, 11:59:00 PM'), '23:59');
+  eq('a time that does not parse is empty, never wrong', O.openTimeTo24h('soon'), '');
+  eq('M/D/YYYY to ISO, zero-padded', O.openAlesievDate('9/1/2026, 1:00:00 AM'), '2026-09-01');
+}
+
+// --- the id, which is this source's entire duplicate defence ---------------
+{
+  eq('an absolute link yields the id', O.openAlesievId('https://alesievauctions.com/auctions/29'), '29');
+  eq('  ... with www', O.openAlesievId('https://www.alesievauctions.com/auctions/29'), '29');
+  eq('  ... over http', O.openAlesievId('http://alesievauctions.com/auctions/29'), '29');
+  eq('  ... with a trailing path', O.openAlesievId('https://alesievauctions.com/auctions/29/items'), '29');
+  eq('a root-relative href yields it too, which is what the page writes', O.openAlesievId('/auctions/29'), '29');
+  eq('another host does NOT, however much the path looks right',
+    O.openAlesievId('https://example.com/auctions/29'), null);
+
+  // The two id spaces are unrelated and must not leak into one another: site
+  // auction 29 and forum topic 29 are different auctions.
+  const forumLink = 'https://truedungeon.com/forum?view=topic&catid=584&id=259798';
+  eq('a forum link has no site id', O.openAlesievId(forumLink), null);
+  eq('a site link has no topic id', O.openTopicId('https://alesievauctions.com/auctions/29'), null);
+  eq("Trent's link has neither", O.openAlesievId(O.OPEN_TRENT_URL), null);
+  check('no recorded row is read as a site auction today',
+    Object.keys(O.openRecordedAlesiev(META)).length === 0,
+    'auctionMetadata records no alesievauctions.com link yet');
+}
+
+// --- a scan, and what a rescan does with it --------------------------------
+{
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const plan = O.openPlanScan({ metaRows: META, alesievCards: cards });
+  eq('one proposal per card', plan.proposals.length, 2);
+  check('every card on a dedicated auction site is a candidate',
+    plan.proposals.every((p) => p.verdict === 'candidate'), '');
+  check('  ... and says where it came from',
+    plan.proposals.every((p) => p.source === O.OPEN_ALESIEV_SOURCE), '');
+
+  // Both auctions open on 2026-09-19, one at 00:00 and one at 11:00. The
+  // listing shows the later one first, so ordering on the date alone would
+  // hand it the lower number.
+  const byId = new Map(plan.proposals.map((p) => [O.openAlesievId(p.link), p]));
+  eq('two auctions on one day get two numbers', new Set(plan.proposals.map((p) => p.auctionId)).size, 2);
+  eq('  ... the 00:00 one first', byId.get('28').auctionId, '202648');
+  eq('  ... then the 11:00 one', byId.get('29').auctionId, '202649');
+  check('  ... continuing from what the sheet holds, not from a count',
+    O.openNextNumber(META, '2026') === 48, '');
+
+  const onyx = byId.get('29');
+  eq('the link recorded is the absolute one', onyx.link, 'https://alesievauctions.com/auctions/29');
+  eq('the sponsor resolves to the recorded auctioneer', onyx.auctioneer, 'alesiev');
+  eq('the style comes from the badge', onyx.auctionStyle, 'Onyx Ultra Condensed');
+  check('the scheduled end is a note, never a value',
+    onyx.notes.some((n) => /closeDate stays blank/.test(n)) && !('closeDate' in onyx),
+    onyx.notes.join(' | '));
+  check('a midnight start is flagged for the day it belongs to',
+    byId.get('28').notes.some((n) => /starts at 00:00/.test(n)), byId.get('28').notes.join(' | '));
+  check('the withheld sentence is carried over',
+    onyx.notes.some((n) => /^withheld:/.test(n)), onyx.notes.join(' | '));
+  check('a pre-order is called out', onyx.notes.some((n) => /pre-order/i.test(n)), onyx.notes.join(' | '));
+  check('but the title hints the badges already answer are NOT repeated',
+    !onyx.notes.some((n) => /^says (onyx|augmented|lightning)/.test(n)),
+    onyx.notes.join(' | '));
+
+  // Once recorded, the same listing must propose nothing.
+  const recorded = META.concat(plan.proposals.map((p) => ({
+    auctionId: p.auctionId, auctionSeason: p.season, auctionNumber: String(p.number),
+    auctionName: p.auctionName, auctioneer: p.auctioneer, Link: p.link, openDate: p.openDate,
+  })));
+  const again = O.openPlanScan({ metaRows: recorded, alesievCards: cards });
+  eq('a rescan after recording proposes nothing', again.proposals.length, 0);
+  check('  ... and says so rather than going quiet',
+    again.notes.some((n) => /2 listed auction\(s\) are already recorded/.test(n)), again.notes.join(' | '));
+
+  // The review key: without it an alesiev row keys as `trent:<its name>` and a
+  // rescan silently discards the operator's tick.
+  const row = O.openReviewRow(onyx);
+  eq('a review row round-trips to a site key', O.openReviewKey(row), 'alesiev:29');
+  const ticked = row.slice();
+  ticked[0] = true;
+  const merged = O.openMergeReview([ticked], [onyx]);
+  eq('a rescan keeps the tick on a site row', merged[0][0], true);
+
+  // A prefilled column that has since changed on the page is called out. The
+  // tab still wins — it may be a correction — but not silently.
+  const stale = row.slice();
+  stale[12] = 'Ultra Condensed';
+  const drifted = O.openMergeReview([stale], [onyx]);
+  eq('what the tab holds still wins', drifted[0][12], 'Ultra Condensed');
+  check('  ... and the difference is said out loud',
+    /KEPT WHAT THIS TAB ALREADY HELD/.test(String(drifted[0][16])), String(drifted[0][16]));
+  const untouched = O.openMergeReview([row.slice()], [onyx]);
+  check('  ... with no note when nothing differs',
+    !/KEPT WHAT THIS TAB/.test(String(untouched[0][16])), String(untouched[0][16]));
+}
+
+// --- promotion --------------------------------------------------------------
+{
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const plan = O.openPlanScan({ metaRows: META, alesievCards: cards });
+  const onyx = plan.proposals.find((p) => /\/29$/.test(p.link));
+  const row = O.openReviewRow(onyx);
+  row[0] = true;
+
+  const promotion = O.openPlanPromotion([row], META, HEADERS);
+  eq('a ticked site row promotes', promotion.rows.length, 1);
+  const f = promotion.rows[0].fields;
+  eq('  ... with the badge-derived style', f.auctionStyle, 'Onyx Ultra Condensed');
+  eq('  ... the badge-derived completion style', f.completionStyle, 'Lightning');
+  eq('  ... the target from the card', f.targetFunding, '$8,000.00');
+  eq('  ... the sponsor as auctioneer', f.auctioneer, 'alesiev');
+  eq('  ... the card link', f.Link, 'https://alesievauctions.com/auctions/29');
+  eq('  ... the start date as openDate', f.openDate, '2026-09-19');
+  eq('  ... season 2026 until a 2027 auction opens', f.auctionSeason, '2026');
+  check('  ... and NO closeDate, which is what makes Status compute Open',
+    !('closeDate' in f), Object.keys(f).join(', '));
+  check('  ... with none of the four blank-style warnings',
+    !promotion.warnings.some((w) => /is blank/.test(w)), promotion.warnings.join(' | '));
+
+  // closeDate is not merely absent from the field map — the cell it lands in
+  // must be cleared, or the row copied down from above inherits the previous
+  // auction's close date and the new auction is born Closed.
+  const closeAt = HEADERS.indexOf('closeDate');
+  check('closeDate is a real column', closeAt >= 0, HEADERS.join(', '));
+  eq('  ... which this phase supplies no value for', promotion.rows[0].cells[closeAt], null);
+  const actions = O.openRowActions(HEADERS, HEADERS.map(() => ''), promotion.rows[0].cells);
+  eq('  ... so a literal there is CLEARED, not copied', actions[closeAt].action, 'clear');
+
+  // The duplicate check. Before the site id was taught to openPlanPromotion,
+  // a row from this source fell through to the Trent name check, matched
+  // nothing, and was promoted with no duplicate defence at all.
+  const already = META.concat([{
+    auctionId: '202649', auctionSeason: '2026', auctionNumber: '49',
+    auctionName: onyx.auctionName, auctioneer: 'alesiev', openDate: onyx.openDate,
+    Link: 'https://alesievauctions.com/auctions/29',
+  }]);
+  const refused = O.openPlanPromotion([row], already, HEADERS);
+  eq('the same site auction cannot be promoted twice', refused.rows.length, 0);
+  check('  ... and is refused by its site id, naming the row that owns it',
+    refused.problems.some((p) => /auction 29 is already recorded as 202649/.test(p)),
+    refused.problems.join(' | '));
+}
+
+// --- the shapes nobody has seen yet ----------------------------------------
+{
+  const tagged = (tags) => O.openParseAlesievCard(
+    '<a class="card auction-card" href="/auctions/99">',
+    '<div class="badge badge-upcoming">Upcoming</div><div class="tag-badge-group">' +
+    tags.map((t) => `<span class="badge tag-badge${t.active ? ' tag-badge-active' : ''}">${t.label}</span>`).join('') +
+    '</div><h2>A</h2><ul class="meta"><li>Sponsor: Alesiev (Alex)</li>' +
+    '<li>Starts: 9/19/2026, 11:00:00 AM</li><li>Target: $8,000</li></ul>'
+  );
+
+  // A card with no badges at all means the markup moved. The baseline would be
+  // a plausible, wrong answer, so all three cells stay blank instead.
+  const bare = O.openParseAlesievCard(
+    '<a class="card auction-card" href="/auctions/99">',
+    '<h2>A</h2><ul class="meta"><li>Starts: 9/19/2026, 11:00:00 AM</li><li>Target: $8,000</li></ul>'
+  );
+  const bareFields = O.openAlesievFields(bare);
+  eq('no badges at all: no style is invented', bareFields.auctionStyle, '');
+  eq('  ... nor a completion style', bareFields.completionStyle, '');
+  eq('  ... nor an augment flag', bareFields.augmentated, '');
+  eq('  ... but the target still comes through', bareFields.targetFunding, '$8,000.00');
+  check('  ... and the markup change is reported',
+    bareFields.notes.some((n) => /listing markup has changed/.test(n)), bareFields.notes.join(' | '));
+
+  // A negative label on an ACTIVE badge means the two signals disagree. Only
+  // one of them can be right and nothing here knows which.
+  const conflicted = tagged([{ label: 'Non-Onyx', active: true }, { label: 'Lightning', active: true }]);
+  const cf = O.openAlesievFields(conflicted);
+  eq('a badge whose label and class disagree fills nothing', cf.auctionStyle, '');
+  check('  ... and says exactly what it saw',
+    cf.notes.some((n) => /never seen/.test(n)), cf.notes.join(' | '));
+  eq('  ... while the other axes are unaffected', cf.completionStyle, 'Lightning');
+
+  // No lightning badge is how a fixed-date auction is expected to render, and
+  // an inactive one has to mean the same thing.
+  const noLightning = tagged([{ label: 'Onyx', active: true }]);
+  eq('no Lightning badge means Fixed Date', O.openAlesievFields(noLightning).completionStyle, 'Fixed Date');
+  const offLightning = tagged([{ label: 'Lightning', active: false }, { label: 'Onyx', active: true }]);
+  eq('an inactive Lightning badge means the same', O.openAlesievFields(offLightning).completionStyle, 'Fixed Date');
+  eq('  ... and a "Fixed Date" label does too',
+    O.openAlesievFields(tagged([{ label: 'Fixed Date', active: false }])).completionStyle, 'Fixed Date');
+  eq('no Augmented badge means No', O.openAlesievFields(noLightning).augmentated, 'No');
+  eq('an Onyx badge with no Onyx sibling still reads Onyx',
+    O.openAlesievFields(noLightning).auctionStyle, 'Onyx Ultra Condensed');
+
+  // No onyx badge either way: the baseline is proposed, and the fact that no
+  // card has ever rendered that way is said.
+  const noOnyx = tagged([{ label: 'Lightning', active: true }]);
+  eq('no Onyx badge falls back to the baseline', O.openAlesievFields(noOnyx).auctionStyle, 'Ultra Condensed');
+  check('  ... and flags that as unobserved',
+    O.openAlesievFields(noOnyx).notes.some((n) => /every card seen so far carries one/.test(n)),
+    O.openAlesievFields(noOnyx).notes.join(' | '));
+
+  // A card with no Target line: the template makes it conditional, so the
+  // positions of the lines after it shift and a positional parser would read
+  // the wrong one.
+  const noTarget = O.openParseAlesievCard(
+    '<a class="card auction-card" href="/auctions/99">',
+    '<h2>A</h2><ul class="meta"><li>Starts: 9/19/2026, 11:00:00 AM</li>' +
+    '<li>Ends: 9/26/2026, 11:59:00 PM</li><li>40 item(s)</li></ul>'
+  );
+  eq('a card with no Sponsor line does not read Starts as the sponsor', noTarget.sponsor, '');
+  eq('  ... and still finds the start', noTarget.startDate, '2026-09-19');
+  eq('  ... and does not read Ends as the target', noTarget.target, null);
+  eq('  ... nor the item count as one', noTarget.itemCount, '40');
+  check('  ... leaving targetFunding blank with a reason',
+    O.openAlesievFields(noTarget).targetFunding === '' &&
+    O.openAlesievFields(noTarget).notes.some((n) => /no Target line/.test(n)), '');
+
+  // A client-rendered page would come back as a shell that parses to zero
+  // cards and is indistinguishable from a site with no auctions. The scan
+  // reports that rather than reading it as "nothing new".
+  eq('a page with no cards yields none', O.openParseAlesievListing('<html><body><h1>Auctions</h1></body></html>').length, 0);
+  eq('  ... and neither does an empty fetch', O.openParseAlesievListing('').length, 0);
+
+  // Card-shaped markup inside a script tag is not a card.
+  const withScript = O.openParseAlesievListing(
+    '<script>var tpl = \'<a class="card auction-card" href="/auctions/1"><h2>X</h2></a>\';</script>' +
+    '<a class="card auction-card" href="/auctions/7"><h2>Real</h2></a>'
+  );
+  eq('a card template inside a script is not counted', withScript.length, 1);
+  eq('  ... the real one is', withScript[0].id, '7');
+
+  // A status suggesting the auction is over is a note, because a promoted row
+  // is created open.
+  const ended = O.openParseAlesievCard(
+    '<a class="card auction-card" href="/auctions/99">',
+    '<div class="badge badge-ended">Ended</div><h2>A</h2><ul class="meta"><li>Starts: 9/19/2026, 11:00:00 AM</li></ul>'
+  );
+  eq('a status chip is read whatever it says', ended.status, 'Ended');
+  const endedProposal = O.openAlesievProposal(ended, META, O.openKnownAuctioneers(META));
+  check('  ... and an ended-looking one is called out',
+    endedProposal.notes.some((n) => /reads as FINISHED/.test(n)), endedProposal.notes.join(' | '));
+
+  // The title and the badges can disagree; the badge wins, out loud.
+  const mislabelled = O.openAlesievTitleConflicts('An Onyx Auction', { auctionStyle: 'Ultra Condensed', augmentated: 'Yes' });
+  check('a title saying Onyx over a non-Onyx badge is surfaced',
+    mislabelled.some((n) => /TITLE says Onyx/.test(n)), mislabelled.join(' | '));
+  eq('a title that agrees with its badges says nothing',
+    O.openAlesievTitleConflicts('An Onyx Auction', { auctionStyle: 'Onyx Ultra Condensed', augmentated: 'Yes' }).length, 0);
+}
+
+// ===========================================================================
+// 12. The round trip through the review tab — what Sheets does to a value
+// ===========================================================================
+//
+// A REGRESSION SECTION. This is a bug that reached auctionMetadata.
+//
+// openWriteReview writes openDate as the string '2026-09-19'. Sheets does not
+// keep it as one — it recognises the shape, makes the cell a real date, and
+// getValues() hands back a JavaScript Date at midnight in the SPREADSHEET's
+// timezone. `String(row[4])` on that produced
+//
+//   Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)
+//
+// and that went into the sheet, where daysToClose and Open Month compute from
+// it and the exported CSV feeds it to the site's date parsing. The same
+// coercion turns targetFunding's `$8,000.00` into the number 8000, which hides
+// because the destination cell's currency format displays it correctly anyway.
+//
+// The tests below are constructed rather than replayed, because what has to be
+// pinned is a Google Sheets behaviour that nothing in this repo can execute.
+// Every value here is exactly what getValues() returns for a cell the scan
+// wrote itself.
+console.log('\nSheet coercion on the round trip\n');
+{
+  // A date cell, as getValues() returns it. Built from local components so the
+  // assertion holds in whatever timezone this test runs in.
+  const asDate = new Date(2026, 8, 19, 1, 0, 0);
+  eq('a Date cell reads back as its ISO date', O.openIsoFromCell(asDate), '2026-09-19');
+  eq('  ... at 23:00 too, not the next day', O.openIsoFromCell(new Date(2026, 8, 19, 23, 0, 0)), '2026-09-19');
+  eq('  ... and at 00:00', O.openIsoFromCell(new Date(2026, 8, 19, 0, 0, 0)), '2026-09-19');
+
+  // The exact string that reached auctionMetadata. A tab still holding it comes
+  // good rather than staying broken.
+  eq('the stringified Date that caused this is repaired',
+    O.openIsoFromCell('Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)'), '2026-09-19');
+  eq('  ... in any month', O.openIsoFromCell('Mon Dec 01 2025 00:00:00 GMT-0600 (Central Standard Time)'), '2025-12-01');
+
+  eq('an ISO string passes through', O.openIsoFromCell('2026-09-19'), '2026-09-19');
+  eq('  ... zero-padded if it is not', O.openIsoFromCell('2026-9-1'), '2026-09-01');
+  eq('a US display date is read as M/D/YYYY', O.openIsoFromCell('9/19/2026'), '2026-09-19');
+  eq('  ... but a first field over 12 is refused, not guessed at',
+    O.openIsoFromCell('19/9/2026'), '19/9/2026');
+  eq('an empty cell is empty', O.openIsoFromCell(''), '');
+  eq('  ... and so is a blank one', O.openIsoFromCell(null), '');
+  eq('anything else is handed back untouched, for the caller to refuse',
+    O.openIsoFromCell('next Tuesday'), 'next Tuesday');
+
+  eq('a currency cell reads back as the money string', O.openMoneyFromCell(8000), '$8,000.00');
+  eq('  ... with cents', O.openMoneyFromCell(7500.5), '$7,500.50');
+  eq('  ... under a thousand', O.openMoneyFromCell(750), '$750.00');
+  eq('  ... and a money string passes through', O.openMoneyFromCell('$8,000.00'), '$8,000.00');
+}
+
+{
+  // End to end: a review row exactly as getValues() returns it after Sheets has
+  // had its way with the two columns.
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+    .proposals.find((p) => /\/29$/.test(p.link));
+  const coerced = O.openReviewRow(proposal);
+  coerced[0] = true;
+  coerced[4] = new Date(2026, 8, 19, 1, 0, 0); // Sheets made a date of it
+  coerced[15] = 8000;                          // and a number of the target
+
+  const promotion = O.openPlanPromotion([coerced], META, HEADERS);
+  eq('a coerced row still promotes', promotion.rows.length, 1);
+  eq('  ... with an ISO openDate', promotion.rows[0].fields.openDate, '2026-09-19');
+  check('  ... and NOT the Date.toString() that reached the sheet',
+    !/GMT|Daylight|Standard/.test(promotion.rows[0].fields.openDate),
+    promotion.rows[0].fields.openDate);
+  eq('  ... and the target as money, not as 8000', promotion.rows[0].fields.targetFunding, '$8,000.00');
+
+  // Belt and braces: converting is best effort, refusing is not.
+  const unreadable = coerced.slice();
+  unreadable[4] = 'sometime in September';
+  const refused = O.openPlanPromotion([unreadable], META, HEADERS);
+  eq('an openDate that cannot be read is refused, not written', refused.rows.length, 0);
+  check('  ... naming the tab to fix it in',
+    refused.problems.some((p) => /not a YYYY-MM-DD date/.test(p) && /auctionOpenReview/.test(p)),
+    refused.problems.join(' | '));
+
+  // Every openDate that survives promotion is ISO, whatever the cell held.
+  const shapes = ['2026-09-19', new Date(2026, 8, 19, 1, 0, 0), '9/19/2026',
+    'Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)'];
+  for (const shape of shapes) {
+    const row = coerced.slice();
+    row[4] = shape;
+    const p = O.openPlanPromotion([row], META, HEADERS);
+    eq(`openDate from ${JSON.stringify(String(shape)).slice(0, 34)}…`,
+      p.rows[0]?.fields.openDate, '2026-09-19');
+  }
+
+  // Two coerced rows still sort by date rather than by their string form.
+  const earlier = coerced.slice();
+  earlier[4] = new Date(2026, 8, 3, 1, 0, 0);
+  earlier[11] = 'https://alesievauctions.com/auctions/27';
+  const both = O.openPlanPromotion([coerced, earlier], META, HEADERS);
+  eq('two coerced rows both promote', both.rows.length, 2);
+  eq('  ... the earlier one first', both.rows[0].fields.openDate, '2026-09-03');
+  eq('  ... taking the lower number', both.rows[0].fields.auctionNumber, '48');
+}
+
+{
+  // The columns that must never be coerced in the first place. This is the
+  // belt; openIsoFromCell and openMoneyFromCell are the braces.
+  const cols = O.OPEN_REVIEW_TEXT_COLUMNS;
+  const at = (name) => O.OPEN_REVIEW_COLUMNS.indexOf(name) + 1;
+  check('openDate is written as text', cols.includes(at('openDate')), cols.join(','));
+  check('  ... so is the open time', cols.includes(at('first post')), cols.join(','));
+  check('  ... and targetFunding', cols.includes(at('targetFunding')), cols.join(','));
+  check('  ... and auctionName, which can begin with a + or an =',
+    cols.includes(at('auctionName')), cols.join(','));
+  check('every text column is a real column, 1-based for getRange',
+    cols.every((c) => c >= 1 && c <= O.OPEN_REVIEW_COLUMNS.length), cols.join(','));
+
+  // The drift note must not fire just because Sheets stored the same money as
+  // a number. It did before openMoneyFromCell, on every rescan.
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+    .proposals.find((p) => /\/29$/.test(p.link));
+  const held = O.openReviewRow(proposal);
+  held[15] = 8000;
+  const merged = O.openMergeReview([held], [proposal]);
+  check('a currency cell stored as a number is not read as drift',
+    !/KEPT WHAT THIS TAB/.test(String(merged[0][16])), String(merged[0][16]));
+  eq('  ... and is carried across as money', merged[0][15], '$8,000.00');
 }
 
 // ===========================================================================

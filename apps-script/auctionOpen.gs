@@ -1,9 +1,9 @@
 /**
  * Phase 4 — Auction-open automation.
  *
- * Watches the two places an 8K auction can open — Trent's shop page and the
- * forum's two auction categories — and proposes the `auctionMetadata` row each
- * new one needs. Proposals land in a review tab. A human ticks the ones that
+ * Watches the three places an 8K auction can open — Trent's shop page, the
+ * forum's two auction categories, and alesievauctions.com — and proposes the
+ * `auctionMetadata` row each new one needs. Proposals land in a review tab. A human ticks the ones that
  * are real, and a second menu item appends those to `auctionMetadata`.
  *
  * NOTHING here writes to a live tab on its own. Phase 2's Trent importer is the
@@ -15,14 +15,14 @@
  *
  * THIS FILE IS THE SOURCE OF TRUTH. It lives in the repo and is copied into the
  * workbook's Apps Script editor, not edited there. `npm run test:open` replays
- * saved copies of all three page shapes through the pure functions below and
+ * saved copies of all four page shapes through the pure functions below and
  * asserts they reproduce what `auctionMetadata.csv` already records.
  *
  * Everything above `--- Apps Script entry points ---` is pure: no
  * SpreadsheetApp, no UrlFetchApp, no I/O, no globals mutated. That is what
  * makes it testable off-platform, and it is worth keeping that way.
  *
- * This file has no `onOpen`. All three .gs files in this project share ONE
+ * This file has no `onOpen`. All six .gs files in this project share ONE
  * global scope, so a second `onOpen` would replace the first rather than add to
  * it and a menu would silently vanish. `trentClose.gs`'s `onOpen` calls
  * `addOpenMenu` when this file is present. Every global here is prefixed
@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-08-24.1';
+var OPEN_VERSION = '2026-08-31.2';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -110,6 +110,121 @@ var OPEN_FORUM_CATEGORIES = ['584', '602'];
  * The count of what this skipped is reported on every scan, never swallowed.
  */
 var OPEN_SIGNAL_ONLY_CATEGORIES = { 602: true };
+
+/**
+ * The third source: alesievauctions.com, a purpose-built auction site.
+ *
+ * It is a different KIND of source from the other two and the difference is
+ * what makes this side of the phase short. Trent's page is prose that has to be
+ * pattern-matched, and a forum thread is prose an auctioneer edits all auction
+ * long. This site renders one `<a class="auction-card">` per auction out of its
+ * own database, with the style, the completion type and the augment flag as
+ * discrete `tag-badge` chips rather than as words in a title. So the four
+ * fields the forum path refuses to guess at are read here rather than guessed —
+ * see OPEN_ALESIEV_TAGS for exactly how far that confidence goes.
+ *
+ * Two more consequences worth stating:
+ *
+ *   - **One fetch per scan.** Everything a row needs is on the listing page —
+ *     sponsor, start, target and every badge — so no per-auction page is
+ *     fetched at all. The forum path needs a feed AND a topic page because the
+ *     feed's date is the last post; this listing states the start date itself.
+ *   - **No triage.** Every card on a dedicated auction site is an auction, so
+ *     there is no equivalent of category 584's charity threads and eBay
+ *     listings and every proposal is a `candidate`. The title is still run
+ *     through OPEN_PHRASE_HINTS, so if the site ever does carry something that
+ *     is not an 8K auction it says so in the notes rather than passing silently.
+ *
+ * The page is server-rendered — this was checked rather than assumed, because
+ * UrlFetchApp runs no JavaScript and a client-rendered listing would come back
+ * as an empty shell that parses to zero cards and looks exactly like "no new
+ * auctions". `openScanAlesievNotes` reports a zero-card parse as a problem for
+ * that reason: on this source, nothing found is a claim worth doubting.
+ */
+var OPEN_ALESIEV_ORIGIN = 'https://alesievauctions.com';
+var OPEN_ALESIEV_LISTING_URL = OPEN_ALESIEV_ORIGIN + '/auctions';
+var OPEN_ALESIEV_SOURCE = 'alesievauctions.com';
+
+/**
+ * The style ladder this site's auctions sit on.
+ *
+ * `Ultra Condensed` is the baseline and an Onyx badge moves it to `Onyx Ultra
+ * Condensed`. Both strings are already in `auctionMetadata`'s vocabulary — that
+ * matters, because § 7 of `validate-prices.mjs` treats a style differing from
+ * an existing one only by case or spacing as an ERROR at the PR gate, so a
+ * plausible-looking `Onyx Ultra-Condensed` invented here would fail the publish
+ * rather than the scan, a long way from the cause.
+ */
+var OPEN_ALESIEV_BASELINE_STYLE = 'Ultra Condensed';
+var OPEN_ALESIEV_ONYX_STYLE = 'Onyx Ultra Condensed';
+var OPEN_ALESIEV_LIGHTNING = 'Lightning';
+var OPEN_ALESIEV_FIXED_DATE = 'Fixed Date';
+
+/**
+ * The three tag-badge axes, and how a card states each one.
+ *
+ * A badge carries the state TWICE — in its label and in a `tag-badge-active`
+ * class — and both are read, because only one of the two was observable when
+ * this was written. Both listed auctions render three badges in the same order,
+ * and between them they show:
+ *
+ *   <span class="badge tag-badge tag-badge-active">Onyx</span>       (on)
+ *   <span class="badge tag-badge">Non-Onyx</span>                    (off)
+ *
+ * So for Onyx the label flips AND the class drops, and the two agree. For
+ * Augmented and Lightning only the ON rendering has ever been seen: both cards
+ * carry both. The negative labels below are therefore a GUESS, and the guess is
+ * safe in the one direction that matters — an unrecognised label matches no
+ * axis, the axis reads as absent, and absent already means off. Guessing wrong
+ * costs a note, never a value.
+ *
+ * `positive` and `negative` anchor with ^ and $ deliberately. A loose /onyx/
+ * would match `Non-Onyx` too and read every non-Onyx auction as Onyx, which is
+ * the exact mistake the forum path measured on thread titles: it reads "Non
+ * Onyx" and "No Onyx SC" as Onyx and is wrong on 11 of the 66 it guesses at.
+ * The badge is a field rather than prose, so anchoring it is honest here in a
+ * way it could never be on a title.
+ */
+var OPEN_ALESIEV_TAGS = {
+  onyx: {
+    label: 'Onyx',
+    positive: /^onyx$/i,
+    negative: /^(?:non|no)[- ]?onyx$/i,
+  },
+  lightning: {
+    label: 'Lightning',
+    positive: /^lightning$/i,
+    negative: /^(?:fixed[- ]?date|(?:non|no)[- ]?lightning)$/i,
+  },
+  augmented: {
+    label: 'Augmented',
+    positive: /^augmented$/i,
+    negative: /^(?:non|un|no)[- ]?augmented$/i,
+  },
+};
+
+/**
+ * Status chips whose wording suggests the auction is over.
+ *
+ * Only `Upcoming` has ever been seen — the site went live carrying two
+ * scheduled auctions and nothing else, so `badge-live` and whatever it uses for
+ * a finished auction are both unobserved. This list exists to raise a NOTE, and
+ * nothing here decides a value, so an unobserved wording costs the operator a
+ * missing hint rather than a wrong cell. Whatever the chip says is reported
+ * verbatim on every proposal either way.
+ */
+var OPEN_ALESIEV_ENDED_RE = /ended|closed|complete|finished|archiv|cancel/i;
+
+/**
+ * Title phrases from OPEN_PHRASE_HINTS that a badge now answers better.
+ *
+ * The hint list exists because a thread title is the only evidence the forum
+ * path has. Here the same three facts come off the badges, so repeating them as
+ * notes would add a line of noise to every single proposal and train the
+ * operator to stop reading the column. The hints that survive are the ones no
+ * badge covers: charity, eBay, cancelled, pre-order, Safehold, Golden Ticket.
+ */
+var OPEN_ALESIEV_BADGE_NOTE_RE = /condensed|onyx|augment|lightning/i;
 
 /**
  * The category RSS feed, not the HTML listing. The feed is one request per
@@ -203,6 +318,25 @@ var OPEN_PHRASE_HINTS = [
   { re: /\bebay\b/i, note: 'mentions eBay' },
   { re: /cancell?ed|failed|not funded|didn.t fund/i, note: 'says cancelled or failed' },
 ];
+
+/**
+ * Review columns that are written to the tab as PLAIN TEXT.
+ *
+ * 1-based, to match `getRange`. Without this Sheets reads what the scan writes
+ * and decides it knows better: `2026-09-19` becomes a date, `11:00` becomes a
+ * time, `$8,000.00` becomes the number 8000 — and `getValues()` then hands
+ * back a Date or a number where the promote step expected the string it wrote.
+ * That produced an `openDate` of "Sat Sep 19 2026 01:00:00 GMT-0500 (Central
+ * Daylight Time)" in `auctionMetadata`.
+ *
+ * The number format has to be set BEFORE the values go in; setting it
+ * afterwards reformats a value that has already been converted.
+ *
+ * This is the belt. `openIsoFromCell` and `openMoneyFromCell` are the braces,
+ * because a tab written before this existed still holds coerced cells, and
+ * because the operator can retype any of these by hand.
+ */
+var OPEN_REVIEW_TEXT_COLUMNS = [5, 6, 8, 12, 16];
 
 /** The review tab's columns, in order. */
 var OPEN_REVIEW_COLUMNS = [
@@ -359,6 +493,86 @@ function openIsoFromRfc822(value) {
   return openIsoFromForumDate(m[1].length === 1 ? '0' + m[1] : m[1], m[2], m[3]);
 }
 
+/**
+ * A review-tab cell to the ISO date the scan put there.
+ *
+ * This exists because of a bug that reached `auctionMetadata` before it was
+ * caught, and the shape of it is worth keeping in mind for any cell this
+ * pipeline round-trips through a sheet.
+ *
+ * `openWriteReview` writes `openDate` as the STRING '2026-09-19'. Sheets does
+ * not store it as one: it recognises the shape, coerces the cell to a real
+ * date, and `getValues()` hands back a **JavaScript Date object** — at midnight
+ * in the SPREADSHEET's timezone, which is not necessarily the script's. The old
+ * `String(row[4])` then produced
+ *
+ *   Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)
+ *
+ * which is `Date.prototype.toString()`, and that went into the cell. It is not
+ * a date Sheets can parse, so `daysToClose` and `Open Month` stop computing and
+ * the exported CSV carries that string into the site's date parsing.
+ *
+ * Four inputs are accepted, and the last two are repair paths rather than
+ * expected shapes: a Date, an ISO string, a Date that has ALREADY been
+ * stringified (so a review tab written by the broken version fixes itself on
+ * the next scan), and `M/D/YYYY` as Sheets displays a date in a US locale.
+ *
+ * A Date is read with LOCAL getters, which are the script's timezone. That is
+ * right whenever the script and the spreadsheet share a timezone, and
+ * `openNormaliseReviewValues` converts using the spreadsheet's own timezone
+ * before this is ever reached, for when they do not. Anything unrecognised is
+ * returned untouched so the caller can refuse it — see `openPlanPromotion`,
+ * which will not promote an openDate that is not ISO.
+ */
+function openIsoFromCell(value) {
+  if (value && typeof value.getFullYear === 'function' && typeof value.getTime === 'function' && isFinite(value.getTime())) {
+    var y = value.getFullYear(), mo = value.getMonth() + 1, d = value.getDate();
+    return y + '-' + (mo < 10 ? '0' : '') + mo + '-' + (d < 10 ? '0' : '') + d;
+  }
+  var s = String(value == null ? '' : value).trim();
+  if (!s) return '';
+
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+  if (m) return m[1] + '-' + (m[2].length === 1 ? '0' : '') + m[2] + '-' + (m[3].length === 1 ? '0' : '') + m[3];
+
+  // `Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)` — a Date that
+  // has already been through String(). Repairing it rather than refusing it is
+  // what lets a tab written by the broken version come good on a rescan.
+  m = s.match(/^\w{3}\s+(\w{3})\s+(\d{1,2})\s+(\d{4})\b/);
+  if (m) {
+    var mon = OPEN_MONTHS[String(m[1]).toLowerCase()];
+    if (mon) return m[3] + '-' + mon + '-' + (m[2].length === 1 ? '0' : '') + m[2];
+  }
+
+  // A date the operator typed, shown back by Sheets in a US locale. M/D/YYYY is
+  // assumed, as it is everywhere else in this file — and a first field over 12
+  // cannot be a month, so it is refused rather than read as D/M and guessed at.
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+  if (m && parseInt(m[1], 10) >= 1 && parseInt(m[1], 10) <= 12) return openIsoFromSlashes(m[1], m[2], m[3]);
+
+  return s;
+}
+
+/**
+ * A review-tab cell to the money string the sheet records.
+ *
+ * The same coercion, one column over and less obvious: `$8,000.00` written as a
+ * string becomes a currency cell, and `getValues()` returns the NUMBER 8000.
+ * `String(8000)` is "8000", which lands in a currency-formatted
+ * `targetFunding` cell and still DISPLAYS as $8,000.00 — so this one hides,
+ * and it also made the drift note in `openMergeReview` fire on every rescan by
+ * comparing "8000" against a freshly parsed "$8,000.00".
+ */
+function openMoneyFromCell(value) {
+  if (typeof value === 'number' && isFinite(value)) {
+    var neg = value < 0;
+    var fixed = Math.abs(value).toFixed(2).split('.');
+    var whole = fixed[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg ? '-$' : '$') + whole + '.' + fixed[1];
+  }
+  return String(value == null ? '' : value).trim();
+}
+
 // ===========================================================================
 // Pure parsers — the three page shapes
 // ===========================================================================
@@ -468,6 +682,249 @@ function openParseTopic(html) {
 }
 
 // ===========================================================================
+// Pure parsers — alesievauctions.com
+// ===========================================================================
+
+/**
+ * The site's own auction id, from a link. Null for anything else.
+ *
+ * Strict about the host on purpose. A lenient `/auctions/(\d+)` would also fire
+ * on a path that happened to look like one on another domain, and this id is
+ * the whole duplicate defence for this source — the same job the topic id does
+ * for the forum. A root-relative form is accepted because that is what the
+ * listing page's own hrefs are (`href="/auctions/29"`); the absolute form is
+ * what gets recorded in the `Link` column.
+ */
+function openAlesievId(link) {
+  var s = String(link == null ? '' : link).trim();
+  var m = s.match(/^https?:\/\/(?:www\.)?alesievauctions\.com\/auctions\/(\d+)/i);
+  if (m) return m[1];
+  m = s.match(/^\/auctions\/(\d+)(?:[/?#]|$)/);
+  return m ? m[1] : null;
+}
+
+function openAlesievUrl(id) {
+  return OPEN_ALESIEV_ORIGIN + '/auctions/' + String(id);
+}
+
+/**
+ * `11:00:00 AM` to `11:00`, `12:00:00 AM` to `00:00`, `11:59:00 PM` to `23:59`.
+ *
+ * 24-hour, because the review tab's time column already holds the forum's
+ * 24-hour post times and the near-midnight check compares it as a string.
+ * Returns '' rather than a wrong time when nothing parses.
+ */
+function openTimeTo24h(text) {
+  var s = String(text == null ? '' : text);
+  var m = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp])\.?[Mm]\.?/);
+  if (m) {
+    var h = parseInt(m[1], 10) % 12;
+    if (/p/i.test(m[3])) h += 12;
+    return (h < 10 ? '0' : '') + h + ':' + m[2];
+  }
+  m = s.match(/\b(\d{1,2}):(\d{2})\b/);
+  return m ? (m[1].length === 1 ? '0' : '') + m[1] + ':' + m[2] : '';
+}
+
+/**
+ * The listing page to one object per auction card.
+ *
+ * Scripts and styles go first for the same reason they do on Trent's page: a
+ * client-side template holding card-shaped markup would be found before the
+ * cards a human sees. This page carries no such template today, which is
+ * exactly why stripping costs nothing and is worth keeping.
+ *
+ * A card is an `<a>` and an `<a>` cannot nest, so the first `</a>` after the
+ * opening tag ends it.
+ */
+function openParseAlesievListing(html) {
+  var body = String(html == null ? '' : html)
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ');
+  var open = /<a\b[^>]*\bclass="[^"]*\bauction-card\b[^"]*"[^>]*>/gi;
+  var cards = [], m;
+  while ((m = open.exec(body)) !== null) {
+    var start = m.index + m[0].length;
+    var end = body.indexOf('</a>', start);
+    cards.push(openParseAlesievCard(m[0], body.slice(start, end < 0 ? body.length : end)));
+  }
+  return cards;
+}
+
+/**
+ * One card's opening tag and inner HTML, to the fields a metadata row needs.
+ *
+ * The `<li>` lines are matched by their LABEL rather than by position. The
+ * template makes both `Sponsor:` and `Target:` conditional — each sits in its
+ * own block in the served HTML — so a card without a sponsor renders one fewer
+ * line and every position after it shifts. Reading `Ends:` as `Target:`
+ * because a sponsor was missing is the kind of failure this pipeline has had
+ * before, and matching on the label costs nothing.
+ */
+function openParseAlesievCard(openTag, inner) {
+  var out = {
+    href: '', id: null, title: '', intro: '',
+    status: '', statusClass: '', tags: [], meta: [],
+    sponsor: '', startDate: null, startTime: '', startRaw: '',
+    endDate: null, endRaw: '', target: null, itemCount: null,
+  };
+  var m = String(openTag).match(/\bhref="([^"]*)"/i);
+  if (m) {
+    out.href = openDecodeEntities(m[1]).trim();
+    out.id = openAlesievId(out.href);
+  }
+
+  // The status chip is a <div class="badge badge-something">. The tag badges
+  // live in a <div class="tag-badge-group">, whose class ALSO contains the
+  // characters "badge" with a word boundary in front of them, so the group has
+  // to be excluded by name rather than by the class test alone.
+  var chips = inner.match(/<div\b[^>]*\bclass="[^"]*\bbadge\b[^"]*"[^>]*>[\s\S]*?<\/div>/gi) || [];
+  for (var c = 0; c < chips.length; c++) {
+    var cls = (chips[c].match(/\bclass="([^"]*)"/i) || ['', ''])[1];
+    if (/tag-badge/.test(cls)) continue;
+    out.statusClass = (cls.match(/\bbadge-([a-z0-9-]+)/i) || ['', ''])[1] || '';
+    out.status = openHtmlToText(chips[c].replace(/^<div[^>]*>/i, '').replace(/<\/div>\s*$/i, '')).trim();
+    break;
+  }
+
+  var tagRe = /<span\b[^>]*\bclass="([^"]*\btag-badge\b[^"]*)"[^>]*>([\s\S]*?)<\/span>/gi;
+  var t;
+  while ((t = tagRe.exec(inner)) !== null) {
+    out.tags.push({
+      label: openHtmlToText(t[2]).trim(),
+      active: /\btag-badge-active\b/.test(t[1]),
+    });
+  }
+
+  m = inner.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i);
+  if (m) out.title = openHtmlToText(m[1]).replace(/\s+/g, ' ').trim();
+  m = inner.match(/<p\b[^>]*\bclass="[^"]*\bauction-description\b[^"]*"[^>]*>([\s\S]*?)<\/p>/i);
+  if (m) out.intro = openHtmlToText(m[1]).replace(/\s+/g, ' ').trim();
+
+  var liRe = /<li[^>]*>([\s\S]*?)<\/li>/gi, li;
+  while ((li = liRe.exec(inner)) !== null) {
+    var text = openHtmlToText(li[1]).replace(/\s+/g, ' ').trim();
+    if (text) out.meta.push(text);
+  }
+  for (var i = 0; i < out.meta.length; i++) {
+    var line = out.meta[i];
+    if ((m = line.match(/^Sponsor:\s*(.+)$/i))) { out.sponsor = m[1].trim(); continue; }
+    if ((m = line.match(/^Starts:\s*(.+)$/i))) {
+      out.startRaw = m[1].trim();
+      out.startDate = openAlesievDate(out.startRaw);
+      out.startTime = openTimeTo24h(out.startRaw);
+      continue;
+    }
+    if ((m = line.match(/^Ends:\s*(.+)$/i))) {
+      out.endRaw = m[1].trim();
+      out.endDate = openAlesievDate(out.endRaw);
+      continue;
+    }
+    if ((m = line.match(/^Target:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i))) { out.target = m[1]; continue; }
+    if ((m = line.match(/^([\d,]+)\s*items?\b/i))) { out.itemCount = m[1]; continue; }
+  }
+  return out;
+}
+
+/** `9/19/2026, 11:00:00 AM` to `2026-09-19`. Null when no date is in there. */
+function openAlesievDate(text) {
+  var m = String(text == null ? '' : text).match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+  return m ? openIsoFromSlashes(m[1], m[2], m[3]) : null;
+}
+
+/**
+ * One tag axis, read off a card's badges.
+ *
+ * Three outcomes, and they are kept apart because they mean different things:
+ *
+ *   { state: true }             the badge says on, and its class agrees
+ *   { state: false }            it says off, or no badge claims this axis
+ *   { state: null, conflict }   the label and the class disagree
+ *
+ * The conflict case has never been seen and is not expected to be — the label
+ * and the class have moved together on every card observed. It exists because
+ * this reads a page nobody here controls: if the site starts rendering an
+ * inactive `Onyx` chip as a placeholder, that shape means something new, and
+ * the useful response is a blank cell and a loud note rather than a confident
+ * `Onyx Ultra Condensed` the operator scrolls past.
+ */
+function openAlesievTag(card, axis) {
+  var rule = OPEN_ALESIEV_TAGS[axis];
+  var tags = (card && card.tags) || [];
+  for (var i = 0; i < tags.length; i++) {
+    var label = String(tags[i].label || '').trim();
+    if (rule.negative.test(label)) {
+      if (tags[i].active) {
+        return {
+          state: null, found: true, label: label,
+          conflict: 'the "' + label + '" badge is marked ACTIVE — a negative label on an active badge is a shape this parser has never seen',
+        };
+      }
+      return { state: false, found: true, label: label };
+    }
+    if (rule.positive.test(label)) {
+      if (tags[i].active) return { state: true, found: true, label: label };
+      return {
+        state: false, found: true, label: label,
+        note: 'the "' + label + '" badge is present but not active, so it is read as off',
+      };
+    }
+  }
+  return { state: false, found: false, label: '' };
+}
+
+/**
+ * The four fields the badges decide, plus what to tell the operator about them.
+ *
+ * When a card carries NO tag badge at all the markup has changed shape, and all
+ * three badge-derived cells are left blank rather than filled with the
+ * baseline. That distinction is the point: "this card says non-Onyx" and "this
+ * parser can no longer find the badges" both produce `Ultra Condensed` if you
+ * are not careful, and only one of them is a fact.
+ */
+function openAlesievFields(card) {
+  var out = { auctionStyle: '', completionStyle: '', augmentated: '', targetFunding: '', notes: [] };
+
+  if (card.target) {
+    out.targetFunding = '$' + card.target + (card.target.indexOf('.') < 0 ? '.00' : '');
+  } else {
+    out.notes.push('no Target line on the card — targetFunding left blank');
+  }
+
+  if (!card.tags.length) {
+    out.notes.push('NO tag badges on this card — the listing markup has changed, so auctionStyle, completionStyle and augmentated are all left blank. Check the page and this parser.');
+    return out;
+  }
+
+  var onyx = openAlesievTag(card, 'onyx');
+  if (onyx.state === null) {
+    out.notes.push('auctionStyle left blank: ' + onyx.conflict);
+  } else {
+    out.auctionStyle = onyx.state ? OPEN_ALESIEV_ONYX_STYLE : OPEN_ALESIEV_BASELINE_STYLE;
+    if (!onyx.found) out.notes.push('no Onyx or Non-Onyx badge on this card, so the baseline ' + OPEN_ALESIEV_BASELINE_STYLE + ' is proposed — every card seen so far carries one, so check it');
+    if (onyx.note) out.notes.push('auctionStyle: ' + onyx.note);
+  }
+
+  var lightning = openAlesievTag(card, 'lightning');
+  if (lightning.state === null) {
+    out.notes.push('completionStyle left blank: ' + lightning.conflict);
+  } else {
+    out.completionStyle = lightning.state ? OPEN_ALESIEV_LIGHTNING : OPEN_ALESIEV_FIXED_DATE;
+    if (lightning.note) out.notes.push('completionStyle: ' + lightning.note);
+  }
+
+  var augment = openAlesievTag(card, 'augmented');
+  if (augment.state === null) {
+    out.notes.push('augmentated left blank: ' + augment.conflict);
+  } else {
+    out.augmentated = augment.state ? 'Yes' : 'No';
+    if (augment.note) out.notes.push('augmentated: ' + augment.note);
+  }
+  return out;
+}
+
+// ===========================================================================
 // Pure rules — numbering, names, triage
 // ===========================================================================
 
@@ -507,6 +964,24 @@ function openRecordedTopics(metaRows) {
   var seen = {};
   for (var i = 0; i < metaRows.length; i++) {
     var id = openTopicId(metaRows[i].Link);
+    if (id) seen[id] = metaRows[i].auctionId;
+  }
+  return seen;
+}
+
+/**
+ * Every alesievauctions.com auction id `auctionMetadata` already records.
+ *
+ * The forum's duplicate defence is the topic id and Trent's is season-and-name;
+ * this source has a stable per-auction URL, so the id in that URL is the key
+ * and it is the strongest of the three. Keeping it in its own lookup rather
+ * than folding it into `openRecordedTopics` is deliberate: the two id spaces
+ * are unrelated, and site auction 29 must never collide with forum topic 29.
+ */
+function openRecordedAlesiev(metaRows) {
+  var seen = {};
+  for (var i = 0; i < metaRows.length; i++) {
+    var id = openAlesievId(metaRows[i].Link);
     if (id) seen[id] = metaRows[i].auctionId;
   }
   return seen;
@@ -822,6 +1297,115 @@ function openTrentProposal(page, metaRows) {
 }
 
 /**
+ * One proposal from one auction card.
+ *
+ * Unlike the forum path, this one FILLS IN `auctionStyle`, `completionStyle`,
+ * `augmentated` and `targetFunding`. The forum path leaves them blank because
+ * it would be reading a thread title, and that was measured: `auctionStyle`
+ * guessed from a title is wrong on 11 of the 66 it would attempt. This reads
+ * discrete badges the site renders from its own record of the auction, which is
+ * a different claim entirely — and where a badge is missing, ambiguous or
+ * self-contradictory the cell goes back to being blank with a note, so the
+ * forum path's rule still holds wherever the evidence is as weak as the forum's.
+ *
+ * `closeDate` is deliberately not taken from the card's `Ends:` line even
+ * though the line is right there and parses cleanly. `Ends` is the SCHEDULED
+ * end; the sheet's `closeDate` is when the auction actually closed, and the two
+ * differ whenever an auction is extended, ends early on funding, or fails. A
+ * blank `closeDate` is also what makes `Status` compute `Open`, so writing the
+ * scheduled date here would mark a brand-new auction closed. The scheduled date
+ * goes in the notes, where it is useful and decides nothing.
+ */
+function openAlesievProposal(card, metaRows, knownNames) {
+  var title = card.title || '';
+  var openDate = card.startDate || '';
+  var season = openInferSeason(title, openDate, metaRows);
+  var who = openMatchAuctioneer(card.sponsor, knownNames);
+  var fields = openAlesievFields(card);
+  var number = openNextNumber(metaRows, season.season);
+
+  var notes = [];
+  if (!card.id) notes.push('NO auction id in the card link ("' + card.href + '") — this row cannot be checked for duplicates. Do not promote it.');
+  if (!openDate) notes.push('NO Starts line on the card — openDate is blank and the row cannot be promoted without one');
+  if (!title) notes.push('NO title on the card');
+  if (!card.sponsor) notes.push('no Sponsor line on the card — auctioneer left blank');
+
+  notes = notes.concat(fields.notes);
+  notes.push('season ' + season.how);
+  if (card.sponsor) {
+    if (who.how === 'new') notes.push('NEW auctioneer "' + who.auctioneer + '" — no recorded auction uses that name');
+    else if (who.how !== 'exact') notes.push('auctioneer matched by ' + who.how + ' from "' + card.sponsor + '"');
+  }
+  if (card.status) {
+    notes.push('site status: ' + card.status);
+    if (OPEN_ALESIEV_ENDED_RE.test(card.status) || OPEN_ALESIEV_ENDED_RE.test(card.statusClass)) {
+      notes.push('that status reads as FINISHED rather than upcoming — check whether this auction has already closed, because a promoted row is created open');
+    }
+  }
+  if (card.endRaw) {
+    notes.push('site says it ends ' + (card.endDate || card.endRaw) + ' — closeDate stays blank on purpose and is filled when the auction actually closes');
+  }
+  if (card.startTime && (card.startTime >= '22:00' || card.startTime <= '02:00')) {
+    notes.push('starts at ' + card.startTime + ' — the site renders times in its own timezone, so check which day this belongs to');
+  }
+  if (card.itemCount) notes.push(card.itemCount + ' items listed');
+  if (card.intro && /withh(?:e|o)ld/i.test(card.intro)) notes.push('withheld: ' + card.intro);
+
+  // The title says the same three things the badges do, so a disagreement
+  // between them is worth surfacing. It is only ever a note: the badge is a
+  // field and the title is prose, and where they differ the badge is the one to
+  // believe — but not silently, because a title saying Onyx over a non-Onyx
+  // badge is equally likely to be a mis-tagged auction.
+  notes = notes.concat(openAlesievTitleConflicts(title, fields));
+  var hints = openPhraseNotes(title);
+  for (var h = 0; h < hints.length; h++) {
+    if (!OPEN_ALESIEV_BADGE_NOTE_RE.test(hints[h])) notes.push(hints[h]);
+  }
+
+  return {
+    key: 'alesiev:' + (card.id || title.toLowerCase()),
+    source: OPEN_ALESIEV_SOURCE,
+    verdict: 'candidate',
+    openDate: openDate,
+    openTime: card.startTime || '',
+    auctioneer: card.sponsor ? who.auctioneer : '',
+    auctionName: title,
+    season: season.season,
+    number: number,
+    auctionId: season.season ? openAuctionId(season.season, number) : '',
+    link: card.id ? openAlesievUrl(card.id) : (card.href || ''),
+    auctionStyle: fields.auctionStyle,
+    completionStyle: fields.completionStyle,
+    augmentated: fields.augmentated,
+    targetFunding: fields.targetFunding,
+    notes: notes,
+  };
+}
+
+/**
+ * Where a card's title contradicts its own badges.
+ *
+ * `Aleisev's ... (8K) Onyx Option A` is tagged Onyx and reads Onyx; the two
+ * agree today. They will not always, because the title is typed and the badges
+ * are ticked, and the one that is wrong is not knowable from here.
+ */
+function openAlesievTitleConflicts(title, fields) {
+  var text = String(title == null ? '' : title);
+  var out = [];
+  var saysNonOnyx = /\bnon[- ]?onyx\b|\bno onyx\b/i.test(text);
+  var saysOnyx = !saysNonOnyx && /\bonyx\b/i.test(text);
+  if (fields.auctionStyle) {
+    var taggedOnyx = fields.auctionStyle === OPEN_ALESIEV_ONYX_STYLE;
+    if (saysOnyx && !taggedOnyx) out.push('the TITLE says Onyx but the card is not tagged Onyx — the badge is what was used');
+    if (saysNonOnyx && taggedOnyx) out.push('the TITLE says non-Onyx but the card IS tagged Onyx — the badge is what was used');
+  }
+  if (fields.augmentated && /augment/i.test(text) && fields.augmentated === 'No') {
+    out.push('the TITLE mentions augments but the card is not tagged Augmented — the badge is what was used');
+  }
+  return out;
+}
+
+/**
  * Everything a scan proposes, numbered.
  *
  * Numbering happens LAST and across the whole batch, because
@@ -850,6 +1434,21 @@ function openPlanScan(input) {
     proposals.push(openForumProposal(topics[i].item, topics[i].topic, metaRows, knownNames));
   }
 
+  // alesievauctions.com. Its cards are filtered here rather than in the parser
+  // so that the parse and the duplicate check stay separable — the test replays
+  // the whole listing and then asserts what a scan against a sheet that already
+  // holds those auctions proposes, which is nothing.
+  var recordedSite = openRecordedAlesiev(metaRows);
+  var cards = input.alesievCards || [];
+  var seenSite = 0;
+  for (var a = 0; a < cards.length; a++) {
+    if (cards[a].id && recordedSite[cards[a].id]) { seenSite++; continue; }
+    proposals.push(openAlesievProposal(cards[a], metaRows, knownNames));
+  }
+  if (seenSite) {
+    notes.push(OPEN_ALESIEV_SOURCE + ': ' + seenSite + ' listed auction(s) are already recorded.');
+  }
+
   proposals.sort(function (a, b) {
     if (a.verdict !== b.verdict) return a.verdict === 'candidate' ? -1 : 1;
     return String(a.openDate).localeCompare(String(b.openDate));
@@ -864,7 +1463,14 @@ function openPlanScan(input) {
  */
 function openRenumber(proposals, metaRows) {
   var next = {};
-  var ordered = proposals.slice().sort(function (a, b) { return String(a.openDate).localeCompare(String(b.openDate)); });
+  // Date and then time: two auctions on one site can open the same day, and
+  // they did on the very first listing scanned — one at 00:00 and one at 11:00.
+  // Ordering on the date alone leaves those two in whatever order the page
+  // happened to list them, which is newest-first, so the later auction would
+  // take the lower number.
+  var ordered = proposals.slice().sort(function (a, b) {
+    return (String(a.openDate) + ' ' + String(a.openTime || '')).localeCompare(String(b.openDate) + ' ' + String(b.openTime || ''));
+  });
   for (var i = 0; i < ordered.length; i++) {
     var p = ordered[i];
     if (!p.season) { p.number = ''; p.auctionId = ''; continue; }
@@ -894,6 +1500,11 @@ function openReviewKey(row) {
   var link = String(row[11] || '');
   var id = openTopicId(link);
   if (id) return 'topic:' + id;
+  // Before the Trent fallback, not after it: an alesievauctions.com row carries
+  // no topic id, so without this it would key as `trent:<its name>` and a
+  // rescan would drop the operator's tick on the floor.
+  var siteId = openAlesievId(link);
+  if (siteId) return 'alesiev:' + siteId;
   return 'trent:' + String(row[7] || '').trim().toLowerCase();
 }
 
@@ -919,7 +1530,25 @@ function openMergeReview(existingRows, proposals) {
     if (old) {
       row[0] = old[0];
       row[1] = old[1];
-      for (var c = 12; c <= 15; c++) if (String(old[c] || '').trim()) row[c] = old[c];
+      // What the tab already holds wins, because for the forum it is by
+      // definition something the operator typed. For the two sources that
+      // PREFILL these columns it could instead be a stale value from an earlier
+      // scan, so a difference is called out rather than swallowed — a badge
+      // flipped on the site would otherwise be invisible here for ever.
+      var changed = [];
+      for (var c = 12; c <= 15; c++) {
+        // Column 16 is targetFunding, which Sheets returns as a number once it
+        // has made a currency cell of it. Compared raw, "8000" differs from
+        // "$8,000.00" and the drift note fires on every single rescan.
+        var held = c === 15 ? openMoneyFromCell(old[c]) : String(old[c] == null ? '' : old[c]).trim();
+        if (!held) continue;
+        var fresh = String(row[c] == null ? '' : row[c]).trim();
+        if (fresh && fresh !== held) changed.push(OPEN_REVIEW_COLUMNS[c] + ' is "' + held + '" here, "' + fresh + '" on the page');
+        row[c] = held;
+      }
+      if (changed.length) {
+        row[16] = String(row[16] || '') + ' · KEPT WHAT THIS TAB ALREADY HELD — ' + changed.join('; ');
+      }
     }
     rows.push(row);
   }
@@ -949,10 +1578,11 @@ function openIsApproved(row) {
 function openPlanPromotion(reviewRows, metaRows, headers) {
   var approved = [], i;
   for (i = 0; i < reviewRows.length; i++) if (openIsApproved(reviewRows[i])) approved.push({ index: i, row: reviewRows[i] });
-  approved.sort(function (a, b) { return String(a.row[4]).localeCompare(String(b.row[4])); });
+  approved.sort(function (a, b) { return openIsoFromCell(a.row[4]).localeCompare(openIsoFromCell(b.row[4])); });
 
   var recordedTopics = openRecordedTopics(metaRows);
   var recordedTrent = openRecordedTrentNames(metaRows);
+  var recordedSite = openRecordedAlesiev(metaRows);
   var lastSeason = null;
   for (i = 0; i < metaRows.length; i++) lastSeason = String(metaRows[i].auctionSeason);
 
@@ -962,15 +1592,33 @@ function openPlanPromotion(reviewRows, metaRows, headers) {
     var name = String(row[7] || '').trim();
     var season = String(row[8] || '').trim();
     var link = String(row[11] || '').trim();
+    // Read, not stringified. A cell Sheets coerced to a Date stringifies to
+    // "Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight Time)" — see
+    // openIsoFromCell.
+    var openDate = openIsoFromCell(row[4]);
     var topicId = openTopicId(link);
+    var siteId = openAlesievId(link);
     var label = name || link || ('review row ' + (approved[i].index + 2));
 
     if (!season) { problems.push(label + ': no season'); continue; }
-    if (!String(row[4] || '').trim()) { problems.push(label + ': no openDate'); continue; }
+    if (!openDate) { problems.push(label + ': no openDate'); continue; }
+    // The guard, and the point of it: converting is best-effort, refusing is
+    // not. Anything that is not an ISO date is stopped HERE rather than written
+    // into a column `daysToClose` and `Open Month` compute from and the site
+    // parses as a date.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(openDate)) {
+      problems.push(label + ': openDate is "' + openDate + '", which is not a YYYY-MM-DD date. Fix that cell in ' + OPEN_TABS.review + ' and promote again');
+      continue;
+    }
     if (!name) { problems.push(label + ': no auctionName'); continue; }
     if (topicId && recordedTopics[topicId]) { problems.push(label + ': topic ' + topicId + ' is already recorded as ' + recordedTopics[topicId]); continue; }
+    if (siteId && recordedSite[siteId]) { problems.push(label + ': ' + OPEN_ALESIEV_SOURCE + ' auction ' + siteId + ' is already recorded as ' + recordedSite[siteId]); continue; }
+    // Only rows from neither of the id-bearing sources fall through to the
+    // name check. Without the `siteId` guard an alesievauctions.com row would
+    // be tested against Trent's names, match none of them, and be promoted with
+    // no duplicate check at all — the one failure this phase exists to prevent.
     var trentKey = openTrentKey(season, name);
-    if (!topicId && recordedTrent[trentKey]) { problems.push(label + ': "' + name + '" is already recorded as ' + recordedTrent[trentKey] + ' for season ' + season); continue; }
+    if (!topicId && !siteId && recordedTrent[trentKey]) { problems.push(label + ': "' + name + '" is already recorded as ' + recordedTrent[trentKey] + ' for season ' + season); continue; }
 
     if (next[season] === undefined) next[season] = openNextNumber(metaRows, season);
     var number = next[season]++;
@@ -983,8 +1631,8 @@ function openPlanPromotion(reviewRows, metaRows, headers) {
       completionStyle: String(row[13] || '').trim(),
       auctioneer: String(row[6] || '').trim(),
       Link: link,
-      openDate: String(row[4] || '').trim(),
-      targetFunding: String(row[15] || '').trim(),
+      openDate: openDate,
+      targetFunding: openMoneyFromCell(row[15]),
       augmentated: String(row[14] || '').trim(),
     };
     if (!fields.auctionStyle) warnings.push(label + ': auctionStyle is blank');
@@ -1150,6 +1798,30 @@ function openHeaders(name) {
   return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
 }
 
+/**
+ * Dates and times Sheets handed back as Date objects, rendered as the strings
+ * the scan originally wrote them as.
+ *
+ * The timezone is the SPREADSHEET's, not the script's, and that is the whole
+ * reason this is here rather than left to `openIsoFromCell`'s local getters. A
+ * date-only cell comes back as midnight in the spreadsheet's timezone; if the
+ * script's timezone is behind it, midnight lands on the previous day and the
+ * date is off by one. The two are usually the same and this usually changes
+ * nothing — but the promotion that produced "01:00:00" proves they can differ
+ * here, and being off by a day is worse than being off by an hour.
+ *
+ * Mutates the rows in place and returns them; they are a throwaway copy of the
+ * grid in both callers.
+ */
+function openNormaliseReviewValues(rows, timeZone) {
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    if (row[4] instanceof Date) row[4] = Utilities.formatDate(row[4], timeZone, 'yyyy-MM-dd');
+    if (row[5] instanceof Date) row[5] = Utilities.formatDate(row[5], timeZone, 'HH:mm');
+  }
+  return rows;
+}
+
 /** One GET. Returns null rather than throwing, so one dead source is not a dead run. */
 function openFetch(url) {
   var response = UrlFetchApp.fetch(url, {
@@ -1194,6 +1866,21 @@ function scanAuctionOpens() {
     feedItems = feedItems.concat(openParseFeed(xml, cat));
   }
 
+  // One fetch, and everything a row needs is on it — no per-auction page.
+  var alesievHtml = openFetch(OPEN_ALESIEV_LISTING_URL);
+  var alesievCards = [];
+  if (!alesievHtml) {
+    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the listing could not be fetched, so that side of this scan is empty.');
+  } else {
+    alesievCards = openParseAlesievListing(alesievHtml);
+    if (!alesievCards.length) {
+      fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the listing was fetched (' + alesievHtml.length +
+        ' chars) but NO auction cards were found in it. Either it is genuinely empty or the markup ' +
+        'has changed — open ' + OPEN_ALESIEV_LISTING_URL + ' and check, because a parser that finds ' +
+        'nothing looks exactly like a site with no auctions.');
+    }
+  }
+
   var selection = openSelectFeedItems(feedItems, metaRows, {});
   var topics = [];
   for (i = 0; i < selection.selected.length; i++) {
@@ -1203,13 +1890,14 @@ function scanAuctionOpens() {
     topics.push({ item: item, topic: openParseTopic(html) });
   }
 
-  var plan = openPlanScan({ metaRows: metaRows, trentPage: trentPage, topics: topics });
+  var plan = openPlanScan({ metaRows: metaRows, trentPage: trentPage, topics: topics, alesievCards: alesievCards });
   plan.notes = plan.notes.concat(fetchNotes);
   plan.notes.push('Looked at forum topics with a post since ' + selection.cutoff + ': ' +
     selection.selected.length + ' fetched, ' + selection.skipped.recorded + ' already recorded, ' +
     selection.skipped.old + ' older than the cutoff' +
     (selection.skipped.offTopic ? ', ' + selection.skipped.offTopic + ' in the general category with no 8K signal' : '') +
     (selection.skipped.overflow ? ', ' + selection.skipped.overflow + ' left for the next run (fetch cap)' : '') + '.');
+  plan.notes.push('Read ' + alesievCards.length + ' auction card(s) from ' + OPEN_ALESIEV_LISTING_URL + '.');
 
   openWriteReview(plan.proposals);
   ui.alert('Scan complete (script ' + OPEN_VERSION + ')', openDescribeScan(plan), ui.ButtonSet.OK);
@@ -1228,7 +1916,7 @@ function openWriteReview(proposals) {
     sheet = ss.insertSheet(OPEN_TABS.review);
   } else {
     var values = sheet.getDataRange().getValues();
-    if (values.length > 1) existing = values.slice(1);
+    if (values.length > 1) existing = openNormaliseReviewValues(values.slice(1), ss.getSpreadsheetTimeZone());
   }
   var rows = openMergeReview(existing, proposals);
 
@@ -1238,6 +1926,12 @@ function openWriteReview(proposals) {
   sheet.clear();
   sheet.getRange(1, 1, 1, OPEN_REVIEW_COLUMNS.length).setValues([OPEN_REVIEW_COLUMNS]).setFontWeight('bold');
   if (rows.length) {
+    // Formats first. Sheets decides what a value IS as it is written, so a
+    // number format applied afterwards only restyles something already
+    // converted. See OPEN_REVIEW_TEXT_COLUMNS.
+    for (var t = 0; t < OPEN_REVIEW_TEXT_COLUMNS.length; t++) {
+      sheet.getRange(2, OPEN_REVIEW_TEXT_COLUMNS[t], rows.length, 1).setNumberFormat('@');
+    }
     sheet.getRange(2, 1, rows.length, OPEN_REVIEW_COLUMNS.length).setValues(rows);
     sheet.getRange(2, 1, rows.length, 1).insertCheckboxes();
   }
@@ -1271,7 +1965,9 @@ function promoteAuctionOpens() {
   if (headerProblems.length) { ui.alert('Cannot run', headerProblems.join('\n'), ui.ButtonSet.OK); return; }
 
   var reviewValues = review.getDataRange().getValues();
-  var reviewRows = reviewValues.length > 1 ? reviewValues.slice(1) : [];
+  var reviewRows = reviewValues.length > 1
+    ? openNormaliseReviewValues(reviewValues.slice(1), ss.getSpreadsheetTimeZone())
+    : [];
   var metaRows = openReadTab(OPEN_TABS.metadata);
   var plan = openPlanPromotion(reviewRows, metaRows, headers);
 
@@ -1336,10 +2032,23 @@ if (typeof module !== 'undefined') {
     openIsoFromSlashes: openIsoFromSlashes,
     openIsoFromForumDate: openIsoFromForumDate,
     openIsoFromRfc822: openIsoFromRfc822,
+    openIsoFromCell: openIsoFromCell,
+    openMoneyFromCell: openMoneyFromCell,
     openShiftIsoDays: openShiftIsoDays,
     openParseTrentPage: openParseTrentPage,
     openParseFeed: openParseFeed,
     openParseTopic: openParseTopic,
+    openAlesievId: openAlesievId,
+    openAlesievUrl: openAlesievUrl,
+    openTimeTo24h: openTimeTo24h,
+    openAlesievDate: openAlesievDate,
+    openParseAlesievListing: openParseAlesievListing,
+    openParseAlesievCard: openParseAlesievCard,
+    openAlesievTag: openAlesievTag,
+    openAlesievFields: openAlesievFields,
+    openAlesievProposal: openAlesievProposal,
+    openAlesievTitleConflicts: openAlesievTitleConflicts,
+    openRecordedAlesiev: openRecordedAlesiev,
     openNextNumber: openNextNumber,
     openAuctionId: openAuctionId,
     openTopicId: openTopicId,
@@ -1370,12 +2079,18 @@ if (typeof module !== 'undefined') {
     openHeaderProblems: openHeaderProblems,
     openDescribeScan: openDescribeScan,
     OPEN_REVIEW_COLUMNS: OPEN_REVIEW_COLUMNS,
+    OPEN_REVIEW_TEXT_COLUMNS: OPEN_REVIEW_TEXT_COLUMNS,
     OPEN_METADATA_FIELDS: OPEN_METADATA_FIELDS,
     OPEN_DERIVED_FIELDS: OPEN_DERIVED_FIELDS,
     OPEN_TRENT_DEFAULTS: OPEN_TRENT_DEFAULTS,
     OPEN_TRENT_URL: OPEN_TRENT_URL,
     OPEN_FORUM_CATEGORIES: OPEN_FORUM_CATEGORIES,
     OPEN_SIGNAL_ONLY_CATEGORIES: OPEN_SIGNAL_ONLY_CATEGORIES,
+    OPEN_ALESIEV_LISTING_URL: OPEN_ALESIEV_LISTING_URL,
+    OPEN_ALESIEV_SOURCE: OPEN_ALESIEV_SOURCE,
+    OPEN_ALESIEV_ONYX_STYLE: OPEN_ALESIEV_ONYX_STYLE,
+    OPEN_ALESIEV_BASELINE_STYLE: OPEN_ALESIEV_BASELINE_STYLE,
+    OPEN_ALESIEV_TAGS: OPEN_ALESIEV_TAGS,
     OPEN_VERSION: OPEN_VERSION,
   };
 }
