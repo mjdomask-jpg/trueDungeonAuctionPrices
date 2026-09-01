@@ -194,3 +194,55 @@ column, and the eight sheet-backed CSVs would gain one field. Deleting the row
 stays perfectly serviceable until someone wants to ask a question about
 failures — the cost is that by then the answers for past seasons are already
 gone.
+
+---
+
+## 7. A player's shorthand for a lot is recorded as a token name
+
+**Now:** `contextItems.csv` carries two `Item` values that are not tokens. They
+are how an auctioneer described a lot in a forum post, carried straight through
+the import.
+
+| Row | `Item` | Auction | Qty | Price |
+|---|---|---|---|---|
+| 334 | `25,000 GP Reserve Bar` | 202349 | 1 | $250.00 |
+| 431 | `1,000 GP Gold Bar (Bundle)` | 202415 | 1 | $405.00 |
+
+The canonical Trade 4 token is the **`25,000 GP Eldritch Bar`** (see the
+`td-domain` skill's trade ladder). *Reserve Bar* is a player's shorthand for it.
+`(Bundle)` is not part of any token's name either — it says the lot held several
+bars, which is a property of the LOT, not of the token.
+
+Both prices are consistent with that reading. $250 is exactly 25 x the 2023 gold
+bar minimum of $10.00, and $405 sits between 41 and 77 bars at 2024's $9.87
+average — a bundle, priced by its contents.
+
+**Why it matters:** no check can see this, and that is the point of recording it.
+
+- `validate-prices.mjs` § 8 catches names differing by punctuation or a trailing
+  plural. `25,000 GP Reserve Bar` differs from every real token by whole words,
+  so it passes cleanly.
+- § 8 cannot fall back to "is this a known token" either: `contextItems.Item` is
+  deliberately free text, because an augment can be any token ever printed. An
+  unmatched name is the NORMAL case there, so unmatched cannot be an error.
+- So a lot description entering the item vocabulary is invisible, and each one
+  splits a token's history: any future `25,000 GP Eldritch Bar` row starts a
+  second series rather than continuing this one.
+
+This is the same class as the near-miss pairs § 8 already reports, one step
+further out — and unlike those, it is **not** ambiguous. `+1 Turkey Leg` and
+`+1 Turkey Leg of Smiting` are two tokens and must never be merged; these two
+rows are one token under a nickname and a lot count under another.
+
+**Done looks like:** row 334 renamed to `25,000 GP Eldritch Bar`. Row 431 needs
+a decision first, because renaming it alone loses information — the price is for
+a bundle whose size the name no longer states. Either recover the count from the
+202415 thread and set `quantity` accordingly, or leave the row and record why.
+
+Worth pairing with the wider question of representing the higher denominations
+at all: `transmuteRecipes.csv` has **no** Mithral or Eldritch bar, and spells
+every large sum as N x `1,000 GP Gold Bar` (127 lines, at 1x, 3x, 4x, 5x, 10x,
+15x, 50x and 100x). That gives the right total and the wrong shopping list — it
+tells a player to acquire twenty-five separate bars when one token is the whole
+amount. `derivedPrices.csv` is the mechanism for it and is currently idle, its
+one rule superseded by the Monster Trophy off-auction rows.

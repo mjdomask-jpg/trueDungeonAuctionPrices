@@ -23,7 +23,7 @@ type PickItem =
   | { type: 'single'; cost: BuildCost };
 
 // Tier display order for the drawer's filter chips (game power ladder).
-const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic', 'Safehold', 'Ultra Rare', 'Paragon', 'Omni'];
+const TIER_ORDER = ['Relic', 'Legendary', 'Arcanum', 'Eldritch', 'Enhanced', 'Exalted', 'Mythic', 'Safehold', 'Ultra Rare', 'Paragon', 'Trade 3', 'Trade 5'];
 
 export type RecipeDrawerProps = {
   engine: CostEngine;

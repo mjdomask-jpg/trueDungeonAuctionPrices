@@ -68,15 +68,16 @@ export type ShoppingRow = {
   notes: ShoppingNote[];
 };
 
-/** A recipe in the list whose SOURCE is another recipe in the list, so the
- *  player is being asked to buy something they are already crafting (D5).
+/** A good the list asks the player to BUY that another pick in the list already
+ *  CRAFTS, so they are being asked to buy something they are already making (D5).
+ *  Usually an upgrade source; a craftable good burned as fuel counts too.
  *  Reported, never applied on its own: netting is one explicit, reversible
  *  toggle, because silently subtracting things is how a plan stops being
  *  checkable. */
 export type ChainLink = {
   rowId: string;
   good: string;
-  needed: number; // how many the source lines ask for
+  needed: number; // how many the list's lines ask for
   crafted: number; // how many the player is already making
   /** What turning the toggle on actually contributes to this row: the crafted
    *  ones, capped at what the row still lacks. Reported whether the toggle is
@@ -308,7 +309,12 @@ export function buildShoppingList(
   // whether the LIST contains both halves of a pair, which no single pick knows.
   const chains: ChainLink[] = [];
   for (const d of drafts.values()) {
-    if (!d.row.isSource) continue;
+    // The condition is "the list is crafting this good", nothing more. It used to
+    // be gated on `isSource` as well, which worked only because every both-halves
+    // pair happened to be an upgrade source -- a proxy, not the rule. A craftable
+    // good consumed as FUEL is the same double-buy: 99 recipes burn a Golden
+    // Fleece, none of them upgrades from one, and a reader picking the Fleece
+    // recipe alongside a Legendary was still asked to buy the Fleece.
     const crafted = crafting.get(d.row.good) ?? 0;
     if (crafted === 0) continue;
     const typed = Math.max(0, onHand[d.row.id] ?? 0);

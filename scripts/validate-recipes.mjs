@@ -126,6 +126,9 @@ const transmuteNames = new Set(recipes.map(r => r.Transmute));
 // Mirrors TIER_PROXY in src/lib/transmutes.ts: tiers that are auctioned
 // generically, so a named member of the tier still has a price.
 const TIER_PROXY = { 'Ultra Rare': 'Ultra Rare' };
+// Mirrors isTradeCategory in src/lib/transmutes.ts. A pattern rather than a list,
+// so a Trade 5 rung is recognised the season it appears.
+const isTradeCategory = (category) => /^Trade \d+$/.test(category);
 const CATEGORY_VOCAB = new Set([...prices.map(p => p.Category), ...meta.map(m => m.Category)].filter(Boolean));
 const proxyPriced = new Set(); // `${year}|${item}` unknown tokens their tier can price
 const fleeceYears = new Set(fleece.map(f => f.Year));
@@ -149,8 +152,12 @@ const pricedYears = new Set(prices.map(p => p.auctionSeason));
 
 // ---------- per-row recipe checks ----------
 const seenKeys = new Map();
+// The power-tier ladder, plus the trade rungs: a trade good can itself be a
+// transmute (Golden Fleece is 10 Monster Trophies), and its Level is the rung it
+// occupies rather than a tier -- which is what keeps isTradeGood reading the same
+// answer for the recipe and for every line that consumes it.
 const LEVELS = new Set(['Enhanced','Exalted','Relic','Legendary','Arcanum','Paragon','Mythic',
-                        'Eldritch','Omni','Safehold','Ultra Rare']);
+                        'Eldritch','Safehold','Ultra Rare','Trade 3','Trade 5']);
 const unresolvedGoods = new Map();   // "year|good" -> count
 const usedGoodYears = new Set();
 
@@ -334,11 +341,17 @@ for (const [k, goods] of bySrc) if (goods.length > 1)
   add('WARN', 'multi-source', `${k} has ${goods.length} IsSource rows: ${goods.join(', ')}`);
 
 // A line naming another transmute is nearly always the upgrade-from token, so
-// IsSource=FALSE on one is usually an authoring slip. The engine costs it
-// either way (it recurses on any transmute-named good); what the flag decides
-// is whether the "I already own the source" toggle can exclude it.
+// IsSource=FALSE on one is usually an authoring slip. What the flag decides is
+// whether the "I already own the source" toggle can exclude it.
+//
+// A TRADE GOOD is exempt, mirroring the engine's own exemption at the recursion
+// site in src/lib/transmutes.ts: Golden Fleece is craftable (10 Monster
+// Trophies) but it is fuel on all 99 lines that consume it, never the token
+// being upgraded. Without this the one Fleece recipe would raise 99 warnings
+// telling the maintainer to make every Legendary an upgrade FROM a Fleece.
 for (const r of recipes) {
   if (r.IsSource.toUpperCase() === 'TRUE' || !transmuteNames.has(r.Item)) continue;
+  if (isTradeCategory(metaByKey.get(r.ResolvedYear + r.Item)?.Category ?? '')) continue;
   add('WARN', 'source-flag', `${r.Year} ${r.Transmute} consumes transmute "${r.Item}" @${r.ResolvedYear} with IsSource=FALSE — should this be TRUE?`);
 }
 
