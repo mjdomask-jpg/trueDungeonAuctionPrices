@@ -109,26 +109,52 @@ const allLines = costs.flatMap((c) => c.lines.map((l) => ({ c, l })));
 // =========================================================================
 console.log('\n=== 1. the corpus these numbers are measured over ===');
 
-check('174 recipes, priced', costs.length === 174, costs.length);
-check('91 active / 12 future / 71 expired at ' + TODAY,
-  costs.filter((c) => c.status === 'active').length === 91 &&
-  costs.filter((c) => c.status === 'future').length === 12 &&
-  costs.filter((c) => c.status === 'expired').length === 71,
-  costs.reduce((m, c) => ({ ...m, [c.status]: (m[c.status] ?? 0) + 1 }), {}));
-check('103 pickable recipes (active + future)', pickable.length === 103, pickable.length);
-check('1,985 priced ingredient lines', allLines.length === 1985, allLines.length);
+// REPORTED, NOT PINNED. These were 174/91/12/71/103/1,985 when this section was
+// written, and every one of them is a property of whatever transmuteRecipes.csv
+// holds today. Asserting them turned an ordinary recipe edit into a red check on
+// a publish PR — the exact failure that took #155 down — while catching nothing
+// the structural claims below do not catch better.
+//
+// So the corpus is printed on every run, where a human reading the output can
+// see it move, and what is ASSERTED is the shape it has to have whatever its
+// size: the three statuses partition it, pickable is exactly the non-expired
+// part, and none of it is empty. A corpus that silently collapsed to nothing —
+// the failure worth catching here — trips all three.
+const byStatus = costs.reduce((m, c) => ({ ...m, [c.status]: (m[c.status] ?? 0) + 1 }), {});
+console.log(`        corpus at ${TODAY}: ${costs.length} recipes ` +
+  `(${byStatus.active ?? 0} active / ${byStatus.future ?? 0} future / ${byStatus.expired ?? 0} expired), ` +
+  `${pickable.length} pickable, ${allLines.length} priced ingredient lines\n`);
+
+check('every recipe is priced, and the corpus is not empty',
+  costs.length > 0 && allLines.length > 0, `${costs.length} recipes, ${allLines.length} lines`);
+check('the three statuses partition the corpus — no recipe is in two or none',
+  (byStatus.active ?? 0) + (byStatus.future ?? 0) + (byStatus.expired ?? 0) === costs.length,
+  JSON.stringify(byStatus));
+check('each status is populated, so every branch below has something to measure',
+  (byStatus.active ?? 0) > 0 && (byStatus.future ?? 0) > 0 && (byStatus.expired ?? 0) > 0,
+  JSON.stringify(byStatus));
+check('pickable is exactly active + future',
+  pickable.length === (byStatus.active ?? 0) + (byStatus.future ?? 0),
+  `${pickable.length} vs ${(byStatus.active ?? 0) + (byStatus.future ?? 0)}`);
 
 // =========================================================================
 console.log('\n=== 2. branch S1 — a trade good prices at the current season ===');
 
 const tradeLines = allLines.filter(({ l }) => isTradeCategory(l.category));
 const pickableTrade = tradeLines.filter(({ c }) => c.status !== 'expired');
-check('1,736 trade-good lines in all, 1,125 of them pickable',
-  tradeLines.length === 1736 && pickableTrade.length === 1125,
+check('trade-good lines exist, and the pickable ones are a subset',
+  tradeLines.length > 0 && pickableTrade.length > 0 && pickableTrade.length <= tradeLines.length,
   `${tradeLines.length} / ${pickableTrade.length}`);
 
+// This one IS kept as an equality, and the distinction is the point of this
+// pass. The counts above are incidental — how many lines happen to reference a
+// trade good. GOODS is a closed vocabulary: Trade 1-5 is a fixed set, and a
+// fifteenth appearing is a real event somebody should look at, not the routine
+// drift of a recipe edit. The literal lives HERE and nowhere else; the two other
+// places that used to repeat `14` now read goods.length.
 const goods = [...new Set(tradeLines.map(({ l }) => l.good))].sort();
-check('exactly 14 distinct trade goods', goods.length === 14, goods.join(', '));
+const GOOD_COUNT = 14;
+check(`exactly ${GOOD_COUNT} distinct trade goods`, goods.length === GOOD_COUNT, goods.join(', '));
 
 // The premise under the Shopping List's merge key. If this ever fails, rows
 // merged on name alone are summing two different prices under one heading.
@@ -151,7 +177,7 @@ check('...and every one of them is priced from the current season',
 // actually changes something: an expired recipe's Darkwood Plank is bought now.
 const expiredTrade = tradeLines.filter(({ c }) => c.status === 'expired');
 check('an EXPIRED recipe reads today\'s trade-good prices, not its build window\'s',
-  expiredTrade.length === 611 && expiredTrade.every(({ l }) => l.basis !== 'window'),
+  expiredTrade.length > 0 && expiredTrade.every(({ l }) => l.basis !== 'window'),
   `${expiredTrade.length} lines, ${expiredTrade.filter(({ l }) => l.basis === 'window').length} still windowed`);
 
 // =========================================================================
@@ -162,9 +188,21 @@ const L = prices.latestPriced;
 const inPrint = urPickable.filter(({ l }) => l.nominalYear >= L - 1);
 const oop = urPickable.filter(({ l }) => l.nominalYear < L - 1 && l.nominalYear >= prices.earliestPriced);
 const preData = urPickable.filter(({ l }) => l.nominalYear < prices.earliestPriced);
-check(`branch S2 covers 27 in-print lines (nominal >= ${L - 1})`, inPrint.length === 27, inPrint.length);
-check('branch 3 covers 40 out-of-print lines', oop.length === 40, oop.length);
-check('branch 4 covers 18 lines older than the auction data', preData.length === 18, preData.length);
+// What matters is that all three branches are REACHED and that they carve the
+// pickable Ultra Rares up between them with nothing falling through a crack —
+// a claim about the branch conditions, which the old tallies (27/40/18) never
+// made at all.
+//
+// Its reach is narrow, and worth stating so nobody trusts it further than it
+// goes: it catches a line whose vintage is UNCLASSIFIABLE (undefined, NaN),
+// which lands in no bucket. A null nominalYear coerces to 0 and lands in the
+// pre-data branch, so this stays green on one — measured, not assumed.
+check(`all three vintage branches are exercised (S2 nominal >= ${L - 1}, 3 out-of-print, 4 pre-data)`,
+  inPrint.length > 0 && oop.length > 0 && preData.length > 0,
+  `S2 ${inPrint.length} / 3 ${oop.length} / 4 ${preData.length}`);
+check('...and they partition the pickable Ultra Rares exactly — no line in two branches or none',
+  inPrint.length + oop.length + preData.length === urPickable.length,
+  `${inPrint.length} + ${oop.length} + ${preData.length} vs ${urPickable.length}`);
 
 check('an in-print Ultra Rare prices at the current season, not a pool',
   inPrint.every(({ l }) => l.source !== 'auction' || l.basis === 'season'),
@@ -209,8 +247,8 @@ for (const r of recipes) {
       pinnedUR.push({ key: r.key, status: c.status, l, pin: authored[i].goodYear.trim() });
   });
 }
-check('10 pinned Ultra Rare lines in the corpus, 7 of them on pickable recipes',
-  pinnedUR.length === 10 && pinnedUR.filter((p) => p.status !== 'expired').length === 7,
+check('the corpus carries pinned Ultra Rare lines, some on pickable recipes',
+  pinnedUR.length > 0 && pinnedUR.some((p) => p.status !== 'expired'),
   pinnedUR.map((p) => `${p.key} ${p.l.nominalYear}`).join('\n'));
 
 // A pinned Ultra Rare now takes the SAME branch a blank one of its vintage
@@ -218,7 +256,7 @@ check('10 pinned Ultra Rare lines in the corpus, 7 of them on pickable recipes',
 // — out of print, and inside the auction data; the in-print pins are next.
 const poolable = pinnedUR.filter((p) => p.l.nominalYear >= prices.earliestPriced && p.l.nominalYear < L - 1);
 check('every pinned OUT-OF-PRINT Ultra Rare pools its pinned vintage and the next',
-  poolable.length === 6 && poolable.every((p) =>
+  poolable.length > 0 && poolable.every((p) =>
     p.l.basis === 'pool' && p.l.poolYears[0] === p.l.nominalYear && p.l.poolYears[1] === p.l.nominalYear + 1),
   poolable.map((p) => `${p.key} pin=${p.pin} nom=${p.l.nominalYear} ${p.l.basis} ${JSON.stringify(p.l.poolYears)}`).join('\n'));
 
@@ -228,7 +266,7 @@ check('every pinned OUT-OF-PRINT Ultra Rare pools its pinned vintage and the nex
 // nothing but how the cell happened to be authored.
 const inPrintPins = pinnedUR.filter((p) => p.l.nominalYear >= L - 1);
 check('a pinned IN-PRINT Ultra Rare reads the current season, exactly as a blank one does',
-  inPrintPins.length === 3 && inPrintPins.every((p) => p.l.basis === 'season' && p.l.pricedYear === L),
+  inPrintPins.length > 0 && inPrintPins.every((p) => p.l.basis === 'season' && p.l.pricedYear === L),
   inPrintPins.map((p) => `${p.key} pin=${p.pin} nom=${p.l.nominalYear} ${p.l.basis}/${p.l.pricedYear} ${money(p.l.unitAvg)}`).join('\n'));
 check('...so a pinned and a blank line of the same vintage never disagree',
   new Set(allLines.filter(({ l }) => isUR(l) && l.nominalYear === L - 1 && l.source === 'auction')
@@ -239,12 +277,19 @@ check('...so a pinned and a blank line of the same vintage never disagree',
 // otherwise have introduced. Deathward Greaves is a 2026 recipe holding
 // 2023/2024/2025 Ultra Rares, so recipe-keyed pooling would price all three
 // identically.
+// The mechanism — poolYears keying on the line's own nominalYear — is already
+// asserted corpus-wide above. What is unique here is the CONSEQUENCE: distinct
+// vintages must come out at distinct prices, which is exactly what the
+// recipe-keyed bug would collapse. So the claim is stated as that relation
+// (distinct prices == distinct vintages) rather than as the literal 3 and 2,
+// and it stays true if this recipe gains or loses a pinned line.
 const dgPins = pinnedUR.filter((p) => p.key === '2026|Deathward Greaves');
 const dgPooled = dgPins.filter((p) => p.l.basis === 'pool');
-check("the pool keys on the LINE's year, not the recipe's — Deathward Greaves' 2023 and 2024 pins pool their OWN vintages",
-  dgPins.length === 3 && dgPooled.length === 2 &&
+const dgVintages = new Set(dgPins.map((p) => p.l.nominalYear));
+check("the pool keys on the LINE's year, not the recipe's — Deathward Greaves' pins pool their OWN vintages",
+  dgPins.length > 1 && dgPooled.length > 0 && dgVintages.size > 1 &&
   dgPooled.every((p) => p.l.poolYears[0] === p.l.nominalYear && p.l.poolYears[1] === p.l.nominalYear + 1) &&
-  new Set(dgPins.map((p) => p.l.unitAvg)).size === 3,
+  new Set(dgPins.map((p) => p.l.unitAvg)).size === dgVintages.size,
   dgPins.map((p) => `pin=${p.pin} nom=${p.l.nominalYear}: ${money(p.l.unitAvg)} ${p.l.basis} ${JSON.stringify(p.l.poolYears ?? null)}`).join('\n'));
 
 // The two pins the pool cannot answer, which must fall through unchanged
@@ -281,9 +326,12 @@ check('a trade good merges on name alone; everything else carries its vintage',
 const all2026 = costs.filter((c) => c.year === 2026 && c.status !== 'expired').map((c) => ({ cost: c, qty: 1 }));
 const one = buildShoppingList([pick('2026|Deathward Greaves', 1)], engine);
 const many = buildShoppingList(all2026, engine);
-check('the trade-good table is BOUNDED at 14 however many recipes are picked',
-  many.trade.length === 14 && one.trade.length <= 14 && many.trade.length - one.trade.length <= 1,
-  `1 recipe -> ${one.trade.length} trade rows; ${all2026.length} recipes -> ${many.trade.length}`);
+// Bounded by the VOCABULARY, not by a literal — goods.length is where that
+// number is stated (§ 2), so a fifteenth trade good moves this with it.
+check(`the trade-good table is BOUNDED at ${goods.length} however many recipes are picked`,
+  many.trade.length <= goods.length && one.trade.length <= goods.length &&
+  many.trade.length - one.trade.length <= 1,
+  `1 recipe -> ${one.trade.length} trade rows; ${all2026.length} recipes -> ${many.trade.length}; vocabulary ${goods.length}`);
 check('...while the additional-items table grows at roughly a row per recipe',
   many.additional.length > one.additional.length * 5,
   `${one.additional.length} -> ${many.additional.length} over ${all2026.length} recipes`);
@@ -452,10 +500,20 @@ console.log('\n=== 6. the staleness flag (D1b) ===');
 
 const stale = goods.map((g) => ({ g, s: stalenessOf(g, engine) })).filter((x) => x.s);
 check('threshold is 35%', STALE_THRESHOLD === 0.35, STALE_THRESHOLD);
-check('exactly two goods are flagged in season ' + L + ': Elven Bismuth and Oil of Enchantment',
-  stale.length === 2 && stale.map((x) => x.g).sort().join(', ') === 'Elven Bismuth, Oil of Enchantment',
-  stale.map((x) => `${x.g} ${money(x.s.seasonAvg)} -> ${money(x.s.recentAvg)} (${(x.s.divergence * 100).toFixed(0)}%)`).join('\n'));
-check('both are UNDERSTATED by their season average, so the default under-quotes them',
+// The most price-sensitive assertion in the file, and the one most certain to
+// redden a routine publish: WHICH goods are stale is decided by the prices
+// themselves, so any price export can change the answer. It named Elven Bismuth
+// and Oil of Enchantment when written. What is asserted now is that the flag
+// fires at all — without which the divergence check below is vacuously true —
+// and the goods it names are printed so a reader sees the set move.
+console.log(`        stale in season ${L}: ` +
+  (stale.length
+    ? stale.map((x) => `${x.g} ${money(x.s.seasonAvg)} -> ${money(x.s.recentAvg)} (${(x.s.divergence * 100).toFixed(0)}%)`).join('; ')
+    : 'none') + '\n');
+check('the staleness flag fires on at least one good, so the check below is not vacuous',
+  stale.length > 0,
+  stale.map((x) => `${x.g} ${money(x.s.seasonAvg)} -> ${money(x.s.recentAvg)}`).join('\n'));
+check('every flagged good is UNDERSTATED by its season average, so the default under-quotes it',
   stale.every((x) => x.s.divergence > 0),
   stale.map((x) => `${x.g} ${(x.s.divergence * 100).toFixed(0)}%`).join(', '));
 
@@ -513,12 +571,16 @@ const eraExpiredTrade = eraLines.filter(({ c, l }) => c.status === 'expired' && 
 // behaviour, and the reason this asserts "not the current season" rather than
 // "windowed", which would have been the tidier claim and the wrong one.
 check("under 'era' NO expired trade good is priced from the current season",
-  eraExpiredTrade.length === 611 && eraExpiredTrade.every(({ l }) => l.pricedYear !== L),
+  eraExpiredTrade.length > 0 && eraExpiredTrade.every(({ l }) => l.pricedYear !== L),
   `${eraExpiredTrade.filter(({ l }) => l.pricedYear === L).length} of ${eraExpiredTrade.length} still on ${L}`);
-check("...469 of them over the build window, the rest on the pre-2018 fallback",
-  eraExpiredTrade.filter(({ l }) => l.basis === 'window').length === 469,
-  eraExpiredTrade.filter(({ l }) => l.basis === 'window').length);
-check("...and under 'today' every one of the 611 IS on the current season",
+// BOTH routes have to be live: most land on the build window, the pre-2018
+// recipes fall back to the season path. Asserting the split (it was 469/142)
+// pinned which recipes exist rather than that both routes work.
+check("...some over the build window, the rest on the pre-2018 fallback — both routes live",
+  eraExpiredTrade.some(({ l }) => l.basis === 'window') &&
+  eraExpiredTrade.some(({ l }) => l.basis !== 'window'),
+  `${eraExpiredTrade.filter(({ l }) => l.basis === 'window').length} windowed of ${eraExpiredTrade.length}`);
+check("...and under 'today' every one of them IS on the current season",
   expiredTrade.every(({ l }) => l.basis !== 'window' && l.pricedYear === L));
 
 // The 2027 preview keeps its forward last-5 estimate under 'era' (consequence
@@ -543,8 +605,8 @@ check("...so the two bases really do disagree about it",
 const activeTrade = costs.filter((c) => c.status === 'active')
   .flatMap((c) => c.lines.map((l, i) => ({ l, e: eraByKey.get(c.key).lines[i] })))
   .filter(({ l }) => isTradeCategory(l.category));
-check("an ACTIVE recipe's own trade goods are identical under both bases — all 1,014",
-  activeTrade.length === 1014 && activeTrade.every(({ l, e }) => l.unitAvg === e.unitAvg),
+check("an ACTIVE recipe's own trade goods are identical under both bases — every one of them",
+  activeTrade.length > 0 && activeTrade.every(({ l, e }) => l.unitAvg === e.unitAvg),
   `${activeTrade.filter(({ l, e }) => l.unitAvg !== e.unitAvg).length} of ${activeTrade.length} differ`);
 
 const activeDiff = costs.filter((c) => c.status === 'active')
@@ -588,8 +650,11 @@ for (const c of costs) {
     if (isUR(l)) pinDiffUR++;
   });
 }
-check(`"today's prices" is NOT "${L} prices" — they differ on 150 lines, 90 of them Ultra Rares`,
-  pinDiff === 150 && pinDiffUR === 90, `${pinDiff} lines, ${pinDiffUR} Ultra Rare`);
+// The claim is the inequality itself — pinning the latest season is NOT the
+// same as pricing today — plus the fact that Ultra Rares are where it bites.
+// It differed on 150 lines, 90 of them Ultra Rares, when this was written.
+check(`"today's prices" is NOT "${L} prices" — they differ, and Ultra Rares are where`,
+  pinDiff > 0 && pinDiffUR > 0, `${pinDiff} lines, ${pinDiffUR} Ultra Rare`);
 check('...and the difference is the right way round: the pin under-quotes what you cannot buy',
   costs.flatMap((c) => c.lines.map((l, i) => ({ l, p: pinLatest.cost(c.transmute, c.year).lines[i] })))
     .filter(({ l, p }) => isUR(l) && l.unitAvg !== p.unitAvg)
@@ -784,11 +849,20 @@ check('the filename is dated so two exports in a season do not collide',
 console.log('\n=== 11. the 10x lot hint ===');
 
 // Trade 1 tokens sell mostly as 10x bundles, so the "buy" count is not a number
-// you can actually ask for. 8 of the 14 goods bundle; Trade 2-4 do not.
+// you can actually ask for. The Trade 1 goods bundle; Trade 2-4 do not.
+//
+// Stated as a SET EQUALITY against the Trade 1 rows rather than against the
+// literal 8. That is not merely more durable, it is a stronger claim: the two
+// every() clauses alone say "everything it fires on is Trade 1" and "nothing
+// outside Trade 1 fires", both of which a hint that fired on NOTHING would
+// satisfy. Counting against the Trade 1 rows themselves closes that hole.
 const lotRows = many.trade.filter((r) => lotHintFor(r) !== null);
-check('the hint fires on the 8 Trade 1 goods and on nothing else',
-  lotRows.length === 8 && lotRows.every((r) => r.category === 'Trade 1') &&
+const trade1Rows = many.trade.filter((r) => r.category === 'Trade 1');
+check('the hint fires on every Trade 1 good and on nothing else',
+  trade1Rows.length > 0 && lotRows.length === trade1Rows.length &&
+  lotRows.every((r) => r.category === 'Trade 1') &&
   many.trade.filter((r) => r.category !== 'Trade 1').every((r) => lotHintFor(r) === null),
+  `${lotRows.length} fired of ${trade1Rows.length} Trade 1 rows: ` +
   lotRows.map((r) => `${r.good} (${r.category})`).join(', '));
 
 check('it rounds UP to whole lots and reports the overshoot',
