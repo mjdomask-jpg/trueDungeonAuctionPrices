@@ -331,7 +331,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202347,2023,47,grunnel,2007 Prop,1,$80.00
 202347,2023,47,grunnel,Small Favor Scroll,1,$80.00
 202348,2023,48,grunnel,Small Favor Scroll,1,$100.00
-202349,2023,49,token,"25,000 GP Reserve Bar",1,$250.00
+202349,2023,49,token,"25,000 GP Eldritch Ore Bar",1,$250.00
 202349,2023,49,token,Lucky Plate Armor,1,$60.00
 202349,2023,49,grunnel,Old Token Mat,1,$30.00
 202349,2023,49,grunnel,Prove Fear Prop,1,$60.00
@@ -428,7 +428,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202413,2024,13,withheld,Ring of the 3rd Circle,1,-$104.36
 202413,2024,13,withheld,Ring of the 3rd Circle,1,-$104.36
 202413,2024,13,token,Set of Stalker Bits,1,$25.00
-202415,2024,15,token,"1,000 GP Gold Bar (Bundle)",1,$405.00
+202413,2024,13,token,"25,000 GP Eldritch Ore Bar",1,$226.00
+202413,2024,13,token,"25,000 GP Eldritch Ore Bar",1,$226.00
 202415,2024,15,token,Alchemist's Ink (Bundle),1,$14.70
 202415,2024,15,token,Alchemist's Parchment (Bundle),1,$13.30
 202415,2024,15,token,Amulet of Treasure Finding,1,$306.00
