@@ -8,9 +8,13 @@ Recorded 2026-08-20, while reconciling the docs with the shared `td-domain`
 skill. Game-level definitions live there; this file tracks only what *this
 repo's data* is missing.
 
-Last reconciled **2026-09-02**, after PR #159 modelled the trade good ladder,
-the maintainer decided items 3 and 4 (keep `Category` as the tier axis), and
-item 5 gained the validator rule it asked for.
+Last reconciled **2026-09-02**. Four items closed that day: the maintainer
+decided 3 and 4 (keep `Category` as the tier axis), 5 gained the validator rule
+it asked for plus the three cells that clear its warning (PR #163), and 7 was
+fixed by a thread read (PRs #164/#165) — which also corrected the Trade 4
+token's NAME to `25,000 GP Eldritch Ore Bar` here and in the `td-domain` skill,
+and re-based item 8's evidence from one sale to six. Item 2 closed the day
+before with PR #159.
 **A resolved item keeps its number and is marked RESOLVED rather than deleted**,
 so a reader who met it elsewhere can still find it, and so the reasoning that
 closed it is not lost. Renumbering would also break every reference to "item 4"
@@ -104,7 +108,7 @@ category disagree, in `tokenMetadata.csv` and `prices.csv` alike.
 
 **The trip-wire, and it is a real one.** `CATEGORY_SECTION` keys on the
 **category**, not on the token — so it folds *anything* carrying `Trade 4` into
-Premium. Item 8 proposes authoring the `25,000 GP Eldritch Bar` as a Trade 4
+Premium. Item 8 proposes authoring the `25,000 GP Eldritch Ore Bar` as a Trade 4
 token; the moment that lands, the bar joins the Premium table too, which is wrong
 for a token that is not an 8K-order exclusive, and nothing would report it.
 Whoever picks up item 8 either re-keys the fold on the item name or reopens this
@@ -174,8 +178,9 @@ rather than a specific one — is authored on 10 lines and blank on 3 (lines 500
 name before ever reading the cell, and `TIER_PROXY` skips a proxy equal to the
 good. It is still reported, because a carve-out with one occupant is as likely to
 be the bug as the rule, and "inert today" is exactly what this item is about.
-**Filling those three cells in the sheet clears the last warning**, and is the
-one open action left here.
+**Those three cells were filled in the sheet and published as PR #163**, so the
+warning is clear and the check now reports nothing on the shipped data. Nothing
+is left open here.
 
 **Tested, by shape rather than by row.** `scripts/validate-recipes.test.mjs`
 (new, wired in as `npm run test:recipes`) copies `public/data`, injects each
@@ -255,62 +260,66 @@ gone.
 
 ---
 
-## 7. A player's shorthand for a lot is recorded as a token name
+## 7. A player's shorthand for a lot is recorded as a token name — RESOLVED (PRs #164/#165, 2026-09-02)
 
-**Now:** `contextItems.csv` carries two `Item` values that are not tokens. They
-are how an auctioneer described a lot in a forum post, carried straight through
-the import.
+**Both rows are fixed, and the canonical name itself was wrong in this file.**
 
-| Row | `Item` | Auction | Qty | Price |
-|---|---|---|---|---|
-| 334 | `25,000 GP Reserve Bar` | 202349 | 1 | $250.00 |
-| 431 | `1,000 GP Gold Bar (Bundle)` | 202415 | 1 | $405.00 |
+**The name.** The Trade 4 denomination is the **`25,000 GP Eldritch Ore Bar`**,
+not the `25,000 GP Eldritch Bar` this entry and the `td-domain` skill both said.
+Corrected by the maintainer, and corrected in the skill's trade ladder as well,
+since a game fact belongs there and the skill is shared with the treasure-pull
+project. Row 334 (202349, $250) now carries it.
 
-The canonical Trade 4 token is the **`25,000 GP Eldritch Bar`** (see the
-`td-domain` skill's trade ladder). *Reserve Bar* is a player's shorthand for it.
-`(Bundle)` is not part of any token's name either — it says the lot held several
-bars, which is a property of the LOT, not of the token.
+**Row 431 needed a thread read, and got one.** 202415 (Fred K's 2024 Pre-Order
+Auction) sold **six bar lots**, not one bundle:
 
-Both prices are consistent with that reading. $250 is exactly 25 x the 2023 gold
-bar minimum of $10.00, and $405 sits between 41 and 77 bars at 2024's $9.87
-average — a bundle, priced by its contents.
+| Lot | Price | Buyer |
+|---|---|---|
+| 25K bar x3 | $226 each | Felurian |
+| 5K bar x3 | $42, $42, $43 | Lorren, Lorren, Haliax |
 
-**Why it matters:** no check can see this, and that is the point of recording it.
+Four of those are the order's normal contents — one 25K bar and three 5K bars —
+so only the **two extra 25K bars** are context. They are recorded as one row,
+`25,000 GP Eldritch Ore Bar`, quantity 2, $452.00, replacing the
+`1,000 GP Gold Bar (Bundle)` row entirely. The $405 the old row carried was
+never a real lot price.
 
-- `validate-prices.mjs` § 8 catches names differing by punctuation or a trailing
-  plural. `25,000 GP Reserve Bar` differs from every real token by whole words,
-  so it passes cleanly.
-- § 8 cannot fall back to "is this a known token" either: `contextItems.Item` is
-  deliberately free text, because an augment can be any token ever printed. An
-  unmatched name is the NORMAL case there, so unmatched cannot be an error.
-- So a lot description entering the item vocabulary is invisible, and each one
-  splits a token's history: any future `25,000 GP Eldritch Bar` row starts a
-  second series rather than continuing this one.
+**The value semantics were checked, not assumed**, because the row is the first
+context row above quantity 1 in a while: a **non-withheld** row's value is the
+sheet's `Price` as-is (`buildContextItems` returns `refValue`, no multiply), so
+qty 2 at $452 counts $452 and matches the metadata's `contextTotal` moving by
+exactly +$452. Only **withheld** rows multiply by quantity (`-mean x quantity`).
+Authoring $226 there would have HALVED the auction's context, silently.
 
-This is the same class as the near-miss pairs § 8 already reports, one step
-further out — and unlike those, it is **not** ambiguous. `+1 Turkey Leg` and
-`+1 Turkey Leg of Smiting` are two tokens and must never be merged; these two
-rows are one token under a nickname and a lot count under another.
-
-**Done looks like:** row 334 renamed to `25,000 GP Eldritch Bar`. Row 431 needs
-a decision first, because renaming it alone loses information — the price is for
-a bundle whose size the name no longer states. Either recover the count from the
-202415 thread and set `quantity` accordingly, or leave the row and record why.
-
-Pairs with **item 8**, which is the same subject one level up.
+**One process note, because it is the defect this data set produces most often.**
+PR #164 first landed both rows on auction **202413** rather than 202415 — a
+pull-down from the cell above in the sheet — which moved $452 onto Flik's
+Augmented Standard Auction and took $405 off Fred's. Everything downstream stayed
+self-consistent: `contextTotal`, `netCost` and `fundingGap` all recomputed
+cleanly on both auctions, so nothing looked wrong. PR #165 corrected it. **No
+validator can see this**, and none reasonably could: a context row on the wrong
+auction is a well-formed row. Reading the thread is the only check there is, and
+here it is decisive — 202413's thread contains no bar lot at all.
 
 ---
 
 ## 8. Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum
 
+**Updated 2026-09-02** after item 7 closed: the name below is corrected
+(`Eldritch Ore Bar`), and the evidence section is no longer a single data point.
+
 **Now:** `transmuteRecipes.csv` contains **no** `5,000 GP Mithral Bar` and no
-`25,000 GP Eldritch Bar`. Every large sum is authored as a multiple of the
+`25,000 GP Eldritch Ore Bar`. Every large sum is authored as a multiple of the
 1,000 GP Gold Bar — 127 lines, at 1x, 3x, 4x, 5x, 10x, 15x, 50x and 100x. The
-1,000 GP bar is also the only bar ever sold at auction, so it is the only one with
-a price.
+1,000 GP bar is the only one with an entry in `prices.csv`, so it is the only one
+the engine can price. It is **not** the only one ever sold: the larger
+denominations sell as auction EXTRAS and land in `contextItems.csv`. Three of the
+six sales below are recorded there (row 334, and row 431 at quantity 2); the
+other three are 202415's 5K bars, which were that order's normal contents and so
+appear only in its forum thread.
 
 **Why it matters:** the totals are right and the shopping list is wrong. Per the
-`td-domain` trade ladder, the Mithral Bar (Trade 3) and the Eldritch Bar (Trade 4)
+`td-domain` trade ladder, the Mithral Bar (Trade 3) and the Eldritch Ore Bar (Trade 4)
 are real tokens, and a 25,000 GP requirement can legitimately be met by any mix of
 the two denominations adding up. Today the site tells a player to go and acquire
 twenty-five separate 1,000 GP bars when one token is the whole amount.
@@ -319,10 +328,29 @@ It also leaves the trade ladder half-populated in the direction that matters for
 item 3: Trade 3 currently means Golden Fleece only, and Trade 4 means Wish Ring
 only, because the bar half of each rung is not in the data.
 
-**The evidence that they trade at face value** is thin but consistent: the one
-observed sale, `contextItems.csv` row 334 (auction 202349), went for **$250**,
-exactly 25 x the 2023 gold bar minimum of $10.00. That is a single data point from
-a row whose name is itself wrong (item 7), so it is a hint, not a basis.
+**The evidence is no longer thin, and it revises the claim.** Item 7's thread read
+turned one data point into six sales across two seasons, and they do NOT trade at
+face value — they trade at a small discount to the 1,000 GP bar's average:
+
+| Sale | Season | Per 1,000 GP | That season's 1,000 GP bar |
+|---|---|---|---|
+| 25K @ $250 (202349) | 2023 | $10.00 | min $10.00, avg $12.59 (n=51) |
+| 25K @ $226, x3 (202415) | 2024 | $9.04 | min $5.25, avg $9.87 (n=72) |
+| 5K @ $42, $42, $43 (202415) | 2024 | $8.40-$8.60 | same |
+
+Every one lands at or below that season's average and above its minimum. The
+original reading — "$250 is exactly 25 x the 2023 minimum, so face value" — was a
+coincidence of a season whose minimum happened to be a round $10.00; the 2024
+sales, where min and average are far apart, separate the two readings and the
+average is the one the prices track. **So a derived rule at exactly 5 x the gold
+bar would price a Mithral Bar slightly high**, which matters because the derived
+price is what a Shopping List would quote.
+
+**And the interchange is now attested rather than inferred.** 202415's lot
+listing says it outright: *"the 5K bars can either be single 5K bars or 5 1K bars
+- your choice"*, with the 25K bars called single tokens in the same breath. That
+is the auctioneer stating this item's whole premise, and it is recorded in the
+`td-domain` skill's trade ladder too.
 
 **Done looks like:** the denominations authored as tokens, with `derivedPrices.csv`
 expressing them against the bar that IS priced (`5,000 GP Mithral Bar = 1,000 GP
@@ -342,6 +370,6 @@ changing any of them.
 And the third, added 2026-09-02 when item 3 was decided: `sectionCategory` folds
 every `Trade 4` row into the Premium table for display, keyed on the **category**
 and not on the token, because Wish Ring is Trade 4's only occupant today. An
-authored `25,000 GP Eldritch Bar` would inherit that fold and land in Premium
+authored `25,000 GP Eldritch Ore Bar` would inherit that fold and land in Premium
 beside it — wrong for a bar that is not an 8K-order exclusive, and silent. Re-key
 `CATEGORY_SECTION` on the item name at that point, or reopen item 3.

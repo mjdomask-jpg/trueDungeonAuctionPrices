@@ -33,7 +33,7 @@ export function compareCategories(a: string, b: string): number {
 // 2026-09-02 (docs/data-backlog.md items 3 and 4, both resolved there). It is
 // sound only while Wish Ring is Trade 4's sole occupant, because the map keys on
 // the CATEGORY, not on the token: a second Trade 4 token — backlog item 8 would
-// author the `25,000 GP Eldritch Bar` as one — would silently inherit the fold
+// author the `25,000 GP Eldritch Ore Bar` as one — would silently inherit the fold
 // and sit in Premium too. Re-key on the item name at that point.
 const CATEGORY_SECTION: Record<string, string> = {
   'Trade 4': 'Premium',
