@@ -161,16 +161,22 @@ const isBidFloorArtifact = (l) => l.lot != null && l.lot <= BID_FLOOR && l.quant
 // ===========================================================================
 // 1. Trent min/max reconcile
 // ===========================================================================
-// prices.csv stores a per-item summary of the per-lot rows in rawPricesData.
-// The summary convention changed between eras and BOTH are live:
-//   season 2024+  two rows per item, the min and the max of its lots (one row
-//                 where every lot fetched the same price)
-//   season 2023   a single averaged row — the first 15 Trent auctions
-// So 2024+ is an exact set equality; for 2023 the strongest sound assertion is
-// that the recorded price falls inside the lot range. A single-price era row
-// outside its own range is a WARN, not an error: it is not provably a
-// transcription defect the way a broken min/max is, and four such rows are
-// live today.
+// prices.csv stores a per-item summary of the per-lot rows in rawPricesData:
+// two rows per item, the min and the max of its lots, and a SINGLE row where
+// the item had only one lot. One rule, exact set equality, every season.
+//
+// It was not always one rule. The first 15 Trent auctions — all of season 2023
+// — recorded a single row per item instead, so this section carried an era
+// split: exact equality from 2024, and for 2023 the weaker assertion that the
+// recorded price fell inside its own lot range. Those auctions were backfilled
+// to min/max pairs on 2026-09-02 (PR #169), which left the era branch with no
+// data to run on: rawPricesData begins at 2023, so nothing reached it and
+// nothing in validate-prices.test.mjs ever had. It came out with the backfill.
+//
+// The reason to delete it rather than leave it as history: an unreachable
+// branch reads as a live rule. The next person to hit a single-row item would
+// have found a documented carve-out saying that is allowed, when what it
+// actually means now is that trentClose.gs wrote one row for a one-lot item.
 //
 // The set equality is computed over the ELIGIBLE lots, not over every lot —
 // see isBidFloorArtifact above. That widens the contract rather than loosening
@@ -180,7 +186,6 @@ const isBidFloorArtifact = (l) => l.lot != null && l.lot <= BID_FLOOR && l.quant
 // comparison instead (nearest lot, a percentage tolerance) would also stop
 // catching the transcription defects this section exists for.
 console.log('1. Trent min/max reconcile (prices.csv vs rawPricesData.csv)');
-const MINMAX_FROM_SEASON = 2024;
 const rawLots = groupBy(raw.filter((r) => r.auctionId && r.Item), key, (r) => ({
   unit: money(r.Price),
   lot: money(r.trentPrice),
@@ -193,7 +198,6 @@ const rawAuctionIds = new Set(raw.map((r) => r.auctionId).filter(Boolean));
   let checked = 0, excludedLots = 0;
   for (const [k, lots] of rawLots) {
     const [auctionId, item] = k.split('|');
-    const season = Number(metaById.get(auctionId)?.auctionSeason ?? auctionId.slice(0, 4));
     const priced = lots.filter((l) => l.unit != null);
     if (!priced.length) continue;
     const recorded = priceRows.get(k);
@@ -210,19 +214,11 @@ const rawAuctionIds = new Set(raw.map((r) => r.auctionId).filter(Boolean));
     if (excluded) excludedLots += excluded;
     const values = basis;
     const min = Math.min(...values), max = Math.max(...values);
-    if (season >= MINMAX_FROM_SEASON) {
-      const want = min === max ? [min] : [min, max];
-      const got = [...new Set(recorded.filter((v) => v != null))].sort((a, b) => a - b);
-      if (got.length !== want.length || got.some((v, i) => Math.abs(v - want[i]) > 0.005))
-        errs.push(`${auctionId} "${item}": prices.csv has [${got.join(', ')}] but its ${values.length} eligible lot(s) give [${want.join(', ')}]`
-          + (excluded ? ` (${excluded} at-the-$${BID_FLOOR}-floor multi-token lot(s) excluded — see isBidFloorArtifact)` : ''));
-    } else {
-      for (const v of recorded) {
-        if (v == null) continue;
-        if (v < min - 0.005 || v > max + 0.005)
-          warns.push(`${auctionId} "${item}": recorded $${v} is outside its own lot range $${min}–$${max} (${values.length} lots, single-price era)`);
-      }
-    }
+    const want = min === max ? [min] : [min, max];
+    const got = [...new Set(recorded.filter((v) => v != null))].sort((a, b) => a - b);
+    if (got.length !== want.length || got.some((v, i) => Math.abs(v - want[i]) > 0.005))
+      errs.push(`${auctionId} "${item}": prices.csv has [${got.join(', ')}] but its ${values.length} eligible lot(s) give [${want.join(', ')}]`
+        + (excluded ? ` (${excluded} at-the-$${BID_FLOOR}-floor multi-token lot(s) excluded — see isBidFloorArtifact)` : ''));
   }
   // The mirror direction: an auction with per-lot data carrying a priced item
   // lots behind it. Legitimate off-auction additions exist, so this is a WARN.
@@ -445,7 +441,8 @@ console.log('5b. Every auction still has prices (auctionMetadata.csv vs prices.c
 //
 // AN ONYX ITEM RECORDED TWICE FOR ONE AUCTION IS THE SHAPE THAT CANNOT BE
 // LEGITIMATE. `prices.csv` deliberately allows exactly two rows for one item —
-// the min/max entry convention, which 105 auctions use — and that is why § 5b's
+// the min/max entry convention, which 119 auctions use (105 before the 2023
+// backfill brought fifteen more onto it) — and that is why § 5b's
 // note says 20193's duplicates could not be caught by counting. `onyx.csv` has
 // no such convention: measured over all 1,118 rows of nine seasons, 52 of the
 // 53 Onyx auctions carry each item exactly once, and the 53rd is 202219, which

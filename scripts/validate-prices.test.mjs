@@ -48,6 +48,22 @@ const cases = [
     L[i] = L[i].replace(',Aragonite,15,', ',Aragonite,19,'); return L.join('\n');
   }), /prices\.csv has \[12\.59, 19\] but its .* lot\(s\) give \[12\.59, 15\]/],
 
+  // Season 2023 is held to the same exact equality as every other season. It
+  // was not until the 2026-09-02 backfill: those fifteen Trent auctions carried
+  // one row per item, so this section only warned that the recorded price fell
+  // inside the lot range, and nothing here exercised that branch at all. This
+  // case is the one that would have been a WARN before and is an ERROR now.
+  //
+  // A one-lot item is deliberate — it pins the singleton half of the rule too,
+  // where "one row" is correct and only its VALUE can be wrong. The injected
+  // price is a sentinel and the lot count is a structural 1, so nothing here
+  // is pinned to a number the workbook can legitimately republish.
+  ['1  a season-2023 row that disagrees with its lot', () => edit('prices.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('202314,2023,14,Wish Ring,'));
+    const f = L[i].split(','); f[4] = '999999'; L[i] = f.join(',');
+    return L.join('\n');
+  }), /202314 "Wish Ring": prices\.csv has \[999999\] but its 1 eligible lot\(s\) give \[/],
+
   ['1  item dropped from prices.csv', () => edit('prices.csv', (t) =>
     lines(t).filter((l) => !l.startsWith('202642,2026,42,Aragonite,')).join('\n')),
     /202642 "Aragonite": 12 lot\(s\) in rawPricesData but no row in prices\.csv/, 'warn'],

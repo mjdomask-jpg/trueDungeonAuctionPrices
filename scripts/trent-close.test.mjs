@@ -127,10 +127,11 @@ const raw = load(dataDir, 'rawPricesData.csv').filter((r) => r.auctionId);
 const prices = load(dataDir, 'prices.csv').filter((r) => r.auctionId);
 const tokens = load(dataDir, 'tokenMetadata.csv');
 
-// prices.csv only stores a min/max PAIR from season 2024 on. The fifteen
-// season-2023 Trent auctions record a single averaged price instead, so the
-// replay checks their per-lot output and skips the summary comparison.
-const MINMAX_FROM_SEASON = 2024;
+// Every auction with per-lot data is compared on its summary, not just its
+// lots. The fifteen season-2023 Trent auctions used to be skipped here — they
+// recorded one row per item rather than a min/max pair — until the 2026-09-02
+// backfill (PR #169) put them on the same convention as everything after them.
+// They are the whole reason the skip existed, so it went with them.
 
 const byAuction = new Map();
 for (const r of raw) (byAuction.get(r.auctionId) ?? byAuction.set(r.auctionId, []).get(r.auctionId)).push(r);
@@ -165,7 +166,7 @@ for (const p of prices) (pricesByAuction.get(p.auctionId) ?? pricesByAuction.set
     // (item, price) pairs, which is the semantics the site and
     // validate-prices.mjs both use — row order inside an auction is not
     // load-bearing, and the site groups on read.
-    if (Number(season) < MINMAX_FROM_SEASON) continue;
+    //
     // Only over items that HAVE lots. An auction can carry a priced item with
     // no Trent lot behind it — 202647's Golden Ticket was recorded
     // off-auction — and no parser can reproduce a row that was never in the
@@ -201,7 +202,7 @@ for (const p of prices) (pricesByAuction.get(p.auctionId) ?? pricesByAuction.set
   check(`no auction aborts (${auctions} auctions, ${lots} lots — 110 Trent + 1 forum)`, !aborted.length, show(aborted));
   check('every lot name resolves to the Item the sheet recorded', !itemWrong.length, show(itemWrong));
   check('every lot divides down to the per-token price the sheet recorded', !unitWrong.length, show(unitWrong));
-  check(`every season-${MINMAX_FROM_SEASON}+ min/max summary is reproduced exactly (${summarised} auctions)`, !summaryWrong.length, show(summaryWrong));
+  check(`every min/max summary is reproduced exactly (${summarised} auctions, every season)`, !summaryWrong.length, show(summaryWrong));
   check('every file identifies its own season from its own token names', !seasonWrong.length, show(seasonWrong));
   console.log(`        · ${countOdd.length} shipped item(s) carry a row count the singleton rule would not produce (sheet noise, harmless):`);
   for (const line of countOdd) console.log('          ' + line);
