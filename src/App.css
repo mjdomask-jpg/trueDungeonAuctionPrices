@@ -2905,45 +2905,62 @@ table.an-opens col.col-days { width: 16%; }
    before it — the numbers in --pv-frozen and these six declarations are one
    fact written twice, so they change together or the columns overlap. */
 .sl-pv {
-  --pv-w-item: 232px; --pv-w-buy: 58px; --pv-w-hand: 172px;
-  --pv-w-total: 58px; --pv-w-unit: 76px; --pv-w-cost: 86px;
-  /* 232 + 58 + 172 + 58 + 76 + 86 */
-  --pv-frozen: 682px;
-  /* Read-only (the takeaway table): on hand is a number, not a stepper, so the
-     column costs 62px instead of 172. 232 + 58 + 62 + 58 + 76 + 86. */
-  --pv-frozen-ro: 572px;
+  --pv-w-item: 208px; --pv-w-buy: 76px; --pv-w-hand: 172px; --pv-w-total: 58px;
+  /* 208 + 76 + 172 + 58. FOUR frozen columns, not six: $ ea and Cost were
+     pinned here too and the block ran to 682px — half a 1440px screen spent
+     before one recipe column was drawn. They ride at the far RIGHT of the
+     scrolling half now, so they scroll; the plan's money is in the section
+     subtotal, the takeaway table and the footer, none of which move. */
+  --pv-frozen: 514px;
+  /* Read-only (the takeaway table): on hand is a number, not a stepper, so
+     the column costs 62px instead of 172. 208 + 76 + 62 + 58. */
+  --pv-frozen-ro: 404px;
+  /* $ ea + Cost, unpinned and last. Counted into every min-width so the
+     recipe columns never squeeze them. */
+  --pv-w-unit: 76px; --pv-w-cost: 88px;
+  --pv-money: 164px;
 }
 .sl-pv .pv-item  { width: var(--pv-w-item); left: 0; text-align: left; }
-.sl-pv .pv-buy   { width: var(--pv-w-buy); left: 232px; }
-.sl-pv .pv-hand  { width: var(--pv-w-hand); left: 290px; text-align: left; }
-.sl-pv .pv-total { width: var(--pv-w-total); left: 462px; }
-.sl-pv .pv-unit  { width: var(--pv-w-unit); left: 520px; }
-.sl-pv .pv-cost  { width: var(--pv-w-cost); left: 596px; }
-.sl-pv-ro .pv-hand-ro { width: 62px; left: 290px; }
-.sl-pv-ro .pv-total { left: 352px; }
-.sl-pv-ro .pv-unit  { left: 410px; }
-.sl-pv-ro .pv-cost  { left: 486px; }
+.sl-pv .pv-buy   { width: var(--pv-w-buy); left: 208px; }
+.sl-pv .pv-hand  { width: var(--pv-w-hand); left: 284px; text-align: left; }
+.sl-pv .pv-total { width: var(--pv-w-total); left: 456px; }
+.sl-pv-ro .pv-hand-ro { width: 62px; left: 284px; }
+.sl-pv-ro .pv-total { left: 346px; }
+/* Widths only — these two SCROLL, so they carry no offset and no sticky. */
+.sl-pv .pv-unit  { width: var(--pv-w-unit); }
+.sl-pv .pv-cost  { width: var(--pv-w-cost); }
 
 .sl-pv .pv-item, .sl-pv .pv-buy, .sl-pv .pv-hand, .sl-pv .pv-hand-ro,
-.sl-pv .pv-total, .sl-pv .pv-unit, .sl-pv .pv-cost {
+.sl-pv .pv-total {
   position: sticky; z-index: 1;
   /* Out of flow they lose the row's background, so each frozen cell paints its
      own — otherwise the recipe columns scroll visibly underneath them. The
      header cells sit above their own row's, hence the second z-index. */
   background: var(--card);
 }
-.sl-pv thead .pv-item, .sl-pv thead .pv-buy, .sl-pv thead .pv-hand, .sl-pv thead .pv-hand-ro,
-.sl-pv thead .pv-total, .sl-pv thead .pv-unit, .sl-pv thead .pv-cost { z-index: 2; }
+.sl-pv thead .pv-item, .sl-pv thead .pv-buy, .sl-pv thead .pv-hand,
+.sl-pv thead .pv-hand-ro, .sl-pv thead .pv-total { z-index: 2; }
 /* The seam between the frozen group and the columns sliding under it. A border
    on the cell would travel with the collapsed table border; a shadow does not,
    and it reads as depth rather than as a seventh column rule. */
-.sl-pv .pv-cost { box-shadow: 6px 0 6px -6px rgba(0, 0, 0, 0.28); }
-:root[data-theme='dark'] .sl-pv .pv-cost { box-shadow: 6px 0 6px -6px rgba(0, 0, 0, 0.55); }
+.sl-pv .pv-total { box-shadow: 6px 0 6px -6px rgba(0, 0, 0, 0.28); }
+:root[data-theme='dark'] .sl-pv .pv-total { box-shadow: 6px 0 6px -6px rgba(0, 0, 0, 0.55); }
 
 .sl-pv .pv-nm { display: block; color: var(--text-h); }
 .sl-pv .pv-sub { display: block; font-size: 11px; color: var(--text-d); margin-top: 1px; }
-.sl-pv .sl-stale, .sl-pv .sl-lot { display: block; margin-top: 2px; font-size: 10.5px; }
+/* Two lines here, one in the Notes row: the item column is 208px where that
+   row has 400. The amber is what marks them as a flag rather than as two
+   more numbers — the trailing "this one is moving" is gone. */
+.sl-pv .sl-stale { display: block; margin-top: 2px; font-size: 10.5px; line-height: 1.35; }
 .sl-pv .pv-buy b { color: var(--text-h); font-size: 14px; }
+/* The 10x lot arithmetic, under the count it corrects. It was a sentence
+   beneath the item name and fired on 8 of the 14 trade goods — near-permanent
+   prose that set the item column's width and cost every flagged row a second
+   line. Both views render it here now, from one function. */
+.pv-lot, .cl-lot {
+  display: block; font-size: 10px; line-height: 1.3; margin-top: 2px;
+  color: var(--text-d); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
 
 /* The on-hand cell: the shared pill and stepper, laid out for a table cell
    rather than for the calculator's flex row — and trimmed, because here the

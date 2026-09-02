@@ -78,7 +78,8 @@ const {
   parseDerivedRules, isTradeCategory, TIER_PROXY,
 } = lib.transmutes;
 const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote,
-  lotHintFor, LOT_SIZE, recipesFor, pivotColumnLabel } = lib.shoppingList;
+  lotHintFor, lotHintLabel, LOT_SIZE, recipesFor, pivotColumnLabel,
+  stalenessParts } = lib.shoppingList;
 const { toCSV, toTSV, toRows, toSheet, csvFile, guardFormula, exportFilename, EXPORT_COLUMNS } =
   lib.shoppingExport;
 const { loadShopping, saveShopping, clearShopping } = lib.shoppingStorage;
@@ -700,10 +701,35 @@ check('every note in the closed vocabulary renders, and none renders as undefine
 // The flag states a fact and stops. It must not acquire a direction: trade-good
 // prices do not follow a reliable seasonal shape, so anything forward-looking
 // here would be read as a forecast the data cannot support.
+//
+// Pinned as a RULE, not as a sentence. The wording moved once already — the
+// trailing "— this one is moving" was the longest clause here and only
+// restated the flag's own existence — and a test spelling the sentence out
+// fails on an edit that changes nothing about what is claimed. What must not
+// change is that both measured numbers appear and no third thing does.
 const bismuth = stalenessOf('Elven Bismuth', engine);
-check('the staleness sentence names both measured numbers and predicts nothing',
-  /^season avg \$[\d.,]+ · recent sales \$[\d.,]+ — this one is moving$/.test(stalenessNote(bismuth, m)),
+const stalePartsBismuth = stalenessParts(bismuth, m);
+check('the staleness flag names both measured numbers, in two parts',
+  stalePartsBismuth.length === 2 &&
+  /^season avg \$[\d.,]+$/.test(stalePartsBismuth[0]) &&
+  /^recent sales \$[\d.,]+$/.test(stalePartsBismuth[1]),
+  stalePartsBismuth.join(' | '));
+
+// The pivot stacks the parts and the Notes row joins them. One function, so a
+// reader switching views cannot be shown two different numbers for one good.
+check('the one-line form is exactly the two parts joined',
+  stalenessNote(bismuth, m) === stalePartsBismuth.join(' · '),
   stalenessNote(bismuth, m));
+
+// The one thing the flag is forbidden to do. A direction word here would be a
+// forecast, and the quarter-by-quarter measurement behind STALE_THRESHOLD says
+// there is no seasonal shape to forecast from.
+check('no measured staleness flag predicts a direction',
+  goods.every((g) => {
+    const st = stalenessOf(g, engine);
+    if (!st) return true;
+    return !/\b(rising|falling|up|down|moving|will|expect|soon|trend)\b/i.test(stalenessNote(st, m));
+  }));
 
 // Every note a real list produces must come from the vocabulary — the tables
 // join these with " · " and the CSV puts them in one cell, so an unrendered
@@ -907,6 +933,23 @@ check('a covered row gets no hint — there is nothing left to buy',
   bigStash.all.filter((r) => lotHintFor(r)).length);
 
 // =========================================================================
+// The label both views render, now that the sentence under the item name is
+// gone. It carries the two numbers a reader cannot work out at a glance — the
+// lots to ask for, and what they will end up holding — and nothing else.
+check('the lot label states the lots and the tokens, and pluralises',
+  lotRows.every((r) => {
+    const h = lotHintFor(r);
+    return lotHintLabel(h) === `${h.lots} lot${h.lots === 1 ? '' : 's'} = ${h.tokens}`;
+  }),
+  lotRows.slice(0, 3).map((r) => lotHintLabel(lotHintFor(r))).join(' | '));
+
+// The general fact — that Trade 1 tokens bundle at all — is the table's hint
+// now, said once. What stays per row is the arithmetic, so the label must not
+// grow prose back into it.
+check('the lot label is arithmetic, not a sentence',
+  lotRows.every((r) => !/[a-z]{4,}/.test(lotHintLabel(lotHintFor(r)).replace(/lots?/g, ""))),
+  lotRows.slice(0, 3).map((r) => lotHintLabel(lotHintFor(r))).join(' | '));
+
 console.log('\n=== 12. localStorage: the contents are DATA, not state ===');
 
 // Nothing here touches a real browser; loadShopping is exercised through a

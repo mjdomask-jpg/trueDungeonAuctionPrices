@@ -360,9 +360,14 @@ headers, which map by *rendered* column index.
 that reflows anything.** `WIDE` (1024px) sits beside it as a **capability line**:
 below it the Shopping List's pivot view is not offered at all, and nothing else
 changes shape there. Add a capability line only when a feature's *frozen
-furniture* will not fit — the pivot's six pinned columns cost 682px before a
+furniture* will not fit — the pivot's four pinned columns cost 514px before a
 single data column is drawn — and hide the control rather than disabling it,
 leaving any saved preference alone so it comes back on a wider screen.
+
+**Pin as few columns as the question needs.** The pivot started with six and the
+frozen block was 682px — half a 1440px screen, before one data column. What
+belongs in it is what the reader came for; a column that is merely useful can
+scroll. Count the block before choosing, not after.
 
 **Freezing the left-hand columns of a wide table.** Put the table in an
 `overflow-x: auto` wrapper, set `border-collapse: separate` (sticky cells lose
@@ -408,6 +413,16 @@ table's `Season` moves under the item name below 640px (`Premium · 2026`), the
 way the ingredient rows move `$/ea` into their meta line. Render it always and
 hide it in CSS: it is a presentation swap, not a data one, so nothing in the
 component has to know which one is showing.
+
+**A per-row note that fires on most rows is not a note, it is a column heading
+and an arithmetic cell.** The Shopping List's 10x lot hint read *"usually sold
+in 10x lots — 3 lots get you 30, 4 more than you need"* under the item name and
+fired on 8 of 14 rows: near-permanent prose that set the item column's width and
+cost every flagged row a second line. Split it. The **general** half ("Trade 1
+goods usually sell as 10x lots") goes in the table's own hint, said once; the
+**per-row** half becomes a compact value under the number it qualifies
+(`2 lots = 20`). Count how often a note fires before writing it as a sentence —
+above about half the rows, prose is what the eye learns to skip.
 
 **Table headers do not stick by default, and adding `position: sticky` to a `th`
 will not change that.** `.tablewrap` sets `overflow-x: auto`, and CSS forces

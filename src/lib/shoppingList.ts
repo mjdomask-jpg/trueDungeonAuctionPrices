@@ -513,6 +513,28 @@ export function lotHintFor(row: ShoppingRow): LotHint | null {
   return { lots, tokens, over: tokens - row.need };
 }
 
+/**
+ * The hint as it sits UNDER the buy count — `3 lots = 30`.
+ *
+ * It used to be a sentence under the item name: *"usually sold in 10x lots — 3
+ * lots get you 30, 4 more than you need"*. That fired on **8 of the 14** trade
+ * goods, which made it the second-longest thing on the row and, being nearly
+ * always on, prose the eye learns to skip. It also stated the general fact —
+ * that Trade 1 tokens bundle — once per row; the table says it once now, in its
+ * own header.
+ *
+ * What is left is the only part that is about THIS row: the number you can
+ * actually ask an auctioneer for, and what you will end up holding. The
+ * overage is dropped as a number and left as a subtraction the reader can do,
+ * because `26` and `= 30` are already side by side.
+ *
+ * Rendered here rather than in a component because BOTH views show it and a
+ * lot count that disagreed between them would be worse than none.
+ */
+export function lotHintLabel(lot: LotHint): string {
+  return `${lot.lots} lot${lot.lots === 1 ? '' : 's'} = ${lot.tokens}`;
+}
+
 // --- The pivot ------------------------------------------------------------
 
 /**
@@ -572,12 +594,30 @@ export function noteLabel(n: ShoppingNote): string {
   }
 }
 
-/** The staleness row's sentence. States a FACT and stops: the measured season
- *  average, the measured recent one, and that the good is moving. It must not
- *  say which way it will go next — trade-good prices do not follow a reliable
- *  seasonal shape, and a page that guessed would be read as a forecast. */
+/**
+ * The staleness flag, as its two measured halves.
+ *
+ * TWO PARTS rather than one string, because the views set them differently: the
+ * Notes row joins them on one line, the pivot stacks them, and a pivot's item
+ * column is 208px wide where the sentence was 400.
+ *
+ * It states a FACT and stops. The two numbers ARE the fact — the flag only
+ * exists because they have diverged — and it must not acquire a direction:
+ * trade-good prices do not follow a reliable seasonal shape, so anything
+ * forward-looking would be read as a forecast the data cannot support.
+ *
+ * The trailing *"— this one is moving"* is gone. It was the longest clause here
+ * and it only restated the flag's own existence; what marks these as a flag
+ * rather than as two more numbers is the amber, exactly as the `Out of print`
+ * badge is marked by its own colour and nothing else.
+ */
+export function stalenessParts(s: Staleness, money: (n: number) => string): [string, string] {
+  return [`season avg ${money(s.seasonAvg)}`, `recent sales ${money(s.recentAvg)}`];
+}
+
+/** The one-line form, for a row with the width for it. */
 export function stalenessNote(s: Staleness, money: (n: number) => string): string {
-  return `season avg ${money(s.seasonAvg)} · recent sales ${money(s.recentAvg)} — this one is moving`;
+  return stalenessParts(s, money).join(' · ');
 }
 
 const byItem = (a: ShoppingRow, b: ShoppingRow) => a.displayName.localeCompare(b.displayName);

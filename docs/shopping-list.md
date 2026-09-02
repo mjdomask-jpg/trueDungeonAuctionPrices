@@ -102,32 +102,55 @@ sales by **35%** (`STALE_THRESHOLD`). The number is derived, not chosen:
 measured over 117 good-seasons the divergences form two populations — ordinary
 noise 0–27%, sustained repricing 46–100% — and any cutoff from 20% to 50%
 produces the same list today. The row states a fact and stops: *"season avg
-$31.67 · recent sales $63.25 — this one is moving."* It must never say which way
-it will go next; trade-good prices do not follow a reliable seasonal shape.
+$31.67 · recent sales $63.25"* — joined on one line in Notes, stacked on two in
+the pivot, from one function (`stalenessParts`) so the two views cannot quote
+different numbers for one good.
+
+The two numbers **are** the flag: it only exists because they diverged, and the
+**amber** is what marks them as a flag rather than as two more numbers — the way
+`Out of print` is marked by its own colour and nothing else. It must never say
+which way the price will go next; trade-good prices do not follow a reliable
+seasonal shape. A test pins that no rendered flag contains a direction word,
+rather than pinning the sentence, so a wording change cannot quietly reintroduce
+a forecast.
 
 **The 10x lot hint**, on the 8 Trade 1 goods. Those tokens sell mostly as 10x
 bundles — ten mailed as one lot to save postage — so the count in the *buy*
-column is not a number you can ask for. The hint does the arithmetic (*"1 lot
-gets you 10, 5 more than you need"*) and **never moves a total**: auctions still
-sell singles, and rounding fourteen goods up to lots would inflate a small plan
-by a third.
+column is not a number you can ask for. It **never moves a total**: auctions
+still sell singles, and rounding fourteen goods up to lots would inflate a small
+plan by a third.
+
+It sits **under the buy count** in both views, as `2 lots = 20`. It was a
+sentence beneath the item name — *"usually sold in 10x lots — 3 lots get you 30,
+4 more than you need"* — and firing on 8 of 14 rows made it near-permanent prose
+that set the item column's width and cost every flagged row a second line. What
+survives is the part that is about *this* row: the number to ask for, and what
+you will end up holding. The overage is left as a subtraction, because the two
+numbers are already side by side. The general fact — that Trade 1 bundles at
+all — is in the Trade goods table's own hint, said once.
 
 ---
 
 ## The breakdown: Notes or By recipe
 
-A **Breakdown** toggle in the summary bar — `Notes` (the default) or
-`By recipe` — chooses whether the per-recipe demand is a sentence under the
-item name or a **column per recipe**. It governs both working tables, the
-takeaway table and both exports, which is why it sits in the summary bar rather
-than in a table header: no one table owns it.
+A **Breakdown** toggle — `Notes` (the default) or `By recipe` — chooses whether
+the per-recipe demand is a sentence under the item name or a **column per
+recipe**. It governs both working tables, the takeaway table and both exports.
+
+It lives in the **header of whichever table renders first**, beside the master
+On hand control. No one table owns it, which argued for the summary bar — and
+that is where it went first, where it was two sections above anything it changed
+and could not be found. It sits where the reader is already looking when the
+breakdown is the thing bothering them. *"Whichever renders first"* rather than
+*"Trade goods"* because an empty table returns `null`: a plan of recipes wanting
+no trade goods would take the toggle down with it.
 
 **Desktop only, above 1024px.** That is arithmetic rather than policy. The
-frozen group — Item, To buy, On hand, Total, $ ea, Cost — costs 682px before a
-single recipe column is drawn, so at 640px there is room for none of them and
-at 900px for two. `WIDE` in `hooks/useMediaQuery.ts` is a **capability line, not
-a second layout breakpoint**: nothing else on the site changes shape there, and
-`NARROW` is still the only breakpoint that reflows anything.
+frozen group — Item, To buy, On hand, Total — costs 514px before a single recipe
+column is drawn, so at 640px there is room for none of them. `WIDE` in
+`hooks/useMediaQuery.ts` is a **capability line, not a second layout
+breakpoint**: nothing else on the site changes shape there, and `NARROW` is
+still the only breakpoint that reflows anything.
 
 Below it the toggle is **hidden rather than disabled and the saved preference is
 left alone**, so a plan read in pivot on a laptop is still in pivot when the
@@ -171,8 +194,9 @@ Only the `For X ×N` and `Source for X ×N` notes leave the item cell — they *
 the columns, and leaving them under a column saying the same thing would make
 the pivot strictly worse than the table it is offered instead of. Everything
 else stays: `Price adjusted`, `N spare`, `Out of print`, the netting note,
-`Priced as X`, the staleness sentence and the 10x lot hint are all facts about
-the row itself, and no column expresses any of them.
+`Priced as X` and the staleness numbers are all facts about the row itself, and
+no column expresses any of them. The 10x lot hint stays too, in its new home
+under the buy count.
 
 **A cell the recipe does not touch is blank** (a faint `·` on screen, an empty
 cell in the file) **and never `0`**. A zero is a measured quantity: it sums, it
@@ -184,18 +208,29 @@ count already multiplied in.** One Ink line under a `×3` heading reads 15.
 
 ### How the frozen columns work
 
-To buy, On hand and Total sit at the left in that order, with `$ ea` and `Cost`
-behind them, because they are what the reader came for — the breakdown informs
-and does not get to push the answer off the screen. All six are
-`position: sticky` with **cumulative pixel `left` offsets**, which only works
-because the site-wide `table-layout: fixed` means a column's width comes from
-the first row and nothing else. So the frozen columns carry explicit widths and
-**the recipe columns deliberately carry none**: they share whatever is left,
-wider than 112px when three recipes have the page to themselves and exactly
-112px once the inline `min-width` forces the scroll. Nothing after the frozen
-group can move a frozen offset either way.
+**Four columns are frozen, not six.** Item, To buy, On hand and Total sit at the
+left in that order, because they are what the reader came for — the breakdown
+informs and does not get to push the answer off the screen.
 
-The width figures in `--pv-frozen` and the six `left` declarations are **one
+`$ ea` and `Cost` were pinned there too and the block ran to **682px, half a
+1440px screen spent before one recipe column was drawn**. They ride at the far
+**right of the scrolling half** now, after the recipe columns, and the frozen
+block is 514px. The trade is real and deliberate: correcting a price on a
+ten-recipe plan costs a scroll. The plan's *money* does not move — the section
+subtotal, the takeaway table and the footer total all stay put — and pinning
+them again is one `position` declaration if it turns out wrong.
+
+The four are `position: sticky` with **cumulative pixel `left` offsets**, which
+only works because the site-wide `table-layout: fixed` means a column's width
+comes from the first row and nothing else. So the frozen columns carry explicit
+widths, `$ ea`/`Cost` carry their own (counted into every `min-width` as
+`--pv-money` so the recipe columns cannot squeeze them), and **the recipe
+columns deliberately carry none**: they share whatever is left, wider than 112px
+when three recipes have the page to themselves and exactly 112px once the inline
+`min-width` forces the scroll. Nothing after the frozen group can move a frozen
+offset either way.
+
+The width figures in `--pv-frozen` and the four `left` declarations are **one
 fact written twice**. Change one without the other and the columns overlap.
 
 ## Getting it out

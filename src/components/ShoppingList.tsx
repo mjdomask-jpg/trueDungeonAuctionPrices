@@ -195,6 +195,38 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
   // to count nothing.
   const chainUnits = shopping.chains.reduce((t, c) => t + c.netted, 0);
 
+  // The Breakdown toggle. It governs both working tables, the takeaway table
+  // and both exports, so no ONE table owns it — but it lived in the summary
+  // bar first and was two sections away from anything it changed, which made
+  // it hard to find. It rides in the header of whichever table renders FIRST
+  // instead: beside the master On hand control, in the place the reader is
+  // already looking when the breakdown is the thing bothering them.
+  //
+  // "Whichever renders first" rather than "Trade goods", because an empty
+  // table returns null — a plan of recipes that wanted no trade goods would
+  // take the toggle down with it.
+  const viewToggle = wide ? (
+    <span className="sl-view">
+      <span className="sl-view-l">Breakdown</span>
+      {/* `data-label` on every toggle button — the site rule: it feeds the
+          invisible bold ghost that reserves each button's active width, so the
+          control does not resize as the selection moves. */}
+      <span className="toggle-buttons" role="group" aria-label="Ingredient table layout">
+        <button type="button" data-label="Notes"
+          className={view === 'standard' ? 'on' : undefined}
+          aria-pressed={view === 'standard'} onClick={() => setView('standard')}>
+          Notes
+        </button>
+        <button type="button" data-label="By recipe"
+          className={view === 'pivot' ? 'on' : undefined}
+          aria-pressed={view === 'pivot'} onClick={() => setView('pivot')}>
+          By recipe
+        </button>
+      </span>
+    </span>
+  ) : null;
+  const toggleOn = shopping.trade.length > 0 ? 'trade' : 'additional';
+
   const chip = (p: Pick) => {
     const cost = byKey.get(p.key);
     if (!cost) return null;
@@ -236,32 +268,6 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                   screen. */}
               {paused.length > 0 && <span className="sl-paused"> · {paused.length} paused</span>}
             </div>
-            {/* The view toggle lives HERE rather than in a table header,
-                because it is not a table's control: it changes both working
-                tables, the takeaway table and both exports. Hidden below WIDE,
-                where the pivot's frozen columns alone would fill the screen —
-                see `WIDE` in hooks/useMediaQuery.ts. */}
-            {wide && (
-              <div className="sl-view">
-                <span className="sl-view-l">Breakdown</span>
-                {/* `data-label` on every toggle button — the site rule: it
-                    feeds the invisible bold ghost that reserves each button's
-                    active width, so the control does not resize as the
-                    selection moves. */}
-                <span className="toggle-buttons" role="group" aria-label="Ingredient table layout">
-                  <button type="button" data-label="Notes"
-                    className={view === 'standard' ? 'on' : undefined}
-                    aria-pressed={view === 'standard'} onClick={() => setView('standard')}>
-                    Notes
-                  </button>
-                  <button type="button" data-label="By recipe"
-                    className={view === 'pivot' ? 'on' : undefined}
-                    aria-pressed={view === 'pivot'} onClick={() => setView('pivot')}>
-                    By recipe
-                  </button>
-                </span>
-              </div>
-            )}
             <div className="sl-total">
               <span className="sl-total-l">Still to buy</span>
               <b>{moneyCalc(shopping.totals.grandAvg)}</b>
@@ -323,10 +329,11 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                   the pivot exists for. */}
               <ShoppingPivot
                 title="Trade goods"
-                hint="one row per good, one column per recipe"
+                hint="one row per good, one column per recipe · Trade 1 goods usually sell as 10x lots"
                 rows={shopping.trade}
                 making={shopping.making}
                 breakdown="matrix"
+                headRight={toggleOn === 'trade' ? viewToggle : undefined}
                 {...tableProps}
               />
               {/* SINGLE column, because these are a diagonal: at 29 picked
@@ -339,6 +346,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                 making={shopping.making}
                 breakdown="single"
                 showCategory
+                headRight={toggleOn === 'additional' ? viewToggle : undefined}
                 {...tableProps}
               />
             </>
@@ -346,8 +354,9 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
             <>
               <ShoppingTable
                 title="Trade goods"
-                hint="one row per good, however many recipes want it"
+                hint="one row per good, however many recipes want it · Trade 1 goods usually sell as 10x lots"
                 rows={shopping.trade}
+                headRight={toggleOn === 'trade' ? viewToggle : undefined}
                 {...tableProps}
               />
               <ShoppingTable
@@ -355,6 +364,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
                 hint="one row per token and season"
                 rows={shopping.additional}
                 showCategory
+                headRight={toggleOn === 'additional' ? viewToggle : undefined}
                 {...tableProps}
               />
             </>

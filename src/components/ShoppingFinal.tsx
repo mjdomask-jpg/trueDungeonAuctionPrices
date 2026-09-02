@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Money } from './Money';
 import { moneyCalc } from '../lib/format';
-import { stalenessNote, type ShoppingList } from '../lib/shoppingList';
+import { stalenessNote, stalenessParts, type ShoppingList } from '../lib/shoppingList';
 import { toTSV, csvFile, exportFilename } from '../lib/shoppingExport';
 
 // The takeaway list: every row in one table, in D6's order, plus the two ways
@@ -24,7 +24,8 @@ import { toTSV, csvFile, exportFilename } from '../lib/shoppingExport';
 // exports carry in full. The two notes that change a PURCHASE rather than
 // explaining one ride under the item name instead: `Out of print`, because in
 // a plain table a 2012 Ultra Rare looks exactly like one you can still buy,
-// and the staleness sentence, because it says the price beside it is moving.
+// and the staleness numbers, because the price beside them has moved away from
+// the season average they were budgeted on.
 
 // IN PIVOT MODE it grows the per-recipe columns and the file follows suit. It
 // stays READ-ONLY: the on-hand count appears as a number so the table adds up
@@ -117,21 +118,24 @@ export function ShoppingFinal({ list, pivot }: { list: ShoppingList; pivot: bool
               // in its columns and its recipe headings wrap the same way, so a
               // narrower floor keeps a five-recipe plan from scrolling by six
               // pixels — which reads as a bug rather than as a wide table.
-              style={{ minWidth: `calc(var(--pv-frozen-ro) + ${cols.length} * 96px)` }}>
+              style={{ minWidth: `calc(var(--pv-frozen-ro) + var(--pv-money) + ${cols.length} * 96px)` }}>
               <thead>
                 <tr>
                   <th scope="col" className="pv-item">Item</th>
                   <th scope="col" className="pv-buy">To buy</th>
                   <th scope="col" className="pv-hand-ro">On hand</th>
                   <th scope="col" className="pv-total">Total</th>
-                  <th scope="col" className="pv-unit">$ ea</th>
-                  <th scope="col" className="pv-cost">Cost</th>
                   {cols.map((m) => (
                     <th scope="col" className="pv-rx" key={m.key}>
                       <span className="pv-rx-nm">{m.displayName}</span>
                       <span className="pv-rx-n">×{m.qty}</span>
                     </th>
                   ))}
+                  {/* The money at the far right, matching the working
+                      tables: pinning it there cost 162px of a frozen block
+                      that had already taken half the screen. */}
+                  <th scope="col" className="pv-unit">$ ea</th>
+                  <th scope="col" className="pv-cost">Cost</th>
                 </tr>
               </thead>
               <tbody>
@@ -140,7 +144,7 @@ export function ShoppingFinal({ list, pivot }: { list: ShoppingList; pivot: bool
                     <th scope="row" className="pv-item">
                       <span className="pv-nm">{r.displayName}</span>
                       {/* The Season column folds under the name here rather
-                          than costing a seventh frozen column — the same trade
+                          than costing a fifth frozen column — the same trade
                           the standard table makes at phone widths, made for
                           the same reason in the other direction. */}
                       <span className="pv-sub">
@@ -150,17 +154,13 @@ export function ShoppingFinal({ list, pivot }: { list: ShoppingList; pivot: bool
                           <span className="sl-final-flag">Out of print</span>
                         )}
                       </span>
-                      {r.staleness && (
-                        <span className="sl-stale">{stalenessNote(r.staleness, moneyCalc)}</span>
-                      )}
+                      {r.staleness && stalenessParts(r.staleness, moneyCalc).map((line) => (
+                        <span className="sl-stale" key={line}>{line}</span>
+                      ))}
                     </th>
                     <td className="pv-buy num">{r.need > 0 ? <b>{r.need}</b> : '—'}</td>
                     <td className="pv-hand-ro num">{r.onHand}</td>
                     <td className="pv-total num">{r.quantity}</td>
-                    <td className="pv-unit num">{r.unitAvg === null ? '—' : moneyCalc(r.unitAvg)}</td>
-                    <td className="pv-cost num">
-                      {r.unitAvg === null ? '—' : <Money format={moneyCalc} value={r.extAvg} />}
-                    </td>
                     {cols.map((m) => {
                       const n = r.byPick[m.key] ?? 0;
                       return (
@@ -169,6 +169,10 @@ export function ShoppingFinal({ list, pivot }: { list: ShoppingList; pivot: bool
                         </td>
                       );
                     })}
+                    <td className="pv-unit num">{r.unitAvg === null ? '—' : moneyCalc(r.unitAvg)}</td>
+                    <td className="pv-cost num">
+                      {r.unitAvg === null ? '—' : <Money format={moneyCalc} value={r.extAvg} />}
+                    </td>
                   </tr>
                 ))}
               </tbody>

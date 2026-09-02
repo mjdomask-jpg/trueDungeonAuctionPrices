@@ -25,13 +25,18 @@ export type HandProps = {
 /** The header both table shapes carry: what the section is, the master
  *  All/None, and the subtotal. */
 export function ShoppingSectionHead({
-  title, hint, rows, hand, setOnHandMany,
+  title, hint, rows, hand, setOnHandMany, right,
 }: {
   title: string;
   hint?: string;
   rows: readonly ShoppingRow[];
   hand: ReturnType<typeof handMath>;
   setOnHandMany: HandProps['setOnHandMany'];
+  /** Rendered between the master All/None and the subtotal. The Breakdown
+   *  toggle sits here, on the FIRST table that has rows — it governs more than
+   *  one table, but a control parked in the summary bar two sections away from
+   *  what it changes could not be found. */
+  right?: React.ReactNode;
 }) {
   const subtotal = rows.reduce((t, r) => t + (r.extAvg ?? 0), 0);
   return (
@@ -55,6 +60,7 @@ export function ShoppingSectionHead({
               onClick={() => setOnHandMany(hand.entries(false))}>None</button>
           </span>
         </span>
+        {right}
         <span className="sl-sub">
           <span className="sl-sub-l">Subtotal</span> <b><Money format={moneyCalc} value={subtotal} /></b>
         </span>

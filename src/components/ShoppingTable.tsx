@@ -4,7 +4,10 @@ import { PriceInput } from './PriceInput';
 import { ShoppingHandCell, ShoppingSectionHead, type HandProps } from './ShoppingHand';
 import { handMath } from '../lib/shoppingHand';
 import { moneyCalc } from '../lib/format';
-import { noteLabel, stalenessNote, lotHintFor, type ShoppingNote, type ShoppingRow } from '../lib/shoppingList';
+import {
+  noteLabel, stalenessNote, lotHintFor, lotHintLabel,
+  type ShoppingNote, type ShoppingRow,
+} from '../lib/shoppingList';
 
 // One of the Shopping List's two ingredient tables.
 //
@@ -45,7 +48,7 @@ const isRecipeNote = (n: ShoppingNote) => n.kind === 'for' || n.kind === 'source
 
 export function ShoppingTable({
   title, hint, rows, showCategory = false, editing, onHand, setOnHand, setOnHandMany,
-  setOverride, clearOverride,
+  setOverride, clearOverride, headRight,
 }: {
   title: string;
   hint?: string;
@@ -54,6 +57,8 @@ export function ShoppingTable({
   editing: PriceEdit;
   setOverride: (id: string, n: number | null) => void;
   clearOverride: (id: string) => void;
+  /** The Breakdown toggle, on whichever table renders first. */
+  headRight?: React.ReactNode;
 } & HandProps) {
   // Which rows have their per-recipe notes expanded. Per TABLE, not global:
   // the two tables are rendered from separate instances, and an expander is a
@@ -72,7 +77,7 @@ export function ShoppingTable({
   return (
     <section className="sl-table">
       <ShoppingSectionHead title={title} hint={hint} rows={rows} hand={hand}
-        setOnHandMany={setOnHandMany} />
+        setOnHandMany={setOnHandMany} right={headRight} />
 
       <div className="calc-lhead">
         <span>Ingredient</span><span className="h-hand">on hand</span><span>buy</span>
@@ -134,31 +139,22 @@ export function ShoppingTable({
                     <i className="cl-edit-i" aria-hidden="true">✎</i>
                   </button>
                 </span>
-                {/* Rendered from `stalenessNote` rather than assembled here, for
-                    the same reason the notes are: step 4's Copy and CSV carry
-                    this sentence too, and a spreadsheet that disagreed with the
-                    page would be worse than one with no flag at all. It already
-                    ends "this one is moving", so it needs no label in front of
-                    it — that would say the same thing twice. */}
+                {/* Rendered from the lib rather than assembled here, for the
+                    same reason the notes are: the pivot shows the same two
+                    numbers, and a second view that disagreed with this one
+                    would be worse than no flag at all. ONE LINE here, stacked
+                    there — this row has the width for it and a 208px item
+                    column does not.
+                    The two numbers ARE the flag: it only exists because they
+                    diverged, and the amber is what marks them as a flag rather
+                    than as two more numbers, exactly as `Out of print` is
+                    marked by its own colour and nothing else. It must not
+                    acquire a direction — trade-good prices follow no reliable
+                    seasonal shape, so a forecast is not something this data
+                    can support. */}
                 {r.staleness && (
                   <span className="sl-stale">{stalenessNote(r.staleness, moneyCalc)}</span>
                 )}
-                {/* Trade 1 tokens are mostly auctioned as 10x bundles, so the
-                    number in the "buy" column is not a number you can actually
-                    ask for. A HINT only — it never moves a total, because
-                    auctions still sell singles and rounding fourteen goods up
-                    to lots would inflate a small plan by a third. */}
-                {(() => {
-                  const lot = lotHintFor(r);
-                  if (!lot) return null;
-                  return (
-                    <span className="sl-lot">
-                      usually sold in 10x lots — <b>{lot.lots}</b> lot{lot.lots === 1 ? '' : 's'}
-                      {lot.over > 0 && <> {lot.lots === 1 ? 'gets' : 'get'} you {lot.tokens},{' '}
-                        {lot.over} more than you need</>}
-                    </span>
-                  );
-                })()}
               </span>
 
               <span className="cl-hand">
@@ -167,6 +163,21 @@ export function ShoppingTable({
 
               <span className="cl-buy">
                 {r.need > 0 ? r.need : <span className="cl-check" aria-label="covered">✓</span>}
+                {/* Trade 1 tokens are mostly auctioned as 10x bundles, so the
+                    number above this one is not a number you can actually ask
+                    for. A HINT only — it never moves a total, because auctions
+                    still sell singles and rounding fourteen goods up to lots
+                    would inflate a small plan by a third.
+                    UNDER THE COUNT rather than in a sentence beneath the item
+                    name: it fires on 8 of the 14 trade goods, which made
+                    near-permanent prose out of a per-row number and restated
+                    the general fact — that Trade 1 bundles at all — once per
+                    row. The table hint says that part once now, and both views
+                    render the arithmetic the same way. */}
+                {(() => {
+                  const lot = lotHintFor(r);
+                  return lot ? <span className="cl-lot">{lotHintLabel(lot)}</span> : null;
+                })()}
               </span>
 
               <span className="cl-unit">
