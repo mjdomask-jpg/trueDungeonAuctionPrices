@@ -8,6 +8,12 @@ Recorded 2026-08-20, while reconciling the docs with the shared `td-domain`
 skill. Game-level definitions live there; this file tracks only what *this
 repo's data* is missing.
 
+Last reconciled **2026-09-02**, after PR #159 modelled the trade good ladder.
+**A resolved item keeps its number and is marked RESOLVED rather than deleted**,
+so a reader who met it elsewhere can still find it, and so the reasoning that
+closed it is not lost. Renumbering would also break every reference to "item 4"
+in the docs and in the commit log.
+
 ---
 
 ## 1. The 50 GP Idol chase set is only half modeled
@@ -31,45 +37,79 @@ exists.
 
 ---
 
-## 2. Golden Fleece has no recipe of its own
+## 2. Golden Fleece has no recipe of its own — RESOLVED (PR #159, 2026-09-01)
 
-**Now:** 99 recipe lines *consume* Golden Fleece. **Zero produce it** — no row in
-`transmuteRecipes.csv` has a `Transmute` containing "Fleece".
+**Was:** 99 recipe lines consumed Golden Fleece and none produced it; the real
+relationship existed only backwards, as `derivedPrices.csv`'s `Monster Trophy =
+Golden Fleece / 10, bound=ceiling`.
 
-The real relationship — 10 Monster Trophies transmute into 1 Golden Fleece —
-exists in the data only **backwards**, as the `derivedPrices.csv` rule
-`Monster Trophy = Golden Fleece / 10, bound=ceiling`.
+**Now:** `transmuteRecipes.csv` carries `2017 | Trade 3 | Golden Fleece | 10 x
+Monster Trophy`, `Expires=never` — the first authored value in that column.
+`offAuctionPrices.csv` carries Monster Trophy for 2019-2026, which supersede the
+derived rule (leaf order is auction -> off-auction -> derived, written that way
+for exactly this) and took the `ceiling` flag off **36** recipes. The derived rule
+survives as an unreachable fallback.
 
-**Why it matters:** Golden Fleece is itself a transmute, so build-vs-buy applies
-to it and cannot currently be computed. The ceiling rule is also justified by
-scarcity that is nowhere written down: players commonly hold one Monster Trophy,
-but assembling ten is hard, so Fleece/10 is an upper bound on a trophy's worth
-rather than a market price.
+**Three things worth keeping from how it was closed**, because none is obvious
+from the resulting data:
 
-**Done looks like:** a recipe producing Golden Fleece from 10 Monster Trophies,
-with the derived-price rule kept as the fallback and its cycle guard intact.
+1. **A Monster Trophy has a VINTAGE, and a recipe wants the previous year's.** A
+   2027 recipe needs a 2026 trophy; the rule is recipe year - 1 throughout, now
+   `ItemYear=-1` on all 36 lines. The 2027 trophy row was deleted as a projection
+   rather than a sale — nobody holds one yet.
+2. **A non-blank `ItemYear` makes the line a PIN**, which outranks rule 4's
+   float-to-today. That is what the year-1 fix actually did to the engine, and it
+   is not visible in the CSV.
+3. **The trophy prices were authored as exactly Fleece / 10**, so no number moved.
+   What changed is that 36 recipes stopped saying "upper bound" — a judgement the
+   maintainer made, not a measurement. The original rule's rationale (assembling
+   ten trophies is hard, so Fleece/10 is a ceiling on one trophy's worth) still
+   stands and is now unstated anywhere in the data.
 
 ---
 
-## 3. Trade good rungs 3-5 have no representation
+## 3. The trade rungs live on the `Category` axis, which is not a tier field
 
-**Now:** `Trade 1`, `Trade 2` and (since 2026-08-29) `Trade 4` are real
-categories in `prices.csv` and `tokenGroups.csv` with a group order. `Trade 3`
-and `Trade 5` appear in **no CSV at all**.
+**Reframed 2026-09-02.** The original entry said Trade 3 and Trade 5 "appear in no
+CSV at all" and asked for a tier field. Half of that is now done and the other
+half was decided the opposite way, so the item is worth restating rather than
+closing.
 
-The rungs exist and are held by real tokens:
+**Now:** all five rungs exist in the data.
 
-| Rung | Token | Category it actually carries |
+| Rung | Tokens | Where it is recorded |
 |---|---|---|
-| Trade 3 | Golden Fleece | `Golden Fleece` |
-| Trade 4 | Wish Ring | `Trade 4` (group `8k exclusive`) |
+| Trade 1 | the eight | `prices.csv`, `tokenGroups.csv`, `tokenMetadata.csv` |
+| Trade 2 | the four | same |
+| Trade 3 | Golden Fleece | `tokenMetadata.csv`, `offAuctionPrices.csv`, recipe `Level` |
+| Trade 4 | Wish Ring | `prices.csv`, `tokenGroups.csv`, `tokenMetadata.csv` |
+| Trade 5 | Omni Orb, Omni Cube | `tokenMetadata.csv`, recipe `Level` |
 
-**Why it matters:** the trade good ladder runs Trade 1 -> Trade 5. Treasure pulls
-can contain higher-tier goods, so a sibling project consuming this catalog needs
-the rungs to exist. Today the ladder is inferable only from prose.
+**But they were put ON the `Category` axis, not beside it.** The rung is the value
+of `tokenMetadata.Category` and of the recipe's `Level`. So the two axes the
+original entry wanted kept apart — the rung a token occupies, and how a lot was
+*sold* — are now the same column.
 
-**Done looks like:** a tier field that can express all five rungs without
-disturbing the existing `Category` axis, which describes how a lot was *sold*.
+**Why that is mostly fine, and where it is not.** It collides only for a token
+that is BOTH on the trade ladder and auctioned. There are exactly two such cases:
+Trade 1/2, where the two axes happen to agree, and the **Wish Ring**, where they
+do not — which is item 4, and which already needs `sectionCategory` to fold it
+back into Premium for display. Trade 3 and Trade 5 are never sold, so nothing
+about them is a sale category and no collision is possible.
+
+**It is also load-bearing now, in a way it was not when this was written.**
+`isTradeCategory` (`/^Trade \d+$/`) reads that same column to decide a PRICING
+branch — see the market-first rule in `src/lib/transmutes.ts`. A separate tier
+field would mean deciding which of the two the engine reads, and getting it wrong
+is silent: an Omni line that stopped being seen as a trade good would still price
+correctly, because it has no market price either way.
+
+**Done looks like:** a decision, not necessarily a change. Either the `Category`
+column is accepted as the tier axis and the Wish Ring's display fold is accepted
+as the one exception, or a separate field is added — in which case
+`isTradeCategory`, the Shopping List's `mergesAsTradeGood`, `validate-prices.mjs`
+S 7's vocabulary and `publishToSite.gs`'s allow-list all have to name which axis
+they mean. Related to item 4; still likely resolved together.
 
 ---
 
@@ -87,6 +127,12 @@ real `Trade 4`.
 **Why it matters:** acquisition and function disagree. Wish Ring is a Trade 4
 trade good by what it *does*, but obtainable only as a Bonus item in an 8K order.
 No field expresses both, and picking one loses the other.
+
+**Updated 2026-09-02.** The GAME fact is no longer open: the `td-domain` skill's
+trade ladder now states that Trade 4 is *either* an upgraded bar (25,000 GP
+Eldritch Bar) *or* the Wish Ring, and that the Wish Ring is the one rung of the
+ladder genuinely sold at auction. So its rung is settled and only the SCHEMA
+question survives — this item is now narrower than when it was written.
 
 **Done looks like:** a decision on whether tier and acquisition are separate
 fields. Related to item 3 — likely resolved together.
@@ -239,10 +285,44 @@ a decision first, because renaming it alone loses information — the price is f
 a bundle whose size the name no longer states. Either recover the count from the
 202415 thread and set `quantity` accordingly, or leave the row and record why.
 
-Worth pairing with the wider question of representing the higher denominations
-at all: `transmuteRecipes.csv` has **no** Mithral or Eldritch bar, and spells
-every large sum as N x `1,000 GP Gold Bar` (127 lines, at 1x, 3x, 4x, 5x, 10x,
-15x, 50x and 100x). That gives the right total and the wrong shopping list — it
-tells a player to acquire twenty-five separate bars when one token is the whole
-amount. `derivedPrices.csv` is the mechanism for it and is currently idle, its
-one rule superseded by the Monster Trophy off-auction rows.
+Pairs with **item 8**, which is the same subject one level up.
+
+---
+
+## 8. Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum
+
+**Now:** `transmuteRecipes.csv` contains **no** `5,000 GP Mithral Bar` and no
+`25,000 GP Eldritch Bar`. Every large sum is authored as a multiple of the
+1,000 GP Gold Bar — 127 lines, at 1x, 3x, 4x, 5x, 10x, 15x, 50x and 100x. The
+1,000 GP bar is also the only bar ever sold at auction, so it is the only one with
+a price.
+
+**Why it matters:** the totals are right and the shopping list is wrong. Per the
+`td-domain` trade ladder, the Mithral Bar (Trade 3) and the Eldritch Bar (Trade 4)
+are real tokens, and a 25,000 GP requirement can legitimately be met by any mix of
+the two denominations adding up. Today the site tells a player to go and acquire
+twenty-five separate 1,000 GP bars when one token is the whole amount.
+
+It also leaves the trade ladder half-populated in the direction that matters for
+item 3: Trade 3 currently means Golden Fleece only, and Trade 4 means Wish Ring
+only, because the bar half of each rung is not in the data.
+
+**The evidence that they trade at face value** is thin but consistent: the one
+observed sale, `contextItems.csv` row 334 (auction 202349), went for **$250**,
+exactly 25 x the 2023 gold bar minimum of $10.00. That is a single data point from
+a row whose name is itself wrong (item 7), so it is a hint, not a basis.
+
+**Done looks like:** the denominations authored as tokens, with `derivedPrices.csv`
+expressing them against the bar that IS priced (`5,000 GP Mithral Bar = 1,000 GP
+Gold Bar x 5`). That file is currently idle — its only rule was superseded by the
+Monster Trophy rows in PR #159 — so the mechanism is free.
+
+**Two cautions before anyone starts.** A recipe line naming a denomination is a
+line naming a TRANSMUTE, since every rung of the trade ladder is craftable, so it
+goes through the market-first rule in `src/lib/transmutes.ts`: with no auction
+price of its own a Mithral Bar would price at its BUILD cost, which is what you
+want, but it also means the Shopping List will section it by pricing route and
+give it a vintage. And swapping `5x 1,000 GP Gold Bar` for `1x 5,000 GP Mithral
+Bar` is not cost-neutral if the two are ever priced independently — check what it
+does to the 43 Legendary recipes and their Wish-Ring-or-15,000-GP path before
+changing any of them.
