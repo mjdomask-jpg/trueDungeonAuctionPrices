@@ -400,6 +400,17 @@ row checks — otherwise one bad header buries its own diagnosis under thousands
 cascading errors. Near-misses in spacing or case (`DisplayName` for
 `Display Name`) are reported as such rather than as a missing column.
 
+It also asserts **one `IngredientType` per `Item`** across every line that names
+it — the column describes the token, not the recipe consuming it. The two ways
+lines can disagree are graded apart, and deliberately: two different non-blank
+values is an **ERROR** (the data states two things about one token, which
+unfinished authoring cannot produce), while authored-here-blank-there is a
+**WARN** (the engine reads the resolved category, so a blank cell falls back to
+`tokenMetadata`). The second is never an error because `IngredientType` is an
+optional column, and authoring an optional column must not turn a passing export
+into a failing one — see `docs/data-backlog.md` item 5. `npm run test:recipes`
+mutation-tests both severities against a copy of `public/data`.
+
 **`npm run validate`** also runs `scripts/validate-context.mjs`, which mirrors
 `src/lib/context.ts` outside the browser. It reproduces the withheld point-in-time
 recompute from the CSVs and asserts it matches the audited

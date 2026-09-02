@@ -9,10 +9,17 @@
 // checks.
 
 import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'data') + '/';
+// --data points the run at a directory other than the repo's own, so the test
+// suite can check behaviour against a mutated COPY without ever writing to
+// public/data. Mirrors validate-prices.mjs and validate-context.mjs.
+const dirArg = (flag, fallback) => {
+  const i = process.argv.indexOf(flag);
+  return i === -1 ? fallback : resolve(process.argv[i + 1]);
+};
+const ROOT = dirArg('--data', join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'data')) + '/';
 
 // --- minimal RFC4180 CSV parser (handles quoted commas) ---
 function parseCSV(text) {
@@ -328,6 +335,61 @@ for (const [k, values] of expiresByRecipe) {
       add('ERROR', 'expires-range', `${k}: Expires ${v} precedes the recipe's own season`);
     else
       add('INFO', 'expires', `${k}: non-standard expiry ${v} (standard would be ${Number(year) + 1}-12-01)`);
+  }
+}
+
+// ---------- IngredientType agreement across lines (docs/data-backlog.md item 5) ----------
+// `IngredientType` is a property of the TOKEN, not of the recipe consuming it,
+// so every line naming the same Item should carry the same value. It is also an
+// OPTIONAL column, and this file's closing rule is that authoring an optional
+// column must never turn a passing export into a failing one -- so the two ways
+// it can disagree are graded differently:
+//
+//   two non-blank values     -> ERROR. The data states two things about one
+//                               token, which no amount of unfinished authoring
+//                               can produce. Only a typo or a real disagreement
+//                               gets here, so failing the export is right.
+//   authored here, blank there -> WARN. That is authoring in progress, and the
+//                               engine already survives it: isUltraRare and
+//                               isTradeGood read the RESOLVED category
+//                               (`prices.category(...) || l.ingredientType`), so
+//                               a blank cell falls back to tokenMetadata.
+//
+// The WARN is the one that matters, because it is the shape the defect actually
+// took. `Charm of Synergy` carried `Ultra Rare` on Giln's Redoubt Shield and a
+// blank cell on Smith's Charm of Unified Synergy (Set 2) for as long as the
+// column has existed (filled in PR #159). It cost nothing only because that
+// token has its own off-auction price and never reached TIER_PROXY -- which
+// keys off the AUTHORED cell alone, and would have sent the two copies of one
+// ingredient down different branches the day that price went away.
+//
+// One live occurrence, and it is deliberately not carved out: the Item named
+// `Ultra Rare` is the tier itself, and there `isUltraRare` short-circuits on the
+// name (`l.good === 'Ultra Rare'`) while TIER_PROXY skips a proxy equal to the
+// good, so the cell is inert on those lines. Inert today is exactly what item 5
+// is about, and a carve-out with one occupant is as likely to be the bug as the
+// rule -- so it is reported like any other split and clears by filling the
+// cells in the sheet.
+const typesByItem = new Map();   // Item -> Map(value -> [line numbers]); '' is the blank cell
+for (const [i, r] of recipes.entries()) {
+  const v = (r.IngredientType ?? '').trim();
+  if (!typesByItem.has(r.Item)) typesByItem.set(r.Item, new Map());
+  const byValue = typesByItem.get(r.Item);
+  if (!byValue.has(v)) byValue.set(v, []);
+  byValue.get(v).push(i + 2);
+}
+const citeLines = (ls) =>
+  ls.length > 4 ? `lines ${ls.slice(0, 4).join(', ')} and ${ls.length - 4} more`
+                : `line${ls.length > 1 ? 's' : ''} ${ls.join(', ')}`;
+for (const [item, byValue] of [...typesByItem].sort()) {
+  const authored = [...byValue.keys()].filter(v => v !== '');
+  if (authored.length > 1) {
+    const shown = authored.map(v => `"${v}" (${citeLines(byValue.get(v))})`).join(' vs ');
+    add('ERROR', 'ingredient-type-conflict',
+      `"${item}" is authored with ${authored.length} different IngredientTypes: ${shown} -- it is one value per token`);
+  } else if (authored.length === 1 && byValue.has('')) {
+    add('WARN', 'ingredient-type-blank',
+      `"${item}": IngredientType is "${authored[0]}" on ${byValue.get(authored[0]).length} line(s) but blank on ${citeLines(byValue.get(''))} -- fill the cell in the sheet so every copy takes the same pricing branch`);
   }
 }
 

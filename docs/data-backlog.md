@@ -8,8 +8,9 @@ Recorded 2026-08-20, while reconciling the docs with the shared `td-domain`
 skill. Game-level definitions live there; this file tracks only what *this
 repo's data* is missing.
 
-Last reconciled **2026-09-02**, after PR #159 modelled the trade good ladder and
-the maintainer decided items 3 and 4 (keep `Category` as the tier axis).
+Last reconciled **2026-09-02**, after PR #159 modelled the trade good ladder,
+the maintainer decided items 3 and 4 (keep `Category` as the tier axis), and
+item 5 gained the validator rule it asked for.
 **A resolved item keeps its number and is marked RESOLVED rather than deleted**,
 so a reader who met it elsewhere can still find it, and so the reasoning that
 closed it is not lost. Renumbering would also break every reference to "item 4"
@@ -136,42 +137,56 @@ in the Premium table. Neither exists today.
 
 ---
 
-## 5. `IngredientType` is authored inconsistently for the same token
+## 5. `IngredientType` is authored inconsistently for the same token — RESOLVED (2026-09-02)
 
-**Now:** `Charm of Synergy` appears on two recipes in `transmuteRecipes.csv` and
-is authored two different ways:
+**Closed the second of the two ways this entry offered**, and the cheap one:
+`scripts/validate-recipes.mjs` now asserts that a given `Item` carries one
+`IngredientType` everywhere it appears.
 
-| Row | Recipe | `IngredientType` |
+**The data half had already fixed itself, which this entry did not know.** PR
+#159 filled the blank cell on `Charm of Synergy` / Smith's Charm of Unified
+Synergy (Set 2) while modelling the trade ladder. The reconciliation that
+rewrote this entry on 2026-09-02 read the table from the entry rather than from
+the CSV, so it reported a defect that had been gone for a day — which is the
+same lesson as the `verify-claims-against-project-data` memory, applied to this
+file's own prose.
+
+**The rule, and why it has two severities.** `IngredientType` is a property of
+the TOKEN, not of the recipe consuming it, so the two ways lines can disagree
+are not the same kind of problem:
+
+| Shape | Severity | Why |
 |---|---|---|
-| 414 | `2017\|Giln's Redoubt Shield` | `Ultra Rare` |
-| 1910 | `2027\|Smith's Charm of Unified Synergy (Set 2)` | *(blank)* |
+| One Item, two different non-blank values | **ERROR** (fails the run) | The data states two things about one token. No amount of unfinished authoring produces this — only a typo or a real disagreement. |
+| One Item, authored on some lines and blank on others | **WARN** (never fails) | Authoring in progress. The engine already survives it: `isUltraRare` and `isTradeGood` read the resolved category (`prices.category(...) \|\| l.ingredientType`), so a blank cell falls back to `tokenMetadata`. |
 
-`tokenMetadata.csv` row 165 says the token's category is `Ultra Rare`, so the
-metadata is unambiguous and only the recipe cells disagree.
+The WARN is the one that matters, because it is the shape the defect actually
+took. It is also **deliberately not an error**, for the reason
+`validate-recipes.mjs` states at its own exit: authoring an optional column must
+never turn a passing export into a failing one. An ERROR here would sit on the
+publish PR and look exactly like the publish being broken — the failure mode the
+`publish-check-blocks-publishing` memory has now recorded four times.
 
-**Why it matters:** `IngredientType` is not decoration — it selects a pricing
-branch. The engine's `isUltraRare` originally read the authored cell alone, so
-the same ingredient on two recipes took two different routes through
-`leafForGood`: one reached the Ultra Rare rules (in-print check, two-season
-pool, D4 clamp) and the other did not.
+**One live occurrence, reported rather than carved out.** The Item literally
+named `Ultra Rare` — the generic tier slot, since auctions sell "an Ultra Rare"
+rather than a specific one — is authored on 10 lines and blank on 3 (lines 500,
+1428, 1442). It is provably inert there: `isUltraRare` short-circuits on the
+name before ever reading the cell, and `TIER_PROXY` skips a proxy equal to the
+good. It is still reported, because a carve-out with one occupant is as likely to
+be the bug as the rule, and "inert today" is exactly what this item is about.
+**Filling those three cells in the sheet clears the last warning**, and is the
+one open action left here.
 
-**It costs nothing today**, which is exactly what makes it worth recording.
-`Charm of Synergy` carries its own hand-authored `offAuctionPrices.csv` row at
-$140.00, so the direct lookup succeeds on both recipes, `TIER_PROXY` is never
-consulted, and the two agree by accident rather than by rule. The day that
-off-auction row is removed — or the day a token authored this way has no price
-of its own — the two recipes would quietly price the same ingredient
-differently.
-
-`isUltraRare` now reads the **resolved** category (`prices.category(...) ||
-l.ingredientType`), symmetric with `isTradeGood`, so the engine is correct
-whichever way a cell is filled in. That is a guard, not a fix: the data still
-says two things about one token.
-
-**Done looks like:** `IngredientType` populated on every line naming a specific
-member of an auctioned tier, or a validator rule asserting that a given `Item`
-carries one `IngredientType` everywhere it appears. The second is cheap and
-would have caught this — `validate-recipes.mjs` already walks every line.
+**Tested, by shape rather than by row.** `scripts/validate-recipes.test.mjs`
+(new, wired in as `npm run test:recipes`) copies `public/data`, injects each
+defect into the copy, and asserts the severity as well as the message — plus a
+third case proving agreement stays silent, without which a check that reported
+every token would pass the first two. Removing the check fails 2 of its 4 cases;
+that was verified, not assumed. Each case finds its target by asking "whichever
+Item is authored on two or more lines" instead of naming a row, so a re-export
+cannot turn it into a red publish check; if no row matches the shape it reports
+STALE rather than FAIL. `validate-recipes.mjs` gained a `--data` flag for it,
+mirroring the other two validators.
 
 ---
 
