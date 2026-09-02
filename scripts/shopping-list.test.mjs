@@ -78,7 +78,7 @@ const {
   parseDerivedRules, isTradeCategory, TIER_PROXY,
 } = lib.transmutes;
 const { buildShoppingList, mergeKey, stalenessOf, STALE_THRESHOLD, noteLabel, stalenessNote,
-  lotHintFor, LOT_SIZE } = lib.shoppingList;
+  lotHintFor, LOT_SIZE, recipesFor, pivotColumnLabel } = lib.shoppingList;
 const { toCSV, toTSV, toRows, toSheet, csvFile, guardFormula, exportFilename, EXPORT_COLUMNS } =
   lib.shoppingExport;
 const { loadShopping, saveShopping, clearShopping } = lib.shoppingStorage;
@@ -1059,6 +1059,182 @@ check('a key naming no recipe still loads — resolving it is the caller\'s job'
   withKeyed(() => { saveCalcRecipe('2019|A Token That Was Renamed');
     return loadCalcRecipe() === '2019|A Token That Was Renamed' &&
       !costs.some((c) => c.key === '2019|A Token That Was Renamed'); }));
+
+// =========================================================================
+console.log('\n=== 14. the pivot view: the breakdown as COLUMNS ===');
+
+// The per-recipe breakdown moved out of a sentence and into columns, which
+// makes it arithmetic rather than prose. What is pinned here is the arithmetic
+// and the SHAPE of the export; the density numbers that decided the two tables
+// pivot differently are REPORTED, because they are properties of whatever
+// transmuteRecipes.csv holds today and asserting them would turn an ordinary
+// recipe edit into a red check on a publish PR.
+
+const pivotPicks = [
+  pick('2026|Ring of the Sacred Circle', 1),
+  pick('2026|Deathward Greaves', 2),
+  pick('2026|Charm of Deathward', 3),
+].filter((p) => p.cost);
+const pv = buildShoppingList(pivotPicks, engine);
+const pvAll = buildShoppingList(all2026, engine);
+
+// --- the columns and the cells -------------------------------------------
+
+check('every pick carries the key its column is matched on',
+  pv.making.length === pivotPicks.length &&
+  pv.making.every((m) => m.key === `${m.year}|${m.transmute}`),
+  JSON.stringify(pv.making.map((m) => m.key)));
+
+// THE invariant. The columns are a decomposition of the row's own total, so a
+// row whose cells do not add up to `quantity` is a row whose pivot lies — and
+// nothing on the page would show it, because both numbers look reasonable.
+check('every row: the per-recipe cells sum to the row total',
+  pv.all.every((r) => Object.values(r.byPick).reduce((t, n) => t + n, 0) === r.quantity),
+  JSON.stringify(pv.all.filter((r) =>
+    Object.values(r.byPick).reduce((t, n) => t + n, 0) !== r.quantity).map((r) => r.id)));
+
+check('a cell is only ever a POSITIVE count — an untouched pair is absent, not 0',
+  pv.all.every((r) => Object.values(r.byPick).every((n) => n > 0)));
+
+check('no row names a recipe the plan is not making',
+  pv.all.every((r) => Object.keys(r.byPick).every((k) => pv.making.some((m) => m.key === k))));
+
+check('every row belongs to at least one recipe',
+  pv.all.length > 0 && pv.all.every((r) => recipesFor(r, pv.making).length > 0));
+
+check("recipesFor returns the owners in the READER's order, and only the owners",
+  pv.all.every((r) => {
+    const got = recipesFor(r, pv.making);
+    const want = pv.making.filter((m) => (r.byPick[m.key] ?? 0) > 0);
+    return got.length === want.length && got.every((m, i) => m.key === want[i].key);
+  }));
+
+// A pick's own quantity is multiplied INTO the cell, which is why a column
+// headed ×3 sits over a cell reading 15 rather than 5. Doubling one pick
+// doubles exactly its own column and leaves every other cell alone.
+const pvDoubled = buildShoppingList(
+  pivotPicks.map((p, i) => (i === 0 ? { ...p, qty: p.qty * 2 } : p)), engine);
+const doubledKey = pivotPicks[0].cost.key;
+check('a cell carries the copy count already multiplied in',
+  pv.all.every((r) => {
+    const after = pvDoubled.all.find((x) => x.id === r.id);
+    if (!after) return true;
+    const mine = r.byPick[doubledKey] ?? 0;
+    if ((after.byPick[doubledKey] ?? 0) !== mine * 2) return false;
+    return Object.keys(r.byPick).every((k) => k === doubledKey || after.byPick[k] === r.byPick[k]);
+  }));
+
+// --- the two shapes, reported not pinned ---------------------------------
+
+const pvFill = (rows) => {
+  const cells = rows.reduce((t, r) => t + Object.keys(r.byPick).length, 0);
+  const denom = rows.length * pvAll.making.length;
+  return {
+    rows: rows.length,
+    shared: rows.filter((r) => Object.keys(r.byPick).length > 1).length,
+    pct: denom ? Math.round((100 * cells) / denom) : 0,
+  };
+};
+const tradeFill = pvFill(pvAll.trade);
+const addFill = pvFill(pvAll.additional);
+console.log(`  note  over ${pvAll.making.length} recipes: trade ${tradeFill.rows} rows, ` +
+  `${tradeFill.shared} shared, grid ${tradeFill.pct}% full; ` +
+  `additional ${addFill.rows} rows, ${addFill.shared} shared, grid ${addFill.pct}% full`);
+// The structural claim the two shapes rest on, and it holds at any corpus
+// size: a trade good is on the list because MANY recipes want it, an additional
+// item because ONE recipe names that token. Stated as an ordering rather than
+// as a threshold, so it survives the corpus growing.
+check('trade goods are shared more widely than additional items are',
+  tradeFill.rows === 0 || addFill.rows === 0 || tradeFill.pct > addFill.pct,
+  `trade ${tradeFill.pct}% vs additional ${addFill.pct}%`);
+
+// --- the exports ---------------------------------------------------------
+
+check('a column heading is the recipe and its COPY count',
+  pv.making.every((m) => pivotColumnLabel(m) === `${m.displayName} ×${m.qty}`),
+  pv.making.map(pivotColumnLabel).join(' | '));
+
+const stdRows = toRows(pv);
+const pvRows = toRows(pv, { pivot: true });
+
+check('the standard file is untouched — pivot defaults OFF everywhere',
+  JSON.stringify(stdRows) === JSON.stringify(toRows(pv, {})) &&
+  JSON.stringify(stdRows) === JSON.stringify(toRows(pv, { pivot: false })) &&
+  toTSV(pv) === toTSV(pv, { pivot: false }) &&
+  toCSV(pv) === toCSV(pv, { pivot: false }));
+
+check('pivot APPENDS one column per recipe and moves none of the fixed nine',
+  pvRows[0].length === EXPORT_COLUMNS.length + pv.making.length &&
+  pvRows[0].slice(0, EXPORT_COLUMNS.length).join('|') === EXPORT_COLUMNS.join('|') &&
+  pvRows[0].slice(EXPORT_COLUMNS.length).join('|') === pv.making.map(pivotColumnLabel).join('|'),
+  pvRows[0].join(' | '));
+
+check('every pivot row has exactly as many cells as the header',
+  pvRows.every((r) => r.length === pvRows[0].length),
+  JSON.stringify(pvRows.map((r) => r.length).filter((n, i, a) => a.indexOf(n) === i)));
+
+check('the fixed nine cells of a pivot row are the standard row, unchanged',
+  pvRows.slice(1).every((r, i) =>
+    r.slice(0, EXPORT_COLUMNS.length).join('|') === stdRows[i + 1].join('|')));
+
+// A blank, not a zero. A zero is a measured quantity: it sums, it averages and
+// it charts, and a reader filtering "the recipes that want this" would get
+// every row back. Blank is what a spreadsheet's own pivot writes there.
+check('an untouched cell exports BLANK, never 0',
+  pvRows.slice(1).every((r) => r.slice(EXPORT_COLUMNS.length).every((c) => c === '' || Number(c) > 0)));
+
+check("the exported cells are the row's own byPick, column for column",
+  pvRows.slice(1).every((r, i) => {
+    const row = pv.all[i];
+    return pv.making.every((m, j) => {
+      const cell = r[EXPORT_COLUMNS.length + j];
+      const want = row.byPick[m.key] ?? 0;
+      return want > 0 ? cell === String(want) : cell === '';
+    });
+  }));
+
+// The preamble, the quoting and the BOM belong to the standard writers — the
+// pivot only widens the table, so all three must still be exactly where they
+// were.
+const pvSheet = toSheet(pv, { pivot: true });
+check('the "Making" preamble still sits above the header in pivot mode',
+  pvSheet[0][0] === 'Making' && pvSheet[pv.making.length + 1].length === 0 &&
+  pvSheet[pv.making.length + 2][0] === 'Item');
+
+check('a pivot TSV has one tab per column and no stray row breaks',
+  toTSV(pv, { pivot: true }).split('\n').slice(pv.making.length + 2)
+    .every((line) => line.split('\t').length === EXPORT_COLUMNS.length + pv.making.length));
+
+check('the pivot FILE still opens with the BOM, and only the file does',
+  csvFile(pv, { pivot: true }).charCodeAt(0) === 0xfeff &&
+  csvFile(pv, { pivot: true }).slice(1) === toCSV(pv, { pivot: true }) &&
+  toTSV(pv, { pivot: true }).charCodeAt(0) !== 0xfeff);
+
+// Everything paused, so there is no breakdown to pivot ON. The writers fall
+// back rather than emit a header row with nothing under it.
+const allPaused = buildShoppingList(pivotPicks.map((p) => ({ ...p, qty: 0 })), engine);
+check('a plan with every recipe paused pivots to the standard file',
+  allPaused.making.length === 0 &&
+  JSON.stringify(toRows(allPaused, { pivot: true })) === JSON.stringify(toRows(allPaused)));
+
+// --- the saved preference ------------------------------------------------
+
+check('the breakdown choice round-trips',
+  withStore(null, () => {
+    saveShopping({ picks: [{ key: '2026|X', qty: 1 }], onHand: {}, overrides: {}, netCrafted: false, view: 'pivot' });
+    return loadShopping().view === 'pivot';
+  }));
+
+// No version bump and no migration: a v1 entry written before this field
+// existed is complete without it, and anything that is not the one non-default
+// value reads as the default.
+check('an entry with no view, a junk view or a hand-edited one all load as standard',
+  withStore(JSON.stringify({ picks: [], onHand: {}, overrides: {}, netCrafted: false }),
+    () => loadShopping().view === 'standard') &&
+  withStore(JSON.stringify({ picks: [], onHand: {}, overrides: {}, netCrafted: false, view: 'PIVOT' }),
+    () => loadShopping().view === 'standard') &&
+  withStore(JSON.stringify({ picks: [], onHand: {}, overrides: {}, netCrafted: false, view: 7 }),
+    () => loadShopping().view === 'standard'));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — shoppingList: ${pass} passed, ${fail} failed`);

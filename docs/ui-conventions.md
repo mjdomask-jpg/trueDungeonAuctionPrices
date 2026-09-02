@@ -356,6 +356,42 @@ Pick the breakpoint in React via `useMediaQuery`, not in CSS — hiding columns
 with `display: none` fights `table-layout: fixed` and the colspan'd group
 headers, which map by *rendered* column index.
 
+**There is one LAYOUT breakpoint (`NARROW`, 640px) and it is still the only one
+that reflows anything.** `WIDE` (1024px) sits beside it as a **capability line**:
+below it the Shopping List's pivot view is not offered at all, and nothing else
+changes shape there. Add a capability line only when a feature's *frozen
+furniture* will not fit — the pivot's six pinned columns cost 682px before a
+single data column is drawn — and hide the control rather than disabling it,
+leaving any saved preference alone so it comes back on a wider screen.
+
+**Freezing the left-hand columns of a wide table.** Put the table in an
+`overflow-x: auto` wrapper, set `border-collapse: separate` (sticky cells lose
+their borders under `collapse`), and give each frozen cell `position: sticky`
+with a **cumulative pixel `left`** — the sum of the widths before it. Three
+things this needs:
+
+- **Explicit widths on the frozen columns and NONE on the rest.** The
+  site-wide `table-layout: fixed` means a column's width comes from the first
+  row, so the unwidthed columns share the remainder and nothing downstream can
+  move a frozen offset. Force the scroll with a `min-width` on the table
+  (`calc(var(--frozen) + N * <col>px)`), not by fixing its width — a table
+  pinned to an exact width leaves a gap when the data is narrow.
+- **An opaque background on every frozen cell**, and a higher `z-index` on the
+  header's, or the scrolling columns show through them.
+- **The widths and the offsets are one fact written twice.** Change one without
+  the other and the columns overlap. Keep them adjacent in the stylesheet with
+  the sum written out in a comment.
+
+The seam between the frozen group and the columns sliding under it is a
+`box-shadow` on the last frozen cell, not a border — a border travels with the
+table's own rules and reads as one more column divider.
+
+**`Page.captureScreenshot` does not reproduce a scroll container's
+`scrollLeft`**, so a screenshot cannot prove a frozen column is pinned. Assert
+it by measurement instead: set `scrollLeft`, then check each frozen cell's
+`getBoundingClientRect().left` minus the scroller's own left edge is unchanged
+while a scrolling cell's has moved.
+
 **Column widths are percentages on the `<thead>` cells. A `min-width` on a cell
 does nothing.** The global `table` rule sets `table-layout: fixed` site-wide, so
 a column's width comes from the first row and nothing else — a `min-width`

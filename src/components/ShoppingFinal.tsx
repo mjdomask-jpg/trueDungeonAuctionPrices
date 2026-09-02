@@ -26,15 +26,31 @@ import { toTSV, csvFile, exportFilename } from '../lib/shoppingExport';
 // a plain table a 2012 Ultra Rare looks exactly like one you can still buy,
 // and the staleness sentence, because it says the price beside it is moving.
 
-export function ShoppingFinal({ list }: { list: ShoppingList }) {
+// IN PIVOT MODE it grows the per-recipe columns and the file follows suit. It
+// stays READ-ONLY: the on-hand count appears as a number so the table adds up
+// on its own, but the controls stay in the working tables above. A second live
+// control set for one piece of state on one page is how two surfaces start
+// disagreeing about what a reader typed.
+//
+// It uses ONE shape for both tables' rows, unlike the working pair — a matrix
+// column per recipe over everything. Here that is right: this is the file's
+// table, the reader has already read the diagonal upstairs, and a `For` column
+// that meant something different from the columns beside it would be worse
+// than a sparse block.
+
+export function ShoppingFinal({ list, pivot }: { list: ShoppingList; pivot: boolean }) {
   const [copied, setCopied] = useState(false);
   if (list.all.length === 0) return null;
 
   const toBuy = list.all.filter((r) => r.need > 0).length;
+  // A pivot with no recipes to pivot on is just the standard table, and
+  // `list.making` is empty exactly when every pick is paused.
+  const cols = pivot ? list.making : [];
+  const asPivot = cols.length > 0;
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(toTSV(list));
+      await navigator.clipboard.writeText(toTSV(list, { pivot }));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -49,7 +65,7 @@ export function ShoppingFinal({ list }: { list: ShoppingList }) {
     // csvFile, not toCSV: the file needs a BOM or Excel reads its UTF-8 as
     // Windows-1252 and every × and · arrives mangled. The `charset` below is
     // not stored anywhere in the file and cannot do that job.
-    const blob = new Blob([csvFile(list)], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([csvFile(list, { pivot })], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -94,6 +110,71 @@ export function ShoppingFinal({ list }: { list: ShoppingList }) {
           </div>
         )}
 
+        {asPivot ? (
+          <div className="sl-pv-scroll">
+            <table className="sl-pv sl-pv-ro"
+              // 96px, not the working tables' 112px. This table has no controls
+              // in its columns and its recipe headings wrap the same way, so a
+              // narrower floor keeps a five-recipe plan from scrolling by six
+              // pixels — which reads as a bug rather than as a wide table.
+              style={{ minWidth: `calc(var(--pv-frozen-ro) + ${cols.length} * 96px)` }}>
+              <thead>
+                <tr>
+                  <th scope="col" className="pv-item">Item</th>
+                  <th scope="col" className="pv-buy">To buy</th>
+                  <th scope="col" className="pv-hand-ro">On hand</th>
+                  <th scope="col" className="pv-total">Total</th>
+                  <th scope="col" className="pv-unit">$ ea</th>
+                  <th scope="col" className="pv-cost">Cost</th>
+                  {cols.map((m) => (
+                    <th scope="col" className="pv-rx" key={m.key}>
+                      <span className="pv-rx-nm">{m.displayName}</span>
+                      <span className="pv-rx-n">×{m.qty}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {list.all.map((r) => (
+                  <tr key={r.id} className={r.need === 0 ? 'done' : undefined}>
+                    <th scope="row" className="pv-item">
+                      <span className="pv-nm">{r.displayName}</span>
+                      {/* The Season column folds under the name here rather
+                          than costing a seventh frozen column — the same trade
+                          the standard table makes at phone widths, made for
+                          the same reason in the other direction. */}
+                      <span className="pv-sub">
+                        {r.category}
+                        {r.nominalYear !== null && ` · ${r.nominalYear}`}
+                        {r.outOfPrint && r.nominalYear !== null && (
+                          <span className="sl-final-flag">Out of print</span>
+                        )}
+                      </span>
+                      {r.staleness && (
+                        <span className="sl-stale">{stalenessNote(r.staleness, moneyCalc)}</span>
+                      )}
+                    </th>
+                    <td className="pv-buy num">{r.need > 0 ? <b>{r.need}</b> : '—'}</td>
+                    <td className="pv-hand-ro num">{r.onHand}</td>
+                    <td className="pv-total num">{r.quantity}</td>
+                    <td className="pv-unit num">{r.unitAvg === null ? '—' : moneyCalc(r.unitAvg)}</td>
+                    <td className="pv-cost num">
+                      {r.unitAvg === null ? '—' : <Money format={moneyCalc} value={r.extAvg} />}
+                    </td>
+                    {cols.map((m) => {
+                      const n = r.byPick[m.key] ?? 0;
+                      return (
+                        <td className="pv-cell num" key={m.key}>
+                          {n > 0 ? n : <span className="pv-nil" aria-hidden="true">·</span>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
         <div className="sl-final-scroll">
           <table className="sl-final-t">
             <thead>
@@ -143,10 +224,16 @@ export function ShoppingFinal({ list }: { list: ShoppingList }) {
             </tbody>
           </table>
         </div>
+        )}
         <p className="sl-final-note">
-          Both exports carry more than this table shows — what you already have, and the full
-          quantity as well as what is left to buy. Prices export as plain numbers so a
-          spreadsheet can add them up.
+          {asPivot ? (
+            <>Both exports carry this table's columns, the recipe breakdown included. Prices
+              export as plain numbers so a spreadsheet can add them up.</>
+          ) : (
+            <>Both exports carry more than this table shows — what you already have, and the full
+              quantity as well as what is left to buy. Prices export as plain numbers so a
+              spreadsheet can add them up.</>
+          )}
         </p>
       </details>
     </section>

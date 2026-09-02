@@ -84,7 +84,8 @@ master is the fallback.
 **The per-recipe notes cap at two**, with a `+N more` expander per row. Six
 recipes already made that line wrap twice on a phone. Only the `For X ×N` and
 `Source for X ×N` notes count against the cap — the rest are status, one of
-each at most, and hiding those would trade a wall for a puzzle.
+each at most, and hiding those would trade a wall for a puzzle. On a desktop
+there is a second answer to the same problem — see *The breakdown* below.
 
 **Sources do not recurse.** A source is one Additional Item, category
 `Transmute`, priced at its build cost. Its own bill of materials is the Build
@@ -113,6 +114,90 @@ by a third.
 
 ---
 
+## The breakdown: Notes or By recipe
+
+A **Breakdown** toggle in the summary bar — `Notes` (the default) or
+`By recipe` — chooses whether the per-recipe demand is a sentence under the
+item name or a **column per recipe**. It governs both working tables, the
+takeaway table and both exports, which is why it sits in the summary bar rather
+than in a table header: no one table owns it.
+
+**Desktop only, above 1024px.** That is arithmetic rather than policy. The
+frozen group — Item, To buy, On hand, Total, $ ea, Cost — costs 682px before a
+single recipe column is drawn, so at 640px there is room for none of them and
+at 900px for two. `WIDE` in `hooks/useMediaQuery.ts` is a **capability line, not
+a second layout breakpoint**: nothing else on the site changes shape there, and
+`NARROW` is still the only breakpoint that reflows anything.
+
+Below it the toggle is **hidden rather than disabled and the saved preference is
+left alone**, so a plan read in pivot on a laptop is still in pivot when the
+laptop comes back.
+
+### The two tables pivot differently, because the data has two shapes
+
+Measured over the real corpus — the numbers the test prints on every run:
+
+| picked | Trade rows | shared | grid full | Additional rows | shared | grid full |
+|---|---|---|---|---|---|---|
+| 3 | 13 | 12 | 64% | 10 | **0** | 33% |
+| 5 | 13 | 12 | 42% | 11 | **1** | 22% |
+| 20 | 14 | 14 | 55% | 19 | **3** | 8% |
+| all 29 | 14 | 14 | 60% | 35 | **4** | **5%** |
+
+**Trade goods get the true matrix.** Twelve to fourteen of their fourteen rows
+are wanted by more than one recipe at every plan size and the grid runs 42–64%
+full. This is the table the pivot exists for, and it is where the `+N more`
+expander was hiding the most.
+
+**Additional Items get a single `For` column.** They are a *diagonal*: at 29
+picked recipes, 31 of 35 rows belong to exactly one recipe. Twenty-nine columns
+to carry four rows' worth of shared information is not a pivot, it is a
+scrollbar — so the column names the one owning recipe and keeps a `+N more` for
+the handful that really are shared. That is what a pivot degenerates to when
+its matrix is diagonal.
+
+**The takeaway table uses one shape for everything**, a matrix column per
+recipe over both sections. Here that is right: it is the file's table, the
+reader has already read the diagonal upstairs, and a `For` column meaning
+something different from the columns beside it would be worse than a sparse
+block. It stays **read-only** — the on-hand count shows as a number so the
+table adds up on its own, but the controls stay in the working tables. Two live
+control sets for one piece of state on one page is how two surfaces start
+disagreeing about what a reader typed.
+
+### What the columns replace, and what they do not
+
+Only the `For X ×N` and `Source for X ×N` notes leave the item cell — they *are*
+the columns, and leaving them under a column saying the same thing would make
+the pivot strictly worse than the table it is offered instead of. Everything
+else stays: `Price adjusted`, `N spare`, `Out of print`, the netting note,
+`Priced as X`, the staleness sentence and the 10x lot hint are all facts about
+the row itself, and no column expresses any of them.
+
+**A cell the recipe does not touch is blank** (a faint `·` on screen, an empty
+cell in the file) **and never `0`**. A zero is a measured quantity: it sums, it
+averages, it charts, and a reader filtering *"which recipes want this"* would
+get every row back.
+
+**A column's `×N` is the COPY count; the cells under it are totals with that
+count already multiplied in.** One Ink line under a `×3` heading reads 15.
+
+### How the frozen columns work
+
+To buy, On hand and Total sit at the left in that order, with `$ ea` and `Cost`
+behind them, because they are what the reader came for — the breakdown informs
+and does not get to push the answer off the screen. All six are
+`position: sticky` with **cumulative pixel `left` offsets**, which only works
+because the site-wide `table-layout: fixed` means a column's width comes from
+the first row and nothing else. So the frozen columns carry explicit widths and
+**the recipe columns deliberately carry none**: they share whatever is left,
+wider than 112px when three recipes have the page to themselves and exactly
+112px once the inline `min-width` forces the scroll. Nothing after the frozen
+group can move a frozen offset either way.
+
+The width figures in `--pv-frozen` and the six `left` declarations are **one
+fact written twice**. Change one without the other and the columns overlap.
+
 ## Getting it out
 
 **Copy as TSV** and **Download CSV**. Both open with **what the plan is for** —
@@ -126,9 +211,20 @@ the file looks, and forty trade goods say nothing about what any of them is
 for. The cost is real and accepted: a spreadsheet's header auto-detection sees
 row 1, so filters need setting up by hand.
 
+**In `By recipe` mode both files gain the recipe columns**, appended after the
+nine above and headed `Name ×N`. Appended rather than reordered into the
+screen's To buy / On hand / Total order: a spreadsheet has no width problem and
+no frozen-column problem, so the reason the screen puts those three first does
+not apply, and a file whose column order moved under a toggle would break every
+saved filter pointing at it. The preamble, the quoting, the formula guard and
+the BOM are untouched. With every recipe paused there is nothing to pivot on
+and the writers fall back to the standard file rather than emitting a header
+row with nothing under it.
+
 **Flags replaced Notes**, and is a narrow replacement rather than a shortened
 one. The per-recipe breakdown is a wall in a spreadsheet as much as on screen,
-and the working tables are where it belongs. Two values survive, because they
+and the working tables are where it belongs — and where the pivot now puts it
+in columns. Two values survive, because they
 change what you should *buy* rather than explaining why a row exists: `Out of
 print` — in a bare grid a 2012 Ultra Rare looks exactly like one still on sale
 — and `Price moving`. The staleness *numbers* stay on the page; the price they
@@ -182,9 +278,18 @@ writer.
 
 ## Saving
 
-`localStorage` only, under `td-shopping-v1`. Three things persist — the picks,
-the on-hand counts and the corrected prices — plus the netting toggle. What is
-on screen (which chips are expanded, which price editor is open) does not.
+`localStorage` only, under `td-shopping-v1`. Five things persist — the picks,
+the on-hand counts, the corrected prices, the netting toggle and the
+**Breakdown** choice. What is on screen (which chips are expanded, which price
+editor is open, which `+N more` is uncapped) does not.
+
+The Breakdown choice is a *preference* rather than a fact about the screen,
+which is why it sits on the saved side of that line. It rides in the plan's own
+entry and **Clear list resets it with everything else** — that is what keeps an
+emptied plan leaving no entry at all rather than a lone `{"view":"pivot"}`. No
+version bump and no migration: an entry written before the field existed is
+complete without it, and anything that is not the one non-default value reads as
+the default.
 
 Share links were dropped: a twenty-recipe plan with per-row counts makes a
 punishing URL. A server-side "code" is **impossible**, not merely unbuilt — the
@@ -242,11 +347,14 @@ those.
 | `lib/shoppingExport.ts` | TSV and CSV writers, the formula guard, the BOM |
 | `lib/shoppingStorage.ts` | load/save/clear, and the validation |
 | `lib/calcStorage.ts` | the Build Calculator's one saved value |
-| `components/ShoppingList.tsx` | selection, chips, state, autosave |
-| `components/ShoppingTable.tsx` | one ingredient table, rendered twice |
+| `lib/shoppingHand.ts` | the All/None arithmetic both table shapes share |
+| `components/ShoppingList.tsx` | selection, chips, state, the Breakdown toggle, autosave |
+| `components/ShoppingTable.tsx` | one ingredient table in `Notes` shape, rendered twice |
+| `components/ShoppingPivot.tsx` | the same table in `By recipe` shape, matrix or single |
+| `components/ShoppingHand.tsx` | the section header and the on-hand cell, shared by both |
 | `components/ShoppingFinal.tsx` | the takeaway list and the two buttons |
 | `components/RecipeDrawer.tsx` | shared with the Build Calculator |
-| `scripts/shopping-list.test.mjs` | 115 assertions, the ninth `npm test` suite |
+| `scripts/shopping-list.test.mjs` | the tenth `npm test` suite; § 14 is the pivot |
 
 The row markup reuses the Build Calculator's classes (`calc-line`, `cl-main`
 and friends) rather than copying them, so the two cannot disagree about the
@@ -266,7 +374,5 @@ while `Buy` held 225px for a two-digit number.
 
 | | |
 |---|---|
-| **A Combined / Pivot view** | The per-recipe breakdown as columns, one per transmute, instead of notes. **Desktop only** — twenty recipes is twenty columns and there is no phone form of it. The `+N more` expander is the interim answer |
-| **Notes as a pivot view** | The same idea for the takeaway table, which now shows no notes at all. Revisit together with the above |
 | **Drawer row names ellipsize** | A picked row in the drawer truncates long names (`Val's +4 Ke…`) because the stepper takes ~180px. Abbreviating the tier chip on phones bought some of it back, not all; fixing the rest means reworking the row's flex layout |
 | **XLSX export** | ~400KB dependency, or a hand-rolled zip writer |
