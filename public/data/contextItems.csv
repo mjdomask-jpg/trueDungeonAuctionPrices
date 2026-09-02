@@ -222,8 +222,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20233,2023,3,token,Tinker Bit,1,$15.00
 20233,2023,3,token,Tinker Bit,1,$15.00
 20236,2023,6,withheld,Adventurers' Guild Button,2,-$10.50
-20236,2023,6,withheld,Amulet of Magnifying,1,-$0.50
-20236,2023,6,withheld,Amulet of Magnifying,1,-$0.50
+20236,2023,6,withheld,Amulet of Magnifying,1,-$0.52
+20236,2023,6,withheld,Amulet of Magnifying,1,-$0.52
 20236,2023,6,token,Bead of Guided Strike,1,$42.00
 20236,2023,6,token,Belt of the Deadshot,1,$81.00
 20236,2023,6,token,Figurine of Power Reaver,1,$16.00
@@ -232,10 +232,10 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20236,2023,6,token,Lucky Kilt,1,$39.00
 20236,2023,6,token,Mad Evoker's Charm,1,$31.00
 20236,2023,6,token,Master Ale Drinker's Bead,1,$29.00
-20236,2023,6,withheld,Ring of the 4th Circle,2,-$169.60
-20236,2023,6,withheld,Ring of the 4th Circle,1,-$84.80
+20236,2023,6,withheld,Ring of the 4th Circle,2,-$170.67
+20236,2023,6,withheld,Ring of the 4th Circle,1,-$85.34
 20236,2023,6,token,Sacred Necklace,1,$206.00
-20236,2023,6,withheld,Ultra Rare,4,-$321.10
+20236,2023,6,withheld,Ultra Rare,4,-$323.13
 202310,2023,10,token,+2 Flaming Blade,1,$65.00
 202310,2023,10,token,Amulet of Aiming,1,$65.00
 202310,2023,10,token,Butterfly Cloak,1,$50.00
@@ -337,7 +337,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202349,2023,49,grunnel,Prove Fear Prop,1,$60.00
 202349,2023,49,grunnel,Small Favor Scroll,1,$100.00
 202349,2023,49,grunnel,Symbol of Discord Prop,1,$10.00
-202349,2023,49,withheld,Ultra Rare,2,-$184.41
+202349,2023,49,withheld,Ultra Rare,2,-$185.22
 202350,2023,50,token,+2 Sun Scimitars (2),1,$150.00
 202350,2023,50,token,Boots of Protection,1,$180.00
 202350,2023,50,token,Chance at AoTF,1,$125.00
