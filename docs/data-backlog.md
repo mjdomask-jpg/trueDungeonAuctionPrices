@@ -8,7 +8,8 @@ Recorded 2026-08-20, while reconciling the docs with the shared `td-domain`
 skill. Game-level definitions live there; this file tracks only what *this
 repo's data* is missing.
 
-Last reconciled **2026-09-02**, after PR #159 modelled the trade good ladder.
+Last reconciled **2026-09-02**, after PR #159 modelled the trade good ladder and
+the maintainer decided items 3 and 4 (keep `Category` as the tier axis).
 **A resolved item keeps its number and is marked RESOLVED rather than deleted**,
 so a reader who met it elsewhere can still find it, and so the reasoning that
 closed it is not lost. Renumbering would also break every reference to "item 4"
@@ -68,74 +69,70 @@ from the resulting data:
 
 ---
 
-## 3. The trade rungs live on the `Category` axis, which is not a tier field
+## 3. The trade rungs live on the `Category` axis, which is not a tier field — RESOLVED (decision, 2026-09-02)
 
-**Reframed 2026-09-02.** The original entry said Trade 3 and Trade 5 "appear in no
-CSV at all" and asked for a tier field. Half of that is now done and the other
-half was decided the opposite way, so the item is worth restating rather than
-closing.
+**Decided by the maintainer: `Category` IS the tier axis, and the Wish Ring's
+display fold is the one accepted exception.** No second field is added.
 
-**Now:** all five rungs exist in the data.
+The reasoning, in the maintainer's terms: the Bonus items in the largest order
+have been stable for a long time, so the collision has exactly one occupant and
+no realistic prospect of a second. A separate tier field would be the extensible
+solution to a set of size one — and its cost is not the column, it is that four
+call sites (`isTradeCategory`, the Shopping List's `mergesAsTradeGood`,
+`validate-prices.mjs` § 7's vocabulary and `publishToSite.gs`'s allow-list) would
+each have to name which axis they read, with a silent failure mode if any of them
+picked wrong. The kludge is the cheaper resolution.
 
-| Rung | Tokens | Where it is recorded |
-|---|---|---|
-| Trade 1 | the eight | `prices.csv`, `tokenGroups.csv`, `tokenMetadata.csv` |
-| Trade 2 | the four | same |
-| Trade 3 | Golden Fleece | `tokenMetadata.csv`, `offAuctionPrices.csv`, recipe `Level` |
-| Trade 4 | Wish Ring | `prices.csv`, `tokenGroups.csv`, `tokenMetadata.csv` |
-| Trade 5 | Omni Orb, Omni Cube | `tokenMetadata.csv`, recipe `Level` |
+**What is now settled, and can be relied on:**
 
-**But they were put ON the `Category` axis, not beside it.** The rung is the value
-of `tokenMetadata.Category` and of the recipe's `Level`. So the two axes the
-original entry wanted kept apart — the rung a token occupies, and how a lot was
-*sold* — are now the same column.
+- `tokenMetadata.Category` and a recipe's `Level` hold the token's **rung**.
+  `isTradeCategory` (`/^Trade \d+$/`) reading that column to pick a pricing
+  branch is correct **by design**, not by luck.
+- `sectionCategory`'s `Trade 4 -> Premium` map in `src/lib/categories.ts` is the
+  sanctioned exception. It is **display only** — the Prices page and the Trends
+  year-over-year view group on the section; the explorer's chips, filters and
+  sorting keep the real `Trade 4`.
+- No code or data change. Everything already matches the decision, so this item
+  closes on the decision itself.
 
-**Why that is mostly fine, and where it is not.** It collides only for a token
-that is BOTH on the trade ladder and auctioned. There are exactly two such cases:
-Trade 1/2, where the two axes happen to agree, and the **Wish Ring**, where they
-do not — which is item 4, and which already needs `sectionCategory` to fold it
-back into Premium for display. Trade 3 and Trade 5 are never sold, so nothing
-about them is a sale category and no collision is possible.
+**Measured the day it was decided**, because a decision to live with a special
+case is only as good as the size of the set it covers: `Trade 3` has one occupant
+(Golden Fleece, never sold), `Trade 4` one (Wish Ring), `Trade 5` two (Omni Orb,
+Omni Cube, never sold). Wish Ring is the **only** token whose rung and sale
+category disagree, in `tokenMetadata.csv` and `prices.csv` alike.
 
-**It is also load-bearing now, in a way it was not when this was written.**
-`isTradeCategory` (`/^Trade \d+$/`) reads that same column to decide a PRICING
-branch — see the market-first rule in `src/lib/transmutes.ts`. A separate tier
-field would mean deciding which of the two the engine reads, and getting it wrong
-is silent: an Omni line that stopped being seen as a trade good would still price
-correctly, because it has no market price either way.
-
-**Done looks like:** a decision, not necessarily a change. Either the `Category`
-column is accepted as the tier axis and the Wish Ring's display fold is accepted
-as the one exception, or a separate field is added — in which case
-`isTradeCategory`, the Shopping List's `mergesAsTradeGood`, `validate-prices.mjs`
-S 7's vocabulary and `publishToSite.gs`'s allow-list all have to name which axis
-they mean. Related to item 4; still likely resolved together.
+**The trip-wire, and it is a real one.** `CATEGORY_SECTION` keys on the
+**category**, not on the token — so it folds *anything* carrying `Trade 4` into
+Premium. Item 8 proposes authoring the `25,000 GP Eldritch Bar` as a Trade 4
+token; the moment that lands, the bar joins the Premium table too, which is wrong
+for a token that is not an 8K-order exclusive, and nothing would report it.
+Whoever picks up item 8 either re-keys the fold on the item name or reopens this
+decision. Noted in item 8's cautions as well.
 
 ---
 
-## 4. Wish Ring's dual nature is unreconciled
+## 4. Wish Ring's dual nature is unreconciled — RESOLVED (decision, 2026-09-02)
 
-**Now:** `Trade 4` category, group `8k exclusive`, **288 rows in `prices.csv`**
-(so it is auctioned), and **43 recipe lines consume it** (so it behaves as a
-trade good). The category moved from `Premium` to `Trade 4` on 2026-08-29 to
-match the canonical rung; because a single Trade 4 token is not worth a table of
-its own, `sectionCategory` in `src/lib/categories.ts` folds it back into the
-Premium section on the Prices page and the Trends year-over-year view. That is a
-DISPLAY grouping only — the explorer's chips, filters and sorting still show the
-real `Trade 4`.
+**Decided with item 3: tier and acquisition are NOT separated into two fields.**
+Wish Ring stays a `Trade 4` token that displays under Premium.
 
-**Why it matters:** acquisition and function disagree. Wish Ring is a Trade 4
-trade good by what it *does*, but obtainable only as a Bonus item in an 8K order.
-No field expresses both, and picking one loses the other.
+**The dual nature is not, in fact, unrecorded — which is this entry's own
+correction.** Both halves sit on one row of `tokenGroups.csv`, in different
+columns: `Category = Trade 4` (what the token *does*) and `Group = 8k exclusive`
+(how it is *got*), the latter shared with two Premium tokens. `Group` is the
+Timelines chart grouping rather than a declared acquisition field, so that is a
+representation and not a schema commitment — but a reader asking how a Wish Ring
+is obtained does have somewhere to look, which the original entry assumed there
+was not.
 
-**Updated 2026-09-02.** The GAME fact is no longer open: the `td-domain` skill's
-trade ladder now states that Trade 4 is *either* an upgraded bar (25,000 GP
-Eldritch Bar) *or* the Wish Ring, and that the Wish Ring is the one rung of the
-ladder genuinely sold at auction. So its rung is settled and only the SCHEMA
-question survives — this item is now narrower than when it was written.
+What genuinely has no home is a single field meaning "trade good **and**
+premium-priced", and the decision is that none is needed. The engine wants the
+rung (item 3); the Prices page wants the section (`sectionCategory`); nothing
+asks the combined question.
 
-**Done looks like:** a decision on whether tier and acquisition are separate
-fields. Related to item 3 — likely resolved together.
+**What would reopen it** is item 3's trip-wire — a second auctioned token on a
+`Trade N` rung — or a UI that has to explain to a player *why* a trade good sits
+in the Premium table. Neither exists today.
 
 ---
 
@@ -317,7 +314,7 @@ expressing them against the bar that IS priced (`5,000 GP Mithral Bar = 1,000 GP
 Gold Bar x 5`). That file is currently idle — its only rule was superseded by the
 Monster Trophy rows in PR #159 — so the mechanism is free.
 
-**Two cautions before anyone starts.** A recipe line naming a denomination is a
+**Three cautions before anyone starts.** A recipe line naming a denomination is a
 line naming a TRANSMUTE, since every rung of the trade ladder is craftable, so it
 goes through the market-first rule in `src/lib/transmutes.ts`: with no auction
 price of its own a Mithral Bar would price at its BUILD cost, which is what you
@@ -326,3 +323,10 @@ give it a vintage. And swapping `5x 1,000 GP Gold Bar` for `1x 5,000 GP Mithral
 Bar` is not cost-neutral if the two are ever priced independently — check what it
 does to the 43 Legendary recipes and their Wish-Ring-or-15,000-GP path before
 changing any of them.
+
+And the third, added 2026-09-02 when item 3 was decided: `sectionCategory` folds
+every `Trade 4` row into the Premium table for display, keyed on the **category**
+and not on the token, because Wish Ring is Trade 4's only occupant today. An
+authored `25,000 GP Eldritch Bar` would inherit that fold and land in Premium
+beside it — wrong for a bar that is not an 8K-order exclusive, and silent. Re-key
+`CATEGORY_SECTION` on the item name at that point, or reopen item 3.
