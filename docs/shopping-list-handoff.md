@@ -925,7 +925,10 @@ Test suite finishes at **90 assertions**.
 All five steps are merged or in flight. What was deliberately left undone, so
 nobody re-derives it:
 
-- **XLSX export** — needs a ~400KB dependency or a hand-rolled zip writer.
+- **XLSX export** — **dropped 2026-09-02**, not deferred. The only thing it
+  buys over the CSV is a live `Total − On hand` formula in the *To buy* column,
+  which is seconds of typing for the reader; it costs a ~400KB dependency or a
+  hand-rolled zip writer. See `shopping-list.md` § *Dropped*.
 - **The Excel CSV check** — the formula guard's file half is unverified because
   there is no Excel on this machine. One line to fix if it misbehaves; see
   `shopping-list.md`.
