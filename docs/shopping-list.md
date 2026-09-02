@@ -306,8 +306,15 @@ it — the clipboard carries text rather than bytes, which is why Copy as TSV
 never had the problem and why a BOM pasted into a cell would be a stray
 character rather than an encoding hint.
 
-**XLSX is deferred**: it needs either a ~400KB dependency or a hand-rolled zip
-writer.
+**XLSX is DROPPED, not deferred** (2026-09-02). It was a *Could have* in the
+original brief, wanted for one thing the CSV cannot carry: a live formula in the
+*To buy* column, `Total − On hand`. That is a few seconds of typing for anyone
+who wants it, and the cost of shipping it is a ~400KB dependency or a hand-rolled
+zip writer — a poor trade against a build the whole site keeps small on purpose.
+
+Recorded as a decision rather than deleted, so the next pass does not re-derive
+it. Reopen it only if something turns up that a CSV genuinely cannot express —
+multiple sheets, or formatting the file has to carry.
 
 ---
 
@@ -410,4 +417,13 @@ while `Buy` held 225px for a two-digit number.
 | | |
 |---|---|
 | **Drawer row names ellipsize** | A picked row in the drawer truncates long names (`Val's +4 Ke…`) because the stepper takes ~180px. Abbreviating the tier chip on phones bought some of it back, not all; fixing the rest means reworking the row's flex layout |
-| **XLSX export** | ~400KB dependency, or a hand-rolled zip writer |
+
+## Dropped
+
+Not pending — decided against, and here so nobody re-derives them.
+
+| | |
+|---|---|
+| **XLSX export** | The one thing it buys over the CSV is a live `Total − On hand` formula, which is seconds of typing for the reader. Costs a ~400KB dependency or a hand-rolled zip writer. See § *Getting it out* |
+| **Share links** | A twenty-recipe plan with per-row counts makes a punishing URL |
+| **Server-side save codes** | Impossible, not unbuilt: static hosting on GitHub Pages has no write path, and a repo token in client JS would be public |
