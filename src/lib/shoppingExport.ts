@@ -23,9 +23,24 @@
 // interpret the value); the ENCODING is a file concern, and `csvFile` is the
 // only thing that should ever be written to disk — see the note on it.
 
-import type { ShoppingList, ShoppingRow } from './shoppingList';
+import { pivotColumnLabel, type ShoppingList, type ShoppingRow } from './shoppingList';
 
 export type ExportFormat = 'tsv' | 'csv';
+
+/**
+ * Whether the file carries the per-recipe breakdown as columns.
+ *
+ * Follows the view the reader is looking at, which is the whole point of the
+ * toggle: they picked a shape, and the file is that shape. Off by default in
+ * every signature here, so the standard file is byte-for-byte what it was.
+ *
+ * The pivot columns are APPENDED to the nine fixed ones rather than reordered
+ * into the screen's To buy / On hand / Total order. A spreadsheet has no width
+ * problem and no frozen-column problem, so the reason the screen puts those
+ * three first does not apply — and a file whose column order moved under a
+ * toggle would break every saved filter and formula pointing at it.
+ */
+export type ExportOptions = { pivot?: boolean };
 
 /** The columns, in order. One list so a future column cannot be added to one
  *  writer and forgotten in the other. */
@@ -110,9 +125,26 @@ function tsvCell(cell: string): string {
   return guardFormula(cell).replace(/[\t\r\n]+/g, ' ');
 }
 
-/** The TABLE — the header and one row per ingredient, nothing else. */
-export function toRows(list: ShoppingList): string[][] {
-  return [[...EXPORT_COLUMNS], ...list.all.map(cellsFor)];
+/** The TABLE — the header and one row per ingredient, nothing else.
+ *
+ *  In pivot mode one column per active recipe follows the nine fixed ones. A
+ *  cell the recipe does not touch is EMPTY rather than `0`: a zero is a
+ *  measured quantity and would sum, average and chart as one, and a 35×29
+ *  block of them is what makes the on-screen version of this table unreadable.
+ *  Blank is what a spreadsheet's own pivot writes there. */
+export function toRows(list: ShoppingList, { pivot = false }: ExportOptions = {}): string[][] {
+  if (!pivot || list.making.length === 0) return [[...EXPORT_COLUMNS], ...list.all.map(cellsFor)];
+  const cols = list.making;
+  return [
+    [...EXPORT_COLUMNS, ...cols.map(pivotColumnLabel)],
+    ...list.all.map((r) => [
+      ...cellsFor(r),
+      ...cols.map((m) => {
+        const n = r.byPick[m.key] ?? 0;
+        return n > 0 ? String(n) : '';
+      }),
+    ]),
+  ];
 }
 
 /**
@@ -128,24 +160,24 @@ export function toRows(list: ShoppingList): string[][] {
  * CSV and every spreadsheet reads it; padding them out to nine would put eight
  * empty cells beside every line of it.
  */
-export function toSheet(list: ShoppingList): string[][] {
-  if (list.making.length === 0) return toRows(list);
+export function toSheet(list: ShoppingList, opts: ExportOptions = {}): string[][] {
+  if (list.making.length === 0) return toRows(list, opts);
   return [
     ['Making'],
     ...list.making.map((m) => [m.displayName, String(m.qty)]),
     [],
-    ...toRows(list),
+    ...toRows(list, opts),
   ];
 }
 
-export function toTSV(list: ShoppingList): string {
-  return toSheet(list).map((r) => r.map(tsvCell).join('\t')).join('\n');
+export function toTSV(list: ShoppingList, opts: ExportOptions = {}): string {
+  return toSheet(list, opts).map((r) => r.map(tsvCell).join('\t')).join('\n');
 }
 
-export function toCSV(list: ShoppingList): string {
+export function toCSV(list: ShoppingList, opts: ExportOptions = {}): string {
   // A trailing newline: POSIX tools treat a file without one as truncated, and
   // spreadsheets do not mind it.
-  return toSheet(list).map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  return toSheet(list, opts).map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
 
 /**
@@ -162,11 +194,11 @@ export function toCSV(list: ShoppingList): string {
  * is why Copy as TSV never had the problem, and a BOM pasted into a cell would
  * be a stray character rather than an encoding hint.
  */
-export function csvFile(list: ShoppingList): string {
+export function csvFile(list: ShoppingList, opts: ExportOptions = {}): string {
   // Written as an escape, not as the character: a literal BOM in source is
   // invisible, and the next person to touch this line would delete it without
   // knowing they had.
-  return `\uFEFF${toCSV(list)}`;
+  return `\uFEFF${toCSV(list, opts)}`;
 }
 
 /** `td-shopping-list-2026-08-31.csv` — dated, because a player will export this

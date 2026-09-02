@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { Money } from './Money';
 import { PriceInput } from './PriceInput';
+import { ShoppingHandCell, ShoppingSectionHead, type HandProps } from './ShoppingHand';
+import { handMath } from '../lib/shoppingHand';
 import { moneyCalc } from '../lib/format';
-import { noteLabel, stalenessNote, lotHintFor, type ShoppingNote, type ShoppingRow } from '../lib/shoppingList';
+import {
+  noteLabel, stalenessNote, lotHintFor, lotHintLabel,
+  type ShoppingNote, type ShoppingRow,
+} from '../lib/shoppingList';
 
 // One of the Shopping List's two ingredient tables.
 //
@@ -43,44 +48,24 @@ const isRecipeNote = (n: ShoppingNote) => n.kind === 'for' || n.kind === 'source
 
 export function ShoppingTable({
   title, hint, rows, showCategory = false, editing, onHand, setOnHand, setOnHandMany,
-  setOverride, clearOverride,
+  setOverride, clearOverride, headRight,
 }: {
   title: string;
   hint?: string;
   rows: readonly ShoppingRow[];
   showCategory?: boolean;
   editing: PriceEdit;
-  onHand: (id: string) => number;
-  setOnHand: (id: string, n: number) => void;
-  /** One state update for the whole table, so All/None over fourteen goods is
-   *  a single render rather than fourteen. */
-  setOnHandMany: (entries: [string, number][]) => void;
   setOverride: (id: string, n: number | null) => void;
   clearOverride: (id: string) => void;
-}) {
+  /** The Breakdown toggle, on whichever table renders first. */
+  headRight?: React.ReactNode;
+} & HandProps) {
   // Which rows have their per-recipe notes expanded. Per TABLE, not global:
   // the two tables are rendered from separate instances, and an expander is a
   // fact about the screen — it is deliberately not part of the saved plan.
   const [openNotes, setOpenNotes] = useState<ReadonlySet<string>>(() => new Set());
   if (rows.length === 0) return null;
-  const subtotal = rows.reduce((t, r) => t + (r.extAvg ?? 0), 0);
-
-  // A row is COVERED on its total on-hand, which includes whatever D5's
-  // netting is contributing; but All only ever writes the TYPED number, so it
-  // fills to what is still missing rather than to the full quantity. Without
-  // that, hitting All on a netted row would type in a count the player does
-  // not own and show the difference back to them as "N spare".
-  const netted = (r: ShoppingRow) => Math.max(0, r.onHand - onHand(r.id));
-  const covered = (r: ShoppingRow) => r.onHand >= r.quantity;
-  const fillTo = (r: ShoppingRow) => Math.max(onHand(r.id), r.quantity - netted(r));
-
-  // Two-state, like the calculator's: neither side lights while you are
-  // part-way through entering what you hold, which says more than a pair of
-  // momentary buttons where All lights and None never does.
-  const allOwned = rows.every(covered);
-  const noneOwned = rows.every((r) => onHand(r.id) === 0);
-  const setAll = (full: boolean) =>
-    setOnHandMany(rows.map((r) => [r.id, full ? fillTo(r) : 0]));
+  const hand = handMath(rows, onHand);
 
   const toggleNotes = (id: string) =>
     setOpenNotes((prev) => {
@@ -91,31 +76,8 @@ export function ShoppingTable({
 
   return (
     <section className="sl-table">
-      <div className="sl-thead">
-        <h3>
-          {title} <span className="sl-count">{rows.length}</span>
-          {hint && <span className="sl-thint">{hint}</span>}
-        </h3>
-        <div className="sl-thead-r">
-          {/* The calculator's control, shape for shape — and the master form of
-              the pill on every row below, which is the relationship it should
-              read as. */}
-          <span className="calc-tool">
-            <span className="calc-tool-lab">On hand</span>
-            <span className="calc-seg">
-              <button type="button" data-label="All" className={allOwned ? 'on' : undefined}
-                aria-pressed={allOwned} aria-label={`Own all ${title.toLowerCase()}`}
-                onClick={() => setAll(true)}>All</button>
-              <button type="button" data-label="None" className={noneOwned ? 'on' : undefined}
-                aria-pressed={noneOwned} aria-label={`Own none of the ${title.toLowerCase()}`}
-                onClick={() => setAll(false)}>None</button>
-            </span>
-          </span>
-          <span className="sl-sub">
-            <span className="sl-sub-l">Subtotal</span> <b><Money format={moneyCalc} value={subtotal} /></b>
-          </span>
-        </div>
-      </div>
+      <ShoppingSectionHead title={title} hint={hint} rows={rows} hand={hand}
+        setOnHandMany={setOnHandMany} right={headRight} />
 
       <div className="calc-lhead">
         <span>Ingredient</span><span className="h-hand">on hand</span><span>buy</span>
@@ -123,12 +85,7 @@ export function ShoppingTable({
       </div>
 
       {rows.map((r) => {
-        const have = onHand(r.id);
         const open = editing.rowId === r.id;
-        const crafting = netted(r);
-        // A row that D5's toggle covers on its own has nothing left for the
-        // player to own, so its pill would be a control with no second state.
-        const nothingToOwn = r.quantity - crafting <= 0;
         const recipeNotes = r.notes.filter(isRecipeNote);
         const notesOpen = openNotes.has(r.id);
         const overLimit = recipeNotes.length > RECIPE_NOTE_LIMIT;
@@ -182,73 +139,45 @@ export function ShoppingTable({
                     <i className="cl-edit-i" aria-hidden="true">✎</i>
                   </button>
                 </span>
-                {/* Rendered from `stalenessNote` rather than assembled here, for
-                    the same reason the notes are: step 4's Copy and CSV carry
-                    this sentence too, and a spreadsheet that disagreed with the
-                    page would be worse than one with no flag at all. It already
-                    ends "this one is moving", so it needs no label in front of
-                    it — that would say the same thing twice. */}
+                {/* Rendered from the lib rather than assembled here, for the
+                    same reason the notes are: the pivot shows the same two
+                    numbers, and a second view that disagreed with this one
+                    would be worse than no flag at all. ONE LINE here, stacked
+                    there — this row has the width for it and a 208px item
+                    column does not.
+                    The two numbers ARE the flag: it only exists because they
+                    diverged, and the amber is what marks them as a flag rather
+                    than as two more numbers, exactly as `Out of print` is
+                    marked by its own colour and nothing else. It must not
+                    acquire a direction — trade-good prices follow no reliable
+                    seasonal shape, so a forecast is not something this data
+                    can support. */}
                 {r.staleness && (
                   <span className="sl-stale">{stalenessNote(r.staleness, moneyCalc)}</span>
                 )}
-                {/* Trade 1 tokens are mostly auctioned as 10x bundles, so the
-                    number in the "buy" column is not a number you can actually
-                    ask for. A HINT only — it never moves a total, because
-                    auctions still sell singles and rounding fourteen goods up
-                    to lots would inflate a small plan by a third. */}
-                {(() => {
-                  const lot = lotHintFor(r);
-                  if (!lot) return null;
-                  return (
-                    <span className="sl-lot">
-                      usually sold in 10x lots — <b>{lot.lots}</b> lot{lot.lots === 1 ? '' : 's'}
-                      {lot.over > 0 && <> {lot.lots === 1 ? 'gets' : 'get'} you {lot.tokens},{' '}
-                        {lot.over} more than you need</>}
-                    </span>
-                  );
-                })()}
               </span>
 
               <span className="cl-hand">
-                {/* The master control's per-row form, and the calculator's
-                    pill exactly — one button whose label flips, so it reports
-                    the row's state as well as setting it. Disabled where
-                    netting already covers the row: there is no second state to
-                    toggle to, and the badge beside it says why. */}
-                <button type="button" className={`calc-all${covered(r) ? ' on' : ''}`}
-                  aria-pressed={covered(r)} disabled={nothingToOwn}
-                  aria-label={covered(r) ? `Own none: ${r.displayName}` : `Own all ${r.quantity}: ${r.displayName}`}
-                  onClick={() => setOnHand(r.id, covered(r) ? 0 : fillTo(r))}>
-                  {covered(r) ? 'None' : 'All'}
-                </button>
-                <span className="cl-stepper">
-                  <button type="button" className="cl-step" disabled={have <= 0}
-                    aria-label={`One fewer on hand: ${r.displayName}`}
-                    onClick={() => setOnHand(r.id, have - 1)}>−</button>
-                  {/* type=text, not number: number inputs cannot select(), and
-                      on iOS a tap drops the caret before the 0 so "2" becomes
-                      "20". inputMode keeps the numeric keypad. */}
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" enterKeyHint="next"
-                    aria-label={`On hand: ${r.displayName}`} value={have}
-                    onFocus={(e) => e.currentTarget.select()}
-                    onChange={(e) => setOnHand(r.id, e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0)} />
-                  {/* NOT disabled at the required quantity — D2. Owning more
-                      than the plan needs is a fact worth recording. */}
-                  <button type="button" className="cl-step"
-                    aria-label={`One more on hand: ${r.displayName}`}
-                    onClick={() => setOnHand(r.id, have + 1)}>+</button>
-                </span>
-                {/* D5's contribution, shown where the arithmetic is. The box
-                    beside it holds what the player TYPED, so a netted row
-                    otherwise reads "on hand 0, needed 3, buy 1" with the
-                    missing two explained nowhere on the row. */}
-                {crafting > 0 && (
-                  <span className="sl-netted">+{crafting} crafting</span>
-                )}
+                <ShoppingHandCell row={r} hand={hand} onHand={onHand} setOnHand={setOnHand} />
               </span>
 
               <span className="cl-buy">
                 {r.need > 0 ? r.need : <span className="cl-check" aria-label="covered">✓</span>}
+                {/* Trade 1 tokens are mostly auctioned as 10x bundles, so the
+                    number above this one is not a number you can actually ask
+                    for. A HINT only — it never moves a total, because auctions
+                    still sell singles and rounding fourteen goods up to lots
+                    would inflate a small plan by a third.
+                    UNDER THE COUNT rather than in a sentence beneath the item
+                    name: it fires on 8 of the 14 trade goods, which made
+                    near-permanent prose out of a per-row number and restated
+                    the general fact — that Trade 1 bundles at all — once per
+                    row. The table hint says that part once now, and both views
+                    render the arithmetic the same way. */}
+                {(() => {
+                  const lot = lotHintFor(r);
+                  return lot ? <span className="cl-lot">{lotHintLabel(lot)}</span> : null;
+                })()}
               </span>
 
               <span className="cl-unit">

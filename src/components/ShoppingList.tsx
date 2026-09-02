@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RecipeDrawer } from './RecipeDrawer';
 import { ShoppingTable } from './ShoppingTable';
+import { ShoppingPivot } from './ShoppingPivot';
 import { ShoppingFinal } from './ShoppingFinal';
 import { Money } from './Money';
 import { buildShoppingList, type ShoppingPick } from '../lib/shoppingList';
-import { loadShopping, saveShopping, clearShopping } from '../lib/shoppingStorage';
+import { loadShopping, saveShopping, clearShopping, type ShoppingView } from '../lib/shoppingStorage';
+import { WIDE, useMediaQuery } from '../hooks/useMediaQuery';
 import { moneyCalc } from '../lib/format';
 import type { IngredientPath } from '../lib/substitutions';
 import type { BuildCost, CostEngine } from '../lib/transmutes';
@@ -20,9 +22,15 @@ import type { BuildCost, CostEngine } from '../lib/transmutes';
 //
 // The plan SURVIVES A RELOAD, in localStorage and nowhere else — see
 // lib/shoppingStorage.ts for why there is no share link and why a server-side
-// code is impossible on static hosting rather than merely unbuilt. Three pieces
-// of state are saved: the picks, the on-hand counts and the corrected prices.
-// Everything else here describes the screen rather than the plan.
+// code is impossible on static hosting rather than merely unbuilt. What is
+// saved is the picks, the on-hand counts, the corrected prices, the netting
+// toggle and which BREAKDOWN the tables are drawn in. Everything else here
+// describes the screen rather than the plan.
+//
+// THE BREAKDOWN comes in two shapes and the second is desktop-only. `Notes`
+// puts the per-recipe demand under the item name, capped at two with a `+N
+// more`; `By recipe` puts it in columns — see ShoppingPivot for why the two
+// tables pivot differently and hooks/useMediaQuery.ts for why 1024px.
 //
 // PRICING IS NOT NEGOTIABLE HERE. The parent builds this view's engine with
 // `basis: 'today'` and no pinned price year, because the whole premise is that
@@ -56,6 +64,13 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
   // D5. Off by default and reversible: netting silently is how a plan stops
   // being checkable, so this is offered and never assumed.
   const [netCrafted, setNetCrafted] = useState(saved?.netCrafted ?? false);
+  // The reader's CHOICE, which is not the same as what is on screen. Below
+  // WIDE the pivot is not offered and the standard tables render whatever this
+  // says — the preference is kept rather than corrected, so a plan read in
+  // pivot on a laptop is still in pivot when the laptop comes back.
+  const [view, setView] = useState<ShoppingView>(saved?.view ?? 'standard');
+  const wide = useMediaQuery(WIDE);
+  const pivot = view === 'pivot' && wide;
 
   // Autosave. Every dependency here is part of the PLAN; which chips are
   // expanded and which price editor is open are facts about the screen and are
@@ -68,9 +83,13 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
   useEffect(() => {
     const empty = picks.length === 0 &&
       Object.keys(onHand).length === 0 && Object.keys(overrides).length === 0 && !netCrafted;
+    // `view` is deliberately absent from the emptiness test and present in what
+    // is written. It rides in the plan's entry, so an emptied plan still leaves
+    // NO entry — Clear list resets it alongside everything else, which is what
+    // keeps that true.
     if (empty) clearShopping();
-    else saveShopping({ picks, onHand, overrides, netCrafted });
-  }, [picks, onHand, overrides, netCrafted]);
+    else saveShopping({ picks, onHand, overrides, netCrafted, view });
+  }, [picks, onHand, overrides, netCrafted, view]);
 
   const byKey = useMemo(() => {
     const m = new Map<string, BuildCost>();
@@ -107,6 +126,7 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
     setOnHand({});
     setOverrides({});
     setNetCrafted(false);
+    setView('standard');
     setEditing(null);
     // The stored entry is removed by the autosave effect above, which sees the
     // emptied state. Calling clearShopping() here as well would be undone by
@@ -174,6 +194,38 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
   // of the source by hand, and the copy drops the count rather than offering
   // to count nothing.
   const chainUnits = shopping.chains.reduce((t, c) => t + c.netted, 0);
+
+  // The Breakdown toggle. It governs both working tables, the takeaway table
+  // and both exports, so no ONE table owns it — but it lived in the summary
+  // bar first and was two sections away from anything it changed, which made
+  // it hard to find. It rides in the header of whichever table renders FIRST
+  // instead: beside the master On hand control, in the place the reader is
+  // already looking when the breakdown is the thing bothering them.
+  //
+  // "Whichever renders first" rather than "Trade goods", because an empty
+  // table returns null — a plan of recipes that wanted no trade goods would
+  // take the toggle down with it.
+  const viewToggle = wide ? (
+    <span className="sl-view">
+      <span className="sl-view-l">Breakdown</span>
+      {/* `data-label` on every toggle button — the site rule: it feeds the
+          invisible bold ghost that reserves each button's active width, so the
+          control does not resize as the selection moves. */}
+      <span className="toggle-buttons" role="group" aria-label="Ingredient table layout">
+        <button type="button" data-label="Notes"
+          className={view === 'standard' ? 'on' : undefined}
+          aria-pressed={view === 'standard'} onClick={() => setView('standard')}>
+          Notes
+        </button>
+        <button type="button" data-label="By recipe"
+          className={view === 'pivot' ? 'on' : undefined}
+          aria-pressed={view === 'pivot'} onClick={() => setView('pivot')}>
+          By recipe
+        </button>
+      </span>
+    </span>
+  ) : null;
+  const toggleOn = shopping.trade.length > 0 ? 'trade' : 'additional';
 
   const chip = (p: Pick) => {
     const cost = byKey.get(p.key);
@@ -269,21 +321,56 @@ export function ShoppingList({ engine, path }: { engine: CostEngine; path: Ingre
             </div>
           )}
 
-          <ShoppingTable
-            title="Trade goods"
-            hint="one row per good, however many recipes want it"
-            rows={shopping.trade}
-            {...tableProps}
-          />
-          <ShoppingTable
-            title="Additional items"
-            hint="one row per token and season"
-            rows={shopping.additional}
-            showCategory
-            {...tableProps}
-          />
+          {pivot ? (
+            <>
+              {/* MATRIX for the trade goods, because they are dense: 12 to 14
+                  of the 14 rows are wanted by more than one recipe at every
+                  plan size, and the grid runs 42–64% full. This is the table
+                  the pivot exists for. */}
+              <ShoppingPivot
+                title="Trade goods"
+                hint="one row per good, one column per recipe · Trade 1 goods usually sell as 10x lots"
+                rows={shopping.trade}
+                making={shopping.making}
+                breakdown="matrix"
+                headRight={toggleOn === 'trade' ? viewToggle : undefined}
+                {...tableProps}
+              />
+              {/* SINGLE column, because these are a diagonal: at 29 picked
+                  recipes 31 of 35 rows belong to exactly one, and the matrix
+                  is 5% full. See ShoppingPivot's header for the measurement. */}
+              <ShoppingPivot
+                title="Additional items"
+                hint="one row per token and season, with the recipe that wants it"
+                rows={shopping.additional}
+                making={shopping.making}
+                breakdown="single"
+                showCategory
+                headRight={toggleOn === 'additional' ? viewToggle : undefined}
+                {...tableProps}
+              />
+            </>
+          ) : (
+            <>
+              <ShoppingTable
+                title="Trade goods"
+                hint="one row per good, however many recipes want it · Trade 1 goods usually sell as 10x lots"
+                rows={shopping.trade}
+                headRight={toggleOn === 'trade' ? viewToggle : undefined}
+                {...tableProps}
+              />
+              <ShoppingTable
+                title="Additional items"
+                hint="one row per token and season"
+                rows={shopping.additional}
+                showCategory
+                headRight={toggleOn === 'additional' ? viewToggle : undefined}
+                {...tableProps}
+              />
+            </>
+          )}
 
-          <ShoppingFinal list={shopping} />
+          <ShoppingFinal list={shopping} pivot={pivot} />
 
           <div className="sl-foot">
             <div className="sl-foot-row total">

@@ -20,11 +20,20 @@
 //   that does not check out is dropped rather than repaired, because a
 //   half-repaired plan is harder to notice than an empty one.
 
+/** Which shape the working tables are drawn in. A preference rather than a
+ *  fact about the screen — the chips' expander and the open price editor are
+ *  deliberately not saved, and this is saved, because it is a choice about how
+ *  the reader reads a plan rather than where they happen to have scrolled to.
+ *  It rides in the plan's own entry and is thrown away by Clear list along with
+ *  everything else, which is what keeps an emptied plan leaving NO entry. */
+export type ShoppingView = 'standard' | 'pivot';
+
 export type SavedShopping = {
   picks: { key: string; qty: number }[];
   onHand: Record<string, number>;
   overrides: Record<string, number>;
   netCrafted: boolean;
+  view: ShoppingView;
 };
 
 /** Versioned, so a future shape change starts clean instead of trying to read
@@ -95,6 +104,11 @@ export function loadShopping(): SavedShopping | null {
       onHand: numberMap(v.onHand),
       overrides: numberMap(v.overrides),
       netCrafted: v.netCrafted === true,
+      // Anything that is not the one non-default value reads as the default,
+      // which covers an entry written before this field existed as well as a
+      // hand-edited one. No migration and no version bump: a v1 entry is
+      // complete without it.
+      view: v.view === 'pivot' ? 'pivot' : 'standard',
     };
   } catch {
     // Corrupt JSON. Leave the entry in place rather than deleting it — this

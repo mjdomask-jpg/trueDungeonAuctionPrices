@@ -2864,3 +2864,145 @@ table.an-opens col.col-days { width: 16%; }
 @media (max-width: 640px) {
   .sl-clear { min-height: 40px; }
 }
+
+
+/* --- Shopping List: the pivot view (desktop only) ------------------------ */
+
+/* The view toggle, in the summary bar rather than in a table header: it changes
+   both working tables, the takeaway table and both exports, so no one table
+   owns it. Only rendered above 1024px — see WIDE in hooks/useMediaQuery.ts.
+   Shorter than the site's standard control height, because it shares a baseline
+   row with two pieces of running text rather than sitting in a controls bar. */
+.sl-view { display: flex; align-items: center; gap: 8px; }
+.sl-view-l { color: var(--text-d); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.sl-view .toggle-buttons { height: 26px; }
+.sl-view .toggle-buttons button { font-size: 11.5px; padding: 0 10px; }
+
+/* The pivot table itself.
+   `table-layout` is FIXED site-wide, which is what makes the frozen columns
+   possible: a column's width comes from the first row and nothing else, so the
+   `left` offsets below are cumulative constants rather than guesses. The FROZEN
+   columns therefore carry explicit widths and the recipe columns carry none —
+   they share whatever is left, which is wider than 112px when three recipes
+   have the page to themselves and exactly 112px once the inline min-width
+   forces the scroll. Nothing after the frozen group can move a frozen offset
+   either way. */
+.sl-pv-wrap { padding-bottom: 4px; }
+.sl-pv-scroll { overflow-x: auto; margin-top: 6px; }
+.sl-pv { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.sl-pv th, .sl-pv td {
+  padding: 7px 8px; border-bottom: 1px solid var(--border);
+  vertical-align: top; font-weight: 400; text-align: right;
+}
+.sl-pv thead th {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-d);
+  border-bottom-width: 2px; vertical-align: bottom;
+}
+.sl-pv tbody tr.done { opacity: 0.55; }
+.sl-pv .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* The frozen group. Cumulative `left` offsets, each the sum of the widths
+   before it — the numbers in --pv-frozen and these six declarations are one
+   fact written twice, so they change together or the columns overlap. */
+.sl-pv {
+  --pv-w-item: 208px; --pv-w-buy: 76px; --pv-w-hand: 172px; --pv-w-total: 58px;
+  /* 208 + 76 + 172 + 58. FOUR frozen columns, not six: $ ea and Cost were
+     pinned here too and the block ran to 682px — half a 1440px screen spent
+     before one recipe column was drawn. They ride at the far RIGHT of the
+     scrolling half now, so they scroll; the plan's money is in the section
+     subtotal, the takeaway table and the footer, none of which move. */
+  --pv-frozen: 514px;
+  /* Read-only (the takeaway table): on hand is a number, not a stepper, so
+     the column costs 62px instead of 172. 208 + 76 + 62 + 58. */
+  --pv-frozen-ro: 404px;
+  /* $ ea + Cost, unpinned and last. Counted into every min-width so the
+     recipe columns never squeeze them. */
+  --pv-w-unit: 76px; --pv-w-cost: 88px;
+  --pv-money: 164px;
+}
+.sl-pv .pv-item  { width: var(--pv-w-item); left: 0; text-align: left; }
+.sl-pv .pv-buy   { width: var(--pv-w-buy); left: 208px; }
+.sl-pv .pv-hand  { width: var(--pv-w-hand); left: 284px; text-align: left; }
+.sl-pv .pv-total { width: var(--pv-w-total); left: 456px; }
+.sl-pv-ro .pv-hand-ro { width: 62px; left: 284px; }
+.sl-pv-ro .pv-total { left: 346px; }
+/* Widths only — these two SCROLL, so they carry no offset and no sticky. */
+.sl-pv .pv-unit  { width: var(--pv-w-unit); }
+.sl-pv .pv-cost  { width: var(--pv-w-cost); }
+
+.sl-pv .pv-item, .sl-pv .pv-buy, .sl-pv .pv-hand, .sl-pv .pv-hand-ro,
+.sl-pv .pv-total {
+  position: sticky; z-index: 1;
+  /* Out of flow they lose the row's background, so each frozen cell paints its
+     own — otherwise the recipe columns scroll visibly underneath them. The
+     header cells sit above their own row's, hence the second z-index. */
+  background: var(--card);
+}
+.sl-pv thead .pv-item, .sl-pv thead .pv-buy, .sl-pv thead .pv-hand,
+.sl-pv thead .pv-hand-ro, .sl-pv thead .pv-total { z-index: 2; }
+/* The seam between the frozen group and the columns sliding under it. A border
+   on the cell would travel with the collapsed table border; a shadow does not,
+   and it reads as depth rather than as a seventh column rule. */
+.sl-pv .pv-total { box-shadow: 6px 0 6px -6px rgba(0, 0, 0, 0.28); }
+:root[data-theme='dark'] .sl-pv .pv-total { box-shadow: 6px 0 6px -6px rgba(0, 0, 0, 0.55); }
+
+.sl-pv .pv-nm { display: block; color: var(--text-h); }
+.sl-pv .pv-sub { display: block; font-size: 11px; color: var(--text-d); margin-top: 1px; }
+/* Two lines here, one in the Notes row: the item column is 208px where that
+   row has 400. The amber is what marks them as a flag rather than as two
+   more numbers — the trailing "this one is moving" is gone. */
+.sl-pv .sl-stale { display: block; margin-top: 2px; font-size: 10.5px; line-height: 1.35; }
+.sl-pv .pv-buy b { color: var(--text-h); font-size: 14px; }
+/* The 10x lot arithmetic, under the count it corrects. It was a sentence
+   beneath the item name and fired on 8 of the 14 trade goods — near-permanent
+   prose that set the item column's width and cost every flagged row a second
+   line. Both views render it here now, from one function. */
+.pv-lot, .cl-lot {
+  display: block; font-size: 10px; line-height: 1.3; margin-top: 2px;
+  color: var(--text-d); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* The on-hand cell: the shared pill and stepper, laid out for a table cell
+   rather than for the calculator's flex row — and trimmed, because here the
+   whole control is a frozen column competing with the breakdown for the screen.
+   The INPUT needs its own rule: the calculator's lives on ".cl-hand input",
+   and in a table cell there is no .cl-hand wrapper around it. */
+.sl-pv .pv-hand { white-space: nowrap; }
+.sl-pv .pv-hand .cl-stepper { display: inline-flex; vertical-align: middle; gap: 5px; }
+.sl-pv .pv-hand .calc-all { flex-basis: 44px; width: 44px; height: 28px; vertical-align: middle;
+  margin-right: 6px; }
+.sl-pv .pv-hand .cl-step { width: 28px; height: 28px; font-size: 16px; }
+.sl-pv .pv-hand input {
+  box-sizing: border-box; width: 44px; height: 28px; text-align: center;
+  padding: 0 3px; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-h);
+}
+.sl-pv .pv-hand input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+.sl-pv .pv-hand .sl-netted { display: block; text-align: left; margin-top: 3px; }
+
+/* A recipe column's heading: the name wraps over as many lines as it needs and
+   the copy count sits under it. Not rotated — a sideways name is dense and
+   slow, and the count under the name is what a reader checks most. */
+.sl-pv .pv-rx { text-align: right; vertical-align: bottom; line-height: 1.25;
+  /* The site-wide "thead th" is nowrap, which is right for every other header
+     on the site and wrong for this one: a 31-character recipe name has to wrap
+     inside 112px or it runs straight over the column beside it. */
+  white-space: normal; overflow-wrap: anywhere; }
+.sl-pv .pv-rx-nm { display: block; text-transform: none; letter-spacing: 0; font-size: 11px;
+  color: var(--text); font-weight: 500; }
+.sl-pv .pv-rx-n { display: block; color: var(--accent); font-variant-numeric: tabular-nums;
+  margin-top: 2px; }
+.sl-pv .pv-cell { color: var(--text-h); }
+/* An untouched cell is a MIDDOT, not a 0: a zero is a measured quantity and a
+   14x20 block of them is the noise the reader opened this view to see past. */
+.sl-pv .pv-nil { color: var(--border); }
+
+/* The degenerate column, for the table whose matrix is a diagonal. */
+.sl-pv .pv-for { width: 180px; text-align: left; white-space: normal; }
+.sl-pv .pv-for-1 { display: block; color: var(--text); }
+.sl-pv .pv-for-1 b { color: var(--text-h); font-variant-numeric: tabular-nums; }
+
+/* The price editor, spanning the whole row underneath it — the same editor the
+   standard table opens, in the one shape a table row can hold it. */
+.sl-pv .pv-edrow > td { padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
+.sl-pv .pv-edrow .cl-editor { margin: 0; }

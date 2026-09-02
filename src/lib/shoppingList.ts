@@ -60,6 +60,22 @@ export type ShoppingRow = {
   extAvg: number | null; // need x unitAvg
   extMin: number | null;
 
+  /** Pick key (`${year}|${transmute}`) -> how many of this good that ONE pick
+   *  accounts for, its own quantity already multiplied in. The pivot view's
+   *  cells and nothing else; the sum over it is `quantity`.
+   *
+   *  Keyed by the pick rather than by the transmute NAME, unlike the `for` and
+   *  `sourceFor` notes beside it. Two vintages of one transmute are two picks
+   *  with two different bills and two columns, and a column headed by a name
+   *  that stood for both would be summing things the reader chose separately.
+   *  The notes keep their own merge because a sentence naming a token twice
+   *  reads worse than one naming it once — a column cannot make that trade.
+   *
+   *  Source lines and ordinary fuel lines land in the SAME cell. The cell is a
+   *  count of what that recipe consumes, and the row-level `isSource` already
+   *  says the good is an upgrade source somewhere in the plan. */
+  byPick: Readonly<Record<string, number>>;
+
   isSource: boolean;
   outOfPrint: boolean;
   /** Set on trade goods whose season average has gone stale — see
@@ -104,7 +120,16 @@ export type ShoppingTotals = {
  *  and for the exports' preamble. The YEAR is carried because two vintages of
  *  one transmute are two different recipes with two different bills, and a
  *  summary that collapsed them would be summarising the wrong thing. */
-export type ShoppingMaking = { transmute: string; displayName: string; year: number; qty: number };
+export type ShoppingMaking = {
+  /** The pick's own key, `${year}|${transmute}` — the one thing that matches a
+   *  column to `ShoppingRow.byPick`. Carried rather than reassembled by the
+   *  caller, so the two cannot drift apart on the separator. */
+  key: string;
+  transmute: string;
+  displayName: string;
+  year: number;
+  qty: number;
+};
 
 export type ShoppingList = {
   trade: ShoppingRow[];
@@ -233,6 +258,12 @@ type Draft = {
   row: ShoppingRow;
   wanted: Map<string, number>; // transmute -> quantity, for the "For X xN" notes
   sourceFor: Map<string, number>;
+  /** pick key -> quantity, for the pivot view's cells. A THIRD accumulation
+   *  rather than a regrouping of the two above: those split sources from fuel
+   *  and merge the vintages together, and neither split is the one a column
+   *  wants. Deriving the numbers from the notes would make a sentence's
+   *  wording load-bearing for an arithmetic total. */
+  byPick: Map<string, number>;
 };
 
 /**
@@ -293,6 +324,7 @@ export function buildShoppingList(
             overridden: false,
             extAvg: null,
             extMin: null,
+            byPick: {},
             isSource: l.isSource,
             outOfPrint: isOutOfPrint(l, engine),
             staleness: null,
@@ -300,11 +332,13 @@ export function buildShoppingList(
           },
           wanted: new Map(),
           sourceFor: new Map(),
+          byPick: new Map(),
         };
         drafts.set(id, d);
       }
 
       d.row.quantity += qty;
+      d.byPick.set(pick.cost.key, (d.byPick.get(pick.cost.key) ?? 0) + qty);
       // A row can be a source on one recipe and plain fuel on another (the
       // 2024 Safehold III case), so `isSource` is true if it is ever one.
       if (l.isSource) {
@@ -373,6 +407,7 @@ export function buildShoppingList(
     if (r.section === 'trade') r.staleness = stalenessOf(r.good, engine);
 
     r.notes = orderedNotes(r, d, nettedQty);
+    r.byPick = Object.fromEntries(d.byPick);
     rows.push(r);
   }
 
@@ -394,6 +429,7 @@ export function buildShoppingList(
     additional,
     all,
     making: active.map((p) => ({
+      key: p.cost.key,
       transmute: p.cost.transmute,
       displayName: p.cost.displayName,
       year: p.cost.year,
@@ -477,6 +513,64 @@ export function lotHintFor(row: ShoppingRow): LotHint | null {
   return { lots, tokens, over: tokens - row.need };
 }
 
+/**
+ * The hint as it sits UNDER the buy count — `3 lots = 30`.
+ *
+ * It used to be a sentence under the item name: *"usually sold in 10x lots — 3
+ * lots get you 30, 4 more than you need"*. That fired on **8 of the 14** trade
+ * goods, which made it the second-longest thing on the row and, being nearly
+ * always on, prose the eye learns to skip. It also stated the general fact —
+ * that Trade 1 tokens bundle — once per row; the table says it once now, in its
+ * own header.
+ *
+ * What is left is the only part that is about THIS row: the number you can
+ * actually ask an auctioneer for, and what you will end up holding. The
+ * overage is dropped as a number and left as a subtraction the reader can do,
+ * because `26` and `= 30` are already side by side.
+ *
+ * Rendered here rather than in a component because BOTH views show it and a
+ * lot count that disagreed between them would be worse than none.
+ */
+export function lotHintLabel(lot: LotHint): string {
+  return `${lot.lots} lot${lot.lots === 1 ? '' : 's'} = ${lot.tokens}`;
+}
+
+// --- The pivot ------------------------------------------------------------
+
+/**
+ * The recipes one row actually belongs to, in the reader's own order.
+ *
+ * The pivot's columns are `list.making` — every active pick, whether or not a
+ * given row touches it — so this is not what draws the matrix. It is what the
+ * DEGENERATE case needs: measured over the real corpus the Additional Items
+ * table is a diagonal (at 29 picked recipes, 31 of its 35 rows belong to
+ * exactly one recipe and the matrix is 5% full), so that table names its one
+ * owner in a single column instead of scrolling 29 mostly-empty ones. The
+ * export's single-column form reads the same list.
+ *
+ * Trade goods are the opposite and are why the matrix exists at all: 12 to 14
+ * of their 14 rows are wanted by more than one recipe at every plan size, and
+ * the grid runs 42–64% full.
+ */
+export function recipesFor(
+  row: ShoppingRow,
+  making: readonly ShoppingMaking[],
+): ShoppingMaking[] {
+  return making.filter((m) => (row.byPick[m.key] ?? 0) > 0);
+}
+
+/** A pivot column's heading: the recipe and how many of it the plan is making.
+ *  The ×N is the COPY COUNT, while the cells below it are totals with that
+ *  count already multiplied in — one Ink line ×3 copies shows a column headed
+ *  `×3` over a cell reading 15.
+ *
+ *  The EXPORTS' form. The screen sets the same two pieces on two lines, so the
+ *  recipe name can wrap and the count sit under it — which no single string
+ *  does. A test pins both forms to the same pair rather than to each other. */
+export function pivotColumnLabel(m: ShoppingMaking): string {
+  return `${m.displayName} ×${m.qty}`;
+}
+
 // --- Wording -------------------------------------------------------------
 
 /**
@@ -500,12 +594,30 @@ export function noteLabel(n: ShoppingNote): string {
   }
 }
 
-/** The staleness row's sentence. States a FACT and stops: the measured season
- *  average, the measured recent one, and that the good is moving. It must not
- *  say which way it will go next — trade-good prices do not follow a reliable
- *  seasonal shape, and a page that guessed would be read as a forecast. */
+/**
+ * The staleness flag, as its two measured halves.
+ *
+ * TWO PARTS rather than one string, because the views set them differently: the
+ * Notes row joins them on one line, the pivot stacks them, and a pivot's item
+ * column is 208px wide where the sentence was 400.
+ *
+ * It states a FACT and stops. The two numbers ARE the fact — the flag only
+ * exists because they have diverged — and it must not acquire a direction:
+ * trade-good prices do not follow a reliable seasonal shape, so anything
+ * forward-looking would be read as a forecast the data cannot support.
+ *
+ * The trailing *"— this one is moving"* is gone. It was the longest clause here
+ * and it only restated the flag's own existence; what marks these as a flag
+ * rather than as two more numbers is the amber, exactly as the `Out of print`
+ * badge is marked by its own colour and nothing else.
+ */
+export function stalenessParts(s: Staleness, money: (n: number) => string): [string, string] {
+  return [`season avg ${money(s.seasonAvg)}`, `recent sales ${money(s.recentAvg)}`];
+}
+
+/** The one-line form, for a row with the width for it. */
 export function stalenessNote(s: Staleness, money: (n: number) => string): string {
-  return `season avg ${money(s.seasonAvg)} · recent sales ${money(s.recentAvg)} — this one is moving`;
+  return stalenessParts(s, money).join(' · ');
 }
 
 const byItem = (a: ShoppingRow, b: ShoppingRow) => a.displayName.localeCompare(b.displayName);
