@@ -368,6 +368,78 @@ console.log('4. Metadata hygiene (auctionMetadata.csv)');
 }
 
 // ===========================================================================
+// 4b. preorderTotal recomputes from the price rows under it
+// ===========================================================================
+// `preorderTotal` is a formula in the workbook, not a typed value, and it is
+// the sum of two QUERYs over `prices`:
+//
+//   max(Price where Item = 'Treasure Chip')  x  chips per 8K order
+// + max(Price where Item = 'Preorder Bonus') x  32
+//
+// It exists here because it went WRONG and nothing noticed. Treasure Chips
+// used to come 48 to an order in 3x lots — 16 physical lots — and `prices`
+// recorded the price of a 3x lot, so the formula multiplied by 16. In 2026 the
+// order became 50 chips in 10x lots, two lot sizes for one token. Rather than
+// carry both, the maintainer refactored `prices` to hold the PER-CHIP price
+// (2018-2025 divided by 3, 2026 by 10) — and the 2018-2025 formula kept its
+// x16. Every pre-2026 preorderTotal was a third of what it should have been,
+// on a column the site reads for Analytics -> Funding & Context. Corrected in
+// the 2026-09-03 publish; this section is what stops it recurring.
+//
+// The multiplier is CHIPS PER ORDER, which is a fact about the order and not
+// about the auction: 48 through 2025, 50 from 2026. Both halves of that were
+// confirmed by the maintainer. A season this table does not know is a NOTE
+// rather than a silent pass — when the order composition changes again, the
+// honest outcome is "nobody has told me what 2027 is", not a green tick.
+//
+// Deliberately checked against `prices.csv` rather than against the formula
+// text: the formula is not in the export, and a check that could only compare
+// two spreadsheet strings would have said nothing about the years of wrong
+// numbers underneath. The 133 auctions with no preorder rows at all reconcile
+// as 0 = 0, so the count reported is the one that is actually load-bearing.
+const CHIPS_PER_ORDER = [[2026, 50], [2018, 48]]; // [from season, chips], newest first
+const chipsPerOrder = (season) => (CHIPS_PER_ORDER.find(([from]) => season >= from) ?? [])[1] ?? null;
+const PREORDER_BONUS_PER_ORDER = 32;
+console.log('4b. preorderTotal reconcile (auctionMetadata.csv vs prices.csv)');
+{
+  const errs = [], notes = [];
+  let checked = 0, vacuous = 0;
+  const pricesByAuction = new Map();
+  for (const p of prices) {
+    if (!p.auctionId) continue;
+    if (!pricesByAuction.has(p.auctionId)) pricesByAuction.set(p.auctionId, []);
+    pricesByAuction.get(p.auctionId).push(p);
+  }
+  const maxPrice = (id, item) => {
+    const v = (pricesByAuction.get(id) ?? []).filter((r) => r.Item === item)
+      .map((r) => money(r.Price)).filter((x) => x != null);
+    return v.length ? Math.max(...v) : null;
+  };
+  const unknownSeasons = new Set();
+  for (const m of meta) {
+    if (!m.auctionId) continue;
+    const recorded = money(m.preorderTotal);
+    if (recorded == null) continue;
+    const season = Number(m.auctionSeason);
+    const chips = chipsPerOrder(season);
+    if (chips == null) { unknownSeasons.add(season); continue; }
+    const chip = maxPrice(m.auctionId, 'Treasure Chip');
+    const bonus = maxPrice(m.auctionId, 'Preorder Bonus');
+    if (chip == null && bonus == null) { vacuous++; }
+    else checked++;
+    const want = round2((chip ?? 0) * chips + (bonus ?? 0) * PREORDER_BONUS_PER_ORDER);
+    if (Math.abs(recorded - want) > 0.02)
+      errs.push(`${m.auctionId} "${m.auctionName}": preorderTotal is $${recorded} but its rows give $${want.toFixed(2)}`
+        + ` (Treasure Chip ${chip == null ? 'none' : '$' + chip} x ${chips}`
+        + `, Preorder Bonus ${bonus == null ? 'none' : '$' + bonus} x ${PREORDER_BONUS_PER_ORDER})`);
+  }
+  for (const s of [...unknownSeasons].sort())
+    notes.push(`season ${s} is not in CHIPS_PER_ORDER, so its preorderTotal was not checked — add the chips-per-8K-order count for that season`);
+  capped(err, errs); capped(note, notes);
+  if (!errs.length) ok(`${checked} auction(s) with preorder rows reconcile to their preorderTotal (${vacuous} more have no preorder rows and reconcile as $0)`);
+}
+
+// ===========================================================================
 // 5. A Price that is not a number, in every keyed price file
 // ===========================================================================
 // Two causes have been seen and neither is legitimate: "-" pasted out of the

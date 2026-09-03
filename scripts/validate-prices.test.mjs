@@ -123,6 +123,30 @@ const cases = [
     L[i] = c.join(','); return L.join('\n');
   }), /daysToClose is \d+ but .* day\(s\)/],
 
+  // § 4b exists because this column was wrong for years and nothing said so:
+  // the chips-per-order multiplier stayed at its pre-2026 value after `prices`
+  // was refactored to a per-chip figure, so every pre-2026 preorderTotal was a
+  // third of the truth. Two cases, because the check has two anchors and only
+  // one of them is the cell that was wrong.
+  //
+  // The metadata side. A sentinel, not an arithmetic near-miss: what is being
+  // pinned is that the column is recomputed at all.
+  ['4b preorderTotal that does not match its rows', () => edit('auctionMetadata.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('202642,'));
+    const c = L[i].split(','); c[c.length - 1] = '$1.00'; L[i] = c.join(',');
+    return L.join('\n');
+  }), /202642 .*preorderTotal is \$1 but its rows give \$/],
+
+  // The prices side, and a season-2026 auction so the 50-chip multiplier is
+  // the one exercised — 48 is already covered by every other row in the file.
+  // 202618 has no per-lot data, so this cannot also trip § 1 and leave the
+  // case passing on the wrong check's output.
+  ['4b a Treasure Chip price the preorderTotal no longer follows', () => edit('prices.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('202618,2026,18,Treasure Chip,'));
+    const c = L[i].split(','); c[4] = '9'; L[i] = c.join(',');
+    return L.join('\n');
+  }), /202618 .*preorderTotal is \$240 but its rows give \$.*Treasure Chip \$9 x 50/],
+
   ['5  a "-" price', () => edit('prices.csv', (t) =>
     t.replace('202642,2026,42,Aragonite,15,', '202642,2026,42,Aragonite,-,')),
     /has Price = "-"/],
