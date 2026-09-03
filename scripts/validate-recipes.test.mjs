@@ -1,5 +1,5 @@
 // Mutation test for validate-recipes.mjs's IngredientType agreement check
-// (docs/data-backlog.md item 5).
+// (docs/backlog.md DATA-5).
 //
 // A validator that has never seen a defect is a validator nobody has tested.
 // This copies public/data, injects one known defect into the COPY, and asserts

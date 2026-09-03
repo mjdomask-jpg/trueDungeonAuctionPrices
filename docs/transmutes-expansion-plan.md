@@ -628,9 +628,11 @@ suggestion box, optional Recipes-view badge.
 §3.6: global price-season selector, default Auto. The three forks §3.6 could not
 have anticipated — it predates the accuracy release — are settled as F1–F3 in §11.
 
-### Phase 8 — Could-haves: third-party prices (deferred)
+### Phase 8 — Could-haves: third-party prices (deferred) — tracked as `SITE-5`
 §2.3 + §1c: trenttokens build-time snapshot, auto-fill lowest price, buy link. Do
-last; re-confirm appetite for the infra first.
+last; re-confirm appetite for the infra first. **Pending status lives in
+[`backlog.md`](./backlog.md) as `SITE-5`** — this section is the design, not the
+list.
 
 ### Phase 9 — Alternative ingredients: Wish Ring ⇄ 15,000 GP — ✅ SHIPPED
 §3.8: model the Wish-Ring-or-15,000-GP choice on the 43 Legendary recipes that have
@@ -641,12 +643,15 @@ Phases 4–8, and corrects a number that is wrong in ~25% of seasons, which argu
 pulling it ahead of Phase 4 — but it should probably be decided *with* Phase 6, since
 both are line-level substitution and shouldn't grow two mechanisms.
 
-### Later / precision follow-ups
+### Later / precision follow-ups — moved to [`backlog.md`](./backlog.md)
+Both moved 2026-09-03, and both are still open:
 - Non-standard `Expires` dates beyond the standard rule (Ioun Stone Mystic Orb's March
-  expiry, Mark of Enlightenment's 1-year window) — author these into the `Expires`
-  column as Phase 4's date-windowed engine already reads them; verify each against the
-  data as it's entered.
-- Optional `localStorage` persistence of calculator inputs.
+  expiry, Mark of Enlightenment's 1-year window) — now **`SITE-6`**. Phase 4's
+  date-windowed engine already reads the column; measured 2026-09-03, the file still
+  carries exactly one non-blank `Expires`.
+- `localStorage` persistence of calculator inputs — now **`SITE-7`**. The selected
+  recipe persists; the on-hand counts do not, and that is now a correctness
+  decision rather than a scope one (§9 Q4 below).
 
 ---
 

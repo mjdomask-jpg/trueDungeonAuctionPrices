@@ -514,7 +514,8 @@ Cheap now while the code is small, painful later. Independent of which features 
 - **Introduce a normalized data layer.** Consider a small build-time step that reads the source
   CSVs (prices, metadata, onyx, recipes, token metadata, manual prices) and emits
   clean/typed JSON, doing the §3.5 normalization once. Source of truth stays CSV (spreadsheet-easy
-  to edit); the app consumes derived JSON.
+  to edit); the app consumes derived JSON. **Still deferred — tracked as `SITE-8` in
+  [`backlog.md`](./backlog.md)**, with the revisit trigger.
 
 ## 6. Proposed build order
 
@@ -559,6 +560,8 @@ muted-text brighten, and the curly→straight apostrophe normalization in recipe
 5. ~~**Open Auctions freshness**~~ — RESOLVED for now (2026-07-22): **deferred**, because the
    question is moot until the data changes. `auctionMetadata.csv` contains no `Open` rows at all,
    so the view has nothing to show. Revisit if a live-ish feed appears.
+   **Tracked as `SITE-1` in [`backlog.md`](./backlog.md)**, where the re-measurement
+   (289 of 289 rows still `Closed`, 2026-09-03) and the revisit trigger live.
 6. ~~**`Safehold` / `Patron` levels**~~ — RESOLVED / SHIPPED (Phase 4). All run through the one
    engine. `Safehold` is a self-contained V→I upgrade ladder (source lines point one rung down;
    cross-season source resolution handles rungs whose recipe lives in an earlier season). `Patron`,

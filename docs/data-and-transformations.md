@@ -408,7 +408,7 @@ unfinished authoring cannot produce), while authored-here-blank-there is a
 **WARN** (the engine reads the resolved category, so a blank cell falls back to
 `tokenMetadata`). The second is never an error because `IngredientType` is an
 optional column, and authoring an optional column must not turn a passing export
-into a failing one — see `docs/data-backlog.md` item 5. `npm run test:recipes`
+into a failing one — see `docs/backlog.md` `DATA-5`. `npm run test:recipes`
 mutation-tests both severities against a copy of `public/data`.
 
 **`npm run validate`** also runs `scripts/validate-context.mjs`, which mirrors

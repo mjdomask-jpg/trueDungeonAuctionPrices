@@ -622,7 +622,7 @@ category (which `isUltraRare` now does) makes the two agree. **It costs nothing
 today** — the token has its own hand-authored off-auction price of $140.00, so
 both lines price identically and never reach the tier — but it would start
 costing something the day that off-auction row went away. Worth an entry in
-`docs/data-backlog.md`; not worth a data edit inside a pricing PR.
+`docs/backlog.md`; not worth a data edit inside a pricing PR.
 
 This also corrects the handoff's own pinned-UR table: it listed the two-season
 pool for that line as **$111.50**, which is the *Ultra Rare tier's* 2017–2018

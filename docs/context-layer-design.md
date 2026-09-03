@@ -316,7 +316,8 @@ data.md` (export step for `contextItems.csv`, new metadata columns), `ui-convent
    the user opts in.
 3. **Transmute "most-withheld components" callout → deferred.** Transmutes stay untouched
    in core Phase 3; the callout is an optional stretch to revisit only after the core
-   layer ships cleanly.
+   layer ships cleanly. **The core layer has shipped and the callout has not** —
+   tracked as `SITE-4` in [`backlog.md`](./backlog.md), confirmed unbuilt 2026-09-03.
 
 None blocked Phase 3 step 1 (the data layer); these shape later UI steps.
 
