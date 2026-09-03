@@ -182,8 +182,13 @@ export function valueWithheld(item: RawContextItem, idx: PriceIndex): { value: n
 // never completed, so nothing was actually withheld or augmented, and the funding
 // analytics are per completed auction. This matches the explorer, which already
 // lists only Closed auctions (data.ts exploreAuctions). It also sidesteps a data
-// artifact — the one Failed auction carrying context rows (202518) has no close
+// artifact — 202518, the one Failed auction carrying context rows, has no close
 // date, so it couldn't be ordered for the point-in-time estimate anyway.
+//
+// 202518's rows are worth keeping in mind rather than in the data: they are a
+// withheld list for an auction that then failed to fund, which is a real thing
+// to have and a meaningless thing to average. Dropping them here is what lets
+// them be restored to the CSVs safely (backlog DATA-6).
 export function buildContextItems(
   raw: RawContextItem[], sales: Sale[], meta: AuctionMeta[],
 ): ContextItem[] {

@@ -52,7 +52,10 @@ export type AuctionMeta = {
   fundingNoAugment: number | null;
   preorderTotal: number | null;
   // How long the auction ran. Backfilled to every season (2018 on) as of
-  // 2026-08-14; still null for the 6 Failed/Open rows the sheet left blank.
+  // 2026-08-14, and populated on every row the sheet holds today. Still
+  // nullable, and not defensively: a Failed auction can end without a close
+  // date (202518 did), and an Open one has not ended at all. Null is left out
+  // of every average rather than read as zero.
   daysToClose: number | null;
   // SEASON months, not calendar months: month 1 is the season's first month
   // (≈ September of the previous calendar year), so a "2026" auction opening
@@ -692,8 +695,11 @@ function auctionNameMatches(m: AuctionMeta, needle: string): boolean {
 // the token half of the general search) selects which rows show inside them,
 // and prunes auctions left matching nothing.
 //
-// Only Closed auctions are listed. The five Failed ones recorded no sales
-// anyway, so this drops empty rows rather than any price data.
+// Only Closed auctions are listed, and that is all `Failed` needs from this
+// file: a failed auction did not fund, so it has no sales, so listing it would
+// put an empty auction on the page. `status !== 'Closed'` covers Open and
+// Failed alike — which is why DATA-6 could give `Status` a third value without
+// touching a line of the site (backlog DATA-6).
 //
 // The general search spans both levels: an auction whose NAME matches keeps all
 // its rows, and any token whose name matches keeps its row. That is what makes

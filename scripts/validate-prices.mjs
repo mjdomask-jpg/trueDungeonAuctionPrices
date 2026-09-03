@@ -318,6 +318,30 @@ console.log('4. Metadata hygiene (auctionMetadata.csv)');
       if (!v) { if (m.Status === 'Closed') warns.push(`${where}: Closed but ${f} is empty`); continue; }
       if (!ISO.test(v)) errs.push(`${where}: ${f} "${v}" is not zero-padded YYYY-MM-DD`);
     }
+    // `Status` and `outcome` are one fact written twice, so they have to agree.
+    //
+    // `Status` is a formula — `IF(outcome<>"", outcome, IF(closeDate="",
+    // "Open", "Closed"))` — and in the workbook the two CANNOT disagree. That
+    // is exactly why this is checked here: every routine update to this data is
+    // a PASTE, a paste carries values rather than formulas, and a pasted
+    // `Status` is a plain string that no longer recomputes. A disagreement is
+    // therefore the signature of the formula having been overwritten — the same
+    // failure that froze `augmentated` at "No" for the life of an auction until
+    // OPEN_DERIVED_FIELDS caught it.
+    //
+    // Both directions are errors, and they say different things. `outcome` set
+    // with a `Status` that ignores it means the formula is gone. `Status` of
+    // `Failed` with `outcome` blank means the reverse — a value typed straight
+    // into a derived column, which the next recalculation will silently undo.
+    const outcome = String(m.outcome ?? '').trim();
+    if (outcome && m.Status !== outcome) {
+      errs.push(`${where}: outcome is "${outcome}" but Status is "${m.Status}" — Status should compute from ` +
+        'outcome, so this row has lost its formula (a paste overwrites it)');
+    }
+    if (!outcome && m.Status === 'Failed') {
+      errs.push(`${where}: Status is "Failed" but outcome is blank — Failed comes FROM outcome, so either ` +
+        'the outcome cell was not filled in or Status was typed over its own formula');
+    }
     if (ISO.test(m.openDate) && ISO.test(m.closeDate)) {
       const span = Math.round((Date.parse(m.closeDate) - Date.parse(m.openDate)) / 86400000);
       // An auction that opens and closes on the same date is a one-day auction,
@@ -474,10 +498,22 @@ console.log('5. Non-numeric prices (prices.csv, onyx.csv, rawPricesData.csv)');
 // 5b. An auction that has lost all of its prices
 // ===========================================================================
 // A row in `auctionMetadata` with nothing in `prices.csv` is an auction that
-// silently disappeared from every statistic on the site. It has never been a
-// legitimate state: measured over all 289 auctions of nine seasons, every one
-// carries price rows — a failed auction is DELETED from the metadata rather
-// than left empty, which is the settled convention (maintainer, 2026-08-26).
+// silently disappeared from every statistic on the site. For a CLOSED auction
+// it has never been a legitimate state: measured over all 289 auctions of nine
+// seasons, every one carries price rows.
+//
+// THERE IS NOW ONE LEGITIMATE EMPTY ROW, and it is why this check grew a
+// condition. A `Failed` auction did not fund, so it sold nothing, so it has no
+// price rows BY DEFINITION — and until 2026-09-03 the way that was handled was
+// to DELETE the whole row, which is what made "every metadata row has prices"
+// true in the first place. `Status` can now say `Failed` (backlog DATA-6), so
+// the row survives its own failure and lands here empty and legitimate.
+//
+// Exempting it costs this check nothing. `Failed` is not a state a Closed
+// auction can drift into by accident: it is set by hand in `outcome`, § 7
+// fences that column to one value, and § 4 refuses a row whose `outcome` and
+// `Status` disagree. The bug this check was written for is a CLOSED auction
+// losing its rows, and every Closed auction is still tested for it.
 //
 // WHY THIS EXISTS. Correcting the 20193/20196 transposition re-keyed 20195's
 // twenty rows onto 20193 instead of swapping the intended pair, leaving 20193
@@ -493,14 +529,33 @@ console.log('5. Non-numeric prices (prices.csv, onyx.csv, rawPricesData.csv)');
 console.log('5b. Every auction still has prices (auctionMetadata.csv vs prices.csv)');
 {
   const priced = new Set(prices.map((r) => r.auctionId));
-  const errs = [];
+  const errs = [], notes = [];
+  let exempt = 0;
   for (const m of meta) {
-    if (!m.auctionId || priced.has(m.auctionId)) continue;
+    if (!m.auctionId) continue;
+    if (m.Status === 'Failed') {
+      // The other direction of the same agreement, and worth having: a failed
+      // auction sold nothing, so rows under it are either a wrong `outcome` or
+      // — far more likely, and the defect this data set produces most often —
+      // rows keyed onto the wrong auction. A note rather than an error, because
+      // which way it resolves is a judgement call and erroring would block a
+      // publish on one.
+      if (priced.has(m.auctionId)) {
+        notes.push(`${m.auctionId} "${m.auctionName}" is Failed but HAS rows in prices.csv — ` +
+          'a failed auction sold nothing, so either the outcome is wrong or these rows belong to another auction');
+      } else exempt++;
+      continue;
+    }
+    if (priced.has(m.auctionId)) continue;
     errs.push(`${m.auctionId} "${m.auctionName}" (${m.auctionSeason}, ${m.auctioneer}) is in auctionMetadata ` +
       'but has NO rows in prices.csv — the auction has lost its prices, or its rows were re-keyed onto another auction');
   }
-  capped(err, errs);
-  if (!errs.length) ok(`all ${meta.filter((m) => m.auctionId).length} auction(s) in auctionMetadata carry price rows`);
+  capped(err, errs); capped(note, notes);
+  if (!errs.length) {
+    const tested = meta.filter((m) => m.auctionId && m.Status !== 'Failed').length;
+    ok(`all ${tested} auction(s) that could carry price rows do` +
+      (exempt ? `; ${exempt} Failed auction(s) correctly carry none` : ''));
+  }
 }
 
 // ===========================================================================
@@ -592,8 +647,16 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
   // auctionStyle and the rows must agree in both directions. 16 auctions
   // violated this before the 2026-08-21 backfill; the count is zero today, so
   // any violation from here is a genuine defect rather than a backlog.
+  //
+  // `auctionStyle` predicts an auction's CONTENT, so it predicts nothing about
+  // an auction that never had any: a Failed auction did not fund and sold no
+  // tokens, and its style is what it WOULD have been. Both directions of this
+  // check are therefore Closed-only — without the guard a failed Onyx auction
+  // is a hard ERROR ("style says Onyx but onyx.csv has no rows") on a row that
+  // is exactly right, and that error blocks every publish until someone deletes
+  // the row again.
   for (const m of meta) {
-    if (!m.auctionId) continue;
+    if (!m.auctionId || m.Status === 'Failed') continue;
     const styled = /onyx/i.test(m.auctionStyle || '');
     const hasRows = onyxByAuction.has(m.auctionId);
     if (styled && !hasRows) errs.push(`${m.auctionId} "${m.auctionName}": auctionStyle "${m.auctionStyle}" says Onyx but onyx.csv has no rows`);
@@ -625,7 +688,7 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
     prices.filter((r) => r.auctionId && /^(Rare|Uncommon) Bag$/.test(r.Item)),
     (r) => r.auctionId, (r) => r);
   for (const m of meta) {
-    if (!m.auctionId) continue;
+    if (!m.auctionId || m.Status === 'Failed') continue;  // sold nothing — see above
     const style = m.auctionStyle || '';
     const isCondensed = CONDENSED_ONLY.test(style) && !CONDENSED_EXCLUDES.test(style);
     const hasBags = bagsByAuction.has(m.auctionId);
@@ -709,13 +772,28 @@ console.log('7. Closed vocabularies (auctionMetadata.csv, prices.csv, onyx.csv, 
     }
   }
 
-  // The four hand-typed vocabulary columns. `Status` and `augmentated` are
-  // genuinely closed — both are the output of a two-way decision — so anything
-  // outside them is an error. `auctionStyle` and `completionStyle` may grow.
+  // The vocabulary columns. `Status`, `outcome` and `augmentated` are genuinely
+  // closed — each is the output of a decision with a fixed set of answers — so
+  // anything outside them is an error. `auctionStyle` and `completionStyle` may
+  // grow, because auctioneers invent formats.
+  //
+  // `Status` is DERIVED, not typed: since DATA-6 the formula is
+  // `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))`, so its third
+  // value arrives from `outcome` rather than from a keystroke. It is still
+  // checked here because a paste bypasses the sheet entirely, and a pasted
+  // `Status` is just a string like any other.
+  //
+  // `outcome` is the one hand-typed column of the three and it is blank on
+  // nearly every row — blanks are skipped below, so the fence only ever sees
+  // rows someone deliberately marked. It holds `Failed` today. `Cancelled` is
+  // the obvious second member and is deliberately NOT pre-allowed: adding a
+  // value here should be a decision, and an unrecognised one should stop a
+  // publish rather than ride along.
   const COLUMNS = [
     { field: 'auctionStyle', closed: false },
     { field: 'completionStyle', closed: false },
-    { field: 'Status', closed: true, allowed: ['Open', 'Closed'] },
+    { field: 'Status', closed: true, allowed: ['Open', 'Closed', 'Failed'] },
+    { field: 'outcome', closed: true, allowed: ['Failed'] },
     { field: 'augmentated', closed: true, allowed: ['Yes', 'No'] },
   ];
   for (const col of COLUMNS) {

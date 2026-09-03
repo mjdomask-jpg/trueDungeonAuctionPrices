@@ -38,7 +38,7 @@
  * `HARDEN_`/`harden`.
  */
 
-var HARDEN_VERSION = '2026-08-24.1';
+var HARDEN_VERSION = '2026-09-03.1';
 
 /**
  * Columns holding a price, by tab and header. Numeric-only validation goes on
@@ -102,6 +102,23 @@ var HARDEN_VOCABULARY = [
     'Semi-Lightning',               //   7
   ] },
   { tab: 'contextItems', header: 'category', grows: false, values: ['token', 'grunnel', 'withheld', 'augment'] },
+
+  // `outcome` is DATA-6's column, and it is `pending` because the workbook does
+  // not have it yet — this entry lands before the column does, on purpose, so
+  // that the day someone adds it the fence is already written and the harden
+  // pass proposes the dropdown on its next run rather than a season later.
+  //
+  // `pending` changes ONE thing: a missing column is reported as a note naming
+  // this entry instead of as a problem. That distinction is the whole point of
+  // the flag — for every other column here, absent means RENAMED, which is a
+  // problem and must stay one. Remove the flag once the column exists, and the
+  // note goes back to being the alarm it should be.
+  //
+  // It is `grows: false` while `auctionStyle` beside it is `grows: true`, and
+  // the two are opposite for a reason: styles are invented by auctioneers and
+  // arrive unannounced, outcomes are decided here. `Cancelled` is the obvious
+  // second member and is deliberately not offered until someone decides it is.
+  { tab: 'auctionMetadata', header: 'outcome', grows: false, pending: true, values: ['Failed'] },
 ];
 
 // `augmentated` is NOT here, and the reason is worth keeping. It reads like the
@@ -296,7 +313,7 @@ function hardenPlan(book) {
   }
   for (i = 0; i < HARDEN_VOCABULARY.length; i++) {
     var v = HARDEN_VOCABULARY[i];
-    wanted.push({ tab: v.tab, header: v.header, rule: 'list', values: v.values, grows: v.grows });
+    wanted.push({ tab: v.tab, header: v.header, rule: 'list', values: v.values, grows: v.grows, pending: v.pending });
   }
 
   for (i = 0; i < wanted.length; i++) {
@@ -305,7 +322,16 @@ function hardenPlan(book) {
     if (!tab) { problems.push('no tab named "' + want.tab + '" — cannot validate its ' + want.header + ' column'); continue; }
     var at = hardenFindColumn(tab.headers, want.header);
     if (at === -1) {
-      problems.push('tab "' + want.tab + '" has no "' + want.header + '" column — its headers are: ' + tab.headers.join(', '));
+      // A column this script expects and cannot find is normally a RENAME, and
+      // a rename silently drops a fence — so it is a problem. `pending` is the
+      // one case where absence is expected rather than alarming: the entry was
+      // written before the column was added. See HARDEN_VOCABULARY's `outcome`.
+      if (want.pending) {
+        notes.push(want.tab + ' has no "' + want.header + '" column yet — this rule is waiting for it. ' +
+          'Add the column and re-run, then drop `pending` from its entry so a later rename is an alarm again.');
+      } else {
+        problems.push('tab "' + want.tab + '" has no "' + want.header + '" column — its headers are: ' + tab.headers.join(', '));
+      }
       continue;
     }
     var column = tab.columns[at] || { formulas: [], values: [] };

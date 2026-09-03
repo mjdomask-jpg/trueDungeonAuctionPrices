@@ -39,6 +39,55 @@ const edit = (file, fn) => {
   writeFileSync(p, after);
 };
 
+// --- shape helpers ----------------------------------------------------------
+//
+// Two cases below need to reach a column by NAME rather than by position, and
+// on this file that is not the same as splitting on commas: `targetFunding` and
+// the augment rollups are quoted money ("$8,000.00"), so a data row splits into
+// more fields than the header has. Counting from the END is exact, because
+// every quoted column sits before the two these helpers touch.
+//
+// Written this way because DATA-6 adds a column. A case that says "the last
+// field is preorderTotal" is not testing the validator, it is testing the
+// current column count — and it goes red on the PUBLISH PR the day the workbook
+// gains an eleventh input, which is where a red check is worst.
+// These files are CRLF and `lines()` splits on \n, so every line here still
+// carries its \r. It is not decoration: appending a column after it would bury
+// a carriage return in the middle of a row. So each helper peels the \r off,
+// works, and puts it back — which is also why none of them uses a bare
+// `line + ',value'`.
+const splitLine = (line) => {
+  const cr = line.endsWith('\r');
+  return { cells: (cr ? line.slice(0, -1) : line).split(','), cr };
+};
+const joinLine = ({ cells, cr }) => cells.join(',') + (cr ? '\r' : '');
+
+const fieldFromEnd = (headerLine, name) => {
+  const { cells } = splitLine(headerLine);
+  const at = cells.indexOf(name);
+  if (at === -1) throw new Error(`no ${name} column`);
+  return cells.length - at;
+};
+const setFromEnd = (row, back, value) => {
+  const parts = splitLine(row);
+  parts.cells[parts.cells.length - back] = value;
+  return joinLine(parts);
+};
+
+// `outcome` may or may not be in the export yet — it is DATA-6's new column and
+// the workbook gains it independently of this repo. Either way it is LAST, so
+// these two work on both shapes and neither leaves a ragged row behind.
+const hasOutcome = (headerLine) => splitLine(headerLine).cells.includes('outcome');
+const appendField = (line, value) => {
+  const parts = splitLine(line);
+  parts.cells.push(value);
+  return joinLine(parts);
+};
+const withOutcomeColumn = (L) => (hasOutcome(L[0])
+  ? L
+  : [appendField(L[0], 'outcome'), ...L.slice(1).map((l) => appendField(l, ''))]);
+const setOutcome = (row, value) => setFromEnd(row, 1, value);
+
 // [name, mutate, expected message, level] — level defaults to 'error', meaning
 // the run must also exit non-zero. 'warn' cases must be reported and must NOT
 // fail the run.
@@ -133,7 +182,7 @@ const cases = [
   // pinned is that the column is recomputed at all.
   ['4b preorderTotal that does not match its rows', () => edit('auctionMetadata.csv', (t) => {
     const L = lines(t); const i = L.findIndex((l) => l.startsWith('202642,'));
-    const c = L[i].split(','); c[c.length - 1] = '$1.00'; L[i] = c.join(',');
+    L[i] = setFromEnd(L[i], fieldFromEnd(L[0], 'preorderTotal'), '$1.00');
     return L.join('\n');
   }), /202642 .*preorderTotal is \$1 but its rows give \$/],
 
@@ -171,6 +220,51 @@ const cases = [
 
   // 5c is the check § 6's row-count warning was shaped around rather than
   // catching: 202219 held 40 rows and the warning called that "two sets".
+  // § 5b. THE CHECK HAD NO CASE AT ALL until DATA-6 loosened it, which is the
+  // worst moment to discover that: a check nobody has fired is a check nobody
+  // knows still works. These two pin the loosening from both sides — the bug it
+  // was written for still fails, and the state it was loosened FOR still passes.
+  //
+  // The bug: 20195's twenty rows were once re-keyed onto 20193, leaving 20195
+  // with none, and the full validator passed. Deleting every price row for one
+  // CLOSED auction is that shape exactly.
+  ['5b a Closed auction that has lost every price row', () => edit('prices.csv', (t) =>
+    lines(t).filter((l) => !l.startsWith('20181,2018,1,')).join('\n')),
+    /20181 .* is in auctionMetadata but has NO rows in prices\.csv/],
+
+  // And the state it was loosened for. A FAILED auction did not fund, so it
+  // sold nothing and carries no price rows — that is correct data, not loss.
+  //
+  // Built as a whole new row rather than by mutating an existing one, and that
+  // is deliberate: mutating a real auction into a failure would mean deleting
+  // its price rows too, which strands its rawPricesData lots and fires a
+  // different check. A fresh auction number in a season that has one free is
+  // the only edit that touches nothing else.
+  ['5b a Failed auction with no price rows is legitimate', () => edit('auctionMetadata.csv', (t) => {
+    const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
+    // Built field by field off the live header rather than typed out, so the
+    // row stays correct however many columns the export has. Every value here
+    // is one a human types; the formula columns are left empty on purpose,
+    // which is also what they look like in an export of a row like this.
+    const fields = splitLine(L[0]).cells.map((h) => ({
+      auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+      auctionName: 'A 2018 auction that did not fund',
+      auctionStyle: 'Super Condensed', completionStyle: 'Fixed Date', auctioneer: 'Wade S',
+      Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+      openDate: '2018-10-01', Status: 'Failed', outcome: 'Failed',
+    }[h] ?? ''));
+    return [...L, fields.join(',')].join('\n') + '\n';
+  }), /Failed auction\(s\) correctly carry none/, 'warn'],
+
+  // The other direction of § 5b: rows under an auction that sold nothing. This
+  // is the wrong-auction defect wearing a new hat, and it is a NOTE — which way
+  // it resolves is a judgement call, and erroring would block a publish on one.
+  ['5b a Failed auction that HAS price rows is a note', () => edit('auctionMetadata.csv', (t) => {
+    const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
+    return L.map((l, i) => (i > 0 && l.startsWith('20181,2018,1,')
+      ? setOutcome(l.replace(',3,Closed,', ',3,Failed,'), 'Failed') : l)).join('\n') + '\n';
+  }), /20181 .* is Failed but HAS rows in prices\.csv/, 'warn'],
+
   ['5c an Onyx item recorded twice for one auction', () => edit('onyx.csv', (t) => {
     const L = lines(t); const i = L.findIndex((l) => l.startsWith('20222,2022,2,+2 Chaos Cannon,'));
     L.splice(i + 1, 0, L[i].replace(/,\$[\d.]+,/, ',$999.00,')); return L.join('\n');
@@ -230,12 +324,36 @@ const cases = [
     t.replace(',Super Condensed,Fixed Date,Wade S,', ',Quantum Condensed,Fixed Date,Wade S,')),
     /auctionStyle: 9 distinct value\(s\)/, 'warn'],
 
-  // `Status` is a formula — `IF(closeDate="","Open","Closed")` — so `Failed` is
-  // unrepresentable in the sheet today (workbook-findings.md, Issue 3). The
-  // check exists for the day that changes, and for a hand-edited export.
-  ['7  Status outside its two values', () => edit('auctionMetadata.csv', (t) =>
+  // `Status` is a formula — since DATA-6 it is
+  // `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))` — so its
+  // three values are the only ones it can produce. This case is the fourth
+  // value, and `Cancelled` is chosen on purpose: it is the plausible next
+  // member of the vocabulary, and it must be a DECISION to add rather than
+  // something that rides in on a publish.
+  ['7  Status outside its three values', () => edit('auctionMetadata.csv', (t) =>
+    t.replace('2018-09-27,2018-09-30,3,Closed,', '2018-09-27,2018-09-30,3,Cancelled,')),
+    /Status "Cancelled" is not Open or Closed or Failed/],
+
+  // § 4. `Status` and `outcome` are one fact written twice. In the workbook they
+  // cannot disagree — one computes from the other — so a disagreement in the
+  // EXPORT means the formula was pasted over, which is how `augmentated` once
+  // froze at "No" for the life of an auction.
+  ['4  Status says Failed but outcome is blank', () => edit('auctionMetadata.csv', (t) =>
     t.replace('2018-09-27,2018-09-30,3,Closed,', '2018-09-27,2018-09-30,3,Failed,')),
-    /Status "Failed" is not Open or Closed/],
+    /Status is "Failed" but outcome is blank/],
+
+  ['4  outcome is set but Status ignores it', () => edit('auctionMetadata.csv', (t) => {
+    const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
+    return L.map((l, i) => (i > 0 && l.startsWith('20181,2018,1,') ? setOutcome(l, 'Failed') : l)).join('\n') + '\n';
+  }), /outcome is "Failed" but Status is "Closed"/],
+
+  // A new `outcome` value must NOT ride along the way a new auctionStyle does.
+  // The two columns look alike and are fenced oppositely on purpose: styles are
+  // invented by auctioneers, outcomes are decided here.
+  ['7  a new outcome value does not ride along', () => edit('auctionMetadata.csv', (t) => {
+    const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
+    return L.map((l, i) => (i > 0 && l.startsWith('20181,2018,1,') ? setOutcome(l, 'Cancelled') : l)).join('\n') + '\n';
+  }), /outcome "Cancelled" is not Failed/],
 
   ['7  augmentated says TRUE instead of Yes', () => edit('auctionMetadata.csv', (t) =>
     t.replace(/,"\$8,000\.00",No,/, ',"$8,000.00",TRUE,')),

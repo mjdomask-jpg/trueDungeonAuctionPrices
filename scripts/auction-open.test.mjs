@@ -375,8 +375,21 @@ console.log('\nSeason inference\n');
     if (got.season === r.auctionSeason && !/ASSUMED/.test(got.how)) placed++;
     else missed.push(r);
   }
-  eq('276 of the 289 recorded rows are placed by their open date alone', placed, 276);
-  check('  ... and all 13 that are not are a season\'s own first or last auction',
+  // NOT `eq(placed, 276)`, which is what this was. That number is a tally over
+  // the shipped CSV, so the workbook can move it without anything being wrong —
+  // and a tally in a test is a red check on the PUBLISH PR, where it reads as
+  // the publish being broken. DATA-6 will move it directly: five failed
+  // auctions come back and the corpus goes from 289 rows to 294.
+  //
+  // Nothing is lost by dropping it, because the assertion underneath is
+  // strictly stronger. "276" only ever said HOW MANY rows the rule places; the
+  // next check says the ones it does not place are exactly a season's first or
+  // last auction, which is the property the rule is supposed to have. A rule
+  // that started misplacing mid-season auctions would still fail there, and it
+  // would fail there whatever the corpus size.
+  check(`every one of the ${META.length} recorded rows is either placed or flagged (${placed} placed)`,
+    placed + missed.length === META.length && placed > 0, `${placed} + ${missed.length} vs ${META.length}`);
+  check('  ... and every row that is NOT placed is a season\'s own first or last auction',
     missed.every((r) => {
       const span = O.openSeasonSpans(META).find((s) => s.season === r.auctionSeason);
       return r.openDate === span.first || r.openDate === span.last;
@@ -1105,11 +1118,14 @@ console.log('\nSheet coercion on the round trip\n');
 // silently. That is what a real cleanup of promoted test data left behind.
 //
 // The awkward part, and the reason the note matters more than the clearing:
-// current practice DELETES a failed auction's row rather than marking it —
-// `Status` is `IF(closeDate="","Open","Closed")` and cannot express `Failed` —
-// so "promoted, then gone" is equally what a failed auction looks like.
-// Nothing here can tell deleted test data from a failed auction, so the row is
-// reopened, the tick is forced off, and the note says both readings.
+// "promoted, then gone" is not only what deleted test data looks like. Until
+// DATA-6 it was equally what a FAILED auction looked like, because `Status` was
+// `IF(closeDate="","Open","Closed")` and the only way to record a failure was
+// to delete the row. A failure now keeps its row and says so in `outcome`, so
+// the reading has shifted — but every auction that failed before the column
+// existed was deleted under the old habit, and habits outlive columns. So the
+// behaviour is unchanged: reopened, tick forced off, and the note now says
+// which reading is the likely one.
 console.log('\nStale promoted markers\n');
 {
   eq('a marker yields the id it claims', O.openPromotedId('promoted 202648'), '202648');
@@ -1150,8 +1166,8 @@ console.log('\nStale promoted markers\n');
     /WAS PROMOTED as 202649/.test(String(after[0][16])) &&
     /no row with that auctionId is in auctionMetadata/.test(String(after[0][16])),
     String(after[0][16]));
-  check('  ... and warns that a FAILED auction looks identical',
-    /FAILED and its row was deleted on purpose, leave it unticked/.test(String(after[0][16])),
+  check('  ... and says which reading is likely, without claiming to know',
+    /deleted on purpose/.test(String(after[0][16])) && /check before re-ticking/.test(String(after[0][16])),
     String(after[0][16]));
 
   // A marker that is still true is left completely alone.

@@ -57,7 +57,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | ID | Item | Blocked on |
 |---|---|---|
 | **DATA-1** | The 50 GP Idol chase set is only half modeled | nothing — data authoring |
-| **DATA-6** | A failed auction has no representation, so its row is deleted | a maintainer decision on shape |
+| **DATA-6** | A failed auction has no representation, so its row is deleted | **the workbook only** — shape decided, repo side shipped, dry-run green |
 | **DATA-8** | Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum | a decision, then careful authoring |
 | **SITE-2** | Transmute row height at 375px | the maintainer's real-phone verdict; **do not act unsolicited** |
 | **SITE-3** | Shopping List drawer row names ellipsize | a flex-layout rework |
@@ -255,67 +255,94 @@ check; if no row matches the shape it reports STALE rather than FAIL.
 
 ---
 
-## DATA-6. A failed auction has no representation, so its row is deleted — OPEN
+## DATA-6. A failed auction has no representation, so its row is deleted — REPO SIDE DONE, WAITING ON THE WORKBOOK
 
-**Now:** `Status` is a formula — `IF(closeDate = "", "Open", "Closed")` — so the
-column has exactly two reachable values and **`Failed` is not one of them**. All
-289 rows read `Closed` (re-measured 2026-09-03), and none has a blank `closeDate`.
+**Shape decided (2026-09-03): an `outcome` column that feeds the `Status`
+formula.** `Status` stays derived; it just reads one more input first:
 
-An auction that fails to fund is therefore handled by **deleting its
-`auctionMetadata` row**. That is current practice and it works, in the sense that
-nothing downstream is wrong.
+```
+=IF(outcome <> "", outcome, IF(closeDate = "", "Open", "Closed"))
+```
 
-**Why it matters:** three things follow.
+`outcome` is blank on an ordinary auction and `Failed` on one that did not fund.
+Everything the repo needs is merged. The workbook does not have the column yet,
+and that is the whole of what is left — the operator's steps are in
+`updating-the-data.md` § *Recording a failed auction*.
 
-1. **Auction numbers are permanently burned.** Six are missing across the
-   recorded era — 2020 has no 8, 2025 no 18, 25 or 31, 2026 no 3 or 38 — and the
-   sequence is legitimately sparse rather than corrupt. This is why
-   `auctionOpen.gs` numbers from `max + 1` and never `count + 1`; counting would
-   propose 2026's 46, which exists. The gap is the *only* surviving trace that an
-   auction happened at all.
-2. **Failure-rate data is lost for good.** Which auctioneers' auctions fail, and
-   whether `Lightning` fails more often than `Fixed Date`, are questions the data
-   cannot answer and never will for auctions already deleted. Nothing on the site
-   asks them today, which is exactly why the loss is invisible.
-3. **The auction-open scanner cannot tell a failure from a mistake.** Since
-   `2026-08-31.3`, `openMergeReview` clears a `promoted <id>` marker whose
-   `auctionId` is no longer in `auctionMetadata`, so the review row can be
-   approved again. But "promoted, then the row is gone" is *equally* a failed
-   auction and deleted test data, and nothing in the script can separate them. So
-   it reopens the row, forces the tick off, and asks the operator in a note —
-   every time, for ever. A `Failed` state would make that question answerable
-   instead of asked.
+### Why this shape, and where the old entry was wrong
 
-**One correction to the plan.** `data-pipeline-plan.md`'s Phase 4 follow-on
-question says retaining failed rows "would cost nothing visually" because
-`Failed` has no dedicated UI and is only ever "not `Closed`". That is not right as
-written. `openAuctions()` in `src/lib/data.ts` filters `status === 'Open'`, and it
-feeds the live-auction banner on both the Dashboard and the Explorer with an
-"opened N days ago" line. A retained failed row keeps a blank `closeDate`, so
-`Status` computes `Open`, and the auction would sit on that banner **for ever**
-with a counter that climbs. Retaining rows is only free once a third state exists
-— which is the point of this item, not an argument against it.
+This entry recommended a standalone `outcome` column with `Status` left alone,
+and dismissed "widening `Status`" as giving up the formula. Those are not the
+only two options, and the third is better than both: an **input** column that
+`Status` computes from is not the same thing as typing `Status` by hand. It
+keeps every guarantee the formula provides — `Status` and `closeDate` cannot
+drift apart, and `auctionOpen.gs`'s promote step can still copy the column down
+rather than write it (`OPEN_DERIVED_FIELDS`).
 
-**Done looks like:** a state a failed auction can actually be in, without the
-banner adopting it. The two shapes worth weighing:
+**And the entry's "one correction to the plan" was itself only true of the shape
+it recommended.** It said the plan was wrong to claim retaining failed rows
+"would cost nothing visually", because `openAuctions()` filters `status ===
+'Open'` and a retained row with a blank `closeDate` computes `Open` — so it
+would sit on the live-auction banner for ever. That is exactly right *if*
+`Status` keeps only two values. Where `Status` itself says `Failed`, it does
+not arise: every consumer of `status` in the app tests for exactly `Closed`
+(`closedOnly`, `seasonRows`, `explorerOptions`, `buildContextItems`,
+`exploreAuctions`) or exactly `Open` (`openAuctions`), so a third value is
+skipped by both. **The site needed no change at all.** The plan was right; the
+correction applied to one shape and was written as though it applied to the
+question.
 
-- **A separate column** — `outcome`, say, holding `Funded` / `Failed` /
-  `Cancelled`, left blank for the ordinary case. `Status` keeps its formula and
-  its meaning, `openAuctions()` gains an `outcome !== 'Failed'` guard, and the row
-  survives with its `openDate`, `auctioneer` and `completionStyle` intact — which
-  is all the failure-rate analysis needs.
-- **Widening `Status` itself**, which means giving up the formula and typing the
-  column by hand. Cheaper in columns and worse in every other way: it removes the
-  guarantee that `Status` and `closeDate` agree, and `auctionOpen.gs`'s promote
-  step relies on that formula being copied down rather than written (see
-  `OPEN_DERIVED_FIELDS`).
+### What the failure actually costs, re-measured
 
-Either way it is a **data-model change with a UI consequence**, so it wants
-deciding rather than drifting: `validate-prices.mjs` would need the new vocabulary
-in its § 7 checks, `publishToSite.gs`'s allow-list would need the column, and the
-eight sheet-backed CSVs would gain one field. Deleting the row stays perfectly
-serviceable until someone wants to ask a question about failures — the cost is
-that by then the answers for past seasons are already gone.
+The three consequences the old entry listed were sound, and one of them is now
+partly recoverable:
+
+1. **Auction numbers are permanently burned.** Still true as a rule, and still
+   why `auctionOpen.gs` numbers from `max + 1` rather than `count + 1`. But the
+   burned numbers are not all unrecoverable — see below.
+2. **Failure-rate data is lost for good.** *Not for good.* The five deleted rows
+   are in this repository's history, at `b4196af^`, complete with `openDate`,
+   `closeDate`, `daysToClose`, `auctioneer`, `completionStyle` and
+   `targetFunding` — which is everything the failure-rate questions need. So is
+   `202518`'s set of thirteen withheld `contextItems` rows. A restore is written
+   out in `updating-the-data.md`.
+3. **The auction-open scanner cannot tell a failure from a mistake.** Improved,
+   not solved, and deliberately so. A failure now keeps its row, so "promoted,
+   then gone" *should* mean deleted test data — but every auction that failed
+   before the column existed was deleted under the old habit, and the habit
+   outlives the column. `openMergeReview` still clears the marker, still forces
+   the tick off, and now says which reading is the likely one.
+
+`20208` is not one of the five. Season 2020's missing 8 was an all-`n/a`
+placeholder row (`Hayward 8`) removed by the 2019–20 backfill — no failure was
+recorded there and there is nothing to restore.
+
+### What shipped
+
+| Where | What |
+|---|---|
+| `validate-prices.mjs` § 7 | `Status` accepts `Failed`; `outcome` joins the fenced columns at one value. `Cancelled` is deliberately not pre-allowed — a second outcome should be a decision, not a paste |
+| `validate-prices.mjs` § 4 | New: `outcome` and `Status` must agree. In the workbook they cannot disagree, so a disagreement in the export means the formula was pasted over — the same failure that once froze `augmentated` at `No` |
+| `validate-prices.mjs` § 5b | A `Failed` row is exempt from "every auction carries price rows" (it sold nothing). The reverse is a note: a `Failed` auction that HAS rows is a wrong outcome, or rows on the wrong auction |
+| `validate-prices.mjs` § 6 | Both `auctionStyle` agreement loops skip `Failed`. Without this a failed **Onyx** auction is a hard error on a correct row, and it would block every publish |
+| `validate-prices.test.mjs` | § 5b had **no case at all** before this — the check the file calls the largest silent data loss it can catch had never been fired. It now has one from each side, plus three for `outcome`. 41 cases, all passing |
+| `hardenSheet.gs` | An `outcome` dropdown, `grows: false`, marked `pending` so a column that does not exist yet is a note rather than an alarm. Its test pins both halves: quiet while absent, fence the moment it appears |
+| `auctionOpen.gs` | The stale-marker note now says which reading is likely |
+| `auction-open.test.mjs` | `eq(placed, 276)` de-pinned. It was a tally over the shipped CSV, the restore moves it to 294, and a tally in a test is a red check on the **publish** PR |
+| `data.ts`, `context.ts` | Comments only — they described five `Failed` rows that had not existed since they were deleted |
+
+**Dry-run.** The full workbook change — new column, five restored rows, thirteen
+context rows — was applied to `public/data` and the whole gate run against it:
+`npm run validate` 0 errors and the same 7 standing warnings, `npm run build`
+clean, all ten test suites passing. § 5b reports `5 Failed auction(s) correctly
+carry none`.
+
+### What is left
+
+The two workbook edits, in `updating-the-data.md` § *Recording a failed
+auction*: add the column, change the formula. Then, optionally, the restore.
+Once the harden pass has run against the real column, drop `pending: true` from
+its `HARDEN_VOCABULARY` entry so a later rename is an alarm again.
 
 ---
 
@@ -471,11 +498,15 @@ correctly disappeared when the row went to `Closed`. The metadata has read
 289 of 289 `Closed` ever since, which is why the empty path is the one anybody
 looking at the site today will see.
 
-**The `DATA-6` interaction survives this and is the live risk.** `Status` is
-`IF(closeDate = "", "Open", "Closed")`, so a failed auction retained with a blank
-`closeDate` would compute `Open` and sit on that banner **for ever**, with a
-"days ago" counter that climbs. That is why `DATA-6` says retaining rows is only
-free once a third state exists.
+**The `DATA-6` interaction was the live risk, and the shape chosen removes it.**
+The danger was real: with `Status` at two values, a failed auction retained with
+a blank `closeDate` computes `Open` and sits on this banner **for ever**, with a
+"days ago" counter that climbs. `DATA-6` resolved to an `outcome` column that
+feeds the formula instead, so a failed row computes `Failed` — and
+`openAuctions()` filters `status === 'Open'` exactly, so it is skipped with no
+guard and no change to this component. Worth keeping in mind rather than
+forgetting: the risk lived in the *shape*, and a different shape would have
+brought it straight back.
 
 ---
 

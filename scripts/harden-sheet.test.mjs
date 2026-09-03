@@ -177,10 +177,37 @@ const validated = new Set(kinds('validate').map((a) => `${a.tab}!${a.header}`));
 for (const c of H.HARDEN_PRICE_COLUMNS) {
   ok(validated.has(`${c.tab}!${c.header}`), `no numeric validation proposed for ${c.tab}!${c.header}`);
 }
-for (const v of H.HARDEN_VOCABULARY) {
+for (const v of H.HARDEN_VOCABULARY.filter((v) => !v.pending)) {
   ok(validated.has(`${v.tab}!${v.header}`), `no dropdown proposed for ${v.tab}!${v.header}`);
 }
 console.log(`  ✓ ${kinds('validate').length} validation rule(s), covering every price and vocabulary column`);
+
+// A PENDING entry is one written before its column exists (DATA-6's `outcome`).
+// Both halves matter and they pull in opposite directions, so both are pinned:
+// while the column is absent the run must stay quiet, and the moment it appears
+// the fence must go up. A `pending` flag that silenced the second half would be
+// a fence that never gets built.
+for (const v of H.HARDEN_VOCABULARY.filter((v) => v.pending)) {
+  const key = `${v.tab}!${v.header}`;
+  eq(validated.has(key), false, `${key} is pending, so no rule should be proposed for it yet`);
+  ok(plan.notes.some((n) => n.includes(`no "${v.header}" column yet`)),
+    `${key} is pending and absent, but nothing said so — it would wait for ever in silence`);
+  ok(!plan.problems.some((pr) => pr.includes(`"${v.header}"`)),
+    `${key} is pending, so its absence must not be reported as a problem`);
+
+  // Now give the workbook the column and re-plan. This is the day the
+  // maintainer adds it, and the rule has to appear on its own.
+  const withColumn = buildBook(FILES);
+  const tab = withColumn.tabs[v.tab];
+  tab.headers = [...tab.headers, v.header];
+  tab.columns = [...tab.columns, { formulas: tab.columns[0].formulas.map(() => ''), values: tab.columns[0].values.map(() => '') }];
+  const after = H.hardenPlan(withColumn);
+  ok(after.actions.some((a) => a.kind === 'validate' && a.tab === v.tab && a.header === v.header),
+    `${key} exists now but no dropdown was proposed — the pending rule never fires`);
+  ok(!after.notes.some((n) => n.includes(`no "${v.header}" column yet`)),
+    `${key} exists now but the waiting note is still printed`);
+  passed++;
+}
 
 // Every formula column is protected, and only formula columns are.
 const protectedCols = new Set(kinds('protect').map((a) => `${a.tab}!${a.header}`));
@@ -229,6 +256,15 @@ console.log('\n=== 5. the dropdowns still match the data ===');
 for (const v of H.HARDEN_VOCABULARY) {
   const rows = parseCSV(readFileSync(join(dataDir, `${v.tab}.csv`), 'utf8')).filter((r) => r.length > 1);
   const at = rows[0].indexOf(v.header);
+  // A pending column is absent from the CSVs BY DEFINITION, so "the dropdown
+  // matches the data" has nothing to compare. Asserted rather than skipped: if
+  // the column has quietly appeared, the entry has outlived its flag and this
+  // comparison should start running.
+  if (v.pending) {
+    eq(at, -1, `${v.tab}.csv now HAS an ${v.header} column — drop \`pending\` from its HARDEN_VOCABULARY entry`);
+    passed++;
+    continue;
+  }
   if (!ok(at >= 0, `${v.tab}.csv has no ${v.header} column`)) continue;
   const actual = new Set(rows.slice(1).map((r) => (r[at] ?? '').trim()).filter(Boolean));
   const missing = [...actual].filter((a) => !v.values.includes(a));

@@ -112,8 +112,8 @@ it in the Google Sheet and re-export — not in the CSV, or your fix disappears
 next time.
 
 `INFO` lines (`·`) are normal and can be ignored — a season with no auction data
-falling back to earlier prices, an auction-number gap left by a deleted `Failed`
-row, the skipped link check.
+falling back to earlier prices, an auction-number gap left by a `Failed` row
+deleted before there was a way to mark one, the skipped link check.
 
 **Warnings (`!`) are not automatically fine.** Two of them are standing — known
 and decided — so the useful question is not "are there warnings" but *"is this
@@ -372,12 +372,14 @@ if you delete that auction from `auctionMetadata`, the next scan notices its
 `notes`** — otherwise the row would sit there looking approvable and quietly
 doing nothing.
 
-> **Read that note before re-approving.** Deleting a promoted row is also how a
-> **failed** auction is recorded — `Status` is
-> `IF(closeDate = "", "Open", "Closed")` and cannot say `Failed`, so the row is
-> removed instead. The script cannot tell a failed auction from deleted test
-> data, so it reopens the row either way and leaves the decision to you. If the
-> auction failed, leave it unticked.
+> **Read that note before re-approving.** Deleting a promoted row *used* to be
+> how a **failed** auction was recorded, because `Status` could not say `Failed`
+> — so "promoted, then gone" was as likely a failure as deleted test data. A
+> failure now keeps its row and says so in `outcome`, so a missing row should
+> mean it was removed on purpose. *Should*: every auction that failed before
+> that column existed was deleted under the old habit, and the habit outlives
+> the column. So the script still reopens the row either way and leaves the
+> decision to you.
 
 If the auction has also come off its listing so nothing proposes it any more,
 the row is kept as history with its status rewritten to
@@ -388,7 +390,7 @@ so it is left alone by every later scan.
 
 | | |
 |---|---|
-| `auctionNumber` | `max` of that season plus one, never `count` plus one. Failed auctions are deleted, so the numbers are sparse — 2026 is missing 3 and 38, 2025 is missing 18, 25 and 31. Counting would propose 46, which already exists. |
+| `auctionNumber` | `max` of that season plus one, never `count` plus one. The numbers are sparse where failed auctions were deleted before `outcome` existed — 2026 is missing 3 and 38, 2025 is missing 18, 25 and 31. Counting would propose 46, which already exists. Restoring those rows closes the gaps but does not change the rule: `max + 1` is right either way, and only `max + 1` survives a season that ends on a failure. |
 | `auctionId` | The season and the number run together, the way all 289 recorded rows are built. |
 | `openDate` | The forum's exact first-post timestamp, not "5 days ago". For Trent, the start date his page states. For the auction site, the card's `Starts:` date — its `Ends:` line is read and then deliberately not used. |
 | `auctioneer` | The forum display name — or the auction site's `Sponsor:` line — mapped to the name you already use: `Wade Schwendemann (Dr. Uid)` to `Wade S`, `alesiev - Alex` to `alesiev`, `Alesiev (Alex)` to `alesiev`, `Nick` to `Nick Braun`. A name it cannot map is flagged as new rather than guessed. |
@@ -1378,7 +1380,8 @@ change.
 | `auctionSeason` | **Yes** | Four-digit year, e.g. `2026`. |
 | `auctionNumber` | **Yes** | Sequence within the season, e.g. `47`. |
 | `auctionName` | **Yes** | Free text, shown to users. May contain commas — the sheet quotes them correctly on export. |
-| `Status` | **Yes** | **Derived, not typed.** The sheet computes it as `IF(closeDate = "", "Open", "Closed")`, so it is `Open` exactly while `closeDate` is empty and `Closed` once you fill it in. **`Failed` cannot be produced by that formula** — see the rules below. All 289 rows read `Closed` today. |
+| `Status` | **Yes** | **Derived, not typed.** The sheet computes it as `IF(outcome <> "", outcome, IF(closeDate = "", "Open", "Closed"))`. So it reads `Failed` when you mark `outcome`, otherwise `Open` while `closeDate` is empty and `Closed` once you fill it in — three values, all of them computed. Never type into this column: a typed value stops recomputing and the validators reject the disagreement it creates. |
+| `outcome` | Optional | **The only way to record a failure.** Blank on an ordinary auction; `Failed` on one that did not fund. It is the input `Status` reads, which is what lets a failed auction keep its row instead of being deleted — see *Recording a failed auction* below. `Failed` is the only value the validators accept; `Cancelled` is the obvious second one and adding it should be a decision, not a paste. |
 | `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated on **all 289 rows** — none blank, none `n/a`. Because `Status` keys off this column, clearing it is what makes an auction show as live. See the padding warning below. |
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
@@ -1394,16 +1397,17 @@ change.
 - **Only `Status = Closed` auctions are counted.** Anything else is loaded but
   excluded from every count and statistic. **Today that is every row: all 289
   are `Closed`, and there are no `Open` or `Failed` rows at all.**
-- **`Failed` is not a value you can set.** `Status` is the formula
-  `IF(closeDate = "", "Open", "Closed")`, which can only ever produce those two
-  strings. A failed auction is therefore **deleted** rather than marked, which
-  is why `auctionNumber` sequences have permanent gaps — `202518`, `202525`,
-  `202531`, `20263` and `202638` are the known ones. A gap is expected; a
-  *duplicate* number is not.
-  > The site treats `Failed` identically to any non-`Closed` row, so nothing
-  > renders differently either way. Recording failures instead of deleting them
-  > would need a separate flag column feeding
-  > `IF(failed, "Failed", IF(closeDate = "", "Open", "Closed"))`.
+- **A failed auction is marked, not deleted.** Put `Failed` in `outcome` and
+  leave the row alone. `Status` picks it up, every count and statistic on the
+  site skips it exactly as it skips an `Open` row, and the auction keeps its
+  number, its dates, its auctioneer and its target.
+  > This changed on 2026-09-03 (backlog DATA-6). Before it, `Status` was
+  > `IF(closeDate = "", "Open", "Closed")` and could not say `Failed` at all, so
+  > the row was **deleted** — which is why `auctionNumber` sequences have
+  > permanent gaps at `202518`, `202525`, `202531`, `20263` and `202638`, and at
+  > `20208` for a different reason (an empty placeholder). **Those five rows are
+  > recoverable and their restore is written out below.** A gap is expected; a
+  > *duplicate* number is not.
 - **`Open` auctions are surfaced separately** by the live "open auctions" banner
   (top of Prices) and the "Open auctions" section (top of Auction Data). Both
   read `Status = Open` directly and are independent of every page filter. Since
@@ -1424,6 +1428,116 @@ change.
   existed from 2022 on, and the Analytics Current Year view excluded the earlier
   seasons for that reason. All nine seasons (2018–2026) are now dated, so
   `seasonsWithCadence()` admits every one of them.
+
+### Recording a failed auction
+
+An auction that does not fund keeps its row. Put `Failed` in `outcome` and stop
+there — do not clear the dates, do not touch `Status`, do not delete anything.
+
+The site needs no change to cope with it, and that is not luck: every place that
+reads `Status` asks whether it is exactly `Closed` (counts, statistics, the
+explorer, the context layer) or exactly `Open` (the live-auction banner). A
+third value is skipped by both, so a failed auction disappears from the
+statistics and never appears on the banner, which is what you want.
+
+Two checks in `validate-prices.mjs` know about it, and both exist because a
+failed auction breaks a rule that is otherwise sound:
+
+- **§ 5b** normally errors on a metadata row with no rows in `prices.csv` — an
+  auction that lost its price history. A failed auction sold nothing, so it is
+  exempt. The other direction is a note: a `Failed` auction that *has* price
+  rows is either a wrong `outcome` or rows keyed onto the wrong auction.
+- **§ 6** normally requires `auctionStyle` and the rows to agree in both
+  directions. `auctionStyle` predicts an auction's *contents*, and a failed
+  auction has none, so it is skipped. Without this an Onyx auction that failed
+  is a hard error on a row that is exactly right.
+
+#### Setting the sheet up (once)
+
+This has not been done in the workbook yet. Two edits, in this order:
+
+1. **Add an `outcome` column at the far right of `auctionMetadata`**, after
+   `preorderTotal`. At the end, not inserted — the publish serialises the tab in
+   sheet order, so appending keeps the CSV diff to one new field per row. The
+   publish will report the header change as a caution on its first run after
+   this; that is expected, and it says so once.
+2. **Change the `Status` formula** from
+
+   ```
+   =IF(closeDate = "", "Open", "Closed")
+   ```
+
+   to
+
+   ```
+   =IF(outcome <> "", outcome, IF(closeDate = "", "Open", "Closed"))
+   ```
+
+   — with `outcome` written as the actual cell reference for that row, the same
+   way the existing formula names `closeDate`. Copy it down the whole column.
+
+Then run **Harden the sheet**. It already carries the rule for `outcome` and is
+waiting for the column: until the column exists it prints a note saying so, and
+the first run after you add it proposes the reject-only dropdown. Once that has
+happened, drop `pending: true` from the `outcome` entry in `HARDEN_VOCABULARY`
+so that a later *rename* of the column goes back to being an alarm.
+
+#### The five rows that were deleted before this existed
+
+Failure was recorded by deletion for as long as there was no way to record it,
+so five auctions were removed outright. **They are not lost** — they are in this
+repository's history, at `b4196af^`, complete with dates, auctioneer, style and
+target. Restoring them is optional and it is the only reason any of the failure
+questions can be asked about past seasons.
+
+Paste these into `auctionMetadata` as new rows. **Only the input columns are
+here.** Everything else in that tab computes — `auctionId`, `Status`,
+`daysToClose`, `Open Month`, `Close Month`, `augmentated`, the three `augment*`
+rollups, `augmentedTotal`, `fundingNoAugment`, `preorderTotal` — so copy the
+formula columns down from the row above rather than typing them. Writing over a
+derived column is the bug `OPEN_DERIVED_FIELDS` exists to prevent.
+
+| `auctionSeason` | `auctionNumber` | `auctionName` | `auctionStyle` | `completionStyle` | `auctioneer` | `openDate` | `closeDate` | `targetFunding` | `outcome` |
+|---|---|---|---|---|---|---|---|---|---|
+| 2025 | 18 | Jon 8k super condensed auction | Super Condensed | Fixed Date | Jon | 2024-10-05 | *(blank)* | $7,777.00 | Failed |
+| 2025 | 25 | (Token of Time) 2025 8k Super-Condensed Auction | Super Condensed | Fixed Date | Lord Brian | 2024-11-08 | 2024-12-21 | $7,500.00 | Failed |
+| 2025 | 31 | $8K Onyx Auction #2 With Golden Ticket! | Ultra Condensed | Semi-Lightning | Mike Steele | 2024-12-28 | 2025-01-08 | $7,500.00 | Failed |
+| 2026 | 3 | 2026 8k Super Condensed Lightning Auction! | Super Condensed | Lightning | Ralykam | 2025-09-25 | 2025-10-09 | $7,500.00 | Failed |
+| 2026 | 38 | Mike's $8K Augmented Auction w/ Golden Ticket! | Super Condensed | Lightning | Mike Steele | 2026-01-05 | 2026-02-13 | $8,000.00 | Failed |
+
+Their `Link` values are in the repo at that same commit and are too long for the
+table; take them from `git show b4196af^:public/data/auctionMetadata.csv`.
+
+**202518 also had thirteen `contextItems` rows**, all `withheld`, and they went
+with it. They are worth restoring for the same reason — a withheld list for an
+auction that then failed to fund is a real thing to have. The site drops them
+(`buildContextItems` keeps Closed auctions only), so they add nothing to any
+statistic and cannot distort one:
+
+> Patron Pin (1), Ultra Rare (1), Alchemist's Ink (9), Alchemist's Parchment
+> (3), Aragonite (3), Darkwood Plank (13), Dwarven Steel (10), Elven Bismuth
+> (3), Minotaur Hide (8), Mystic Silk (15), Oil of Enchantment (3),
+> Philosopher's Stone (10), 1,000 GP Gold Bar (5)
+
+Paste `auctionSeason`, `auctionNumber`, `category` (`withheld`) `Item` and
+`quantity` only. **Do not paste the old `priceAugmented` values** — that column
+is a `QUERY` on withheld rows, so copy the formula down from an existing
+withheld row and let it recompute. The historical values were correct for the
+prices of the day and are not correct now.
+
+#### 20208 is not one of these
+
+Season 2020 is also missing a number 8, and it is a different thing: `20208`
+was a placeholder row — name `Hayward 8`, every other field `n/a` — removed by
+the 2019–20 backfill. There is nothing to restore and no failure recorded.
+
+#### It has been dry-run
+
+The whole change — the new column, the five rows, the thirteen context rows —
+was applied to `public/data` and the full gate run against it on 2026-09-03:
+`npm run validate` clean at 0 errors and the same 7 standing warnings,
+`npm run build` clean, and every test suite passing. § 5b reports
+`5 Failed auction(s) correctly carry none`.
 
 ### What `preorderTotal` counts
 
