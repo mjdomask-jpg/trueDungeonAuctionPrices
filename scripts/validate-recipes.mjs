@@ -338,7 +338,7 @@ for (const [k, values] of expiresByRecipe) {
   }
 }
 
-// ---------- IngredientType agreement across lines (docs/data-backlog.md item 5) ----------
+// ---------- IngredientType agreement across lines (docs/backlog.md DATA-5) ----------
 // `IngredientType` is a property of the TOKEN, not of the recipe consuming it,
 // so every line naming the same Item should carry the same value. It is also an
 // OPTIONAL column, and this file's closing rule is that authoring an optional

@@ -412,18 +412,12 @@ while `Buy` held 225px for a two-digit number.
 
 ---
 
-## Deferred
+## Deferred and dropped — see [`backlog.md`](./backlog.md)
 
-| | |
-|---|---|
-| **Drawer row names ellipsize** | A picked row in the drawer truncates long names (`Val's +4 Ke…`) because the stepper takes ~180px. Abbreviating the tier chip on phones bought some of it back, not all; fixing the rest means reworking the row's flex layout |
+Moved 2026-09-03. This view's one deferred item is **`SITE-3`** (drawer row names
+ellipsize); **XLSX export**, **share links** and **server-side save codes** are in
+that file's § *Dropped*, with the reasons, so nobody re-derives them.
 
-## Dropped
-
-Not pending — decided against, and here so nobody re-derives them.
-
-| | |
-|---|---|
-| **XLSX export** | The one thing it buys over the CSV is a live `Total − On hand` formula, which is seconds of typing for the reader. Costs a ~400KB dependency or a hand-rolled zip writer. See § *Getting it out* |
-| **Share links** | A twenty-recipe plan with per-row counts makes a punishing URL |
-| **Server-side save codes** | Impossible, not unbuilt: static hosting on GitHub Pages has no write path, and a repo token in client JS would be public |
+§ *Getting it out* above still holds the XLSX reasoning in full, and § *Saving*
+still explains why the Build Calculator stores only the recipe — `backlog.md`
+carries the list, not the reasoning.

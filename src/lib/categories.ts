@@ -30,7 +30,7 @@ export function compareCategories(a: string, b: string): number {
 // `category` itself.
 //
 // This fold is the SETTLED exception to `Category` being the tier axis, decided
-// 2026-09-02 (docs/data-backlog.md items 3 and 4, both resolved there). It is
+// 2026-09-02 (docs/backlog.md DATA-3 and DATA-4, both resolved there). It is
 // sound only while Wish Ring is Trade 4's sole occupant, because the map keys on
 // the CATEGORY, not on the token: a second Trade 4 token — backlog item 8 would
 // author the `25,000 GP Eldritch Ore Bar` as one — would silently inherit the fold
