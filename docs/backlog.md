@@ -466,16 +466,58 @@ not all; fixing the rest means reworking the row's flex layout.
 
 ---
 
-## SITE-4. Transmutes "most-withheld components" callout — OPEN (optional stretch)
+## SITE-4. "Most-withheld components" callout — OPEN (optional stretch)
 
-From the context layer's design, § 9.3: a callout on the Transmutes view showing
-which recipe components are most often withheld by auctioneers. Deferred out of
-core Phase 3 so Transmutes stayed untouched while the context layer shipped;
-it was to be revisited "only after the core layer ships cleanly", which it has.
+**A "withheld" item is one the auctioneer pulled from the auction and never
+sold** — kept for themselves. It never has a real price, so the site estimates one
+from the same-season sales in the five auctions before it, flags every such number
+as an estimate, and keeps it out of headline stats by default.
+
+The proposal, from `context-layer-design.md` § 5.1 and deferred at § 9.3:
+Phase 1 noticed that **what auctioneers withhold is overwhelmingly transmute
+ingredients**, so a small callout would name which ones. It is a *Transmutes*
+observation but it was proposed to live **on the Analytics page** — Transmutes was
+explicitly out of scope for the whole context layer and stayed untouched. Anyone
+picking this up should decide the home deliberately rather than inherit either
+reading.
 
 **Confirmed not built (2026-09-03)** — no withheld-aware code exists under the
-Transmutes pages; the only consumers of withheld data are `AuctionCard` and
-`ContextAnalytics`. Blocked on appetite, nothing technical.
+Transmutes pages, and `AuctionCard` and `ContextAnalytics` are the only consumers
+of withheld data anywhere.
+
+**The premise holds. Measured 2026-09-03: 84 withheld rows over 27 auctions, 32
+distinct items.** But three things a design has to settle turned up in the
+measuring, and none of them is in the original proposal.
+
+**1. "Most-withheld" has two answers and they barely overlap.** Rank by *rows*
+(how many auctions withheld it) and you get the chain components the design named:
+Patron Pin 12, Ring of the 3rd Circle 11, then Marks of the Tenets, Path to
+Enlightenment fragments, and the other Rings. Rank by *quantity* and trade goods
+bury them — Philosopher's Stone 278, Mystic Silk 242, Darkwood Plank 229 — because
+two auctions (2022 and 2025) withheld big trade-good lots. There is a third
+ranking, by estimated value, which nobody has computed. Pick one and say which it
+is on screen, or the callout means whatever the reader assumes.
+
+**2. The obvious join does not work.** `contextItems.csv` records a withheld item
+by its **specific name** (`Ring of the 3rd Circle`). The recipe line that consumes
+it is authored as a **generic tier slot** — `Item = 1k Bonus`, `ItemYear = -2`,
+`ResolvedYear = 2024` — with the specific name only in **`Display Name`**, a label
+rather than a key. So of the 32 withheld items, **14 match the recipe `Item`
+column and 26 match `Display Name`**. `Display Name` is populated on all 1,986
+recipe lines, so joining on it is possible; it is just not a key, and nothing
+guarantees it stays unique or stable. The honest alternative is resolving tier +
+`ResolvedYear` to a token name, which is work the engine does not do today.
+
+**3. The headline would be a non-ingredient.** Six withheld items appear nowhere
+in `transmuteRecipes.csv` — **Patron Pin** (the single most-withheld item by rows,
+12 auctions across 6 seasons), `4th Tooth of Cavadar`, `Adventurers' Guild
+Button`, `Lenses of Hunting`, `Amulet of Magnifying`, `Treasure Chip (each)`. A
+callout titled "components" that leads with a Patron Pin is either mis-titled or
+has to filter it out and explain why.
+
+**Blocked on appetite, not on anything technical** — but the sequencing note is
+that `DATA-8` would change item 2's arithmetic, since authoring the GP
+denominations as tokens moves names between the two columns.
 
 ---
 
