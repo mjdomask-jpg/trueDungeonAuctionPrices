@@ -9,11 +9,12 @@ reading the actual sheets, and proposes a phased build order.
 Read [domain-context.md](./domain-context.md) first for the *why*; this doc is the
 *what next* and *how*.
 
-> **Status (2026-07-22): Phases 0–4 SHIPPED to `main`; Phase 5 all but complete.** The transmute
+> **Status (updated 2026-09-03): Phases 0–5 all SHIPPED to `main`.** The transmute
 > build-vs-buy engine (the headline feature) is live, the Detailed Auction Data explorer
-> (`/explorer`) has landed, and the auction-analytics dashboards (`/analytics`) are in. Only Open
-> Auctions remains, and it is **deferred** — the metadata currently holds no `Open` rows at all, so
-> the view has nothing to render until there is a live-ish feed. See §6 for per-phase status.
+> (`/explorer`) has landed, and the auction-analytics dashboards (`/analytics`) are in.
+> **Open Auctions, deferred at 2026-07-22 for want of any `Open` row, shipped on 2026-08-08**
+> (`f5cb77a`, v1.4) and was proved live against auction `202647`. See §6 for per-phase status,
+> and `backlog.md` `SITE-1` for what was built.
 
 ## 1. The load-bearing conclusion
 
@@ -107,11 +108,14 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   - `exploreAuctions` / `flattenAuctions` / `sortFlatRows` in `lib/data.ts`; `pages/ExplorerPage.tsx`
     + `components/{AuctionCard,SaleTable}.tsx`. First view to read `completionStyle` from
     `auctionMetadata.csv`.
-- ⛔ **DEFERRED (Phase 5)** — `Open Auctions` — currently-running auctions (metadata filtered to
-  `Open`) with links. This is the one **time-sensitive** view, and it is only meaningful when fed
-  live-ish data. As of the 2026-07-22 export `Status` holds **271 `Closed` and 5 `Failed`, and no
-  `Open` rows whatsoever**, so the view would render empty on day one. Maintainer's call: skip it
-  until there is a feed behind it.
+- ✅ **DONE (2026-08-08, `f5cb77a`, v1.4)** — `Open Auctions` — currently-running auctions (metadata
+  filtered to `Open`) with links. This is the one **time-sensitive** view, and it is only meaningful
+  when fed live-ish data. It was **deferred** at first: as of the 2026-07-22 export `Status` held
+  **271 `Closed` and 5 `Failed`, and no `Open` rows whatsoever**, so the view would have rendered
+  empty on day one, and the maintainer's call was to skip it until there was a feed behind it.
+  A real open auction appeared two weeks later and it was built: a banner on the Prices page (hidden
+  when nothing is open) plus an always-rendered `Open auctions` section on Auction Data, linked by
+  `/explorer/grouped#open`. See `backlog.md` `SITE-1`.
 
 ### D. Raw data imports (source of truth)
 `auctionMetadata`, `auctionPrices`, `pricesOnyx`. These are local copies of the data-layer
@@ -526,7 +530,7 @@ Cheap now while the code is small, painful later. Independent of which features 
 | **2** ✅ | Price Timelines (per-token charts) | C | **DONE (PR #5).** Hand-rolled SVG charts (zero deps), data-authored grouping via `tokenGroups.csv`. |
 | **3** ✅ | Compare Years tool | C | **DONE (PR #6).** Cross-season, keyed on canonical Item; % diff on avg; category + biggest-movers views. |
 | **4** ✅ | **Transmutes / build-vs-buy** | B | **DONE — SHIPPED (PR #8, merge `d6ece93`, 2026-07-22).** Cost engine (`lib/transmutes.ts`) + `/transmutes` page: Relic→Legendary paired layout, both build/upgrade costs, full BOM, game-canonical tier colors. All of §3–§4.4 landed. |
-| **5** ✅ | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **DONE, less one deferral.** Detailed Auction Data explorer — `/explorer`, grouped + flat views, one price per token per auction, unions the Onyx feed. Auction analytics — `/analytics`, Current Year + Historical behind a toggle, ten panels over `auctionMetadata.csv`. Open Auctions **deferred**: the metadata has no `Open` rows, so there is nothing to render until a live-ish feed exists. |
+| **5** ✅ | Auction analytics + Detailed Auction Data explorer + Open Auctions | C | **DONE — the one deferral later shipped too.** Detailed Auction Data explorer — `/explorer`, grouped + flat views, one price per token per auction, unions the Onyx feed. Auction analytics — `/analytics`, Current Year + Historical behind a toggle, ten panels over `auctionMetadata.csv`. Open Auctions was **deferred** here and later **SHIPPED** on 2026-08-08 (`f5cb77a`, v1.4) — banner + Auction Data section, proved live against auction `202647`. See § 7 Q5 and `backlog.md` `SITE-1`. |
 
 Rationale: Phases 1–3 were pure computation over data we already parse, so they exercised the new
 routing/data-layer plumbing on low-risk features before the transmute engine (Phase 4), which
@@ -560,8 +564,10 @@ muted-text brighten, and the curly→straight apostrophe normalization in recipe
 5. ~~**Open Auctions freshness**~~ — RESOLVED for now (2026-07-22): **deferred**, because the
    question is moot until the data changes. `auctionMetadata.csv` contains no `Open` rows at all,
    so the view has nothing to show. Revisit if a live-ish feed appears.
-   **Tracked as `SITE-1` in [`backlog.md`](./backlog.md)**, where the re-measurement
-   (289 of 289 rows still `Closed`, 2026-09-03) and the revisit trigger live.
+   **SUPERSEDED — it shipped on 2026-08-08** (`f5cb77a`, v1.4): a banner on the Prices page
+   and an always-rendered `Open auctions` section on Auction Data, linked by
+   `/explorer/grouped#open`. Proved live against auction `202647`, which opened 2026-08-07
+   and closed 2026-08-15. Closed as `SITE-1` in [`backlog.md`](./backlog.md).
 6. ~~**`Safehold` / `Patron` levels**~~ — RESOLVED / SHIPPED (Phase 4). All run through the one
    engine. `Safehold` is a self-contained V→I upgrade ladder (source lines point one rung down;
    cross-season source resolution handles rungs whose recipe lives in an earlier season). `Patron`,
