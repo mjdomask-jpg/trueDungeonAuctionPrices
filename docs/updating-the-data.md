@@ -1461,6 +1461,23 @@ Replayed against the pre-fix data it flags all 129 rows and nothing else.
 > not know is reported as a note and skipped — deliberately, so an unfamiliar
 > year reads as "nobody has told me what this is" rather than passing green.
 
+The two eras' formulas also matched the item differently for a while — pre-2026
+on `D = 'Treasure Chip'`, 2026+ on `D contains 'Treasure Chip'`. Inert, since
+`Treasure Chip` is the only spelling in the corpus, but `contains` would have
+absorbed a future `Treasure Chip Bonus` into 2026+ totals and not earlier ones.
+**Both are `=` as of 2026-09-03.**
+
+> **That fix does not appear in any commit, and could not.** The publish
+> exports **values, not formulas**, and both spellings compute the same number
+> today — so the script correctly saw nothing to publish. It is worth
+> understanding as a property of the pipeline rather than a one-off: *a
+> formula-only change is invisible to the repo*. These docs are the only record
+> of what a formula says, they can drift from the sheet with no diff anywhere,
+> and that drift is precisely what let the `×16` sit wrong for years. When you
+> change a formula, change the note here too — nothing else will catch it. What
+> the repo *can* check is the numbers a formula produces, which is what § 4b
+> does.
+
 ### `Expires` — when a recipe stops being craftable
 
 This is what decides whether a recipe is priced at **today's** prices or over
