@@ -39,8 +39,16 @@ was left in its place.
 - **Add an item here, not in the doc you happen to be editing.** That is the
   whole point of the file.
 
-Last reconciled **2026-09-03** against `ac20c44` on `main`. Everything asserted
-below about the current data was measured that day, not remembered.
+Last reconciled **2026-09-03**. Everything asserted below about the current
+*data* was measured that day, not remembered.
+
+> **A deferral in a plan doc is not evidence the thing is still deferred.** The
+> first pass carried `SITE-1` (Open Auctions) forward as open on the strength of
+> `expansion-plan.md` saying so — and it had shipped on 2026-08-08, nearly a month
+> earlier, banner and all. The plan doc was never updated; the code was the only
+> honest source. **Before writing "still open" against anything, grep the app for
+> it.** The same pass measured the CSVs and got those right, so the gap was
+> specifically between prose and code, which is the direction nothing checks.
 
 ---
 
@@ -51,7 +59,6 @@ below about the current data was measured that day, not remembered.
 | **DATA-1** | The 50 GP Idol chase set is only half modeled | nothing — data authoring |
 | **DATA-6** | A failed auction has no representation, so its row is deleted | a maintainer decision on shape |
 | **DATA-8** | Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum | a decision, then careful authoring |
-| **SITE-1** | Open Auctions view | still moot — 289 of 289 rows read `Closed` |
 | **SITE-2** | Transmute row height at 375px | the maintainer's real-phone verdict; **do not act unsolicited** |
 | **SITE-3** | Shopping List drawer row names ellipsize | a flex-layout rework |
 | **SITE-4** | Transmutes "most-withheld components" callout | appetite — an optional stretch from the context layer |
@@ -423,22 +430,52 @@ Monster Trophy rows in PR #159 — so the mechanism is free.
 
 # SITE — the app
 
-## SITE-1. Open Auctions view — OPEN, and still moot
+## SITE-1. Open Auctions — RESOLVED (`f5cb77a`, v1.4, 2026-08-08)
 
-**Deferred 2026-07-22** (`expansion-plan.md` § 6 Phase 5, § 7 Q5) because
-`auctionMetadata.csv` contains no `Open` rows at all, so the view would have
-nothing to render.
+**It shipped, and it shipped nearly a month before this backlog was written.**
+The consolidation carried forward `expansion-plan.md`'s 2026-07-22 deferral
+without checking whether the code had moved on, and it had. Corrected 2026-09-03
+on the maintainer's word, then verified against the source.
 
-**Re-measured 2026-09-03 and the deferral still holds on its own terms: 289 of 289
-rows read `Closed`.** What has changed since is that Phase 4's `auctionOpen.gs`
-now watches three sources and promotes rows, so `Open` rows become reachable the
-first time an auction is promoted before it closes. What already exists for that
-case is the **live-auction banner** on the Dashboard and the Explorer, fed by
-`openAuctions()` in `src/lib/data.ts` — a full view is the part still deferred.
+**What was deferred** (§ 6 Phase 5, § 7 Q5): the view had nothing to render,
+because `auctionMetadata.csv` held no `Open` rows.
 
-**Revisit trigger:** the first non-zero count of `Open` rows in the published
-metadata. Note the interaction with `DATA-6` — a retained failed row would also
-compute `Open` and sit on that banner for ever.
+**What is built**, as two halves with a link between them:
+
+- **The Prices (home) banner** — `components/OpenAuctionsBanner.tsx`, rendered at
+  the top of `DashboardPage`. It shows **only when at least one auction is open**;
+  a permanent "nothing open" bar on the busiest page would be nag. Count, the
+  linked auction names inline up to three, then `see all open →`.
+- **The Auction Data section** — an `Open auctions` strip at the top of
+  `ExplorerPage`, **always rendered**, with the quiet "nothing open" line the
+  banner deliberately does not carry. Collapsed by default so the historical data
+  leads the page; each `OpenAuctionCard` expands to auctioneer, opened date +
+  "N days ago", funding goal, augmented, style and completion.
+- **The link between them** points at `/explorer/grouped#open` — the canonical
+  view path, not the bare `/explorer`, because that route's redirect would strip
+  the fragment. `ExplorerPage` snapshots the intent at mount and consumes it once
+  the data arrives, then expands and scrolls the strip into view.
+
+**Two decisions in there worth not re-deriving.** Both lists read the
+**unfiltered** `meta`, so the page's season, category, search and the shared
+source/type filters can never hide a live auction — it is a standalone "what is
+live right now" list, not part of the closed-sales explorer under it. And the
+banner's asymmetry with the section (hidden when empty vs always shown) is
+deliberate, not an oversight.
+
+**It was proved against a real auction, not a fixture.** `202647`, *Alesiev's
+FINAL 2026 Token Auction - With Augments!*, opened **2026-08-07** — the banner
+shipped the next day — and closed **2026-08-15**, 8 days later. So the feature
+ran live, in front of users, for essentially that auction's whole run, and then
+correctly disappeared when the row went to `Closed`. The metadata has read
+289 of 289 `Closed` ever since, which is why the empty path is the one anybody
+looking at the site today will see.
+
+**The `DATA-6` interaction survives this and is the live risk.** `Status` is
+`IF(closeDate = "", "Open", "Closed")`, so a failed auction retained with a blank
+`closeDate` would compute `Open` and sit on that banner **for ever**, with a
+"days ago" counter that climbs. That is why `DATA-6` says retaining rows is only
+free once a third state exists.
 
 ---
 
