@@ -1387,7 +1387,7 @@ change.
 | `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. **Populated on all 289 rows** since the backfill. |
 | `daysToClose` | Optional | Whole days the auction ran, computed as `MAX(closeDate - openDate, 1)` — the floor of `1` is why same-day auctions read `1`, not `0`. Drives the Analytics days-to-close chart and every "avg days to close" figure; a row that isn't a number is **left out of those averages**, not counted as zero. **Populated on all 289 rows** — none blank, none `n/a`, so the averages cover every auction. Four rows read `n/a` until 2026-08-20, when their formulas were repaired: each had lost its `closeDate` reference and evaluated to `#REF!`, which the surrounding `IFERROR` quietly turned into `n/a`. Worth knowing as a failure shape — a broken reference here degrades to a plausible-looking string rather than an error. |
 | `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. **Populated on every season back to 2018.** They are derived from `openDate`/`closeDate`, so a wrong date shows up here as an out-of-range month — see the gotcha below. |
-| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced directly (they feed Analytics → Funding & Context). Present for 2018–2021 and 2023–2026; **the whole 2022 season is still blank — backfill queued for the next round of updates.** |
+| `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced directly (they feed Analytics → Funding & Context). `targetFunding`, `augmentedTotal`, `fundingNoAugment` and `preorderTotal` are **populated on all 289 rows, every season including 2022** — they are formulas and always compute. The `augment*` **inputs** are blank wherever an auction had no augment, which is most of them in every season; that is the data model, not a gap. **`preorderTotal` has its own check — see § *What `preorderTotal` counts* below.** (This row claimed 2022 was blank and a backfill was queued; that was true before the 2022 backfill landed and had not been re-measured since. Re-measured 2026-09-03: zero blanks.) |
 
 ### Rules that matter
 
@@ -1424,6 +1424,42 @@ change.
   existed from 2022 on, and the Analytics Current Year view excluded the earlier
   seasons for that reason. All nine seasons (2018–2026) are now dated, so
   `seasonsWithCadence()` admits every one of them.
+
+### What `preorderTotal` counts
+
+`preorderTotal` is a formula, never typed. It is the retail value of the
+preorder items in one $8K order, and it is the sum of two `QUERY`s over
+`prices`:
+
+```
+max(Price where Item = 'Treasure Chip')  × chips per order
++ max(Price where Item = 'Preorder Bonus') × 32
+```
+
+**`prices` holds the PER-CHIP price, and the multiplier is chips per order.**
+That is the whole thing to get right, and it is what went wrong:
+
+| Season | Chips per order | Sold as | Multiplier |
+|---|---|---|---|
+| 2018–2025 | 48 | 3× lots, so 16 physical lots | **48** |
+| 2026+ | 50 | 10× lots, so 5 physical lots | **50** |
+
+Two lot sizes for one token would have meant carrying both schemes forever, so
+`prices` was refactored to a per-chip figure instead — 2018–2025 divided by 3,
+2026 by 10. **The 2018–2025 formula was not updated with it** and kept the ×16
+that belonged to the old 3×-lot price. Every pre-2026 `preorderTotal` was a
+third of what it should have been, on a column Analytics → Funding & Context
+reads. It went unnoticed until 2026-09-03, when it was corrected across 129
+rows.
+
+Nothing in the export can see a formula, so **`validate-prices.mjs` § 4b
+recomputes the column from `prices.csv`** rather than comparing formula text.
+Replayed against the pre-fix data it flags all 129 rows and nothing else.
+
+> **When the order composition changes again**, add the season to
+> `CHIPS_PER_ORDER` in `scripts/validate-prices.mjs`. A season the table does
+> not know is reported as a note and skipped — deliberately, so an unfamiliar
+> year reads as "nobody has told me what this is" rather than passing green.
 
 ### `Expires` — when a recipe stops being craftable
 

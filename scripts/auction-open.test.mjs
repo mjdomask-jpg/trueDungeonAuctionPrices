@@ -548,7 +548,7 @@ console.log('\nPromotion\n');
     augmentated: '=IF(Q290&R290<>"","Yes","No")',
     augmentedTotal: '=SUM(Q290:S290)',
     fundingNoAugment: '=O290-T290',
-    preorderTotal: '=QUERY(auctionFullData,"select max(E)*16 where D=\'3x Treasure Chip\'")',
+    preorderTotal: '=IFERROR(QUERY(auctionFullData,"select max(E)*50 where A = \'"&$A290&"\' and D contains \'Treasure Chip\' label max(E)*50 \'\' ",1))+IFERROR(QUERY(auctionFullData,"select max(E)*32 where A = \'"&$A290&"\' and D = \'Preorder Bonus\' label max(E)*32 \'\' ",1))',
   }[h] || ''));
   const actions = O.openRowActions(HEADERS, asFormulas, cells);
   eq('closeDate is CLEARED, not inherited', actions[HEADERS.indexOf('closeDate')].action, 'clear');
