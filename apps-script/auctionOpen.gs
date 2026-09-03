@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-08-31.3';
+var OPEN_VERSION = '2026-09-03.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -1550,13 +1550,19 @@ function openReviewKey(row) {
  * starts with `promoted`, so the operator can tick such a row all day and the
  * promote step will silently ignore it.
  *
- * **A deleted row is not necessarily a mistake.** Current practice is to DELETE
- * a failed auction's row rather than mark it — `Status` is
- * `IF(closeDate="","Open","Closed")` and cannot express `Failed` — so
- * "promoted, then gone" is exactly what a failed auction looks like, as well as
- * what deleted test data looks like. Nothing here can tell those apart, so the
- * marker is cleared, the tick is forced OFF, and the note says both readings.
- * The operator decides whether to approve it again.
+ * **A deleted row used to be ambiguous, and is less so now.** Until DATA-6
+ * there was no way to record a failure: `Status` was
+ * `IF(closeDate="","Open","Closed")`, so a failed auction's row was DELETED,
+ * and "promoted, then gone" was exactly as likely to be a failed auction as
+ * deleted test data. A failed auction now keeps its row and says `Failed` in
+ * `outcome`, so a missing row should mean the row was removed on purpose.
+ *
+ * "Should" is doing real work in that sentence, which is why nothing here got
+ * cheaper. Every auction that failed BEFORE the column existed was deleted
+ * under the old habit, the habit outlives the column that replaced it, and this
+ * script cannot see either. So the behaviour is unchanged — the marker is
+ * cleared, the tick is forced OFF, and the operator decides — and only the note
+ * changes, to say which reading is now the likely one.
  *
  * Omit `recordedIds` and no marker is ever questioned, which is what this did
  * before.
@@ -1585,7 +1591,7 @@ function openMergeReview(existingRows, proposals, recordedIds) {
         row[1] = '';
         row[16] = String(row[16] || '') + ' · WAS PROMOTED as ' + staleId +
           ', and no row with that auctionId is in ' + OPEN_TABS.metadata +
-          ' now. The marker has been cleared so this can be approved again — but if that auction FAILED and its row was deleted on purpose, leave it unticked.';
+          ' now. The marker has been cleared so this can be approved again. A failed auction KEEPS its row now (outcome = Failed), so this is most likely a row deleted on purpose — but an auction that failed before that column existed was deleted instead, so check before re-ticking.';
       }
       // What the tab already holds wins, because for the forum it is by
       // definition something the operator typed. For the two sources that

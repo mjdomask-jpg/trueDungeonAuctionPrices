@@ -78,7 +78,7 @@ Seasons 2019–2026.
 | G | `auctioneer` | 36 distinct. **`= "Trent"` marks every Trent auction.** |
 | H | `Link` | Domain distinguishes source: `trenttokens.com` (111) vs `truedungeon.com` (73) vs blank (92). |
 | I,J,K | `openDate`, `closeDate`, `daysToClose` | Real dates from season 2023 on; `n/a` (41) for 2019–22. One blank close. |
-| L | `Status` | Closed (271) / Failed (5). No `Open` rows currently. |
+| L | `Status` | Closed (271) / Failed (5). No `Open` rows currently. **Superseded twice since.** The five `Failed` rows were later deleted — that was how a failure was recorded, because `Status` had become the formula `IF(closeDate = "", "Open", "Closed")` and could not say `Failed`. Since 2026-09-03 it can again, from an `outcome` column (backlog DATA-6), and the five deleted rows are recoverable at `b4196af^`. |
 | M,N | `Open Month`, `Close Month` | Derived month labels. |
 | **O** | **`targetFunding`** | Concept 3. See §5. |
 | P | `augmentated` *(sic)* | Yes (41) / No (143) / blank (92). Misspelled — see §4.4. |
@@ -112,6 +112,15 @@ Seasons 2019–2026.
   - 5 are `Status = Failed` (`202518, 202525, 202531, 20263, 202638`) — expected,
     they didn't complete. One of them (`202518`) nonetheless has an `augmentData`
     row, which is mildly odd (a failed auction with a recorded augment).
+    > **Since superseded.** All five rows were later deleted, and `202518`'s
+    > thirteen withheld context rows with them. They are recoverable at
+    > `b4196af^` and a failure now keeps its row — see DATA-6. The "mildly odd"
+    > reading was wrong, incidentally: a withheld list is what the auctioneer
+    > *intended* to keep back, and it is recorded when the auction is set up
+    > rather than when it completes, so a failed auction having one is ordinary.
+  - This is also the measurement § 5b of `validate-prices.mjs` was later built
+    on — "every metadata row carries price rows" was true only because the
+    failures had been deleted. § 5b now exempts a `Failed` row explicitly.
   - 1 is `202251` "Beertram's Appreciation 8K Auction" — **`Status = Closed` but
     zero sales rows.** Genuine gap or an auction whose lots weren't logged. Flagged.
 
