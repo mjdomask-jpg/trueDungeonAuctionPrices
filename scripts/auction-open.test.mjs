@@ -84,6 +84,30 @@ let pass = 0, fail = 0;
 const ok = (name) => { console.log(`ok      ${name}`); pass++; };
 const bad = (name, detail) => { console.error(`FAIL    ${name}`); if (detail) console.error(detail.split('\n').map((l) => '        ' + l).join('\n')); fail++; };
 const check = (name, cond, detail) => (cond ? ok(name) : bad(name, detail));
+
+// --- what the corpus happens to hold right now ------------------------------
+//
+// Every one of these was a literal in this file — `48`, `'202648'`, `'202649'`,
+// `'2026-08-07'` — and each is a fact about the shipped CSV rather than about
+// the code. The next auction that closes moves all of them at once: fourteen
+// assertions, one event. That is a red check on the PUBLISH PR, where it reads
+// as the publish being broken rather than as the season having moved on.
+//
+// Deriving them is NOT a way of asserting less. The claims worth making here
+// are relational — a batch numbers in date order, two proposals never collide,
+// a promotion continues the sheet's run — and none of them was ever about the
+// number being 48. Where the RULE itself is under test (`openNextNumber`), it
+// is pinned against a constructed season further down, which no publish can
+// touch.
+const numbersIn = (season) => META.filter((r) => r.auctionSeason === season).map((r) => Number(r.auctionNumber));
+const MAX_2026 = Math.max(...numbersIn('2026'));
+const NEXT_2026 = MAX_2026 + 1;                       // 48 when this was written
+const ID_2026 = (n) => '2026' + String(n);
+const NEWEST_OPEN = META.reduce((a, r) => (r.openDate > a ? r.openDate : a), '');
+// An id no season can reach, for "this was never recorded" assertions. 99 is
+// past any plausible auction number and 2026 is a season that exists, so the
+// row would be findable if it were ever added.
+const NEVER_RECORDED = ID_2026(99);
 const eq = (name, got, want) => check(name, got === want, `got  ${JSON.stringify(got)}\nwant ${JSON.stringify(want)}`);
 
 // ===========================================================================
@@ -135,7 +159,7 @@ console.log("Trent's collection page\n");
   eq('  ... its open date', fresh.openDate, '2026-03-28');
   eq('  ... its auctioneer', fresh.auctioneer, 'Trent');
   eq('  ... its link, the one all 111 rows share', fresh.link, O.OPEN_TRENT_URL);
-  eq('  ... and the number after the season max', String(fresh.number), '48');
+  eq('  ... and the number after the season max', String(fresh.number), String(NEXT_2026));
   check('  ... with the page-vs-sheet style disagreement in the notes',
     fresh.notes.some((n) => /page calls the ORDER/.test(n)), fresh.notes.join(' | '));
 }
@@ -195,7 +219,8 @@ for (const f of manifest.feeds) {
   // 2026-08-07 and its feed item is dated later. Anything that treated the feed
   // date as an open date would be wrong by however long the thread ran.
   const item = FEED.find((i) => i.id === '259798');
-  check('feed pubDate is the last post, not the open', item.isoDate > '2026-08-07', `${item.isoDate}`);
+  check('feed pubDate is the last post, not the open', item.isoDate > O.openParseTopic(fixture('topic-259798.html.gz')).openDate,
+    `${item.isoDate}`);
   eq('  ... while the topic page has the real one', O.openParseTopic(fixture('topic-259798.html.gz')).openDate, '2026-08-07');
 
   // Titles drift all auction long, so the recorded name and the current title
@@ -216,7 +241,12 @@ for (const f of manifest.feeds) {
 // ===========================================================================
 console.log('\nNumbering\n');
 {
-  eq('2026 continues from its max, not its count', O.openNextNumber(META, '2026'), 48);
+  // A differential check, not a restatement: the expected value is computed
+  // straight from the corpus here, while the function under test walks the rows
+  // itself. What it proves is that the walk survives the real data's shapes —
+  // numbers as strings, blank rows, a season present in nine spellings of row.
+  // The RULE is pinned against the constructed season below.
+  eq(`2026 continues from its max (${MAX_2026}), not its count`, O.openNextNumber(META, '2026'), NEXT_2026);
 
   // WHY `max + 1` AND NOT `count + 1`, pinned twice — once against a made-up
   // season and once against the real corpus, and the pair is the point.
@@ -251,10 +281,10 @@ console.log('\nNumbering\n');
     collides.every((season) => O.openNextNumber(META, season)
       > META.filter((r) => r.auctionSeason === season).length + 1),
     'a season where count + 1 collides must still number from max + 1');
-  eq('2025 continues from its max', O.openNextNumber(META, '2025'), 47);
+  eq('2025 continues from its max', O.openNextNumber(META, '2025'), Math.max(...numbersIn('2025')) + 1);
   eq('an unseen season starts at 1', O.openNextNumber(META, '2027'), 1);
 
-  eq('auctionId is season and number run together', O.openAuctionId('2026', 48), '202648');
+  eq('auctionId is season and number run together', O.openAuctionId('2026', 48), '202648');  // literals, not corpus
   let idOk = 0;
   for (const r of META) if (r.auctionId === O.openAuctionId(r.auctionSeason, r.auctionNumber)) idOk++;
   eq('  ... on every recorded row', idOk, META.length);
@@ -266,8 +296,9 @@ console.log('\nNumbering\n');
     { season: '2027', openDate: '2026-09-03', number: 0, auctionId: '' },
   ];
   O.openRenumber(proposals, META);
-  eq('a batch numbers in open-date order', proposals[1].auctionId, '202648');
-  eq('  ... then the next', proposals[0].auctionId, '202649');
+  eq('a batch numbers in open-date order', proposals[1].auctionId, ID_2026(NEXT_2026));
+  eq('  ... then the next', proposals[0].auctionId, ID_2026(NEXT_2026 + 1));
+  check('  ... so the two never collide', proposals[0].auctionId !== proposals[1].auctionId, '');
   eq('  ... and a different season keeps its own run', proposals[2].auctionId, '20271');
 }
 
@@ -305,7 +336,15 @@ console.log('\nDuplicate detection\n');
     selection.selected.every((i) => !recorded[i.id]), '');
   check('the cutoff keeps the first run small', selection.selected.length <= 25,
     `${selection.selected.length} selected of ${FEED.length} feed items`);
-  eq('the cutoff sits behind the newest recorded open', O.openScanCutoff(META), '2026-07-17');
+  // The cutoff is a window behind the newest recorded open, so it moves with
+  // the corpus. Pinned as the RELATIONSHIP — behind the newest open, and not so
+  // far behind that a scan re-reads the whole forum.
+  const cutoff = O.openScanCutoff(META);
+  check(`the cutoff (${cutoff}) sits behind the newest recorded open (${NEWEST_OPEN})`,
+    cutoff < NEWEST_OPEN, `${cutoff} vs ${NEWEST_OPEN}`);
+  check('  ... by a bounded window, not an open-ended one',
+    (Date.parse(NEWEST_OPEN) - Date.parse(cutoff)) / 86400000 <= 60,
+    `${((Date.parse(NEWEST_OPEN) - Date.parse(cutoff)) / 86400000).toFixed(0)} days`);
 
   // 602 is the general discussion category, so a topic there must look like an
   // auction before its page is fetched. Without the rule a scan returns a dozen
@@ -471,7 +510,11 @@ console.log('\nSeason inference\n');
   check('seasons never overlap', gaps.every((g) => g > 0), `gaps in days: ${gaps.join(', ')}`);
   check('  ... but one has started 9 days after the last one ended',
     Math.min(...gaps) <= 14, `gaps in days: ${gaps.join(', ')}`);
-  eq('and 2026, the season the fallback would name today, stopped opening auctions on', seasons['2026'].last, '2026-08-07');
+  // The DATE is corpus, so it is derived; the CLAIM is that 2026 is still the
+  // season holding the newest open anywhere in the file, which is what makes it
+  // the one a date-less fallback would name.
+  eq(`and 2026, the season the fallback would name today, stopped opening auctions on ${seasons['2026'].last}`,
+    seasons['2026'].last, NEWEST_OPEN);
 
   let right = 0, wrong = 0, none = 0;
   for (const r of META.filter((x) => /truedungeon/i.test(x.Link))) {
@@ -576,7 +619,14 @@ console.log('\nReview tab\n');
 console.log('\nPromotion\n');
 {
   const topic = O.openParseTopic(fixture('topic-259798.html.gz'));
-  const without = META.filter((r) => r.auctionId !== '202647');
+  // Everything from 202647 up is removed, not 202647 alone. Removing one row
+  // from the middle of a dense season leaves a HOLE, and the numbering rule is
+  // `max + 1` — so re-promoting it would take the number after whatever is
+  // still there, not its own back. Dropping the tail is what makes 202647 the
+  // next number again, and it keeps that true however many auctions close after
+  // it.
+  const REPROMOTED = '202647';
+  const without = META.filter((r) => !(r.auctionSeason === '2026' && Number(r.auctionNumber) >= 47));
   const proposal = O.openForumProposal(
     { id: '259798', catid: '584', title: topic.title, isoDate: '2026-08-18' }, topic,
     without, O.openKnownAuctioneers(META));
@@ -591,7 +641,7 @@ console.log('\nPromotion\n');
   const plan = O.openPlanPromotion([row], without, HEADERS);
   eq('one row to append', plan.rows.length, 1);
   const f = plan.rows[0].fields;
-  eq('  ... numbered from the sheet', f.auctionId, '202647');
+  eq('  ... numbered from the sheet', f.auctionId, REPROMOTED);
   eq('  ... with the recorded openDate', f.openDate, '2026-08-07');
   eq('  ... the recorded auctioneer', f.auctioneer, 'alesiev');
   eq('  ... and the operator\'s typed style', f.auctionStyle, 'Ultra Condensed');
@@ -660,7 +710,7 @@ console.log('\nPromotion\n');
       writtenBack[HEADERS.indexOf(derived)].action, 'write');
   }
   eq('  ... and the id it writes is the computed one',
-    writtenBack[HEADERS.indexOf('auctionId')].value, '202647');
+    writtenBack[HEADERS.indexOf('auctionId')].value, REPROMOTED);
 
   // A value the operator typed that the sheet is about to compute over is
   // REPORTED, not dropped in silence.
@@ -668,7 +718,7 @@ console.log('\nPromotion\n');
   check('the ignored augmentated value is named in the dialog',
     overrides.some((o) => /augmentated: "Yes" — the column computes itself/.test(o)), overrides.join(' | '));
   check('  ... and so is the auctionId it did not need',
-    overrides.some((o) => /auctionId: "202647"/.test(o)), overrides.join(' | '));
+    overrides.some((o) => o.includes(`auctionId: "${REPROMOTED}"`)), overrides.join(' | '));
   eq('nothing is reported when the columns are not formulas',
     O.openDerivedOverrides(HEADERS, noDerivedFormulas, plan.rows).length, 0);
   for (const stale of ['augmentTokens', 'augmentGrunnel', 'augmentWithheld']) {
@@ -842,10 +892,12 @@ console.log('\nalesievauctions.com\n');
   // hand it the lower number.
   const byId = new Map(plan.proposals.map((p) => [O.openAlesievId(p.link), p]));
   eq('two auctions on one day get two numbers', new Set(plan.proposals.map((p) => p.auctionId)).size, 2);
-  eq('  ... the 00:00 one first', byId.get('28').auctionId, '202648');
-  eq('  ... then the 11:00 one', byId.get('29').auctionId, '202649');
+  eq('  ... the 00:00 one first', byId.get('28').auctionId, ID_2026(NEXT_2026));
+  eq('  ... then the 11:00 one', byId.get('29').auctionId, ID_2026(NEXT_2026 + 1));
   check('  ... continuing from what the sheet holds, not from a count',
-    O.openNextNumber(META, '2026') === 48, '');
+    O.openNextNumber(META, '2026') === NEXT_2026
+      && byId.get('28').auctionId === ID_2026(O.openNextNumber(META, '2026')),
+    `next is ${O.openNextNumber(META, '2026')}, first proposal is ${byId.get('28').auctionId}`);
 
   const onyx = byId.get('29');
   eq('the link recorded is the absolute one', onyx.link, 'https://alesievauctions.com/auctions/29');
@@ -1143,7 +1195,7 @@ console.log('\nSheet coercion on the round trip\n');
   const both = O.openPlanPromotion([coerced, earlier], META, HEADERS);
   eq('two coerced rows both promote', both.rows.length, 2);
   eq('  ... the earlier one first', both.rows[0].fields.openDate, '2026-09-03');
-  eq('  ... taking the lower number', both.rows[0].fields.auctionNumber, '48');
+  eq('  ... taking the lower number', both.rows[0].fields.auctionNumber, String(NEXT_2026));
 }
 
 {
@@ -1203,7 +1255,7 @@ console.log('\nStale promoted markers\n');
   const ids = O.openRecordedAuctionIds(META);
   eq('every recorded auctionId is in the lookup', Object.keys(ids).length, new Set(META.map((r) => r.auctionId)).size);
   check('  ... including the newest', ids['202647'] === true, '');
-  check('  ... and not one that was never recorded', ids['202648'] === undefined, '');
+  check(`  ... and not one that was never recorded (${NEVER_RECORDED})`, ids[NEVER_RECORDED] === undefined, '');
 
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
   const proposals = O.openPlanScan({ metaRows: META, alesievCards: cards }).proposals;
