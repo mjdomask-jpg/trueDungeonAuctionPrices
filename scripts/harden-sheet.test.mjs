@@ -182,31 +182,55 @@ for (const v of H.HARDEN_VOCABULARY.filter((v) => !v.pending)) {
 }
 console.log(`  ✓ ${kinds('validate').length} validation rule(s), covering every price and vocabulary column`);
 
-// A PENDING entry is one written before its column exists (DATA-6's `outcome`).
-// Both halves matter and they pull in opposite directions, so both are pinned:
-// while the column is absent the run must stay quiet, and the moment it appears
-// the fence must go up. A `pending` flag that silenced the second half would be
-// a fence that never gets built.
-for (const v of H.HARDEN_VOCABULARY.filter((v) => v.pending)) {
-  const key = `${v.tab}!${v.header}`;
-  eq(validated.has(key), false, `${key} is pending, so no rule should be proposed for it yet`);
-  ok(plan.notes.some((n) => n.includes(`no "${v.header}" column yet`)),
-    `${key} is pending and absent, but nothing said so — it would wait for ever in silence`);
-  ok(!plan.problems.some((pr) => pr.includes(`"${v.header}"`)),
-    `${key} is pending, so its absence must not be reported as a problem`);
+// A PENDING entry is one written before its column exists — DATA-6's `outcome`
+// was the first, and its flag came off once the workbook had the column. So
+// this is exercised with a SYNTHETIC entry rather than whichever real one
+// happens to be pending, because the answer to "which one" is normally "none",
+// and a mechanism that is only tested while somebody is mid-migration is a
+// mechanism that breaks silently during the next one.
+//
+// Both halves matter and they pull in opposite directions: while the column is
+// absent the run must stay quiet, and the moment it appears the fence must go
+// up. A `pending` flag that silenced the second half would be a fence that
+// never gets built.
+{
+  const probe = { tab: 'auctionMetadata', header: 'notAColumnYet', grows: false, pending: true, values: ['X'] };
+  H.HARDEN_VOCABULARY.push(probe);
+  try {
+    const key = `${probe.tab}!${probe.header}`;
+    const absent = H.hardenPlan(buildBook(FILES));
+    ok(!absent.actions.some((a) => a.kind === 'validate' && a.header === probe.header),
+      `${key} is pending, so no rule should be proposed for it yet`);
+    ok(absent.notes.some((n) => n.includes(`no "${probe.header}" column yet`)),
+      `${key} is pending and absent, but nothing said so — it would wait for ever in silence`);
+    ok(!absent.problems.some((pr) => pr.includes(`"${probe.header}"`)),
+      `${key} is pending, so its absence must not be reported as a problem`);
 
-  // Now give the workbook the column and re-plan. This is the day the
-  // maintainer adds it, and the rule has to appear on its own.
-  const withColumn = buildBook(FILES);
-  const tab = withColumn.tabs[v.tab];
-  tab.headers = [...tab.headers, v.header];
-  tab.columns = [...tab.columns, { formulas: tab.columns[0].formulas.map(() => ''), values: tab.columns[0].values.map(() => '') }];
-  const after = H.hardenPlan(withColumn);
-  ok(after.actions.some((a) => a.kind === 'validate' && a.tab === v.tab && a.header === v.header),
-    `${key} exists now but no dropdown was proposed — the pending rule never fires`);
-  ok(!after.notes.some((n) => n.includes(`no "${v.header}" column yet`)),
-    `${key} exists now but the waiting note is still printed`);
-  passed++;
+    // Now give the workbook the column and re-plan. This is the day the
+    // maintainer adds it, and the rule has to appear on its own.
+    const withColumn = buildBook(FILES);
+    const tab = withColumn.tabs[probe.tab];
+    tab.headers = [...tab.headers, probe.header];
+    tab.columns = [...tab.columns, { formulas: tab.columns[0].formulas.map(() => ''), values: tab.columns[0].values.map(() => '') }];
+    const after = H.hardenPlan(withColumn);
+    ok(after.actions.some((a) => a.kind === 'validate' && a.tab === probe.tab && a.header === probe.header),
+      `${key} exists now but no dropdown was proposed — the pending rule never fires`);
+    ok(!after.notes.some((n) => n.includes(`no "${probe.header}" column yet`)),
+      `${key} exists now but the waiting note is still printed`);
+
+    // And the flag is not a licence to go missing: without it, the same absent
+    // column is a problem. This is the assertion that makes dropping `pending`
+    // from a real entry mean something.
+    const strict = H.hardenPlan(buildBook(FILES));
+    probe.pending = false;
+    const strictAfter = H.hardenPlan(buildBook(FILES));
+    ok(!strict.problems.some((pr) => pr.includes(`"${probe.header}"`))
+      && strictAfter.problems.some((pr) => pr.includes(`"${probe.header}"`)),
+      'without `pending`, an absent column must be reported as a problem');
+    passed++;
+  } finally {
+    H.HARDEN_VOCABULARY.splice(H.HARDEN_VOCABULARY.indexOf(probe), 1);
+  }
 }
 
 // Every formula column is protected, and only formula columns are.
@@ -259,7 +283,8 @@ for (const v of H.HARDEN_VOCABULARY) {
   // A pending column is absent from the CSVs BY DEFINITION, so "the dropdown
   // matches the data" has nothing to compare. Asserted rather than skipped: if
   // the column has quietly appeared, the entry has outlived its flag and this
-  // comparison should start running.
+  // comparison should start running. That is not hypothetical — it is how
+  // `outcome`'s flag came off, on the publish that first carried the column.
   if (v.pending) {
     eq(at, -1, `${v.tab}.csv now HAS an ${v.header} column — drop \`pending\` from its HARDEN_VOCABULARY entry`);
     passed++;

@@ -217,10 +217,40 @@ for (const f of manifest.feeds) {
 console.log('\nNumbering\n');
 {
   eq('2026 continues from its max, not its count', O.openNextNumber(META, '2026'), 48);
-  const count2026 = META.filter((r) => r.auctionSeason === '2026').length;
-  check('  ... and count + 1 would collide with a recorded auction',
-    META.some((r) => r.auctionSeason === '2026' && +r.auctionNumber === count2026 + 1),
-    `count + 1 = ${count2026 + 1}, which exists`);
+
+  // WHY `max + 1` AND NOT `count + 1`, pinned twice — once against a made-up
+  // season and once against the real corpus, and the pair is the point.
+  //
+  // The constructed case is the assertion. It cannot stop demonstrating the
+  // rule, because it is not data anybody publishes.
+  const sparse = [
+    { auctionSeason: '9999', auctionNumber: '1' },
+    { auctionSeason: '9999', auctionNumber: '2' },
+    { auctionSeason: '9999', auctionNumber: '4' },
+  ];
+  eq('a season with a gap continues from its max', O.openNextNumber(sparse, '9999'), 5);
+  check('  ... where count + 1 would collide with a recorded auction',
+    sparse.some((r) => +r.auctionNumber === sparse.length + 1), 'count + 1 = 4, which exists');
+
+  // The corpus half is DOCUMENTATION, and it moved under this test once
+  // already. It used to name 2026, whose gaps at 3 and 38 were failed auctions
+  // deleted for want of anywhere to put them. DATA-6 gave them somewhere, they
+  // were restored, and 2026's numbering became dense — so the season that had
+  // been the example stopped being one, and a hardcoded `2026` here failed on
+  // the publish PR that restored them.
+  //
+  // Exactly one season still shows it, and it is the one gap that was never a
+  // failure: 2020 has no 8 because `Hayward 8` was an empty placeholder row
+  // removed by the 2019–20 backfill. So this looks for a season rather than
+  // naming one, and tolerates there being none — the rule is pinned above.
+  const collides = [...new Set(META.map((r) => r.auctionSeason))].filter((season) => {
+    const rows = META.filter((r) => r.auctionSeason === season);
+    return rows.some((r) => +r.auctionNumber === rows.length + 1);
+  });
+  check(`the corpus still shows it too, in ${collides.length} season(s): ${collides.join(', ') || 'none'}`,
+    collides.every((season) => O.openNextNumber(META, season)
+      > META.filter((r) => r.auctionSeason === season).length + 1),
+    'a season where count + 1 collides must still number from max + 1');
   eq('2025 continues from its max', O.openNextNumber(META, '2025'), 47);
   eq('an unseen season starts at 1', O.openNextNumber(META, '2027'), 1);
 
@@ -247,7 +277,23 @@ console.log('\nNumbering\n');
 console.log('\nDuplicate detection\n');
 {
   const recorded = O.openRecordedTopics(META);
-  eq('recorded topic ids', Object.keys(recorded).length, 178);
+  // NOT `eq(Object.keys(recorded).length, 178)`. That is a tally over the
+  // shipped CSV, and the workbook moves it whenever an auction is added — which
+  // makes it a red check on the PUBLISH PR, where a red check reads as the
+  // publish being broken rather than as the corpus having grown.
+  //
+  // The property underneath is what matters and is stronger: every forum row
+  // yields an id, and no two auctions share one. A shared id is the real defect
+  // here, because this map is id -> auctionId, so the second auction silently
+  // overwrites the first and a duplicate scan stops being detectable.
+  const forumRows = META.filter((r) => /truedungeon/i.test(r.Link));
+  const forumIds = forumRows.map((r) => O.openTopicId(r.Link));
+  check(`every forum row is in the map, one id each (${Object.keys(recorded).length} id(s) from ${forumRows.length} row(s))`,
+    forumRows.length > 0 && Object.keys(recorded).length === new Set(forumIds).size,
+    `${Object.keys(recorded).length} recorded vs ${new Set(forumIds).size} distinct id(s)`);
+  check('  ... and no two auctions claim the same topic',
+    new Set(forumIds).size === forumIds.length,
+    `${forumIds.length - new Set(forumIds).size} duplicate topic id(s) — one auction would overwrite the other`);
   eq('  ... keyed to the auction that owns them', recorded['259798'], '202647');
   check('every forum row yields an id, anchors and www and all',
     META.filter((r) => /truedungeon/i.test(r.Link)).every((r) => O.openTopicId(r.Link)), '');
@@ -305,10 +351,20 @@ console.log('\nDuplicate detection\n');
 console.log('\nAuctioneer matching\n');
 {
   const known = O.openKnownAuctioneers(META);
-  // 40 spellings, 38 names: the sheet holds both `Edwin`/`edwin` and
-  // `Ralykam`/`ralykam`, and the most recent spelling of each wins.
-  eq('distinct recorded auctioneers, case-folded', known.length, 38);
-  eq('  ... from 40 spellings', new Set(META.map((r) => r.auctioneer)).size, 40);
+  // The sheet holds both `Edwin`/`edwin` and `Ralykam`/`ralykam`, and the most
+  // recent spelling of each wins. Pinned as the RELATIONSHIP between the two
+  // counts rather than as the counts: both grow whenever an auctioneer new to
+  // the corpus appears, and one restored auction is enough to move them.
+  const spellings = new Set(META.map((r) => r.auctioneer).filter((n) => String(n || '').trim()));
+  const folded = new Set([...spellings].map((n) => n.trim().toLowerCase()));
+  eq(`distinct recorded auctioneers, case-folded (from ${spellings.size} spelling(s))`, known.length, folded.size);
+  check('  ... and folding is doing real work', known.length < spellings.size,
+    `${spellings.size - known.length} spelling(s) collapse`);
+  for (const name of ['edwin', 'ralykam']) {
+    check(`  ... "${name}" appears exactly once in the known list`,
+      known.filter((n) => n.toLowerCase() === name).length === 1,
+      known.filter((n) => n.toLowerCase() === name).join(', '));
+  }
   const cases = [
     ['alesiev - Alex', 'alesiev', 'exact'],
     ['ralykam', 'Ralykam', 'exact'],
@@ -422,9 +478,16 @@ console.log('\nSeason inference\n');
     const m = r.auctionName.match(/\b(20\d{2})\b/);
     if (!m) none++; else if (m[1] === r.auctionSeason) right++; else wrong++;
   }
-  eq('a year in the recorded name is right 65 times', right, 65);
-  eq('  ... wrong once', wrong, 1);
-  eq('  ... and absent 112 times', none, 112);
+  // Counts in the MESSAGE, invariants in the assertion. `right` and `none` both
+  // track the corpus size and neither says anything on its own; `wrong` is the
+  // one number worth watching, because it counts auctions whose own name names
+  // the wrong season, and a second one appearing is a real signal.
+  const forumTotal = META.filter((x) => /truedungeon/i.test(x.Link)).length;
+  check(`every forum row is classified (${right} right, ${wrong} wrong, ${none} with no year, of ${forumTotal})`,
+    right + wrong + none === forumTotal, `${right + wrong + none} vs ${forumTotal}`);
+  check('  ... a year in the name usually names the season', right > wrong && right > 0, `${right} vs ${wrong}`);
+  check('  ... and it is wrong at most once, which is why a name cannot be trusted for the season',
+    wrong <= 1, `${wrong} row(s) name a season other than their own`);
 }
 
 // ===========================================================================
@@ -435,14 +498,15 @@ console.log('\nTriage\n');
   const recorded = O.openRecordedTopics(META);
   const known = FEED.filter((i) => recorded[i.id]);
   const hit = known.filter((i) => O.openLooksLikeEightK(i.title)).length;
-  eq('recorded auctions still in the feeds', known.length, 35);
-  eq('  ... of which the 8K test catches', hit, 28);
+  check(`recorded auctions still in the feeds (${known.length}), of which the 8K test catches ${hit}`,
+    known.length > 0 && hit > 0, `${known.length} known, ${hit} caught`);
   check('  ... so it misses real auctions and must never be a filter', hit < known.length,
     `${known.length - hit} recorded auctions carry no 8K signal in their CURRENT title`);
 
   const unrecorded = FEED.filter((i) => !recorded[i.id]);
   const falsePositives = unrecorded.filter((i) => O.openLooksLikeEightK(i.title)).length;
-  eq('  ... and fires on unrecorded topics too', falsePositives, 21);
+  check(`  ... and fires on ${falsePositives} unrecorded topic(s) too`, falsePositives > 0,
+    'a title that reads like an 8K auction is not evidence that it is one');
   check('  ... which is why a candidate is only a sort order',
     falsePositives > 0, 'charity auctions, cancelled auctions and discussion threads all match');
 

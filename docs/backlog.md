@@ -57,7 +57,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | ID | Item | Blocked on |
 |---|---|---|
 | **DATA-1** | The 50 GP Idol chase set is only half modeled | nothing — data authoring |
-| **DATA-6** | A failed auction has no representation, so its row is deleted | **the workbook only** — shape decided, repo side shipped, dry-run green |
+| **DATA-6** | ~~A failed auction has no representation, so its row is deleted~~ | **RESOLVED 2026-09-03** — shipped, workbook updated, five rows restored |
 | **DATA-8** | Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum | a decision, then careful authoring |
 | **SITE-2** | Transmute row height at 375px | the maintainer's real-phone verdict; **do not act unsolicited** |
 | **SITE-3** | Shopping List drawer row names ellipsize | a flex-layout rework |
@@ -255,7 +255,7 @@ check; if no row matches the shape it reports STALE rather than FAIL.
 
 ---
 
-## DATA-6. A failed auction has no representation, so its row is deleted — REPO SIDE DONE, WAITING ON THE WORKBOOK
+## DATA-6. A failed auction has no representation, so its row is deleted — RESOLVED (PRs #177/#178, 2026-09-03)
 
 **Shape decided (2026-09-03): an `outcome` column that feeds the `Status`
 formula.** `Status` stays derived; it just reads one more input first:
@@ -265,9 +265,11 @@ formula.** `Status` stays derived; it just reads one more input first:
 ```
 
 `outcome` is blank on an ordinary auction and `Failed` on one that did not fund.
-Everything the repo needs is merged. The workbook does not have the column yet,
-and that is the whole of what is left — the operator's steps are in
-`updating-the-data.md` § *Recording a failed auction*.
+**Done end to end:** the repo side merged as #177, and #178 carried the workbook
+change — the column, the formula, the dropdown, and the five deleted rows
+restored with 202518's thirteen withheld context rows. 289 auctions became 294.
+The operator's record is in `updating-the-data.md` § *Recording a failed
+auction*.
 
 ### Why this shape, and where the old entry was wrong
 
@@ -337,12 +339,39 @@ context rows — was applied to `public/data` and the whole gate run against it:
 clean, all ten test suites passing. § 5b reports `5 Failed auction(s) correctly
 carry none`.
 
+### What the restore then broke, and the lesson in it
+
+Nothing about the data. **Nine assertions in `auction-open.test.mjs` and one in
+`harden-sheet.test.mjs`**, all of them on the publish PR, where a red check
+reads as the publish being broken.
+
+The nine were corpus tallies — `recorded topic ids` at 178, `distinct recorded
+auctioneers` at 38, `a year in the recorded name is right 65 times`, the triage
+counts. Five new rows moved every one. #177 had de-pinned exactly one of these
+(`eq(placed, 276)`), found by grepping for the numbers *that* change described.
+**Fixing the instance is not fixing the class**: the file held eight more, keyed
+to numbers nobody thought to grep for. All are now pinned to the invariant with
+the count kept in the message.
+
+One was not a tally, and it is the more interesting failure. `count + 1 would
+collide with a recorded auction` demonstrated why numbering uses `max + 1` —
+using 2026, whose gaps at 3 and 38 were the deleted failures. **Restoring them
+destroyed the demonstration**: 2026's numbering is dense now, so `count + 1` is
+`max + 1` and the example stopped being one. The rule is unchanged and still
+right; only the corpus stopped illustrating it. It is now pinned against a
+constructed season that cannot stop illustrating it, with the corpus search kept
+as documentation — which reports exactly one season, 2020, whose gap at 8 was
+never a failure at all.
+
+And the tenth was this repo's own check working: `harden-sheet.test.mjs`
+asserted that a `pending` column which has quietly appeared means the flag has
+outlived its purpose. The column appeared, so it failed, and dropping the flag
+was the fix. It was hidden behind the auction-open failure because the suites
+are chained — **read past the first failing suite**.
+
 ### What is left
 
-The two workbook edits, in `updating-the-data.md` § *Recording a failed
-auction*: add the column, change the formula. Then, optionally, the restore.
-Once the harden pass has run against the real column, drop `pending: true` from
-its `HARDEN_VOCABULARY` entry so a later rename is an alarm again.
+Nothing.
 
 ---
 

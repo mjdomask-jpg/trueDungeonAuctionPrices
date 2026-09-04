@@ -361,15 +361,22 @@ console.log('4. Metadata hygiene (auctionMetadata.csv)');
       (s.get(number) ?? s.set(number, []).get(number)).push(m.auctionId);
     }
   }
-  // A repeated number inside a season is an error; a missing one is not. Gaps
-  // are deleted Failed rows — a normal event that leaves no trace behind, so
-  // they are stated and never counted against the run.
+  // A repeated number inside a season is an error; a missing one is not.
+  //
+  // Gaps USED to mean a deleted Failed row, which is what this note said. That
+  // is no longer the common case and, since the DATA-6 restore, no longer even
+  // the case here: the failures that burned 2025's 18/25/31 and 2026's 3/38
+  // have their rows back, and the ONE gap left in the corpus is 2020's 8, which
+  // was never a failure at all — an empty `Hayward 8` placeholder removed by
+  // the 2019–20 backfill. So the note says what a gap is, rather than asserting
+  // a cause it cannot see.
   for (const [season, numbers] of [...numbersBySeason].sort((a, b) => a[0] - b[0])) {
     for (const [n, ids] of numbers) if (ids.length > 1) errs.push(`season ${season}: auctionNumber ${n} used by ${ids.join(' and ')}`);
     const all = [...numbers.keys()].sort((a, b) => a - b);
     const gaps = [];
     for (let n = all[0]; n < all[all.length - 1]; n++) if (!numbers.has(n)) gaps.push(n);
-    if (gaps.length) info(`season ${season}: auctionNumber gap(s) at ${gaps.join(', ')} (deleted Failed auctions — expected)`);
+    if (gaps.length) info(`season ${season}: auctionNumber gap(s) at ${gaps.join(', ')} — a number nothing uses. ` +
+      'Expected: a deleted row leaves one behind, and not every deleted row was a failure. A DUPLICATE is the error');
   }
   capped(err, errs); capped(note, warns);
   if (!errs.length) ok(`${seenId.size} auction(s): ids, dates, daysToClose and numbering are consistent`);

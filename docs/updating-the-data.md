@@ -112,8 +112,8 @@ it in the Google Sheet and re-export — not in the CSV, or your fix disappears
 next time.
 
 `INFO` lines (`·`) are normal and can be ignored — a season with no auction data
-falling back to earlier prices, an auction-number gap left by a `Failed` row
-deleted before there was a way to mark one, the skipped link check.
+falling back to earlier prices, an auction-number gap left by a deleted row,
+the skipped link check.
 
 **Warnings (`!`) are not automatically fine.** Two of them are standing — known
 and decided — so the useful question is not "are there warnings" but *"is this
@@ -390,7 +390,7 @@ so it is left alone by every later scan.
 
 | | |
 |---|---|
-| `auctionNumber` | `max` of that season plus one, never `count` plus one. The numbers are sparse where failed auctions were deleted before `outcome` existed — 2026 is missing 3 and 38, 2025 is missing 18, 25 and 31. Counting would propose 46, which already exists. Restoring those rows closes the gaps but does not change the rule: `max + 1` is right either way, and only `max + 1` survives a season that ends on a failure. |
+| `auctionNumber` | `max` of that season plus one, never `count` plus one. Those gaps are closed now that the five deleted failures are restored, so 2026 no longer demonstrates the collision — 2020, whose missing 8 was a placeholder rather than a failure, is the only season left that does. The rule is unchanged and still the right one: only `max + 1` survives a season whose numbering is sparse for any reason. |
 | `auctionId` | The season and the number run together, the way all 289 recorded rows are built. |
 | `openDate` | The forum's exact first-post timestamp, not "5 days ago". For Trent, the start date his page states. For the auction site, the card's `Starts:` date — its `Ends:` line is read and then deliberately not used. |
 | `auctioneer` | The forum display name — or the auction site's `Sponsor:` line — mapped to the name you already use: `Wade Schwendemann (Dr. Uid)` to `Wade S`, `alesiev - Alex` to `alesiev`, `Alesiev (Alex)` to `alesiev`, `Nick` to `Nick Braun`. A name it cannot map is flagged as new rather than guessed. |
@@ -1403,11 +1403,12 @@ change.
   number, its dates, its auctioneer and its target.
   > This changed on 2026-09-03 (backlog DATA-6). Before it, `Status` was
   > `IF(closeDate = "", "Open", "Closed")` and could not say `Failed` at all, so
-  > the row was **deleted** — which is why `auctionNumber` sequences have
-  > permanent gaps at `202518`, `202525`, `202531`, `20263` and `202638`, and at
-  > `20208` for a different reason (an empty placeholder). **Those five rows are
-  > recoverable and their restore is written out below.** A gap is expected; a
-  > *duplicate* number is not.
+  > the row was **deleted**. Five auctions were lost that way — `202518`,
+  > `202525`, `202531`, `20263` and `202638` — and **all five have since been
+  > restored**, which closed every numbering gap they had left. The only gap in
+  > the corpus now is 2020's missing 8, which was never a failure: `Hayward 8`
+  > was an empty placeholder removed by the 2019–20 backfill. A gap is expected;
+  > a *duplicate* number is not.
 - **`Open` auctions are surfaced separately** by the live "open auctions" banner
   (top of Prices) and the "Open auctions" section (top of Auction Data). Both
   read `Status = Open` directly and are independent of every page filter. Since
@@ -1454,7 +1455,9 @@ failed auction breaks a rule that is otherwise sound:
 
 #### Setting the sheet up (once)
 
-This has not been done in the workbook yet. Two edits, in this order:
+**Done — the workbook has the column, the formula and the dropdown as of
+2026-09-03, and the five rows below are restored.** Kept here as the record of
+what was changed. Two edits, in this order:
 
 1. **Add an `outcome` column at the far right of `auctionMetadata`**, after
    `preorderTotal`. At the end, not inserted — the publish serialises the tab in
@@ -1476,19 +1479,23 @@ This has not been done in the workbook yet. Two edits, in this order:
    — with `outcome` written as the actual cell reference for that row, the same
    way the existing formula names `closeDate`. Copy it down the whole column.
 
-Then run **Harden the sheet**. It already carries the rule for `outcome` and is
-waiting for the column: until the column exists it prints a note saying so, and
-the first run after you add it proposes the reject-only dropdown. Once that has
-happened, drop `pending: true` from the `outcome` entry in `HARDEN_VOCABULARY`
-so that a later *rename* of the column goes back to being an alarm.
+Then run **Harden the sheet**, which proposes the reject-only dropdown on
+`outcome`. That has been done, and `pending: true` has come off the entry in
+`HARDEN_VOCABULARY` — so a missing `outcome` column is an alarm again, the way
+it is for every other fenced column.
 
-#### The five rows that were deleted before this existed
+#### The five rows that were deleted before this existed — RESTORED
 
 Failure was recorded by deletion for as long as there was no way to record it,
-so five auctions were removed outright. **They are not lost** — they are in this
-repository's history, at `b4196af^`, complete with dates, auctioneer, style and
-target. Restoring them is optional and it is the only reason any of the failure
-questions can be asked about past seasons.
+so five auctions were removed outright. They were never lost — they were in this
+repository's history at `b4196af^` — and **all five are back in the sheet as of
+2026-09-03**, along with 202518's thirteen withheld context rows. Kept below as
+the record of what was restored and where it came from.
+
+One value came back different, correctly: `202518`'s `augmentWithheld` reads
+−$702.39 rather than the −$702.99 it held when it was deleted. That column is a
+`QUERY` over current prices, so it recomputed — which is exactly why the old
+`priceAugmented` values were not pasted back.
 
 Paste these into `auctionMetadata` as new rows. **Only the input columns are
 here.** Everything else in that tab computes — `auctionId`, `Status`,
