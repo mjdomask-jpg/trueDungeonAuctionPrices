@@ -38,7 +38,7 @@
  * `HARDEN_`/`harden`.
  */
 
-var HARDEN_VERSION = '2026-09-03.1';
+var HARDEN_VERSION = '2026-09-03.2';
 
 /**
  * Columns holding a price, by tab and header. Numeric-only validation goes on
@@ -103,22 +103,19 @@ var HARDEN_VOCABULARY = [
   ] },
   { tab: 'contextItems', header: 'category', grows: false, values: ['token', 'grunnel', 'withheld', 'augment'] },
 
-  // `outcome` is DATA-6's column, and it is `pending` because the workbook does
-  // not have it yet — this entry lands before the column does, on purpose, so
-  // that the day someone adds it the fence is already written and the harden
-  // pass proposes the dropdown on its next run rather than a season later.
-  //
-  // `pending` changes ONE thing: a missing column is reported as a note naming
-  // this entry instead of as a problem. That distinction is the whole point of
-  // the flag — for every other column here, absent means RENAMED, which is a
-  // problem and must stay one. Remove the flag once the column exists, and the
-  // note goes back to being the alarm it should be.
+  // `outcome` is DATA-6's column. It landed here as `pending` before the column
+  // existed, and the flag came off on 2026-09-03 once the workbook had it and
+  // the harden pass had proposed the dropdown — so a missing `outcome` column
+  // is an ALARM again, the way it is for every other entry, because absent now
+  // means renamed. The `pending` machinery stays for the next column that needs
+  // it; `harden-sheet.test.mjs` exercises it with a synthetic entry so it does
+  // not go untested between uses.
   //
   // It is `grows: false` while `auctionStyle` beside it is `grows: true`, and
   // the two are opposite for a reason: styles are invented by auctioneers and
   // arrive unannounced, outcomes are decided here. `Cancelled` is the obvious
   // second member and is deliberately not offered until someone decides it is.
-  { tab: 'auctionMetadata', header: 'outcome', grows: false, pending: true, values: ['Failed'] },
+  { tab: 'auctionMetadata', header: 'outcome', grows: false, values: ['Failed'] },
 ];
 
 // `augmentated` is NOT here, and the reason is worth keeping. It reads like the
