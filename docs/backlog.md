@@ -56,7 +56,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 
 | ID | Item | Blocked on |
 |---|---|---|
-| **DATA-1** | The 50 GP Idol chase set is only half modeled | nothing — data authoring |
+| **DATA-1** | ~~The 50 GP Idol chase set is only half modeled~~ | **RESOLVED 2026-09-04** — modelled, published and live; it forges the Totem of Wonder |
 | **DATA-6** | ~~A failed auction has no representation, so its row is deleted~~ | **RESOLVED 2026-09-03** — shipped, workbook updated, five rows restored |
 | **DATA-8** | Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum | a decision, then careful authoring |
 | **SITE-2** | Transmute row height at 375px | the maintainer's real-phone verdict; **do not act unsolicited** |
@@ -82,24 +82,69 @@ place where a real game concept has no home in the schema yet. Game-level
 definitions live in the shared `td-domain` skill — this section tracks only what
 *this repo's data* is missing.
 
-## DATA-1. The 50 GP Idol chase set is only half modeled — OPEN
+## DATA-1. The 50 GP Idol chase set is only half modeled — RESOLVED (PRs #180/#181/#182, 2026-09-04)
 
-**Now:** the Idol appears only in `contextItems.csv`, as six named variants —
+**Was:** the Idol existed only in `contextItems.csv`, as six named variants —
 Goose, Lion, Locust, Meerkat, Ram, Tortoise — across 7 rows, all season 2025,
-carried as auction augments at $20 each.
+carried as auction augments at $20 each. It was absent from `tokenMetadata.csv`,
+`offAuctionPrices.csv` and `transmuteRecipes.csv`, so it was the one chase set
+nothing reasoning about chase sets could see.
 
-It is absent from `tokenMetadata.csv`, `offAuctionPrices.csv`, and
-`transmuteRecipes.csv`.
+**Now:** authored in the workbook, published across three PRs, and verified live
+on td-auctions.com on 2026-09-04.
 
-**Why it matters:** it *is* a chase token — treasure-only, set-forming, named
-variants — and every other chase set is modeled. Stalker Token, Herald Token and
-Golem Piece all carry a `Treasure Chest` metadata row and an off-auction price.
-The Idol is the odd one out, so anything reasoning about chase sets will silently
-miss it.
+- `tokenMetadata.csv`: `2024 | 50 GP Idol (40 Unique) | Treasure Chest`.
+- `offAuctionPrices.csv`: `2024 | Treasure Chest | 50 GP Idol (40 Unique) |
+  15 / 10 / 5`.
+- `transmuteRecipes.csv`: the Idol's transmute — **`2024 | Legendary | Totem of
+  Wonder`**, `40 x 50 GP Idol (40 Unique)` plus `1 x Ring of Wonder` pinned to
+  `ItemYear=2020`.
+- `tokenMetadata.csv` also gained `2020 | Ring of Wonder | Ultra Rare`, which
+  the recipe's second line needs.
+- `scripts/validate-recipes.mjs`: `2024|Totem of Wonder` added to
+  `RAW_BUILT_LEGENDARIES` — like `Gear Golem Totem` it is forged from a chase
+  set with no source relic, so the "every Legendary upgrades from a relic" guard
+  has to be told.
 
-**Done looks like:** a `Treasure Chest` row per season in `tokenMetadata.csv`, an
-`offAuctionPrices.csv` entry, and its transmute in `transmuteRecipes.csv` if one
-exists.
+Measured against the shipped engine, not inferred: the recipe resolves with
+**0 unpriced lines** at **$511 avg / $295 min**, and the page renders it under
+2024 -> LEGENDARIES as `est. $511 min $295`. Validators: 0 errors (the 7
+warnings are all pre-existing and unrelated). Ten test suites pass, `tsc -b`
+clean.
+
+**Four things worth keeping**, because none is recoverable from the resulting
+data:
+
+1. **The naming is `(40 Unique)`, and it is the established convention, not a
+   description.** `Golem Piece (40 Unique)` and `Herald Token (20 Unique)`
+   already read that way: the parenthetical states the set's size, the row
+   prices **one** piece, and the recipe carries the count as `Quantity`. So
+   `Quantity=40` beside a name saying `(40 Unique)` is correct and is not a
+   double-count.
+2. **"A `Treasure Chest` row per season" — this item's original *Done looks
+   like* — was wrong about the practice.** Every other chase set carries exactly
+   **one** off-auction row for the whole set (`Golem Piece` 2026, `Herald Token`
+   2026, `Stalker Token` 2023); only `Monster Trophy`, which has a vintage per
+   DATA-2, is authored per season. One row is the correct shape here, and the
+   engine's float-to-nearest-priced-season covers the rest.
+3. **`Ring of Wonder` is priced by TIER PROXY, not by a row of its own.** It
+   appears in `onyx.csv` and `contextItems.csv` but **never in `prices.csv`**,
+   and `PriceIndex` is built from `prices.csv` alone — onyx sales are not in it.
+   The line prices only because its `Substitute` column says `Ultra Rare`,
+   resolving through `TIER_PROXY` to 45 pooled 2020-2021 Ultra Rare sales
+   ($111.23 avg). The UI says so on the line: *"2020 - auction - priced as Ultra
+   Rare - 2020-2021 pooled"*. **Drop that `Substitute` value and the line goes
+   unpriced** — there is no fallback behind it.
+4. **The six `50GP Idol: <variant>` context rows are deliberately NOT merged
+   into this token.** They are named chase variants recorded as auction augments;
+   `50 GP Idol (40 Unique)` is the generic piece the recipe consumes. They also
+   spell it `50GP` where the token spells it `50 GP`, which § 8 does not flag
+   because the names differ by more than punctuation. That is the § 8 rule
+   working as intended — a variant is not a spelling of its set.
+
+The Totem reads `est.` rather than `expired` because `Legendary` is in
+`NEVER_EXPIRING_LEVELS`, so a blank `Expires` on a 2024 Legendary never lapses.
+That is the documented rule, not an artefact of the new rows.
 
 ---
 

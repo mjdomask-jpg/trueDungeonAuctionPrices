@@ -423,14 +423,14 @@ for (const r of recipes) {
 // were missing theirs — this guard makes a re-export that drops one loud, because
 // losing the source relic silently deletes a recipe's single biggest cost line.
 // A handful of Legendaries are genuinely built from raw materials with no
-// upgrade-from token (alternate "Recipe N" variants, the Golem-piece totem); they
+// upgrade-from token (alternate "Recipe N" variants, the chase-set totems); they
 // are listed explicitly so the clean state stays at zero errors and only a real
 // regression fires. Add to this list when a new raw-built Legendary is authored.
 const RAW_BUILT_LEGENDARIES = new Set([
   '2023|Charm of Avarice Recipe 3',            // alternate recipe: raw materials + Ultra Rare
   "2024|Kilgor's +4 Savage Sword (Recipe 2)",  // alternate recipe: no upgrade-from token
   '2026|Gear Golem Totem',                     // forged from Golem Pieces, no source relic
-  '2024|Totem of Wonder',                     // forged from 50 GP Idols, no source relic
+  '2024|Totem of Wonder',                      // forged from 50 GP Idols, no source relic
 ]);
 const legendarySources = new Map();   // "Year|Transmute" -> count of IsSource rows
 for (const r of recipes) if (r.Level === 'Legendary') {
