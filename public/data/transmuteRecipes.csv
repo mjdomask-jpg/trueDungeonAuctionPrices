@@ -1986,4 +1986,4 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 "2027|Charm of Unity|1,000 GP Gold Bar||FALSE",2027,Relic,Charm of Unity,"1,000 GP Gold Bar",,2027,"1,000 GP Gold Bar",5,FALSE,,
 2017|Golden Fleece|Monster Trophy||FALSE,2017,Trade 3,Golden Fleece,Monster Trophy,,2017,Monster Trophy,10,FALSE,never,
 2024|Totem of Wonder|50 GP Idol (40 Unique)||FALSE,2024,Legendary,Totem of Wonder,50 GP Idol (40 Unique),,2024,50 GP Idol (40 Unique),10,FALSE,,
-2024|Totem of Wonder|Ring of Wonder|2020|FALSE,2024,Legendary,Totem of Wonder,Ring of Wonder,2020,2020,Ring of Wonder,10,FALSE,,Ultra Rare
+2024|Totem of Wonder|Ring of Wonder|2020|FALSE,2024,Legendary,Totem of Wonder,Ring of Wonder,2020,2020,Ring of Wonder,1,FALSE,,Ultra Rare
