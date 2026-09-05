@@ -42,11 +42,41 @@ export const OMNI_ORB_TIERS = new Set(['Ultra Rare', 'Exalted', 'Rare', 'Enhance
 export const WISH_RING = 'Wish Ring';
 export const GOLD_BAR = '1,000 GP Gold Bar';
 
-/** The recipes read "1 Wish Ring OR 15,000 GP", and 15,000 GP is 15 more of
- *  the 1,000 GP Gold Bars the recipe already asks for — so the GP path raises
- *  an existing line's quantity (25 → 40) rather than adding a row. */
+/**
+ * The GP denominations, in gold pieces.
+ *
+ * These are three weights of ONE currency, not three goods: five 1,000 GP Gold
+ * Bars are a 5,000 GP Mithral Bar, and the company will issue a player either
+ * on request, so a recipe asking for 25,000 GP is satisfied by any combination
+ * that adds up. `derivedPrices.csv` prices the larger two as exact multiples of
+ * the bar for the same reason.
+ *
+ * This table exists because the recipes changed underneath this file (DATA-8).
+ * A Legendary used to ask for `1,000 GP Gold Bar x25`; it now asks for
+ * `25,000 GP Eldritch Ore Bar x1`, which is the token the game's own recipe
+ * card names. Matching the line by the literal string `GOLD_BAR` — which is
+ * what `goldPathFor` did — stopped finding it, and the failure was SILENT:
+ * `goldPathFor` returned null, so the Wish Ring toggle simply stopped
+ * rendering on all 43 recipes with no error anywhere. Measured before the fix:
+ * 43 of 47 Legendary recipes offered the path, then 0 of 47.
+ *
+ * So the rule is stated in GP and not in bar counts, and a fourth denomination
+ * would only have to be added here.
+ */
+export const GP_DENOMINATIONS: Readonly<Record<string, number>> = {
+  '1,000 GP Gold Bar': 1000,
+  '5,000 GP Mithral Bar': 5000,
+  '25,000 GP Eldritch Ore Bar': 25000,
+};
+
+/** The recipes read "1 Wish Ring OR 15,000 GP". 15,000 GP is not a token — no
+ *  denomination is worth that — so the GP path states the line's whole value in
+ *  GP, adds the ring's 15,000, and re-denominates the total into Gold Bars: a
+ *  Legendary's `25,000 GP Eldritch Ore Bar x1` becomes `1,000 GP Gold Bar x40`.
+ *  That is the same row, the same total and the same wording the GP path showed
+ *  when the recipe was authored as 25 bars, so nothing visible moved. */
 export const GP_PER_WISH_RING = 15000;
-export const GP_PER_BAR = 1000;
+export const GP_PER_BAR = GP_DENOMINATIONS[GOLD_BAR];
 export const BARS_PER_WISH_RING = GP_PER_WISH_RING / GP_PER_BAR; // 15
 
 /** Which of the two legal paths a recipe is being priced on. */
@@ -56,34 +86,49 @@ export const DEFAULT_PATH: IngredientPath = 'ring';
 
 export type GoldPath = {
   ringIndex: number; // BOM index of the Wish Ring line
-  barIndex: number; // BOM index of the Gold Bar line the extra bars merge into
+  barIndex: number; // BOM index of the GP line the ring's GP merges into
   ringQuantity: number; // rings the recipe asks for (1 everywhere in this data)
-  barQuantity: number; // bars as authored (25 everywhere in this data)
-  gpBarQuantity: number; // bars on the GP path (40)
+  barGood: string; // the denomination that line is authored in
+  barQuantity: number; // that denomination's count, as authored (1 on a Legendary)
+  barGp: number; // what the line is worth in GP (25,000 on a Legendary)
+  gpTotal: number; // GP on the GP path (40,000 on a Legendary)
+  gpBarQuantity: number; // gpTotal expressed in 1,000 GP Gold Bars (40)
 };
 
 /**
  * Locate the Wish-Ring-or-GP choice in a bill of materials.
  *
- * Returns null when the recipe does not offer it — the three Legendaries with
- * no Wish Ring line, and every non-Legendary. Also null when a Wish Ring line
- * exists with no Gold Bar line to merge into: that combination does not occur
- * in the data (all 43 have both), and inventing a new row for it would be a
- * guess about a recipe nobody has authored.
+ * Returns null when the recipe does not offer it — the four Legendaries with no
+ * Wish Ring line (`Charm of Avarice Recipe 3`, `Kilgor's +4 Savage Sword
+ * (Recipe 2)`, `Totem of Wonder`, `Gear Golem Totem`; measured 2026-09-04, and
+ * it was three until `Totem of Wonder` was authored), and every non-Legendary.
+ * Also null when a Wish Ring line exists with no GP line to merge into: that
+ * combination does not occur in the data (all 43 have both), and inventing a
+ * new row for it would be a guess about a recipe nobody has authored.
+ *
+ * The GP line is found by DENOMINATION rather than by name, so it keeps working
+ * whichever weight the sheet authors the requirement in. No recipe carries two
+ * GP lines — checked across all 176 — so `findIndex` is not choosing between
+ * candidates.
  */
 export function goldPathFor(cost: BuildCost): GoldPath | null {
   const ringIndex = cost.lines.findIndex((l) => l.good === WISH_RING);
   if (ringIndex < 0) return null;
-  const barIndex = cost.lines.findIndex((l) => l.good === GOLD_BAR);
+  const barIndex = cost.lines.findIndex((l) => l.good in GP_DENOMINATIONS);
   if (barIndex < 0) return null;
+  const bar = cost.lines[barIndex];
   const ringQuantity = cost.lines[ringIndex].quantity;
-  const barQuantity = cost.lines[barIndex].quantity;
+  const barGp = bar.quantity * GP_DENOMINATIONS[bar.good];
+  const gpTotal = barGp + ringQuantity * GP_PER_WISH_RING;
   return {
     ringIndex,
     barIndex,
     ringQuantity,
-    barQuantity,
-    gpBarQuantity: barQuantity + ringQuantity * BARS_PER_WISH_RING,
+    barGood: bar.good,
+    barQuantity: bar.quantity,
+    barGp,
+    gpTotal,
+    gpBarQuantity: gpTotal / GP_PER_BAR,
   };
 }
 
@@ -96,17 +141,61 @@ export function goldPathFor(cost: BuildCost): GoldPath | null {
  * index, so removing a row would silently re-map a player's entries onto the
  * wrong ingredients when they flip the toggle.
  */
-export function applyGoldPath(cost: BuildCost): BuildCost {
+export function applyGoldPath(cost: BuildCost, engine: CostEngine): BuildCost {
   const path = goldPathFor(cost);
   if (!path) return cost;
 
   const lines = cost.lines.map((l, i) => {
     if (i === path.ringIndex) return withQuantity(l, 0, 'replaced');
-    if (i === path.barIndex) return withQuantity(l, path.gpBarQuantity, 'boosted');
+    if (i === path.barIndex) return asGoldBars(l, path, engine);
     return l;
   });
 
   return { ...cost, lines, ...totalsOf(lines, cost) };
+}
+
+/**
+ * Re-denominate the GP line into 1,000 GP Gold Bars at the path's total.
+ *
+ * A no-op beyond the quantity when the line is already Gold Bars, which is what
+ * every non-Legendary GP line still is — that branch is the original behaviour,
+ * unchanged and still exercised.
+ *
+ * THE PRICE IS LOOKED UP, NEVER DIVIDED DOWN. The obvious shortcut is
+ * `l.unitAvg / 25`, since the Ore Bar's price is by construction 25x the bar's.
+ * It does not round-trip: measured over two million money values, `(g * 25) / 25
+ * !== g` about 15% of the time and `(g * 5) / 5 !== g` about 13%, so the GP
+ * path's total would stop matching a Relic's Gold Bar line computed the
+ * ordinary way — two numbers that must agree, drifting in the last bits for no
+ * reason. Asking the price index costs one lookup and is exact.
+ *
+ * It is asked at the line's `pricedYear`, NOT its `nominalYear`. Trade goods
+ * price at the current season under rule S1, so a 2012 Legendary's GP line is
+ * priced from 2026; looking up at 2012 clamps to 2018 instead and quietly
+ * reprices it. That was measured too — 41 of the 43 recipes came out $247 high
+ * before the year was corrected.
+ */
+function asGoldBars(l: PricedLine, path: GoldPath, engine: CostEngine): PricedLine {
+  if (l.good === GOLD_BAR) return withQuantity(l, path.gpBarQuantity, 'boosted');
+  // An unpriced GP line stays unpriced rather than acquiring a price from a
+  // different token: `withQuantity` already carries nulls through correctly.
+  const p = l.unitAvg === null ? null : engine.prices.leafPrice(GOLD_BAR, l.pricedYear, l.variant, l.window);
+  if (!p) return { ...withQuantity(l, path.gpBarQuantity, 'boosted'), good: GOLD_BAR, displayName: GOLD_BAR };
+  const q = path.gpBarQuantity;
+  return {
+    ...l,
+    good: GOLD_BAR,
+    displayName: GOLD_BAR,
+    category: 'Trade 2',
+    quantity: q,
+    substituted: 'boosted',
+    source: p.source,
+    bound: p.bound,
+    unitAvg: p.stats.avg,
+    unitMin: p.stats.min,
+    extAvg: p.stats.avg * q,
+    extMin: p.stats.min * q,
+  };
 }
 
 function withQuantity(l: PricedLine, quantity: number, substituted: 'replaced' | 'boosted'): PricedLine {
@@ -142,10 +231,10 @@ export type PathComparison = {
 };
 
 /** Price both legal paths for a recipe that offers the choice. */
-export function compareIngredientPaths(cost: BuildCost): PathComparison | null {
+export function compareIngredientPaths(cost: BuildCost, engine: CostEngine): PathComparison | null {
   const path = goldPathFor(cost);
   if (!path) return null;
-  const gp = applyGoldPath(cost);
+  const gp = applyGoldPath(cost, engine);
   return {
     ringAvg: cost.fullAvg, ringMin: cost.fullMin,
     gpAvg: gp.fullAvg, gpMin: gp.fullMin,
@@ -157,9 +246,14 @@ export function compareIngredientPaths(cost: BuildCost): PathComparison | null {
 }
 
 /** Apply the selected path. `'ring'` is the identity, and the default, because
- *  it is what the recipe literally lists. */
-export function onPath(cost: BuildCost, path: IngredientPath): BuildCost {
-  return path === 'gp' ? applyGoldPath(cost) : cost;
+ *  it is what the recipe literally lists.
+ *
+ *  `engine` is REQUIRED rather than optional even though the ring path never
+ *  touches it. Optional, it would type-check at a call site that forgot to pass
+ *  one and then silently drop the substituted line's price — a $352 row landing
+ *  at $0 with nothing to see. Required, the compiler names every call site. */
+export function onPath(cost: BuildCost, path: IngredientPath, engine: CostEngine): BuildCost {
+  return path === 'gp' ? applyGoldPath(cost, engine) : cost;
 }
 
 // --- Omni offers ----------------------------------------------------------

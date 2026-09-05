@@ -58,7 +58,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 |---|---|---|
 | **DATA-1** | ~~The 50 GP Idol chase set is only half modeled~~ | **RESOLVED 2026-09-04** — modelled, published and live; it forges the Totem of Wonder |
 | **DATA-6** | ~~A failed auction has no representation, so its row is deleted~~ | **RESOLVED 2026-09-03** — shipped, workbook updated, five rows restored |
-| **DATA-8** | Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum | a decision, then careful authoring |
+| **DATA-8** | ~~Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum~~ | **RESOLVED 2026-09-04** — both denominations authored and priced; 49 recipe lines name the Ore Bar; totals unmoved |
 | **SITE-2** | Transmute row height at 375px | the maintainer's real-phone verdict; **do not act unsolicited** |
 | **SITE-3** | Shopping List drawer row names ellipsize | a flex-layout rework |
 | **SITE-4** | Transmutes "most-withheld components" callout | appetite — an optional stretch from the context layer |
@@ -458,74 +458,108 @@ decisive — 202413's thread contains no bar lot at all.
 
 ---
 
-## DATA-8. Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum — OPEN
+## DATA-8. Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum — RESOLVED (2026-09-04)
 
-**Now:** `transmuteRecipes.csv` contains **no** `5,000 GP Mithral Bar` and no
-`25,000 GP Eldritch Ore Bar`. Every large sum is authored as a multiple of the
-1,000 GP Gold Bar — 127 lines, at 1x, 3x, 4x, 5x, 10x, 15x, 50x and 100x. The
-1,000 GP bar is the only one with an entry in `prices.csv`, so it is the only one
-the engine can price. It is **not** the only one ever sold: the larger
-denominations sell as auction EXTRAS and land in `contextItems.csv`. Three of the
-six sales below are recorded there (row 334, and row 431 at quantity 2); the other
-three are 202415's 5K bars, which were that order's normal contents and so appear
-only in its forum thread.
+**Was:** `transmuteRecipes.csv` contained no `5,000 GP Mithral Bar` and no
+`25,000 GP Eldritch Ore Bar`. Every large sum was authored as a multiple of the
+1,000 GP Gold Bar, so the totals were right and the shopping list was wrong: the
+site told a player to acquire twenty-five separate bars when one token is the
+whole amount.
 
-**Why it matters:** the totals are right and the shopping list is wrong. Per the
-`td-domain` trade ladder, the Mithral Bar (Trade 3) and the Eldritch Ore Bar
-(Trade 4) are real tokens, and a 25,000 GP requirement can legitimately be met by
-any mix of the two denominations adding up. Today the site tells a player to go
-and acquire twenty-five separate 1,000 GP bars when one token is the whole amount.
+**Now:** both denominations are authored as tokens and priced, and the Legendary
+recipes name the one their card actually names.
 
-It also leaves the trade ladder half-populated in the direction `DATA-3` cared
-about: Trade 3 currently means Golden Fleece only, and Trade 4 means Wish Ring
-only, because the bar half of each rung is not in the data.
+- `tokenMetadata.csv`: 32 rows — `5,000 GP Mithral Bar` (`Trade 3`) and
+  `25,000 GP Eldritch Ore Bar` (`Trade 4`), each across 2012–2027, matching the
+  season coverage every other trade good has.
+- `derivedPrices.csv`: priced off the 1,000 GP Gold Bar at **face value** —
+  `Multiple 5` and `Multiple 25`, no `Bound`.
+- `transmuteRecipes.csv`: **49 lines** name the Ore Bar — 43 Legendary, 4 Mythic,
+  2 Safehold. `2025 Safehold I` takes 2 (50,000 GP); every other line takes 1.
+- `substitutions.ts`: reworked to find the GP line by **denomination** and work
+  in **gold pieces** (see *The silent breakage* below).
 
-**The evidence revises the claim.** `DATA-7`'s thread read turned one data point
-into six sales across two seasons, and they do NOT trade at face value — they
-trade at a small discount to the 1,000 GP bar's average:
+**Face value, not a discount, and no ceiling flag.** The six recorded sales trade
+8–20% under the multiple, and the earlier draft of this item proposed pricing to
+them. The maintainer settled it on a fact the sales cannot show: **a player can
+request either denomination from the company directly** — win 25 × 1,000 GP at
+auction and ask for one 25,000 GP bar instead. The goods are fungible by issue,
+not merely by arithmetic, so the multiple *is* the acquisition cost and a
+discount fitted to six auction-extra sales would be a worse number, not a better
+one. `min`, `max` and `avg` all scale together for the same reason.
 
-| Sale | Season | Per 1,000 GP | That season's 1,000 GP bar |
-|---|---|---|---|
-| 25K @ $250 (202349) | 2023 | $10.00 | min $10.00, avg $12.59 (n=51) |
-| 25K @ $226, x3 (202415) | 2024 | $9.04 | min $5.25, avg $9.87 (n=72) |
-| 5K @ $42, $42, $43 (202415) | 2024 | $8.40-$8.60 | same |
+**Totals did not move.** Measured across the whole corpus with the real engine:
+**175 of 176 build costs identical to the bit**, 0 unpriced lines. The one mover
+is `2026 Earcuff of Greater Glory` (+$60.00), an unrelated Monster Trophy
+correction that rode along in the same workbook pass.
 
-Every one lands at or below that season's average and above its minimum. The
-original reading — "$250 is exactly 25 x the 2023 minimum, so face value" — was a
-coincidence of a season whose minimum happened to be a round $10.00; the 2024
-sales, where min and average are far apart, separate the two readings and the
-average is the one the prices track. **So a derived rule at exactly 5 x the gold
-bar would price a Mithral Bar slightly high**, which matters because the derived
-price is what a Shopping List would quote.
+### The silent breakage this exposed
 
-**And the interchange is attested rather than inferred.** 202415's lot listing
-says it outright: *"the 5K bars can either be single 5K bars or 5 1K bars - your
-choice"*, with the 25K bars called single tokens in the same breath. That is the
-auctioneer stating this item's whole premise, and it is recorded in the
-`td-domain` skill's trade ladder too.
+`substitutions.ts` located the Wish-Ring-or-GP choice by the literal string
+`'1,000 GP Gold Bar'`. Once a Legendary asked for an Ore Bar instead,
+`goldPathFor` returned `null` — and **nothing failed**. The toggle simply stopped
+rendering on all 43 recipes: no error, no console warning, no validator. Measured
+before the fix: 43 of 47 Legendary recipes offered the path, then 0 of 47.
 
-**Done looks like:** the denominations authored as tokens, with `derivedPrices.csv`
-expressing them against the bar that IS priced (`5,000 GP Mithral Bar = 1,000 GP
-Gold Bar x 5`). That file is currently idle — its only rule was superseded by the
-Monster Trophy rows in PR #159 — so the mechanism is free.
+The rule is now stated in GP (`GP_DENOMINATIONS`), so it holds whichever weight
+the sheet authors, and a fourth denomination would only have to be added to that
+table. Both paths verified identical to the bit on all 43 — ring and GP alike —
+against the old data and old code, with line counts preserved so the calculator's
+per-line state stays keyed correctly. The GP path still renders
+`1,000 GP Gold Bar ×40`.
 
-**Three cautions before anyone starts.**
+Two things the implementation forced, both now recorded in the code:
 
-1. A recipe line naming a denomination is a line naming a TRANSMUTE, since every
-   rung of the trade ladder is craftable, so it goes through the market-first rule
-   in `src/lib/transmutes.ts`: with no auction price of its own a Mithral Bar
-   would price at its BUILD cost, which is what you want, but it also means the
-   Shopping List will section it by pricing route and give it a vintage.
-2. Swapping `5x 1,000 GP Gold Bar` for `1x 5,000 GP Mithral Bar` is not
-   cost-neutral if the two are ever priced independently — check what it does to
-   the 43 Legendary recipes and their Wish-Ring-or-15,000-GP path before changing
-   any of them.
-3. `sectionCategory` folds every `Trade 4` row into the Premium table for display,
-   keyed on the **category** and not on the token, because Wish Ring is Trade 4's
-   only occupant today. An authored `25,000 GP Eldritch Ore Bar` would inherit
-   that fold and land in Premium beside it — wrong for a bar that is not an
-   8K-order exclusive, and silent. Re-key `CATEGORY_SECTION` on the item name at
-   that point, or reopen `DATA-3`.
+1. **The substituted line's price is looked up, never divided down.**
+   `unitAvg / 25` is the obvious shortcut and does not round-trip: `(g * 25) / 25
+   !== g` for about 15% of money values.
+2. **It is looked up at `pricedYear`, not `nominalYear`.** Trade goods price at
+   the current season under rule S1, so a 2012 Legendary's GP line is priced from
+   2026; using `nominalYear` clamps to 2018 and put 41 of the 43 out by $247 each.
+
+### The regression this pass found
+
+Between **2026-08-20** (`35928da`, PR #57) and **2026-09-04**, the Legendary bar
+line read **15×**, not 25×. It arrived as one of **502 quantity changes** in a
+single workbook re-export, alongside a coherent 377-line halving pass — so it did
+not look like a defect from the repo side, and no validator could see it. It was
+caught only because this item's own arithmetic did not work: 15,000 GP is not a
+denomination of anything, while 25,000 GP is exactly one Ore Bar. Restored on the
+maintainer's word, then re-verified line by line.
+
+**The lesson is about detection, not about the number.** A recipe quantity is
+authored in a sheet, published without review of its arithmetic, and nothing in
+the repo has an opinion about whether it is plausible. Nine publishes re-asserted
+the wrong value over two weeks. See `verify-claims-against-project-data` — this is
+the same shape as a row keyed to the wrong auction: correct-looking data that only
+a domain fact can contradict.
+
+### The three cautions, resolved
+
+1. *A recipe line naming a denomination goes through the market-first rule.*
+   Moot as built: neither bar has a recipe, so neither is a transmute, and both
+   price straight from their derived rule (`src=derived` on the line).
+2. *Swapping bars for a denomination is not cost-neutral if the two are priced
+   independently.* They are not priced independently — the derived rule ties them
+   to the Gold Bar exactly, which is what makes the 175-of-176 result hold.
+3. *`sectionCategory` folds every `Trade 4` row into Premium, keyed on the
+   category and not the token, so an authored Ore Bar would land in Premium
+   beside the Wish Ring.* **Does not happen, and `CATEGORY_SECTION` was left
+   alone.** The Prices and Trends views build their rows from `aggregateSeason`
+   over *sales*, not from `tokenMetadata`; the Ore Bar has no row in `prices.csv`
+   or `onyx.csv` (checked: 0 in each), so it never reaches `sectionCategory` at
+   all. The caution becomes live only if one of these bars is ever sold and
+   recorded as a price row — `DATA-3` is still the place that would be reopened.
+
+### Still open, deliberately
+
+- **`2027 | Coin of Wealth` keeps `1,000 GP Gold Bar ×100`** — 100,000 GP, or four
+  Ore Bars. Left as authored; `2025 Safehold I`'s 50 was converted to 2, so the
+  treatment is not yet uniform. Worth a decision, not a bug.
+- **The `5,000 GP Mithral Bar` is authored and priced but named by no recipe.**
+  It is real, it completes the Trade 3 rung, and 40 recipe lines ask for exactly
+  5 Gold Bars — but converting those was not part of what the maintainer scoped,
+  and each would need the same card-level confirmation the Legendary line got.
 
 ---
 

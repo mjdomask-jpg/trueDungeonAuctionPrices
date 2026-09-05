@@ -318,6 +318,21 @@ under a ring.
   the 44 Legendary bar lines; one at 10×). So the GP path does **not** add a line —
   it **merges into an existing one**, 25 → 40 bars. Any UI has to decide whether that
   reads as one line changing quantity or as two competing lines.
+
+  > **Superseded 2026-09-04 by DATA-8, and the mechanism moved with it.** That GP
+  > line is no longer authored in Gold Bars: a Legendary now asks for
+  > `25,000 GP Eldritch Ore Bar ×1`, the token the game's own recipe card names.
+  > The choice is unchanged and the totals are unchanged to the bit — the GP path
+  > still shows `1,000 GP Gold Bar ×40` — but `substitutions.ts` now finds the
+  > line by **denomination** (`GP_DENOMINATIONS`) and works in **gold pieces**
+  > rather than bar counts, because matching the literal string
+  > `'1,000 GP Gold Bar'` silently stopped finding it and dropped the toggle from
+  > all 43 recipes with no error anywhere. See `docs/backlog.md` DATA-8.
+  >
+  > Between 2026-08-20 and 2026-09-04 this line read **15×**, not 25×. That was a
+  > regression, not a recipe change — one of 502 quantities altered in a single
+  > workbook pass, restored on the maintainer's word. Nothing in the repo caught
+  > it, and the number in this bullet is the reason it was noticed at all.
 - Both goods are richly priced (Wish Ring: 268 sales; Gold Bar: more), so neither side
   of the comparison leans on the estimate/fallback machinery.
 

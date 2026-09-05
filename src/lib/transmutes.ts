@@ -59,6 +59,23 @@ export type DerivedRule = {
   token: string; // canonical name of the derived token
   derivedFrom: string; // canonical name of the parent
   ratio: number; // how many `token` make one `derivedFrom`
+  /** The inverse relationship, for a token WORTH MORE than its parent: how many
+   *  `derivedFrom` make one `token`. Authored as the `Multiple` column and null
+   *  when the row uses `Ratio` instead.
+   *
+   *  It is a second field rather than a fractional `Ratio` because the two are
+   *  not the same arithmetic. A 25,000 GP Eldritch Ore Bar is twenty-five Gold
+   *  Bars, which as a ratio is 0.04 — and `x / 0.04` is not `x * 25`: they
+   *  disagree in the last bits for about a quarter of money values, and for a
+   *  half of them at `0.2` versus `× 5`. Sub-cent either way, but a price this
+   *  file exists to make EXACT (the goods are fungible, so the bar's price is
+   *  the multiple, not an estimate of it) should not arrive with float noise
+   *  on it. Writing `Multiple 25` also reads as what it is; `Ratio 0.04` does
+   *  not.
+   *
+   *  `Ratio` keeps dividing, untouched, so the Monster Trophy row's numbers do
+   *  not shift by a last bit either. */
+  multiple: number | null;
   year: number | null; // null = applies to every season; a year overrides it
   bound: string; // 'ceiling' — the value is an upper bound, not a measurement
 };
@@ -168,13 +185,21 @@ export function parseDerivedRules(text: string): DerivedRule[] {
   const objs = toObjects(parseCSV(text));
   const out: DerivedRule[] = [];
   for (const o of objs) {
+    // Exactly one of the two columns, and a row carrying both is skipped rather
+    // than resolved by precedence: they express opposite relationships, so a
+    // row with both is an authoring mistake and guessing which was meant is how
+    // a price ends up 625x out.
     const ratio = Number(o['Ratio']);
-    if (!o['Token'] || !o['DerivedFrom'] || !isFinite(ratio) || ratio <= 0) continue;
+    const multiple = Number(o['Multiple']);
+    const hasRatio = !!(o['Ratio'] ?? '').trim() && isFinite(ratio) && ratio > 0;
+    const hasMultiple = !!(o['Multiple'] ?? '').trim() && isFinite(multiple) && multiple > 0;
+    if (!o['Token'] || !o['DerivedFrom'] || hasRatio === hasMultiple) continue;
     const year = parseInt(o['Year'], 10);
     out.push({
       token: o['Token'],
       derivedFrom: o['DerivedFrom'],
-      ratio,
+      ratio: hasRatio ? ratio : 1 / multiple,
+      multiple: hasMultiple ? multiple : null,
       year: isFinite(year) ? year : null,
       bound: (o['Bound'] || '').toLowerCase(),
     });
@@ -429,8 +454,14 @@ export class PriceIndex {
       const parent = this.leafPrice(rule.derivedFrom, year, variant, window);
       if (!parent) return null;
       const s = parent.stats;
+      // Multiply where the row said `Multiple`, divide where it said `Ratio` —
+      // see DerivedRule.multiple. All three of min/max/avg scale, so a bar's
+      // whole distribution is its parent's, which is what fungibility means.
+      const scale = rule.multiple === null
+        ? (v: number) => v / rule.ratio
+        : (v: number) => v * rule.multiple!;
       return {
-        stats: { n: s.n, min: s.min / rule.ratio, max: s.max / rule.ratio, avg: s.avg / rule.ratio },
+        stats: { n: s.n, min: scale(s.min), max: scale(s.max), avg: scale(s.avg) },
         source: 'derived',
         pricedYear: parent.pricedYear,
         variant: parent.variant,

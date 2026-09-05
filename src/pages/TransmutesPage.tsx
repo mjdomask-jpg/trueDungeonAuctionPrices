@@ -90,8 +90,11 @@ export default function TransmutesPage() {
       ? all.filter((c) => c.displayName.toLowerCase().includes(q) || c.transmute.toLowerCase().includes(q))
       : all;
     const live = activeOnly ? matched.filter((c) => c.status !== 'expired') : matched;
-    return path === DEFAULT_PATH ? live : live.map((c) => onPath(c, path));
-  }, [q, activeOnly, path]);
+    // `engine` is in the deps because onPath now needs it to price the GP path's
+    // substituted line. It is nullable here and the guard costs nothing: with no
+    // engine there are no costs to map in the first place.
+    return path === DEFAULT_PATH || !engine ? live : live.map((c) => onPath(c, path, engine));
+  }, [q, activeOnly, path, engine]);
 
   // The trade rungs, pinned above the seasons. `bandKeys` is what stops them
   // being listed twice; the season counts drop to match (2026: 29 -> 28).

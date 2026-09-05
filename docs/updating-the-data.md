@@ -2077,9 +2077,38 @@ quietly showing a stale one.
 ### `derivedPrices.csv`
 
 Rules for pricing a token off another token. Columns: `Token`, `DerivedFrom`,
-`Ratio`, `Year`, `Bound`, `Note`. One rule today: Monster Trophy is priced as
-Golden Fleece ÷ 10, as a ceiling, because ten Trophies make one Golden Fleece and
-Trophies are never sold.
+`Ratio`, `Multiple`, `Year`, `Bound`, `Note`.
+
+**A row carries `Ratio` or `Multiple`, never both** — they express opposite
+relationships, and a row with both is skipped rather than resolved by
+precedence, because guessing which was meant is how a price ends up 625× out.
+
+| Column | Means | Use when |
+|---|---|---|
+| `Ratio` | how many `Token` make one `DerivedFrom` — the parent's price is **divided** | the token is worth **less** than its parent |
+| `Multiple` | how many `DerivedFrom` make one `Token` — the parent's price is **multiplied** | the token is worth **more** than its parent |
+
+Three rules today:
+
+- **Monster Trophy** = Golden Fleece ÷ 10 (`Ratio 10`), as a **ceiling**, because
+  ten Trophies make one Fleece and Trophies are never sold. Superseded per season
+  by any real `offAuctionPrices.csv` row, which the engine consults first.
+- **5,000 GP Mithral Bar** = 1,000 GP Gold Bar × 5 (`Multiple 5`), Trade 3.
+- **25,000 GP Eldritch Ore Bar** = 1,000 GP Gold Bar × 25 (`Multiple 25`), Trade 4.
+
+The two bars carry **no `Bound`**, and that is the point: the GP denominations are
+three weights of one currency, and the company will issue a player either on
+request, so the multiple is the price rather than an estimate of it. All three of
+`min`, `max` and `avg` scale together. They are priced off the Gold Bar because
+that is the denomination with a market — 401 auction sales against six ever
+recorded for the Ore Bar.
+
+**Why `Multiple` is a separate column and not a fractional `Ratio`.** ×25 as a
+ratio is 0.04, and `x / 0.04` is not `x * 25` — they disagree in the last bits
+for about 13% of money values, and `x / 0.2` from `x * 5` for about 35%. The
+amounts are sub-cent, but a bar's price has to equal 25 Gold Bars computed the
+ordinary way, and two numbers that must agree should not drift for no reason.
+`Ratio` still divides, so the Monster Trophy row is untouched by the addition.
 
 ---
 

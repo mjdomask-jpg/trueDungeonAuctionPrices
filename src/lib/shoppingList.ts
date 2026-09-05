@@ -295,7 +295,7 @@ export function buildShoppingList(
     // the quantities being merged are the ones actually being bought. On the
     // GP path the ring line survives at quantity 0 (substitutions.ts keeps the
     // line count stable), and a zero-quantity line adds nothing to a merge.
-    const cost = onPath(pick.cost, path);
+    const cost = onPath(pick.cost, path, engine);
     for (const l of cost.lines) {
       if (l.quantity <= 0) continue;
       const id = mergeKey(l);

@@ -109,6 +109,11 @@ const recipes = load('transmuteRecipes.csv');
 const meta    = load('tokenMetadata.csv');
 const fleece  = load('offAuctionPrices.csv');
 const prices  = load('prices.csv');
+// Hand-authored, no tab behind it, and not in SCHEMA: it is the one price table
+// the sheet does not own, so a missing column here is a repo edit to fix rather
+// than a bad export to report. Read for its Token column alone — the arithmetic
+// is the runtime's business (parseDerivedRules in src/lib/transmutes.ts).
+const derived = load('derivedPrices.csv');
 
 // Every check below reads columns by name, so on a schema failure they would all
 // fire at once against undefined values — thousands of lines burying the one
@@ -140,6 +145,10 @@ const CATEGORY_VOCAB = new Set([...prices.map(p => p.Category), ...meta.map(m =>
 const proxyPriced = new Set(); // `${year}|${item}` unknown tokens their tier can price
 const fleeceYears = new Set(fleece.map(f => f.Year));
 const fleeceGood  = new Set(fleece.map(f => f.Item));
+// Tokens a derivedPrices.csv rule can price. A rule needs its PARENT priced,
+// not the token itself, so these never want an auction row of their own.
+const derivedGood = new Set(derived.map(d => d.Token).filter(Boolean));
+const derivedParent = new Map(derived.filter(d => d.Token).map(d => [d.Token, d.DerivedFrom]));
 // Off-auction coverage is PER ITEM: the table's year range differs token by
 // token (Golden Fleece starts 2019, Charm of Awakened Synergy is 2018 only).
 // Checking the file-wide year set instead let a season that prices some other
@@ -272,19 +281,39 @@ for (const [item, years] of [...offUse].sort()) {
     }
   }
 }
-const trophyYears = new Set(recipes.filter(r => r.Item === 'Monster Trophy').map(r => r.ResolvedYear));
-for (const y of [...trophyYears].sort()) {
-  if (offHas('Golden Fleece', y)) continue;
-  const ps = pricingSeason(y);
-  if (offHas('Golden Fleece', ps.season)) {
-    add('INFO', 'derived-fallback', `Monster Trophy @ ${y} prices off Golden Fleece @ ${ps.season} (${ps.variant})`);
-  } else {
-    const near = [...(offYearsByItem.get('Golden Fleece') ?? [])].map(Number)
-      .sort((a, b) => Math.abs(a - y) - Math.abs(b - y) || b - a)[0];
-    if (near === undefined)
-      add('ERROR', 'derived-price', `Monster Trophy @ ${y}: Golden Fleece is absent from pricesFleece entirely`);
-    else
-      add('INFO', 'derived-fallback', `Monster Trophy @ ${y} prices off Golden Fleece @ ${near} via nearest-season fallback`);
+// Every derived token a recipe names, traced to the season its PARENT is
+// actually priced in.
+//
+// This block used to name Monster Trophy and Golden Fleece as literals, twice
+// each, and it could only ever have described the one rule that existed when it
+// was written. It now walks derivedPrices.csv — and in doing so had to learn
+// that a parent may be priced by EITHER table. Golden Fleece is off-auction, so
+// `offHas` was the whole story; the GP bars derive from the 1,000 GP Gold Bar,
+// which is an ordinary auction good with 401 sales, and a check that consulted
+// only pricesFleece would have called every one of them absent.
+const parentYearsOf = (parent) => {
+  const years = new Set([...(offYearsByItem.get(parent) ?? [])].map(Number));
+  for (const p of prices) if (p.Item === parent) years.add(Number(p.auctionSeason));
+  return [...years].sort((a, b) => a - b);
+};
+const parentHas = (parent, y) => offHas(parent, y) || pricedPairs.has(String(y) + '|' + parent);
+for (const rule of derived) {
+  if (!rule.Token || !rule.DerivedFrom) continue;
+  const parent = rule.DerivedFrom;
+  const years = new Set(recipes.filter(r => r.Item === rule.Token).map(r => r.ResolvedYear));
+  const parentYears = parentYearsOf(parent);
+  for (const y of [...years].sort()) {
+    if (parentHas(parent, y)) continue;
+    const ps = pricingSeason(y);
+    if (parentHas(parent, ps.season)) {
+      add('INFO', 'derived-fallback', `${rule.Token} @ ${y} prices off ${parent} @ ${ps.season} (${ps.variant})`);
+    } else {
+      const near = parentYears.sort((a, b) => Math.abs(a - y) - Math.abs(b - y) || b - a)[0];
+      if (near === undefined)
+        add('ERROR', 'derived-price', `${rule.Token} @ ${y}: ${parent} is absent from every price table`);
+      else
+        add('INFO', 'derived-fallback', `${rule.Token} @ ${y} prices off ${parent} @ ${near} via nearest-season fallback`);
+    }
   }
 }
 
@@ -457,7 +486,27 @@ for (const start of edges.keys()) {
 // ---------- price coverage for leaf goods ----------
 const missingPrice = new Map();
 for (const r of recipes) {
-  if (transmuteNames.has(r.Item) || fleeceGood.has(r.Item) || r.Item === 'Monster Trophy') continue;
+  // `derivedGood` used to be the literal string 'Monster Trophy'. That was the
+  // only derived token when this line was written, and naming it here meant the
+  // validator asserted a fact about the data instead of reading it: the second
+  // row ever added to derivedPrices.csv would have been reported as an unpriced
+  // gap it never was, exactly the failure the tier-proxy note below describes.
+  // Read the table, so a rule authored in the sheet-free file is honoured the
+  // day it lands rather than the day someone remembers this line.
+  //
+  // The exemption tests the PARENT and not the season, and that distinction was
+  // measured rather than reasoned: keying it to the line's own ResolvedYear
+  // reported seven false gaps the moment a bar line was authored, one for each
+  // season with no auction data at all (2012-2017 and 2027). `leafPrice` clamps
+  // into the range that has data and then walks to the nearest priced season,
+  // so a parent priced in ANY season resolves. Which season it lands on is the
+  // derived-fallback block's business, and a parent priced in NO season is
+  // already an ERROR there — warning here too would double-report it.
+  if (transmuteNames.has(r.Item) || fleeceGood.has(r.Item)) continue;
+  if (derivedGood.has(r.Item)) {
+    const parent = derivedParent.get(r.Item);
+    if (transmuteNames.has(parent) || offYearsByItem.has(parent) || pricedItems.has(parent)) continue;
+  }
   // A named member of an auctioned tier having no price of its own is the
   // expected state, not a gap: the runtime prices it through the tier. Test the
   // line's IngredientType rather than `proxyPriced`, which only ever holds goods

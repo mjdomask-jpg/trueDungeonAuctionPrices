@@ -219,7 +219,7 @@ export function BuildCalculator({ engine }: { engine: CostEngine }) {
   // from 25 to 40, line indices are stable and every per-line entry below
   // survives a flip.
   const gold = cost ? goldPathFor(cost) : null;
-  const pathCost = cost ? onPath(cost, path) : null;
+  const pathCost = cost ? onPath(cost, path, engine) : null;
 
   // --- Per-line + total math ---------------------------------------------
   const rows = (pathCost ? pathCost.lines : []).map((line, i) => {

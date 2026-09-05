@@ -159,8 +159,20 @@ check('trade-good lines exist, and the pickable ones are a subset',
 // for, and it fired. Note the vocabulary counts goods that are CONSUMED by some
 // recipe: Omni Orb is (four 2026 Mythics upgrade from one), Omni Cube is not, so
 // only the Orb joined. Golden Fleece was already here under Trade 3.
+//
+// 15 -> 16 on 2026-09-04, and it fired again: `25,000 GP Eldritch Ore Bar`
+// (Trade 4). DATA-8 — the Legendary recipes ask for one 25,000 GP bar, and the
+// sheet had been spelling that as 25 x `1,000 GP Gold Bar` because a single
+// token for it did not exist in the data. 49 recipe lines now name the token.
+// The Gold Bar did NOT leave the vocabulary: 43 recipes still consume it at
+// 1-10, so the two denominations are both live and both merge separately, which
+// is correct — they are different tokens a player buys separately.
+//
+// `5,000 GP Mithral Bar` (Trade 3) is authored in tokenMetadata and priced in
+// derivedPrices, but is NOT in this vocabulary and should not be: no recipe
+// consumes one yet, and this list counts goods a recipe actually asks for.
 const goods = [...new Set(tradeLines.map(({ l }) => l.good))].sort();
-const GOOD_COUNT = 15;
+const GOOD_COUNT = 16;
 check(`exactly ${GOOD_COUNT} distinct trade goods`, goods.length === GOOD_COUNT, goods.join(', '));
 
 // The premise under the Shopping List's merge key. If this ever fails, rows
@@ -334,11 +346,24 @@ const all2026 = costs.filter((c) => c.year === 2026 && c.status !== 'expired').m
 const one = buildShoppingList([pick('2026|Deathward Greaves', 1)], engine);
 const many = buildShoppingList(all2026, engine);
 // Bounded by the VOCABULARY, not by a literal — goods.length is where that
-// number is stated (§ 2), so a fifteenth trade good moves this with it.
+// number is stated (§ 2), so a sixteenth trade good moves this with it.
+//
+// The GAP between one recipe and twenty-nine used to be pinned at `<= 1`, and
+// that turned out to be a pin on the corpus's shape rather than on the design.
+// Authoring `25,000 GP Eldritch Ore Bar` widened it to 2 without weakening
+// anything: a Legendary now asks for the Ore Bar while a Relic still asks for
+// Gold Bars, so a big basket legitimately carries both denominations where a
+// one-recipe basket carries one. The invariant was never "the gap is at most
+// one row" — it is "trade rows are capped by a closed vocabulary and do not
+// track the number of recipes", so that is what is asserted: the hard cap, and
+// growth far slower than the basket. A regression where trade rows tracked
+// recipes would add ~28 rows here and fail both clauses.
+const tradeGrowth = many.trade.length - one.trade.length;
 check(`the trade-good table is BOUNDED at ${goods.length} however many recipes are picked`,
   many.trade.length <= goods.length && one.trade.length <= goods.length &&
-  many.trade.length - one.trade.length <= 1,
-  `1 recipe -> ${one.trade.length} trade rows; ${all2026.length} recipes -> ${many.trade.length}; vocabulary ${goods.length}`);
+  tradeGrowth * 5 <= all2026.length - 1,
+  `1 recipe -> ${one.trade.length} trade rows; ${all2026.length} recipes -> ${many.trade.length} ` +
+  `(+${tradeGrowth} for +${all2026.length - 1} recipes); vocabulary ${goods.length}`);
 check('...while the additional-items table grows at roughly a row per recipe',
   many.additional.length > one.additional.length * 5,
   `${one.additional.length} -> ${many.additional.length} over ${all2026.length} recipes`);
