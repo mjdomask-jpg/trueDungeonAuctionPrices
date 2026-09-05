@@ -72,6 +72,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-2** | Close handling for alesievauctions.com | the maintainer's sample exports |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
 | **PIPE-4** | Feasibility verdict: import trade-good quantities from truedungeontokens.com | **a written answer from me** — the maintainer asked and none exists |
+| **DATA-9** | 12 recipes disagree with tokendb, and Orion's Belt needs a call | **the maintainer's decision on Orion's Belt**; the other 11 have paste blocks ready |
 
 ---
 
@@ -564,6 +565,66 @@ a domain fact can contradict.
 ---
 
 # SITE — the app
+
+## DATA-9. Twelve recipes disagree with tokendb — OPEN, measured and paste-ready
+
+Every recipe in `transmuteRecipes.csv` was reconciled against its token page on
+tokendb.com on **2026-09-05**. 155 of 176 recipe groups agree exactly. The full
+findings, the paste blocks and the judgement calls are in
+**`tokendb-recipe-audit.md`** — this entry is the pointer, not a second copy.
+
+The twelve that are wrong:
+
+| Transmute | What is wrong |
+|---|---|
+| Ashenne's Arch-Mage Medallion | six quantities — Dwarven Steel reads 20, tokendb says 5 |
+| Blessed Redoubt Mail | 1 gold bar, tokendb says `4,000 GP` |
+| Benrow's Elder Drake Necklace | Mystic Silk 35, tokendb says 30 |
+| Boaz's Bead of Whispers | Dwarven Steel 10, tokendb says 15 |
+| Greater Bead of Whispers | Dwarven Steel 15, tokendb says 10 |
+| +3 Turkey Leg of Smiting | Golden Fleece 1, tokendb says 2 |
+| Gem of Last Hope | 10 Mystic Silk where the recipe wants 10 Philosopher's Stone |
+| Deathward Greaves | a gold bar the recipe does not ask for |
+| Bead of Divine Choice | a Golden Fleece the recipe does not ask for |
+| Gloves of Spirit Handling | missing its `1× 1,000 GP Gold Bar` |
+| Ioun Stone Elfstone Shard | missing 6 Monster Trophy (every 2020 trophy) |
+| Charm of Unity | Ultra Rare 1, but the option is `2× any Ultra Rare` |
+
+**Orion's Belt is the one that needs a decision, not a patch.** tokendb wants six
+Relic Recipe Fragments plus every 2019 monster trophy, with a footnote that the
+fragments may not substitute for the trophies — so six of each. The CSV records
+`5 x Golden Fleece` and no trophy row. Golden Fleece appears nowhere in that
+recipe, and five Fleece is fifty trophies, so there is no equivalence to infer.
+No paste block was written for it deliberately.
+
+### What is NOT wrong, and must not be "fixed"
+
+**The CSV omits Rare-and-below ingredients on purpose.** Of the 301 named
+ingredients it leaves out, 247 are Rare, Uncommon, Common, Quest or Premium,
+while the named ingredients it does record are almost entirely Ultra Rare or
+Transmuted-Relic. That was measured by looking every one of them up, because
+without it this audit would have reported 301 phantom missing rows. The
+remaining nine open discrepancies are vintage mismatches (tokendb publishes only
+the current Omni recipe; the CSV holds 2024 and 2025) or modelling choices (a
+"pick any N" group recorded as one representative). § 2 of the audit lists them
+with the reasoning; none has a change proposed.
+
+### The guard that now exists
+
+`npm run test:tokendb` reconciles the CSV against `fixtures/tokendb/` — 175
+verbatim pages, gzipped — and fails on any discrepancy outside the known list in
+that directory's `manifest.json`. It reports the reconciled count rather than
+pinning it, so correcting one of the twelve above can never red-block a publish
+PR; a fixed row prints a note asking for the manifest to be trimmed.
+
+Its twelve mutation cases are the reason to trust it. **The first run of them
+found a hole in the reconciler itself**: deleting a recipe's `Wish Ring` row was
+not reported, because a choice group nothing matched was skipped silently — the
+same skip that lets the genuinely unmodelled groups pass. A choice group is now
+skipped only when every option is a token the CSV omits by convention; one
+offering something it tracks and matched by nothing is a missing row.
+
+---
 
 ## SITE-1. Open Auctions — RESOLVED (`f5cb77a`, v1.4, 2026-08-08)
 
