@@ -1,2 +1,4 @@
-Token,DerivedFrom,Ratio,Year,Bound,Note
-Monster Trophy,Golden Fleece,10,,ceiling,"Reward-only ingredient; 10 make one Fleece (displayName ""Golden Fleece""). Never auctioned - priced as Fleece/10."
+Token,DerivedFrom,Ratio,Multiple,Year,Bound,Note
+Monster Trophy,Golden Fleece,10,,,ceiling,"Reward-only ingredient; 10 make one Fleece (displayName ""Golden Fleece""). Never auctioned - priced as Fleece/10."
+"5,000 GP Mithral Bar","1,000 GP Gold Bar",,5,,,"Trade 3. A denomination of the same currency, not a different good: one is five 1,000 GP Gold Bars, and the company will issue either on request. So the price is the multiple exactly - min, max and avg alike - and carries no ceiling flag."
+"25,000 GP Eldritch Ore Bar","1,000 GP Gold Bar",,25,,,"Trade 4. Twenty-five 1,000 GP Gold Bars, or any mix of Gold and Mithral Bars totalling 25,000 GP. Priced off the Gold Bar because that is the denomination with a market: 401 auction sales against six ever recorded for this one."
