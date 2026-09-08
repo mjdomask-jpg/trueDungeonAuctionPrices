@@ -1,0 +1,376 @@
+{
+ "source": "175 verbatim token pages from tokendb.com, gzipped, nothing trimmed — one per transmute in public/data/transmuteRecipes.csv, plus the five Safehold \"(Under Construction)\" pages that carry a finished Safehold's trade goods. Untrimmed for the same reason fixtures/forum-threads gives: the failure this guards against is a recipe read off the wrong list on the page, and a trimmed page cannot show one.",
+ "fetched": "2026-09-05",
+ "url": "https://tokendb.com/token/<slug>/",
+ "slugRule": "Lower-case the Transmute name, drop + and apostrophes, spaces to hyphens. Eighteen names do not follow it; slugs holds every name-to-slug mapping so none has to be re-derived.",
+ "slugs": {
+  "+1 Archer's Buckler": "1-archers-buckler",
+  "+2 Keen Slayer Bow": "2-keen-slayer-bow",
+  "+3 Baton of Focus": "3-baton-of-focus",
+  "+3 Deathcleaver": "3-deathcleaver",
+  "+3 Fellbane Crossbow": "3-fellbane-crossbow",
+  "+3 Holy Avenger": "3-holy-avenger",
+  "+3 Mithral Bracers": "3-mithral-bracers",
+  "+3 Savage Sword": "3-savage-sword",
+  "+3 Slayer Sword": "3-slayer-sword",
+  "+3 Staff of Focus": "3-staff-of-focus",
+  "+3 Throwing Hammer of Smiting": "3-throwing-hammer-of-smiting",
+  "+3 Turkey Leg of Smiting": "3-turkey-leg-of-smiting",
+  "+3 Viper Strike Fang": "3-viper-strike-fang",
+  "Amulet of Noble Might": "amulet-of-noble-might",
+  "Arcanum Shirt": "arcanum-shirt",
+  "Aron's Arcane Necklace of Baubles": "arons-arcane-necklace-of-baubles",
+  "Aron's Sunhide Robe": "arons-sunhide-robe",
+  "Ashenne's Arch-Mage Medallion": "ashennes-arch-mage-medallion",
+  "Asher's +5 Viper Strike Fang": "ashers-5-viper-strike-fang",
+  "Ava's +5 Holy Avenger": "avas-5-holy-avenger",
+  "Averon's +5 Deathcleaver": "averons-5-deathcleaver",
+  "Bead of Asgard": "bead-of-asgard",
+  "Bead of Defiance": "mythic-bead-of-defiance",
+  "Bead of Divine Choice": "bead-of-divine-choice",
+  "Bead of Greater Binding": "bead-of-greater-binding",
+  "Bead of Horus": "bead-of-horus",
+  "Belt of Ogre Mage Power": "belt-of-ogre-mage-power",
+  "Benrow's Elder Drake Necklace": "benrows-elder-drake-necklace",
+  "Bibwik's Bead Bracelets": "bibwiks-bead-bracelets",
+  "Bifrost Charm": "bifrost-charm",
+  "Blessed Redoubt Helm": "blessed-redoubt-helm",
+  "Blessed Redoubt Mail": "blessed-redoubt-mail",
+  "Blessed Redoubt Plate": "blessed-redoubt-plate",
+  "Blessed Redoubt Shield": "blessed-redoubt-shield",
+  "Boaz's Bead of Whispers": "boazs-bead-of-whispers",
+  "Bog's Medallion of Berserking": "bogs-medallion-of-berserking",
+  "Boots of Grounding": "boots-of-grounding",
+  "Boots of Protection": "boots-of-protection",
+  "Bracers of Carnage": "bracers-of-carnage",
+  "Bracers of the Inferno": "bracers-of-the-inferno",
+  "Byr's Anointed Redoubt Plate": "byrs-anointed-redoubt-plate",
+  "Censer of Divine Aid": "censer-of-divine-aid",
+  "Chalice of Chugging": "chalice-of-chugging",
+  "Charm of Avarice Recipe 3": "charm-of-avarice",
+  "Charm of Deathward": "charm-of-deathward",
+  "Charm of Divine Gifts": "charm-of-divine-gifts",
+  "Charm of Fate": "mythic-charm-of-fate",
+  "Charm of the Fire Newt": "charm-of-the-fire-newt",
+  "Charm of Timely Aid": "charm-of-timely-aid",
+  "Charm of Treasure Boosting": "charm-of-treasure-boosting",
+  "Charm of Unity": "charm-of-unity",
+  "Coin of Wealth": "mythic-coin-of-wealth",
+  "Craven's Vampire Ring": "cravens-vampire-ring",
+  "Deathward Greaves": "deathward-greaves",
+  "Divine Water": "divine-water",
+  "Drake's +5 Staff of Focus": "drakes-5-staff-of-focus",
+  "Drue's +5 Baton of Focus": "drues-5-baton-of-focus",
+  "Druegar's Sacred Necklace": "druegars-sacred-necklace",
+  "Earcuff of Greater Glory": "earcuff-of-greater-glory",
+  "Earcuff of Thor's Bliss": "earcuff-of-thors-bliss",
+  "Eldest Orb of Dragonkind": "eldest-orb-of-dragonkind",
+  "Eldritch Runestone": "eldritch-runestone",
+  "Enchanter's Whetstone": "enchanters-whetstone",
+  "Ettin Ring": "mythic-ettin-ring",
+  "Follower": "follower",
+  "Gear Golem Totem": "gear-golem-totem",
+  "Gem of Last Hope": "gem-of-last-hope",
+  "Giln's Redoubt Shield": "gilns-redoubt-shield",
+  "Girdle of Frost Giant Strength": "girdle-of-frost-giant-strength",
+  "Gloves of Infamy": "gloves-of-infamy",
+  "Gloves of Spirit Handling": "gloves-of-spirit-handling",
+  "Golden Fleece": "golden-fleece",
+  "Greater Arcane Necklace of Baubles": "greater-arcane-necklace-of-baubles",
+  "Greater Bead Bracelets": "greater-bead-bracelets",
+  "Greater Bead of Whispers": "greater-bead-of-whispers",
+  "Greater Charm Bracelets": "greater-charm-bracelets",
+  "Greater Cloak of Destiny": "greater-cloak-of-destiny",
+  "Greater Eye Patch of the Aesir": "greater-eye-patch-of-the-aesir",
+  "Greater Gloves of the Gladiator": "greater-gloves-of-the-gladiator",
+  "Greater Ring of Havoc": "greater-ring-of-havoc",
+  "Greater Ring of Reflexes": "greater-ring-of-reflexes",
+  "Gregor's Gladiator Gloves": "gregors-gladiator-gloves",
+  "Hat of the Lucky Pirate": "hat-of-the-lucky-pirate",
+  "Herald's Ring of Focus": "heralds-ring-of-focus",
+  "Herald's Ring of Wrath": "heralds-ring-of-wrath",
+  "Hireling": "hireling",
+  "Iktomi's Shaper Necklace": "iktomis-shaper-necklace",
+  "Incense of Focus": "incense-of-focus",
+  "Incense of Might": "incense-of-might",
+  "Incense of Power": "incense-of-power",
+  "Incense of the Magi": "incense-of-the-magi",
+  "Io's +4 Ultra Keen Slayer Bow": "ios-4-ultra-keen-slayer-bow",
+  "Ioun Stone Aquamarine Prism": "ioun-stone-aquamarine-prism",
+  "Ioun Stone Elfstone Shard": "ioun-stone-elfstone-shard",
+  "Ioun Stone Mystic Orb": "ioun-stone-mystic-orb",
+  "Ioun Stone Obsidian Shard": "ioun-stone-obsidian-shard",
+  "Ioun Stone of Judgment": "mythic-ioun-stone-of-judgment",
+  "Ioun Stone of Mystic Heroism": "ioun-stone-of-mystic-heroism",
+  "Ioun Stone Sapphire Trilliant": "ioun-stone-sapphire-trilliant",
+  "Ioun Stone Sunstone Trilliant": "ioun-stone-sunstone-trilliant",
+  "Khing's Ring of Supreme Evasion": "khings-ring-of-supreme-evasion",
+  "Kilgor's +4 Savage Sword (Recipe 1)": "kilgors-4-savage-sword",
+  "Kilgor's +4 Savage Sword (Recipe 2)": "kilgors-4-savage-sword",
+  "Kilt of Dungeonbane": "kilt-of-dungeonbane",
+  "Lenses of Sage Sight": "lenses-of-sage-sight",
+  "Luna's Greater Charm Bracelets": "lunas-greater-charm-bracelets",
+  "Lute of Free Fury": "lute-of-free-fury",
+  "Mage Medallion": "mage-medallion",
+  "Mark of Enlightenment": "mark-of-enlightenment",
+  "Mark of the Tenets": "mark-of-the-tenets",
+  "Mask of Careless Magic": "mask-of-careless-magic",
+  "Mask of Foggy Skill": "mask-of-foggy-skill",
+  "Master Ale Drinker's Bead": "master-ale-drinkers-bead",
+  "Master Drinker's Gloves": "master-drinkers-gloves",
+  "Medallion of Furious Attack": "medallion-of-furious-attack",
+  "Muk's Greater Ring of Havoc": "muks-greater-ring-of-havoc",
+  "Necklace of the Sneak": "necklace-of-the-sneak",
+  "Necklace of the Spirit Drake": "necklace-of-the-spirit-drake",
+  "Odin's Eye Patch": "odins-eye-patch",
+  "Omni Cube": "omni-cube",
+  "Omni Cube Ultra Rare Recipe": "omni-cube",
+  "Omni Orb": "omni-orb",
+  "One Boot Billy Map - Trade 1 Recipe": "one-boot-billys-map",
+  "One Boot Billy Map - Trade 2 Recipe": "one-boot-billys-map",
+  "Orb of Annihilation": "orb-of-annihilation",
+  "Orion's Belt": "orions-belt",
+  "Pendant of the Yew": "pendant-of-the-yew",
+  "Pern's Redoubt Helm": "perns-redoubt-helm",
+  "Pharacus' Greater Cloak of Destiny": "pharacus-greater-cloak-of-destiny",
+  "Ralson's Pendant of the Elder Yew": "ralsons-pendant-of-the-elder-yew",
+  "Raphiel's Sneaky Necklace": "raphiels-sneaky-necklace",
+  "Relsa's Ring of Supreme Focus": "relsas-ring-of-supreme-focus",
+  "Ring of Greater Focus": "ring-of-greater-focus",
+  "Ring of Improved Evasion": "ring-of-improved-evasion",
+  "Ring of Last Call": "ring-of-last-call",
+  "Ring of Protection +4": "ring-of-protection-4",
+  "Ring of Psychic Mastery": "ring-of-psychic-mastery",
+  "Ring of Sirenbane": "ring-of-sirenbane",
+  "Ring of Stamina": "ring-of-stamina",
+  "Ring of the Dire Ram": "ring-of-the-dire-ram",
+  "Ring of the Ioun": "ring-of-the-ioun",
+  "Ring of the Sacred Circle": "ring-of-the-sacred-circle",
+  "Ring of the Vampire Lord": "ring-of-the-vampire-lord",
+  "Rolland's Ring of Protection +6": "rollands-ring-of-protection-6",
+  "Sacred Necklace": "sacred-necklace",
+  "Safehold I": "safehold-i",
+  "Safehold II": "safehold-ii",
+  "Safehold III": "safehold-iii",
+  "Safehold IV": "safehold-iv",
+  "Safehold V": "safehold-v",
+  "Shaman's Greater Necklace": "shamans-greater-necklace",
+  "Shirt of Modest Luck": "shirt-of-modest-luck",
+  "Sidekick": "sidekick",
+  "Sill's Anointed Redoubt Mail": "sills-anointed-redoubt-mail",
+  "Smith's Charm of Unified Synergy (Set 1)": "smiths-charm-of-unified-synergy",
+  "Smith's Charm of Unified Synergy (Set 2)": "smiths-charm-of-unified-synergy",
+  "Smith's Charm of Unified Synergy (Set 3)": "smiths-charm-of-unified-synergy",
+  "Spirit Pet Asp": "spirit-pet-asp",
+  "Spirit Pet Bliss Squirrel": "spirit-pet-bliss-squirrel",
+  "Stalker Bead of Focus": "stalker-bead-of-focus",
+  "Stalker Bead of Skill": "stalker-bead-of-skill",
+  "Starhide Robe": "starhide-robe",
+  "Surtr's Girdle of Fire Giant Strength": "surtrs-girdle-of-fire-giant-strength",
+  "TaMor's +4 Mithral Bracers": "tamors-4-mithral-bracers",
+  "Thor's +5 Returning Hammer of Smiting": "thors-5-returning-hammer-of-smiting",
+  "Tomb Treasure Chest (Recipe 1)": "tomb-treasure-chest",
+  "Tomb Treasure Chest (Recipe 2)": "tomb-treasure-chest",
+  "Totem of Wonder": "totem-of-wonder",
+  "Underling": "underling-fighter",
+  "Val's +4 Keen Fellbane Crossbow": "vals-4-keen-fellbane-crossbow",
+  "Vim's Boots of Protection": "vims-boots-of-protection",
+  "Viv's Amulet of Noble Might": "vivs-amulet-of-noble-might",
+  "Welfor's +5 Slayer Sword": "welfors-5-slayer-sword",
+  "Widseth's Legendary Lute": "widseths-legendary-lute"
+ },
+ "listIndex": {
+  "Charm of Avarice Recipe 3": 2,
+  "Kilgor's +4 Savage Sword (Recipe 1)": 0,
+  "Kilgor's +4 Savage Sword (Recipe 2)": 1,
+  "Omni Cube": 0,
+  "Omni Cube Ultra Rare Recipe": 1,
+  "Omni Orb": 0,
+  "One Boot Billy Map - Trade 1 Recipe": 0,
+  "One Boot Billy Map - Trade 2 Recipe": 1,
+  "Tomb Treasure Chest (Recipe 1)": 0,
+  "Tomb Treasure Chest (Recipe 2)": 1,
+  "Charm of Deathward": 1,
+  "Eldritch Runestone": 0,
+  "Mage Medallion": 0
+ },
+ "listIndexNote": "Pages carrying more than one recipe, or one recipe plus an unrelated list. Index into the candidate recipe lists in page order. Anything not named here uses list 0.",
+ "setPick": {
+  "Smith's Charm of Unified Synergy (Set 1)": 0,
+  "Smith's Charm of Unified Synergy (Set 2)": 1,
+  "Smith's Charm of Unified Synergy (Set 3)": 2
+ },
+ "extraPages": {
+  "Safehold I": "safehold-i-under-construction",
+  "Safehold II": "safehold-ii-under-construction",
+  "Safehold III": "safehold-iii-under-construction",
+  "Safehold IV": "safehold-iv-under-construction",
+  "Safehold V": "safehold-v-under-construction"
+ },
+ "extraPagesNote": "A finished Safehold is built from its \"(Under Construction)\" token, and the trade goods live on THAT page. The CSV merges both stages into one recipe, so the test splices the two pages the same way.",
+ "monsterTrophiesByYear": {
+  "2019": 6,
+  "2020": 6,
+  "2023": 8,
+  "2024": 7,
+  "2025": 6,
+  "2026": 6
+ },
+ "monsterTrophiesNote": "Counted off tokendb's own pub_year + classification=monster-trophy facet, minus two documented exclusions: 2019's six Relic Recipe Fragments (Orion's Belt footnote says they may not substitute for trophies) and 2026's four Participation \"Silver Ship\" trophies (Earcuff of Greater Glory footnote). A recipe saying \"not including X\" subtracts one more.",
+ "expect": {
+  "groups": 176,
+  "reconciled": 155
+ },
+ "known": {
+  "Ring of Greater Focus": [
+   {
+    "kind": "EXTRA",
+    "item": "1,000 GP Gold Bar",
+    "site": null,
+    "csv": 3
+   }
+  ],
+  "Kilt of Dungeonbane": [
+   {
+    "kind": "EXTRA",
+    "item": "Ultra Rare",
+    "site": null,
+    "csv": 3
+   }
+  ],
+  "Omni Cube [2024]": [
+   {
+    "kind": "MISSING",
+    "item": "Ultra Rare",
+    "site": 2,
+    "csv": null
+   },
+   {
+    "kind": "QTY",
+    "item": "Aragonite",
+    "site": 5,
+    "csv": 3
+   },
+   {
+    "kind": "QTY",
+    "item": "Elven Bismuth",
+    "site": 2,
+    "csv": 4
+   },
+   {
+    "kind": "QTY",
+    "item": "Enchanter's Munition",
+    "site": 4,
+    "csv": 5
+   },
+   {
+    "kind": "QTY",
+    "item": "Oil of Enchantment",
+    "site": 2,
+    "csv": 3
+   }
+  ],
+  "Omni Orb [2024]": [
+   {
+    "kind": "MISSING",
+    "item": "Ultra Rare",
+    "site": 1,
+    "csv": null
+   },
+   {
+    "kind": "QTY",
+    "item": "Aragonite",
+    "site": 4,
+    "csv": 2
+   },
+   {
+    "kind": "QTY",
+    "item": "Elven Bismuth",
+    "site": 1,
+    "csv": 2
+   },
+   {
+    "kind": "QTY",
+    "item": "Mystic Silk",
+    "site": 5,
+    "csv": 10
+   },
+   {
+    "kind": "QTY",
+    "item": "Oil of Enchantment",
+    "site": 1,
+    "csv": 2
+   }
+  ],
+  "Omni Cube [2025]": [
+   {
+    "kind": "QTY",
+    "item": "Aragonite",
+    "site": 5,
+    "csv": 3
+   },
+   {
+    "kind": "QTY",
+    "item": "Elven Bismuth",
+    "site": 2,
+    "csv": 3
+   },
+   {
+    "kind": "QTY",
+    "item": "Oil of Enchantment",
+    "site": 2,
+    "csv": 3
+   }
+  ],
+  "Omni Orb [2025]": [
+   {
+    "kind": "QTY",
+    "item": "Aragonite",
+    "site": 4,
+    "csv": 2
+   },
+   {
+    "kind": "QTY",
+    "item": "Elven Bismuth",
+    "site": 1,
+    "csv": 2
+   },
+   {
+    "kind": "QTY",
+    "item": "Oil of Enchantment",
+    "site": 1,
+    "csv": 2
+   }
+  ],
+  "Coin of Wealth": [
+   {
+    "kind": "MISSING",
+    "item": "100,000 GP Mythic Ore Bar",
+    "site": 1,
+    "csv": null
+   },
+   {
+    "kind": "EXTRA",
+    "item": "1,000 GP Gold Bar",
+    "site": null,
+    "csv": 100
+   },
+   {
+    "kind": "EXTRA",
+    "item": "Ultra Rare",
+    "site": null,
+    "csv": 3
+   }
+  ],
+  "Golden Fleece": [
+   {
+    "kind": "NO_RECIPE_ON_PAGE",
+    "item": null,
+    "site": null,
+    "csv": null
+   }
+  ]
+ },
+ "knownNote": "The recipe groups that did NOT reconcile, with the exact deltas measured on the date in knownMeasured. Every one is a modelling or vintage question, not a data error -- the twelve errors the 2026-09-05 audit found were corrected and published, and this list is what remains. tokendb-recipe-audit.md carries the reasoning for each. The test fails on a discrepancy OUTSIDE this list; a known entry that goes clean is a note, not a failure, so correcting a row can never red-block a publish PR. Re-measure with TOKENDB_EMIT_KNOWN=1 rather than editing by hand.",
+ "knownMeasured": "2026-09-08"
+}
