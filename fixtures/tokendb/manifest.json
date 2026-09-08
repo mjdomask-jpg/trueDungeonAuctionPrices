@@ -51,10 +51,10 @@
   "Charm of Deathward": "charm-of-deathward",
   "Charm of Divine Gifts": "charm-of-divine-gifts",
   "Charm of Fate": "mythic-charm-of-fate",
+  "Charm of the Fire Newt": "charm-of-the-fire-newt",
   "Charm of Timely Aid": "charm-of-timely-aid",
   "Charm of Treasure Boosting": "charm-of-treasure-boosting",
   "Charm of Unity": "charm-of-unity",
-  "Charm of the Fire Newt": "charm-of-the-fire-newt",
   "Coin of Wealth": "mythic-coin-of-wealth",
   "Craven's Vampire Ring": "cravens-vampire-ring",
   "Deathward Greaves": "deathward-greaves",
@@ -100,10 +100,10 @@
   "Ioun Stone Elfstone Shard": "ioun-stone-elfstone-shard",
   "Ioun Stone Mystic Orb": "ioun-stone-mystic-orb",
   "Ioun Stone Obsidian Shard": "ioun-stone-obsidian-shard",
-  "Ioun Stone Sapphire Trilliant": "ioun-stone-sapphire-trilliant",
-  "Ioun Stone Sunstone Trilliant": "ioun-stone-sunstone-trilliant",
   "Ioun Stone of Judgment": "mythic-ioun-stone-of-judgment",
   "Ioun Stone of Mystic Heroism": "ioun-stone-of-mystic-heroism",
+  "Ioun Stone Sapphire Trilliant": "ioun-stone-sapphire-trilliant",
+  "Ioun Stone Sunstone Trilliant": "ioun-stone-sunstone-trilliant",
   "Khing's Ring of Supreme Evasion": "khings-ring-of-supreme-evasion",
   "Kilgor's +4 Savage Sword (Recipe 1)": "kilgors-4-savage-sword",
   "Kilgor's +4 Savage Sword (Recipe 2)": "kilgors-4-savage-sword",
@@ -141,7 +141,7 @@
   "Ring of Last Call": "ring-of-last-call",
   "Ring of Protection +4": "ring-of-protection-4",
   "Ring of Psychic Mastery": "ring-of-psychic-mastery",
-  "Ring of Siren Bane": "ring-of-sirenbane",
+  "Ring of Sirenbane": "ring-of-sirenbane",
   "Ring of Stamina": "ring-of-stamina",
   "Ring of the Dire Ram": "ring-of-the-dire-ram",
   "Ring of the Ioun": "ring-of-the-ioun",
@@ -161,8 +161,8 @@
   "Smith's Charm of Unified Synergy (Set 1)": "smiths-charm-of-unified-synergy",
   "Smith's Charm of Unified Synergy (Set 2)": "smiths-charm-of-unified-synergy",
   "Smith's Charm of Unified Synergy (Set 3)": "smiths-charm-of-unified-synergy",
+  "Spirit Pet Asp": "spirit-pet-asp",
   "Spirit Pet Bliss Squirrel": "spirit-pet-bliss-squirrel",
-  "Spirt Pet Asp": "spirit-pet-asp",
   "Stalker Bead of Focus": "stalker-bead-of-focus",
   "Stalker Bead of Skill": "stalker-bead-of-skill",
   "Starhide Robe": "starhide-robe",
@@ -230,126 +230,12 @@
     "csv": 3
    }
   ],
-  "Blessed Redoubt Mail": [
-   {
-    "kind": "QTY",
-    "item": "1,000 GP Gold Bar",
-    "site": 4,
-    "csv": 1
-   }
-  ],
   "Kilt of Dungeonbane": [
    {
     "kind": "EXTRA",
     "item": "Ultra Rare",
     "site": null,
     "csv": 3
-   }
-  ],
-  "Orion's Belt": [
-   {
-    "kind": "MISSING",
-    "item": "Monster Trophy",
-    "site": 6,
-    "csv": null
-   },
-   {
-    "kind": "EXTRA",
-    "item": "Golden Fleece",
-    "site": null,
-    "csv": 5
-   }
-  ],
-  "Gem of Last Hope": [
-   {
-    "kind": "MISSING",
-    "item": "Philosopher's Stone",
-    "site": 10,
-    "csv": null
-   },
-   {
-    "kind": "EXTRA",
-    "item": "Mystic Silk",
-    "site": null,
-    "csv": 10
-   }
-  ],
-  "Benrow's Elder Drake Necklace": [
-   {
-    "kind": "QTY",
-    "item": "Mystic Silk",
-    "site": 30,
-    "csv": 35
-   }
-  ],
-  "Ashenne's Arch-Mage Medallion": [
-   {
-    "kind": "QTY",
-    "item": "Alchemist's Ink",
-    "site": 15,
-    "csv": 10
-   },
-   {
-    "kind": "QTY",
-    "item": "Alchemist's Parchment",
-    "site": 15,
-    "csv": 10
-   },
-   {
-    "kind": "QTY",
-    "item": "Darkwood Plank",
-    "site": 30,
-    "csv": 25
-   },
-   {
-    "kind": "QTY",
-    "item": "Dwarven Steel",
-    "site": 5,
-    "csv": 20
-   },
-   {
-    "kind": "QTY",
-    "item": "Minotaur Hide",
-    "site": 15,
-    "csv": 10
-   },
-   {
-    "kind": "QTY",
-    "item": "Mystic Silk",
-    "site": 25,
-    "csv": 35
-   }
-  ],
-  "Ioun Stone Elfstone Shard": [
-   {
-    "kind": "MISSING",
-    "item": "Monster Trophy",
-    "site": 6,
-    "csv": null
-   }
-  ],
-  "+3 Turkey Leg of Smiting": [
-   {
-    "kind": "QTY",
-    "item": "Golden Fleece",
-    "site": 2,
-    "csv": 1
-   }
-  ],
-  "Boaz's Bead of Whispers": [
-   {
-    "kind": "QTY",
-    "item": "Dwarven Steel",
-    "site": 15,
-    "csv": 10
-   }
-  ],
-  "Greater Bead of Whispers": [
-   {
-    "kind": "QTY",
-    "item": "Dwarven Steel",
-    "site": 10,
-    "csv": 15
    }
   ],
   "Omni Cube [2024]": [
@@ -456,30 +342,6 @@
     "csv": 2
    }
   ],
-  "Deathward Greaves": [
-   {
-    "kind": "EXTRA",
-    "item": "1,000 GP Gold Bar",
-    "site": null,
-    "csv": 1
-   }
-  ],
-  "Bead of Divine Choice": [
-   {
-    "kind": "EXTRA",
-    "item": "Golden Fleece",
-    "site": null,
-    "csv": 1
-   }
-  ],
-  "Gloves of Spirit Handling": [
-   {
-    "kind": "MISSING",
-    "item": "1,000 GP Gold Bar",
-    "site": 1,
-    "csv": null
-   }
-  ],
   "Coin of Wealth": [
    {
     "kind": "MISSING",
@@ -500,14 +362,6 @@
     "csv": 3
    }
   ],
-  "Charm of Unity": [
-   {
-    "kind": "CHOICE_QTY",
-    "item": "Ultra Rare",
-    "site": 2,
-    "csv": 1
-   }
-  ],
   "Golden Fleece": [
    {
     "kind": "NO_RECIPE_ON_PAGE",
@@ -517,5 +371,6 @@
    }
   ]
  },
- "knownNote": "The 21 groups that did NOT reconcile on 2026-09-05, with the exact deltas measured. Twelve are data errors with paste blocks in transmute-recipe-audit.md; the rest are vintage mismatches (tokendb publishes only the current Omni recipe) or modelling choices (a \"pick any N\" group reduced to one representative). The test fails on a discrepancy OUTSIDE this list. A known entry that goes clean is a note, not a failure, so correcting a row can never red-block a publish PR."
+ "knownNote": "The recipe groups that did NOT reconcile, with the exact deltas measured on the date in knownMeasured. Every one is a modelling or vintage question, not a data error -- the twelve errors the 2026-09-05 audit found were corrected and published, and this list is what remains. tokendb-recipe-audit.md carries the reasoning for each. The test fails on a discrepancy OUTSIDE this list; a known entry that goes clean is a note, not a failure, so correcting a row can never red-block a publish PR. Re-measure with TOKENDB_EMIT_KNOWN=1 rather than editing by hand.",
+ "knownMeasured": "2026-09-08"
 }

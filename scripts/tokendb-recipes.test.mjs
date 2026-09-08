@@ -478,6 +478,18 @@ for (const [gkey, g] of groups) found.set(gkey, reconcile(g, parsed.get(gkey), g
 
 {
   const sig = (d) => `${d.kind}|${d.item}|${d.site}|${d.csv}`;
+
+  // Trimming the manifest by hand after a batch of corrections is how a known
+  // list goes stale, and a stale list is how a real discrepancy hides inside an
+  // entry nobody re-read. `TOKENDB_EMIT_KNOWN=1 npm run test:tokendb` prints the
+  // block to paste back in, measured rather than remembered.
+  if (process.env.TOKENDB_EMIT_KNOWN) {
+    const out = {};
+    for (const [gkey, diffs] of found) if (diffs.length) out[gkey] = diffs;
+    console.log('\n--- known (paste into fixtures/tokendb/manifest.json) ---');
+    console.log(JSON.stringify(out, null, 1));
+  }
+
   let reconciled = 0;
   let unexpected = 0;
   for (const [gkey, diffs] of found) {
@@ -498,7 +510,11 @@ for (const [gkey, g] of groups) found.set(gkey, reconcile(g, parsed.get(gkey), g
   }
   ok(unexpected === 0, `${unexpected} discrepancies are not in the manifest's known list`);
   console.log(`  ✓ ${reconciled} of ${groups.size} recipe groups reconcile exactly`);
-  console.log(`    ${groups.size - reconciled} known discrepancies stand (12 data errors, the rest vintage or modelling -- see transmute-recipe-audit.md)`);
+  console.log(`    ${groups.size - reconciled} known discrepancies stand, all vintage or modelling questions -- see docs/tokendb-recipe-audit.md`);
+  // A "pick any N of these" recipe reconciles by construction: the resolver
+  // accepts whichever member the CSV names. It cannot tell a well-chosen
+  // representative from a badly-chosen one, so § 2.2 of the audit is invisible
+  // here by design, not absent.
 }
 
 // ------------------------------------------------- 4. the guard has teeth --

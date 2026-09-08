@@ -72,7 +72,10 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-2** | Close handling for alesievauctions.com | the maintainer's sample exports |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
 | **PIPE-4** | Feasibility verdict: import trade-good quantities from truedungeontokens.com | **a written answer from me** — the maintainer asked and none exists |
-| **DATA-9** | 12 recipes disagree with tokendb, and Orion's Belt needs a call | **the maintainer's decision on Orion's Belt**; the other 11 have paste blocks ready |
+| **DATA-9** | ~~12 recipes disagree with tokendb~~ | **RESOLVED 2026-09-08** — all twelve corrected and published, plus Orion's Belt and the +1 Turkey Leg |
+| **DATA-10** | Fractional GP is dropped or rounded | nothing — three `derivedPrices.csv` rows, no engine or workbook change |
+| **DATA-11** | A "pick any N of these" recipe is frozen to one member | a call on whether three expired recipes justify a pool rule |
+| **DATA-12** | `Relic Recipe Fragment (6 unique)` is keyed to two different years | one cell in the workbook |
 
 ---
 
@@ -566,63 +569,178 @@ a domain fact can contradict.
 
 # SITE — the app
 
-## DATA-9. Twelve recipes disagree with tokendb — OPEN, measured and paste-ready
+## DATA-9. Twelve recipes disagreed with tokendb — RESOLVED (PR #186, 2026-09-08)
 
 Every recipe in `transmuteRecipes.csv` was reconciled against its token page on
-tokendb.com on **2026-09-05**. 155 of 176 recipe groups agree exactly. The full
-findings, the paste blocks and the judgement calls are in
-**`tokendb-recipe-audit.md`** — this entry is the pointer, not a second copy.
+tokendb.com on **2026-09-05**; 155 of 176 recipe groups agreed. All twelve
+errors were corrected in the workbook and published, and re-verified on
+**2026-09-08** by diffing the CSV at `53c6ba3` against the published tree — so
+the check was that each change landed *and* that nothing else moved. It did not.
+**168 of 176 now reconcile exactly, and none of the remaining eight is a data
+error.**
 
-The twelve that are wrong:
+Two more landed in the same publish. **Orion's Belt**, which the audit
+deliberately refused to guess at, is now recorded as tokendb states it —
+`6 x Relic Recipe Fragment (6 unique)` plus `6 x Monster Trophy` — with the
+unexplained `5 x Golden Fleece` gone and the new aggregate given rows in
+`offAuctionPrices.csv` and `tokenMetadata.csv` so it prices. **+1 Turkey Leg of
+Smiting** was added as that year's `2k Bonus`.
 
-| Transmute | What is wrong |
-|---|---|
-| Ashenne's Arch-Mage Medallion | six quantities — Dwarven Steel reads 20, tokendb says 5 |
-| Blessed Redoubt Mail | 1 gold bar, tokendb says `4,000 GP` |
-| Benrow's Elder Drake Necklace | Mystic Silk 35, tokendb says 30 |
-| Boaz's Bead of Whispers | Dwarven Steel 10, tokendb says 15 |
-| Greater Bead of Whispers | Dwarven Steel 15, tokendb says 10 |
-| +3 Turkey Leg of Smiting | Golden Fleece 1, tokendb says 2 |
-| Gem of Last Hope | 10 Mystic Silk where the recipe wants 10 Philosopher's Stone |
-| Deathward Greaves | a gold bar the recipe does not ask for |
-| Bead of Divine Choice | a Golden Fleece the recipe does not ask for |
-| Gloves of Spirit Handling | missing its `1× 1,000 GP Gold Bar` |
-| Ioun Stone Elfstone Shard | missing 6 Monster Trophy (every 2020 trophy) |
-| Charm of Unity | Ultra Rare 1, but the option is `2× any Ultra Rare` |
+`tokendb-recipe-audit.md` carries the detail. What is worth keeping here is what
+the pass got *wrong*, and what it established.
 
-**Orion's Belt is the one that needs a decision, not a patch.** tokendb wants six
-Relic Recipe Fragments plus every 2019 monster trophy, with a footnote that the
-fragments may not substitute for the trophies — so six of each. The CSV records
-`5 x Golden Fleece` and no trophy row. Golden Fleece appears nowhere in that
-recipe, and five Fleece is fifty trophies, so there is no equivalence to infer.
-No paste block was written for it deliberately.
+### The audit made a claim it had not checked
 
-### What is NOT wrong, and must not be "fixed"
+It reported that Bead of Asgard and Charm of Divine Gifts were the exception to
+the omit-Rare-and-below convention, "whose options are Relic-tier beads and
+charms". They are not. **It had inferred the ingredients' tier from the tier of
+the recipe they feed**, which is exactly the move this repo has been burned by
+before. Every option in all seven such groups was then looked up: all 22 are
+Rare or below, most of them **Participation** tokens — guaranteed rewards for
+attending a specific event. There is no exception, and "guaranteed event reward"
+is a sharper statement of the rule than "Rare", because it explains why the
+tokens barely trade and why omitting them cannot understate a build.
 
-**The CSV omits Rare-and-below ingredients on purpose.** Of the 301 named
-ingredients it leaves out, 247 are Rare, Uncommon, Common, Quest or Premium,
-while the named ingredients it does record are almost entirely Ultra Rare or
-Transmuted-Relic. That was measured by looking every one of them up, because
-without it this audit would have reported 301 phantom missing rows. The
-remaining nine open discrepancies are vintage mismatches (tokendb publishes only
-the current Omni recipe; the CSV holds 2024 and 2025) or modelling choices (a
-"pick any N" group recorded as one representative). § 2 of the audit lists them
-with the reasoning; none has a change proposed.
+### What the convention actually is, confirmed by the maintainer
 
-### The guard that now exists
+The CSV omits Rare-and-below ingredients on purpose: they cost $5 at most and
+most players have them on hand. Separately, **an ingredient the transmute itself
+supplies is not a cost** — the matching `… Steward` for a Safehold companion and
+the `Mythic Transmuter` for a Mythic are handed over gratis, so recording them
+would double-count. Measuring this mattered: without it the audit would have
+reported 301 phantom missing rows.
+
+### The guard, and the hole it found in itself
 
 `npm run test:tokendb` reconciles the CSV against `fixtures/tokendb/` — 175
 verbatim pages, gzipped — and fails on any discrepancy outside the known list in
 that directory's `manifest.json`. It reports the reconciled count rather than
-pinning it, so correcting one of the twelve above can never red-block a publish
-PR; a fixed row prints a note asking for the manifest to be trimmed.
+pinning it, so a correction can never red-block a publish PR. Re-measure the
+known list with `TOKENDB_EMIT_KNOWN=1`; trimming it by hand is how it goes stale,
+and a stale list hides a real discrepancy inside an entry nobody re-read.
 
-Its twelve mutation cases are the reason to trust it. **The first run of them
-found a hole in the reconciler itself**: deleting a recipe's `Wish Ring` row was
-not reported, because a choice group nothing matched was skipped silently — the
-same skip that lets the genuinely unmodelled groups pass. A choice group is now
-skipped only when every option is a token the CSV omits by convention; one
-offering something it tracks and matched by nothing is a missing row.
+**Its twelve mutation cases found a hole in the reconciler on their first run**:
+deleting a recipe's `Wish Ring` row went unreported, because a choice group
+nothing matched was skipped silently — the same skip that lets the genuinely
+unmodelled groups pass. A group is now skipped only when every option is a token
+the CSV omits by convention.
+
+**What it still cannot see** is DATA-11. A "pick any N of these" recipe
+reconciles by construction, because the resolver accepts whichever member the
+CSV names — so a badly chosen representative is indistinguishable from a well
+chosen one.
+
+---
+
+## DATA-10. Fractional GP is dropped or rounded — OPEN, specified and ready
+
+Recipes name GP amounts that do not divide into whole 1,000 GP Bars. The CSV
+records nothing for them, except Ring of Greater Focus which rounds up:
+
+| Transmute | tokendb | CSV records |
+|---|---|---|
+| Ring of Stamina | `200 GP` | nothing |
+| Enchanter's Whetstone | `500 GP` | nothing |
+| Gem of Last Hope | `500 GP` | nothing |
+| Ring of Greater Focus | `2,500 GP` | 3 x 1,000 GP Gold Bar |
+
+That is the whole exposure — three distinct amounts across four recipes, all
+expired. Two further `500 GP` mentions sit inside "ONLY ONE of" groups where the
+CSV records the trophy branch instead and needs nothing.
+
+**The fix needs no code and no workbook change.** Players convert
+common/uncommon/rare tokens into Gold Bars, and loose GP items sell at prices
+consistent with fractions of the bar — which is a ratio of the Gold Bar, exactly
+what `derivedPrices.csv` already expresses. It is the same shape as the
+`5,000 GP Mithral Bar` row with `Ratio` where that one uses `Multiple`, and
+`derivedPrices.csv` is hand-authored with no tab behind it. `Ratio` already
+divides and `Multiple` already accepts a non-integer, so `200 GP` → Ratio 5,
+`500 GP` → Ratio 2, `2,500 GP` → Multiple 2.5. Then each recipe records
+`1 x 200 GP`, `1 x 500 GP`, `1 x 2,500 GP` and the card mirrors the page text.
+
+**Leave `Bound` empty.** `ceiling` is defensible — smaller denominations are less
+liquid — but nothing measured says so, and the Monster Trophy row earns its
+`ceiling` because Fleece÷10 is provably an upper bound. A flag nothing supports
+is a guess wearing a flag's clothes.
+
+Applying this moves four expired recipe totals: three up, since they currently
+record no GP at all, and Ring of Greater Focus down from 3 bars to 2.5.
+
+§ 2.3 of `tokendb-recipe-audit.md` has the CSV rows ready to paste.
+
+---
+
+## DATA-11. A "pick any N of these" recipe is frozen to one member — OPEN, measured
+
+Three expired recipes let the player pick any N from a pool, and the CSV freezes
+one member as if it were required:
+
+| Transmute | tokendb | CSV records |
+|---|---|---|
+| Tomb Treasure Chest (Recipe 1) | ANY FORTY of the 8 Trade 1 goods | 40 x Mystic Silk |
+| Tomb Treasure Chest (Recipe 2) | ANY TWENTY of the 3 Trade 2 goods | 20 x Aragonite |
+| One Boot Billy Map — Trade 1 | TWENTY of the 8 Trade 1 goods | 20 x Darkwood Plank |
+
+The player heuristic was *buy the cheapest*, and the old sheet had a query
+tracking which that was.
+
+**How wrong the frozen pick is depends entirely on the tier**, measured against
+`prices.csv`:
+
+| Pool | Season | Cheapest | CSV picked | Gap on the line |
+|---|---|---|---|---|
+| Trade 1 (40) | 2024 | Mystic Silk $1.52 | Mystic Silk $1.52 | $0 |
+| Trade 1 (40) | 2025 | Darkwood Plank $1.38 | Mystic Silk $1.39 | $0 |
+| Trade 1 (20) | 2023 | Mystic Silk $1.62 | Darkwood Plank $1.64 | $0 |
+| **Trade 2 (20)** | **2024** | **Elven Bismuth $6.47** | **Aragonite $10.76** | **$86** |
+| Trade 2 (20) | 2025 | Aragonite $9.82 | Aragonite $9.82 | $0 |
+
+The eight Trade 1 goods price within pennies of each other, so any
+representative is fine. **Trade 2 is not** — Aragonite ran 66% above Elven
+Bismuth in 2024, and since Recipe 2 is *only* that line, the card shows $203
+where the cheapest route was about $129. It does not flip which recipe is
+cheaper (Recipe 1 shows $55) but it overstates the alternative by a third.
+
+**Recommended**: a pool rule in `derivedPrices.csv` — `DerivedFrom` holding a
+`|`-separated member list with `Bound = cheapest` — plus about twenty lines in
+`PriceIndex.leafPrice` that price every member for the season and return the
+**whole distribution of the member with the lowest avg**. Not an elementwise min
+across members, which would yield a min and an avg that never belonged to the
+same good; keeping one good's distribution intact is what the Fleece rule
+already does. The pools are the Trade 1 and Trade 2 tiers the domain already
+names, the file has no workbook tab behind it, the line renders as `derived`,
+and it re-resolves per season — so an expired recipe priced over its own build
+window gets the answer that was true *then*, which a frozen pick cannot.
+
+**If that is more than three expired recipes deserve**, the zero-code half-
+measure still beats today: rename the Item to `Any Trade 1 Good` / `Any Trade 2
+Good` and leave the price alone. The card then stops claiming the chest needed
+Mystic Silk, which is the part that actually misleads a reader.
+
+**Not recommended**: reviving the old sheet's cheapest-good query into
+`offAuctionPrices.csv`. It works, but it freezes the answer at publish time and
+mislabels the line "non-auction item" when every member is an auctioned good.
+
+---
+
+## DATA-12. `Relic Recipe Fragment (6 unique)` is keyed to two different years — OPEN, one cell
+
+The aggregate added for Orion's Belt in PR #186 is keyed to **2024** in
+`offAuctionPrices.csv` and **2019** in `tokenMetadata.csv`. Its two precedents
+agree in both files (`50 GP Idol (40 Unique)` 2024/2024, `Golem Piece
+(40 Unique)` 2026/2026), and the token is a 2019 Treasure Chest item used by a
+2019 recipe, so **2019 is right and the `offAuctionPrices` row is the one to
+move**.
+
+Nothing is broken — the season clamp finds the 2024 row and prices the line. But
+it prices it *through the fallback*, and the card says so: Orion's Belt renders
+`6 × Relic Recipe Fragment (6 unique) — non-auction item · from 2024` on a 2019
+recipe, where the line beside it reads `6 × Monster Trophy — non-auction item ·
+season priced`.
+
+Worth noting as a shape: **a new aggregate has to be given the same year in both
+files, and nothing checks that.** The season clamp is generous enough that a
+mismatch prices anyway and shows up only as a quieter label on the card.
 
 ---
 
