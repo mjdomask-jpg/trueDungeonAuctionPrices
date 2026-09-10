@@ -522,7 +522,7 @@ importer knows the recurring ones by name rather than stopping on them:
 
 | In the file | Becomes |
 |---|---|
-| `Random UR` × 9 | **one** `token` row, quantity 9, summed — which is how the sheet records it |
+| `Random UR` × 9 | **one** `token` row named **`Random Ultra Rare`**, quantity 9, summed — which is how the sheet records it. The importer wrote `Random UR` until 2026-09-10; that name is in `contextItems.csv` zero times. |
 | `Grunnel Augment` × 6 | **six** `grunnel` rows, one per lot, each keeping its own price |
 | `Player Augment` × 2 | two `token` rows |
 
@@ -578,6 +578,182 @@ like context items, exactly as the Trent importer does.
 **bump `FORUM_VERSION`**, run `npm run test:forum`, then paste it over the
 editor's contents. The test replays all three real files in `fixtures/forum/`
 against `prices.csv`.
+
+---
+
+## Importing an alesievauctions.com close
+
+alesievauctions.com hosts auctions in its own database and produces a close
+export when one ends. `apps-script/alesievClose.gs` imports it.
+
+**It is treated like a Trent close, not like a forum close**, and the reason is
+the source rather than the shape. A forum auctioneer builds a results file by
+hand, and three files from one auctioneer arrived in three different layouts —
+so [that importer](#importing-a-forum-close-from-a-file) has to sniff its
+columns and hedge its output. This export comes out of a database: one row per
+lot, the same columns every time, and a `Category` column that **states** where
+a row belongs instead of leaving it to be inferred from a name. So min/max goes
+straight into `prices`, the lots go straight into `rawPricesData`, augments and
+withheld items go straight into `contextItems`, Onyx lots go straight into
+`onyx`, and there is no intermediate proposal step for you to approve row by
+row.
+
+Everything that decides a *number* is still the Trent importer's, unchanged:
+the quantity rule, the name resolution, the per-token division, the min/max, the
+bid-floor exclusion and the season check. **The Trent script must be installed
+for this one to work.**
+
+### The columns it reads
+
+| Column | Read as |
+|---|---|
+| **A `Item`** | the lot name — see the grammar below |
+| **B `Category`** | where the row goes — see the routing below |
+| **D `Current Bid`** | the **ending** bid: what the lot actually closed at. Blank means it drew no bid. |
+
+`Starting Bid`, `Bid Count`, `High Bid`, `Average Bid`, `Median Bid` and
+`Low Bid` are ignored, and the dialog says so every run.
+
+> **`Average Bid` here is not the `Average Bid` that gets a forum file
+> refused.** The forum importer turns away any file carrying that header,
+> because the one forum file that had it was a pivot over *every bid received*
+> and reconciled with nothing. In this export it is a per-lot bid statistic
+> sitting beside a genuine winning-bid column. Same words, opposite meaning —
+> which is exactly why this export gets its own reader and must never be pasted
+> into `forumStaging`.
+
+### Column A grammar
+
+Four things can be in a lot name, and three of them are new to this source:
+
+| In the name | Means |
+|---|---|
+| `(3 of 5)` | **lot 3 of 5 lots** of that item — a lot *number*, not a quantity. No marker means lot 1 of 1. |
+| `"5,000 GP Gold Bar"` | five `1,000 GP Gold Bar` tokens. The quotes are the site's own, around a name containing a comma. |
+| `10x Treasure Chip`, `Alchemist's Ink 10x` | ten tokens in the lot, at either end of the name. The price divides by ten. |
+| anything else | the token's own name |
+
+A gold-bar denomination that is **not** a multiple of 1,000 stops the run rather
+than being rounded — that would be a real change in how this source names
+things, and it should be looked at.
+
+### Column B routing
+
+| `Category` says | Goes to | As |
+|---|---|---|
+| `Augment - Player` | `contextItems` | `token`, one row per lot, at its own price |
+| `Augment - Grunnel` | `contextItems` | `grunnel`, one row per lot |
+| `Withheld` | `contextItems` | `withheld`, **aggregated per item** and with **no price** |
+| `Onyx` | `onyx` | one row per lot, `Onyx Ultra Rare` |
+| anything else, or blank | `prices` + `rawPricesData` | an ordinary lot of the auction's own tokens |
+
+Matching is **anchored at the start**, so `Non-Onyx` is not Onyx. An
+`Augment - <anything else>` stops the run and asks: `contextItems.category` is a
+four-value vocabulary the PR check enforces, and inventing a fifth here would
+fail at the gate a long way from the cause.
+
+> **A withheld row carries no price on purpose.** The item did not sell, so
+> there is no bid to transcribe, and the workbook computes the figure it shows
+> as a query over `prices`. The rows are also **aggregated**: nine withheld
+> `5,000 GP Gold Bar` lots become one row at quantity 45, which is the shape
+> every recorded withheld block has — `20251` records 90 withheld gold bars as a
+> single row.
+
+### The two names `Category` cannot tell apart
+
+The export labels **`Pick Your Purple`** and **`Random Ultra Rare`** both
+`Ultra Rare`, and they belong in different files.
+
+- **`Pick Your Purple`** is a buyer choosing any Ultra Rare. That is a market
+  observation, so it prices as `Ultra Rare` in the spine like any other lot.
+- **`Random Ultra Rare`** is a lucky dip. All 21 of its appearances in
+  `contextItems.csv` are **one aggregated `token` row** — quantity, and the
+  lots' prices **summed**.
+
+So the split is made by name, not by the category column. The dialog shows how
+a summed row was reached — `8 @ $55 + 1 @ $57 = $497` — because a total is not
+checkable on its own and the distribution it came from is.
+
+### What it does that neither other importer does
+
+| | |
+|---|---|
+| **Names every augment** | The forum file calls six different grunnel augments `Grunnel Augment` and leaves you to name them from the thread. This source names each one, so the `contextItems` rows come out complete. |
+| **Writes `closeDate`** | It asks for the close date and writes it to `auctionMetadata`, then reads the cell back to check Sheets did not reformat it. `Status`, `daysToClose` and `Close Month` are formulas and follow on their own. |
+| **Refuses a re-import** | If `prices` already holds rows for the chosen auction it stops. An export you can download twice is easy to import twice. |
+
+### Installing it (once)
+
+Add it as another file in the same Apps Script project (**File → New →
+Script**, name it `alesievClose`), paste in `site/apps-script/alesievClose.gs`,
+and add a tab called exactly **`alesievStaging`**. Reload the spreadsheet; two
+items appear under **TD auctions**.
+
+### Using it
+
+1. The auction must already be in `auctionMetadata`. If it is not, run
+   [the auction scan](#watching-for-new-auctions) and promote it first.
+2. Paste the export — **including the header row** — into `alesievStaging`.
+3. **TD auctions → Dry run — show what the export would import.** Give it the
+   target `auctionId`; the prompt lists alesiev's recent auctions and says which
+   are still open.
+4. Read the summary: how many lots, what goes to each tab, every `contextItems`
+   row spelled out, and anything it could not place.
+5. **Import alesievauctions.com close…** when the dry run looks right.
+6. It asks for the **close date**, as `YYYY-MM-DD`. This is when the auction
+   *actually* closed — **not** the `Ends:` date on the site's card, which is the
+   scheduled end and parts company with the real one whenever an auction is
+   extended, ends early on funding, or fails. Leave it blank to skip; `Status`
+   stays `Open` until it is filled in.
+7. Export the changed tabs and run `npm run validate`, or publish from the
+   sheet.
+
+Type the close date in ISO or it is refused rather than converted. That is not
+fussiness: a date written to a sheet in any other shape gets coerced on the way
+in, comes back from `getValues()` as a JavaScript `Date`, and reaches
+`auctionMetadata` as `Sat Sep 19 2026 01:00:00 GMT-0500 (Central Daylight
+Time)` — which Sheets cannot parse, so `daysToClose` and `Close Month` stop
+computing. That bug reached the tab once already.
+
+### When it refuses
+
+Everything below stops the run and writes **nothing** — never half an auction.
+
+| It says | Do this |
+|---|---|
+| a name is *not a token in season N, but it is in M* | You probably picked the wrong auction. If not, `tokenMetadata` is missing a row for this season. |
+| a name is *not a token in any season* | It is probably a context item. The dialog hands you a filled-in worksheet for it. |
+| *this file looks like season N* | The export and the chosen auction disagree about the season. Check the auction. |
+| *this auction already has rows in `prices`* | It has been imported. Delete the existing rows first if you meant to replace them. |
+| an augment kind it does not know | Decide which `contextItems.category` it takes and add it to `ALESIEV_AUGMENT_CATEGORIES`. |
+| a multi-token **Onyx** lot | Split it by hand. All 1,155 recorded Onyx rows are single tokens, so dividing this one either way would be a guess. |
+
+An auction is only *caution*ed, not stopped, when nothing in the export is
+unique to one season — that means the season check could not engage, not that
+something is wrong.
+
+### What it does not do
+
+- **It does not close anything else.** `outcome`, `targetFunding` and the
+  augment rollups are untouched.
+- **It does not find an auction.** The auction must already be in
+  `auctionMetadata`, promoted from a scan.
+
+### Changing the script
+
+`apps-script/alesievClose.gs` in the repo is the source of truth. Edit it here,
+**bump `ALESIEV_VERSION`**, run `npm run test:alesiev`, then paste it over the
+editor's contents.
+
+> **The fixture pins grammar and routing, and never a price.** The sample export
+> in `fixtures/alesiev/` has **dummy prices** — it is an extract showing which
+> rows and columns a close carries, not a record of an auction that happened, so
+> there is nothing to reconcile it against. What stands in: every name the
+> importer writes is asserted to be one `tokenMetadata`, `contextItems` or
+> `onyx` **already holds**, and the shapes nobody has seen yet — a withheld
+> block, an Onyx lot, an unknown augment kind — are constructed in the test. The
+> withheld and Onyx paths are therefore **built and tested but never run against
+> a real file**; check the first one of each carefully.
 
 ---
 

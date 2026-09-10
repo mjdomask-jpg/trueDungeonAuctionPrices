@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-01.2';
+var SCRIPT_VERSION = '2026-09-10.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -102,6 +102,15 @@ var EXCEPTIONS = {
 
   // --- Forum (alesiev, 202647) ---------------------------------------------
   'pyp': 'Ultra Rare',
+  // Spelled out, which is how alesievauctions.com's export writes it — 34 lots
+  // in the first sample and the only price name in it that resolved nowhere.
+  // Note what is NOT here: `random ultra rare`. A PYP is a buyer choosing any
+  // Ultra Rare, which is a market observation and belongs in the price spine; a
+  // Random Ultra Rare is a lucky dip, and all 21 of its recorded appearances are
+  // ONE aggregated `token` row in contextItems. The export's Category column
+  // calls both of them `Ultra Rare`, so leaving the second unresolvable is what
+  // keeps them apart. See ALESIEV_CONTEXT_RULES.
+  'pick your purple': 'Ultra Rare',
   'ag codes': "Adventurers' Guild Button",
   // The SINGULAR was simply not beside the plural, the same hole `1k gp bar`
   // filled beside `1k gp bars`. Mike Steele sells 202645's four as
@@ -805,10 +814,11 @@ function describePlan(plan, auctionId) {
  * Every .gs file in an Apps Script project shares ONE global scope, so a second
  * onOpen in another file would not add a second menu — it would replace this
  * function and one menu would silently vanish. Phase 3 (`publishToSite.gs`),
- * Phase 4 (`auctionOpen.gs`) and Phase 5 (`forumClose.gs`) therefore contribute
- * their items through `addPublishMenu`, `addOpenMenu` and `addForumMenu`
- * instead. The typeof guards keep this file working on its own when any of them
- * is not installed.
+ * Phase 4 (`auctionOpen.gs`) and Phase 5 (`forumClose.gs`, `forumThread.gs`,
+ * `alesievClose.gs`) therefore contribute their items through `addPublishMenu`,
+ * `addOpenMenu`, `addForumMenu`, `addThreadMenu` and `addAlesievMenu` instead.
+ * The typeof guards keep this file working on its own when any of them is not
+ * installed.
  *
  * That shared scope is also why `forumClose.gs` can call this file's parser
  * directly rather than duplicating it — and why this file must be installed for
@@ -821,6 +831,7 @@ function onOpen() {
     .addItem('Dry run — show what would be imported', 'dryRunTrentClose');
   if (typeof addForumMenu === 'function') addForumMenu(menu);
   if (typeof addThreadMenu === 'function') addThreadMenu(menu);
+  if (typeof addAlesievMenu === 'function') addAlesievMenu(menu);
   if (typeof addOpenMenu === 'function') addOpenMenu(menu);
   if (typeof addHardenMenu === 'function') addHardenMenu(menu);
   if (typeof addPublishMenu === 'function') addPublishMenu(menu);

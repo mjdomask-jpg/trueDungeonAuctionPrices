@@ -54,7 +54,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var FORUM_VERSION = '2026-08-26.1';
+var FORUM_VERSION = '2026-09-10.1';
 
 /** The tab the operator pastes the auctioneer's file into. */
 var FORUM_STAGING_TAB = 'forumStaging';
@@ -127,8 +127,12 @@ var FORUM_REFUSE_HEADERS = ['average bid', 'average', 'avg bid', 'avg', 'mean bi
  * names whose meaning is known, not a licence to guess at unknown ones.
  */
 var FORUM_CONTEXT_RULES = {
-  'random ur': { category: 'token', aggregate: true, item: 'Random UR' },
-  'random urs': { category: 'token', aggregate: true, item: 'Random UR' },
+  'random ur': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
+  'random urs': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
+  // The export from alesievauctions.com spells it out, and so do a handful of
+  // forum posts. Same row either way.
+  'random ultra rare': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
+  'random ultra rares': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
   'grunnel augment': { category: 'grunnel', aggregate: false },
   'player augment': { category: 'token', aggregate: false },
 };
@@ -136,10 +140,18 @@ var FORUM_CONTEXT_RULES = {
 /**
  * The `Item` an aggregated row is written under.
  *
- * `item` on the rule, not the spelling the file happened to use. `contextItems`
- * records `Random UR`; a file writing `Random Urs` would otherwise create a
- * second, near-identical Item that every later grouping treats as a different
- * thing. The site joins on these names.
+ * `item` on the rule, not the spelling the file happened to use. A file writing
+ * `Random Urs` would otherwise create a second, near-identical Item that every
+ * later grouping treats as a different thing. The site joins on these names.
+ *
+ * **The name this resolves to was WRONG until 2026-09-10.** The rule wrote
+ * `Random UR`, which appears in `contextItems.csv` exactly zero times — all 21
+ * recorded rows say `Random Ultra Rare`. Nothing caught it because `202647`,
+ * the auction the fixtures replay, was transcribed by hand before this importer
+ * existed, so the wrong name had never actually been written anywhere. The
+ * lesson is the one this repo keeps relearning: a name a script INVENTS is
+ * checked by nothing until the day it is used, so pin it to what the shipped
+ * CSV holds rather than to what the source file says.
  */
 function forumContextDisplayName(name) {
   var rule = forumContextRule(name);

@@ -69,7 +69,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-9** | No React test harness | appetite |
 | **SITE-10** | Excel's handling of the exported CSV is unverified | access to Excel |
 | **PIPE-1** | Ingest auctioneers' external tracking sheets | sign-in access to those sheets |
-| **PIPE-2** | Close handling for alesievauctions.com | the maintainer's sample exports |
+| **PIPE-2** | ~~Close handling for alesievauctions.com~~ | **RESOLVED 2026-09-10** — `alesievClose.gs`; the withheld and Onyx paths are built and tested but have never seen a real file |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
 | **PIPE-4** | Feasibility verdict: import trade-good quantities from truedungeontokens.com | **a written answer from me** — the maintainer asked and none exists |
 | **DATA-9** | ~~12 recipes disagree with tokendb~~ | **RESOLVED 2026-09-08** — all twelve corrected and published, plus Orion's Belt and the +1 Turkey Leg |
@@ -988,11 +988,39 @@ on how those sheets are shared — establish that before designing anything.
 
 ---
 
-## PIPE-2. Close handling for alesievauctions.com — OPEN
+## PIPE-2. Close handling for alesievauctions.com — RESOLVED (2026-09-10)
 
-Phase 4 watches the site and proposes new auctions from its server-rendered cards.
-**Reading a close from it is not built** — the maintainer is sending sample
-exports first, and nothing should be designed against a guessed shape.
+Phase 4 watches the site and proposes new auctions from its server-rendered
+cards. Reading a close from it is now built: `apps-script/alesievClose.gs`,
+`npm run test:alesiev` (120 assertions), the sample export in
+`fixtures/alesiev/`, and § *Importing an alesievauctions.com close* in
+`updating-the-data.md`.
+
+**It is Trent's treatment, not the forum's, and the source is why.** A forum
+auctioneer builds a results file by hand — three files from one auctioneer had
+three layouts — so `forumClose.gs` sniffs its columns and hedges its output.
+This export comes out of a database with one row per lot and a `Category` column
+that *states* where a row belongs. So it writes min/max straight to `prices`,
+lots to `rawPricesData`, augments and withheld items to `contextItems`, Onyx to
+`onyx`, and `closeDate` to `auctionMetadata`, with no proposal step.
+
+**What is still unproven, and it is the reason this entry is worth reading after
+it closes.** The sample export's PRICES ARE DUMMY DATA — the maintainer said so
+on 2026-09-10; it is an extract showing which rows and columns a close carries,
+not a record of an auction. So unlike every other close path in this repo,
+**nothing here has been reconciled against a recorded row**. The fixture pins
+grammar and routing only. Two paths are built entirely from the maintainer's
+description and have never seen a real file:
+
+- **withheld rows** — aggregated per item, no price
+- **Onyx rows** — one per lot, no division, and a multi-token Onyx lot aborts
+
+Check the first real file of each carefully. If either is wrong, this entry
+reopens rather than a new one being filed.
+
+**Two things it does not do.** It does not write `outcome`, `targetFunding` or
+the augment rollups; and it does not find an auction — the row must already be
+in `auctionMetadata`, promoted from a scan.
 
 ---
 
