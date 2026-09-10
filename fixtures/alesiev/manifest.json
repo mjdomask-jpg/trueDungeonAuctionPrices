@@ -1,0 +1,30 @@
+{
+  "source": "The first close export from alesievauctions.com, supplied by the maintainer on 2026-09-10 as `test-auction-with-cascade-bids.csv`. Converted to a fixture without changing a value.",
+  "fetched": "2026-09-10",
+  "files": [
+    {
+      "file": "alesiev-site-export-sample.csv",
+      "headers": "Item | Category | Starting Bid | Current Bid | Bid Count | High Bid | Average Bid | Median Bid | Low Bid",
+      "shape": "one row per lot, from the site's own database",
+      "rows": 163,
+      "reconciles": null,
+      "why": "PRICES ARE DUMMY DATA. The maintainer confirmed on 2026-09-10 that this is a sample extract showing which ROWS AND COLUMNS a close carries, not a record of an auction that happened. So this fixture pins GRAMMAR AND ROUTING and must never be used to pin a number against prices.csv — there is no auction to reconcile it with. It is the second fixture in this repo that cannot be replayed against a recorded row; the alesievauctions.com listing page in fixtures/auction-open was the first, for the same reason (the source was brand new).",
+      "season": "2027",
+      "seasonEvidence": "Three names decide it, and they are exactly the season-discriminating names inferSeasons exists to find: `Ioun Stone Warden Wrath` is 2027's Display Name for `1k Bonus`, `Shirt of Cat's Gift` for `2k Bonus`, and `1st Codex of the Familiar` for `8k Bonus`. inferSeasons returns ['2027'] with no tie. There is no 2027 row in auctionMetadata yet, so a real import of this file would have to promote the auction first.",
+      "grammar": [
+        "`(N of M)` is a LOT NUMBER — lot N of M lots of the same item. Trailing only, and stripped before anything else reads the name. Without this rule 0 of 163 lots resolve; with it (and the two below) 116 do.",
+        "A name containing a comma is wrapped in literal double quotes INSIDE the CSV quoting: the raw field is `\"\"\"5,000 GP Gold Bar\"\" (1 of 9)\"` and the cell value is `\"5,000 GP Gold Bar\" (1 of 9)`. The quotes sit outside the name and inside the lot marker.",
+        "`X,000 GP Gold Bar` is X `1,000 GP Gold Bar` tokens. `1,000 GP Gold Bar` is the only gold bar tokenMetadata has ever held, in every season.",
+        "A trailing `10x` (`Alchemist's Ink 10x`) means what a leading `10x` means — the same rewrite forumClose.gs already makes."
+      ],
+      "routing": "Column B states the destination. `Augment - Player` -> contextItems `token`, `Augment - Grunnel` -> contextItems `grunnel`, `Withheld` -> contextItems `withheld` with no price, `Onyx` -> the onyx tab. Everything else (`Trade`, `Premium`, `Bonus`, `Ultra Rare`, blank) is an ordinary priced lot.",
+      "notInTheSample": [
+        "Withheld rows — the maintainer said they arrive in a later revision of the export.",
+        "Onyx rows — possible in these auctions but absent here.",
+        "An `Augment - <kind>` other than Player or Grunnel."
+      ],
+      "namesColumnBCannotSplit": "`Pick Your Purple` (34 lots) and `Random Ultra Rare` (9 lots) are BOTH labelled `Ultra Rare`, and they belong in different files. A PYP is a buyer choosing any Ultra Rare — a market observation, and it goes in the price spine as `Ultra Rare` (a new EXCEPTIONS entry). A Random Ultra Rare is a lucky dip, and all 21 of its recorded appearances in contextItems.csv are ONE aggregated `token` row. So the split is by NAME, and it is what keeps `random ultra rare` deliberately out of EXCEPTIONS.",
+      "ignoredColumns": "Starting Bid, Bid Count, High Bid, Average Bid, Median Bid, Low Bid. `Current Bid` is the ending bid. Note that `Average Bid` here is a per-lot bid statistic sitting beside a genuine winning-bid column — forumClose.gs REFUSES any file carrying that header, correctly for its own source, which is why this export gets its own reader rather than going through forumReadStaging."
+    }
+  ]
+}

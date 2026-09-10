@@ -161,8 +161,17 @@ console.log('\nThe per-lot file (202647) — the format being asked for\n');
   const recorded = CI.filter((c) => c.Item !== 'Golden Ticket').map((c) => money(c.priceAugmented)).sort((a, b) => a - b);
   eq('  ... whose prices match contextItems exactly', emitted.join(','), recorded.join(','));
 
-  const randomUR = rows.find((r) => r[4] === 'Random UR');
-  eq('Random UR is aggregated to one row', randomUR[5], 9);
+  // The Item is pinned to what `contextItems.csv` HOLDS, not to what the source
+  // file says. The rule wrote `Random UR` until 2026-09-10 and nothing caught
+  // it: that name appears in the shipped CSV zero times, against 21 rows saying
+  // `Random Ultra Rare`, and 202647 was transcribed by hand before this importer
+  // existed, so the wrong name had never actually been written anywhere.
+  const randomUR = rows.find((r) => r[4] === 'Random Ultra Rare');
+  check('the aggregated row is named the way contextItems names it',
+    randomUR !== undefined, rows.map((r) => r[4]).join(', '));
+  check('  ... and `Random UR` is a name no recorded row uses',
+    CI.every((c) => c.Item !== 'Random UR'), 'contextItems.csv holds a Random UR row');
+  eq('Random Ultra Rare is aggregated to one row', randomUR[5], 9);
   eq('  ... summing to what the sheet records', randomUR[6], 497);
   eq('  ... as a token', randomUR[3], 'token');
 
@@ -181,7 +190,7 @@ console.log('\nThe per-lot file (202647) — the format being asked for\n');
 
   const breakdown = F.forumAggregateBreakdown(plan.context);
   eq('the dialog shows how the total was reached', breakdown.length, 1);
-  eq('  ... spelled out', breakdown[0], 'Random UR: 8 @ $55 + 1 @ $57 = $497');
+  eq('  ... spelled out', breakdown[0], 'Random Ultra Rare: 8 @ $55 + 1 @ $57 = $497');
 
   const grunnel = rows.filter((r) => r[3] === 'grunnel');
   eq('each Grunnel Augment keeps its own row', grunnel.length, 6);
@@ -238,7 +247,7 @@ console.log('\nMixed prices in an aggregated row\n');
 
   const b = F.forumAggregateBreakdown(
     F.forumReadStaging([['Item', 'Amount'], ['Random UR', '55'], ['Random UR', '55'], ['Random UR', '57']]).context);
-  eq('the breakdown groups equal prices', b[0], 'Random UR: 2 @ $55 + 1 @ $57 = $167');
+  eq('the breakdown groups equal prices', b[0], 'Random Ultra Rare: 2 @ $55 + 1 @ $57 = $167');
 
   // Grunnel augments are NOT aggregated, so mixed prices stay separate rows.
   const g = F.forumContextRows(
