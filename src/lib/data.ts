@@ -28,6 +28,12 @@ export type AuctionMeta = {
   auctioneer: string;
   style: string;
   completionStyle: string;
+  // The sheet's derived `Status`: `IF(outcome <> "", outcome, IF(closeDate =
+  // "", "Open", "Closed"))`. Four values reach the site — `Closed`, `Open`,
+  // `Failed` and `Pending` — and only `Closed` is counted anywhere. The two
+  // that come from `outcome` are hand-marked: `Failed` for an auction that did
+  // not fund (backlog DATA-6), `Pending` for one announced but not yet started.
+  // See auctionPhase() for why `Pending` is not simply believed.
   status: string;
   link: string;
   closeDate: string;
@@ -229,15 +235,60 @@ export function seasonsOf(sales: Sale[]): string[] {
   return [...new Set(sales.map((s) => s.season))].sort((a, b) => Number(b) - Number(a));
 }
 
-// Auctions currently accepting bids: Status is "Open" in auctionMetadata. Rare —
-// usually 0-3 run at once, and most of the season none do. Sorted most-recently-
-// opened first (openDate desc, then auction number as a tiebreak for same-day
-// opens). This is "live-ish": it's only as current as the last data export, so
-// the UI shows how long ago each opened rather than implying real time.
-export function openAuctions(meta: AuctionMeta[]): AuctionMeta[] {
-  return meta
-    .filter((m) => m.status === 'Open')
-    .sort((a, b) => b.openDate.localeCompare(a.openDate) || b.auctionNumber - a.auctionNumber);
+// The two live-ish states an auction can be in before it closes.
+export type AuctionPhase = 'open' | 'pending';
+
+// Which of them an auction is in right now, or null if it is neither.
+//
+// THE DATE DECIDES, NOT THE LABEL, and that is the whole design. This site is
+// static: `Status` is frozen into the CSV at publish time, so a row that says
+// `Pending` says it until someone exports the sheet again. Several auctions of
+// a season are announced weeks ahead and open on one date — 2026-09-19 for
+// season 2027 — and nobody should have to be at a keyboard that morning to
+// republish before the site stops calling them pending. So a `Pending` row
+// whose openDate has arrived reads as OPEN here, with no export in between.
+//
+// The reverse is defended too: an `Open` row whose openDate is still in the
+// future reads as PENDING. That is contradictory data — the sheet only says
+// `Open` because `closeDate` is blank — and it is the shape a pre-announced
+// auction takes when nobody marked its `outcome`. Believing the label there
+// would render "opened today" (daysSince clamps at 0) over a date days away.
+//
+// A `Pending` row with NO openDate stays pending: announced, date not set yet.
+// It is the one case the date cannot decide, and the label is all there is.
+export function auctionPhase(m: AuctionMeta, now: Date = new Date()): AuctionPhase | null {
+  if (m.status !== 'Open' && m.status !== 'Pending') return null;
+  const days = daysUntil(m.openDate, now);
+  if (m.status === 'Pending') return days === null || days > 0 ? 'pending' : 'open';
+  return days !== null && days > 0 ? 'pending' : 'open';
+}
+
+// Auctions that have not closed, split by phase. Rare — usually 0-3 run at
+// once, and most of the season none do; the pending list fills up in the weeks
+// before a season opens and empties on the day.
+//
+// Open sorts most-recently-opened FIRST (openDate desc) because the newest is
+// the one you have not seen. Pending sorts soonest-first (openDate asc) for the
+// same reason read forwards: the next one to start leads. Auction number breaks
+// a same-day tie either way, and a pending auction with no date sorts last.
+//
+// This is "live-ish": it is only as current as the last data export, so the UI
+// says how long ago each opened (or how long until it does) rather than
+// implying real time.
+export function liveAuctions(
+  meta: AuctionMeta[],
+  now: Date = new Date(),
+): { open: AuctionMeta[]; pending: AuctionMeta[] } {
+  const open: AuctionMeta[] = [], pending: AuctionMeta[] = [];
+  for (const m of meta) {
+    const phase = auctionPhase(m, now);
+    if (phase === 'open') open.push(m);
+    else if (phase === 'pending') pending.push(m);
+  }
+  open.sort((a, b) => b.openDate.localeCompare(a.openDate) || b.auctionNumber - a.auctionNumber);
+  pending.sort((a, b) =>
+    (a.openDate || '9999').localeCompare(b.openDate || '9999') || a.auctionNumber - b.auctionNumber);
+  return { open, pending };
 }
 
 // Whole days between an ISO date-only string ("YYYY-MM-DD") and today, compared
@@ -245,11 +296,30 @@ export function openAuctions(meta: AuctionMeta[]): AuctionMeta[] {
 // time). Null when the date is missing/unparseable; never negative. Powers the
 // "opened N days ago" line on open auctions.
 export function daysSince(iso: string, now: Date = new Date()): number | null {
+  const d = daysBetween(iso, now);
+  return d === null ? null : Math.max(0, -d);
+}
+
+// The same span read the other way, and NOT clamped: negative means the date
+// has already passed. auctionPhase keys off the sign, so a clamp here would
+// make every past date look like "opens today" and no pending auction could
+// ever flip itself to open. "Opens in N days" formatting clamps at the edge
+// instead, where losing the sign costs nothing.
+export function daysUntil(iso: string, now: Date = new Date()): number | null {
+  return daysBetween(iso, now);
+}
+
+// Whole calendar days from today to an ISO date-only string: positive in the
+// future, negative in the past, 0 today. Null when the date is missing or is
+// not zero-padded YYYY-MM-DD — the same silent-failure shape the rest of the
+// site has for dates (docs/updating-the-data.md), so "2026-9-19" is no date at
+// all rather than a date off by a month.
+function daysBetween(iso: string, now: Date): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
   if (!m) return null;
   const then = Date.UTC(+m[1], +m[2] - 1, +m[3]);
   const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.max(0, Math.round((today - then) / 86_400_000));
+  return Math.round((then - today) / 86_400_000);
 }
 
 export type PricedAuction = {

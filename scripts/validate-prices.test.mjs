@@ -88,6 +88,24 @@ const withOutcomeColumn = (L) => (hasOutcome(L[0])
   : [appendField(L[0], 'outcome'), ...L.slice(1).map((l) => appendField(l, ''))]);
 const setOutcome = (row, value) => setFromEnd(row, 1, value);
 
+// A whole new auctionMetadata row, built field by field off the LIVE header
+// rather than typed out, so it stays correct however many columns the export
+// has. Every value passed is one a human types; the formula columns are left
+// empty on purpose, which is also what they look like in an export of a row
+// that was never filled in.
+//
+// Several cases need a row that sold nothing — failed, open, pending — and
+// none of them can be made by mutating a real auction: turning a recorded
+// auction into one of those states would mean deleting its price rows too,
+// which strands its rawPricesData lots and fires a different check. A fresh
+// auction number in a season that has one free is the only edit that touches
+// nothing else.
+const addMetaRow = (values) => edit('auctionMetadata.csv', (t) => {
+  const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
+  const fields = splitLine(L[0]).cells.map((h) => values[h] ?? '');
+  return [...L, fields.join(',')].join('\n') + '\n';
+});
+
 // [name, mutate, expected message, level] — level defaults to 'error', meaning
 // the run must also exit non-zero. 'warn' cases must be reported and must NOT
 // fail the run.
@@ -232,29 +250,63 @@ const cases = [
     lines(t).filter((l) => !l.startsWith('20181,2018,1,')).join('\n')),
     /20181 .* is in auctionMetadata but has NO rows in prices\.csv/],
 
-  // And the state it was loosened for. A FAILED auction did not fund, so it
-  // sold nothing and carries no price rows — that is correct data, not loss.
+  // And the states it was loosened for. An auction that has not finished sold
+  // nothing and carries no price rows — correct data, not loss. Three of the
+  // four `Status` values are in that position and each is pinned here.
   //
-  // Built as a whole new row rather than by mutating an existing one, and that
-  // is deliberate: mutating a real auction into a failure would mean deleting
-  // its price rows too, which strands its rawPricesData lots and fires a
-  // different check. A fresh auction number in a season that has one free is
-  // the only edit that touches nothing else.
-  ['5b a Failed auction with no price rows is legitimate', () => edit('auctionMetadata.csv', (t) => {
-    const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
-    // Built field by field off the live header rather than typed out, so the
-    // row stays correct however many columns the export has. Every value here
-    // is one a human types; the formula columns are left empty on purpose,
-    // which is also what they look like in an export of a row like this.
-    const fields = splitLine(L[0]).cells.map((h) => ({
-      auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
-      auctionName: 'A 2018 auction that did not fund',
-      auctionStyle: 'Super Condensed', completionStyle: 'Fixed Date', auctioneer: 'Wade S',
-      Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
-      openDate: '2018-10-01', Status: 'Failed', outcome: 'Failed',
-    }[h] ?? ''));
-    return [...L, fields.join(',')].join('\n') + '\n';
-  }), /Failed auction\(s\) correctly carry none/, 'warn'],
+  // FAILED did not fund.
+  ['5b a Failed auction with no price rows is legitimate', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 auction that did not fund',
+    auctionStyle: 'Super Condensed', completionStyle: 'Fixed Date', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2018-10-01', Status: 'Failed', outcome: 'Failed',
+    // Matched on the STATUS NAME, with the count left as \d+. The shipped data
+    // already holds five Failed rows and could hold a real Open or Pending one
+    // any week, so a pinned number here is a pin on the workbook's contents —
+    // and a case pinned to a value goes red on the PUBLISH PR, which is the
+    // worst place for a red check. What is being asserted is that the summary
+    // names this status at all.
+  }), /\d+ Failed auction\(s\) correctly carry none/, 'warn'],
+
+  // OPEN is still taking bids. This state was NEVER exempt and nothing noticed:
+  // the one Open row this data has carried (202647) was published on 2026-08-08,
+  // before § 5b existed, so the two never ran together. The next open auction
+  // would have failed the publish that carried it.
+  ['5b an Open auction with no price rows is legitimate', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 auction still taking bids',
+    auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2018-10-01', Status: 'Open',
+  }), /\d+ Open[,]? .*correctly carry none/, 'warn'],
+
+  // PENDING has not started. Announced weeks ahead of a season's opening day,
+  // so these rows sit in the export empty for all of that time.
+  ['5b a Pending auction with no price rows is legitimate', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 auction announced but not yet open',
+    auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2099-10-01', Status: 'Pending', outcome: 'Pending',
+  }), /\d+ Pending[,]? .*correctly carry none/, 'warn'],
+
+  // § 6, the other check the same loosening had to reach. `auctionStyle`
+  // predicts an auction's CONTENT, and a pending auction has none yet — so an
+  // Onyx-styled pending row with no onyx.csv rows is exactly right, and before
+  // the loosening it was a hard ERROR that would have blocked the publish
+  // carrying it. Not hypothetical: the auctionOpen fixture's two pre-announced
+  // auctions are `Onyx Ultra Condensed` and open in the future.
+  //
+  // Asserted on the SUCCESS line rather than on an absence: "no error appeared"
+  // passes just as well when the whole section has stopped running.
+  ['6  a Pending Onyx auction is not an error', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 Onyx auction announced but not yet open',
+    auctionStyle: 'Onyx Ultra Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2099-10-01', Status: 'Pending', outcome: 'Pending',
+  }), /Onyx row\(s\) across 55 auction\(s\) and \d+ context row\(s\) are internally consistent/, 'warn'],
 
   // The other direction of § 5b: rows under an auction that sold nothing. This
   // is the wrong-auction defect wearing a new hat, and it is a NOTE — which way
@@ -324,13 +376,13 @@ const cases = [
     t.replace(',Super Condensed,Fixed Date,Wade S,', ',Quantum Condensed,Fixed Date,Wade S,')),
     /auctionStyle: 9 distinct value\(s\)/, 'warn'],
 
-  // `Status` is a formula — since DATA-6 it is
-  // `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))` — so its
-  // three values are the only ones it can produce. This case is the fourth
-  // value, and `Cancelled` is chosen on purpose: it is the plausible next
-  // member of the vocabulary, and it must be a DECISION to add rather than
-  // something that rides in on a publish.
-  ['7  Status outside its three values', () => edit('auctionMetadata.csv', (t) =>
+  // `Status` is a formula — `IF(outcome<>"", outcome, IF(closeDate="", "Open",
+  // "Closed"))` — so the only values it can produce are `Open`, `Closed` and
+  // whatever `outcome` is allowed to hold, which is `Failed` and `Pending`.
+  // Four in all. This case is a fifth, and `Cancelled` is chosen on purpose: it
+  // is the plausible next member of the vocabulary, and it must be a DECISION
+  // to add rather than something that rides in on a publish.
+  ['7  Status outside its four values', () => edit('auctionMetadata.csv', (t) =>
     t.replace('2018-09-27,2018-09-30,3,Closed,', '2018-09-27,2018-09-30,3,Cancelled,')),
     /Status "Cancelled" is not Open or Closed or Failed/],
 
@@ -346,6 +398,35 @@ const cases = [
     const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
     return L.map((l, i) => (i > 0 && l.startsWith('20181,2018,1,') ? setOutcome(l, 'Failed') : l)).join('\n') + '\n';
   }), /outcome is "Failed" but Status is "Closed"/],
+
+  // The same formula guard for `Pending`, which arrives the same way `Failed`
+  // does — through `outcome`, never by typing into `Status`.
+  ['4  Status says Pending but outcome is blank', () => edit('auctionMetadata.csv', (t) =>
+    t.replace('2018-09-27,2018-09-30,3,Closed,', '2018-09-27,2018-09-30,3,Pending,')),
+    /Status is "Pending" but outcome is blank/],
+
+  // A pending row whose date has arrived. A NOTE, not an error: the site reads
+  // the DATE and already shows it as open, which is the whole point — nobody
+  // has to republish on the morning of a season's opening day. The cell is just
+  // stale, and a stale cell must never block a publish.
+  ['4  a Pending auction whose openDate has passed is a note', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 auction that has since opened',
+    auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2018-10-01', Status: 'Pending', outcome: 'Pending',
+  }), /outcome is "Pending" but openDate 2018-10-01 has arrived/, 'warn'],
+
+  // Pending AND closed is not a stale cell, it is a contradiction: an auction
+  // cannot have finished before it started. An ERROR, because unlike the stale
+  // case there is no reading of the row that is true.
+  ['4  a Pending auction that also has a closeDate', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 auction both pending and closed',
+    auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2099-10-01', closeDate: '2099-10-09', Status: 'Pending', outcome: 'Pending',
+  }), /outcome is "Pending" but closeDate is 2099-10-09/],
 
   // A new `outcome` value must NOT ride along the way a new auctionStyle does.
   // The two columns look alike and are fenced oppositely on purpose: styles are

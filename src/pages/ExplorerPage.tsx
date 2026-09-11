@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows, asTenXSales, openAuctions,
+  exploreAuctions, explorerOptions, flattenAuctions, sortFlatRows, asTenXSales, liveAuctions,
   EMPTY_FILTERS, DEFAULT_SORT, COMPACT_SORT_KEYS,
   type ExplorerFilters, type SortKey, type SortDir,
 } from '../lib/data';
@@ -92,11 +92,15 @@ export default function ExplorerPage() {
   const options = useMemo(() => explorerOptions(viewSales, viewMeta), [viewSales, viewMeta]);
   const result = useMemo(() => exploreAuctions(viewSales, viewMeta, filters), [viewSales, viewMeta, filters]);
 
-  // Currently-open auctions, shown in their own section at the top. Read from the
-  // UNFILTERED meta on purpose: it's a standalone "what's live right now" list,
-  // not part of the closed-sales explorer below, so the page's season/category/
-  // search and the shared Source/type filters must not hide a live auction.
-  const openList = useMemo(() => openAuctions(meta), [meta]);
+  // Auctions that have not closed — open now, and announced but not yet started
+  // — shown in their own section at the top. Read from the UNFILTERED meta on
+  // purpose: it's a standalone "what's live right now" list, not part of the
+  // closed-sales explorer below, so the page's season/category/search and the
+  // shared Source/type filters must not hide a live auction. A pending one
+  // would be hidden by nearly any of them: it belongs to a season with no sales
+  // yet and has no categories at all.
+  const live = useMemo(() => liveAuctions(meta), [meta]);
+  const liveCount = live.open.length + live.pending.length;
 
   // The open list is a collapsed one-line strip by default so the historical
   // data leads the page (Option B). The Prices banner links to
@@ -111,14 +115,14 @@ export default function ExplorerPage() {
   // the sales arrive a beat after mount, so this can't simply run on mount.
   const wantOpen = useRef(location.hash === '#open');
   useEffect(() => {
-    if (wantOpen.current && openList.length > 0) {
+    if (wantOpen.current && liveCount > 0) {
       wantOpen.current = false;
       setOpenExpanded(true);
       requestAnimationFrame(() =>
         openRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
       );
     }
-  }, [openList.length]);
+  }, [liveCount]);
 
   // Context items (withheld / augmented / grunnel / released) grouped by auction,
   // so each card can show its own below the sales. The provenance chips select
@@ -237,24 +241,41 @@ export default function ExplorerPage() {
           explorer and always renders, carrying the quiet reassurance line when
           nothing is open so the feature never looks broken/absent. Folded to a
           one-line strip by default (Option B) so the historical data leads the
-          page; the Prices banner links here via /explorer#open to expand it. */}
-      <section className="open-section" aria-label="Open auctions">
-        {openList.length === 0 ? (
+          page; the Prices banner links here via /explorer#open to expand it.
+
+          Open and pending share the strip and its summary count, because the
+          question the strip answers is "is there anything to watch?" and the
+          answer is yes either way. Inside, they are separate labelled groups:
+          what you can bid on now and what you cannot are not interchangeable,
+          and a mixed list sorted by date would interleave them. */}
+      <section className="open-section" aria-label="Open and upcoming auctions">
+        {liveCount === 0 ? (
           <p className="empty open-empty" id="open">No auctions currently open — check back soon.</p>
         ) : (
           <details
-            className="open-disclosure"
+            className={`open-disclosure${live.open.length === 0 ? ' pending-only' : ''}`}
             id="open"
             ref={openRef}
             open={openExpanded}
             onToggle={(e) => setOpenExpanded(e.currentTarget.open)}
           >
             <summary>
-              <span className="open-dot" aria-hidden="true" />
-              <strong>{openList.length} auction{openList.length === 1 ? '' : 's'} open now</strong>
+              <span className={live.open.length > 0 ? 'open-dot' : 'pending-dot'} aria-hidden="true" />
+              <strong>
+                {live.open.length > 0 && `${live.open.length} auction${live.open.length === 1 ? '' : 's'} open now`}
+                {live.open.length > 0 && live.pending.length > 0 && ' · '}
+                {live.pending.length > 0 && `${live.pending.length} ${live.open.length > 0 ? 'upcoming' : `auction${live.pending.length === 1 ? '' : 's'} upcoming`}`}
+              </strong>
             </summary>
             <div className="open-disclosure-body">
-              {openList.map((m) => <OpenAuctionCard key={m.auctionId} meta={m} />)}
+              {/* The group headings appear only when BOTH groups have members.
+                  A single-group list is already described by the summary above
+                  it, and a heading over the only thing there is reads as though
+                  something is missing. */}
+              {live.open.length > 0 && live.pending.length > 0 && <h3 className="live-group">Open now</h3>}
+              {live.open.map((m) => <OpenAuctionCard key={m.auctionId} meta={m} phase="open" />)}
+              {live.open.length > 0 && live.pending.length > 0 && <h3 className="live-group">Not yet open</h3>}
+              {live.pending.map((m) => <OpenAuctionCard key={m.auctionId} meta={m} phase="pending" />)}
             </div>
           </details>
         )}

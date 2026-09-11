@@ -512,6 +512,28 @@ chip labelling a row you can already read, not to a control you pick from.
   7.16:1. Darkening the *fill* so white could work would have meant reaching
   `#c2560a`, which no longer reads as Legendary orange and crowds Omni.
 
+### A status colour is never the only thing saying the status
+
+`--live` (red) means an auction is taking bids right now; `--pending` (amber)
+means one has been announced but has not started. They are deliberately far
+apart in hue, and the shapes differ too — a **filled** dot for live, a **hollow
+ring** for pending — so the two are still distinguishable without colour.
+
+Neither is ever the only signal. Every pending surface also says it in words: a
+`PENDING` badge on the card, and `Opens:` rather than `Opened:` before the date.
+A reader who cannot see the amber loses nothing.
+
+Two rules came out of building it, both worth keeping:
+
+- **A pending thing must not borrow the live colour.** The banner is red only
+  when something is genuinely open; when everything is still ahead it goes
+  amber. Red is a claim about *now*.
+- **A badge inside `.auction-title` goes at the FRONT.** That element is a
+  two-line `-webkit-line-clamp` box: on a phone the auction name fills both
+  lines and anything trailing it is clipped away with the overflow. The badge
+  was trailing at first and vanished on mobile — which is the one place it is
+  least replaceable, since the colour is all that would have been left.
+
 ## Charts
 
 Hand-rolled zero-dependency SVG, themed with the same CSS variables. A null data

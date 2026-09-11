@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, openAuctions, type ItemRow,
+  seasonsOf, aggregateSeason, lastFiveAuctionNumbers, asTenXRows, liveAuctions, type ItemRow,
 } from '../lib/data';
 import { fmtCloseDate } from '../lib/format';
 import { useAuctionData } from '../data/auctionDataContext';
@@ -120,9 +120,12 @@ export default function DashboardPage() {
       && passesAuctionFilters(m, filters, goldenTicketAuctions))
     .length;
 
-  // Auctions live right now, across all seasons — the banner is season-agnostic
-  // (an open auction is worth surfacing whatever season you're viewing).
-  const openList = useMemo(() => openAuctions(meta), [meta]);
+  // Auctions open right now and announced but not yet started, across all
+  // seasons — the banner is season-agnostic (an auction you can still bid in,
+  // or will be able to, is worth surfacing whatever season you're viewing).
+  // That matters most at the season rollover, when the pending ones belong to a
+  // season this page cannot yet show because it has no prices in it.
+  const live = useMemo(() => liveAuctions(meta), [meta]);
 
   // Global intro stats (across all seasons) — always the full main list, so the
   // welcome line reads the same whichever view is active.
@@ -146,7 +149,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <OpenAuctionsBanner open={openList} />
+      <OpenAuctionsBanner open={live.open} pending={live.pending} />
       <PageIntro short="Welcome to the True Dungeon Auction Analysis">
         Welcome to the True Dungeon auction analysis! These statistics are calculated
         live from {totalClosedAuctions.toLocaleString()} auctions from {firstYear} to {lastYear}.

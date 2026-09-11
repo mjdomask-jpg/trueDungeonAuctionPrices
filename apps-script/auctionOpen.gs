@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-03.1';
+var OPEN_VERSION = '2026-09-11.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -349,17 +349,28 @@ var OPEN_REVIEW_COLUMNS = [
  * The `auctionMetadata` columns this phase fills in, and the ones it must leave
  * alone.
  *
- * These eleven are the ones a promotion supplies a value for. `daysToClose`,
+ * These twelve are the ones a promotion supplies a value for. `daysToClose`,
  * `Status`, `Open Month`, `Close Month`, `augmentedTotal`, `fundingNoAugment`
  * and `preorderTotal` are formulas and are never written; writing a literal
  * into one would replace a formula with a frozen number.
  *
- * `closeDate` stays blank on purpose: `Status` is `IF(closeDate="","Open",
- * "Closed")`, so a blank close date is what makes a new auction read as open.
+ * `closeDate` stays blank on purpose: `Status` is `IF(outcome<>"", outcome,
+ * IF(closeDate="","Open","Closed"))`, so a blank close date is what makes a new
+ * auction read as open.
+ *
+ * `outcome` is the twelfth and the newest (2026-09-11). It is the one column
+ * here whose value depends on WHEN the auction opens rather than on what the
+ * source said: an auction whose `openDate` is still in the future has not
+ * started, and promoting it with a blank `outcome` would put it on the site's
+ * live banner days early. It gets `Pending` instead — see openPendingOutcome.
+ * On every other row it is written BLANK, which matters: a promoted row is
+ * copied down from the one above it, and a row copied from a failed auction
+ * would otherwise inherit `Failed`.
  */
 var OPEN_METADATA_FIELDS = [
   'auctionId', 'auctionSeason', 'auctionNumber', 'auctionName', 'auctionStyle',
   'completionStyle', 'auctioneer', 'Link', 'openDate', 'targetFunding', 'augmentated',
+  'outcome',
 ];
 
 /**
@@ -390,6 +401,37 @@ var OPEN_METADATA_FIELDS = [
  * assumed, exactly as the augment columns already are.
  */
 var OPEN_DERIVED_FIELDS = ['auctionId', 'augmentated'];
+
+/**
+ * What `outcome` should say for an auction opening on `openDate`.
+ *
+ * `Pending` while the date is still ahead, blank once it has arrived. Blank is
+ * a real answer, not "no answer": it is what tells the promote step to CLEAR a
+ * cell copied down from the row above, which may be a failed auction's
+ * `Failed`.
+ *
+ * Both arguments are ISO date-only strings and the comparison is a string
+ * compare, which is exact for that format and carries no timezone of its own.
+ * `today` is supplied by the caller rather than read here, because the
+ * spreadsheet's timezone and the script's differ on this workbook — that is
+ * what put `01:00` into the first promoted `openDate` — and the calendar the
+ * operator means is the spreadsheet's.
+ *
+ * An unparseable or missing date returns blank rather than guessing. The
+ * promote step refuses such a row before this is ever reached; returning blank
+ * means that if the guard is ever relaxed, the failure is a row that is merely
+ * un-marked rather than one stuck pending for ever.
+ */
+function openPendingOutcome(openDate, today) {
+  var d = String(openDate == null ? '' : openDate);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return '';
+  return d > String(today || '') ? 'Pending' : '';
+}
+
+/** Today as `YYYY-MM-DD` in the SPREADSHEET's timezone. See openPendingOutcome. */
+function openTodayIso(timeZone) {
+  return Utilities.formatDate(new Date(), timeZone, 'yyyy-MM-dd');
+}
 
 var OPEN_MONTHS = {
   jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
@@ -1375,6 +1417,14 @@ function openAlesievProposal(card, metaRows, knownNames) {
   if (card.startTime && (card.startTime >= '22:00' || card.startTime <= '02:00')) {
     notes.push('starts at ' + card.startTime + ' — the site renders times in its own timezone, so check which day this belongs to');
   }
+  // The site is the one source that lists an auction BEFORE it opens — a forum
+  // thread and Trent's shop page both appear when the auction does — so this is
+  // the path that produces pending rows, and in the normal season-opening week
+  // it produces several at once. Said here as well as at the promote step
+  // because this is where the operator decides whether the date is right.
+  if (card.startTime) {
+    notes.push('opens at ' + card.startTime + ' — no column records a time, so put it in the auctionName if it matters');
+  }
   if (card.itemCount) notes.push(card.itemCount + ' items listed');
   if (card.intro && /withh(?:e|o)ld/i.test(card.intro)) notes.push('withheld: ' + card.intro);
 
@@ -1650,7 +1700,14 @@ function openIsApproved(row) {
  * may be hours old, an auction may have been added by hand since, and a
  * duplicate `auctionNumber` is the one failure this phase exists to prevent.
  */
-function openPlanPromotion(reviewRows, metaRows, headers) {
+function openPlanPromotion(reviewRows, metaRows, headers, todayIso) {
+  // Defaulted rather than required, so every existing caller and test keeps
+  // working. The live caller passes the SPREADSHEET's today (openTodayIso);
+  // this fallback is UTC, which is the same date except within a few hours of
+  // midnight. Deliberately plain JS and not `Utilities.formatDate`: this
+  // function is part of the pure core the tests load into a bare VM, where no
+  // Apps Script global exists.
+  var today = todayIso || new Date().toISOString().slice(0, 10);
   var approved = [], i;
   for (i = 0; i < reviewRows.length; i++) if (openIsApproved(reviewRows[i])) approved.push({ index: i, row: reviewRows[i] });
   approved.sort(function (a, b) { return openIsoFromCell(a.row[4]).localeCompare(openIsoFromCell(b.row[4])); });
@@ -1709,7 +1766,16 @@ function openPlanPromotion(reviewRows, metaRows, headers) {
       openDate: openDate,
       targetFunding: openMoneyFromCell(row[15]),
       augmentated: String(row[14] || '').trim(),
+      outcome: openPendingOutcome(openDate, today),
     };
+    // Said out loud, because a promoted row that does NOT appear on the site's
+    // open banner looks like a bug from the outside. The operator should know
+    // which of the two happened before they go looking.
+    if (fields.outcome === 'Pending') {
+      warnings.push(label + ': opens ' + openDate + ', which is still ahead — promoted as PENDING (outcome = Pending). ' +
+        'It shows on the site as upcoming, and becomes open by itself on that date with no republish. ' +
+        'Clear the outcome cell if the auction opens early');
+    }
     if (!fields.auctionStyle) warnings.push(label + ': auctionStyle is blank');
     if (!fields.completionStyle) warnings.push(label + ': completionStyle is blank');
     if (lastSeason && season !== lastSeason) {
@@ -2044,7 +2110,7 @@ function promoteAuctionOpens() {
     ? openNormaliseReviewValues(reviewValues.slice(1), ss.getSpreadsheetTimeZone())
     : [];
   var metaRows = openReadTab(OPEN_TABS.metadata);
-  var plan = openPlanPromotion(reviewRows, metaRows, headers);
+  var plan = openPlanPromotion(reviewRows, metaRows, headers, openTodayIso(ss.getSpreadsheetTimeZone()));
 
   if (!plan.rows.length) {
     ui.alert('Nothing to promote (script ' + OPEN_VERSION + ')',
@@ -2062,6 +2128,7 @@ function promoteAuctionOpens() {
   if (plan.warnings.length) { lines.push('', 'CAUTION:'); for (i = 0; i < plan.warnings.length; i++) lines.push('  • ' + plan.warnings[i]); }
   lines.push('', 'Each row is copied down from the one above, so the formula columns keep their formulas.',
     'Every other column this phase does not fill is cleared — closeDate included, which is what makes Status read "Open".');
+  lines.push('An auction whose openDate is still ahead is written with outcome = Pending instead, so Status reads "Pending" until that date.');
 
   // Say when a typed value is about to lose to a formula, rather than dropping
   // it silently. `augmentated` is the one that bites: an operator who knows the
@@ -2150,6 +2217,7 @@ if (typeof module !== 'undefined') {
     openMergeReview: openMergeReview,
     openIsApproved: openIsApproved,
     openPlanPromotion: openPlanPromotion,
+    openPendingOutcome: openPendingOutcome,
     openMetadataCells: openMetadataCells,
     openRowActions: openRowActions,
     openDerivedOverrides: openDerivedOverrides,

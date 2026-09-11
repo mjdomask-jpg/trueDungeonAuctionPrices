@@ -116,6 +116,11 @@ The big one. New data model + a recursive cost engine. Detailed in §3–§4. **
   A real open auction appeared two weeks later and it was built: a banner on the Prices page (hidden
   when nothing is open) plus an always-rendered `Open auctions` section on Auction Data, linked by
   `/explorer/grouped#open`. See `backlog.md` `SITE-1`.
+  **Extended to PENDING auctions on 2026-09-11 (v2.7)**: an auction announced but not yet started
+  is recorded with `Pending` in DATA-6's `outcome` column, and the site decides open-vs-upcoming
+  from `openDate` against today rather than from the stored label — so a season's auctions, all
+  announced for one opening day, become open on that day with no republish. Same banner, calmer
+  accent. See `backlog.md` `SITE-1`.
 
 ### D. Raw data imports (source of truth)
 `auctionMetadata`, `auctionPrices`, `pricesOnyx`. These are local copies of the data-layer

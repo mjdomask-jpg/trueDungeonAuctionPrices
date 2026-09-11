@@ -51,6 +51,12 @@
   --live: #b91c1c;
   --live-bg: rgba(185, 28, 28, 0.08);
 
+  /* The calmer half of the same idea: an auction announced but not yet open.
+     Amber rather than the live red, because a pending auction is NOT happening
+     now and must not borrow the colour that says so. Dark step below. */
+  --pending: #b45309;
+  --pending-bg: rgba(180, 83, 9, 0.08);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --serif: Georgia, 'Times New Roman', serif;
   --display: 'Caslon Antique', Georgia, serif;
@@ -103,6 +109,9 @@
 
   --live: #f87171;
   --live-bg: rgba(248, 113, 113, 0.12);
+
+  --pending: #fbbf24;
+  --pending-bg: rgba(251, 191, 36, 0.12);
 }
 
 * { box-sizing: border-box; }

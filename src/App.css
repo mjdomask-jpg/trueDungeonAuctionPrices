@@ -1446,6 +1446,26 @@ td.diff.down { color: var(--diff-down); }
 .open-banner-text a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .open-banner-text a:hover { text-decoration: underline; }
 
+/* PENDING — an auction announced but not yet open. Same box, calmer accent:
+   amber instead of the live red, and a hollow ring instead of a filled dot, so
+   the two are told apart by SHAPE as well as by hue. The banner only wears
+   this when nothing is actually open; a mixed banner stays red, because
+   something really is live and that is the louder fact. */
+.open-banner.pending-only { background: var(--pending-bg); border-color: var(--pending); }
+.pending-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px; /* nudge onto the text baseline, like .open-dot */
+  border-radius: 50%;
+  border: 2px solid var(--pending);
+}
+/* The pending count goes on its own line when the open count is above it: two
+   counts run together in one sentence read as one number split in half. */
+.open-banner-next { display: block; margin-top: 4px; }
+/* The date itself, which is the load-bearing word on a pending line. */
+.open-banner-text .pending-when { color: var(--pending); white-space: nowrap; }
+
 /* Section headings on the Auction Data page ("Open auctions", "Historical
    auctions"). The top margin gives separation from the nav rule / the section
    above; the Historical heading's own margin sets the gap to the open list. */
@@ -1493,6 +1513,46 @@ td.diff.down { color: var(--diff-down); }
    bottom margin — sized for the gap before a table on closed cards — is dead
    space here. */
 .open-auction .auction-facts { margin-bottom: 0; }
+
+/* The strip wears the pending accent only when nothing is open at all — same
+   rule as the banner. .open-dot/.pending-dot inside a summary is centred
+   rather than baseline-nudged. */
+.open-disclosure.pending-only > summary { border-color: var(--pending); background: var(--pending-bg); }
+.open-disclosure > summary .pending-dot { margin-top: 0; }
+
+/* Group headings inside the strip, shown only when both groups have members. */
+.live-group {
+  margin: 4px 0 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.live-group + .live-group { margin-top: 16px; }
+.open-auction + .live-group { margin-top: 18px; }
+
+/* A pending card. The left edge carries the amber so a card scanned in a list
+   is placed before its date is read; the badge says it in words for anyone the
+   colour does not reach. */
+.pending-auction { border-left: 3px solid var(--pending); }
+.pending-badge {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: 1px;
+  padding: 1px 7px;
+  border: 1px solid var(--pending);
+  border-radius: 999px;
+  background: var(--pending-bg);
+  color: var(--pending);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 
 /* Sortable column headers in the explorer's flat view. The <th> keeps its
    alignment; the button fills it so the whole header cell is the hit target. */

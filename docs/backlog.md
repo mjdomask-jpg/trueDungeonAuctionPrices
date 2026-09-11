@@ -343,6 +343,11 @@ skipped by both. **The site needed no change at all.** The plan was right; the
 correction applied to one shape and was written as though it applied to the
 question.
 
+> `openAuctions()` was replaced by `liveAuctions()` in v2.7, when `Pending`
+> became a fourth value. The reasoning above still holds and the split is still
+> exact — what changed is that open-vs-upcoming is now decided by `openDate`
+> rather than by the label. See `SITE-1`.
+
 ### What the failure actually costs, re-measured
 
 The three consequences the old entry listed were sound, and one of them is now
@@ -744,7 +749,7 @@ mismatch prices anyway and shows up only as a quieter label on the card.
 
 ---
 
-## SITE-1. Open Auctions — RESOLVED (`f5cb77a`, v1.4, 2026-08-08)
+## SITE-1. Open Auctions — RESOLVED (`f5cb77a`, v1.4, 2026-08-08); extended to Pending (v2.7, 2026-09-11)
 
 **It shipped, and it shipped nearly a month before this backlog was written.**
 The consolidation carried forward `expansion-plan.md`'s 2026-07-22 deferral
@@ -790,10 +795,64 @@ The danger was real: with `Status` at two values, a failed auction retained with
 a blank `closeDate` computes `Open` and sits on this banner **for ever**, with a
 "days ago" counter that climbs. `DATA-6` resolved to an `outcome` column that
 feeds the formula instead, so a failed row computes `Failed` — and
-`openAuctions()` filters `status === 'Open'` exactly, so it is skipped with no
-guard and no change to this component. Worth keeping in mind rather than
+`openAuctions()` filtered `status === 'Open'` exactly, so it is skipped with no
+guard and no change to this component. (That function is `liveAuctions()` since
+v2.7 — see *Extended to PENDING auctions* below; a `Failed` row is still
+skipped, and now by a helper that names the two states it does accept.) Worth keeping in mind rather than
 forgetting: the risk lived in the *shape*, and a different shape would have
 brought it straight back.
+
+### Extended to PENDING auctions (v2.7, 2026-09-11)
+
+The same two surfaces now also carry auctions that are **announced but have not
+started**. A season opens all at once — several auctioneers announced auctions
+for 2026-09-19, season 2027's first day — and until this they could only be
+entered on the day, or entered early and be wrong about being live.
+
+**The recording shape is `DATA-6`'s, reused exactly**: `Pending` in `outcome`,
+the announced start in `openDate`, `closeDate` empty, `Status` computing
+`Pending` off the same formula. No new column, no new formula.
+
+**The SITE reads the date, not the label, and that is the whole design.**
+`auctionPhase()` in `lib/data.ts` calls a `Pending` row upcoming while its
+`openDate` is ahead and **open from that date onwards, with no new export**.
+This site is static, so `Status` is frozen into the CSV at publish time;
+believing the label would mean someone republishing at 11am on opening day.
+The reverse is defended too — an `Open` row with a future `openDate` reads as
+upcoming, which is what a pre-announced auction looks like when nobody marked
+`outcome`, and which would otherwise have rendered "opened today" over a date
+days away (`daysSince` clamps at 0). A `Pending` row with **no** date stays
+pending: announced, date not set.
+
+**Three things that came out of building it and are worth not re-deriving:**
+
+- **One banner, not two.** Open and pending are the same question a moment
+  apart, and two callouts at the top of the busiest page cost a phone screen of
+  height in the one week both lists are non-empty. They are separated by accent
+  instead — red and a filled dot while anything is genuinely open, amber and a
+  hollow ring when everything is ahead. A pending auction never wears the
+  colour that claims *now*.
+- **Pending is grouped BY DATE, one line per date.** The first build summarised
+  them ("3 auctions opening soon") and a summary can only name one date, or
+  none — and the date is the whole point of the line. A season's auctions
+  mostly share one opening day, so the common shape is still a single line.
+- **The `PENDING` badge leads the card title.** `.auction-title` is a two-line
+  clamp box; trailing the badge worked on a desktop and was clipped away on a
+  phone, which is exactly where the word matters most.
+
+**What the pipeline does with it.** `auctionOpen.gs` promotes a ticked row whose
+`openDate` is still ahead with `outcome = Pending` and says so under CAUTION;
+every other promotion writes the cell blank, which also clears a `Failed`
+inherited from the row copied down. alesievauctions.com is the only source that
+lists an auction before it opens, so it is the one that produces these — its
+fixture is two `Upcoming` cards starting 2026-09-19.
+
+**One latent bug fell out of it.** `validate-prices.mjs` §§ 5b and 6 exempted
+only `Failed` from "every auction has price rows" and the `auctionStyle`
+agreement. An **`Open`** auction is just as empty, and the one Open row this
+data has ever carried (`202647`) was published before § 5b existed — so the two
+had never run together, and the next open auction would have **failed the
+publish that carried it**. Both sections now exempt every non-`Closed` status.
 
 ---
 

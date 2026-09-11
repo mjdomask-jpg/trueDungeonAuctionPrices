@@ -74,3 +74,22 @@ export const fmtCentral = (iso: string | undefined): string => {
   }).format(d);
   return `${date} ${time}`;
 };
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// "Fri, Sep 19" — weekday and date, no year. For a date near enough that the
+// day of the week is the useful half of the answer, which is exactly what a
+// pending auction's open date is: "3 auctions open Fri, Sep 19" answers "when?"
+// the way someone asks it. The year is dropped on purpose — a pending auction
+// is weeks away at most, so the year carries no information and costs width in
+// a banner that has to fit on a phone.
+//
+// Built on UTC rather than the local clock: a date-only string has no time to
+// shift, and reading it as local midnight puts the weekday a day out west of
+// Greenwich. Null when missing or unparseable, like every other date helper.
+export const fmtDateWithDay = (iso: string | undefined): string | null => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
+  const base = fmtCloseDate(iso);
+  if (!m || !base) return null;
+  return `${DAYS[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()]}, ${base}`;
+};
