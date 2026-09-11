@@ -261,13 +261,21 @@ const cases = [
     auctionStyle: 'Super Condensed', completionStyle: 'Fixed Date', auctioneer: 'Wade S',
     Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
     openDate: '2018-10-01', Status: 'Failed', outcome: 'Failed',
-    // Matched on the STATUS NAME, with the count left as \d+. The shipped data
-    // already holds five Failed rows and could hold a real Open or Pending one
-    // any week, so a pinned number here is a pin on the workbook's contents —
-    // and a case pinned to a value goes red on the PUBLISH PR, which is the
-    // worst place for a red check. What is being asserted is that the summary
-    // names this status at all.
-  }), /\d+ Failed auction\(s\) correctly carry none/, 'warn'],
+    // Matched on the STATUS NAME, with the count left as \d+ AND nothing
+    // assumed about what follows it. The summary lists every exempt status in
+    // one line — "5 Failed, 3 Pending auction(s) correctly carry none" — so a
+    // pattern ending `Failed auction\(s\)` quietly requires Failed to be the
+    // LAST status named, which is a fact about the workbook's contents and not
+    // about this check.
+    //
+    // It was written that way, and it went red on the first publish that
+    // carried Pending rows (PR #191) — a case pinned to shipped data failing
+    // on a publish PR, which is the worst place for a red check and the exact
+    // trap the three of these were meant to avoid. The other two were already
+    // written loosely; this one was not, and passed only because no Pending
+    // row existed yet. What is asserted is that the summary names this status
+    // with a count, nothing more.
+  }), /\b\d+ Failed\b.*correctly carry none/, 'warn'],
 
   // OPEN is still taking bids. This state was NEVER exempt and nothing noticed:
   // the one Open row this data has carried (202647) was published on 2026-08-08,
@@ -279,7 +287,7 @@ const cases = [
     auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
     Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
     openDate: '2018-10-01', Status: 'Open',
-  }), /\d+ Open[,]? .*correctly carry none/, 'warn'],
+  }), /\b\d+ Open\b.*correctly carry none/, 'warn'],
 
   // PENDING has not started. Announced weeks ahead of a season's opening day,
   // so these rows sit in the export empty for all of that time.
@@ -289,7 +297,7 @@ const cases = [
     auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
     Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
     openDate: '2099-10-01', Status: 'Pending', outcome: 'Pending',
-  }), /\d+ Pending[,]? .*correctly carry none/, 'warn'],
+  }), /\b\d+ Pending\b.*correctly carry none/, 'warn'],
 
   // § 6, the other check the same loosening had to reach. `auctionStyle`
   // predicts an auction's CONTENT, and a pending auction has none yet — so an
