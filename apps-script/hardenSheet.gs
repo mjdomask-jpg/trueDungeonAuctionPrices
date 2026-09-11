@@ -38,7 +38,7 @@
  * `HARDEN_`/`harden`.
  */
 
-var HARDEN_VERSION = '2026-09-11.1';
+var HARDEN_VERSION = '2026-09-11.2';
 
 /**
  * Columns holding a price, by tab and header. Numeric-only validation goes on
@@ -150,6 +150,79 @@ var HARDEN_VOCABULARY = [
  * re-running the script.
  */
 var HARDEN_DEAD_RANGES = ['trentAuctionData', 'NamedRange1', 'categories'];
+
+/**
+ * One existing data-validation rule, reduced to the parts this script sets.
+ *
+ *   { rule: 'list', values: [...], allowInvalid: bool }   a dropdown
+ *   { rule: 'other' }                                     a number rule, etc.
+ *   { rule: 'unknown' }                                   a list built from a
+ *                                                         RANGE rather than a
+ *                                                         literal list
+ *
+ * `unknown` is not a failure to try harder: a range-backed dropdown is not a
+ * shape this script writes, so somebody set it up by hand, and replacing it
+ * with a literal list would quietly undo their work. It is reported and left
+ * alone.
+ *
+ * Written defensively because it runs against a live workbook rather than a
+ * fixture: a rule whose criteria cannot be read must degrade to `unknown`, not
+ * throw and take the whole scan with it.
+ */
+function hardenReadRule(rule) {
+  if (!rule) return null;
+  var type, criteria;
+  try {
+    type = rule.getCriteriaType();
+    criteria = rule.getCriteriaValues();
+  } catch (e) {
+    return { rule: 'unknown', why: 'its criteria could not be read (' + e.message + ')' };
+  }
+  if (String(type) !== 'VALUE_IN_LIST') return { rule: 'other' };
+  var values = criteria && criteria[0];
+  if (Object.prototype.toString.call(values) !== '[object Array]') {
+    return { rule: 'unknown', why: 'it lists values from a RANGE rather than from a literal list' };
+  }
+  var out = [];
+  for (var i = 0; i < values.length; i++) out.push(String(values[i]));
+  var allowInvalid = true;
+  try { allowInvalid = !!rule.getAllowInvalid(); } catch (e2) { allowInvalid = true; }
+  return { rule: 'list', values: out, allowInvalid: allowInvalid };
+}
+
+/**
+ * Whether an existing dropdown already says what this script wants it to say.
+ *
+ * Compared as an ORDERED list, not as a set. The order is what the operator
+ * sees in the dropdown and this script always writes it in `HARDEN_VOCABULARY`
+ * order, so a reordered rule is one somebody edited by hand — worth proposing
+ * a rewrite for, and the rewrite costs nothing.
+ *
+ * `allowInvalid` is half the rule and is compared too: `grows: true` is
+ * warn-only and `grows: false` rejects outright, and a column fenced the wrong
+ * way looks identical in the UI until somebody types into it.
+ */
+function hardenRuleMatches(existing, wantValues, wantGrows) {
+  if (!existing || existing.rule !== 'list') return false;
+  if (existing.allowInvalid !== !!wantGrows) return false;
+  var have = existing.values || [], want = wantValues || [];
+  if (have.length !== want.length) return false;
+  for (var i = 0; i < want.length; i++) if (String(have[i]) !== String(want[i])) return false;
+  return true;
+}
+
+/** What differs between an existing dropdown and the wanted one, for the dialog. */
+function hardenRuleDifference(existing, wantValues, wantGrows) {
+  if (!existing || existing.rule !== 'list') return 'it is not a list rule';
+  var why = [];
+  var have = (existing.values || []).join(', '), want = (wantValues || []).join(', ');
+  if (have !== want) why.push('it offers [' + have + '] and should offer [' + want + ']');
+  if (existing.allowInvalid !== !!wantGrows) {
+    why.push('it ' + (existing.allowInvalid ? 'WARNS on' : 'REJECTS') + ' an unlisted value and should ' +
+      (wantGrows ? 'warn' : 'reject'));
+  }
+  return why.join('; ');
+}
 
 /**
  * Tabs this does not touch: the scratch surfaces the other scripts write.
@@ -350,8 +423,34 @@ function hardenPlan(book) {
         ' populated cells carry a formula. Not touched: a rule for this column would be wrong for one half of it.');
       continue;
     }
-    if (book.validation && book.validation[want.tab + '!' + want.header]) {
-      notes.push(want.tab + '!' + want.header + ' already has data validation');
+    // An existing rule is COMPARED, not just counted. Counting it was a bug:
+    // it made every vocabulary permanently frozen at whatever it was first set
+    // to, so `outcome` could never gain `Pending` and the script reported no
+    // work to do. See hardenReadRule.
+    var existing = book.validation && book.validation[want.tab + '!' + want.header];
+    if (existing) {
+      // Legacy shape (`true`) or a rule this script did not write: it exists,
+      // and there is nothing to compare it against, so it is left alone and
+      // said out loud rather than silently replaced.
+      if (existing === true || existing.rule === 'unknown') {
+        notes.push(want.tab + '!' + want.header + ' already has data validation, left alone — ' +
+          ((existing !== true && existing.why) || 'this script cannot read what it says'));
+        continue;
+      }
+      // A number rule either exists or does not; its bounds are not
+      // parameterised here, so existence is the whole question for one.
+      if (want.rule !== 'list') {
+        notes.push(want.tab + '!' + want.header + ' already has data validation');
+        continue;
+      }
+      if (hardenRuleMatches(existing, want.values, want.grows)) {
+        notes.push(want.tab + '!' + want.header + ' already offers exactly [' + want.values.join(', ') + ']');
+        continue;
+      }
+      actions.push({ kind: 'validate', tab: want.tab, header: want.header, column: at,
+        rule: want.rule, values: want.values, grows: want.grows, rows: tab.rows, replaces: existing,
+        detail: want.tab + '!' + want.header + ' -> REPLACE the dropdown it has: ' +
+          hardenRuleDifference(existing, want.values, want.grows) });
       continue;
     }
     actions.push({ kind: 'validate', tab: want.tab, header: want.header, column: at,
@@ -484,12 +583,20 @@ function hardenReadBook() {
       columns.push({ formulas: f, values: v });
     }
 
-    // Which columns already carry validation, sampled at the first data row —
-    // validation is applied to whole columns here, so the first row is
-    // representative of one this script set.
+    // Which columns already carry validation, AND WHAT IT SAYS, sampled at the
+    // first data row — validation is applied to whole columns here, so the
+    // first row is representative of one this script set.
+    //
+    // The contents matter, and storing a bare `true` here was a bug that hid
+    // for a week. `hardenPlan` compared existence only, so once a column had a
+    // dropdown its values could never be changed: adding `Pending` to
+    // `outcome` produced "already has data validation" and zero actions, on a
+    // script whose whole premise is being re-runnable. A rule this script
+    // cannot parse is recorded as `unknown` rather than guessed at.
     var firstRow = sheet.getRange(2, 1, 1, lastCol).getDataValidations()[0];
     for (var k = 0; k < lastCol; k++) {
-      if (firstRow[k]) book.validation[name + '!' + String(headers[k]).trim()] = true;
+      if (!firstRow[k]) continue;
+      book.validation[name + '!' + String(headers[k]).trim()] = hardenReadRule(firstRow[k]);
     }
 
     var protectedColumns = [];
@@ -599,6 +706,9 @@ if (typeof module !== 'undefined') {
     HARDEN_PRICE_COLUMNS: HARDEN_PRICE_COLUMNS,
     HARDEN_COUNT_COLUMNS: HARDEN_COUNT_COLUMNS,
     HARDEN_VOCABULARY: HARDEN_VOCABULARY,
+    hardenReadRule: hardenReadRule,
+    hardenRuleMatches: hardenRuleMatches,
+    hardenRuleDifference: hardenRuleDifference,
     HARDEN_DEAD_RANGES: HARDEN_DEAD_RANGES,
     HARDEN_SKIP_TABS: HARDEN_SKIP_TABS,
     HARDEN_VERSION: HARDEN_VERSION,
