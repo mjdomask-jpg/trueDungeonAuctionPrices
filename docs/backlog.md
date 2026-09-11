@@ -68,6 +68,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-8** | Build-time CSV → JSON normalization step | nothing hurts yet |
 | **SITE-9** | No React test harness | appetite |
 | **SITE-10** | Excel's handling of the exported CSV is unverified | access to Excel |
+| **SITE-11** | An auction source has only two values (Forum/Trent) and alesievauctions.com is a third | **a call on whether the split is venue or Trent-vs-everyone** — the rename may beat the addition |
 | **PIPE-1** | Ingest auctioneers' external tracking sheets | sign-in access to those sheets |
 | **PIPE-2** | ~~Close handling for alesievauctions.com~~ | **RESOLVED 2026-09-10** — `alesievClose.gs`; the withheld and Onyx paths are built and tested but have never seen a real file |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
@@ -1026,6 +1027,58 @@ Sheets and LibreOffice consume it silently, but **there is no Excel on this
 machine**, so nobody has opened the downloaded `.csv` in the application the guard
 exists for. It is one line to fix if it misbehaves. See `shopping-list.md`
 § *Getting it out*.
+
+---
+
+## SITE-11. An auction source has only two values, and there are now three — OPEN
+
+`deriveSource()` in `lib/data.ts` answers `'Forum' | 'Trent'`, per auction, from
+the auctioneer and the Link:
+
+```ts
+if (auctioneer === 'trent') return 'Trent';
+if (/trenttokens\.com/i.test(link)) return 'Trent';
+return 'Forum';
+```
+
+Everything that is not Trent falls through to **Forum**, which was exhaustive
+right up until 2026-09-11. Season 2027's first two auctions — `20271` and
+`20272` — run on **alesievauctions.com**, a site that is neither. They are
+filed as Forum today, so the Source filter groups them with forum threads and
+the Funding & Context analytics count them as forum auctions.
+
+**This is not a bug in `deriveSource`.** It is a vocabulary that ran out. The
+function is doing exactly what it says; the type `AuctionSource` has two members
+and the world has three.
+
+### Why it was left alone
+
+Noticed while shipping Pending (`SITE-1`) and deliberately not folded in. The
+change is small where it starts and not where it ends:
+
+- `AuctionSource` gains a member, so every exhaustive switch over it must too.
+- The **Source filter** is a shared context-layer control (`context-layer-design.md`
+  § 3.1) with its own chips, labels and persistence — a third option changes a
+  UI the whole site shares, not one page.
+- **Analytics** groups by source in several panels; a third series needs a colour
+  that works in both themes and does not collide with the existing two.
+- Historical rows are the awkward part. Measured 2026-09-11: of 297 auctions,
+  **112 are Trent, 2 are on alesievauctions.com and the other 183 are forum
+  threads**. alesiev has 8 auctions in all, and **6 of them ran on the forum**
+  before the site existed — genuinely Forum. So this is not a rename of an
+  auctioneer: one person's auctions split across two sources, which is exactly
+  the shape `data-audit.md` § 3 warns against inferring from a date. It has to
+  come off the Link, per row.
+
+### What is actually undecided
+
+Whether a reader benefits from telling the two apart at all. "Forum" currently
+means "not Trent", and the useful distinction for pricing may be **Trent vs
+everyone else** rather than the venue. If so, the honest fix is to rename the
+value rather than add one — cheaper, and it leaves nothing mislabelled. Today
+only 2 rows of 297 are wrong; the question is whether that stays small.
+
+**Blocked on:** the maintainer's call on that question, before any code.
 
 ---
 
