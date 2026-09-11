@@ -1389,6 +1389,22 @@ be re-run**: every season adds ~1,500 price rows and Phase 4 adds auctions, so a
 one-time pass done by hand has a hole in it a few months later and nothing says
 so. Running it again is safe and is how new columns get covered.
 
+> **"Re-run it" was only half true until 2026-09-11, and the gap is worth
+> knowing.** The plan asked whether a column *had* data validation, never
+> whether the rule was the right one — so a column's dropdown was frozen at
+> whatever it was first set to. Adding `Pending` to `outcome` and re-running
+> reported **nothing to do**, on the script whose whole premise is this
+> paragraph. Fixed in `2026-09-11.2`: an existing dropdown is now compared
+> against the wanted values *and* its allow-invalid fence, and a mismatch is
+> proposed as a **REPLACE** with the difference spelled out. A rule this script
+> did not write — one listing values from a range — is reported and left alone
+> rather than overwritten.
+>
+> It hid because the test modelled an applied rule as `true`, discarding the
+> same values the reader discarded. **A test can only catch what its model can
+> represent.**
+
+
 ### Installing it (once)
 
 Paste it into the same Apps Script project as the others, as a new file named
@@ -1410,7 +1426,7 @@ and **Harden the sheet — apply…**.
 | **Numeric-only validation on every price column** | `prices!Price`, `onyx!Price`, `rawPricesData!trentPrice` and the three in `offAuctionPrices`. This is the one that matters most: it makes the `-` class impossible. Six such rows existed before Phase 0, every one a real sale recorded as if it had not happened. |
 | **Whole-number validation on counts** | `contextItems!quantity`, `auctionMetadata!auctionNumber`. |
 | **Protection on every formula column** | 12 of them, including `auctionMetadata`'s seven. Set to **warn, not block** — you can still override deliberately, you just cannot do it by accident. |
-| **Dropdowns on the vocabulary columns** | `auctionStyle` and `completionStyle` warn only, because those vocabularies genuinely grow; `augmentated` and `contextItems!category` reject, because those sets cannot. |
+| **Dropdowns on the vocabulary columns** | `auctionStyle` and `completionStyle` warn only, because those vocabularies genuinely grow; `outcome` (`Failed`, `Pending`) and `contextItems!category` reject, because those sets cannot. A dropdown that already exists is **compared** against the current vocabulary, not skipped — if it is missing a value, or fenced the wrong way, the dry run says so and the apply replaces it. |
 | **Deletes three dead named ranges** | `trentAuctionData` and `NamedRange1` are silently truncated by thousands of rows; `categories` points at `#REF!`. Unused is not the hazard — **unused *and wrong* is**. Reach for `trentAuctionData` and you get an answer over 71% of the data with no error. `auctionList`, `tokenDisplayNames` and `onyxPriceTable` are also unused, are whole-column and correct, and are left alone. |
 
 ### What it does NOT do

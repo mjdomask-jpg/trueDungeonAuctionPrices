@@ -262,14 +262,132 @@ for (const a of plan.actions) {
   seen.add(k);
 }
 // And a workbook that already has everything proposes nothing.
+//
+// The applied rule is recorded in the SHAPE the script actually writes — the
+// values and the allow-invalid flag — not as a bare `true`. That distinction
+// is the whole of the bug below: a model that records only "a rule exists"
+// cannot tell a correct dropdown from a stale one, so it asserts idempotence
+// and misses the case where the script is idempotent about the WRONG thing.
+const applied = (a) => (a.rule === 'list'
+  ? { rule: 'list', values: a.values.slice(), allowInvalid: !!a.grows }
+  : { rule: 'other' });
 const done = buildBook(FILES);
 done.namedRanges = [{ name: 'auctionFullData', a1: 'prices!$A:$G' }];
 for (const a of H.hardenPlan(done).actions) {
-  if (a.kind === 'validate') done.validation[`${a.tab}!${a.header}`] = true;
+  if (a.kind === 'validate') done.validation[`${a.tab}!${a.header}`] = applied(a);
   if (a.kind === 'protect') done.tabs[a.tab].protectedColumns.push(a.column);
 }
 eq(H.hardenPlan(done).actions.length, 0, 'a second run over an already-hardened workbook still proposes work');
 console.log('  ✓ idempotent — a second run over a hardened workbook proposes nothing');
+
+// ===========================================================================
+console.log('\n=== 4b. a dropdown whose VALUES have changed ===');
+// ===========================================================================
+// The bug this section exists for, reported from the live workbook on
+// 2026-09-11: `Pending` was added to `outcome`, the harden pass was re-run,
+// and it reported nothing to do. `hardenPlan` asked whether the column HAD a
+// rule, never whether the rule was the right one — so every vocabulary was
+// frozen at whatever it was first set to, on a script whose stated premise is
+// being re-runnable.
+//
+// It hid because the idempotence model above recorded an applied rule as
+// `true`, discarding the values — the same information the reader discarded.
+// A test can only catch what its model can represent.
+{
+  const key = 'auctionMetadata!outcome';
+  const want = H.HARDEN_VOCABULARY.find((v) => v.header === 'outcome');
+
+  // The workbook as the maintainer found it: yesterday's dropdown, one value short.
+  const stale = buildBook(FILES);
+  stale.namedRanges = [{ name: 'auctionFullData', a1: 'prices!$A:$G' }];
+  for (const a of H.hardenPlan(stale).actions) {
+    if (a.kind === 'validate') stale.validation[`${a.tab}!${a.header}`] = applied(a);
+    if (a.kind === 'protect') stale.tabs[a.tab].protectedColumns.push(a.column);
+  }
+  stale.validation[key] = { rule: 'list', values: ['Failed'], allowInvalid: false };
+
+  const proposed = H.hardenPlan(stale).actions.filter((a) => a.kind === 'validate' && a.header === 'outcome');
+  eq(proposed.length, 1, 'a dropdown missing a value is proposed for replacement');
+  eq(proposed[0]?.values.join(','), want.values.join(','), 'the replacement offers the current vocabulary');
+  ok(/REPLACE/.test(proposed[0]?.detail ?? ''), 'the dialog line says it is replacing, not adding');
+  ok(/Failed.*should offer.*Pending/s.test(proposed[0]?.detail ?? ''),
+    `the line says what differs — got: ${proposed[0]?.detail}`);
+
+  // The other half of the rule. A column fenced the wrong way looks identical
+  // in the UI until somebody types into it, so a warn-only rule on a
+  // reject-only column must be proposed too.
+  const loose = buildBook(FILES);
+  loose.namedRanges = [{ name: 'auctionFullData', a1: 'prices!$A:$G' }];
+  for (const a of H.hardenPlan(loose).actions) {
+    if (a.kind === 'validate') loose.validation[`${a.tab}!${a.header}`] = applied(a);
+    if (a.kind === 'protect') loose.tabs[a.tab].protectedColumns.push(a.column);
+  }
+  loose.validation[key] = { rule: 'list', values: want.values.slice(), allowInvalid: true };
+  const fence = H.hardenPlan(loose).actions.filter((a) => a.kind === 'validate' && a.header === 'outcome');
+  eq(fence.length, 1, 'a reject-only column carrying a warn-only rule is proposed');
+  ok(/REJECT|should reject/.test(fence[0]?.detail ?? ''),
+    `the line names the fence, not the values — got: ${fence[0]?.detail}`);
+
+  // And a rule this script did not write is LEFT ALONE. A range-backed
+  // dropdown is somebody's hand-built work; replacing it with a literal list
+  // would quietly undo it.
+  const handmade = buildBook(FILES);
+  handmade.namedRanges = [{ name: 'auctionFullData', a1: 'prices!$A:$G' }];
+  for (const a of H.hardenPlan(handmade).actions) {
+    if (a.kind === 'validate') handmade.validation[`${a.tab}!${a.header}`] = applied(a);
+    if (a.kind === 'protect') handmade.tabs[a.tab].protectedColumns.push(a.column);
+  }
+  handmade.validation[key] = { rule: 'unknown', why: 'it lists values from a RANGE rather than from a literal list' };
+  const left = H.hardenPlan(handmade);
+  eq(left.actions.filter((a) => a.kind === 'validate' && a.header === 'outcome').length, 0,
+    'a rule this script cannot read is replaced rather than reported');
+  ok(left.notes.some((n) => /outcome.*left alone.*RANGE/s.test(n)),
+    'the operator is told why it was left alone');
+
+  // The legacy shape, for a workbook read by an older copy of this script.
+  const legacy = buildBook(FILES);
+  legacy.namedRanges = [{ name: 'auctionFullData', a1: 'prices!$A:$G' }];
+  for (const a of H.hardenPlan(legacy).actions) {
+    if (a.kind === 'validate') legacy.validation[`${a.tab}!${a.header}`] = applied(a);
+    if (a.kind === 'protect') legacy.tabs[a.tab].protectedColumns.push(a.column);
+  }
+  legacy.validation[key] = true;
+  eq(H.hardenPlan(legacy).actions.filter((a) => a.kind === 'validate' && a.header === 'outcome').length, 0,
+    'a bare `true` is treated as unreadable, not as a mismatch');
+}
+
+// The rule reader itself, over the three shapes a live workbook can hand back.
+{
+  const listRule = {
+    getCriteriaType: () => 'VALUE_IN_LIST',
+    getCriteriaValues: () => [['Failed', 'Pending'], true],
+    getAllowInvalid: () => false,
+  };
+  const read = H.hardenReadRule(listRule);
+  eq(read.rule, 'list', 'a list rule reads as a list');
+  eq(read.values.join(','), 'Failed,Pending', 'its values come back verbatim');
+  eq(read.allowInvalid, false, 'and so does its fence');
+  ok(H.hardenRuleMatches(read, ['Failed', 'Pending'], false), 'a matching rule matches');
+  ok(!H.hardenRuleMatches(read, ['Failed'], false), 'a rule with an extra value does not');
+  ok(!H.hardenRuleMatches(read, ['Pending', 'Failed'], false), 'nor does one in a different order');
+  ok(!H.hardenRuleMatches(read, ['Failed', 'Pending'], true), 'nor does one fenced the other way');
+
+  eq(H.hardenReadRule({
+    getCriteriaType: () => 'NUMBER_GREATER_THAN', getCriteriaValues: () => [0],
+  }).rule, 'other', 'a number rule reads as other');
+
+  eq(H.hardenReadRule({
+    getCriteriaType: () => 'VALUE_IN_LIST', getCriteriaValues: () => [{ notAnArray: true }, true],
+  }).rule, 'unknown', 'a range-backed list reads as unknown');
+
+  // It runs against a live workbook, so a throwing rule must degrade rather
+  // than take the whole scan down with it.
+  eq(H.hardenReadRule({
+    getCriteriaType: () => { throw new Error('boom'); },
+  }).rule, 'unknown', 'a rule that throws is unknown, not an exception');
+  eq(H.hardenReadRule(null), null, 'no rule reads as no rule');
+}
+console.log('  ✓ an existing dropdown is compared, not merely counted');
 
 // ===========================================================================
 console.log('\n=== 5. the dropdowns still match the data ===');
