@@ -38,7 +38,7 @@
  * `HARDEN_`/`harden`.
  */
 
-var HARDEN_VERSION = '2026-09-03.2';
+var HARDEN_VERSION = '2026-09-11.1';
 
 /**
  * Columns holding a price, by tab and header. Numeric-only validation goes on
@@ -114,8 +114,15 @@ var HARDEN_VOCABULARY = [
   // It is `grows: false` while `auctionStyle` beside it is `grows: true`, and
   // the two are opposite for a reason: styles are invented by auctioneers and
   // arrive unannounced, outcomes are decided here. `Cancelled` is the obvious
-  // second member and is deliberately not offered until someone decides it is.
-  { tab: 'auctionMetadata', header: 'outcome', grows: false, values: ['Failed'] },
+  // third member and is deliberately not offered until someone decides it is.
+  //
+  // `Pending` joined it on 2026-09-11, for an auction announced but not yet
+  // open. It differs from `Failed` in a way worth knowing at the sheet: it is
+  // TEMPORARY. A pending row is meant to stop being pending, and the site stops
+  // believing the cell the day its `openDate` arrives, so a forgotten one shows
+  // the auction as open anyway and `validate-prices.mjs` § 4 notes the stale
+  // cell. Nothing downstream waits on someone clearing it on the day.
+  { tab: 'auctionMetadata', header: 'outcome', grows: false, values: ['Failed', 'Pending'] },
 ];
 
 // `augmentated` is NOT here, and the reason is worth keeping. It reads like the

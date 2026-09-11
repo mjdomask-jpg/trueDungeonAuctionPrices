@@ -400,9 +400,15 @@ so it is left alone by every later scan.
 
 ### The columns it writes, and the ones it must not
 
-It computes eleven columns: `auctionId`, `auctionSeason`, `auctionNumber`,
+It computes twelve columns: `auctionId`, `auctionSeason`, `auctionNumber`,
 `auctionName`, `auctionStyle`, `completionStyle`, `auctioneer`, `Link`,
-`openDate`, `targetFunding`, `augmentated`.
+`openDate`, `targetFunding`, `augmentated`, `outcome`.
+
+`outcome` is the newest of them and the only one whose value depends on WHEN
+the auction opens rather than on what the source said: a ticked row whose
+`openDate` is still in the future is written `Pending` (see *Recording a
+pending auction*), and every other row is written **blank** — which is also how
+a `Failed` inherited from the row copied down gets cleared.
 
 `daysToClose`, `Status`, `Open Month`, `Close Month`, `augmentedTotal`,
 `fundingNoAugment` and `preorderTotal` are **formulas**, and a literal written
@@ -411,11 +417,11 @@ hold. So the script appends by **copying the last row down** — formulas and
 formatting intact, references shifted one row — and then goes cell by cell:
 
 - a column whose source cell holds a **formula** is **left as copied**;
-- one of the eleven above, where the source cell is *not* already a formula, is
+- one of the twelve above, where the source cell is *not* already a formula, is
   **written**;
 - any other column whose source cell holds a **literal** is **cleared**.
 
-> **Two of those eleven are formulas, and the script wrote over both until
+> **Two of those twelve are formulas, and the script wrote over both until
 > 2026-08-24.** `auctionId` is `=B2&C2` and `augmentated` is
 > `=IF(Q2&R2<>"","Yes","No")`. The formula wins now.
 >
@@ -1557,22 +1563,25 @@ change.
 | `auctionNumber` | **Yes** | Sequence within the season, e.g. `47`. |
 | `auctionName` | **Yes** | Free text, shown to users. May contain commas — the sheet quotes them correctly on export. |
 | `Status` | **Yes** | **Derived, not typed.** The sheet computes it as `IF(outcome <> "", outcome, IF(closeDate = "", "Open", "Closed"))`. So it reads `Failed` when you mark `outcome`, otherwise `Open` while `closeDate` is empty and `Closed` once you fill it in — three values, all of them computed. Never type into this column: a typed value stops recomputing and the validators reject the disagreement it creates. |
-| `outcome` | Optional | **The only way to record a failure.** Blank on an ordinary auction; `Failed` on one that did not fund. It is the input `Status` reads, which is what lets a failed auction keep its row instead of being deleted — see *Recording a failed auction* below. `Failed` is the only value the validators accept; `Cancelled` is the obvious second one and adding it should be a decision, not a paste. |
+| `outcome` | Optional | **The only way to record a failure, and the only way to announce an auction early.** Blank on an ordinary auction; `Failed` on one that did not fund; `Pending` on one that has been announced but has not started. It is the input `Status` reads, which is what lets a failed auction keep its row instead of being deleted — see *Recording a failed auction* and *Recording a pending auction* below. Those two are the only values the validators accept; `Cancelled` is the obvious third one and adding it should be a decision, not a paste. |
 | `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated on **all 289 rows** — none blank, none `n/a`. Because `Status` keys off this column, clearing it is what makes an auction show as live. See the padding warning below. |
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
-| `Link` | Optional | URL to the original forum thread; the "Auction link" on the explorer's expanded cards and, always visible, on the open-auctions banner/section. Fill it in especially for any `Open` auction — it's the whole point of surfacing a live auction. |
-| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the **open-auctions** cards' "opened N days ago" line. **Populated on all 289 rows** since the backfill. |
+| `Link` | Optional | URL to the original forum thread; the "Auction link" on the explorer's expanded cards and, always visible, on the open/upcoming banner and section. Fill it in especially for any `Open` **or `Pending`** auction — it's the whole point of surfacing one. |
+| `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the open/upcoming cards' "opened N days ago" / "in N days" line. **Populated on all 289 rows** since the backfill. It is the one date column that may hold a **future** date: on a `Pending` row it is the announced start, and it is what the site reads to decide whether that auction is upcoming or open. |
 | `daysToClose` | Optional | Whole days the auction ran, computed as `MAX(closeDate - openDate, 1)` — the floor of `1` is why same-day auctions read `1`, not `0`. Drives the Analytics days-to-close chart and every "avg days to close" figure; a row that isn't a number is **left out of those averages**, not counted as zero. **Populated on all 289 rows** — none blank, none `n/a`, so the averages cover every auction. Four rows read `n/a` until 2026-08-20, when their formulas were repaired: each had lost its `closeDate` reference and evaluated to `#REF!`, which the surrounding `IFERROR` quietly turned into `n/a`. Worth knowing as a failure shape — a broken reference here degrades to a plausible-looking string rather than an error. |
 | `Open Month`, `Close Month` | Optional | **Season** months, `1`–`13` — month 1 is the season's first month (≈ September of the previous calendar year), *not* a calendar month. The Analytics month accordions and the prior-year comparisons key on these, which is what lets two seasons line up by how far into the season they are. **Populated on every season back to 2018.** They are derived from `openDate`/`closeDate`, so a wrong date shows up here as an out-of-range month — see the gotcha below. |
 | `targetFunding`, `augment*`, `fundingNoAugment`, `preorderTotal` | No | Back-office financials, not surfaced directly (they feed Analytics → Funding & Context). `targetFunding`, `augmentedTotal`, `fundingNoAugment` and `preorderTotal` are **populated on all 289 rows, every season including 2022** — they are formulas and always compute. The `augment*` **inputs** are blank wherever an auction had no augment, which is most of them in every season; that is the data model, not a gap. **`preorderTotal` has its own check — see § *What `preorderTotal` counts* below.** (This row claimed 2022 was blank and a backfill was queued; that was true before the 2022 backfill landed and had not been re-measured since. Re-measured 2026-09-03: zero blanks.) |
 
 ### Rules that matter
 
-- **Only `Status = Closed` auctions are counted.** Anything else is loaded but
-  excluded from every count and statistic. **Today that is every row: all 289
-  are `Closed`, and there are no `Open` or `Failed` rows at all.**
+- **Only `Status = Closed` auctions are counted.** Anything else — `Open`,
+  `Failed`, `Pending` — is loaded but excluded from every count and statistic.
+  **Measured 2026-09-11: 289 `Closed` and 5 `Failed`, with no `Open` or
+  `Pending` rows.** The three uncounted states are also the three that carry no
+  price rows, which is why `validate-prices.mjs` §§ 5b and 6 exempt all of them
+  rather than just `Failed`.
 - **A failed auction is marked, not deleted.** Put `Failed` in `outcome` and
   leave the row alone. `Status` picks it up, every count and statistic on the
   site skips it exactly as it skips an `Open` row, and the auction keeps its
@@ -1585,11 +1594,17 @@ change.
   > the corpus now is 2020's missing 8, which was never a failure: `Hayward 8`
   > was an empty placeholder removed by the 2019–20 backfill. A gap is expected;
   > a *duplicate* number is not.
-- **`Open` auctions are surfaced separately** by the live "open auctions" banner
-  (top of Prices) and the "Open auctions" section (top of Auction Data). Both
-  read `Status = Open` directly and are independent of every page filter. Since
-  `Status` is derived, **an auction is live exactly while `closeDate` is empty**
-  — fill that column in and it stops showing as open.
+- **`Open` and `Pending` auctions are surfaced separately** by the live banner
+  (top of Prices) and the open/upcoming section (top of Auction Data). Both are
+  independent of every page filter. Since `Status` is derived, **an auction is
+  live exactly while `closeDate` is empty** — fill that column in and it stops
+  showing as open.
+- **For a pending auction, the SITE reads the date, not the label.** A row
+  marked `Pending` shows as upcoming while its `openDate` is in the future and
+  as open from that date onwards, with no new export in between. That is the
+  point of it: a season's auctions are announced together for one opening day,
+  and nobody should have to publish at 11am that morning. See *Recording a
+  pending auction* below.
 - **`closeDate` drives the "Last 5" labels.** The Prices page shows the five most
   recent auctions in a season by date. A missing or wrong `closeDate` puts the
   window in the wrong place.
@@ -1722,6 +1737,73 @@ was applied to `public/data` and the full gate run against it on 2026-09-03:
 `npm run build` clean, and every test suite passing. § 5b reports
 `5 Failed auction(s) correctly carry none`.
 
+### Recording a pending auction
+
+An auction that has been **announced but has not started** keeps a normal row.
+Put `Pending` in `outcome`, put the announced start date in `openDate`, and
+leave `closeDate` empty. `Status` picks it up exactly as it picks up `Failed`.
+
+This exists because a season opens all at once. Several auctioneers announce
+auctions weeks ahead for the season's first day — 2026-09-19 for season 2027 —
+and before this they could only be entered on the day, or entered early and be
+wrong about being live.
+
+**You do not have to clear the cell on opening day.** The site reads the
+**date**, not the label: a `Pending` row shows as upcoming while its `openDate`
+is in the future and as open from that date onwards, with no new export in
+between. Clearing `outcome` afterwards is tidying, not a step — `validate`
+notes a stale one so it does not sit there for ever.
+
+The reverse is defended too: a row that says `Open` with an `openDate` in the
+future is shown as **upcoming**, not open. That is contradictory data (`Open`
+only means `closeDate` is blank) and it is the shape a pre-announced auction
+takes when nobody marked `outcome` — believing it would have rendered "opened
+today" over a date days away.
+
+#### A specific opening TIME
+
+There is no column for one, deliberately: it would be infrastructure for
+something needed once a season. **Put it in `auctionName`** — `2027 8k Super
+Condensed Lightning Auction — opens 11:00 ET` — where it shows on the card and
+in the banner. `auctionOpen.gs` notes the time it read off an
+alesievauctions.com card for exactly this purpose.
+
+#### What it looks like on the site
+
+- **Prices** — the banner groups pending auctions **by date**, one line per
+  date, so each line names the day it opens: *"2 more open on Sat, Sep 19 — …"*.
+  It is red with a filled dot while anything is genuinely open, and amber with a
+  hollow ring when everything is still ahead.
+- **Auction Data** — the same strip at the top, counting both (*"1 auction open
+  now · 3 upcoming"*). Expanded, open and pending are separate labelled groups;
+  each pending card carries a `PENDING` badge, an amber left edge, and
+  `Opens: Sep 19, 2026 · in 8 days`.
+- Every statistic on the site ignores it, the same way it ignores `Failed`.
+
+#### What the validators know about it
+
+- **§ 4** errors if `Status` says `Pending` with a blank `outcome` (the formula
+  was pasted over), and errors on a `Pending` row that also has a `closeDate` —
+  an auction cannot have finished before it started. A `Pending` row whose
+  `openDate` has **passed** is a NOTE, not an error: the site already shows it
+  as open, the cell is merely stale.
+- **§§ 5b and 6** exempt it from "every auction has price rows" and from the
+  `auctionStyle`-vs-rows agreement, for the same reason they exempt `Failed`:
+  it has not sold anything. **`Open` is exempt from both now too** — it always
+  should have been, and the next open auction would otherwise have failed the
+  publish that carried it.
+- **§ 7** accepts `Pending` in `outcome` and `Status`, and nothing else new.
+
+#### Promoting one from the review tab
+
+`auctionOpen.gs` writes it for you. When a ticked row's `openDate` is still in
+the future, the promote step fills `outcome` with `Pending` and says so under
+**CAUTION**; on every other row it writes the cell blank, which also clears a
+`Failed` inherited from the row copied down. alesievauctions.com is the only
+source that lists an auction before it opens, so it is the one that produces
+these — check the `Starts:` date it read, because that date is the whole
+decision.
+
 ### What `preorderTotal` counts
 
 `preorderTotal` is a formula, never typed. It is the retail value of the
@@ -1839,6 +1921,10 @@ formula and will overwrite you; an empty `closeDate` is what makes the auction
 live. The open-auctions banner/section shows the name as a link and an "opened N
 days ago" line, so `Link` and `openDate` are what make the listing useful. When
 it ends, fill in `closeDate` and `Status` flips to `Closed` on its own.
+
+Listing one that has been **announced but has not started** is the same, plus
+`Pending` in `outcome` and the announced start date in `openDate` — see
+*Recording a pending auction*. The site flips it to open on that date by itself.
 
 ---
 

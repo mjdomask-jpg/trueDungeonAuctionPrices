@@ -1199,6 +1199,69 @@ console.log('\nSheet coercion on the round trip\n');
 }
 
 {
+  // --- 12. An auction promoted BEFORE it opens ------------------------------
+  //
+  // alesievauctions.com is the only source that lists an auction before it
+  // starts — a forum thread and Trent's shop page both appear when the auction
+  // does — and the fixture is exactly that case: two cards marked `Upcoming`
+  // that start 2026-09-19, which is a season-2027 opening day. Promoted with a
+  // blank `outcome` they would sit on the site's live banner for the eight days
+  // in between, so the promote step writes `Pending` instead.
+  //
+  // Every assertion here passes `todayIso` explicitly. The fixture's dates are
+  // frozen and the calendar is not: a test that read the real clock would pass
+  // until 2026-09-19 and then quietly assert the opposite thing.
+  eq('a date ahead of today is Pending', O.openPendingOutcome('2026-09-19', '2026-09-11'), 'Pending');
+  eq('the day it opens, it is not', O.openPendingOutcome('2026-09-19', '2026-09-19'), '');
+  eq('and after, it is not', O.openPendingOutcome('2026-09-19', '2026-09-26'), '');
+  // Blank, not Pending: the cell must be CLEARED, because a promoted row is
+  // copied down from the one above and may inherit that row's `Failed`.
+  eq('a missing date marks nothing', O.openPendingOutcome('', '2026-09-11'), '');
+  eq('nor does an unreadable one', O.openPendingOutcome('19/9/2026', '2026-09-11'), '');
+
+  const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+    .proposals.find((p) => /\/29$/.test(p.link));
+  const row = O.openReviewRow(proposal);
+  row[0] = true;
+
+  const early = O.openPlanPromotion([row], META, HEADERS, '2026-09-11');
+  eq('the fixture card promotes', early.rows.length, 1);
+  eq('  ... as Pending, because it opens 2026-09-19', early.rows[0].fields.outcome, 'Pending');
+  eq('  ... with its real open date, not today', early.rows[0].fields.openDate, '2026-09-19');
+  eq('  ... and closeDate still unset', early.rows[0].fields.closeDate, undefined);
+  check('  ... and the operator is told why it will not show as open',
+    early.warnings.some((w) => /promoted as PENDING/.test(w)), early.warnings.join(' | '));
+
+  // The same row on the day it opens. Nothing about the auction changed — only
+  // the date this ran on — and that is the whole design: the marker is a fact
+  // about time, not about the auction.
+  const onTheDay = O.openPlanPromotion([row], META, HEADERS, '2026-09-19');
+  eq('the same row on the open date is not pending', onTheDay.rows[0].fields.outcome, '');
+  check('  ... and says nothing about pending', !onTheDay.warnings.some((w) => /PENDING/.test(w)),
+    onTheDay.warnings.join(' | '));
+
+  // `outcome` is written on EVERY promoted row, blank included, and that is the
+  // point of it being in OPEN_METADATA_FIELDS rather than left out: a column
+  // this phase does not write is copied down from the row above, and the row
+  // above can be a failed auction.
+  const at = HEADERS.indexOf('outcome');
+  check('outcome is a column this phase writes', O.OPEN_METADATA_FIELDS.includes('outcome'),
+    O.OPEN_METADATA_FIELDS.join(','));
+  if (at !== -1) {
+    eq('  ... and is written blank on an ordinary promotion', onTheDay.rows[0].cells[at], '');
+    eq('  ... and Pending on a pending one', early.rows[0].cells[at], 'Pending');
+    // A copied-down `Failed` must be overwritten, not kept. `write ''` and
+    // `clear` reach the same cell state; what matters is that it is neither
+    // `keep` nor the inherited value.
+    const formulas = HEADERS.map(() => '');
+    const actions = O.openRowActions(HEADERS, formulas, onTheDay.rows[0].cells);
+    eq('  ... and the cell is actively emptied, never inherited', actions[at].value, '');
+    check('  ... by an action that touches it', actions[at].action !== 'keep', actions[at].action);
+  }
+}
+
+{
   // The columns that must never be coerced in the first place. This is the
   // belt; openIsoFromCell and openMoneyFromCell are the braces.
   const cols = O.OPEN_REVIEW_TEXT_COLUMNS;
