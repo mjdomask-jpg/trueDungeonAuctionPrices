@@ -103,11 +103,38 @@ const numbersIn = (season) => META.filter((r) => r.auctionSeason === season).map
 const MAX_2026 = Math.max(...numbersIn('2026'));
 const NEXT_2026 = MAX_2026 + 1;                       // 48 when this was written
 const ID_2026 = (n) => '2026' + String(n);
+// The corpus AS THE ALESIEV FIXTURE FOUND IT — every season but 2027.
+//
+// That fixture is the listing as it stood on 2026-08-31, when neither of its
+// two auctions was recorded. Both were promoted and published on 2026-09-11 as
+// season 2027, so replaying the parse against the live sheet now correctly
+// yields NOTHING: the duplicate defence firing as designed. Every block below
+// that replays the fixture to assert something about the PARSE — its fields,
+// its numbering, its notes, what a promotion makes of it — runs against this
+// instead, so it keeps testing the parser rather than testing whether those
+// rows happen to be published yet.
+//
+// Season also moves: with 2027 recorded spanning 2026-09-19, `openInferSeason`
+// reads the cards as 2027 from the span rather than falling back to the newest
+// season. Correct for a live scan, and not what a 2026 fixture is here to pin.
+//
+// The live sheet is not ignored — it gets its own assertions, where "already
+// recorded" is the claim being made rather than an accident of timing.
+const BEFORE_2027 = META.filter((r) => r.auctionSeason !== '2027');
 const NEWEST_OPEN = META.reduce((a, r) => (r.openDate > a ? r.openDate : a), '');
+// Today, and the newest open that has ACTUALLY ARRIVED. The two differ the
+// moment a Pending auction is recorded, because its openDate is in the future
+// — and the scan cutoff anchors on the arrived one, never on a date that has
+// not happened yet. See the cutoff assertions in § 5.
+const TODAY_ISO = new Date().toISOString().slice(0, 10);
+const NEWEST_ARRIVED_OPEN = META.reduce((a, r) => (r.openDate <= TODAY_ISO && r.openDate > a ? r.openDate : a), '');
 // An id no season can reach, for "this was never recorded" assertions. 99 is
 // past any plausible auction number and 2026 is a season that exists, so the
 // row would be findable if it were ever added.
 const NEVER_RECORDED = ID_2026(99);
+// A season the corpus cannot reach, for "nothing is recorded here" assertions.
+// This used to be spelled 2027, which stopped being unseen on 2026-09-11.
+const UNSEEN_SEASON = '2099';
 const eq = (name, got, want) => check(name, got === want, `got  ${JSON.stringify(got)}\nwant ${JSON.stringify(want)}`);
 
 // ===========================================================================
@@ -282,7 +309,12 @@ console.log('\nNumbering\n');
       > META.filter((r) => r.auctionSeason === season).length + 1),
     'a season where count + 1 collides must still number from max + 1');
   eq('2025 continues from its max', O.openNextNumber(META, '2025'), Math.max(...numbersIn('2025')) + 1);
-  eq('an unseen season starts at 1', O.openNextNumber(META, '2027'), 1);
+  // UNSEEN_SEASON, not '2027'. This said 2027 until 2026-09-11, when the first
+  // season-2027 auctions were published and "an unseen season" became a season
+  // with three rows in it — the assertion inverted by a routine publish. A
+  // season the corpus cannot reach keeps the RULE under test and takes the
+  // workbook out of it.
+  eq('an unseen season starts at 1', O.openNextNumber(META, UNSEEN_SEASON), 1);
 
   eq('auctionId is season and number run together', O.openAuctionId('2026', 48), '202648');  // literals, not corpus
   let idOk = 0;
@@ -293,13 +325,13 @@ console.log('\nNumbering\n');
   const proposals = [
     { season: '2026', openDate: '2026-09-02', number: 0, auctionId: '' },
     { season: '2026', openDate: '2026-09-01', number: 0, auctionId: '' },
-    { season: '2027', openDate: '2026-09-03', number: 0, auctionId: '' },
+    { season: UNSEEN_SEASON, openDate: '2026-09-03', number: 0, auctionId: '' },
   ];
   O.openRenumber(proposals, META);
   eq('a batch numbers in open-date order', proposals[1].auctionId, ID_2026(NEXT_2026));
   eq('  ... then the next', proposals[0].auctionId, ID_2026(NEXT_2026 + 1));
   check('  ... so the two never collide', proposals[0].auctionId !== proposals[1].auctionId, '');
-  eq('  ... and a different season keeps its own run', proposals[2].auctionId, '20271');
+  eq('  ... and a different season keeps its own run', proposals[2].auctionId, UNSEEN_SEASON + '1');
 }
 
 // ===========================================================================
@@ -336,15 +368,30 @@ console.log('\nDuplicate detection\n');
     selection.selected.every((i) => !recorded[i.id]), '');
   check('the cutoff keeps the first run small', selection.selected.length <= 25,
     `${selection.selected.length} selected of ${FEED.length} feed items`);
-  // The cutoff is a window behind the newest recorded open, so it moves with
-  // the corpus. Pinned as the RELATIONSHIP — behind the newest open, and not so
+  // The cutoff is a window behind the newest open that has ARRIVED, so it moves
+  // with the corpus. Pinned as the RELATIONSHIP — behind that date, and not so
   // far behind that a scan re-reads the whole forum.
   const cutoff = O.openScanCutoff(META);
-  check(`the cutoff (${cutoff}) sits behind the newest recorded open (${NEWEST_OPEN})`,
-    cutoff < NEWEST_OPEN, `${cutoff} vs ${NEWEST_OPEN}`);
+  check(`the cutoff (${cutoff}) sits behind the newest arrived open (${NEWEST_ARRIVED_OPEN})`,
+    cutoff < NEWEST_ARRIVED_OPEN, `${cutoff} vs ${NEWEST_ARRIVED_OPEN}`);
   check('  ... by a bounded window, not an open-ended one',
-    (Date.parse(NEWEST_OPEN) - Date.parse(cutoff)) / 86400000 <= 60,
-    `${((Date.parse(NEWEST_OPEN) - Date.parse(cutoff)) / 86400000).toFixed(0)} days`);
+    (Date.parse(NEWEST_ARRIVED_OPEN) - Date.parse(cutoff)) / 86400000 <= 60,
+    `${((Date.parse(NEWEST_ARRIVED_OPEN) - Date.parse(cutoff)) / 86400000).toFixed(0)} days`);
+
+  // A FUTURE openDate MUST NOT MOVE THE CUTOFF, and this is the assertion the
+  // bug would have failed. A Pending auction is dated ahead — 2026-09-19, for a
+  // season opening day, recorded on the 11th — and this is a look-BACK. Counted,
+  // it pushed the cutoff past every real thread's last post, `openSelectFeedItems`
+  // dropped the whole feed, and the scan reported no candidates: identical, from
+  // the outside, to a quiet week. The justification for filtering on the feed's
+  // pubDate at all is that it "can only ever over-include"; that holds for a
+  // cutoff at or behind today and fails for one in the future.
+  const pendingRow = { openDate: '2099-01-01', auctionId: '20991', auctionSeason: '2099' };
+  eq('a future openDate does not drag the cutoff forward',
+    O.openScanCutoff(META.concat([pendingRow]), TODAY_ISO), O.openScanCutoff(META, TODAY_ISO));
+  check('  ... so the feed is still scanned rather than silently emptied',
+    O.openSelectFeedItems(FEED, META.concat([pendingRow]), { today: TODAY_ISO }).selected.length > 0,
+    'a pending auction blanked the scan — every feed item fell behind the cutoff');
 
   // 602 is the general discussion category, so a topic there must look like an
   // auction before its page is fetched. Without the rule a scan returns a dozen
@@ -374,11 +421,22 @@ console.log('\nDuplicate detection\n');
 
   // Trent's rows all share one Link, so his duplicate check is by name — and
   // his numbering restarts every season, so the season has to be part of the
-  // key. 111 rows carry only 33 distinct names.
+  // key. Far fewer distinct names than rows, because the names recur.
+  //
+  // DERIVED, not tallied. These read 111 and 33 until 2026-09-11, when a
+  // pending Trent auction was published and both went up by one — a red check
+  // on the PUBLISH PR for a corpus that had merely grown, which is the exact
+  // failure the note in § 5 below warns against. The claims worth making are
+  // relational: every Trent row is keyed, and the names collapse because they
+  // repeat across seasons.
   const names = O.openRecordedTrentNames(META);
+  const trentRows = META.filter((r) => r.auctioneer === 'Trent');
+  const trentNames = new Set(trentRows.map((r) => r.auctionName));
   eq('Trent auctions are keyed by season and name', names[O.openTrentKey('2026', 'Trent Auction 33')], '202643');
-  eq('  ... all 111 of them', Object.keys(names).length, 111);
-  eq('  ... though only 33 names', new Set(META.filter((r) => r.auctioneer === 'Trent').map((r) => r.auctionName)).size, 33);
+  eq(`  ... one key per Trent row, all ${trentRows.length} of them`, Object.keys(names).length, trentRows.length);
+  check(`  ... though far fewer names (${trentNames.size}) than rows (${trentRows.length})`,
+    trentNames.size < trentRows.length,
+    'if every name were distinct a name-only key would do, and this key would not need the season');
   check('  ... so the same name recurs across seasons',
     ['2023', '2024', '2025', '2026'].every((s) => names[O.openTrentKey(s, 'Trent Auction 5')]),
     'a name-only key would call every new season\'s auction 5 a duplicate');
@@ -430,8 +488,14 @@ console.log('\nAuctioneer matching\n');
 console.log('\nSeason inference\n');
 {
   eq('a year in the title wins', O.openInferSeason('Flik\'s 2027 Onyx Auction', '2026-09-30', META).season, '2027');
-  const noYear = O.openInferSeason('Super Condensed Lightning Auction', '2026-09-30', META);
-  eq('without one, the last recorded season', noYear.season, '2026');
+  // DERIVED. This named 2026 outright, which stopped being the last recorded
+  // season the moment season 2027 was published — the fallback correctly
+  // started naming 2027 and the assertion went red for being right. What is
+  // under test is that a date-less title falls back to the LAST RECORDED
+  // season, whichever that is.
+  const lastRecorded = [...new Set(META.map((r) => r.auctionSeason))].sort().pop();
+  const noYear = O.openInferSeason('Super Condensed Lightning Auction', '2027-09-30', META);
+  eq(`without one, the last recorded season (${lastRecorded})`, noYear.season, lastRecorded);
   check('  ... announced as an assumption when nothing is recorded that late',
     /ASSUMED/.test(noYear.how), noYear.how);
   const midSeason = O.openInferSeason('Super Condensed Lightning Auction', '2026-03-01', META);
@@ -510,11 +574,14 @@ console.log('\nSeason inference\n');
   check('seasons never overlap', gaps.every((g) => g > 0), `gaps in days: ${gaps.join(', ')}`);
   check('  ... but one has started 9 days after the last one ended',
     Math.min(...gaps) <= 14, `gaps in days: ${gaps.join(', ')}`);
-  // The DATE is corpus, so it is derived; the CLAIM is that 2026 is still the
-  // season holding the newest open anywhere in the file, which is what makes it
-  // the one a date-less fallback would name.
-  eq(`and 2026, the season the fallback would name today, stopped opening auctions on ${seasons['2026'].last}`,
-    seasons['2026'].last, NEWEST_OPEN);
+  // The DATE is corpus, so it is derived; the CLAIM is that the LAST season in
+  // the file is the one holding the newest open anywhere in it, which is what
+  // makes it the one a date-less fallback would name. Named '2026' until
+  // 2026-09-11, when season 2027 arrived and took that role — the claim was
+  // always about "the last season", never about 2026 specifically.
+  const lastSeason = years[years.length - 1];
+  eq(`and ${lastSeason}, the season the fallback would name today, holds the newest open (${seasons[lastSeason].last})`,
+    seasons[lastSeason].last, NEWEST_OPEN);
 
   let right = 0, wrong = 0, none = 0;
   for (const r of META.filter((x) => /truedungeon/i.test(x.Link))) {
@@ -626,7 +693,14 @@ console.log('\nPromotion\n');
   // next number again, and it keeps that true however many auctions close after
   // it.
   const REPROMOTED = '202647';
-  const without = META.filter((r) => !(r.auctionSeason === '2026' && Number(r.auctionNumber) >= 47));
+  // Season 2027 goes too, and for the same reason the 2026 tail does: this
+  // block simulates the sheet as it stood when 202647 was the next number, and
+  // 2027 is part of what came after. Left in, the promotion is cross-season —
+  // 2026 following a recorded 2027 — and correctly earns the "the copied Open
+  // Month baseline still measures from the previous season" caution, which is
+  // a real warning about a scenario this block is not testing.
+  const without = META.filter((r) => r.auctionSeason !== '2027'
+    && !(r.auctionSeason === '2026' && Number(r.auctionNumber) >= 47));
   const proposal = O.openForumProposal(
     { id: '259798', catid: '584', title: topic.title, isoDate: '2026-08-18' }, topic,
     without, O.openKnownAuctioneers(META));
@@ -741,15 +815,30 @@ console.log('\nPromotion\n');
   for (const r of META) {
     if (Math.abs(money(r.augmentTokens) + money(r.augmentGrunnel) + money(r.augmentWithheld) - money(r.augmentedTotal)) < 0.005) sumOk++;
     if (Math.abs(money(r.targetFunding) - money(r.augmentedTotal) - money(r.fundingNoAugment)) < 0.005) fundOk++;
-    if (String(Math.max((Date.parse(r.closeDate) - Date.parse(r.openDate)) / 86400000, 1)) === r.daysToClose) daysOk++;
   }
   eq('augmentedTotal is computed on every recorded row', sumOk, META.length);
   eq('fundingNoAugment is computed on every recorded row', fundOk, META.length);
-  eq('daysToClose is computed on every recorded row', daysOk, META.length);
+
+  // `daysToClose` is the span between two dates, so it only exists on a row
+  // that HAS both. An auction that has not closed has no span — Open, Pending,
+  // and a Failed auction that ended without a close date (202518 did). Counted
+  // against every row this read 294 of 297 the day three Pending auctions were
+  // published, reporting a formula as broken on rows where it correctly
+  // produced nothing. Same shape as validate-prices § 5b: the exemption belongs
+  // to a PROPERTY (has it finished?), never to an enumerated list of statuses
+  // and never to a count.
+  const ended = META.filter((r) => r.closeDate && r.openDate);
+  for (const r of ended) {
+    if (String(Math.max((Date.parse(r.closeDate) - Date.parse(r.openDate)) / 86400000, 1)) === r.daysToClose) daysOk++;
+  }
+  eq(`daysToClose is computed on every row that has closed (${ended.length})`, daysOk, ended.length);
+  check('  ... and the rows without one have not closed',
+    META.filter((r) => !r.closeDate).every((r) => r.daysToClose === ''),
+    'a row with no closeDate is carrying a daysToClose it cannot have');
 
   // Promotion re-derives, so a row that was recorded by hand since the scan is
   // refused rather than duplicated.
-  const dup = O.openPlanPromotion([row], META, HEADERS);
+  const dup = O.openPlanPromotion([row], BEFORE_2027, HEADERS);
   eq('a topic recorded since the scan is refused', dup.rows.length, 0);
   check('  ... by name', dup.problems.some((p) => /already recorded as 202647/.test(p)), dup.problems.join(' | '));
 
@@ -872,15 +961,57 @@ console.log('\nalesievauctions.com\n');
   eq('a forum link has no site id', O.openAlesievId(forumLink), null);
   eq('a site link has no topic id', O.openTopicId('https://alesievauctions.com/auctions/29'), null);
   eq("Trent's link has neither", O.openAlesievId(O.OPEN_TRENT_URL), null);
-  check('no recorded row is read as a site auction today',
-    Object.keys(O.openRecordedAlesiev(META)).length === 0,
-    'auctionMetadata records no alesievauctions.com link yet');
+
+  // WHAT THIS LOOKS UP IS THE ROUND TRIP, not a count of it.
+  //
+  // It used to read "no recorded row is read as a site auction today" — true
+  // only while the site had never been published from, so it was a note about
+  // the calendar wearing an assertion's clothes. The first publish carrying an
+  // alesievauctions.com auction inverts it. But inverting it to "at least one
+  // IS recorded" just moves the same problem: that version fails on every
+  // commit made before such a publish, including the one that has to be green
+  // for the publish to land.
+  //
+  // The durable claim is the one the duplicate defence actually rests on: every
+  // recorded alesievauctions.com Link yields an id, that id maps back to the
+  // row's own auctionId, and no two rows claim one id. True of zero rows and of
+  // fifty, and it starts biting the moment there is anything to bite.
+  const recordedSite = O.openRecordedAlesiev(META);
+  const siteRows = META.filter((r) => O.openAlesievId(r.Link));
+  eq(`every recorded site link yields an id (${siteRows.length} row(s))`,
+    Object.keys(recordedSite).length, siteRows.length);
+  check('  ... each mapping back to its own auction',
+    siteRows.every((r) => recordedSite[O.openAlesievId(r.Link)] === r.auctionId),
+    siteRows.map((r) => `${r.auctionId} -> ${r.Link}`).join(' | '));
+  check('  ... and no two rows claim one site id',
+    new Set(siteRows.map((r) => O.openAlesievId(r.Link))).size === siteRows.length,
+    'two auctions share an alesievauctions.com id — the duplicate defence would refuse the wrong one');
 }
 
 // --- a scan, and what a rescan does with it --------------------------------
 {
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
-  const plan = O.openPlanScan({ metaRows: META, alesievCards: cards });
+
+  // REPLAYED AGAINST THE CORPUS THE FIXTURE CAME FROM, not against today's.
+  //
+  // The fixture is the listing as it stood on 2026-08-31, when neither auction
+  // was recorded. Both have since been promoted (season 2027, published
+  // 2026-09-11), so a scan against the live sheet now correctly proposes
+  // NOTHING — the duplicate defence firing exactly as designed. Replaying the
+  // parse against that sheet stopped testing the parser and started testing
+  // whether those rows happen to be published yet, which is how this block
+  // went red on the publish that added them.
+  //
+  // Season 2027 rows also move `openInferSeason`: with a season recorded that
+  // spans 2026-09-19, the cards infer 2027 from the span rather than falling
+  // back to the newest season. Right for a live scan, and not what a 2026
+  // fixture is here to pin.
+  //
+  // So the parse, the numbering and the notes are asserted against the sheet
+  // as it was; the live sheet gets its own assertions below, where "already
+  // recorded" is the claim being made.
+  const BEFORE_2027 = META.filter((r) => r.auctionSeason !== '2027');
+  const plan = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: cards });
   eq('one proposal per card', plan.proposals.length, 2);
   check('every card on a dedicated auction site is a candidate',
     plan.proposals.every((p) => p.verdict === 'candidate'), '');
@@ -915,8 +1046,9 @@ console.log('\nalesievauctions.com\n');
     !onyx.notes.some((n) => /^says (onyx|augmented|lightning)/.test(n)),
     onyx.notes.join(' | '));
 
-  // Once recorded, the same listing must propose nothing.
-  const recorded = META.concat(plan.proposals.map((p) => ({
+  // Once recorded, the same listing must propose nothing. Built by feeding the
+  // scan's own proposals back in, so it holds whatever the parse produced.
+  const recorded = BEFORE_2027.concat(plan.proposals.map((p) => ({
     auctionId: p.auctionId, auctionSeason: p.season, auctionNumber: String(p.number),
     auctionName: p.auctionName, auctioneer: p.auctioneer, Link: p.link, openDate: p.openDate,
   })));
@@ -924,6 +1056,32 @@ console.log('\nalesievauctions.com\n');
   eq('a rescan after recording proposes nothing', again.proposals.length, 0);
   check('  ... and says so rather than going quiet',
     again.notes.some((n) => /2 listed auction\(s\) are already recorded/.test(n)), again.notes.join(' | '));
+
+  // AND AGAINST THE REAL SHEET, where the claim is the INVARIANT: a scan
+  // proposes exactly the cards the sheet does not already record, and names the
+  // ones it does.
+  //
+  // Stated that way on purpose. The loop above is the scan's own output fed
+  // back in, which would pass just as well if the parse and the lookup shared a
+  // mistake about what an id is; these rows went through the promote step,
+  // Sheets, and the CSV. But the NUMBER recorded depends on whether the publish
+  // carrying them has landed — it was 0 before 2026-09-11 and 2 after — so
+  // pinning the number makes this assertion a calendar again. The relationship
+  // holds in both worlds and is what the defence is actually for.
+  const recordedNow = O.openRecordedAlesiev(META);
+  const alreadyRecorded = cards.filter((c) => c.id && recordedNow[c.id]);
+  const live = O.openPlanScan({ metaRows: META, alesievCards: cards });
+  eq(`a live scan proposes only the unrecorded cards (${alreadyRecorded.length} of ${cards.length} recorded)`,
+    live.proposals.length, cards.length - alreadyRecorded.length);
+  if (alreadyRecorded.length) {
+    check('  ... and says which are already recorded rather than going quiet',
+      live.notes.some((n) => new RegExp(`${alreadyRecorded.length} listed auction\\(s\\) are already recorded`).test(n)),
+      live.notes.join(' | '));
+    for (const c of alreadyRecorded) {
+      check(`  ... proposing nothing for card ${c.id}, recorded as ${recordedNow[c.id]}`,
+        !live.proposals.some((p) => O.openAlesievId(p.link) === c.id), '');
+    }
+  }
 
   // The review key: without it an alesiev row keys as `trent:<its name>` and a
   // rescan silently discards the operator's tick.
@@ -950,12 +1108,12 @@ console.log('\nalesievauctions.com\n');
 // --- promotion --------------------------------------------------------------
 {
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
-  const plan = O.openPlanScan({ metaRows: META, alesievCards: cards });
+  const plan = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: cards });
   const onyx = plan.proposals.find((p) => /\/29$/.test(p.link));
   const row = O.openReviewRow(onyx);
   row[0] = true;
 
-  const promotion = O.openPlanPromotion([row], META, HEADERS);
+  const promotion = O.openPlanPromotion([row], BEFORE_2027, HEADERS);
   eq('a ticked site row promotes', promotion.rows.length, 1);
   const f = promotion.rows[0].fields;
   eq('  ... with the badge-derived style', f.auctionStyle, 'Onyx Ultra Condensed');
@@ -1153,14 +1311,14 @@ console.log('\nSheet coercion on the round trip\n');
   // End to end: a review row exactly as getValues() returns it after Sheets has
   // had its way with the two columns.
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
-  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+  const proposal = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: cards })
     .proposals.find((p) => /\/29$/.test(p.link));
   const coerced = O.openReviewRow(proposal);
   coerced[0] = true;
   coerced[4] = new Date(2026, 8, 19, 1, 0, 0); // Sheets made a date of it
   coerced[15] = 8000;                          // and a number of the target
 
-  const promotion = O.openPlanPromotion([coerced], META, HEADERS);
+  const promotion = O.openPlanPromotion([coerced], BEFORE_2027, HEADERS);
   eq('a coerced row still promotes', promotion.rows.length, 1);
   eq('  ... with an ISO openDate', promotion.rows[0].fields.openDate, '2026-09-19');
   check('  ... and NOT the Date.toString() that reached the sheet',
@@ -1171,7 +1329,7 @@ console.log('\nSheet coercion on the round trip\n');
   // Belt and braces: converting is best effort, refusing is not.
   const unreadable = coerced.slice();
   unreadable[4] = 'sometime in September';
-  const refused = O.openPlanPromotion([unreadable], META, HEADERS);
+  const refused = O.openPlanPromotion([unreadable], BEFORE_2027, HEADERS);
   eq('an openDate that cannot be read is refused, not written', refused.rows.length, 0);
   check('  ... naming the tab to fix it in',
     refused.problems.some((p) => /not a YYYY-MM-DD date/.test(p) && /auctionOpenReview/.test(p)),
@@ -1183,7 +1341,7 @@ console.log('\nSheet coercion on the round trip\n');
   for (const shape of shapes) {
     const row = coerced.slice();
     row[4] = shape;
-    const p = O.openPlanPromotion([row], META, HEADERS);
+    const p = O.openPlanPromotion([row], BEFORE_2027, HEADERS);
     eq(`openDate from ${JSON.stringify(String(shape)).slice(0, 34)}…`,
       p.rows[0]?.fields.openDate, '2026-09-19');
   }
@@ -1192,7 +1350,7 @@ console.log('\nSheet coercion on the round trip\n');
   const earlier = coerced.slice();
   earlier[4] = new Date(2026, 8, 3, 1, 0, 0);
   earlier[11] = 'https://alesievauctions.com/auctions/27';
-  const both = O.openPlanPromotion([coerced, earlier], META, HEADERS);
+  const both = O.openPlanPromotion([coerced, earlier], BEFORE_2027, HEADERS);
   eq('two coerced rows both promote', both.rows.length, 2);
   eq('  ... the earlier one first', both.rows[0].fields.openDate, '2026-09-03');
   eq('  ... taking the lower number', both.rows[0].fields.auctionNumber, String(NEXT_2026));
@@ -1220,12 +1378,12 @@ console.log('\nSheet coercion on the round trip\n');
   eq('nor does an unreadable one', O.openPendingOutcome('19/9/2026', '2026-09-11'), '');
 
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
-  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+  const proposal = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: cards })
     .proposals.find((p) => /\/29$/.test(p.link));
   const row = O.openReviewRow(proposal);
   row[0] = true;
 
-  const early = O.openPlanPromotion([row], META, HEADERS, '2026-09-11');
+  const early = O.openPlanPromotion([row], BEFORE_2027, HEADERS, '2026-09-11');
   eq('the fixture card promotes', early.rows.length, 1);
   eq('  ... as Pending, because it opens 2026-09-19', early.rows[0].fields.outcome, 'Pending');
   eq('  ... with its real open date, not today', early.rows[0].fields.openDate, '2026-09-19');
@@ -1236,7 +1394,7 @@ console.log('\nSheet coercion on the round trip\n');
   // The same row on the day it opens. Nothing about the auction changed — only
   // the date this ran on — and that is the whole design: the marker is a fact
   // about time, not about the auction.
-  const onTheDay = O.openPlanPromotion([row], META, HEADERS, '2026-09-19');
+  const onTheDay = O.openPlanPromotion([row], BEFORE_2027, HEADERS, '2026-09-19');
   eq('the same row on the open date is not pending', onTheDay.rows[0].fields.outcome, '');
   check('  ... and says nothing about pending', !onTheDay.warnings.some((w) => /PENDING/.test(w)),
     onTheDay.warnings.join(' | '));
@@ -1277,7 +1435,7 @@ console.log('\nSheet coercion on the round trip\n');
   // The drift note must not fire just because Sheets stored the same money as
   // a number. It did before openMoneyFromCell, on every rescan.
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
-  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+  const proposal = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: cards })
     .proposals.find((p) => /\/29$/.test(p.link));
   const held = O.openReviewRow(proposal);
   held[15] = 8000;
@@ -1321,7 +1479,7 @@ console.log('\nStale promoted markers\n');
   check(`  ... and not one that was never recorded (${NEVER_RECORDED})`, ids[NEVER_RECORDED] === undefined, '');
 
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
-  const proposals = O.openPlanScan({ metaRows: META, alesievCards: cards }).proposals;
+  const proposals = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: cards }).proposals;
   const proposal = proposals.find((p) => /\/29$/.test(p.link));
 
   // The case that prompted this: promoted, then the row deleted from the sheet.
@@ -1374,7 +1532,7 @@ console.log('\nStale promoted markers\n');
   // listing. It is history and is kept, but it must stop claiming to be
   // something it is not.
   const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
-  const proposal = O.openPlanScan({ metaRows: META, alesievCards: cards })
+  const proposal = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: cards })
     .proposals.find((p) => /\/29$/.test(p.link));
   const ids = O.openRecordedAuctionIds(META);
 
