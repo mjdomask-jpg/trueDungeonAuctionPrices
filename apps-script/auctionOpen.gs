@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-11.1';
+var OPEN_VERSION = '2026-09-11.2';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -1235,7 +1235,7 @@ function openSeasonSpans(metaRows) {
 function openSelectFeedItems(feedItems, metaRows, options) {
   options = options || {};
   var recorded = openRecordedTopics(metaRows);
-  var cutoff = options.cutoff || openScanCutoff(metaRows);
+  var cutoff = options.cutoff || openScanCutoff(metaRows, options.today);
   var limit = options.limit || OPEN_MAX_TOPIC_FETCHES;
   var selected = [], skipped = { recorded: 0, old: 0, offTopic: 0, overflow: 0 };
 
@@ -1257,11 +1257,32 @@ function openSelectFeedItems(feedItems, metaRows, options) {
   return { selected: selected, skipped: skipped, cutoff: cutoff };
 }
 
-/** The oldest last-post date a scan bothers with. */
-function openScanCutoff(metaRows) {
+/**
+ * The oldest last-post date a scan bothers with.
+ *
+ * The newest recorded `openDate` minus a margin — but only counting dates that
+ * have actually ARRIVED, and that clause is load-bearing.
+ *
+ * A `Pending` auction is dated in the FUTURE (2026-09-19 for season 2027's
+ * opening day, recorded on 2026-09-11), and this is a look-BACK. Counting one
+ * pushed the cutoff past every real thread's last post, so `openSelectFeedItems`
+ * dropped the entire feed and the scan reported no candidates — which is
+ * indistinguishable from a quiet week. The whole justification above is that
+ * this filter "can only ever over-include", because a topic's last post is
+ * never earlier than its first; that is true of a cutoff at or behind today and
+ * false of one in the future. A future date does not over-include, it blinds.
+ *
+ * Clamping to today keeps the guarantee: nothing that opened after the cutoff
+ * can be dropped by it.
+ */
+function openScanCutoff(metaRows, todayIso) {
+  // Plain JS, not Utilities.formatDate: this is part of the pure core the tests
+  // load into a bare VM, where no Apps Script global exists.
+  var today = todayIso || new Date().toISOString().slice(0, 10);
   var latest = '';
   for (var i = 0; i < metaRows.length; i++) {
     var d = String(metaRows[i].openDate || '');
+    if (d > today) continue;
     if (d > latest) latest = d;
   }
   return latest ? openShiftIsoDays(latest, -OPEN_LOOKBACK_MARGIN_DAYS) : '';
