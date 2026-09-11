@@ -390,8 +390,16 @@ console.log('4. Metadata hygiene (auctionMetadata.csv)');
         errs.push(`${where}: daysToClose is ${m.daysToClose} but ${m.openDate}→${m.closeDate} is ${days} day(s)`);
     }
     if (!m.Link) warns.push(`${where}: no Link`);
-    else if (!/^https?:\/\/(www\.)?(truedungeon\.com|trenttokens\.com)\//i.test(m.Link))
-      warns.push(`${where}: Link is not a truedungeon.com or trenttokens.com URL — ${m.Link}`);
+    // The hosts an auction can legitimately live on. `alesievauctions.com` was
+    // missing until 2026-09-11 and that was a stale list, not a judgement: the
+    // pipeline has WATCHED that site since 2026-08-31 (auctionOpen.gs) and
+    // imported closes from it since 2026-09-10 (alesievClose.gs), so an auction
+    // linking there is as expected as one linking to a forum thread. It
+    // surfaced on the first publish that carried one, as two warnings nobody
+    // could act on — and a warning that cannot be acted on trains people to
+    // skip the whole list.
+    else if (!/^https?:\/\/(www\.)?(truedungeon\.com|trenttokens\.com|alesievauctions\.com)\//i.test(m.Link))
+      warns.push(`${where}: Link is not a truedungeon.com, trenttokens.com or alesievauctions.com URL — ${m.Link}`);
     const season = Number(m.auctionSeason), number = Number(m.auctionNumber);
     if (Number.isFinite(season) && Number.isFinite(number)) {
       const s = numbersBySeason.get(season) ?? numbersBySeason.set(season, new Map()).get(season);
