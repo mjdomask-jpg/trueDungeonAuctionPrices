@@ -288,6 +288,33 @@ The 12px uppercase treatment belongs to the label above a control. The values
 inside it stay sentence case, like every `<select>`'s options — a picker reading
 "AUTO (EACH RECIPE)" reads as shouting.
 
+### A row out of width gains a LINE before it gives up a name
+
+When a row's controls crowd its text on a phone, move a control to a second line
+rather than let the text ellipsize. A truncated name is lost information — on
+touch there is no hover to recover it — while a taller row only costs scroll.
+
+Check the width budget before reaching for this: the fix is only warranted when
+nothing on the row can be narrowed or dropped. The drawer's picked rows
+(`SITE-3`) are the worked example — a 112px stepper against a 141px median name
+left about seven characters, and shrinking the stepper, dropping the price and
+dropping the tier chip were each measured and each left 40+ of 174 names still
+clipped. Only a second line actually fixed it.
+
+Two things make it work in practice:
+
+- **Move a control DOWN, never hide it.** The second line takes what the first
+  already carried, so the row buys width by rearranging rather than by hiding.
+  Drop something and you have traded one kind of lost information for another.
+- **Fill the second line.** A lone control on its own line reads as having fallen
+  off the row. Send a second element down with it — the drawer sends the price
+  along with the stepper — so the line looks deliberate.
+
+**Desktop usually has a cheaper answer: give the container the width it needs.**
+The same drawer was a flat 384px at every viewport with 900px of unused page
+behind it; widening it fixed desktop with one declaration and no extra height.
+Reach for the second line only where the width genuinely is not there.
+
 ## Form controls on mobile
 
 **Any `<select>`, `<input>` or `<textarea>` must render at 16px or larger on

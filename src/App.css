@@ -1153,6 +1153,15 @@ td.diff.down { color: var(--diff-down); }
   display: flex; flex-direction: column;
 }
 .calc-drawer.on { transform: translateX(0); }
+/* Wider once the window can spare it. 384px is a phone-shaped width, and the
+   drawer kept it at every size -- so a picked row, which gives ~112px to the
+   stepper, left the recipe NAME 109px on a 1280px screen with 900px of unused
+   page sitting behind the scrim. Names run to 255px ("Smith's Charm of Unified
+   Synergy (Set 2)"), so 119 of 174 ellipsized for want of space that was there
+   all along. Capped in vw as well so it never eats a small laptop, and left
+   alone below 900px, where max-width: 92vw is already the binding constraint
+   and the phone fix is the two-line row instead (see .calc-opt.stepped). */
+@media (min-width: 900px) { .calc-drawer { width: min(480px, 44vw); } }
 .calc-dhead { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); flex: none; }
 .calc-dhead .calc-dx { align-self: center; }
 .calc-dhead b { font-family: var(--display); font-size: 16px; color: var(--text-h); }
@@ -2687,6 +2696,29 @@ table.an-opens col.col-days { width: 16%; }
   /* The drawer's stepped rows get it too — same thumbs, same buttons. */
   .calc-opt.stepped .sl-step button { min-width: 40px; height: 40px; font-size: 17px; }
   .sl-step-x { min-width: 40px; height: 40px; font-size: 15px; }
+
+  /* A PICKED drawer row goes two-line: name across the top, controls beneath.
+     Those 40px thumbs are why it has to. One line has to hold a tier chip, the
+     name, the price and a three-part stepper, and the stepper alone is 112px of
+     a 307px row — which left the name 97px, about seven characters, so 150 of
+     the 174 recipe names ellipsized the moment they were picked while the very
+     same name sat in full on the unpicked row above. Given its own line the
+     name gets 237px and 4 names still clip, which is what an unpicked row does
+     too: picking a recipe no longer costs you its name.
+
+     The second line is the price and the stepper, so nothing is added that was
+     not already on the row — this buys width by rearranging, not by hiding.
+     The trade is height, ~+26px and only on rows the reader picked; SITE-2
+     settled that trade the same way on the Recipes view. Same grid shape as
+     .cl-main above, which reflows the calculator's ingredient lines. */
+  .calc-opt.stepped {
+    display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 2px;
+  }
+  .calc-opt.stepped .calc-opt-hit { grid-column: 1 / -1; }
+  /* Direct child only: .calc-opt-c also exists inside .calc-opt-hit on the
+     unpicked rows, and those stay one line. */
+  .calc-opt.stepped > .calc-opt-c { grid-column: 1; justify-self: start; padding-left: 2px; }
+  .calc-opt.stepped .sl-step { grid-column: 2; }
 }
 
 /* --- Shopping List: the two ingredient tables (step 3) ------------------ */
