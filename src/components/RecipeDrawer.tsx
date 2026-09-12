@@ -161,9 +161,17 @@ export function RecipeDrawer({
         {c.status === 'expired' && <span className="calc-opt-exp">expired</span>}
         {from && <span className="calc-opt-up">↳ upgrades from {from}</span>}
       </span>
-      <span className="calc-opt-c">{moneyCalc(c.fullAvg)}</span>
     </>
   );
+
+  // The price is rendered apart from the rest of the row, because a stepped row
+  // needs it OUTSIDE the .calc-opt-hit button. On a phone that row is two lines
+  // — name across the top, controls beneath — and the price is what fills the
+  // second line beside the stepper; left inside the hit button it would be stuck
+  // on line one, eating the width the name is there to use. Pulling it out also
+  // takes it off the "add another" tap target, which it never should have been:
+  // nobody expects tapping $1,638 to buy a second one.
+  const optCost = (c: BuildCost) => <span className="calc-opt-c">{moneyCalc(c.fullAvg)}</span>;
 
   const optRow = (c: BuildCost, opts: { indented?: boolean; from?: string | null; showYear?: boolean } = {}) => {
     const cls = `calc-opt${opts.indented ? ' leg' : ''}${selectedKeys.has(c.key) ? ' sel' : ''}`;
@@ -174,6 +182,7 @@ export function RecipeDrawer({
       return (
         <button key={c.key} type="button" className={cls} onClick={() => pick(c)}>
           {optBody(c, opts.from, opts.showYear)}
+          {optCost(c)}
         </button>
       );
     }
@@ -192,6 +201,7 @@ export function RecipeDrawer({
           aria-label={`Add another ${c.displayName}`}>
           {optBody(c, opts.from, opts.showYear)}
         </button>
+        {optCost(c)}
         <span className="sl-step" role="group" aria-label={`Quantity of ${c.displayName}`}>
           {removeHere ? (
             <button type="button" className="sl-step-x" onClick={() => onRemove(c.key)}

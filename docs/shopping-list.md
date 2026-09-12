@@ -404,6 +404,14 @@ phone reflow. `RecipeDrawer`'s `quantities`/`onQuantityChange` props are
 optional; passing neither leaves it the single-select picker the calculator
 uses; `onRemove` is optional in the same way.
 
+**A picked drawer row is two lines on a phone** — name on top, price and stepper
+beneath — because the stepper is 112px of a 307px row and left the name about
+seven characters (`SITE-3`). That is why `RecipeDrawer` renders the price from its
+own `optCost` helper instead of from `optBody`: a stepped row needs it OUTSIDE the
+`.calc-opt-hit` button so it can sit on the second line. An unpicked row is
+unaffected and stays one line, as does every row on desktop, where the fix was to
+widen the drawer instead.
+
 **Table widths are percentages on `<thead>` cells, not min-widths.** The global
 `table` rule in `App.css` sets `table-layout: fixed` site-wide, so a min-width
 on a cell does nothing at all — the takeaway table gave all five columns an
@@ -414,9 +422,11 @@ while `Buy` held 225px for a two-digit number.
 
 ## Deferred and dropped — see [`backlog.md`](./backlog.md)
 
-Moved 2026-09-03. This view's one deferred item is **`SITE-3`** (drawer row names
-ellipsize); **XLSX export**, **share links** and **server-side save codes** are in
-that file's § *Dropped*, with the reasons, so nobody re-derives them.
+Moved 2026-09-03. This view's one deferred item was **`SITE-3`** (drawer row names
+ellipsize), **resolved 2026-09-12** — see that entry for the measurements and for
+the five one-line alternatives that were tried and rejected. **XLSX export**,
+**share links** and **server-side save codes** are in that file's § *Dropped*,
+with the reasons, so nobody re-derives them.
 
 § *Getting it out* above still holds the XLSX reasoning in full, and § *Saving*
 still explains why the Build Calculator stores only the recipe — `backlog.md`

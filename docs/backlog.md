@@ -59,8 +59,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-1** | ~~The 50 GP Idol chase set is only half modeled~~ | **RESOLVED 2026-09-04** — modelled, published and live; it forges the Totem of Wonder |
 | **DATA-6** | ~~A failed auction has no representation, so its row is deleted~~ | **RESOLVED 2026-09-03** — shipped, workbook updated, five rows restored |
 | **DATA-8** | ~~Large GP sums are spelled as N x the 1,000 GP bar, not as the token that is that sum~~ | **RESOLVED 2026-09-04** — both denominations authored and priced; 49 recipe lines name the Ore Bar; totals unmoved |
-| **SITE-2** | Transmute row height at 375px | the maintainer's real-phone verdict; **do not act unsolicited** |
-| **SITE-3** | Shopping List drawer row names ellipsize | a flex-layout rework |
+| **SITE-2** | ~~Transmute row height at 375px~~ | **CLOSED 2026-09-12** — the maintainer's real-phone verdict came back: it reads fine, the wrap was the right trade |
+| **SITE-3** | ~~Shopping List drawer row names ellipsize~~ | **RESOLVED 2026-09-12** — a wider drawer on desktop, a two-line picked row on phones; 150 of 174 names clipped → 3 |
 | **SITE-4** | Transmutes "most-withheld components" callout | appetite — an optional stretch from the context layer |
 | **SITE-5** | Third-party prices (trenttokens snapshot, auto-fill, buy link) | re-confirming appetite for the infra |
 | **SITE-6** | Non-standard `Expires` dates | data authoring — the engine already reads the column |
@@ -857,27 +857,90 @@ publish that carried it**. Both sections now exempt every non-`Closed` status.
 
 ---
 
-## SITE-2. Transmute row height at 375px — OPEN, do not act unsolicited
+## SITE-2. Transmute row height at 375px — CLOSED 2026-09-12, not a defect
 
-**Awaiting the maintainer's real-phone verdict.** Letting `.tx-rface` wrap so
-clipped token names show roughly doubled collapsed row height at 375px (Relic
-40 -> 65px, paired Legendary 52 -> ~97px). That was flagged at the time as the
-explicit trade for showing the name at all.
+**The maintainer reviewed it on a real phone and it reads fine.** The item only
+ever existed because a verdict was outstanding, and the verdict is that the
+taller row is the right trade.
 
-**Levers if it reads too long on a real phone:** Build + Upgrade side by side on
-one line (offered and declined at mockup stage), drop "upgrades from" into the
-expanded view, or tighten `row-gap` / padding.
+What it was: letting `.tx-rface` wrap so clipped token names show roughly doubled
+collapsed row height at 375px (Relic 40 -> 65px, paired Legendary 52 -> ~97px).
+That was flagged at the time as the explicit trade for showing the name at all,
+and the trade stands — **the name is worth the pixels.**
 
-The standing instruction for mobile work applies: audit and report, do not fix
-without approval, and lead with a before/after mockup at true device width.
+The levers considered and now not needed: Build + Upgrade side by side on one
+line (offered and declined at mockup stage), dropping "upgrades from" into the
+expanded view, or tightening `row-gap` / padding. Nothing was changed to close
+this.
+
+**Do not reopen on a screenshot.** A tall row looks worse in a shrunken preview
+than it does in the hand; that gap is exactly why this waited for a real device.
+
+The standing instruction for mobile work still applies to everything else: audit
+and report, do not fix without approval, and lead with a before/after mockup at
+true device width.
 
 ---
 
-## SITE-3. Shopping List drawer row names ellipsize — OPEN
+## SITE-3. Shopping List drawer row names ellipsize — RESOLVED 2026-09-12
 
-A picked row in the drawer truncates long names (`Val's +4 Ke…`) because the
-stepper takes ~180px. Abbreviating the tier chip on phones bought some of it back,
-not all; fixing the rest means reworking the row's flex layout.
+A picked row in the drawer truncated long names (`Val's +4 Ke…`) because the
+stepper takes ~112px. Abbreviating the tier chip on phones bought some of it back,
+not all; fixing the rest meant reworking the row's flex layout.
+
+**Measured before touching anything, and the ticket understated it twice.**
+Against the 174 distinct recipe names (median 141px, longest 255px —
+`Smith's Charm of Unified Synergy (Set 2)`):
+
+| State | Name got | Clipped |
+|---|---|---|
+| Phone 375, unpicked | 216px | 10 / 174 |
+| Phone 375, **picked** | 97px | **150 / 174** |
+| Desktop, unpicked | 183px | ~22 / 174 |
+| Desktop, **picked** | 109px | **119 / 174** |
+
+**It was never a phone problem.** The drawer was a flat 384px at every width, and
+desktop spent what the narrower chip saved on a spelled-out tier name and a fourth
+control (the ✕), so a picked desktop row gave the name *less* than a phone would
+have with the same chip. **Picking is the whole cause** — an unpicked row was
+already fine.
+
+**Two fixes, split by breakpoint, because the levers differ.**
+
+1. **Desktop — widen the drawer** (`@media (min-width: 900px)`, `min(480px, 44vw)`).
+   One declaration, no height cost, no markup change. At 1280px the page had ~900px
+   of unused room behind the scrim. Picked name 109 → 190px, unpicked 183 → 312px.
+2. **Phone — the picked row goes two-line**: name across the top, price and stepper
+   beneath. 92vw was already spent, so a second line was the only lever left.
+   Picked name 97 → 252px, and 3 of 174 names still clip.
+
+**The price moved OUT of `.calc-opt-hit` to make 2 work**, which is the only markup
+change. Left inside the hit button it was stuck on line one eating the width the
+name was there to use; on line two it fills the space beside the stepper, so the
+row reads as a deliberate two-line layout rather than a control that fell off.
+The side benefit is that tapping a price no longer adds another of the recipe.
+
+**The +26px of row height is the trade, and it is the same one `SITE-2` settled** —
+the name is worth the pixels — except here it is narrower, because only rows the
+reader actually picked grow.
+
+**What was measured and rejected**, so nobody re-derives it: letting the name wrap
+instead (97px is ~7 characters — that Smith's Charm becomes six lines); shrinking
+the stepper to 32px (121px, still 119/174, and it breaks the 44px touch floor in
+`ui-conventions.md`); dropping the price from a picked row (132px, still 104/174);
+dropping the tier chip as well (171px, still 42/174); full-bleeding the phone
+drawer to 100vw (127px, still 112/174, and it costs the tap-outside-to-close
+strip, the only such target on touch). **No single-line option got below ~40/174.**
+112px of stepper against a 141px median name has no one-line answer at 375px.
+
+**Still true after the fix, and deliberately left:** ~26 names clip on UNPICKED
+rows at 375px, which is where they were before and is not what this item was
+about. **The maintainer declined fixing them on 2026-09-12** — the only fix is the
+same second line, and unpicked rows outnumber picked ones by roughly 178 to a
+handful, so it would double the drawer's scroll length to save a few names.
+Recorded in § *Dropped* rather than left implied, because "the fix was already
+written, it just was not applied here" is exactly the loose end a later reader
+re-derives. Desktop got these rows 183 → 312px for free from the wider drawer.
 
 ---
 
@@ -1189,6 +1252,7 @@ Reopening one needs a new fact.
 | **A per-season `Expires` override table** | The clamp rule covers every known case. Add one when a case appears that it does not |
 | **Coarse two-season pooling for active windows** | Dropped 2026-08-11 for exact date-windowed pricing. The 2025-2026 data shows a sharp post-Dec-1 spike for Oil of Enchantment and Elven Bismuth that pooling would fold into the cost and overstate. Accuracy was the point of the phase |
 | **`AltItem` / `AltQuantity` data columns for substitution** | D6, 2026-08-13: one substitution engine in code config, holding both the Omni rules and Wish Ring ⇄ 15,000 GP. There is no live Wish-Ring-only recipe, so the columns would mean authoring 43 rows to preserve today's behaviour. A per-line `NoSubstitute` stays a **documented seam**, to be added when a real exception appears |
+| **Two-line UNPICKED rows in the recipe drawer** | Declined 2026-09-12 by the maintainer, on the measurements in `SITE-3`. ~26 of 174 names still ellipsize on unpicked rows at 375px, and the only thing that would fix them is the same second line a picked row now gets — but there are ~178 unpicked rows to a handful of picked ones, so it would add ~26px to nearly every row and roughly DOUBLE the drawer's scroll length. A picker you have to scroll twice as far is worse than one that abbreviates a long name. Desktop already got these rows 183 → 312px from the wider drawer, for free. Reopen only if the drawer stops being a scrolling list |
 | **Automatic normalization of apostrophes in item names** | `Thor’' Mug of Melee` held a curly one AND a straight one; folding it mechanically gives `Thor''`. `validate-prices.mjs` § 8 errors on a curly apostrophe instead, and near-miss pairs are notes that are never merged automatically — `+1 Turkey Leg` and `+1 Turkey Leg of Smiting` are different tokens |
 
 ---
