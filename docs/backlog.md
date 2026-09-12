@@ -933,9 +933,14 @@ drawer to 100vw (127px, still 112/174, and it costs the tap-outside-to-close
 strip, the only such target on touch). **No single-line option got below ~40/174.**
 112px of stepper against a 141px median name has no one-line answer at 375px.
 
-**Still true after the fix:** ~26 names clip on UNPICKED rows at 375px, which is
-where they were before and is not what this item was about. Fixing those would mean
-making every row two-line and roughly doubling the drawer's scroll length.
+**Still true after the fix, and deliberately left:** ~26 names clip on UNPICKED
+rows at 375px, which is where they were before and is not what this item was
+about. **The maintainer declined fixing them on 2026-09-12** — the only fix is the
+same second line, and unpicked rows outnumber picked ones by roughly 178 to a
+handful, so it would double the drawer's scroll length to save a few names.
+Recorded in § *Dropped* rather than left implied, because "the fix was already
+written, it just was not applied here" is exactly the loose end a later reader
+re-derives. Desktop got these rows 183 → 312px for free from the wider drawer.
 
 ---
 
@@ -1247,6 +1252,7 @@ Reopening one needs a new fact.
 | **A per-season `Expires` override table** | The clamp rule covers every known case. Add one when a case appears that it does not |
 | **Coarse two-season pooling for active windows** | Dropped 2026-08-11 for exact date-windowed pricing. The 2025-2026 data shows a sharp post-Dec-1 spike for Oil of Enchantment and Elven Bismuth that pooling would fold into the cost and overstate. Accuracy was the point of the phase |
 | **`AltItem` / `AltQuantity` data columns for substitution** | D6, 2026-08-13: one substitution engine in code config, holding both the Omni rules and Wish Ring ⇄ 15,000 GP. There is no live Wish-Ring-only recipe, so the columns would mean authoring 43 rows to preserve today's behaviour. A per-line `NoSubstitute` stays a **documented seam**, to be added when a real exception appears |
+| **Two-line UNPICKED rows in the recipe drawer** | Declined 2026-09-12 by the maintainer, on the measurements in `SITE-3`. ~26 of 174 names still ellipsize on unpicked rows at 375px, and the only thing that would fix them is the same second line a picked row now gets — but there are ~178 unpicked rows to a handful of picked ones, so it would add ~26px to nearly every row and roughly DOUBLE the drawer's scroll length. A picker you have to scroll twice as far is worse than one that abbreviates a long name. Desktop already got these rows 183 → 312px from the wider drawer, for free. Reopen only if the drawer stops being a scrolling list |
 | **Automatic normalization of apostrophes in item names** | `Thor’' Mug of Melee` held a curly one AND a straight one; folding it mechanically gives `Thor''`. `validate-prices.mjs` § 8 errors on a curly apostrophe instead, and near-miss pairs are notes that are never merged automatically — `+1 Turkey Leg` and `+1 Turkey Leg of Smiting` are different tokens |
 
 ---
