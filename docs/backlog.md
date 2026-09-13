@@ -83,6 +83,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-1** | Ingest auctioneers' external tracking sheets | sign-in access to those sheets |
 | **PIPE-2** | ~~Close handling for alesievauctions.com~~ | **RESOLVED 2026-09-10** — `alesievClose.gs`; the withheld and Onyx paths are built and tested but have never seen a real file |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
+| **PIPE-5** | Ask the truedungeontokens.com owner for a read token | **a conversation, not code** — the maintainer's to have, and the gate on the whole import idea |
 | **PIPE-4** | ~~Feasibility verdict: import trade-good quantities from truedungeontokens.com~~ | **RESOLVED — it was answered 2026-09-01**, two days before this file was written; the verdict is a published artifact, not a repo file, which is why the consolidation missed it |
 | **DATA-9** | ~~12 recipes disagree with tokendb~~ | **RESOLVED 2026-09-08** — all twelve corrected and published, plus Orion's Belt and the +1 Turkey Leg |
 | **DATA-10** | Fractional GP is dropped or rounded | nothing — three `derivedPrices.csv` rows, no engine or workbook change |
@@ -1284,17 +1285,79 @@ decision.
 
 **And even the good version is a snapshot, not a sync.**
 
-### What is actually left, and it is not a repo item
+### What is actually left: `PIPE-5`
 
 Whether the truedungeontokens.com owner has been asked for a token — an external
-conversation, the maintainer's to have, and the gate on everything above. If they
-decline, the fallback is the bookmarklet → Shopping List paste (`T|<name>` into the
-existing `setOnHandMany`), labelled desktop-only.
+conversation, the maintainer's to have, and the gate on everything above.
+**Confirmed 2026-09-13 as not yet asked**, and opened as `PIPE-5` rather than left
+as a sentence inside a resolved item, which is how the last one went missing. If
+they decline, the fallback is the bookmarklet → Shopping List paste (`T|<name>`
+into the existing `setOnHandMany`), labelled desktop-only.
 
 **One stale line in the brief**, flagged twice on 2026-09-01 and still there: it
 describes the filtered 27-row list as what you receive, which holds for the POST
 but not the authenticated GET, which returns all 9,597 rows. Anyone planning
 against that file should not plan against 27.
+
+---
+
+## PIPE-5. Ask the truedungeontokens.com owner for a read token — OPEN, and the ball is the maintainer's
+
+The successor to `PIPE-4`, opened 2026-09-13 once it was confirmed the
+conversation has not happened yet. **`PIPE-4` asked whether the import was
+possible and answered it; this is the one action that answer produced.**
+
+**Nothing can be built until this is asked.** Every path that does not involve
+that site's owner is desktop-only — the bookmarklet is 5.2 KB but bookmarklets
+do not work on phones, and the plain link's GET ignores the filter params and
+dumps 1,903 KB. A phone player gets nothing either way, and typing 14 numbers
+into the Shopping List is about a minute's work, so for them the fallback buys
+approximately zero. **This is not the preferred option among several. It is the
+only one that delivers what the player asked for.**
+
+### The ask
+
+That the `tdt_get_collector_ids` endpoint accept a **per-user read token** — say
+`?token=…` — in place of the session cookie. Nothing else has to change: the
+endpoint already sends `Access-Control-Allow-Origin: *`, so a token-authenticated
+read works from a static site directly, with **no proxy, no backend and no
+credentials anywhere**. That absence is the point — it is what makes the request
+small for them and safe for us.
+
+**[Can We Import Trade Goods?](https://claude.ai/code/artifact/57ad15cf-3e8f-4245-9620-d22b10201c18)**
+ends in a dashed panel written to be forwarded as-is: it states the two headers
+that block it, makes the token ask, and says plainly that players will not be
+asked for their passwords as a workaround. It is written in the maintainer's
+voice — read it before sending. The page is private until shared.
+
+### What each answer means
+
+**Yes** — build it: `n → T|<name>` into the Shopping List's existing
+`setOnHandMany`, with tan = ×10, consolidated gold bars expanding into
+`1,000 GP Gold Bar`, and Omni Orb / Omni Cube / Skull of Batterak ignored. The
+Build Calculator stays out of it (`SITE-7`, and `calcStorage.ts` on why the two
+tools do not share a number). Monster Trophy is absent from their catalogue
+entirely, so that gap is permanent whatever they say.
+
+**No** — ship the bookmarklet → Shopping List paste and **label it desktop-only
+in the UI**, rather than letting phone players discover it themselves.
+
+**Either way, tell the player it is a snapshot they re-pull, not a live sync.**
+"Don't maintain it in two spots" is not fully achievable against a site with no
+export and no API.
+
+### Two things that are not negotiable in the asking
+
+**Do not offer, and do not accept, a password-based workaround.** If the answer
+is no, the tempting next move is a server that collects each player's
+truedungeontokens.com password and replays it. That is credential harvesting with
+good intentions, it makes this project the owner of a breach, and it stays ruled
+out however it is re-framed — "just an app password", "just store the cookie".
+`PIPE-4` killed it pre-emptively for exactly this reason.
+
+**It is their database.** Driving another community member's authenticated
+endpoint on behalf of many players is a thing to ask about rather than ship and
+find out. The conversation is owed regardless of what it yields.
 
 ---
 
