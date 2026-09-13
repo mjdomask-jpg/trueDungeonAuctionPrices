@@ -49,6 +49,17 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 > honest source. **Before writing "still open" against anything, grep the app for
 > it.** The same pass measured the CSVs and got those right, so the gap was
 > specifically between prose and code, which is the direction nothing checks.
+>
+> **And grepping the repo is not enough, because a deliverable can live outside
+> it.** `PIPE-4` was recorded here as "no answer has been written" on 2026-09-03.
+> The answer had been delivered on **2026-09-01** — investigated, argued and
+> published as an artifact. Nothing in the repo could have revealed that: the ask
+> was a file, the answer was a web page. **When an item's deliverable is a verdict,
+> a document or a recommendation rather than code, the repo cannot tell you whether
+> it exists** — check the artifact list and the session history before writing
+> "none exists", and when the deliverable lands somewhere else, **link it from here
+> the same day**. A finished piece of work sat on this list as an open obligation
+> for ten days because nobody wrote the URL down.
 
 ---
 
@@ -72,7 +83,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-1** | Ingest auctioneers' external tracking sheets | sign-in access to those sheets |
 | **PIPE-2** | ~~Close handling for alesievauctions.com~~ | **RESOLVED 2026-09-10** — `alesievClose.gs`; the withheld and Onyx paths are built and tested but have never seen a real file |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
-| **PIPE-4** | Feasibility verdict: import trade-good quantities from truedungeontokens.com | **a written answer from me** — the maintainer asked and none exists |
+| **PIPE-4** | ~~Feasibility verdict: import trade-good quantities from truedungeontokens.com~~ | **RESOLVED — it was answered 2026-09-01**, two days before this file was written; the verdict is a published artifact, not a repo file, which is why the consolidation missed it |
 | **DATA-9** | ~~12 recipes disagree with tokendb~~ | **RESOLVED 2026-09-08** — all twelve corrected and published, plus Orion's Belt and the +1 Turkey Leg |
 | **DATA-10** | Fractional GP is dropped or rounded | nothing — three `derivedPrices.csv` rows, no engine or workbook change |
 | **DATA-11** | A "pick any N of these" recipe is frozen to one member | a call on whether three expired recipes justify a pool rule |
@@ -1217,24 +1228,73 @@ name states its contents (`120x Random Rare` is one bag of 120).
 
 ---
 
-## PIPE-4. Feasibility verdict: import trade-good quantities from truedungeontokens.com — OPEN, and the ball is mine
+## PIPE-4. Feasibility verdict: import trade-good quantities from truedungeontokens.com — RESOLVED 2026-09-01
 
 The maintainer wrote `feasibility-check-import-trade-goods.md` (2026-08-31) asking
 whether a player's own collection could be read off truedungeontokens.com and
 applied to the Build Calculator and Shopping List automatically, so they do not
-maintain the list in two places. It sets out the site, the login, the filtered
-request and a sample response, and asks explicitly:
+maintain the list in two places, and asked to be pushed back on rather than coded
+for.
 
-> "Push back aggressively here. I need an honest assessment of the feasibility."
-> … "Do not start to code a solution."
+**It was answered on 2026-09-01**, investigated and written up as a shareable page:
+**[Can We Import Trade Goods?](https://claude.ai/code/artifact/57ad15cf-3e8f-4245-9620-d22b10201c18)**
+(private until shared; its last section is a dashed panel written to be forwarded
+to the truedungeontokens.com maintainer as-is).
 
-**No answer has been written.** That is the open item — a verdict, not a build.
-The obvious things it has to weigh: cross-authentication from a static
-GitHub-Pages site with no backend and no place to put a secret; CORS on a request
-the browser makes to another origin; mapping that site's token names onto ours
-(the response distinguishes 10x lots **by colour** — brown 1x, tan 10x — while GP
-bar multiples are all brown and carry the multiplier in the name); and what
-happens to a player's saved on-hand counts when the import disagrees with them.
+**This entry was wrong from the day it was written.** The consolidation that created
+this file ran 2026-09-03, read the brief, found no answer *file* in the repo, and
+recorded "no answer has been written" — see the correction note below.
+
+### The verdict, in brief
+
+**The automatic version is impossible as the site stands, and the blocker is
+entirely on their end.** Three independent walls: the endpoint sends
+`Access-Control-Allow-Origin: *` with **no** `Access-Control-Allow-Credentials`,
+which is a spec-level CORS failure for a credentialed read; the session cookie is
+`SameSite=Lax`, so it is not attached cross-site at all; and this site is static,
+with nowhere to put a proxy. The quantities **are** the session — unauthenticated,
+every row comes back `q:0`.
+
+**The password-proxy workaround is ruled out on principle**, not on difficulty: it
+means asking the community to hand this site a password for someone else's site.
+Do not let it be re-framed as "just an app password" or "just store the cookie".
+
+**The real answer is to ask the site's owner for a read token.** They already serve
+`Access-Control-Allow-Origin: *`, so an endpoint accepting a per-user token in
+place of the session cookie would let this static site read it directly — a small
+change on their side, no infrastructure on ours, and the only path that delivers
+what the player actually asked for.
+
+**Everything else is desktop-only.** A bookmarklet POSTs the filtered 5.2 KB but
+bookmarklets are unusable on phones; a plain link carries the `Lax` cookie but the
+GET **ignores the filter params** (measured — saved filters do not reach that
+endpoint), so it dumps 1,903 KB. Nobody pastes 1.9 MB on a phone.
+
+**The data side is clean**: 14/14 exact name matches against `tokenMetadata.csv`,
+straight apostrophes on both sides, no collisions, and 27 brown/tan rows over 27
+distinct names, so no summing across printings. Tan means ×10 with a pluralised
+name; consolidated gold bars expand into `1,000 GP Gold Bar`; Omni Orb, Omni Cube
+and Skull of Batterak are brown but not trade goods; and **Monster Trophy is absent
+from their catalogue entirely**, so it can never import.
+
+**The Build Calculator is deliberately out of scope** — its on-hand counts are keyed
+by line index (`SITE-7`), and `calcStorage.ts` records that the two tools
+deliberately do not share a number. Half the original request contradicts a settled
+decision.
+
+**And even the good version is a snapshot, not a sync.**
+
+### What is actually left, and it is not a repo item
+
+Whether the truedungeontokens.com owner has been asked for a token — an external
+conversation, the maintainer's to have, and the gate on everything above. If they
+decline, the fallback is the bookmarklet → Shopping List paste (`T|<name>` into the
+existing `setOnHandMany`), labelled desktop-only.
+
+**One stale line in the brief**, flagged twice on 2026-09-01 and still there: it
+describes the filtered 27-row list as what you receive, which holds for the POST
+but not the authenticated GET, which returns all 9,597 rows. Anyone planning
+against that file should not plan against 27.
 
 ---
 
