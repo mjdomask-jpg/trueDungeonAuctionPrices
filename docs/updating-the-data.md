@@ -1445,19 +1445,36 @@ validation is. So there are two layers and neither is sufficient alone:
 - **`npm run validate` § 8 catches one item spelled two ways.**
   `contextItems.Item` is free text — it has to be, since an augment can be any
   token ever printed — but two spellings are two series, each with half the
-  history. It folds case, spacing and the curly apostrophe, then folds again to
-  alphanumerics with a trailing plural stripped, and it looks at
-  `tokenMetadata`, `onyx` and `prices` as well as `contextItems`, because the
-  split usually straddles files: `Figurine of Power Phoenix` is a context row
-  while `Figurine of Power: Phoenix` is an Onyx one.
+  history. It folds case and spacing, then the curly apostrophe, then folds
+  again to alphanumerics with a trailing plural stripped, and it looks at
+  `tokenMetadata`, `onyx`, `prices` and `offAuctionPrices` as well as
+  `contextItems`, because the split usually straddles files: `Figurine of Power
+  Phoenix` is a context row while `Figurine of Power: Phoenix` is an Onyx one.
 
-  **Everything here is a NOTE, never an error**, and deliberately so — merging
-  is a judgement a human has to make. `+1 Turkey Leg` and
-  `+1 Turkey Leg of Smiting` are genuinely different tokens whose names contain
-  one another, and collapsing that pair would merge 87 lots of 2022 into one
-  price series. It is also why a pre-existing split does not block a publish:
-  the four it currently reports are real defects in shipped data that want
-  fixing **in the workbook**, not in the repo.
+  **How certain the pair is decides the severity:**
+
+  | Differs only in | Severity | Why |
+  |---|---|---|
+  | CASE or WHITESPACE | **ERROR** | Nothing to arbitrate. One token, two spellings |
+  | a curly apostrophe | **ERROR** | Names are spelled with the straight one |
+  | punctuation, or a trailing plural | note | Might be two real tokens |
+
+  The notes are notes deliberately — merging is a judgement a human has to
+  make. `+1 Turkey Leg` and `+1 Turkey Leg of Smiting` are genuinely different
+  tokens whose names contain one another, and collapsing that pair would merge
+  87 lots of 2022 into one price series. It is also why a pre-existing split
+  does not block a publish: the four it currently reports are real defects in
+  shipped data that want fixing **in the workbook**, not in the repo.
+
+  **`offAuctionPrices` is in that list for a stronger reason than the others.**
+  Its `Item` is a JOIN KEY into `tokenMetadata`, so a name that misses by one
+  capital letter does not split a series — it prices nothing, silently. On
+  2026-09-18 a `Unique` → `unique` rename reached `tokenMetadata` and the
+  recipes but not `offAuctionPrices`, four tokens stopped being priced, and
+  both halves of the break were reported as unrelated WARNINGS in two different
+  validators while `validate` exited 0. The first thing to actually fail was a
+  shopping-list assertion three suites later, saying only that four lines had
+  no price.
 
 Cells also remain untyped underneath, and the four "plausible wrong number"
 defect classes — a price that is real but wrong — are untouched by any of this.
