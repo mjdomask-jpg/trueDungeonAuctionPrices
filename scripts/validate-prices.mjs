@@ -939,14 +939,27 @@ console.log('7. Closed vocabularies (auctionMetadata.csv, prices.csv, onyx.csv, 
 //
 //   ERROR   differs only in CASE or WHITESPACE. A typo by construction — the
 //           same rule § 7 applies, for the same reason.
-//   NOTE    differs only in PUNCTUATION or a trailing plural. Usually one item,
-//           but not always: `+1 Turkey Leg` and `+1 Turkey Leg of Smiting` are
-//           two different tokens whose names contain one another, and merging
-//           that pair would collapse 87 lots of 2022 into one price series. So
-//           this one is surfaced for a human, never asserted.
+//   NOTE    differs only in an APOSTROPHE, or in PUNCTUATION or a trailing
+//           plural. Usually one item, but not always: `+1 Turkey Leg` and
+//           `+1 Turkey Leg of Smiting` are two different tokens whose names
+//           contain one another, and merging that pair would collapse 87 lots
+//           of 2022 into one price series. So those are surfaced for a human,
+//           never asserted.
+//
+// The ERROR half was documented here from the start and was NOT what the code
+// did — every class went to `warns`. That gap cost a real defect on 2026-09-18:
+// a `Unique` -> `unique` rename was applied to tokenMetadata and the recipes
+// but not to `offAuctionPrices.Item`, and the two halves of the break were
+// reported as two unrelated WARNINGS in two different validators. `validate`
+// exited 0, and the first thing to actually fail was a shopping-list assertion
+// three suites later, saying only that four lines had no price.
+//
 // It looks OUTSIDE contextItems too, because the split does. `Figurine of Power
 // Phoenix` sits in contextItems while `Figurine of Power: Phoenix` sits in
 // onyx.csv, and a check confined to one file cannot see that pair at all.
+// `offAuctionPrices` is in that list for a stronger reason than the others:
+// its `Item` is a JOIN KEY into tokenMetadata, so a name that misses by one
+// capital letter does not split a series, it prices nothing and says nothing.
 console.log('8. One item, one spelling (contextItems.csv)');
 {
   const errs = [], warns = [];
@@ -956,6 +969,10 @@ console.log('8. One item, one spelling (contextItems.csv)');
   // on that, because the two spellings still split a series here.
   const soft = (v) => String(v).toLowerCase().replace(/[‘’ʼ]/g, "'").replace(/\s+/g, ' ').trim();
   const hard = (v) => soft(v).replace(/[^a-z0-9]/g, '').replace(/(e?s)$/, '');
+  // Case and whitespace ONLY. Deliberately does NOT fold the apostrophe: a
+  // curly one already has its own ERROR below, and folding it here would
+  // report the same pair twice under two different rules.
+  const caseOnly = (v) => String(v).toLowerCase().replace(/\s+/g, ' ').trim();
 
   const counts = new Map(), firstRow = new Map(), source = new Map();
   for (const [i, r] of ctx.entries()) {
@@ -970,6 +987,7 @@ console.log('8. One item, one spelling (contextItems.csv)');
     ['tokenMetadata.csv', load('tokenMetadata.csv'), ['Item', 'Display Name']],
     ['onyx.csv', onyx, ['Item']],
     ['prices.csv', prices, ['Item']],
+    ['offAuctionPrices.csv', load('offAuctionPrices.csv'), ['Item', 'Display Name']],
   ]) {
     for (const r of rows) {
       for (const f of fields) {
@@ -996,19 +1014,41 @@ console.log('8. One item, one spelling (contextItems.csv)');
   };
   const describe = (n) => `"${n}" [${source.get(n)}` +
     (firstRow.has(n) ? ` row ${firstRow.get(n)}` : '') + ']';
-  // A group is only ours if a contextItems name is in it — two spellings that
-  // both live in the price files are somebody else's problem, and § 7 owns them.
-  const mine = (g) => g.some((n) => source.get(n) === 'contextItems.csv');
+  // A CASE or WHITESPACE difference is an ERROR, and is scoped to NO file in
+  // particular, because there is nothing to arbitrate anywhere: `Golem Piece
+  // (40 Unique)` and `Golem Piece (40 unique)` are one token however they are
+  // filed. The near-miss classes below stay notes and stay scoped, because
+  // those genuinely can be two tokens.
+  const caseGroups = group(caseOnly);
+  for (const g of caseGroups) {
+    for (const odd of g.slice(1)) {
+      errs.push(`Item ${describe(odd)} differs from ${describe(g[0])} only in CASE or spacing — ` +
+        'one token, two spellings. Nothing joins them: a price keyed to one does not reach the other');
+    }
+  }
 
-  const softGroups = group(soft).filter(mine);
+  // A group is only ours if a contextItems OR an offAuctionPrices name is in
+  // it. Two spellings that both live in the price files are historical auction
+  // records and somebody else's problem — but `offAuctionPrices.Item` is a JOIN
+  // KEY into tokenMetadata, so a name that misses by a hair there does not
+  // "split a series", it silently prices nothing at all.
+  const mine = (g) => g.some((n) => {
+    const s = source.get(n);
+    return s === 'contextItems.csv' || s === 'offAuctionPrices.csv';
+  });
+
+  // Anything the case pass already reported is not reported again by the softer
+  // ones, or a single pair arrives three times under three descriptions.
+  const caseFlagged = new Set(caseGroups.flat().map(caseOnly));
+  const softGroups = group(soft).filter(mine).filter((g) => !caseFlagged.has(caseOnly(g[0])));
   for (const g of softGroups) {
     for (const odd of g.slice(1)) {
-      warns.push(`Item ${describe(odd)} differs from ${describe(g[0])} only in case, spacing or apostrophe — ` +
+      warns.push(`Item ${describe(odd)} differs from ${describe(g[0])} only in its apostrophe — ` +
         'the resolver folds these together, but they are still two rows and two series here');
     }
   }
-  // Only report a hard collision the soft pass did not already catch.
-  const alreadyFlagged = new Set(softGroups.flat().map(soft));
+  // Only report a hard collision the earlier passes did not already catch.
+  const alreadyFlagged = new Set([...softGroups.flat().map(soft), ...caseGroups.flat().map(soft)]);
   for (const g of group(hard).filter(mine)) {
     if (alreadyFlagged.has(soft(g[0]))) continue;
     warns.push(`Item ${describe(g[0])} and ${g.slice(1).map(describe).join(', ')} ` +
@@ -1055,7 +1095,7 @@ console.log('8. One item, one spelling (contextItems.csv)');
   const ctxNames = [...source].filter(([, s]) => s === 'contextItems.csv').length;
   if (errs.length) { /* the errors say it */ }
   else if (!warns.length) ok(`${ctxNames} distinct context item name(s), each spelled one way here and in the price files`);
-  else ok(`${ctxNames} distinct context item name(s) checked against tokenMetadata, onyx and prices`);
+  else ok(`${ctxNames} distinct context item name(s) checked against tokenMetadata, onyx, prices and offAuctionPrices`);
 }
 
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${fail} error(s), ${warn} warning(s)`);

@@ -460,13 +460,16 @@ const cases = [
       '20181,2018,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",trade 2')),
     /Category "trade 2" differs from tokenMetadata's "Trade 2" only in case or spacing/],
 
-  // § 8. All warnings: these are real defects in shipped data that a human has
-  // to arbitrate, and failing the gate on one would block a publish for a row
-  // nobody has been shown yet.
+  // § 8 splits by how certain the pair is. A PUNCTUATION or trailing-plural
+  // difference stays a warning: those are real defects a human has to
+  // arbitrate, and failing the gate on one would block a publish for a row
+  // nobody has been shown yet. A CASE or WHITESPACE difference is an ERROR —
+  // there is nothing to weigh up, and leaving it a warning cost a real defect
+  // on 2026-09-18 (see the § 8 header in validate-prices.mjs).
   ['8  one context item spelled two ways', () => edit('contextItems.csv', (t) =>
     t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
       '202019,2020,19,token,bead of the  lucky traveler,1,$145.00')),
-    /differs from .* only in case, spacing or apostrophe/, 'warn'],
+    /differs from .* only in CASE or spacing/],
 
   // A curly apostrophe is an ERROR, not one of the arbitrable near-misses:
   // there is nothing to weigh up, a name is spelled with the straight one.
@@ -490,7 +493,20 @@ const cases = [
   ['8  context item disagrees with tokenMetadata', () => edit('contextItems.csv', (t) =>
     t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
       '202019,2020,19,token,Wish  Ring,1,$145.00')),
-    /\[tokenMetadata\.csv\]|\[prices\.csv\]|\[onyx\.csv\]/, 'warn'],
+    /\[tokenMetadata\.csv\]|\[prices\.csv\]|\[onyx\.csv\]/],
+
+  // THE 2026-09-18 DEFECT, in one line. A `Unique` -> `unique` rename reached
+  // tokenMetadata and the recipes but not `offAuctionPrices.Item`, which is a
+  // JOIN KEY: the price stopped reaching four tokens and nothing failed. Both
+  // halves were reported, as two unrelated WARNINGS in two different
+  // validators, and `validate` exited 0.
+  //
+  // Keyed on the NAME either side of the edit, never on the row's prices — a
+  // case pinned to a value is pinned to a Google Sheets formatting decision.
+  ['8  an off-auction price key differs only in case', () => edit('offAuctionPrices.csv', (t) =>
+    t.replace(',Golem Piece (40 unique),Golem Piece (40 unique),',
+      ',Golem Piece (40 Unique),Golem Piece (40 unique),')),
+    /differs from .* only in CASE or spacing/],
 ];
 
 // The shipped data must be clean first: every case below asserts that ONE
