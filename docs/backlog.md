@@ -83,7 +83,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-1** | Ingest auctioneers' external tracking sheets | sign-in access to those sheets |
 | **PIPE-2** | ~~Close handling for alesievauctions.com~~ | **RESOLVED 2026-09-10** — `alesievClose.gs`; the withheld and Onyx paths are built and tested but have never seen a real file |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
-| **PIPE-5** | Ask the truedungeontokens.com owner for a read token | **a conversation, not code** — the maintainer's to have, and the gate on the whole import idea |
+| **PIPE-5** | Ask the truedungeontokens.com owner for a read token | **a conversation, not code** — the maintainer's to have, the gate on the whole import idea, and now also the gate on a redacted section in the **public** treasure-pull repo |
 | **PIPE-6** | ~~The tokendb check blocked publishes over a missing FIXTURE~~ | **LARGELY RESOLVED 2026-09-18** — `Source` column + triage + `tokendb:refresh`; **the workbook column and the site badge are what is left** |
 | **PIPE-4** | ~~Feasibility verdict: import trade-good quantities from truedungeontokens.com~~ | **RESOLVED — it was answered 2026-09-01**, two days before this file was written; the verdict is a published artifact, not a repo file, which is why the consolidation missed it |
 | **DATA-9** | ~~12 recipes disagree with tokendb~~ | **RESOLVED 2026-09-08** — all twelve corrected and published, plus Orion's Belt and the +1 Turkey Leg |
@@ -1346,6 +1346,37 @@ in the UI**, rather than letting phone players discover it themselves.
 **Either way, tell the player it is a snapshot they re-pull, not a live sync.**
 "Don't maintain it in two spots" is not fully achievable against a site with no
 export and no API.
+
+### A second project is waiting on this answer, and its doc is redacted until then
+
+**The treasure-pull recorder has a redacted section that unblocks when this is
+asked.** On 2026-09-18 its practices doc inherited `PIPE-4`'s verdict so the
+question would not be re-derived over there — and then that repository was
+published **public** at
+[github.com/mjdomask-jpg/treasure-pulls](https://github.com/mjdomask-jpg/treasure-pulls),
+which made naming the site, its owner and its cookie behaviour in a world-readable
+file the wrong thing to do **before the owner has been asked**.
+
+So `C:\treasure-pulls\docs\inherited-practices.md` § *Questions already answered*
+now states the three conclusions that carry over — the blocker is ordinary browser
+security and not a bug, password collection is ruled out on principle, and Monster
+Trophy is absent from the catalogue regardless — **without naming anything**, and
+points here for the detail. A blockquote in that section says why.
+
+**What to do when this item closes:** restore the specifics in that file, or
+decide they stay out of a public repo permanently and delete the blockquote so it
+stops looking like an open action. Either is fine; leaving it is not, because a
+note saying "until they have been asked" is wrong the moment they have been.
+
+**Why it is recorded here rather than only there.** The trigger is a conversation
+that happens outside both repositories, and this is the list that gets read when
+it does. Nothing in the treasure-pull repo will surface its own redaction at the
+right moment — and it is not under this repo's CI, so no check will either.
+
+**One thing not to repeat.** That repo was created public with the unredacted text
+in it, and a force-push did **not** remove it — GitHub kept serving the original
+content by SHA. It took a delete-and-recreate to actually clear. If a doc here
+ever ships to a public home, redact **before** the first push, not after.
 
 ### Two things that are not negotiable in the asking
 
