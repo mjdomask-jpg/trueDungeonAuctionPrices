@@ -77,6 +77,9 @@ const FORMULA_COLUMNS = {
   contextItems: ['auctionId'],
   tokenMetadata: ['key'],
   offAuctionPrices: ['Key'],
+  // ResolvedYear is 1,943 of 1,985 in the live workbook — above the formula
+  // share, so plainly a formula column rather than a mixed one.
+  transmuteRecipes: ['Key', 'ResolvedYear', 'Display Name'],
 };
 // Genuinely mixed columns, also measured from the real export. `priceAugmented`
 // is 95 of 631 populated cells — withheld rows are a QUERY, token and grunnel
@@ -110,7 +113,7 @@ function buildBook(files) {
 }
 
 const FILES = ['auctionMetadata.csv', 'prices.csv', 'onyx.csv', 'rawPricesData.csv',
-  'contextItems.csv', 'tokenMetadata.csv', 'offAuctionPrices.csv'];
+  'contextItems.csv', 'tokenMetadata.csv', 'offAuctionPrices.csv', 'transmuteRecipes.csv'];
 
 // ===========================================================================
 console.log('\n=== 1. finding a column by header ===');
@@ -173,6 +176,27 @@ ok(plan.actions.length > 0, 'the plan proposes nothing at all');
 
 // Every price column gets numeric validation, and `prices!Price` is the one
 // that makes the `-` class impossible.
+// Every tab the script's config NAMES must be modelled by this workbook, or
+// that tab's rules are silently inert. `hardenPlan` checks "is there such a
+// tab" BEFORE it checks `pending`, so an entry naming an unmodelled tab pushes
+// a problem no assertion reads and proposes nothing at all.
+//
+// That is exactly how `transmuteRecipes!Source` shipped broken: the tab was
+// never in FILES, `pending: true` skipped the one assertion that would have
+// noticed, and the defect surfaced only when the column was finally added and
+// the flag came off — turning someone else's unrelated PR red. A `pending`
+// flag must mean "the column is not here yet", never "the tab is not here".
+const configuredTabs = new Set([
+  ...H.HARDEN_PRICE_COLUMNS.map((c) => c.tab),
+  ...H.HARDEN_COUNT_COLUMNS.map((c) => c.tab),
+  ...H.HARDEN_VOCABULARY.map((v) => v.tab),
+]);
+for (const tab of configuredTabs) {
+  ok(book.tabs[tab], `HARDEN config names tab "${tab}" but this test's workbook does not model it — add its CSV to FILES, or that tab's rules are inert`);
+}
+ok(!plan.problems.some((p) => /^no tab named/.test(p)),
+  `the plan cannot find a tab it is configured for: ${plan.problems.filter((p) => /^no tab named/.test(p)).join('; ')}`);
+
 const validated = new Set(kinds('validate').map((a) => `${a.tab}!${a.header}`));
 for (const c of H.HARDEN_PRICE_COLUMNS) {
   ok(validated.has(`${c.tab}!${c.header}`), `no numeric validation proposed for ${c.tab}!${c.header}`);
