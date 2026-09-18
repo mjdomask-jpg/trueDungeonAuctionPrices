@@ -64,7 +64,7 @@ const SCHEMA = {
     // Optional by design: the engine defaults every one of these, so the site
     // is correct before the sheet is touched and authoring only adds precision.
     // Listed here for documentation; absence is never an error.
-    optional: ['Expires', 'IngredientType'],
+    optional: ['Expires', 'IngredientType', 'Source'],
     renamed: { Good: 'Item', GoodYear: 'ItemYear', GoodDisplayName: 'Display Name' },
   },
   'offAuctionPrices.csv': {
@@ -365,6 +365,41 @@ for (const [k, values] of expiresByRecipe) {
     else
       add('INFO', 'expires', `${k}: non-standard expiry ${v} (standard would be ${Number(year) + 1}-12-01)`);
   }
+}
+
+// ---------- Source (optional column, recipe provenance) ----------
+// Where a recipe's numbers came from. It exists because tokendb is not the
+// first place a recipe appears: the company publishes proposed recipes as a
+// forum PDF and tokendb may not carry the final version for months. Blank means
+// `tokendb`, which is why the column needs no back-population -- the 175
+// recipes that predate it keep exactly the behaviour they had.
+//
+// One value per recipe, like Expires. The rules here are deliberately thin: the
+// only thing that can go wrong is a value nothing recognises, and the cost of
+// that is real, because `test:tokendb` treats an unrecognised value as
+// CHECKABLE so a typo cannot quietly switch the guard off. A recipe the
+// maintainer believes is exempt, and which is silently still being checked, is
+// worth a WARN at the gate -- pastes bypass the sheet's own dropdown.
+const SOURCE_VOCAB = new Set(['tokendb', 'forum-pdf']);
+const sourceByRecipe = new Map(); // `${Year}|${Transmute}` -> Map(value -> count)
+for (const r of recipes) {
+  const v = (r.Source ?? '').trim();
+  if (!v) continue;
+  const k = `${r.Year}|${r.Transmute}`;
+  if (!sourceByRecipe.has(k)) sourceByRecipe.set(k, new Map());
+  sourceByRecipe.get(k).set(v, (sourceByRecipe.get(k).get(v) ?? 0) + 1);
+}
+for (const [k, values] of sourceByRecipe) {
+  if (values.size > 1)
+    add('ERROR', 'source-conflict', `${k}: rows disagree on Source (${[...values.keys()].map(v => `"${v}"`).join(' vs ')}) -- it is one value per recipe`);
+  for (const v of values.keys()) {
+    if (SOURCE_VOCAB.has(v.toLowerCase())) continue;
+    // Not an ERROR: a value nobody recognises fails safe (the recipe keeps
+    // being checked), so this must not be the thing that blocks a publish.
+    add('WARN', 'source', `${k}: Source "${v}" is not one of ${[...SOURCE_VOCAB].join(', ')} -- it is still being checked against tokendb`);
+  }
+  if (values.size === 1 && [...values.keys()][0].toLowerCase() === 'tokendb')
+    add('INFO', 'source', `${k}: Source=tokendb restates the default`);
 }
 
 // ---------- IngredientType agreement across lines (docs/backlog.md DATA-5) ----------

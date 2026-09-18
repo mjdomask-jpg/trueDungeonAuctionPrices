@@ -13,6 +13,18 @@ edit that drifts from tokendb now shows up as a red check rather than as a moved
 total nobody notices. Re-measure the known list with
 `TOKENDB_EMIT_KNOWN=1` rather than editing it by hand.
 
+> **What this check is not allowed to do (2026-09-18).** It must never block a
+> publish because THIS REPO is missing a fixture. tokendb is not where a recipe
+> first appears — proposed recipes arrive as a forum PDF months earlier, and a
+> backfilled recipe needs its page fetched, which CI cannot do. So a recipe the
+> check cannot read is **unverified, never incorrect**: it leaves the
+> denominator with its reason, the way `onyxcheck.mjs` treats an unreconcilable
+> row. Only a recipe that DOES resolve to a page and DISAGREES with it fails.
+> Recipes marked `Source=forum-pdf` are not asked at all; an unmapped one is a
+> note naming `npm run tokendb:refresh`, which fetches the page and writes the
+> manifest entry itself. See `backlog.md` PIPE-6 and `updating-the-data.md`
+> § *The `Source` column*.
+
 ## Scope
 
 | | |

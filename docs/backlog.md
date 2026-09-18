@@ -84,6 +84,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-2** | ~~Close handling for alesievauctions.com~~ | **RESOLVED 2026-09-10** — `alesievClose.gs`; the withheld and Onyx paths are built and tested but have never seen a real file |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
 | **PIPE-5** | Ask the truedungeontokens.com owner for a read token | **a conversation, not code** — the maintainer's to have, and the gate on the whole import idea |
+| **PIPE-6** | ~~The tokendb check blocked publishes over a missing FIXTURE~~ | **LARGELY RESOLVED 2026-09-18** — `Source` column + triage + `tokendb:refresh`; **the workbook column and the site badge are what is left** |
 | **PIPE-4** | ~~Feasibility verdict: import trade-good quantities from truedungeontokens.com~~ | **RESOLVED — it was answered 2026-09-01**, two days before this file was written; the verdict is a published artifact, not a repo file, which is why the consolidation missed it |
 | **DATA-9** | ~~12 recipes disagree with tokendb~~ | **RESOLVED 2026-09-08** — all twelve corrected and published, plus Orion's Belt and the +1 Turkey Leg |
 | **DATA-10** | Fractional GP is dropped or rounded | nothing — three `derivedPrices.csv` rows, no engine or workbook change |
@@ -1393,3 +1394,86 @@ This file is the list. These are still the places to understand a thing:
 | The Shopping List's build, step by step | `shopping-list.md`, `shopping-list-handoff.md` |
 | Site-wide UI rules | `ui-conventions.md` |
 | How the thread reader fails | the `forum-thread-parser-traps` memory |
+
+---
+
+## PIPE-6. Recipe provenance — `Source`, and the check that stopped blocking publishes — LARGELY RESOLVED 2026-09-18
+
+**What was wrong.** `test:tokendb` required a repo-side registry entry before new
+sheet data could publish. On 2026-09-18 the workbook added one recipe,
+`Omni Orb Ultra Rare Recipe`; `fixtures/tokendb/manifest.json` had no `slugs`
+entry for the name, so no fixture resolved, so it parsed to nothing, so it
+reconciled as `NO_RECIPE_ON_PAGE` outside the `known` list — **five failures from
+one absence**, cascading through all three sections and blocking the
+auction-metadata rows riding in the same publish commit.
+
+The data was correct throughout. tokendb's page already carried the alternate
+recipe (`6× any Ultra Rare token from the Standard Set`), the CSV said 6, and
+once mapped it reconciled **exactly**. The check produced no information about
+correctness and blocked a correct publish. Fixed for that one recipe by two
+manifest lines in PR #199.
+
+**Why two lines was not the fix.** Unlike the five earlier publish-blockers,
+which were each a stale number fixed once, this recurs on **every new transmute,
+forever**, and it breaks the sheet-as-single-source-of-truth property the
+maintainer works by. Two cases make it structural rather than occasional:
+
+1. **Preview season.** Proposed recipes are published as a **forum PDF**, and
+   tokendb may not carry the final version for **months**. There is nothing to
+   scan and nothing to map — a whole batch of recipes legitimately has no page.
+2. **Historical backfill.** A recipe tokendb has carried for years still needs
+   its fixture **fetched**, and CI has no network by design. So the blocking
+   path could demand a round-trip the pipeline cannot take.
+
+**The flaw, precisely:** § 1 treated *"I have no way to check this"* as *"this is
+wrong."* A transmute with no fixture is **unverified**, not **incorrect** — the
+same distinction `onyxcheck.mjs` settled during the onyx backfill, where
+unreconcilable rows come out of the denominator *with their reason*, because a
+permanently short score teaches the next reader to hunt a bug that is not there.
+
+**What shipped.**
+
+- **An optional `Source` column** on `transmuteRecipes.csv`: blank (= `tokendb`)
+  or `forum-pdf`. **No back-population** — the 175 existing recipes keep their
+  behaviour. Authored in the sheet, so provenance stays single-source-of-truth.
+  One value per recipe, like `Expires`.
+- **`test:tokendb` triages before asserting**: preliminary recipes are not asked,
+  unmapped ones are a **note naming the remedy**, and only a recipe that resolves
+  to a page and disagrees with it fails. Sections 2 and 3 are scoped to the
+  mapped corpus, so § 2 is about the parser again rather than the registry.
+- **An unrecognised `Source` fails SAFE** — the recipe stays checked, and both
+  `validate-recipes.mjs` (WARN) and § 5 name it. A typo cannot quietly disable
+  the guard.
+- **`npm run tokendb:refresh`** fetches pages *and* writes the manifest, so
+  backfilling needs no hand edit. It refuses a page whose `<h1>` does not relate
+  to the name, tries the slug shapes the documented rule misses, picks
+  `listIndex` by reconciling each candidate list against the CSV, and masks
+  Cloudflare's per-request nonce so a no-op re-fetch writes nothing.
+- **The parser is now shared** (`scripts/lib/tokendb.mjs`), so the fetcher
+  accepts exactly the pages the check will later read. Two parsers would drift,
+  and a refresh that files a page its own parser likes while the check reads it
+  differently is the worst kind of green.
+
+Proven by five probes against the real CSV (restored byte-exact afterwards): an
+unmapped recipe is a note and exits 0; a preliminary one is silently skipped; a
+corrupted **checked** recipe still fails; a `Source` typo fails *and* keeps the
+recipe checked; and a corrupted **preliminary** recipe is invisible — the honest
+cost of opting out.
+
+### What is left
+
+| | |
+|---|---|
+| **The workbook column** | `Source` does not exist in the `transmuteRecipes` tab yet. Everything above works without it — absence yields blank, which means `tokendb`. Its `HARDEN_VOCABULARY` entry is `pending: true`, the path DATA-6's `outcome` took; **drop `pending` once the column exists** so a later rename is an alarm again. |
+| **The site badge** | Deliberately not built. The Build Calculator and Shopping List compute **money** off these recipes, and a `forum-pdf` recipe is presented identically to a final one — someone can plan an 8K order against numbers that change before print. `Recipe.source` is carried through the engine so this needs no second schema change. Scoped out on 2026-09-18 to keep the unblocking change small. |
+| **Promotion is manual** | Nothing notices when tokendb catches up on a `forum-pdf` recipe. `npm run tokendb:refresh -- --stale` is the nearest thing. A report of "these preliminaries now have pages" would close the loop. |
+
+### The structural problem underneath, still open
+
+`publishToSite.gs` ships all eight CSVs as **one commit**, so any one file's
+check blocks all of them — which is why a recipe fixture held up an auction
+update. Even a perfect tokendb check would have done so had the recipe genuinely
+been wrong. A per-concern publish, or a way to land part of one, is the thing
+that actually protects time-sensitive auction rows. Not scoped; recorded here
+because this is the second time the all-or-nothing publish turned a narrow
+problem into a broad one.

@@ -38,7 +38,7 @@
  * `HARDEN_`/`harden`.
  */
 
-var HARDEN_VERSION = '2026-09-11.2';
+var HARDEN_VERSION = '2026-09-18.1';
 
 /**
  * Columns holding a price, by tab and header. Numeric-only validation goes on
@@ -123,6 +123,29 @@ var HARDEN_VOCABULARY = [
   // the auction as open anyway and `validate-prices.mjs` § 4 notes the stale
   // cell. Nothing downstream waits on someone clearing it on the day.
   { tab: 'auctionMetadata', header: 'outcome', grows: false, values: ['Failed', 'Pending'] },
+  // `Source` is transmuteRecipes' provenance column (2026-09-18). It is
+  // `grows: false` and warn-only for opposite-looking reasons that are both
+  // deliberate:
+  //
+  // The set cannot legitimately gain a member, because it is not a description
+  // of the world -- it is a two-way decision about whether tokendb can be asked
+  // about this recipe. A third value would mean a third ANSWER to that
+  // question, and there isn't one.
+  //
+  // But the dropdown is a HELP rather than a fence, because the column is
+  // OPTIONAL and blank is its normal state: 175 of 179 recipe groups carry
+  // nothing here and always will. Rejecting input on a column that is almost
+  // always empty turns every ordinary paste into a fight, and a paste is how
+  // this sheet is updated. `validate-recipes.mjs` re-checks the vocabulary at
+  // the PR gate, where a paste cannot bypass it, and deliberately WARNs rather
+  // than erroring -- an unrecognised value leaves the recipe being checked, so
+  // it fails safe and must not be what blocks a publish.
+  // `pending: true` until the workbook grows the column -- the same path
+  // DATA-6's `outcome` took. The repo side ships first so the CHECK stops
+  // blocking publishes immediately; the sheet column can follow whenever, and
+  // until it does an absent column here is expected rather than an alarm.
+  // Drop `pending` once the column exists, so a later RENAME is an alarm again.
+  { tab: 'transmuteRecipes', header: 'Source', grows: true, pending: true, values: ['tokendb', 'forum-pdf'] },
 ];
 
 // `augmentated` is NOT here, and the reason is worth keeping. It reads like the
