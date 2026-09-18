@@ -7,13 +7,13 @@ Key,Year,Category,Item,Display Name,max Price,avg Price,min Price
 2024Golden Fleece,2024,Trade 3,Golden Fleece,Golden Fleece,50,45,40
 2025Golden Fleece,2025,Trade 3,Golden Fleece,Golden Fleece,70,60,50
 2026Golden Fleece,2026,Trade 3,Golden Fleece,Golden Fleece,90,85,75
-2023Stalker Token,2023,No Match Found,Stalker Token,No Match Found,5,4,3
-2026Herald Token (20 Unique),2026,Treasure Chest,Herald Token (20 Unique),Herald Token (20 unique),20,15,10
+2023Stalker Token (20 unique),2023,Treasure Chest,Stalker Token (20 unique),Stalker Token (20 unique),5,4,3
+2026Herald Token (20 unique),2026,Treasure Chest,Herald Token (20 unique),Herald Token (20 unique),20,15,10
 2026Melonbrant Concentrate,2026,Silver Ship Games,Melonbrant Concentrate,Melonbrant Concentrate,50,40,29
 2026Mirthwood Bliss Blossom,2026,Silver Ship Games,Mirthwood Bliss Blossom,Mirthwood Bliss Blossom,50,40,29
 2026Nil Crystal,2026,Silver Ship Games,Nil Crystal,Nil Crystal,60,50,39
 2026Pemberton Pain Extract,2026,Silver Ship Games,Pemberton Pain Extract,Pemberton Pain Extract,50,40,29
-2026Golem Piece (40 Unique),2026,Treasure Chest,Golem Piece (40 Unique),Golem Piece (40 unique),30,20,15
+2026Golem Piece (40 unique),2026,Treasure Chest,Golem Piece (40 unique),Golem Piece (40 unique),30,20,15
 2026Ioun Stone of Envy,2026,Participation,Ioun Stone of Envy,Ioun Stone of Envy,15,10,5
 2026Ioun Stone of Pride,2026,Participation,Ioun Stone of Pride,Ioun Stone of Pride,15,10,5
 2026Ioun Stone of the Dead,2026,Participation,Ioun Stone of the Dead,Ioun Stone of the Dead,15,10,5
@@ -32,6 +32,6 @@ Key,Year,Category,Item,Display Name,max Price,avg Price,min Price
 2024Monster Trophy,2024,Treasure Chest,Monster Trophy,Monster Trophy,5,4.5,4
 2025Monster Trophy,2025,Treasure Chest,Monster Trophy,Monster Trophy,7,6,5
 2026Monster Trophy,2026,Treasure Chest,Monster Trophy,Monster Trophy,9,8.5,7.5
-202450 GP Idol (40 Unique),2024,Treasure Chest,50 GP Idol (40 Unique),50 GP Idol (40 unique),15,10,5
+202450 GP Idol (40 unique),2024,Treasure Chest,50 GP Idol (40 unique),50 GP Idol (40 unique),15,10,5
 2019Relic Recipe Fragment (6 unique),2019,Treasure Chest,Relic Recipe Fragment (6 unique),Relic Recipe Fragment (6 unique),15,12.5,10
 202550 GP Rune (40 unique),2025,Treasure Chest,50 GP Rune (40 unique),50 GP Rune (40 unique),15,10,7.5
