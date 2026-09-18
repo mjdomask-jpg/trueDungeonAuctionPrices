@@ -25,7 +25,8 @@
     "test:thread": "node scripts/forum-thread.test.mjs",
     "test:harden": "node scripts/harden-sheet.test.mjs",
     "test:shopping": "node scripts/shopping-list.test.mjs",
-    "test:tokendb": "node scripts/tokendb-recipes.test.mjs"
+    "test:tokendb": "node scripts/tokendb-recipes.test.mjs",
+    "tokendb:refresh": "node scripts/tokendb-refresh.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

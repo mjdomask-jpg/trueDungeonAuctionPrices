@@ -2161,8 +2161,9 @@ sales.
 | J | `IsSource` | **you type** | `TRUE` = the token being upgraded *from*; `FALSE` = a consumed ingredient. |
 | K | `Expires` | **optional** | When the recipe stops being craftable. Blank = the standard rule. One value per recipe. |
 | L | `IngredientType` | **optional** | The ingredient's tier, from the `Category` vocabulary. Lets a line name a *specific* Ultra Rare. |
+| M | `Source` | **optional** | Where the recipe came from: blank or `tokendb`, or `forum-pdf` for a proposed recipe tokendb does not carry yet. One value per recipe. See below. |
 
-> **Both new columns are optional and the file is valid without them.** The
+> **All three are optional and the file is valid without them.** The
 > engine defaults every one, so the site is correct before you touch the sheet;
 > authoring them only adds precision. Add them at the end of the row — column
 > order does not matter, the header does.
@@ -2195,6 +2196,100 @@ sales.
   Build-vs-Upgrade split on that row. The validator's `multi-source` WARN catches
   it — this is exactly what caught `2014 Ring of Greater Focus` (8 source lines)
   and `2016 Blessed Redoubt Plate` (13), both fixed 2026-08-14.
+
+### The `Source` column — telling the checker what it cannot know
+
+`Source` is an **optional** per-recipe column, added 2026-09-18. Blank means
+`tokendb`, so **you never have to back-populate it** — the recipes that predate
+it keep exactly the behaviour they had.
+
+| Value | Means | Effect on `npm run test:tokendb` |
+|---|---|---|
+| *(blank)* | same as `tokendb` | reconciled against tokendb.com |
+| `tokendb` | tokendb carries this recipe | reconciled against tokendb.com |
+| `forum-pdf` | **proposed**, from a forum PDF | not checked at all, and not reported |
+
+**Why it exists.** tokendb is not where a recipe first appears. The company
+publishes proposed recipes as a PDF on the forums for community feedback, and
+tokendb may not carry the final version for **months**. During preview season
+the sheet is deliberately ahead of tokendb, and a check that treats "tokendb has
+never heard of this" as an error would block every publish for the whole season
+— including the auction rows riding in the same commit, since a publish is one
+commit for all eight files.
+
+**Author it on the recipe, not the line.** Like `Expires`, it is one value per
+recipe; put it on the first row of the block or fill it down, either is fine.
+`validate-recipes.mjs` errors if the rows of one recipe disagree.
+
+**A value nothing recognises fails SAFE.** A typo (`forum_pdf`, `Forum PDF`)
+leaves the recipe *being checked* rather than silently exempt, and is reported
+as a WARN by `validate-recipes.mjs` and named by § 5 of the tokendb check. That
+direction is deliberate: a typo must never be a quiet way to switch the guard
+off.
+
+**What you give up by marking a recipe `forum-pdf`.** Nothing checks its numbers
+at all — a transcription error from the PDF will sit there until you promote the
+recipe. That is the trade, and it is the right one while no page exists to check
+against. **When tokendb catches up, clear the cell** (or set `tokendb`) and run
+the refresh below; the recipe rejoins the checked corpus and any disagreement
+surfaces then.
+
+### Backfilling a recipe tokendb already has
+
+Adding a recipe that has been on tokendb for years — old Enhanced and Exalted
+recipes, say — needs no hand edit in this repo:
+
+```bash
+npm run tokendb:refresh
+```
+
+It finds every recipe with no fixture, fetches its page, writes
+`fixtures/tokendb/<slug>.html.gz` **and** the `manifest.json` entry, then tells
+you what it did. Commit what it writes.
+
+| Flag | What it does |
+|---|---|
+| *(none)* | every unmapped, non-preliminary recipe |
+| `--name="X"` | just that transmute |
+| `--stale` | re-fetch all 173 pages already mapped |
+| `--dry-run` | fetch and report, write nothing |
+
+Worth knowing:
+
+- **It refuses to guess.** A page whose `<h1>` does not relate to the CSV name is
+  rejected rather than filed under a right-looking slug — a wrong page under a
+  right name would let the check read a real recipe off the wrong token and go
+  green.
+- **It tries several slugs.** The documented rule gets 167 of 175; the rest are a
+  `mythic-` prefix or a possessive the CSV drops, so those are tried too.
+- **It picks `listIndex` by measurement.** A page carrying two recipes (the Omni
+  tokens) is resolved by reconciling *each* list against what the CSV already
+  records and keeping the better match. A tie is reported and left alone rather
+  than guessed.
+- **A re-fetch that changes nothing writes nothing.** Cloudflare stamps a fresh
+  nonce into every response, so the comparison masks it — otherwise `--stale`
+  would rewrite all 173 fixtures every time and bury a real change.
+- **A newly mapped recipe is CHECKED from then on.** If it genuinely disagrees
+  with tokendb the check will now fail — that is the point. If the difference is
+  a modelling or vintage question rather than an error, record it with
+  `TOKENDB_EMIT_KNOWN=1 npm run test:tokendb`.
+- **It needs the network, so it is not in CI.** The fixtures are checked in
+  precisely so `npm test` is reproducible offline.
+
+If a page genuinely is not on tokendb, the script says so and tells you to set
+`Source=forum-pdf` — which is the whole loop.
+
+### What the check will and will not block
+
+Since 2026-09-18 `test:tokendb` **cannot block a publish because this repo is
+missing scaffolding**. A recipe it cannot read is *unverified*, never
+*incorrect*: it comes out of the denominator with its reason, the way
+`onyxcheck.mjs` treats an unreconcilable row. Only a recipe that **does** resolve
+to a page and **disagrees** with it fails.
+
+Before that, one new recipe with no manifest entry produced five failures across
+three sections and blocked an unrelated auction update — having proved nothing,
+since once mapped it reconciled exactly (PR #199).
 
 ### Gotcha
 

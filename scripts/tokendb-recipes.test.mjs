@@ -6,19 +6,38 @@
 // contain. Every other validator checks the CSV against itself. This checks it
 // against the source of truth.
 //
+// WHAT THIS CHECK IS NOT ALLOWED TO DO, and why (2026-09-18):
+//
+//   It must never block a publish because the REPO is missing scaffolding.
+//   tokendb is not where a recipe first appears -- the company publishes
+//   proposed recipes as a forum PDF and tokendb may not carry the final
+//   version for MONTHS -- and old recipes get backfilled into the sheet long
+//   after their pages existed. In both cases the CSV is correct and the
+//   fixture simply is not here. Until 2026-09-18 that was five hard failures
+//   (PR #199): one new recipe with no manifest entry cascaded through all three
+//   sections and blocked an unrelated auction update, having proved nothing
+//   about correctness -- once mapped it reconciled exactly.
+//
+//   So: a recipe this suite CANNOT read is UNVERIFIED, never INCORRECT. It
+//   comes out of the denominator with its reason, the way onyxcheck.mjs treats
+//   an unreconcilable row, because a permanently short score teaches the next
+//   reader to hunt a bug that is not there. Only a recipe that DOES resolve to
+//   a page and DISAGREES with it fails.
+//
 // What is asserted, and why each assertion is the shape it is:
 //
-//   1. EVERY TRANSMUTE HAS A PAGE, and that page's <h1> is the token it claims
-//      to be. Eighteen names do not slug the way the obvious rule predicts, so
-//      the manifest carries every mapping; a new transmute with no fixture
-//      fails here rather than silently going unchecked.
-//   2. EVERY PAGE YIELDS A RECIPE LIST. tokendb is a WordPress site and its
-//      markup drifts -- one page today is missing a </li> and another writes
-//      its multipliers as &#xD7; rather than &#215;. A parser that quietly
-//      returns nothing would turn every recipe green, so an empty parse is a
-//      failure, never a pass.
+//   1. EVERY CHECKABLE TRANSMUTE HAS A PAGE. A name with no slug, or a slug
+//      with no fixture, is reported as UNMAPPED with the lines to add and the
+//      command that adds them -- a note, not a failure. Preliminary recipes
+//      (Source=forum-pdf) are not even asked.
+//   2. EVERY MAPPED PAGE YIELDS A RECIPE LIST. tokendb is a WordPress site and
+//      its markup drifts -- one page today is missing a </li> and another
+//      writes its multipliers as &#xD7; rather than &#215;. A parser that
+//      quietly returns nothing would turn every recipe green, so an empty parse
+//      of a page we HAVE is a failure. This is about the parser, so a page we
+//      do not have is not its business.
 //   3. NO DISCREPANCY OUTSIDE THE KNOWN LIST. This is the real guard. The
-//      manifest pins the 21 groups that disagreed when the corpus was captured,
+//      manifest pins the groups that disagreed when the corpus was captured,
 //      with their measured deltas; anything new -- a quantity that drifts, an
 //      ingredient that appears or vanishes -- fails.
 //
@@ -29,6 +48,8 @@
 //      correcting one of the 12 known data errors must not turn a publish PR
 //      red. A known entry that goes clean prints as a note asking for the
 //      manifest to be trimmed.
+//   * The number of unmapped or preliminary recipes. Pinning it would just
+//      re-create the block this check was rewritten to remove.
 //   * Ingredients of Rare rarity and below. The CSV omits them on purpose --
 //      of the 301 named ingredients it leaves out, 247 are Rare, Uncommon,
 //      Common, Quest or Premium, while the ones it DOES record are almost all
@@ -36,14 +57,10 @@
 //      phantom missing rows. Named tokens are compared only when the CSV
 //      already carries a row for them.
 
-import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { gunzipSync } from 'node:zlib';
-
-const here = dirname(fileURLToPath(import.meta.url));
-const fixtureDir = join(here, '..', 'fixtures', 'tokendb');
-const csvPath = join(here, '..', 'public', 'data', 'transmuteRecipes.csv');
+import {
+  manifest, recipeLists, reconcile, readRecipeGroups, isPreliminary,
+  deriveSlug, normaliseSource, SOURCE_VOCAB, TRADE, key, pageCacheSize,
+} from './lib/tokendb.mjs';
 
 let failures = 0;
 const notes = [];
@@ -52,300 +69,52 @@ function ok(cond, msg) {
 }
 function section(title) { console.log('\n' + title); }
 
-// ---------------------------------------------------------------- fixtures --
-const manifest = JSON.parse(readFileSync(join(fixtureDir, 'manifest.json'), 'utf8'));
-const pageCache = new Map();
-function page(slug) {
-  if (pageCache.has(slug)) return pageCache.get(slug);
-  const f = join(fixtureDir, slug + '.html.gz');
-  const html = existsSync(f) ? gunzipSync(readFileSync(f)).toString('utf8') : null;
-  pageCache.set(slug, html);
-  return html;
-}
+const groups = readRecipeGroups();
 
-// ------------------------------------------------------------------- HTML --
-const ENT = {
-  '&#8217;': '’', '&#8216;': '‘', '&#8220;': '“', '&#8221;': '”',
-  '&#8211;': '–', '&#8212;': '—', '&amp;': '&', '&lt;': '<', '&gt;': '>',
-  '&quot;': '"', '&#039;': "'", '&#8230;': '…', '&nbsp;': ' ',
-};
-function dec(s) {
-  return s
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, x) => String.fromCodePoint(parseInt(x, 16)))
-    .replace(/&#(\d+);/g, (_, x) => String.fromCodePoint(Number(x)))
-    .replace(/&#?\w+;/g, (m) => (ENT[m] !== undefined ? ENT[m] : m));
-}
-function txt(html) {
-  return dec(html.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
-}
-
-// Index just past the close tag matching the open tag beginning at startIdx.
-function matchBlock(html, tag, startIdx) {
-  const open = '<' + tag;
-  const close = '</' + tag;
-  const lower = html.toLowerCase();
-  let depth = 0;
-  let i = startIdx;
-  while (i < lower.length) {
-    const o = lower.indexOf(open, i);
-    const c = lower.indexOf(close, i);
-    if (c < 0) return html.length;
-    const okOpen = o >= 0 && /[\s>/]/.test(lower[o + open.length] || '');
-    if (okOpen && o < c) { depth++; i = o + open.length; }
-    else {
-      depth--;
-      const gt = lower.indexOf('>', c);
-      if (depth === 0) return gt < 0 ? html.length : gt + 1;
-      i = c + close.length;
-    }
+// ------------------------------------------------------------- triage --
+// Every group lands in exactly one of three buckets before a single assertion
+// runs, so each section can say plainly what it is and is not talking about.
+const preliminary = new Map(); // no tokendb page exists yet, by design
+const unmapped = new Map();    // should have a page; we do not hold one
+const checked = new Map();     // resolves to a fixture -- the real corpus
+for (const [gkey, g] of groups) {
+  if (isPreliminary(g.source)) { preliminary.set(gkey, g); continue; }
+  const slug = manifest.slugs[g.name];
+  if (!slug) { unmapped.set(gkey, { g, why: 'no slug in the manifest' }); continue; }
+  if (!recipeLists(slug).h1) {
+    unmapped.set(gkey, { g, why: 'fixtures/tokendb/' + slug + '.html.gz is missing or has no <h1>' });
+    continue;
   }
-  return html.length;
+  checked.set(gkey, g);
 }
 
-// Top-level <li> starts. Tolerates an unclosed <li> -- vals-4-keen-fellbane-
-// crossbow has one, and HTML auto-closes it at the next sibling.
-function topLevelLiStarts(inner) {
-  const starts = [];
-  const re = /<(\/?)(ul|ol|li)\b[^>]*>/gi;
-  let depth = 0;
-  let m;
-  while ((m = re.exec(inner))) {
-    const closing = m[1] === '/';
-    const tag = m[2].toLowerCase();
-    if (tag === 'li') {
-      if (!closing && depth === 0) starts.push({ start: m.index, openEnd: m.index + m[0].length });
-      continue;
-    }
-    depth += closing ? -1 : 1;
-    if (depth < 0) depth = 0;
+// One line per unmapped NAME (not per group -- the Omni tokens would say it
+// twice), naming the remedy. The refresh script fetches the page and writes the
+// manifest entry, so the note points at it rather than describing an edit.
+{
+  const byName = new Map();
+  for (const [, u] of unmapped) if (!byName.has(u.g.name)) byName.set(u.g.name, u.why);
+  for (const [name, why] of byName) {
+    notes.push('UNMAPPED "' + name + '" -- ' + why
+      + '; run `npm run tokendb:refresh -- --name="' + name + '"` (derived slug would be "'
+      + deriveSlug(name) + '"). Not checked against tokendb until then.');
   }
-  return starts;
-}
-
-function parseList(inner) {
-  const items = [];
-  const starts = topLevelLiStarts(inner);
-  for (let n = 0; n < starts.length; n++) {
-    const { start: liStart, openEnd } = starts[n];
-    const closed = matchBlock(inner, 'li', liStart);
-    const nextSibling = n + 1 < starts.length ? starts[n + 1].start : inner.length;
-    let content = inner.slice(openEnd, Math.min(closed, nextSibling)).replace(/<\/li\s*>\s*$/i, '');
-    const children = [];
-    let guard = 0;
-    while (guard++ < 30) {
-      const nm = /<(ul|ol)\b[^>]*>/i.exec(content);
-      if (!nm) break;
-      const ns = nm.index;
-      const ne = matchBlock(content, nm[1], ns);
-      const nested = content.slice(ns + nm[0].length, ne).replace(/<\/(ul|ol)\s*>\s*$/i, '');
-      children.push(...parseList(nested));
-      content = content.slice(0, ns) + ' ' + content.slice(ne);
-    }
-    items.push({ text: txt(content), children });
-  }
-  return items;
-}
-
-function blocks(html) {
-  const start = html.indexOf('<div class="entry-content"');
-  let end = html.indexOf('<div class="token-text"');
-  if (end < 0) end = html.indexOf('<div class="dir-tax">');
-  if (end < 0) end = html.length;
-  const body = html.slice(start, end);
-  const out = [];
-  let i = 0;
-  while (i < body.length) {
-    const m = /<(p|h1|h2|h3|h4|h5|h6|ul|ol)\b[^>]*>/i.exec(body.slice(i));
-    if (!m) break;
-    const tag = m[1].toLowerCase();
-    const s = i + m.index;
-    const e = matchBlock(body, tag, s);
-    const inner = body.slice(s + m[0].length, e).replace(new RegExp('</' + tag + '\\s*>\\s*$', 'i'), '');
-    if (tag === 'ul' || tag === 'ol') out.push({ type: 'list', items: parseList(inner) });
-    else out.push({ type: 'text', text: txt(inner) });
-    i = e > s ? e : s + 1;
-  }
-  return out;
-}
-
-// The candidate recipe lists on a page, in page order. A list qualifies if it
-// carries three or more "N x item" lines, or if the text just above it
-// introduces a recipe -- both, because a Trade 3 recipe has no multipliers at
-// all and an effects list can have plenty of lines.
-function recipeLists(slug) {
-  const html = page(slug);
-  if (!html) return { h1: null, lists: [] };
-  const h1m = html.match(/<h1 class="dir-title[^"]*"\s*>([\s\S]*?)<\/h1>/i);
-  const out = [];
-  let prev = [];
-  for (const b of blocks(html)) {
-    if (b.type === 'text') { prev.push(b.text); if (prev.length > 3) prev.shift(); continue; }
-    const label = prev.join(' // ');
-    const numbered = b.items.filter((i) => /^\d[\d,]*\s*[×x]\s/i.test(i.text)).length;
-    const introduced = /construct|recipe\s*#?\s*\d|recipe\b.*usable from|these items/i.test(label);
-    if (numbered >= 3 || (introduced && b.items.length >= 1)) out.push({ label, items: b.items });
-    prev = [];
-  }
-  return { h1: h1m ? txt(h1m[1]) : null, lists: out };
-}
-
-// ---------------------------------------------------------------- ingredients --
-const TRADE = ["Alchemist's Ink", "Alchemist's Parchment", 'Aragonite', 'Darkwood Plank',
-  'Dwarven Steel', 'Elven Bismuth', "Enchanter's Munition", 'Golden Fleece', 'Minotaur Hide',
-  'Mystic Silk', 'Oil of Enchantment', "Philosopher's Stone"];
-
-function n(s) {
-  return String(s)
-    .replace(/[’‘`]/g, "'")
-    .replace(/[–—]/g, '-')
-    .replace(/\s+/g, ' ')
-    // tokendb drops the possessive s on a handful of lines: "Alchemist' Parchment"
-    .replace(/\b(Alchemist|Enchanter|Philosopher)'(\s)/g, "$1's$2")
-    .trim();
-}
-const key = (s) => n(s).toLowerCase();
-// tokendb qualifies some ingredients: "(2021 version only)", "(any year)", "*"
-const bare = (s) => key(s)
-  .replace(/\s*\((?:any year|20\d\d version only|20\d\d)\)\s*$/i, '')
-  .replace(/\s*\*+\s*$/, '')
-  .trim();
-
-const NAME_FIX = new Map(Object.entries({
-  '25,000 gp eldritch bar': '25,000 GP Eldritch Ore Bar',
-  '25,000 gp eldritch ore bar': '25,000 GP Eldritch Ore Bar',
-  '1,000 gp gold bar': '1,000 GP Gold Bar',
-  '1,000 gp bar': '1,000 GP Gold Bar',
-  '100,000 gp mythic ore bar': '100,000 GP Mythic Ore Bar',
-  'monster trophies': 'Monster Trophy',
-  'monster trophy': 'Monster Trophy',
-}));
-const TRACKED = new Set([...TRADE.map(key), '1,000 gp gold bar', '25,000 gp eldritch ore bar',
-  '100,000 gp mythic ore bar', 'monster trophy', 'ultra rare', 'wish ring']);
-const GP_ONLY = /^(at least\s+)?[\d,]+\s*GP(\s*\*)?(\s*\(no change will be given\))?$/i;
-const WORDNUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
-  nine: 9, ten: 10, twenty: 20, thirty: 30, forty: 40, fifty: 50 };
-
-function parsePlain(raw) {
-  let t = n(raw);
-  let qty = 1;
-  const mult = t.match(/^(\d[\d,]*)\s*[×x]\s*(.+)$/i);
-  if (mult) { qty = Number(mult[1].replace(/,/g, '')); t = mult[2].trim(); }
-
-  const reserve = t.match(/^([\d,]+)\s*GP in Reserve Bars?$/i);
-  if (reserve) return { type: 'tracked', name: '1,000 GP Gold Bar', qty: qty * (Number(reserve[1].replace(/,/g, '')) / 1000) };
-
-  const loose = t.match(/^([\d,]+)\s*GP$/i);
-  if (loose) {
-    const gp = Number(loose[1].replace(/,/g, ''));
-    // Under a full bar the CSV records nothing -- you cannot buy a third of one.
-    if (gp % 1000 === 0) return { type: 'tracked', name: '1,000 GP Gold Bar', qty: qty * (gp / 1000) };
-    return { type: 'subBarGp', name: t, qty };
-  }
-
-  const every = t.match(/^every monster trophy from (\d{4})/i);
-  if (every) {
-    let c = manifest.monsterTrophiesByYear[every[1]];
-    if (c === undefined) return { type: 'token', name: n(t), qty };
-    if (/not including/i.test(t)) c -= (t.match(/not including/gi) || []).length;
-    return { type: 'tracked', name: 'Monster Trophy', qty: qty * c };
-  }
-
-  const fixed = NAME_FIX.get(key(t));
-  if (fixed) return { type: 'tracked', name: fixed, qty };
-
-  // "2x any Ultra Rare token from the 2027 Standard Set" is the generic UR the
-  // CSV tracks. "any Ultra Rare robe" is narrower and the CSV names it in full.
-  if (/^(any\s+)?ultra\s*rare(\s+token\b.*)?$/i.test(t)) return { type: 'tracked', name: 'Ultra Rare', qty };
-  const qualified = t.match(/^any\s+(ultra\s*rare\s+.+)$/i);
-  if (qualified) return { type: 'token', name: n(qualified[1]), qty };
-
-  if (TRACKED.has(key(t))) return { type: 'tracked', name: n(t), qty };
-  return { type: 'token', name: n(t), qty };
-}
-
-// "X or Y" is a choice -- but only where the "or" sits outside parentheses.
-// "any Ultra Rare token from the Standard Set (2018 or later)" is ONE item.
-function splitTopLevelOr(t) {
-  const parts = [];
-  let depth = 0;
-  let last = 0;
-  const re = /[()]|\s+(?:OR|or)\s+/g;
-  let m;
-  while ((m = re.exec(t))) {
-    if (m[0] === '(') { depth++; continue; }
-    if (m[0] === ')') { depth = Math.max(0, depth - 1); continue; }
-    if (depth === 0) { parts.push(t.slice(last, m.index)); last = m.index + m[0].length; }
-  }
-  parts.push(t.slice(last));
-  return parts.map(n).filter(Boolean);
-}
-
-function parseItem(item) {
-  const t = n(item.text);
-  const kids = (item.children || []).map((c) => ({ text: n(c.text), children: c.children || [] }));
-
-  const points = t.match(/^plus\s+(\d+)\s+points?\s+worth of tokens/i);
-  if (points) return { type: 'points', qty: Number(points[1]) };
-
-  if (/^ONE of the following sets/i.test(t)) {
-    return { type: 'sets', sets: kids.map((k) => ({ label: k.text, items: (k.children || []).map((x) => n(x.text)) })) };
-  }
-
-  const grp = t.match(/^(?:plus\s+)?ONLY\s+([A-Z]+)\s+of(?:\s+the following)?/i)
-    || t.match(/^(?:plus\s+)?([A-Z]+)\s+of the following/i)
-    || t.match(/^(?:plus\s+)?ANY\s+([A-Z]+|\d+)\s+of (?:the following|these)/i)
-    || t.match(/^plus\s+(?:ANY\s+)?([A-Z]+|\d+)\s+of (?:the following|these)\s+tokens/i);
-  if (grp) {
-    const w = grp[1].toLowerCase();
-    return { type: 'choice', qty: WORDNUM[w] !== undefined ? WORDNUM[w] : Number(w) || 1, options: kids.map((k) => k.text), raw: t };
-  }
-
-  if (kids.length === 0 && !/^\d/.test(t)) {
-    const parts = splitTopLevelOr(t);
-    if (parts.length > 1) return { type: 'choice', qty: 1, options: parts, raw: t, inline: true };
-  }
-  return parsePlain(t);
-}
-
-// --------------------------------------------------------------------- CSV --
-function parseCSV(text) {
-  const rows = []; let row = []; let cur = ''; let quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (quoted) {
-      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else quoted = false; }
-      else cur += c;
-    } else if (c === '"') quoted = true;
-    else if (c === ',') { row.push(cur); cur = ''; }
-    else if (c === '\r') { /* ignore */ }
-    else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
-    else cur += c;
-  }
-  if (cur.length || row.length) { row.push(cur); rows.push(row); }
-  return rows;
-}
-
-const csvRows = parseCSV(readFileSync(csvPath, 'utf8')).slice(1).filter((r) => r.length > 5 && r[3]);
-const groups = new Map();
-for (const r of csvRows) {
-  const name = r[3];
-  // Omni Cube and Omni Orb each carry two vintages under one name.
-  const gkey = (name === 'Omni Cube' || name === 'Omni Orb') ? name + ' [' + r[1] + ']' : name;
-  if (!groups.has(gkey)) groups.set(gkey, { name, items: [] });
-  groups.get(gkey).items.push({ item: r[4], qty: Number(r[8]) });
 }
 
 // ------------------------------------------------------- 1. every page maps --
 section('1. Every transmute maps to a tokendb page');
 {
-  const names = [...new Set(csvRows.map((r) => r[3]))];
-  let missing = 0;
+  const prelimNames = new Set();
+  for (const [, g] of preliminary) prelimNames.add(g.name);
+  for (const [, g] of groups) if (!isPreliminary(g.source)) prelimNames.delete(g.name);
+
+  const names = [...new Set([...groups.values()].map((g) => g.name))];
+  const checkable = names.filter((nm) => !prelimNames.has(nm));
+  const unmappedNames = new Set([...unmapped.values()].map((u) => u.g.name));
   let wrongTitle = 0;
-  for (const name of names) {
-    const slug = manifest.slugs[name];
-    if (!slug) { ok(false, `${name}: no slug in the manifest -- add it and fetch the fixture`); missing++; continue; }
-    const p = recipeLists(slug);
-    if (!p.h1) { ok(false, `${name}: fixtures/tokendb/${slug}.html.gz missing or has no <h1>`); missing++; continue; }
+  for (const name of checkable) {
+    if (unmappedNames.has(name)) continue;
+    const p = recipeLists(manifest.slugs[name]);
     // The CSV shortens some names (drops a "Mythic " prefix, adds a "(Recipe 2)"
     // disambiguator, names a companion generically). Assert the page is A token
     // page, and that its title relates to the name, not that they are equal.
@@ -354,17 +123,19 @@ section('1. Every transmute maps to a tokendb page');
     const related = b === a || b === 'mythic ' + a || b.startsWith(a + ' ') || a.startsWith(b);
     if (!related) wrongTitle++;
   }
-  ok(missing === 0, `${missing} transmutes have no usable fixture`);
-  console.log(`  ✓ ${names.length - missing} of ${names.length} transmutes resolve to a fixture with an <h1>`);
-  if (wrongTitle) notes.push(`${wrongTitle} page titles do not obviously relate to their CSV name (see the report's name-mismatch table)`);
+  const resolved = checkable.length - unmappedNames.size;
+  console.log('  ✓ ' + resolved + ' of ' + checkable.length + ' checkable transmutes resolve to a fixture with an <h1>');
+  if (unmappedNames.size) console.log('    ' + unmappedNames.size + ' unmapped (reported below, not a failure)');
+  if (prelimNames.size) console.log('    ' + prelimNames.size + ' preliminary, not expected on tokendb yet');
+  if (wrongTitle) notes.push(wrongTitle + ' page titles do not obviously relate to their CSV name (see the report\'s name-mismatch table)');
 }
 
 // -------------------------------------------------- 2. every page parses --
-section('2. Every page yields a recipe list');
+section('2. Every mapped page yields a recipe list');
 const parsed = new Map();
 {
   let empty = 0;
-  for (const [gkey, g] of groups) {
+  for (const [gkey, g] of checked) {
     const slug = manifest.slugs[g.name];
     const p = recipeLists(slug);
     const idx = manifest.listIndex[g.name] !== undefined ? manifest.listIndex[g.name] : 0;
@@ -382,102 +153,18 @@ const parsed = new Map();
     parsed.set(gkey, items);
   }
   const knownEmpty = Object.keys(manifest.known).filter((k) => manifest.known[k].some((e) => e.kind === 'NO_RECIPE_ON_PAGE')).length;
-  ok(empty <= knownEmpty, `${empty} recipes parsed to nothing; only ${knownEmpty} are known to state their recipe in prose`);
-  console.log(`  ✓ ${groups.size - empty} of ${groups.size} recipe groups parsed to a list`);
+  ok(empty <= knownEmpty, empty + ' recipes parsed to nothing; only ' + knownEmpty + ' are known to state their recipe in prose');
+  console.log('  ✓ ' + (checked.size - empty) + ' of ' + checked.size + ' mapped recipe groups parsed to a list');
 }
 
 // ------------------------------------------ 3. reconcile against the CSV --
 section('3. The CSV reconciles with tokendb');
 
-// `rows` is what the CSV records for this recipe. Kept a parameter rather than
-// read from `g` so § 4 can hand it a mutated copy.
-function reconcile(g, items, rows) {
-  const diffs = [];
-  if (!items) { diffs.push({ kind: 'NO_RECIPE_ON_PAGE', item: null, site: null, csv: null }); return diffs; }
-
-  const expect = new Map();
-  const tokens = [];
-  const choices = [];
-  const add = (name, qty) => expect.set(n(name), (expect.get(n(name)) || 0) + qty);
-
-  for (const raw of items) {
-    const e = parseItem(raw);
-    if (e.type === 'tracked') add(e.name, e.qty);
-    else if (e.type === 'token') tokens.push(e);
-    else if (e.type === 'points') add('Ultra Rare', e.qty);
-    else if (e.type === 'choice') choices.push(e);
-    else if (e.type === 'sets') {
-      const pick = manifest.setPick[g.name];
-      if (pick !== undefined && e.sets[pick]) {
-        for (const si of e.sets[pick].items) {
-          const p = parsePlain(si);
-          if (p.type === 'tracked') add(p.name, p.qty); else tokens.push(p);
-        }
-      }
-    }
-  }
-
-  const got = new Map();
-  for (const c of rows) got.set(n(c.item), (got.get(n(c.item)) || 0) + c.qty);
-
-  // A "pick N of these" group is satisfied when the CSV records N of one of the
-  // options, or N of the stand-in the maintainer uses for it (Monster Trophy for
-  // a trophy list, Ultra Rare for a list of URs). The "or just pay N GP" branch
-  // is the fallback, so real ingredients are looked at first.
-  const chosen = new Map();
-  for (const ch of choices) {
-    const nonGp = ch.options.filter((o) => !GP_ONLY.test(o) && !/GP in Reserve Bars?/i.test(o) && !/GP (Gold )?Bar/i.test(o));
-    const trophyish = nonGp.length >= 2 && nonGp.every((o) => !TRACKED.has(key(o)));
-    const find = (list) => {
-      const p = list.map((o) => parsePlain(o));
-      return p.find((x) => got.has(n(x.name))) || p.find((x) => [...got.keys()].some((gk) => bare(gk) === bare(x.name)));
-    };
-    let hit = find(nonGp);
-    let pick = hit ? ([...got.keys()].find((gk) => bare(gk) === bare(hit.name)) || n(hit.name)) : null;
-    if (!pick && !ch.inline && trophyish && got.has('Monster Trophy')) pick = 'Monster Trophy';
-    if (!pick) { hit = find(ch.options.filter((o) => !nonGp.includes(o))); if (hit) pick = [...got.keys()].find((gk) => bare(gk) === bare(hit.name)) || n(hit.name); }
-    if (!pick && !ch.inline && got.has('Ultra Rare')) pick = 'Ultra Rare';
-    if (!pick) {
-      // The CSV models some choice groups with nothing at all -- § 2.5 of the
-      // report -- and every one of those offers only Rare-and-below named
-      // tokens, which the CSV omits by convention. A group offering something
-      // the CSV DOES track (a Wish Ring, a gold bar, a trophy) and matched by
-      // nothing is a row that went missing, not a convention.
-      if (ch.options.some((o) => parsePlain(o).type === 'tracked')) {
-        diffs.push({ kind: 'CHOICE_UNSATISFIED', item: ch.raw, site: ch.qty, csv: null });
-      }
-      continue;
-    }
-    chosen.set(pick, (chosen.get(pick) || 0) + ch.qty * (hit ? hit.qty : 1));
-  }
-  for (const [pick, want] of chosen) {
-    const have = got.get(pick);
-    if (have !== want) diffs.push({ kind: 'CHOICE_QTY', item: pick, site: want, csv: have === undefined ? null : have });
-    expect.set(pick, (expect.get(pick) || 0) + have);
-    const tok = tokens.find((t) => bare(t.name) === bare(pick));
-    if (tok) tok.matched = true;
-  }
-
-  for (const [name, qty] of expect) {
-    const have = got.get(name);
-    if (have === undefined) diffs.push({ kind: 'MISSING', item: name, site: qty, csv: null });
-    else if (have !== qty) diffs.push({ kind: 'QTY', item: name, site: qty, csv: have });
-  }
-  for (const [name, qty] of got) {
-    if (expect.has(name)) continue;
-    if (TRACKED.has(key(name))) { diffs.push({ kind: 'EXTRA', item: name, site: null, csv: qty }); continue; }
-    // A named token: compared only because the CSV already carries a row for it.
-    const hit = tokens.find((t) => bare(t.name) === bare(name));
-    if (hit) { if (hit.qty !== qty) diffs.push({ kind: 'QTY', item: name, site: hit.qty, csv: qty }); hit.matched = true; }
-  }
-  return diffs;
-}
-
 const found = new Map();
-for (const [gkey, g] of groups) found.set(gkey, reconcile(g, parsed.get(gkey), g.items));
+for (const [gkey, g] of checked) found.set(gkey, reconcile(g, parsed.get(gkey), g.items));
 
 {
-  const sig = (d) => `${d.kind}|${d.item}|${d.site}|${d.csv}`;
+  const sig = (d) => d.kind + '|' + d.item + '|' + d.site + '|' + d.csv;
 
   // Trimming the manifest by hand after a batch of corrections is how a known
   // list goes stale, and a stale list is how a real discrepancy hides inside an
@@ -498,19 +185,27 @@ for (const [gkey, g] of groups) found.set(gkey, reconcile(g, parsed.get(gkey), g
     for (const d of diffs) {
       if (known.has(sig(d))) continue;
       unexpected++;
-      ok(false, `${gkey}: ${d.kind} ${d.item || ''} -- tokendb says ${d.site}, the CSV says ${d.csv}`);
+      ok(false, gkey + ': ' + d.kind + ' ' + (d.item || '') + ' -- tokendb says ' + d.site + ', the CSV says ' + d.csv);
     }
   }
   for (const gkey of Object.keys(manifest.known)) {
     const diffs = found.get(gkey);
-    if (!diffs) { notes.push(`${gkey} is in the manifest's known list but no longer exists in the CSV`); continue; }
+    if (!diffs) {
+      // Distinguish "gone from the CSV" from "still there, not checked this
+      // run" -- they want opposite responses, and conflating them would ask
+      // someone to delete a known entry that is merely resting.
+      if (preliminary.has(gkey)) notes.push(gkey + ' is in the known list but is now Source=forum-pdf, so it was not checked');
+      else if (unmapped.has(gkey)) notes.push(gkey + ' is in the known list but is unmapped, so it was not checked');
+      else notes.push(gkey + ' is in the manifest\'s known list but no longer exists in the CSV');
+      continue;
+    }
     const now = new Set(diffs.map(sig));
     const fixed = manifest.known[gkey].filter((d) => !now.has(sig(d)));
-    if (fixed.length) notes.push(`${gkey}: ${fixed.length} known discrepanc${fixed.length === 1 ? 'y is' : 'ies are'} now clean -- trim fixtures/tokendb/manifest.json`);
+    if (fixed.length) notes.push(gkey + ': ' + fixed.length + ' known discrepanc' + (fixed.length === 1 ? 'y is' : 'ies are') + ' now clean -- trim fixtures/tokendb/manifest.json');
   }
-  ok(unexpected === 0, `${unexpected} discrepancies are not in the manifest's known list`);
-  console.log(`  ✓ ${reconciled} of ${groups.size} recipe groups reconcile exactly`);
-  console.log(`    ${groups.size - reconciled} known discrepancies stand, all vintage or modelling questions -- see docs/tokendb-recipe-audit.md`);
+  ok(unexpected === 0, unexpected + ' discrepancies are not in the manifest\'s known list');
+  console.log('  ✓ ' + reconciled + ' of ' + checked.size + ' checked recipe groups reconcile exactly');
+  console.log('    ' + (checked.size - reconciled) + ' known discrepancies stand, all vintage or modelling questions -- see docs/tokendb-recipe-audit.md');
   // A "pick any N of these" recipe reconciles by construction: the resolver
   // accepts whichever member the CSV names. It cannot tell a well-chosen
   // representative from a badly-chosen one, so § 2.2 of the audit is invisible
@@ -539,20 +234,44 @@ section('4. Mutations of a clean recipe are caught');
   ];
   let caught = 0;
   for (const [gkey, what, mutate] of cases) {
-    const g = groups.get(gkey);
-    if (!g) { ok(false, `mutation case names ${gkey}, which is not in the CSV`); continue; }
-    ok(found.get(gkey).length === 0, `mutation base ${gkey} must reconcile cleanly today, else the case proves nothing`);
+    const g = checked.get(gkey);
+    // A mutation base that stopped being CHECKED is a silent loss of coverage:
+    // marking a recipe preliminary, or losing its fixture, would otherwise
+    // retire a case with no sign that it had gone.
+    if (!g) {
+      ok(false, 'mutation case names ' + gkey + ', which is not in the checked corpus'
+        + (groups.has(gkey) ? ' (it is ' + (preliminary.has(gkey) ? 'preliminary' : 'unmapped') + ')' : ' (not in the CSV)'));
+      continue;
+    }
+    ok(found.get(gkey).length === 0, 'mutation base ' + gkey + ' must reconcile cleanly today, else the case proves nothing');
     const diffs = reconcile(g, parsed.get(gkey), mutate(g.items));
     if (diffs.length) caught++;
-    else ok(false, `${gkey}: ${what} was NOT reported -- the reconciler is blind to it`);
+    else ok(false, gkey + ': ' + what + ' was NOT reported -- the reconciler is blind to it');
   }
-  console.log(`  ✓ ${caught} of ${cases.length} mutations reported`);
+  console.log('  ✓ ' + caught + ' of ' + cases.length + ' mutations reported');
+}
+
+// --------------------------------------------- 5. the Source column itself --
+section('5. Source is a vocabulary, and blank means tokendb');
+{
+  let bad = 0;
+  for (const [gkey, g] of groups) {
+    const v = normaliseSource(g.source);
+    if (!v || SOURCE_VOCAB.includes(v)) continue;
+    bad++;
+    // An unrecognised value is treated as CHECKABLE upstream, so a typo cannot
+    // quietly switch the guard off. It is still worth naming loudly.
+    ok(false, gkey + ': Source "' + g.source + '" is not one of ' + SOURCE_VOCAB.join(', ')
+      + ' -- treated as checkable, so the guard stayed on');
+  }
+  if (!bad) console.log('  ✓ every authored Source is one of ' + SOURCE_VOCAB.join(', ') + ' (blank = ' + SOURCE_VOCAB[0] + ')');
+  console.log('  ✓ ' + preliminary.size + ' preliminary, ' + unmapped.size + ' unmapped, ' + checked.size + ' checked, of ' + groups.size + ' recipe groups');
 }
 
 // ------------------------------------------------------------------ done --
 for (const note of notes) console.log('  note: ' + note);
 if (failures) {
-  console.error(`\ntokendb recipe reconciliation: ${failures} failure(s)`);
+  console.error('\ntokendb recipe reconciliation: ' + failures + ' failure(s)');
   process.exit(1);
 }
-console.log(`\ntokendb recipe reconciliation: ${groups.size} recipe groups checked against ${pageCache.size} fixtures, no unexpected drift`);
+console.log('\ntokendb recipe reconciliation: ' + checked.size + ' recipe groups checked against ' + pageCacheSize() + ' fixtures, no unexpected drift');

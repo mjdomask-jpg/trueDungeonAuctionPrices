@@ -37,6 +37,14 @@ export type Recipe = {
   // Optional column — blank means the standard rule for the level, so the
   // engine is correct before the sheet is touched (see recipeWindows.ts).
   expires: string;
+  // Raw authored `Source` value, one per recipe: '' | 'tokendb' | 'forum-pdf'.
+  // Optional column — blank means tokendb, the overwhelming default. A
+  // `forum-pdf` recipe is PROPOSED: the company publishes recipes for
+  // community feedback months before tokendb carries the final version, so
+  // its numbers can still move. Nothing in the engine prices differently on
+  // it today; it is carried so the reconciliation check can skip what has no
+  // page yet, and so the UI can say so later without another schema change.
+  source: string;
   lines: RecipeLine[];
 };
 
@@ -118,13 +126,14 @@ export function parseRecipes(text: string): Recipe[] {
     const key = `${year}|${transmute}`;
     let recipe = byKey.get(key);
     if (!recipe) {
-      recipe = { key, year, level: o['Level'], transmute, expires: '', lines: [] };
+      recipe = { key, year, level: o['Level'], transmute, expires: '', source: '', lines: [] };
       byKey.set(key, recipe);
     }
     // `Expires` is a per-recipe value living on recipe rows. Taking the first
     // non-blank one tolerates the sheet's usual habits (authored on the first
     // line, or filled down the block); the validator flags disagreement.
     if (!recipe.expires) recipe.expires = (o['Expires'] ?? '').trim();
+    if (!recipe.source) recipe.source = (o['Source'] ?? '').trim();
     const goodYear = o['ItemYear'] ?? '';
     recipe.lines.push({
       good,
