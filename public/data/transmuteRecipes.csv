@@ -1456,7 +1456,7 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2025|Omni Orb|Oil of Enchantment||FALSE,2025,Trade 5,Omni Orb,Oil of Enchantment,,2025,Oil of Enchantment,2,FALSE,2025-12-31,
 2025|Omni Orb|Philosopher's Stone||FALSE,2025,Trade 5,Omni Orb,Philosopher's Stone,,2025,Philosopher's Stone,10,FALSE,2025-12-31,
 "2025|Omni Orb|1,000 GP Gold Bar||FALSE",2025,Trade 5,Omni Orb,"1,000 GP Gold Bar",,2025,"1,000 GP Gold Bar",2,FALSE,2025-12-31,
-2026|Omni Cube Ultra Rare Recipe|Ultra Rare||FALSE,2026,Trade 5,Omni Cube Ultra Rare Recipe,Ultra Rare,,2026,Ultra Rare,12,FALSE,,Ultra Rare
+2026|Omni Cube Ultra Rare Recipe|Ultra Rare||FALSE,2026,Trade 5,Omni Cube Ultra Rare Recipe,Ultra Rare,,2026,Ultra Rare,12,FALSE,2026-12-31,Ultra Rare
 2025|Bead of Asgard|Alchemist's Ink||FALSE,2025,Relic,Bead of Asgard,Alchemist's Ink,,2025,Alchemist's Ink,1,FALSE,,
 2025|Bead of Asgard|Alchemist's Parchment||FALSE,2025,Relic,Bead of Asgard,Alchemist's Parchment,,2025,Alchemist's Parchment,1,FALSE,,
 2025|Bead of Asgard|Aragonite||FALSE,2025,Relic,Bead of Asgard,Aragonite,,2025,Aragonite,1,FALSE,,
@@ -2017,3 +2017,4 @@ Key,Year,Level,Transmute,Item,ItemYear,ResolvedYear,Display Name,Quantity,IsSour
 2026|Omni Orb|Oil of Enchantment||FALSE,2026,Trade 5,Omni Orb,Oil of Enchantment,,2026,Oil of Enchantment,1,FALSE,2026-12-31,
 2026|Omni Orb|Philosopher's Stone||FALSE,2026,Trade 5,Omni Orb,Philosopher's Stone,,2026,Philosopher's Stone,10,FALSE,2026-12-31,
 "2026|Omni Orb|1,000 GP Gold Bar||FALSE",2026,Trade 5,Omni Orb,"1,000 GP Gold Bar",,2026,"1,000 GP Gold Bar",2,FALSE,2026-12-31,
+2026|Omni Orb Ultra Rare Recipe|Ultra Rare||FALSE,2026,Trade 5,Omni Orb Ultra Rare Recipe,Ultra Rare,,2026,Ultra Rare,6,FALSE,2026-12-31,Ultra Rare
