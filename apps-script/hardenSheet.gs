@@ -145,7 +145,7 @@ var HARDEN_VOCABULARY = [
   // blocking publishes immediately; the sheet column can follow whenever, and
   // until it does an absent column here is expected rather than an alarm.
   // Drop `pending` once the column exists, so a later RENAME is an alarm again.
-  { tab: 'transmuteRecipes', header: 'Source', grows: true, pending: true, values: ['tokendb', 'forum-pdf'] },
+  { tab: 'transmuteRecipes', header: 'Source', grows: true, values: ['tokendb', 'forum-pdf'] },
 ];
 
 // `augmentated` is NOT here, and the reason is worth keeping. It reads like the

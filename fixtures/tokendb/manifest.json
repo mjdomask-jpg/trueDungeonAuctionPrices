@@ -1,6 +1,6 @@
 {
  "source": "175 verbatim token pages from tokendb.com, gzipped, nothing trimmed — one per transmute in public/data/transmuteRecipes.csv, plus the five Safehold \"(Under Construction)\" pages that carry a finished Safehold's trade goods. Untrimmed for the same reason fixtures/forum-threads gives: the failure this guards against is a recipe read off the wrong list on the page, and a trimmed page cannot show one.",
- "fetched": "2026-09-05",
+ "fetched": "2026-09-18",
  "url": "https://tokendb.com/token/<slug>/",
  "slugRule": "Lower-case the Transmute name, drop + and apostrophes, spaces to hyphens. Eighteen names do not follow it; slugs holds every name-to-slug mapping so none has to be re-derived.",
  "slugs": {
@@ -149,6 +149,7 @@
   "Ring of the Sacred Circle": "ring-of-the-sacred-circle",
   "Ring of the Vampire Lord": "ring-of-the-vampire-lord",
   "Rolland's Ring of Protection +6": "rollands-ring-of-protection-6",
+  "Rune Giant Totem": "rune-giant-totem",
   "Sacred Necklace": "sacred-necklace",
   "Safehold I": "safehold-i",
   "Safehold II": "safehold-ii",
