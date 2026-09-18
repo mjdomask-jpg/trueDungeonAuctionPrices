@@ -495,6 +495,7 @@ const RAW_BUILT_LEGENDARIES = new Set([
   "2024|Kilgor's +4 Savage Sword (Recipe 2)",  // alternate recipe: no upgrade-from token
   '2026|Gear Golem Totem',                     // forged from Golem Pieces, no source relic
   '2024|Totem of Wonder',                      // forged from 50 GP Idols, no source relic
+  '2025|Rune Giant Totem',                      // forged from 50 GP Runes, no source relic
 ]);
 const legendarySources = new Map();   // "Year|Transmute" -> count of IsSource rows
 for (const r of recipes) if (r.Level === 'Legendary') {
