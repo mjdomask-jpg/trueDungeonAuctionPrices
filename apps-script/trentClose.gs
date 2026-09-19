@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-19.1';
+var SCRIPT_VERSION = '2026-09-19.2';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -192,6 +192,84 @@ var ONYX_NORMALIZATION = {
 };
 
 var ONYX_CATEGORY = 'Onyx Ultra Rare';
+
+// ===========================================================================
+// `outcome`, shared by all three close paths
+// ===========================================================================
+//
+// `Status` is `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))`,
+// so a non-blank `outcome` OUTRANKS `closeDate`. That is what these two are
+// about: importing a close and filling in `closeDate` does NOT make an auction
+// Closed if a stale `outcome` is still sitting beside it.
+//
+// It is not cosmetic. Every auction `auctionOpen.gs` promotes ahead of its own
+// opening day carries `outcome = Pending`, and a Pending row that also has a
+// `closeDate` is a HARD ERROR in `validate-prices.mjs` § 4 — an auction cannot
+// have closed before it started. So a clean import would publish red, and the
+// cause (a cell nobody was told to clear) sits three steps away from the
+// message. That is how the first 2027 close went.
+
+/**
+ * Why an auction cannot take a close import at all, or '' when it can.
+ *
+ * `Failed` is the one that refuses. A failed auction did not fund and sold
+ * nothing, so rows arriving under it mean the wrong auction was picked or the
+ * `outcome` cell is wrong — and both are decisions for a person. The other
+ * values are ordinary: `Pending` and `Ended` are exactly the states an auction
+ * is in when its close arrives, and blank is the common case.
+ */
+function closeOutcomeProblem(outcome) {
+  var s = String(outcome == null ? '' : outcome).trim();
+  if (s === 'Failed') {
+    return 'this auction is marked outcome = Failed, which means it did not fund and sold nothing. ' +
+      'Importing a close onto it would contradict that. Either you picked the wrong auction, or the ' +
+      'Failed mark is wrong — decide which before importing.';
+  }
+  return '';
+}
+
+/**
+ * Whether writing `closeDate` should also clear `outcome`.
+ *
+ * Both of the values this clears are TEMPORARY by design — a row is meant to
+ * stop being Pending, and meant to stop being Ended — and a close arriving is
+ * exactly the moment each stops being true. Clearing lets `Status` compute
+ * `Closed` from the `closeDate` being written in the same pass, which is the
+ * whole point of writing it.
+ *
+ * `Failed` is never cleared here; `closeOutcomeProblem` has already refused.
+ * An unrecognised value is not cleared either — § 7 fences that column, so a
+ * value this does not know is a value somebody added deliberately, and
+ * deleting it would be the script overruling them.
+ */
+function closeOutcomeClears(outcome) {
+  var s = String(outcome == null ? '' : outcome).trim();
+  return s === 'Pending' || s === 'Ended';
+}
+
+/**
+ * The reminder to show an operator whose target still carries an `outcome`,
+ * or '' when there is nothing to say.
+ *
+ * For the two importers that do NOT write `closeDate` — this one and
+ * `forumClose.gs` — where the operator types the date by hand afterwards and
+ * nothing is watching. `alesievClose.gs` writes the date itself and clears the
+ * cell in the same pass, so it does not need this.
+ *
+ * Worth saying out loud even though § 4 catches it: the gate's message arrives
+ * on a publish PR, hours later and three steps from the cause, and a red check
+ * on a publish is the most expensive place in this pipeline to learn anything.
+ */
+function closeOutcomeReminder(auctionId, outcome) {
+  var s = String(outcome == null ? '' : outcome).trim();
+  if (!s || !closeOutcomeClears(s)) return '';
+  return 'REMEMBER THE outcome CELL: auction ' + auctionId + ' is marked "' + s + '", and this importer ' +
+    'neither writes closeDate nor clears that cell. When you fill closeDate in, empty outcome too — ' +
+    'Status computes from outcome BEFORE closeDate, so the auction stays "' + s + '" until you do' +
+    (s === 'Pending'
+      ? ', and a Pending row carrying a closeDate is a hard ERROR at the PR gate rather than a wrong label'
+      : '') + '.';
+}
 
 // ===========================================================================
 // Pure core
@@ -964,8 +1042,10 @@ function importTrentClose() {
   ];
   if (plan.onyx.length) destinations.push(TABS.onyx + ' from row ' + (ss.getSheetByName(TABS.onyx).getLastRow() + 1));
 
+  var reminder = closeOutcomeReminder(auctionId, target.outcome);
   var go = ui.alert('Import Trent close (script ' + SCRIPT_VERSION + ')',
-    summary + '\n\nAppending to:\n  ' + destinations.join('\n  ') + '\n\nWrite these rows?',
+    summary + '\n\nAppending to:\n  ' + destinations.join('\n  ') +
+    (reminder ? '\n\n' + reminder : '') + '\n\nWrite these rows?',
     ui.ButtonSet.OK_CANCEL);
   if (go !== ui.Button.OK) return;
 
@@ -985,7 +1065,8 @@ function importTrentClose() {
       return keyed(r, ['Item', 'Price', 'Display Name', 'Category']);
     }));
   }
-  ui.alert('Done', summary + '\n\nWritten. Export the changed tabs and run `npm run validate`.', ui.ButtonSet.OK);
+  ui.alert('Done', summary + (reminder ? '\n\n' + reminder : '') +
+    '\n\nWritten. Export the changed tabs and run `npm run validate`.', ui.ButtonSet.OK);
 }
 
 /**
@@ -1057,7 +1138,11 @@ if (typeof module !== 'undefined') {
     contextRows: contextRows,
     contextWorksheetText: contextWorksheetText,
     tsvCell: tsvCell,
+    closeOutcomeProblem: closeOutcomeProblem,
+    closeOutcomeClears: closeOutcomeClears,
+    closeOutcomeReminder: closeOutcomeReminder,
     CONTEXT_COLUMNS: CONTEXT_COLUMNS,
     EXCEPTIONS: EXCEPTIONS,
+    ONYX_NORMALIZATION: ONYX_NORMALIZATION,
   };
 }

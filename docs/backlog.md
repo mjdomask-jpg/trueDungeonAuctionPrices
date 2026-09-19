@@ -95,7 +95,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-7** | ~~A test pinned to a golden file's currency, not to the data~~ | **RESOLVED 2026-09-19** — the withheld audit was green the whole time; two assertions in its test suite were the block |
 | **PIPE-8** | ~~A withheld Onyx token aborts the alesiev import~~ | **RESOLVED 2026-09-19** — three-step resolution; **the workaround's tokenMetadata rows are still in the sheet and four of them collide** |
 | **DATA-15** | Four `tokenMetadata` keys carry two different categories | one sheet edit — surfaced by a new § 7 note, promote it to an error once clean |
-| **PIPE-9** | No close script clears `outcome` | nothing — small, on three scripts |
+| **PIPE-9** | ~~No close script clears `outcome`~~ | **RESOLVED 2026-09-19** — alesiev clears it, Trent and forum remind you, all three refuse a `Failed` target |
 | **PIPE-10** | Close scripts write literals into computed `rawPricesData` columns | a call between writing the formulas and refusing to overwrite them |
 
 ---
@@ -1771,7 +1771,43 @@ duplicate join key.
 
 ---
 
-## PIPE-9. No close script clears `outcome` — OPEN, small
+## PIPE-9. No close script clears `outcome` — RESOLVED 2026-09-19
+
+**Fixed, and the three paths could not get the same fix** — only one of them
+writes to `auctionMetadata` at all.
+
+| Path | What it does now |
+|---|---|
+| `alesievClose.gs` | **Clears the cell** in the same pass that writes `closeDate`, with the same read-back discipline, and reports what it did |
+| `trentClose.gs`, `forumClose.gs` | **Remind you**, by name, in both the confirm and the done dialog. Neither writes `closeDate`, so neither can clear the cell for you |
+| All three | **Refuse a `Failed` target**, at the auction picker |
+
+Three shared helpers live in `trentClose.gs` (one global scope, so all three
+see them): `closeOutcomeProblem`, `closeOutcomeClears`, `closeOutcomeReminder`.
+
+**What gets cleared, and what deliberately does not.** `Pending` and `Ended`
+are both TEMPORARY by design, and a close arriving is the moment each stops
+being true. `Failed` is never cleared — `closeOutcomeProblem` has already
+refused the import, because a failed auction sold nothing and rows arriving
+under it mean the wrong auction was picked *or* the mark is wrong, and that is
+a person's decision. An **unrecognised** value is not cleared either: § 7
+fences that column, so a value the script does not know is one somebody added
+deliberately, and deleting it would be the script overruling them. It says so
+instead.
+
+**The write path is tested**, which is unusual for this repo and deliberate
+here: `alesievClearOutcome` takes its sheet as an argument precisely so a fake
+one can drive it. Eleven cases cover the clear, the formula cell, a clear that
+did not take, an unknown value, a missing column and a blank — and each asserts
+`clearContent()` was actually called rather than trusting the message.
+
+**`Ended` widened this rather than narrowing it**, as the entry predicted: a
+close landing on an `Ended` row must clear that cell too, and § 5b already says
+so when it sees price rows under one.
+
+---
+
+### What it was
 
 `alesievWriteCloseDate` writes `closeDate` and nothing else. Every row
 `auctionOpen.gs` promotes now carries `outcome = Pending`, and `outcome` beats

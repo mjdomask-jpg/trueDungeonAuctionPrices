@@ -38,7 +38,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-19.1';
+var ALESIEV_VERSION = '2026-09-19.2';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -849,7 +849,15 @@ function alesievTargetAuction(ui, title) {
   if (choice.getSelectedButton() !== ui.Button.OK) return null;
 
   var auctionId = choice.getResponseText().trim();
-  for (var j = 0; j < meta.length; j++) if (meta[j].auctionId === auctionId) return meta[j];
+  for (var j = 0; j < meta.length; j++) {
+    if (meta[j].auctionId !== auctionId) continue;
+    // A Failed auction sold nothing, so a close cannot belong to it. Refused
+    // here rather than at the write, because by the write the operator has
+    // already read and approved a plan that was never going to be right.
+    var problem = closeOutcomeProblem(meta[j].outcome);
+    if (problem) { ui.alert('Cannot import', 'Auction ' + auctionId + ': ' + problem, ui.ButtonSet.OK); return null; }
+    return meta[j];
+  }
   ui.alert('No auction "' + auctionId + '" in ' + TABS.metadata + '. Run the auction scan and promote it first.');
   return null;
 }
@@ -995,6 +1003,7 @@ function alesievWriteCloseDate(auctionId, isoDate) {
     return 'closeDate NOT written: ' + TABS.metadata + ' has no ' +
       (idCol === -1 ? 'auctionId' : 'closeDate') + ' column.';
   }
+  var outcomeCol = header.indexOf('outcome');
   for (var r = 1; r < values.length; r++) {
     if (String(values[r][idCol]).trim() !== String(auctionId)) continue;
     var cell = sheet.getRange(r + 1, dateCol + 1);
@@ -1009,9 +1018,57 @@ function alesievWriteCloseDate(auctionId, isoDate) {
       return 'closeDate was written as "' + isoDate + '" but the cell now reads "' + cell.getDisplayValue() +
         '". Fix it by hand before publishing — daysToClose and Close Month will not compute from that.';
     }
-    return 'closeDate set to ' + isoDate + '. Status and daysToClose recompute from it.';
+    return 'closeDate set to ' + isoDate + '. Status and daysToClose recompute from it.' +
+      alesievClearOutcome(sheet, r, outcomeCol, values[r]);
   }
   return 'closeDate NOT written: no row for auction ' + auctionId + ' in ' + TABS.metadata + '.';
+}
+
+/**
+ * Clear a stale `outcome` beside the `closeDate` just written, and say so.
+ *
+ * **Writing `closeDate` is not what makes an auction Closed.** `Status` is
+ * `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))`, so a
+ * left-behind `Pending` outranks the date and the row stays Pending — AND
+ * trips `validate-prices.mjs` § 4, which errors on a Pending row carrying a
+ * closeDate because an auction cannot have closed before it started. Every
+ * auction `auctionOpen.gs` promotes before its opening day carries that cell,
+ * so this is the common case rather than the exotic one. It cost the first
+ * 2027 close a hand edit and a red publish check.
+ *
+ * Returns a sentence to append to the caller's report, always — a cell this
+ * silently changed would be worse than the bug.
+ *
+ * The read-back is the same discipline `alesievWriteCloseDate` uses above, and
+ * for the same reason: a value this pipeline round-trips through a sheet is
+ * not the value it wrote.
+ */
+function alesievClearOutcome(sheet, rowIndex, outcomeCol, rowValues) {
+  if (outcomeCol === -1) {
+    return '\n\nNote: ' + TABS.metadata + ' has no "outcome" column, so nothing could be cleared. ' +
+      'If Status does not read Closed after this, that column is why.';
+  }
+  var current = String(rowValues[outcomeCol] == null ? '' : rowValues[outcomeCol]).trim();
+  if (!current) return '';
+  if (!closeOutcomeClears(current)) {
+    return '\n\nCAUTION: outcome still reads "' + current + '", which this script does not clear on its own. ' +
+      'Status computes from outcome BEFORE closeDate, so the auction will not read Closed until you ' +
+      'empty that cell yourself.';
+  }
+  var cell = sheet.getRange(rowIndex + 1, outcomeCol + 1);
+  if (String(cell.getFormula() || '')) {
+    return '\n\nCAUTION: outcome reads "' + current + '" but that cell holds a FORMULA, so it was left alone. ' +
+      'Status will not read Closed until it stops returning a value.';
+  }
+  cell.clearContent();
+  SpreadsheetApp.flush();
+  var after = String(cell.getDisplayValue() || '').trim();
+  if (after) {
+    return '\n\nCAUTION: tried to clear outcome ("' + current + '") but the cell now reads "' + after +
+      '". Clear it by hand — Status will not read Closed until you do.';
+  }
+  return '\n\noutcome was "' + current + '" and has been cleared, so Status now computes Closed from the ' +
+    'closeDate. (A left-behind "' + current + '" is a hard error at the PR gate, not just a wrong label.)';
 }
 
 /**
@@ -1069,6 +1126,7 @@ if (typeof module !== 'undefined') {
     alesievPlanImport: alesievPlanImport,
     alesievDescribePlan: alesievDescribePlan,
     alesievCloseDateProblem: alesievCloseDateProblem,
+    alesievClearOutcome: alesievClearOutcome,
     alesievContextWorksheetText: alesievContextWorksheetText,
     ALESIEV_CONTEXT_RULES: ALESIEV_CONTEXT_RULES,
     ALESIEV_AUGMENT_CATEGORIES: ALESIEV_AUGMENT_CATEGORIES,

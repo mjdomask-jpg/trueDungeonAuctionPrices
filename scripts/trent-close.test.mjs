@@ -396,5 +396,57 @@ console.log('\nContext items\n');
   check('a clean file produces no worksheet', T.contextWorksheetText(clean, target) === '');
 }
 
+// ===========================================================================
+// `outcome` — shared by all three close paths (backlog PIPE-9)
+// ===========================================================================
+// `Status` is `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))`,
+// so a non-blank `outcome` OUTRANKS `closeDate`. Importing a close and filling
+// the date in does not make an auction Closed while a stale cell sits beside
+// it — and a `Pending` row carrying a closeDate is a hard ERROR at the PR gate,
+// which is where the first 2027 close found out.
+console.log('\nThe outcome cell (PIPE-9)\n');
+{
+  // A Failed auction sold nothing, so a close cannot belong to it. This is the
+  // one value that refuses, and it refuses at the auction PICKER — by the write
+  // the operator has already approved a plan that was never going to be right.
+  check('a Failed auction refuses a close import',
+    /did not fund/.test(T.closeOutcomeProblem('Failed')), T.closeOutcomeProblem('Failed'));
+  check('  ... and says both ways it can be wrong',
+    /wrong auction/.test(T.closeOutcomeProblem('Failed')) && /Failed mark is wrong/.test(T.closeOutcomeProblem('Failed')),
+    T.closeOutcomeProblem('Failed'));
+
+  // The states an auction is actually IN when its close arrives. Refusing
+  // these would refuse the normal case: every auction auctionOpen.gs promotes
+  // ahead of its opening day carries `Pending`.
+  for (const v of ['Pending', 'Ended', '', undefined]) {
+    check(`${JSON.stringify(v)} does not block a close`, T.closeOutcomeProblem(v) === '', T.closeOutcomeProblem(v));
+  }
+
+  // What gets cleared. Both are TEMPORARY by design, and a close arriving is
+  // the moment each stops being true.
+  check('Pending is cleared', T.closeOutcomeClears('Pending'));
+  check('Ended is cleared', T.closeOutcomeClears('Ended'));
+  check('Failed is never cleared', !T.closeOutcomeClears('Failed'));
+  // § 7 fences that column, so a value this does not know is one somebody
+  // added deliberately. Deleting it would be the script overruling them.
+  check('an unrecognised value is left alone', !T.closeOutcomeClears('Cancelled'));
+  check('blank has nothing to clear', !T.closeOutcomeClears(''));
+
+  // The reminder, for the two importers that do NOT write closeDate — this one
+  // and forumClose.gs, where the operator types the date afterwards and
+  // nothing is watching.
+  check('nothing to say about a blank outcome', T.closeOutcomeReminder('20273', '') === '');
+  check('nor about one that will not be cleared anyway', T.closeOutcomeReminder('20273', 'Cancelled') === '');
+  const pending = T.closeOutcomeReminder('20273', 'Pending');
+  check('a Pending target is named with its auction', /20273/.test(pending) && /Pending/.test(pending), pending);
+  check('  ... and says WHY, not just what', /computes from outcome BEFORE closeDate/.test(pending), pending);
+  check('  ... and that Pending in particular is a hard error', /hard ERROR/.test(pending), pending);
+  const ended = T.closeOutcomeReminder('20273', 'Ended');
+  check('an Ended target is named too', /REMEMBER/.test(ended) && /Ended/.test(ended), ended);
+  // Ended + closeDate is legitimate — that is the whole point of the state —
+  // so the reminder must not claim it is an error the way Pending's is.
+  check('  ... without claiming Ended + closeDate is an error', !/hard ERROR/.test(ended), ended);
+}
+
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

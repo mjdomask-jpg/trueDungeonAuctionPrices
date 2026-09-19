@@ -542,5 +542,77 @@ console.log('\nInherited guards\n');
   eq('  ... and is reported', unsold.unsold.length, 1);
 }
 
+// ===========================================================================
+// Clearing the outcome cell (backlog PIPE-9)
+// ===========================================================================
+// This is the only close path that writes to auctionMetadata, so it is the
+// only one that can clear the cell rather than remind someone to. That makes
+// it the one piece of workbook-WRITING logic in this file, and it is driven
+// here against a fake sheet rather than left untested — `alesievClearOutcome`
+// takes its sheet as an argument for exactly that reason.
+console.log('\nClearing the outcome cell (PIPE-9)\n');
+{
+  // Enough of a Range/Sheet to drive the function. `cleared` records whether
+  // clearContent() was actually called, so a test cannot pass on a message
+  // alone while the cell keeps its value.
+  const fakeSheet = (value, opts = {}) => {
+    const state = { value, cleared: false, flushed: 0 };
+    return {
+      state,
+      getRange: () => ({
+        getFormula: () => opts.formula || '',
+        clearContent: () => { state.cleared = true; if (!opts.sticky) state.value = ''; },
+        getDisplayValue: () => state.value,
+      }),
+    };
+  };
+  sandbox.SpreadsheetApp = { flush: () => {} };
+
+  const run = (value, opts) => {
+    const sheet = fakeSheet(value, opts);
+    const said = A.alesievClearOutcome(sheet, 5, 2, ['20275', '2027', value]);
+    return { said, ...sheet.state };
+  };
+
+  // The case that cost the first 2027 close a hand edit and a red check.
+  const pending = run('Pending');
+  check('a Pending cell is cleared', pending.cleared && pending.value === '', JSON.stringify(pending));
+  check('  ... and the report says so rather than changing it silently',
+    /outcome was "Pending" and has been cleared/.test(pending.said), pending.said);
+  check('  ... and says what it would have cost',
+    /hard error at the PR gate/.test(pending.said), pending.said);
+
+  const ended = run('Ended');
+  check('an Ended cell is cleared too', ended.cleared && ended.value === '', JSON.stringify(ended));
+
+  // Nothing to do, and nothing to say about it.
+  const blank = run('');
+  check('a blank cell is left alone and unremarked', !blank.cleared && blank.said === '', JSON.stringify(blank));
+
+  // A value the script does not know is a decision somebody made. § 7 fences
+  // that column, so clearing it would be the script overruling a person.
+  const unknown = run('Cancelled');
+  check('an unrecognised value is NOT cleared', !unknown.cleared, JSON.stringify(unknown));
+  check('  ... but the operator is told Status will not read Closed',
+    /CAUTION/.test(unknown.said) && /Cancelled/.test(unknown.said), unknown.said);
+
+  // Same discipline as the closeDate write above: a formula computes itself.
+  const formula = run('Pending', { formula: '=IF(1,"Pending","")' });
+  check('a formula cell is left alone', !formula.cleared, JSON.stringify(formula));
+  check('  ... and said so', /FORMULA/.test(formula.said), formula.said);
+
+  // The read-back. A value this pipeline round-trips through a sheet is not
+  // the value it wrote, and a clear that did not take must not report success.
+  const stuck = run('Pending', { sticky: true });
+  check('a clear that did not take is reported, not assumed',
+    /tried to clear/.test(stuck.said) && /by hand/.test(stuck.said), stuck.said);
+
+  // An older workbook without the column at all: absence yields a note, never
+  // a crash, and names the column so the cause is not a mystery.
+  const noCol = A.alesievClearOutcome(fakeSheet(''), 5, -1, ['20275']);
+  check('a missing outcome column is a note, not a failure',
+    /no "outcome" column/.test(noCol), noCol);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
