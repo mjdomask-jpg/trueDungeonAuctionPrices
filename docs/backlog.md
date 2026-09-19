@@ -97,8 +97,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-15** | Four `tokenMetadata` keys carry two different categories | one sheet edit — surfaced by a new § 7 note, promote it to an error once clean |
 | **PIPE-9** | ~~No close script clears `outcome`~~ | **RESOLVED 2026-09-19** — alesiev clears it, Trent and forum remind you, all three refuse a `Failed` target |
 | **PIPE-10** | Close scripts write literals into computed `rawPricesData` columns | a call between writing the formulas and refusing to overwrite them |
-| **PIPE-11** | ~~The auctioneer's fee is imported as a withheld row~~ | **RESOLVED 2026-09-19** — `ALESIEV_FEE_NAMES`; **`20275`'s ten stale fee rows are `DATA-16`** |
-| **DATA-16** | `20275` records the auctioneer's fee as ten withheld rows | ten row deletions in the workbook — the cause is fixed, this is what it already wrote |
+| **PIPE-11** | ~~The auctioneer's fee is imported as a withheld row~~ | **RESOLVED 2026-09-19** — `ALESIEV_FEE_NAMES`; **`20275`'s two stale fee rows were `DATA-16`, now also resolved** |
+| **DATA-16** | ~~`20275` records the auctioneer's fee as withheld~~ | **RESOLVED 2026-09-19** — two rows (ten lots) deleted in the workbook; shipped in PR #221, and the Onyx set now adds to 21 |
 | **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
 
 ---
@@ -1928,9 +1928,18 @@ The rows this already wrote are `DATA-16`.
 
 ---
 
-## DATA-16. `20275` records the auctioneer's fee as ten withheld rows — OPEN, ten deletions
+## DATA-16. `20275` records the auctioneer's fee as withheld — RESOLVED 2026-09-19
 
-`contextItems.csv` holds ten rows for `20275` that are the auctioneer's fee, not
+**Done.** Both rows were deleted in the workbook and the deletion shipped with
+the 2026-09-19 publish (PR #221): `20275` now carries nine withheld rows, all of
+them chase tokens, and its Onyx set adds up — 12 sold + 9 withheld = 21.
+
+**It was TWO rows, not ten** — ten *lots*, aggregated into two rows. This entry's
+own heading said "ten withheld rows" and its body said "ten lots, two rows", and
+the heading is the half that got quoted. A count that appears twice in one entry
+is a count that can disagree with itself.
+
+`contextItems.csv` held two rows for `20275` that were the auctioneer's fee, not
 withheld items:
 
 ```
@@ -1981,7 +1990,7 @@ was *never*.
 **Why it was bound to recur.** The abort was written against an accident — a
 stray filter, a clipped sort — but it fires on a quantity, and **every hand
 cleanup of a curated file is a deletion someone meant.** `tokenMetadata` has 618
-rows, so the allowance is twelve; `DATA-16`'s ten fee rows would have squeaked
+rows, so the allowance is twelve; `DATA-16`'s two fee rows would have squeaked
 under it and a thirteenth row of any future cleanup would not. The same is true
 in the other direction: the growth cap refused a backfill bigger than 25%.
 
