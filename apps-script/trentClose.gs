@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-10.1';
+var SCRIPT_VERSION = '2026-09-19.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -166,8 +166,30 @@ var EXCEPTIONS = {
 /** Patron pin ships with a code and the name carries the year. */
 var PATRON_PIN_RE = /^\d{4} patron (lapel )?pin and (patron )?code$/;
 
-/** The one Onyx name that differs from how the site stores it. */
-var ONYX_NORMALIZATION = { 'common/uncommon/rare set': 'C/UC/R Set' };
+/**
+ * Onyx names that differ from how the site stores them.
+ *
+ * `C/UC/R Set` is the canonical spelling and has been for seven seasons — 24
+ * rows in `onyx.csv` across 2018-2022 alone. Every entry here folds onto it.
+ *
+ * `c-u-r onyx set` was added on 2026-09-19 and is the reason this map moved
+ * from one entry to three. alesievauctions.com spells the set that way, and
+ * because the WITHHELD path did not run this map at all, `20275` recorded
+ * `C-U-R Onyx Set` — a name the corpus holds exactly once, against 24 of the
+ * real one. § 8 of `validate-prices.mjs` could not catch it either: its
+ * near-miss detector pairs names differing by punctuation or a trailing
+ * plural, and these two are far enough apart to look like different tokens,
+ * which is precisely the case it refuses to merge on its own.
+ *
+ * So a fork that no check can see is exactly what belongs here, and the bare
+ * `c-u-r set` is included because the marker may already have come off by the
+ * time a name reaches this map.
+ */
+var ONYX_NORMALIZATION = {
+  'common/uncommon/rare set': 'C/UC/R Set',
+  'c-u-r onyx set': 'C/UC/R Set',
+  'c-u-r set': 'C/UC/R Set',
+};
 
 var ONYX_CATEGORY = 'Onyx Ultra Rare';
 

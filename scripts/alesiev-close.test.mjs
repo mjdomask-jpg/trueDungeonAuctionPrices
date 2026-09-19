@@ -89,8 +89,10 @@ const staged = (rows) => [
   ['Item', 'Category', 'Starting Bid', 'Current Bid', 'Bid Count', 'High Bid', 'Average Bid', 'Median Bid', 'Low Bid'],
   ...rows.map(([n, c, bid]) => [n, c, '0.50', bid ?? '', '1', '9.99', '9.99', '9.99', '9.99']),
 ];
-const plan = (rows, season = SEASON, priced = false) =>
-  A.alesievPlanImport(staged(rows), season, TOKENS, priced);
+const plan = (rows, season = SEASON, priced = false, style = '') =>
+  A.alesievPlanImport(staged(rows), season, TOKENS, priced, style);
+/** The same, for an auction whose style says Onyx. */
+const onyxPlan = (rows) => plan(rows, SEASON, false, 'Onyx Ultra Condensed');
 
 // ===========================================================================
 // 1. Column A grammar
@@ -359,6 +361,86 @@ console.log('\nWithheld (a shape nobody has observed yet)\n');
   // down the unsold path.
   check('a blank price does not make a withheld row "unsold"',
     p.unsold.length === 0, JSON.stringify(p.unsold));
+}
+
+// ===========================================================================
+// 6b. Withheld in a SPLIT Onyx order — the shape that aborted the import
+// ===========================================================================
+// 20275 sold 12 of its Onyx set and withheld 9, plus nine Random Ultra Rares.
+// Every one of those eleven names failed `resolveToken`, so the whole import
+// aborted and the 2027 Onyx set had to be typed into tokenMetadata by hand to
+// get past it (backlog PIPE-8). These pin the three-step resolution that
+// replaced it, and each step is proved by a name the NEXT step could not
+// resolve — otherwise the case passes for the wrong reason.
+console.log('\nWithheld in a split Onyx order (PIPE-8)\n');
+{
+  // STEP 1 — a context rule names its own spelling. `Random URs` is the proof
+  // rather than `Random Ultra Rare`, which tokenMetadata now also holds for
+  // 2027: only the rule knows this spelling, so only the rule can have
+  // resolved it. All 21 recorded appearances say `Random Ultra Rare`, and
+  // forumClose.gs shipped `Random UR` — a name contextItems holds zero times.
+  const agg = onyxPlan([['Random URs (1 of 9)', 'Withheld', '']]);
+  check('a withheld aggregate resolves through the context rule', agg.ok, (agg.aborts || []).join('\n'));
+  eq('  ... under the corpus spelling, not the file\'s',
+    (agg.context[0] || {}).Item, 'Random Ultra Rare');
+  eq('  ... still as withheld', (agg.context[0] || {}).category, 'withheld');
+
+  // STEP 2 — tokenMetadata still runs first, and this is the case that proves
+  // step 3 is not a blanket bypass: inside an Onyx auction an ordinary
+  // withheld token is resolved and divided exactly as before. 20222 withholds
+  // fifteen such tokens beside a complete 21-row Onyx set, so this is the
+  // common shape, not the exotic one.
+  const ordinary = onyxPlan([['"5,000 GP Gold Bar" (1 of 2)', 'Withheld', '']]);
+  eq('an ordinary withheld token still resolves in an Onyx auction',
+    (ordinary.context[0] || {}).Item, '1,000 GP Gold Bar');
+  eq('  ... and still divides by the name\'s own quantity',
+    (ordinary.context[0] || {}).quantity, 5);
+  check('  ... and is not reported as unchecked',
+    !(ordinary.cautions || []).some((c) => /taken from the file as they stand/.test(c)),
+    (ordinary.cautions || []).join(' | '));
+
+  // STEP 3 — an Onyx chase token. `Bead of Asgard` stands in for one: it is in
+  // no season's tokenMetadata, which is the NORMAL state for a chase token
+  // (2026 has 12 of its 84 Onyx names there, 2018 has 12 of 63). A withheld one
+  // is in no other file either — it is withheld precisely because it is not in
+  // this file's Onyx block, and a season's first Onyx auction has no history.
+  const chase = onyxPlan([['Bead of Asgard', 'Withheld', '']]);
+  check('a withheld chase token imports in an Onyx auction', chase.ok, (chase.aborts || []).join('\n'));
+  eq('  ... under the name the file gave it', (chase.context[0] || {}).Item, 'Bead of Asgard');
+  check('  ... and every such name is reported for the operator to read',
+    (chase.cautions || []).some((c) => /taken from the file as they stand/.test(c) && /Bead of Asgard/.test(c)),
+    (chase.cautions || []).join(' | '));
+
+  // And the fence. Outside an Onyx auction there is no step 3, so the
+  // tokenMetadata check that catches a typo is exactly as strict as it was.
+  const notOnyx = plan([['Bead of Asgard', 'Withheld', '']]);
+  check('the same name outside an Onyx auction still ABORTS',
+    notOnyx.aborts.some((a) => /not a token/.test(a) && /not an Onyx auction/.test(a)),
+    notOnyx.aborts.join(' | '));
+
+  // The style test is anchored, for the reason auctionOpen.gs learned: a loose
+  // /onyx/ reads `Non-Onyx` as Onyx, which here would silently switch the
+  // tokenMetadata check off for a whole auction.
+  const nonOnyx = plan([['Bead of Asgard', 'Withheld', '']], SEASON, false, 'Non-Onyx Ultra Condensed');
+  check('"Non-Onyx" is not an Onyx style', !nonOnyx.ok, JSON.stringify(nonOnyx.context));
+  const safehold = plan([['Bead of Asgard', 'Withheld', '']], SEASON, false, 'Safehold Onyx Super Condensed');
+  check('a style with Onyx in the middle IS one', safehold.ok, (safehold.aborts || []).join('\n'));
+
+  // The name the missing normalisation forked. contextItems holds
+  // `C-U-R Onyx Set` once; onyx.csv holds `C/UC/R Set` 24 times, and § 8's
+  // near-miss detector cannot pair them — too far apart to be a typo.
+  const set = onyxPlan([['C-U-R Onyx Set', 'Withheld', '']]);
+  eq('the Onyx set folds onto the corpus spelling', (set.context[0] || {}).Item, 'C/UC/R Set');
+  check('  ... which is the spelling onyx.csv actually uses',
+    ONYX.filter((r) => r.Item === 'C/UC/R Set').length > 20,
+    `onyx.csv holds it ${ONYX.filter((r) => r.Item === 'C/UC/R Set').length} time(s)`);
+
+  // A caller that forgets the style would silently get the strict path back,
+  // which is the bug all over again. Say so instead.
+  const noStyle = plan([['+2 Sacred Sling', 'Onyx', '99'], ['Bead of Asgard', 'Withheld', '']]);
+  check('an Onyx file with no style passed says which call site forgot',
+    (noStyle.cautions || []).some((c) => /no auctionStyle was passed/.test(c)),
+    (noStyle.cautions || []).join(' | '));
 }
 
 // ===========================================================================

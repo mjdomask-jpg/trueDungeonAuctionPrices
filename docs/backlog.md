@@ -93,7 +93,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-13** | ~~An auction that has ended but not arrived has no state~~ | **RESOLVED 2026-09-19** — `outcome = Ended`; no workbook formula and no site code had to change |
 | **DATA-14** | `C-U-R Onyx Set` forks a 24-row series | one cell — but fixing `PIPE-8` first stops it recurring |
 | **PIPE-7** | ~~A test pinned to a golden file's currency, not to the data~~ | **RESOLVED 2026-09-19** — the withheld audit was green the whole time; two assertions in its test suite were the block |
-| **PIPE-8** | A withheld Onyx token aborts the alesiev import | nothing — measured, and the resolution order is specified |
+| **PIPE-8** | ~~A withheld Onyx token aborts the alesiev import~~ | **RESOLVED 2026-09-19** — three-step resolution; **the workaround's tokenMetadata rows are still in the sheet and four of them collide** |
+| **DATA-15** | Four `tokenMetadata` keys carry two different categories | one sheet edit — surfaced by a new § 7 note, promote it to an error once clean |
 | **PIPE-9** | No close script clears `outcome` | nothing — small, on three scripts |
 | **PIPE-10** | Close scripts write literals into computed `rawPricesData` columns | a call between writing the formulas and refusing to overwrite them |
 
@@ -1588,6 +1589,12 @@ different tokens, which is exactly the case § 8 refuses to merge automatically.
 The cell is a one-line fix in the workbook. The *reason* it happened is
 `PIPE-8`, and fixing that without fixing this leaves the fork in place.
 
+> **The cause is fixed (2026-09-19), the cell is not.** `ONYX_NORMALIZATION`
+> now folds `c-u-r onyx set` and `c-u-r set` onto `C/UC/R Set` on every path,
+> so no future import can write the forked name. Nothing in the pipeline can
+> reach a row that is already published — that is a workbook edit, and while it
+> is outstanding the series stays split 24/1.
+
 ---
 
 ## PIPE-7. A test pinned to a golden file's currency, not to the data — RESOLVED 2026-09-19
@@ -1628,7 +1635,42 @@ entry in, and the second whose cause was structural rather than a stale number.
 
 ---
 
-## PIPE-8. A withheld Onyx token aborts the alesiev import — OPEN, measured
+## PIPE-8. A withheld Onyx token aborts the alesiev import — RESOLVED 2026-09-19
+
+**Fixed.** `alesievWithheldRows` resolves a name in three steps — context rule,
+then `tokenMetadata` after the Onyx marker comes off, then, **in an Onyx
+auction only**, the name as it stands — and aborts only if all three miss.
+`alesievPlanImport` takes the auction's style to decide, matched anchored so
+`Non-Onyx` does not read as Onyx (the regex agrees with `onyx.csv` on all 303
+recorded auctions, zero mismatches).
+
+Step 3 is the one that matters and it is deliberately unverifiable: there is
+nothing to check a withheld chase token against. It is withheld precisely
+because it is not in this file's Onyx block, and in a season's first Onyx
+auction it is in no other file either. So every name it lets through is named
+in the confirm dialog under CAUTION — the operator reading them is the only
+check left. Step 2 running first is what keeps that from being a blanket
+bypass: `20222`'s fifteen ordinary withheld tokens are resolved and divided
+exactly as before.
+
+`ONYX_NORMALIZATION` gained `c-u-r onyx set` and `c-u-r set`, so the name that
+forked `DATA-14` now folds onto `C/UC/R Set` on every path.
+
+§ 6's set-size note now reports the auction's withheld count beside a short
+Onyx set instead of reading as a defect. It **does not add them up**, and that
+is a decision rather than a shortcut — see the measurement below.
+
+**Two things the fix did NOT do**, both in the sheet:
+
+- The 21 `Onyx`-category `tokenMetadata` rows typed in as the workaround are
+  still there, and **four of them collide with existing `Ultra Rare` rows** —
+  `DATA-15`. Nothing needs them any more.
+- `contextItems`' `C-U-R Onyx Set` cell is still `DATA-14`. The normalisation
+  stops the next one; it cannot reach the row already published.
+
+---
+
+### What it was, and the measurement that shaped the fix
 
 **The 2027 Onyx close is the shape nobody modelled: the auctioneer withheld
 part of the Onyx set and sold the rest.** `20275` sold 12 Onyx tokens and
@@ -1658,12 +1700,74 @@ the withheld path's missing `ONYX_NORMALIZATION` wrote `C-U-R Onyx Set` —
 in order: context rule, then Onyx normalisation, then `tokenMetadata`, aborting
 only if all three miss.
 
-**And § 6's set-size note is describing the wrong thing.** It says
+**And § 6's set-size note was describing the wrong thing.** It said
 `20275: 12 Onyx rows — expected 20 or 21 for one set`. An Onyx order is 21
 **tokens**, not 21 `onyx.csv` rows, and once part of the set is withheld it
-splits across two files: 12 + 9 = 21. The count should span both. It is a note
-and blocked nothing, but it reads as a defect on correct data, and the "an Onyx
-order is exactly 21 rows" claim is repeated in comments in three files.
+splits across two files: 12 + 9 = 21.
+
+**The obvious fix — add the withheld rows to the Onyx rows — is wrong, and the
+corpus says so plainly.** Of the ten Onyx auctions carrying withheld rows, nine
+are at a complete 20 or 21 already and their withheld blocks have nothing to do
+with the set: `20222` withholds fifteen gold bars, trade goods and a Patron Pin
+beside a full 21-row set, so a naive sum reads 36. And `20275`'s own block is
+not all chase tokens either — it holds a Golden Ticket and nine Random Ultra
+Rares alongside the nine.
+
+So the check would have to tell a withheld CHASE token from a withheld ordinary
+one, and every rule that would (absent from `tokenMetadata`, absent from
+`prices`) fails on the season it is needed for: a season's first Onyx auction
+has no history to be absent from, and the workaround above put the 2027 set
+into `tokenMetadata` anyway.
+
+**The note therefore reports both numbers and stops.** A note that hands over
+what it knows beats one asserting a total it cannot support — the 40-row
+"two sets" allowance this same check used to carry is what that mistake looks
+like once it hardens into a rule.
+
+---
+
+## DATA-15. Four `tokenMetadata` keys carry two different categories — OPEN, one sheet edit
+
+Found while fixing `PIPE-8`, and caused by its workaround. `tokenMetadata.key`
+is season + Item and **must be unique**, because everything that reads the file
+builds a lookup off it:
+
+| Reader | Behaviour on a duplicate |
+|---|---|
+| `buildTokenIndex` (`trentClose.gs`) | **last wins** |
+| `rawPricesData!H` (the workbook's own VLOOKUP) | **first wins** |
+
+Two readers, opposite answers, and no message from either. Five duplicates are
+in the shipped file:
+
+```
+2023Greaves of Absorption   Ultra Rare | Ultra Rare   (identical - harmless)
+2027Carter's Tome of Insight  Ultra Rare | Onyx
+2027Charm of Coordination     Ultra Rare | Onyx
+2027Natasha's Nightcap        Ultra Rare | Onyx
+2027Necklace of Baubles       Ultra Rare | Onyx
+```
+
+The four 2027 ones arrived on 2026-09-19 with the 21 `Onyx`-category rows typed
+in to get the import past `PIPE-8`. Those four names are in both the ordinary
+Ultra Rare set and the Onyx set, so the rows collide.
+
+**What it costs is a token's `Category`** — the field a close script stamps onto
+every `prices.csv` row it writes. § 7's existing check cannot see it: both
+values exist in `tokenMetadata`, so a price row carrying either one joins fine.
+
+**The fix is to delete the 21 `Onyx` rows.** Nothing needs them now —
+`PIPE-8` step 3 resolves a withheld chase token without them, and a SOLD Onyx
+lot never consulted `tokenMetadata` in the first place. `2027Random Ultra Rare`
+should go with them: it is a `contextItems` aggregate (24 rows there, **zero**
+in `prices.csv`), not a token, and step 1 resolves it from the rule.
+`2023Greaves of Absorption` is an exact repeat and harmless, but the key is
+still not unique.
+
+A new **note** in `validate-prices.mjs` § 7 reports these. It is a note rather
+than an error only because five are in the file today; **promote it to an error
+once the sheet is clean**, because there is nothing to arbitrate about a
+duplicate join key.
 
 ---
 
