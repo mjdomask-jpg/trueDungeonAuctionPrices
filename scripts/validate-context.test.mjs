@@ -62,9 +62,26 @@ const append = (text, line) => text.replace(/\n?$/, '\n') + line + '\n';
 console.log('Withheld audit\n');
 
 // Baseline: the shipped data must pass, or nothing below means anything.
+//
+// THIS USED TO ASSERT `0 new, 0 gone`, WHICH PUT THE BLOCK BACK. The validator
+// was narrowed to the intersection precisely so a publish carrying new withheld
+// rows would not need a checkout — and then this line required the shipped repo
+// to have no new rows, which is the same demand one layer down. On 2026-09-19
+// the first 2027 close (20275, nine withheld Random Ultra Rares) reported
+// "95 rows vs 84 audited" and failed here, second in the `npm test` chain, on a
+// publish PR. Running `gen-withheld-preview.mjs` made it pass — and the
+// validator itself had been green the whole time, with all 73 audited values
+// matching to the cent. Nothing was ever wrong with the data.
+//
+// So the baseline asserts what a baseline is for and nothing more: the shipped
+// data passes, and it is actually being compared against something. A count of
+// new rows is a fact about how recently someone regenerated a golden file,
+// which is not a property of the data and must never gate a publish.
 const base = withCopy(() => {});
 check('the shipped data passes the audit', base.code === 0, base.out);
-check('every audited value is accounted for as shared', /0 new, 0 gone/.test(base.out), base.out);
+const sharedCount = Number((base.out.match(/\((\d+) shared,/) || [])[1]);
+check('the audit is comparing against a non-empty set of audited values',
+  sharedCount > 0, base.out);
 
 // 1. A NEW auction carrying withheld rows. This is the publish that used to
 //    block, and the operator should never need a checkout for it.
@@ -79,8 +96,25 @@ const added = withCopy(({ readFile, writeFile }) => {
   writeFile('contextItems.csv', append(readFile('contextItems.csv'), '202699,2026,99,withheld,Ultra Rare,2,'));
 });
 check('a new auction with withheld rows PASSES', added.code === 0, added.out);
+// Measured as a DELTA against the baseline, not as the absolute `1`.
+//
+// The absolute number is the repo's un-audited backlog plus this one synthetic
+// row, so pinning it says "the golden file is fully caught up" — the same
+// demand the baseline above used to make, hiding one line further down. It
+// failed the moment the preview lagged by anything, which is the one state
+// this case exists to bless.
+//
+// What is actually being asserted is that adding a withheld row adds exactly
+// one un-audited key and changes nothing else. That holds whatever the backlog
+// is, and it is the property that makes the narrowing safe: valueWithheld only
+// reads sales closing STRICTLY BEFORE the withheld auction, so a later auction
+// cannot reach back into a window that is already closed.
+const newRows = (out) => Number((out.match(/(\d+) shared, (\d+) new/) || [])[2]);
 check('the new row is reported as new data, not as drift',
-  /1 withheld row\(s\) not in the preview/.test(added.out), added.out);
+  newRows(added.out) === newRows(base.out) + 1,
+  `baseline ${newRows(base.out)} new, with the synthetic row ${newRows(added.out)}\n${added.out}`);
+check('and it does not disturb any audited value',
+  sharedCount > 0 && Number((added.out.match(/\((\d+) shared,/) || [])[1]) === sharedCount, added.out);
 
 // 2. An audited value that MOVED. It has to be a price in a PRIOR auction:
 //    the estimate reads sales closing strictly before the withheld auction, so

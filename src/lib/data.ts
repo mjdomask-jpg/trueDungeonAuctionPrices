@@ -29,11 +29,18 @@ export type AuctionMeta = {
   style: string;
   completionStyle: string;
   // The sheet's derived `Status`: `IF(outcome <> "", outcome, IF(closeDate =
-  // "", "Open", "Closed"))`. Four values reach the site — `Closed`, `Open`,
-  // `Failed` and `Pending` — and only `Closed` is counted anywhere. The two
-  // that come from `outcome` are hand-marked: `Failed` for an auction that did
-  // not fund (backlog DATA-6), `Pending` for one announced but not yet started.
-  // See auctionPhase() for why `Pending` is not simply believed.
+  // "", "Open", "Closed"))`. Five values reach the site — `Closed`, `Open`,
+  // `Failed`, `Pending` and `Ended` — and only `Closed` is counted anywhere.
+  // The three that come from `outcome` are hand-marked: `Failed` for an auction
+  // that did not fund (backlog DATA-6), `Pending` for one announced but not yet
+  // started, `Ended` for one that has finished while its results are still on
+  // their way. See auctionPhase() for why `Pending` is not simply believed.
+  //
+  // `Ended` needed no code here and that is the point of choosing it: this
+  // field is a string, auctionPhase() returns null for anything that is not
+  // `Open` or `Pending`, and every count keys off `Closed`. So the row stops
+  // being advertised as live the moment the cell is typed, with nothing on the
+  // site to change and nothing to deploy.
   status: string;
   link: string;
   closeDate: string;

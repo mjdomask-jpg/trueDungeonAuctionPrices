@@ -93,10 +93,11 @@ const metaById = new Map(meta.filter((m) => m.auctionId).map((m) => [m.auctionId
 
 // An auction that cannot have sold anything yet, or ever.
 //
-// Three of `Status`'s four values mean "no price rows, and that is correct":
+// Four of `Status`'s five values mean "no price rows, and that is correct":
 // `Failed` did not fund and sold nothing (backlog DATA-6), `Open` is still
-// taking bids, and `Pending` has not started. Only `Closed` is finished, and
-// only a finished auction is expected to carry rows.
+// taking bids, `Pending` has not started, and `Ended` has finished but has not
+// been imported. Only `Closed` is finished AND recorded, and only a recorded
+// auction is expected to carry rows.
 //
 // Every check that says "this auction should have rows" asks this first. It
 // used to name `Failed` alone, which was a latent block on the pipeline rather
@@ -105,7 +106,22 @@ const metaById = new Map(meta.filter((m) => m.auctionId).map((m) => [m.auctionId
 // § 5b, so nothing ever ran the two together. `Pending` would have hit it on
 // day one — several auctions are announced weeks before a season opens, and
 // their rows sit here empty for all of that time.
+//
+// Written as "not Closed" rather than as a list, which is what let `Ended` be
+// added without touching a single check: the property every one of them wants
+// is that the auction's prices are not in yet, and `Closed` is the only status
+// that asserts they are.
 const unsold = (m) => m.Status !== 'Closed';
+
+// The `Status` values that can only arrive through the `outcome` column.
+//
+// `Status` is `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))`,
+// so `Open` and `Closed` are computed from `closeDate` and everything else is
+// hand-marked. Used by § 4 to catch a row whose Status says one of these while
+// `outcome` is blank — the signature of a paste over the formula — and by § 7,
+// which fences both columns to the same vocabulary from one place so they
+// cannot drift apart.
+const OUTCOME_STATUSES = new Set(['Failed', 'Pending', 'Ended']);
 
 const key = (r) => `${r.auctionId}|${r.Item}`;
 const groupBy = (rows, k, v) => {
@@ -352,15 +368,15 @@ console.log('4. Metadata hygiene (auctionMetadata.csv)');
     //
     // Both directions are errors, and they say different things. `outcome` set
     // with a `Status` that ignores it means the formula is gone. A `Status` of
-    // `Failed` or `Pending` with `outcome` blank means the reverse — a value
-    // typed straight into a derived column, which the next recalculation will
-    // silently undo.
+    // `Failed`, `Pending` or `Ended` with `outcome` blank means the reverse — a
+    // value typed straight into a derived column, which the next recalculation
+    // will silently undo.
     const outcome = String(m.outcome ?? '').trim();
     if (outcome && m.Status !== outcome) {
       errs.push(`${where}: outcome is "${outcome}" but Status is "${m.Status}" — Status should compute from ` +
         'outcome, so this row has lost its formula (a paste overwrites it)');
     }
-    if (!outcome && (m.Status === 'Failed' || m.Status === 'Pending')) {
+    if (!outcome && OUTCOME_STATUSES.has(m.Status)) {
       errs.push(`${where}: Status is "${m.Status}" but outcome is blank — ${m.Status} comes FROM outcome, so ` +
         'either the outcome cell was not filled in or Status was typed over its own formula');
     }
@@ -378,6 +394,35 @@ console.log('4. Metadata hygiene (auctionMetadata.csv)');
     if (outcome === 'Pending' && m.closeDate) {
       errs.push(`${where}: outcome is "Pending" but closeDate is ${m.closeDate} — an auction cannot have ` +
         'closed and not yet started; clear one of the two');
+    }
+    // An auction that has ENDED but whose results have not arrived.
+    //
+    // WHY THE VALUE EXISTS. Before it, an auction that had finished while its
+    // close file was still in the auctioneer's inbox had nowhere to be. Leaving
+    // `closeDate` blank makes `Status` compute `Open`, and auctionPhase() reads
+    // that as live — so the site advertised two finished Trent auctions as
+    // still taking bids. Filling `closeDate` makes it compute `Closed`, and
+    // § 5b then fails the publish because a Closed auction with no price rows
+    // is the largest silent data loss this file exists to catch. Neither
+    // option was available, so the data sat wrong on the live site while
+    // everything downstream was green.
+    //
+    // `Ended` is the state between the two, and it costs the rest of the
+    // pipeline nothing: § 5b and § 6 both exempt it already through `unsold`
+    // (anything that is not `Closed`), and auctionPhase() already returns null
+    // for any status that is not `Open` or `Pending`, so the row simply stops
+    // being live without being counted as closed.
+    //
+    // It is TEMPORARY, the way `Pending` is, and the note says so — a row that
+    // stays `Ended` is an auction whose results nobody chased. The end state is
+    // a blank `outcome` beside the `closeDate` that is already there, which
+    // makes `Status` compute `Closed` with no second edit.
+    if (outcome === 'Ended') {
+      const waited = ISO.test(m.closeDate)
+        ? `, ${Math.round((Date.parse(todayIso) - Date.parse(m.closeDate)) / 86400000)} day(s) ago`
+        : ' (no closeDate recorded)';
+      warns.push(`${where}: outcome is "Ended" — it closed${waited} and its results are not imported yet. ` +
+        'Clear the outcome cell once the prices land and Status computes Closed on its own');
     }
     if (ISO.test(m.openDate) && ISO.test(m.closeDate)) {
       const span = Math.round((Date.parse(m.closeDate) - Date.parse(m.openDate)) / 86400000);
@@ -554,7 +599,7 @@ console.log('5. Non-numeric prices (prices.csv, onyx.csv, rawPricesData.csv)');
 // it has never been a legitimate state: measured over all 289 auctions of nine
 // seasons, every one carries price rows.
 //
-// EMPTY ROWS ARE NOW LEGITIMATE IN THREE STATES, and that is why this check
+// EMPTY ROWS ARE NOW LEGITIMATE IN FOUR STATES, and that is why this check
 // has a condition. A `Failed` auction did not fund, so it sold nothing, so it
 // has no price rows BY DEFINITION — and until 2026-09-03 the way that was
 // handled was to DELETE the whole row, which is what made "every metadata row
@@ -563,13 +608,25 @@ console.log('5. Non-numeric prices (prices.csv, onyx.csv, rawPricesData.csv)');
 // legitimate. An `Open` auction is still taking bids and a `Pending` one has
 // not started, so neither has rows either — see `unsold`.
 //
+// `Ended` is the fourth and the one this check itself forced into existence.
+// An auction that has finished but whose close file has not arrived cannot be
+// `Open` — the site would advertise it as live, which it did on 2026-09-19 for
+// two Trent auctions — and cannot be `Closed`, because THIS CHECK would fail
+// the publish carrying it. It is empty for the same reason the other three
+// are: its prices are not in the file yet.
+//
 // Exempting them costs this check nothing. None is a state a Closed auction
-// can drift into by accident: `Failed` and `Pending` are set by hand in
-// `outcome`, § 7 fences that column to those two values, § 4 refuses a row
-// whose `outcome` and `Status` disagree, and `Open` means `closeDate` is blank,
-// which § 4 warns about the moment a row claims to be Closed. The bug this
-// check was written for is a CLOSED auction losing its rows, and every Closed
-// auction is still tested for it.
+// can drift into by accident: `Failed`, `Pending` and `Ended` are set by hand
+// in `outcome`, § 7 fences that column to those three values, § 4 refuses a
+// row whose `outcome` and `Status` disagree, and `Open` means `closeDate` is
+// blank, which § 4 warns about the moment a row claims to be Closed. The bug
+// this check was written for is a CLOSED auction losing its rows, and every
+// Closed auction is still tested for it.
+//
+// What it costs instead is TIME, and § 4's `Ended` note is the counterweight:
+// an auction parked here is invisible to every statistic, which is precisely
+// what a lost auction looks like. The difference between the two is a cell
+// somebody has to clear, so something has to keep saying it out loud.
 //
 // WHY THIS EXISTS. Correcting the 20193/20196 transposition re-keyed 20195's
 // twenty rows onto 20193 instead of swapping the intended pair, leaving 20193
@@ -601,10 +658,20 @@ console.log('5b. Every auction still has prices (auctionMetadata.csv vs prices.c
       // auction whose close has been imported but whose `closeDate` has not
       // been filled in yet is Open WITH rows, and the fix is the date. The note
       // says which auction, not what to do about it.
+      //
+      // `Ended` resolves exactly one way, so it gets its own sentence. The
+      // auction DID sell these tokens — that is what `Ended` means, unlike
+      // every other status here — and rows appearing under it is the import
+      // having landed. All that is left is the `outcome` cell, and saying
+      // "an Ended auction has sold nothing" would be both wrong and the
+      // opposite of the advice.
       if (priced.has(m.auctionId)) {
-        notes.push(`${m.auctionId} "${m.auctionName}" is ${m.Status} but HAS rows in prices.csv — ` +
-          `a ${m.Status} auction has sold nothing, so either the status is wrong (a closed auction ` +
-          'needs its closeDate) or these rows belong to another auction');
+        notes.push(m.Status === 'Ended'
+          ? `${m.auctionId} "${m.auctionName}" is Ended but HAS rows in prices.csv — the results have ` +
+            'landed, so clear the outcome cell and Status computes Closed from the closeDate already there'
+          : `${m.auctionId} "${m.auctionName}" is ${m.Status} but HAS rows in prices.csv — ` +
+            `a ${m.Status} auction has sold nothing, so either the status is wrong (a closed auction ` +
+            'needs its closeDate) or these rows belong to another auction');
       } else exempt++;
       continue;
     }
@@ -648,17 +715,31 @@ console.log('5b. Every auction still has prices (auctionMetadata.csv vs prices.c
 // here because the file has no two-row convention to hide behind.
 console.log('5c. No auction records an Onyx item twice (onyx.csv)');
 {
+  // The two halves are joined on a NUL because BOTH can contain a space:
+  // `202219 +2 Chaos Cannon` splits on a space into four pieces, none of
+  // which is the item. NUL is the one byte no name has ever carried.
+  //
+  // Written as an ESCAPE, not as the raw byte. It was a literal NUL until
+  // 2026-09-19, which made git, grep and file(1) all class this file as
+  // BINARY — `grep -n` on the repo's most-edited validator returned
+  // "Binary file matches" and nothing else. Diffs survived only because the
+  // bytes sit past git's 8KB sniff window, so the damage was to everyone
+  // reading it rather than to the history.
+  //
+  // One constant rather than two literals: the join and the split have to
+  // agree, and two copies of an invisible byte is how they stop agreeing.
+  const SEP = '\u0000';
   const seen = new Map();
   for (const r of onyx) {
     if (!r.auctionId || !r.Item) continue;
-    const key = `${r.auctionId} ${r.Item}`;
+    const key = `${r.auctionId}${SEP}${r.Item}`;
     seen.set(key, (seen.get(key) || 0) + 1);
   }
   const errs = [];
   const byAuction = new Map();
   for (const [key, n] of seen) {
     if (n < 2) continue;
-    const [id, item] = key.split(' ');
+    const [id, item] = key.split(SEP);
     if (!byAuction.has(id)) byAuction.set(id, []);
     byAuction.get(id).push(`${item} x${n}`);
   }
@@ -849,29 +930,35 @@ console.log('7. Closed vocabularies (auctionMetadata.csv, prices.csv, onyx.csv, 
   // grow, because auctioneers invent formats.
   //
   // `Status` is DERIVED, not typed: since DATA-6 the formula is
-  // `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))`, so its third
-  // value arrives from `outcome` rather than from a keystroke. It is still
-  // checked here because a paste bypasses the sheet entirely, and a pasted
-  // `Status` is just a string like any other.
+  // `IF(outcome<>"", outcome, IF(closeDate="", "Open", "Closed"))`, so every
+  // value past the first two arrives from `outcome` rather than from a
+  // keystroke. It is still checked here because a paste bypasses the sheet
+  // entirely, and a pasted `Status` is just a string like any other.
   //
   // `outcome` is the one hand-typed column of the three and it is blank on
   // nearly every row — blanks are skipped below, so the fence only ever sees
-  // rows someone deliberately marked. It holds two values: `Failed` for an
-  // auction that did not fund, and `Pending` for one announced but not yet
-  // started. `Cancelled` is the obvious third member and is deliberately NOT
-  // pre-allowed: adding a value here should be a decision, and an unrecognised
-  // one should stop a publish rather than ride along.
+  // rows someone deliberately marked. It holds three values: `Failed` for an
+  // auction that did not fund, `Pending` for one announced but not yet started,
+  // and `Ended` for one that has finished while its results are still in the
+  // auctioneer's inbox. `Cancelled` is the obvious fourth member and is
+  // deliberately NOT pre-allowed: adding a value here should be a decision, and
+  // an unrecognised one should stop a publish rather than ride along.
   //
-  // The two differ in one way worth remembering: `Failed` is permanent and
-  // `Pending` is not. A pending row is meant to stop being pending, and the
+  // They differ in one way worth remembering: `Failed` is permanent and the
+  // other two are not. A `Pending` row is meant to stop being pending and the
   // site stops believing the label the day its openDate arrives, so nothing
-  // downstream depends on the cell being cleared on time. § 4 notes it when it
-  // goes stale.
+  // downstream depends on the cell being cleared on time. An `Ended` row is
+  // meant to stop being ended, and nothing but the note in § 4 will ever say
+  // so — the auction is simply absent from every statistic until someone
+  // imports it, which looks exactly like an auction that has not closed.
+  //
+  // Both columns read their vocabulary from OUTCOME_STATUSES, so a new value is
+  // one edit. Fencing them separately is how two lists that must agree drift.
   const COLUMNS = [
     { field: 'auctionStyle', closed: false },
     { field: 'completionStyle', closed: false },
-    { field: 'Status', closed: true, allowed: ['Open', 'Closed', 'Failed', 'Pending'] },
-    { field: 'outcome', closed: true, allowed: ['Failed', 'Pending'] },
+    { field: 'Status', closed: true, allowed: ['Open', 'Closed', ...OUTCOME_STATUSES] },
+    { field: 'outcome', closed: true, allowed: [...OUTCOME_STATUSES] },
     { field: 'augmentated', closed: true, allowed: ['Yes', 'No'] },
   ];
   for (const col of COLUMNS) {

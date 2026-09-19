@@ -90,6 +90,12 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-10** | Fractional GP is dropped or rounded | nothing — three `derivedPrices.csv` rows, no engine or workbook change |
 | **DATA-11** | A "pick any N of these" recipe is frozen to one member | a call on whether three expired recipes justify a pool rule |
 | **DATA-12** | `Relic Recipe Fragment (6 unique)` is keyed to two different years | one cell in the workbook |
+| **DATA-13** | ~~An auction that has ended but not arrived has no state~~ | **RESOLVED 2026-09-19** — `outcome = Ended`; no workbook formula and no site code had to change |
+| **DATA-14** | `C-U-R Onyx Set` forks a 24-row series | one cell — but fixing `PIPE-8` first stops it recurring |
+| **PIPE-7** | ~~A test pinned to a golden file's currency, not to the data~~ | **RESOLVED 2026-09-19** — the withheld audit was green the whole time; two assertions in its test suite were the block |
+| **PIPE-8** | A withheld Onyx token aborts the alesiev import | nothing — measured, and the resolution order is specified |
+| **PIPE-9** | No close script clears `outcome` | nothing — small, on three scripts |
+| **PIPE-10** | Close scripts write literals into computed `rawPricesData` columns | a call between writing the formulas and refusing to overwrite them |
 
 ---
 
@@ -1508,3 +1514,210 @@ been wrong. A per-concern publish, or a way to land part of one, is the thing
 that actually protects time-sensitive auction rows. Not scoped; recorded here
 because this is the second time the all-or-nothing publish turned a narrow
 problem into a broad one.
+
+---
+
+## DATA-13. An auction that has ended but not arrived has no state — RESOLVED 2026-09-19
+
+**The live defect.** On 2026-09-19, the first day of the 2027 season, two Trent
+auctions (`20273`, `20276`) had finished while Trent's close file had not yet
+been sent. The site advertised both as **still taking bids**.
+
+Neither available state was usable, and the second is the interesting one:
+
+| What you could do | What happened |
+|---|---|
+| Leave `closeDate` blank | `Status` computes `Open`, and `auctionPhase()` reads that as live. **The site lies.** |
+| Fill `closeDate` | `Status` computes `Closed`, and `validate-prices.mjs` § 5b fails the publish: a Closed auction with no price rows has lost its prices. **The publish is blocked.** |
+| Delete the row | The DATA-6 disease, cured in September and not worth re-catching. |
+| Mark it `Failed` | Untrue, and permanent. |
+
+So the data was wrong on the live site while every check downstream was green,
+and the only way to correct it was to trip a check that was right to fire.
+§ 5b cannot tell *lost* from *not here yet*, and nothing was asking it to.
+
+**What shipped.** A third `outcome` value, `Ended`, meaning *finished, not yet
+recorded*. Type it beside the real `closeDate`; delete it when the prices land
+and `Status` computes `Closed` off the date already there.
+
+**What it cost, which is the part worth remembering: nothing.**
+
+- The workbook formula is unchanged — `IF(outcome<>"", outcome, ...)` already
+  passes any value through.
+- `src/lib/data.ts` is unchanged apart from a comment. `status` is a `string`,
+  `auctionPhase()` returns null for anything that is not `Open` or `Pending`,
+  and every statistic keys off `Closed`.
+- §§ 5b and 6 are unchanged. They ask `Status !== 'Closed'`, not a list of
+  names — a predicate written as a property rather than an enumeration, which
+  is the only reason a new state cost two lines instead of twenty.
+
+Changed: § 7's vocabulary (both columns now read one `OUTCOME_STATUSES` set, so
+they cannot drift apart), § 4's blank-outcome check, `hardenSheet.gs`'s
+dropdown, and four mutation cases.
+
+**The one real cost is time, and § 4 is the counterweight.** An `Ended` row is
+absent from every statistic, which is precisely what a lost auction looks like.
+`Pending` corrects itself when its `openDate` arrives; **nothing clears this one
+but a person**, so § 4 names every `Ended` row on every run with the number of
+days it has waited.
+
+> **The shape to take from this.** A check that is correct can still be the
+> thing that holds wrong data on a live site, when the schema has no way to say
+> the true thing. The instinct is to loosen the check; the fix was to give the
+> data somewhere honest to sit. Asked the other way round — *what state is this
+> auction actually in?* — the answer was a value nobody had named.
+
+---
+
+## DATA-14. `C-U-R Onyx Set` forks a 24-row series — OPEN, one cell
+
+`contextItems.csv` row 783 (`20275`, withheld) records `C-U-R Onyx Set`. The
+name appears **once** in the whole corpus. `onyx.csv` records the same token as
+`C/UC/R Set` **24 times** across seven seasons.
+
+It got in because `alesievClose.gs`'s withheld path never applies
+`ONYX_NORMALIZATION` — the map exists precisely to fold
+`Common/Uncommon/Rare Set` onto `C/UC/R Set`, and it is applied on the Onyx path
+only. The first auction to withhold part of an Onyx set therefore wrote a name
+nothing else uses.
+
+**§ 8 cannot see it.** Its near-miss detector pairs names differing by
+punctuation or a trailing plural; these two are far enough apart to look like
+different tokens, which is exactly the case § 8 refuses to merge automatically.
+
+The cell is a one-line fix in the workbook. The *reason* it happened is
+`PIPE-8`, and fixing that without fixing this leaves the fork in place.
+
+---
+
+## PIPE-7. A test pinned to a golden file's currency, not to the data — RESOLVED 2026-09-19
+
+**The sixth publish block, and the first that was never real.** The 2027 close
+(`20275`, nine withheld Random Ultra Rares) failed `npm test` on its publish PR.
+Running `gen-withheld-preview.mjs` cleared it — the signature of the block
+PR #72 had removed a fortnight earlier.
+
+**It was not the validator.** Replaying the exact state afterwards,
+`validate-context.mjs` exits 0 on the new data against the old preview, with all
+73 audited values matching to the cent:
+
+```
+Withheld recompute: 95 rows vs 84 audited preview rows (73 shared, 11 new, 0 gone)
+  all 73 audited withheld value(s) still match (+/-$0.01)
+OK - 0 error(s), 1 warning(s)
+```
+
+Two assertions in `validate-context.test.mjs` were the block. One required the
+shipped repo to report `0 new, 0 gone`; the other required a synthetic added row
+to be the *only* un-audited row. Both are the same demand as the removed one —
+*the golden file must be current* — moved one layer down where the narrowing's
+own doc comment could not see them.
+
+**Fixed** by measuring the delta a mutation causes instead of the absolute
+count. Verified both ways: the suite now passes against the caught-up preview
+*and* against the pre-2027 one that blocked, and case 2 (a drifted audited
+value must still FAIL) passes in both, so the audit's actual job is intact.
+
+> **A check that is satisfied by running a generator was asserting that someone
+> ran the generator.** That is a fact about housekeeping, not about data, and it
+> cannot belong on the publish path. Worth asking of any golden-file check: if I
+> regenerate the file, does this pass? If yes, what did it just prove?
+
+Related: the `publish-check-blocks-publishing` memory, which this is the seventh
+entry in, and the second whose cause was structural rather than a stale number.
+
+---
+
+## PIPE-8. A withheld Onyx token aborts the alesiev import — OPEN, measured
+
+**The 2027 Onyx close is the shape nobody modelled: the auctioneer withheld
+part of the Onyx set and sold the rest.** `20275` sold 12 Onyx tokens and
+withheld 9, plus a Golden Ticket and nine Random Ultra Rares.
+
+`alesievReadStaging` routes on the Category column, so a withheld lot lands in
+`alesievWithheldRows`, which calls `resolveToken` against `tokenMetadata`. Two
+kinds of name cannot resolve there, and each aborts the entire import:
+
+- **Onyx chase tokens are deliberately absent from `tokenMetadata`.** Measured
+  across the corpus: 2026 has 12 of 84 Onyx names present, 2025 has 50 of 105,
+  2018 has 12 of 63. `alesievOnyxRows` does not resolve them *for this reason*.
+  The withheld path does, and did not know.
+- **`Random Ultra Rare` is a context aggregate, not a token.**
+  `ALESIEV_CONTEXT_RULES` is consulted only on the `lots` path, never on the
+  withheld one — so the name the rules exist to normalise is not asked about
+  where it most needs to be.
+
+**The workaround left two marks.** The 2027 Onyx set was typed into
+`tokenMetadata` under Category `Ultra Rare`, making 2027 the only season whose
+Onyx tokens are all there (12 in / 0 missing, against 12/72 for 2026); those
+names will now resolve as ordinary Ultra Rares in any future 2027 import. And
+the withheld path's missing `ONYX_NORMALIZATION` wrote `C-U-R Onyx Set` —
+`DATA-14`.
+
+**The fix** is to resolve a withheld name the way the other paths already do,
+in order: context rule, then Onyx normalisation, then `tokenMetadata`, aborting
+only if all three miss.
+
+**And § 6's set-size note is describing the wrong thing.** It says
+`20275: 12 Onyx rows — expected 20 or 21 for one set`. An Onyx order is 21
+**tokens**, not 21 `onyx.csv` rows, and once part of the set is withheld it
+splits across two files: 12 + 9 = 21. The count should span both. It is a note
+and blocked nothing, but it reads as a defect on correct data, and the "an Onyx
+order is exactly 21 rows" claim is repeated in comments in three files.
+
+---
+
+## PIPE-9. No close script clears `outcome` — OPEN, small
+
+`alesievWriteCloseDate` writes `closeDate` and nothing else. Every row
+`auctionOpen.gs` promotes now carries `outcome = Pending`, and `outcome` beats
+`closeDate` in the `Status` formula — so after a clean import the auction is
+still `Pending`, **and** § 4 raises a hard error: *"outcome is Pending but
+closeDate is X — an auction cannot have closed and not yet started."* A publish
+blocker, discovered at the PR rather than at the import.
+
+`trentClose.gs` and `forumClose.gs` never touch either column — the date is
+typed by hand there — so the same trap exists on both paths with nothing to
+trip it earlier.
+
+The fix on the alesiev path is to clear `outcome` in the same pass that writes
+`closeDate`, with the same read-back discipline
+(`sheet-roundtrip-coerces-values`). On the other two it is a line in the import
+dialog naming the cell.
+
+Note that `DATA-13`'s `Ended` widens this slightly rather than narrowing it: a
+close that lands on an `Ended` row must clear that cell too, and § 5b now says
+so when it sees price rows under one.
+
+---
+
+## PIPE-10. Close scripts write literals into computed columns — OPEN, needs a decision
+
+All three close scripts append literal `Item`, per-unit price and `Category`
+into `rawPricesData` columns F, G and H. `workbook-findings.md` records all
+three as formulas:
+
+```
+rawPricesData!F  =VLOOKUP($D2, trentNormalizedQty, 2, FALSE)          -> Item
+rawPricesData!G  =E2/VLOOKUP($D2, trentNormalizedQty, 3, FALSE)       -> per-unit price
+rawPricesData!H  =VLOOKUP($B2&$F2, tokenMetadata!$A:$E, 5, FALSE)     -> Category
+```
+
+Per-row VLOOKUPs absorb this silently, because the literal usually equals what
+the formula would have produced. An `ARRAYFORMULA` cannot: one literal inside
+the spill range kills the whole column, which is what happened on 2026-09-19 and
+why the column was rewritten as per-row VLOOKUPs by hand.
+
+**This is `OPEN_DERIVED_FIELDS` again, on the paths that never got one.** Phase 4
+learned that a script writing into a derived column freezes it — `augmentated`
+sat at `No` for the life of an auction — and the close paths have no equivalent
+list.
+
+Two costs, and the quiet one is worse. The `ARRAYFORMULA` break announces
+itself. A literal that **disagrees** with what the lookup would have said does
+not, ever.
+
+Options: write the formulas the way `auctionOpen.gs` copies the last row down
+(the real fix, and it gives the `ARRAYFORMULA` option back), or declare the
+derived columns and refuse to write where a formula is found. The second is
+cheaper and still leaves the workbook unable to use the tidier formula.

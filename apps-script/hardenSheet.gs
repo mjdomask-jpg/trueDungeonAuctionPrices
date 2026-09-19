@@ -38,7 +38,7 @@
  * `HARDEN_`/`harden`.
  */
 
-var HARDEN_VERSION = '2026-09-18.1';
+var HARDEN_VERSION = '2026-09-19.1';
 
 /**
  * Columns holding a price, by tab and header. Numeric-only validation goes on
@@ -114,7 +114,7 @@ var HARDEN_VOCABULARY = [
   // It is `grows: false` while `auctionStyle` beside it is `grows: true`, and
   // the two are opposite for a reason: styles are invented by auctioneers and
   // arrive unannounced, outcomes are decided here. `Cancelled` is the obvious
-  // third member and is deliberately not offered until someone decides it is.
+  // fourth member and is deliberately not offered until someone decides it is.
   //
   // `Pending` joined it on 2026-09-11, for an auction announced but not yet
   // open. It differs from `Failed` in a way worth knowing at the sheet: it is
@@ -122,7 +122,17 @@ var HARDEN_VOCABULARY = [
   // believing the cell the day its `openDate` arrives, so a forgotten one shows
   // the auction as open anyway and `validate-prices.mjs` § 4 notes the stale
   // cell. Nothing downstream waits on someone clearing it on the day.
-  { tab: 'auctionMetadata', header: 'outcome', grows: false, values: ['Failed', 'Pending'] },
+  //
+  // `Ended` joined on 2026-09-19, for an auction that has finished while its
+  // close file is still in the auctioneer's inbox. It is temporary like
+  // `Pending` and unlike it in the way that matters at the sheet: NOTHING
+  // clears it by itself. A forgotten `Pending` corrects itself when its
+  // `openDate` arrives, because the site reads the date over the label; a
+  // forgotten `Ended` leaves the auction missing from every statistic until
+  // someone types over the cell, and only § 4's note will say so. Type it
+  // beside the `closeDate`, and clear it when the prices land — `Status` then
+  // computes `Closed` off the date that is already there.
+  { tab: 'auctionMetadata', header: 'outcome', grows: false, values: ['Failed', 'Pending', 'Ended'] },
   // `Source` is transmuteRecipes' provenance column (2026-09-18). It is
   // `grows: false` and warn-only for opposite-looking reasons that are both
   // deliberate:
