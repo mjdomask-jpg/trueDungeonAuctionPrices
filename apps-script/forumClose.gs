@@ -54,7 +54,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var FORUM_VERSION = '2026-09-10.1';
+var FORUM_VERSION = '2026-09-19.1';
 
 /** The tab the operator pastes the auctioneer's file into. */
 var FORUM_STAGING_TAB = 'forumStaging';
@@ -529,7 +529,12 @@ function forumTargetAuction(ui, title) {
   var choice = ui.prompt(title, 'Target auctionId?', ui.ButtonSet.OK_CANCEL);
   if (choice.getSelectedButton() !== ui.Button.OK) return null;
   var auctionId = choice.getResponseText().trim();
-  for (var i = 0; i < meta.length; i++) if (meta[i].auctionId === auctionId) return meta[i];
+  for (var i = 0; i < meta.length; i++) {
+    if (meta[i].auctionId !== auctionId) continue;
+    var problem = closeOutcomeProblem(meta[i].outcome);
+    if (problem) { ui.alert('Cannot import', 'Auction ' + auctionId + ': ' + problem, ui.ButtonSet.OK); return null; }
+    return meta[i];
+  }
   ui.alert('No auction "' + auctionId + '" in ' + TABS.metadata + '.');
   return null;
 }
@@ -569,8 +574,13 @@ function importForumClose() {
     return;
   }
 
+  // This importer does not write closeDate, so the operator types it by hand
+  // afterwards — and a stale `outcome` beside it outranks the date. Said here
+  // because § 4's version of the message arrives on a publish PR instead.
+  var reminder = closeOutcomeReminder(target.auctionId, target.outcome);
   var answer = ui.alert('Import (script ' + FORUM_VERSION + ')',
-    forumDescribePlan(plan, target.auctionId) + '\n\nWrite these rows?', ui.ButtonSet.OK_CANCEL);
+    forumDescribePlan(plan, target.auctionId) + (reminder ? '\n\n' + reminder : '') +
+    '\n\nWrite these rows?', ui.ButtonSet.OK_CANCEL);
   if (answer !== ui.Button.OK) return;
 
   if (forumKeepsRawRows(plan)) appendRows(TABS.raw, forumRawRows(plan, target));
@@ -579,7 +589,8 @@ function importForumClose() {
   SpreadsheetApp.flush();
 
   ui.alert('Imported (script ' + FORUM_VERSION + ')',
-    forumDescribePlan(plan, target.auctionId) + '\n\nDone. Publish when you are ready.', ui.ButtonSet.OK);
+    forumDescribePlan(plan, target.auctionId) + (reminder ? '\n\n' + reminder : '') +
+    '\n\nDone. Publish when you are ready.', ui.ButtonSet.OK);
   forumShowContext(plan, target);
 }
 

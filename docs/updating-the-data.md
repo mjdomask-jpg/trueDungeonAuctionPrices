@@ -723,6 +723,7 @@ so `Non-Onyx` does not read as Onyx.
 |---|---|
 | **Names every augment** | The forum file calls six different grunnel augments `Grunnel Augment` and leaves you to name them from the thread. This source names each one, so the `contextItems` rows come out complete. |
 | **Writes `closeDate`** | It asks for the close date and writes it to `auctionMetadata`, then reads the cell back to check Sheets did not reformat it. `Status`, `daysToClose` and `Close Month` are formulas and follow on their own. |
+| **Clears `outcome`** | In the same pass. A `Pending` or `Ended` cell **outranks `closeDate`** in the `Status` formula, so writing the date alone leaves the auction un-Closed — and a `Pending` row carrying a `closeDate` is a hard error at the PR gate. It says what it cleared; it never does it silently. |
 | **Refuses a re-import** | If `prices` already holds rows for the chosen auction it stops. An export you can download twice is easy to import twice. |
 
 ### Installing it (once)
@@ -1892,6 +1893,28 @@ the future, the promote step fills `outcome` with `Pending` and says so under
 source that lists an auction before it opens, so it is the one that produces
 these — check the `Starts:` date it read, because that date is the whole
 decision.
+
+### The `outcome` cell when a close arrives
+
+**Writing `closeDate` is not what makes an auction Closed.** `Status` reads
+`outcome` *first*, so a `Pending` or `Ended` cell left beside the new date
+keeps the auction at that status — and a `Pending` row carrying a `closeDate`
+is a **hard error** at the PR gate, because an auction cannot have closed
+before it started. Every auction `auctionOpen.gs` promotes ahead of its opening
+day carries `Pending`, so this is the ordinary case.
+
+Since 2026-09-19 the importers help, and they cannot all help equally:
+
+- **`alesievClose.gs` clears it for you**, in the same pass that writes
+  `closeDate`, and tells you what it cleared.
+- **The Trent and forum importers remind you**, by name, in the confirm dialog
+  and again when they finish. Neither writes `closeDate` — you type it — so
+  neither can clear the cell.
+- **All three refuse a `Failed` target.** A failed auction sold nothing, so
+  rows arriving under it mean either the wrong auction was picked or the
+  `Failed` mark is wrong. Both are yours to decide.
+
+A value none of them recognises is left alone and reported rather than deleted.
 
 ### Recording an auction that has ended but not arrived
 
