@@ -24,7 +24,7 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20236,Amulet of Magnifying,1,5,-0.52,-0.8,-0.28,recomputed
 20236,Ring of the 4th Circle,2,5,-170.67,-164.0,6.67,recomputed
 20236,Ring of the 4th Circle,1,5,-85.34,-82.0,3.34,recomputed
-20236,Ultra Rare,4,5,-323.13,-384.0,-60.87,recomputed
+20236,Ultra Rare,4,5,-322.5,-384.0,-61.5,recomputed
 202312,Patron Pin,1,5,-318.25,-434.0,-115.75,recomputed
 202327,Path to Enlightenment (Fragment 1),1,5,-541.74,-533.6,8.14,recomputed
 202327,Patron Pin,1,5,-318.25,-501.09,-182.84,recomputed
@@ -70,7 +70,7 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20251,Philosopher's Stone,220,10,-509.99,-507.98,2.01,recomputed
 20251,Ring of the 2nd Circle,2,10,-157.59,-170.6,-13.01,recomputed
 20251,Ultra Rare,15,10,-1050.23,-1059.46,-9.23,recomputed
-20251,Wish Ring,1,5,-167.57,-135.2,32.37,recomputed
+20251,Wish Ring,1,5,-167.34,-135.2,32.14,recomputed
 20251,Wish Ring,2,5,-261.93,-270.4,-8.47,recomputed
 20255,Mark of the 2nd Tenet,2,8,-162.07,-161.94,0.13,recomputed
 20255,Ring of the 2nd Circle,4,9,-315.18,-316.0,-0.82,recomputed
@@ -83,3 +83,14 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 202634,Elven Bismuth,2,8,-63.35,-65.28,-1.93,recomputed
 202634,Oil of Enchantment,2,8,-86.79,-87.67,-0.88,recomputed
 202645,Ring of the 1st Circle,8,10,-898.32,-756.86,141.46,recomputed
+20275,Bead of Need,1,0,,0.0,,FIXED_was_error
+20275,Blood Cult Mark,1,0,,0.0,,FIXED_was_error
+20275,C-U-R Onyx Set,1,0,,0.0,,FIXED_was_error
+20275,Gloves of Elder Horror,1,0,,0.0,,FIXED_was_error
+20275,Golden Ticket,1,0,,0.0,,FIXED_was_error
+20275,Lenses of Timestep,1,0,,0.0,,FIXED_was_error
+20275,Mask of Foggy Health,1,0,,0.0,,FIXED_was_error
+20275,Natasha's Nightcap,1,0,,0.0,,FIXED_was_error
+20275,Random Ultra Rare,9,0,,0.0,,FIXED_was_error
+20275,Spirit Pet Owl,1,0,,0.0,,FIXED_was_error
+20275,Tobin's Cosmic Ring,1,0,,0.0,,FIXED_was_error
