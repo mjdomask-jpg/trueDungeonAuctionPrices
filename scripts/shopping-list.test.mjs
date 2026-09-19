@@ -530,7 +530,48 @@ check('the grand total is exactly the two subtotals',
 // =========================================================================
 console.log('\n=== 6. the staleness flag (D1b) ===');
 
-const stale = goods.map((g) => ({ g, s: stalenessOf(g, engine) })).filter((x) => x.s);
+// Staleness asks whether a season's last five sales of a good have drifted from
+// that season's average. It can therefore only say anything about a season that
+// HAS more than five sales of something: where the last-5 window is a strict
+// subset of the season, and not the very same sales counted twice.
+//
+// `latestPriced` is not reliably such a season. The moment a season's first
+// auction closes it becomes the latest priced one, and for a while every good's
+// last-5 IS its season — divergence is structurally zero and nothing can be
+// flagged. That is correct behaviour (there is no drift to see yet) but it
+// makes every assertion in this section vacuous, which is how it reads from the
+// outside: 2027 opened with one auction on 2026-09-19 and the whole section
+// went quiet, the vacuity guard below firing exactly as designed.
+//
+// So the section measures on the newest season that can support the
+// measurement, and says which one that was. Derived from the corpus, so it
+// moves forward on its own as each season fills in.
+const MEASURABLE = (season) => goods.some((g) => {
+  const full = prices.leafPrice(g, season, 'full');
+  const recent = prices.leafPrice(g, season, 'last5');
+  return full && recent && full.source === 'auction' && !full.seasonMapped &&
+    recent.variant === 'last5' && full.stats.n > recent.stats.n;
+});
+const STALE_SEASON = (() => {
+  for (let s = L; s >= prices.earliestPriced; s--) if (MEASURABLE(s)) return s;
+  return L;
+})();
+// The same corpus, stopped at that season, so `stalenessOf` — which reads
+// `latestPriced` itself and takes no season argument — measures there. Capping
+// the sales is what moves `latestPriced`; nothing about the function changes.
+const stalePrices = new PriceIndex(
+  sales.filter((s) => Number(s.season) <= STALE_SEASON),
+  parseOffAuctionPrices(read('offAuctionPrices.csv')),
+  parseDerivedRules(read('derivedPrices.csv')),
+  parseTokenMetadata(read('tokenMetadata.csv')),
+  parseMeta(read('auctionMetadata.csv')),
+);
+const staleEngine = new CostEngine(recipes, stalePrices, { today: TODAY });
+check('the staleness season is one the measurement can actually be made in',
+  stalePrices.latestPriced === STALE_SEASON && MEASURABLE(STALE_SEASON),
+  `STALE_SEASON ${STALE_SEASON}, latestPriced ${L}`);
+
+const stale = goods.map((g) => ({ g, s: stalenessOf(g, staleEngine) })).filter((x) => x.s);
 check('threshold is 35%', STALE_THRESHOLD === 0.35, STALE_THRESHOLD);
 // The most price-sensitive assertion in the file, and the one most certain to
 // redden a routine publish: WHICH goods are stale is decided by the prices
@@ -538,7 +579,8 @@ check('threshold is 35%', STALE_THRESHOLD === 0.35, STALE_THRESHOLD);
 // and Oil of Enchantment when written. What is asserted now is that the flag
 // fires at all — without which the divergence check below is vacuously true —
 // and the goods it names are printed so a reader sees the set move.
-console.log(`        stale in season ${L}: ` +
+console.log(`        stale in season ${STALE_SEASON}` +
+  (STALE_SEASON === L ? '' : ` (latest priced is ${L}, too new to measure in)`) + ': ' +
   (stale.length
     ? stale.map((x) => `${x.g} ${money(x.s.seasonAvg)} -> ${money(x.s.recentAvg)} (${(x.s.divergence * 100).toFixed(0)}%)`).join('; ')
     : 'none') + '\n');
@@ -554,7 +596,8 @@ check('every flagged good is UNDERSTATED by its season average, so the default u
 // season narrows that gap, this fails and the number gets re-derived.
 const divergences = new Map();
 for (const g of goods) {
-  const full = prices.leafPrice(g, L, 'full'), recent = prices.leafPrice(g, L, 'last5');
+  const full = stalePrices.leafPrice(g, STALE_SEASON, 'full');
+  const recent = stalePrices.leafPrice(g, STALE_SEASON, 'last5');
   if (!full || !recent || full.source !== 'auction' || recent.variant !== 'last5') continue;
   divergences.set(g, Math.abs(recent.stats.avg / full.stats.avg - 1));
 }
@@ -568,7 +611,16 @@ check('...because ordinary goods sit at most 17% out while the flagged pair are 
   [...divergences].map(([g, d]) => `${g} ${(d * 100).toFixed(0)}%`).join(', '));
 
 check('a good with no auction rows cannot be flagged rather than being flagged wrongly',
-  stalenessOf('Golden Fleece', engine) === null, stalenessOf('Golden Fleece', engine));
+  stalenessOf('Golden Fleece', staleEngine) === null, stalenessOf('Golden Fleece', staleEngine));
+
+// The live engine is the one the site actually runs, and on a season too new to
+// measure in it must go QUIET rather than flag something it cannot support.
+// This is the other half of the story above: no drift detected, no drift
+// claimed. It is what the whole section looked like on 2026-09-19.
+check('...and on the live engine the flag never fires without this season\'s own last-5 window',
+  goods.every((g) => stalenessOf(g, engine) === null || MEASURABLE(L)),
+  `latestPriced ${L}, measurable ${MEASURABLE(L)}, ` +
+  `${goods.filter((g) => stalenessOf(g, engine)).length} flagged`);
 
 // =========================================================================
 console.log('\n=== 7. the recent-prices toggle still reaches every branch ===');
@@ -612,20 +664,53 @@ check("...some over the build window, the rest on the pre-2018 fallback — both
   eraExpiredTrade.some(({ l }) => l.basis === 'window') &&
   eraExpiredTrade.some(({ l }) => l.basis !== 'window'),
   `${eraExpiredTrade.filter(({ l }) => l.basis === 'window').length} windowed of ${eraExpiredTrade.length}`);
+// The off-auction allowance is the same one § 2 already makes: a good priced
+// from offAuctionPrices has no auction season to be current in, so "is it on
+// the current season" is not a question about it. Golden Fleece is the live
+// case — 27 lines of it, which sat on 2026 and passed only while 2026 happened
+// to be `latestPriced`, then went red when 2027's first close moved it.
 check("...and under 'today' every one of them IS on the current season",
-  expiredTrade.every(({ l }) => l.basis !== 'window' && l.pricedYear === L));
+  expiredTrade.every(({ l }) => l.basis !== 'window' && (l.pricedYear === L || l.source !== 'auction')),
+  expiredTrade.filter(({ l }) => !(l.basis !== 'window' && (l.pricedYear === L || l.source !== 'auction')))
+    .slice(0, 5).map(({ c, l }) => `${c.key} ${l.good} source=${l.source} -> ${l.pricedYear}`).join('\n'));
 
-// The 2027 preview keeps its forward last-5 estimate under 'era' (consequence
-// B), which needs S2 gated as well as S1 — 8 of the 12 future recipes' Ultra
-// Rare lines are in-print 2027s and would otherwise take S2.
-const eraFuture = eraCosts.filter((c) => c.status === 'future');
-const nowFuture = costs.filter((c) => c.status === 'future');
+// A season's PREVIEW keeps its forward last-5 estimate under 'era' (consequence
+// B), which needs S2 gated as well as S1 — the preview season's Ultra Rare
+// lines are in-print and would otherwise take S2.
+//
+// Measured on a corpus that stops BEFORE the preview season, because a forward
+// estimate is only the thing being tested while there is nothing to price from.
+// Once that season's first auction closes there is real data and both bases use
+// it, which is right and which is also why this cannot be asserted on the live
+// corpus: it held until 2026-09-19 and stopped the moment 20275 closed, with no
+// engine change behind it. Capping the sales restores the state the rule is
+// about, and moves forward on its own as each preview season fills in.
+const PREVIEW_SEASON = Math.max(...recipes.map((r) => r.year));
+const prePreview = new PriceIndex(
+  sales.filter((s) => Number(s.season) < PREVIEW_SEASON),
+  parseOffAuctionPrices(read('offAuctionPrices.csv')),
+  parseDerivedRules(read('derivedPrices.csv')),
+  parseTokenMetadata(read('tokenMetadata.csv')),
+  parseMeta(read('auctionMetadata.csv')),
+);
+const preEngine = new CostEngine(recipes, prePreview, { today: TODAY });
+const preEra = new CostEngine(recipes, prePreview, { today: TODAY, basis: 'era' });
+const eraFuture = recipes.map((r) => preEra.cost(r.transmute, r.year)).filter(Boolean)
+  .filter((c) => c.status === 'future');
+const nowFuture = recipes.map((r) => preEngine.cost(r.transmute, r.year)).filter(Boolean)
+  .filter((c) => c.status === 'future');
 const total = (cs) => cs.reduce((t, c) => t + c.fullAvg, 0);
-check("under 'era' the 2027 preview keeps its forward last-5 estimate",
-  eraFuture.flatMap((c) => c.lines).some((l) => l.variant === 'last5') &&
-  !nowFuture.flatMap((c) => c.lines).some((l) => l.variant === 'last5'),
-  `era ${eraFuture.flatMap((c) => c.lines).filter((l) => l.variant === 'last5').length} last5 lines, ` +
-  `today ${nowFuture.flatMap((c) => c.lines).filter((l) => l.variant === 'last5').length}`);
+const last5Of = (cs) => cs.flatMap((c) => c.lines).filter((l) => l.variant === 'last5').length;
+// Stated as a COMPARISON, not as "today reaches it zero times". Today legitimately
+// falls back to last-5 for a handful of lines whose token has no price in any
+// season yet — four Onyx tokens from the 2027 set, on this corpus — and pinning
+// that to zero would make an unrelated new token redden the check. What the gate
+// claims is that 'era' reaches for the forward estimate far more than 'today'
+// does; if S2 stopped being gated the two would converge and this fails.
+check("under 'era' the preview season keeps its forward last-5 estimate",
+  last5Of(eraFuture) > 0 && last5Of(eraFuture) > last5Of(nowFuture),
+  `preview season ${PREVIEW_SEASON}, ${nowFuture.length} future recipe(s): ` +
+  `era ${last5Of(eraFuture)} last5 lines, today ${last5Of(nowFuture)}`);
 check("...so the two bases really do disagree about it",
   Math.abs(total(eraFuture) - total(nowFuture)) > 500,
   `era ${money(total(eraFuture))} vs today ${money(total(nowFuture))}`);
@@ -732,7 +817,11 @@ check('every note in the closed vocabulary renders, and none renders as undefine
 // restated the flag's own existence — and a test spelling the sentence out
 // fails on an edit that changes nothing about what is claimed. What must not
 // change is that both measured numbers appear and no third thing does.
-const bismuth = stalenessOf('Elven Bismuth', engine);
+// `staleEngine`, not `engine`, for the same reason § 6 uses it: this is about
+// the flag's WORDING, and a season too new to measure in produces no flag to
+// word. Read off the live engine it returned null the day 2027 opened, and
+// `stalenessParts` threw rather than failing an assertion.
+const bismuth = stalenessOf('Elven Bismuth', staleEngine);
 const stalePartsBismuth = stalenessParts(bismuth, m);
 check('the staleness flag names both measured numbers, in two parts',
   stalePartsBismuth.length === 2 &&
@@ -751,7 +840,7 @@ check('the one-line form is exactly the two parts joined',
 // there is no seasonal shape to forecast from.
 check('no measured staleness flag predicts a direction',
   goods.every((g) => {
-    const st = stalenessOf(g, engine);
+    const st = stalenessOf(g, staleEngine);
     if (!st) return true;
     return !/\b(rising|falling|up|down|moving|will|expect|soon|trend)\b/i.test(stalenessNote(st, m));
   }));
@@ -776,7 +865,12 @@ check('a netted chain removes exactly what is being crafted, and no more',
 // =========================================================================
 console.log('\n=== 10. Copy as TSV and Download CSV ===');
 
-const exported = buildShoppingList(all2026, engine, {
+// `staleEngine` so the Flags column has both of its values to carry. The
+// staleness flag is the scarcer one and it goes quiet in a season too new to
+// measure in — on the live engine the vacuity guard below correctly reported
+// that the Flags assertion above was proving only half of itself. Everything
+// here is about the EXPORT's shape, which the capped corpus does not change.
+const exported = buildShoppingList(all2026, staleEngine, {
   onHand: { [many.trade[0].id]: 3 },
   overrides: { [many.trade[1].id]: 9.99 },
 });

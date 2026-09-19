@@ -308,13 +308,19 @@ const cases = [
   //
   // Asserted on the SUCCESS line rather than on an absence: "no error appeared"
   // passes just as well when the whole section has stopped running.
+  //
+  // The auction COUNT is deliberately `\d+` and not the number of the day. It
+  // was pinned to 55 and went red the moment a publish carried a 56th Onyx
+  // auction — 20275, the first 2027 close — proving nothing about the Pending
+  // rule this case exists to guard. The corpus grows every season; what must
+  // hold is that § 6 reached its success line, not how much data it counted.
   ['6  a Pending Onyx auction is not an error', () => addMetaRow({
     auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
     auctionName: 'A 2018 Onyx auction announced but not yet open',
     auctionStyle: 'Onyx Ultra Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
     Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
     openDate: '2099-10-01', Status: 'Pending', outcome: 'Pending',
-  }), /Onyx row\(s\) across 55 auction\(s\) and \d+ context row\(s\) are internally consistent/, 'warn'],
+  }), /Onyx row\(s\) across \d+ auction\(s\) and \d+ context row\(s\) are internally consistent/, 'warn'],
 
   // The other direction of § 5b: rows under an auction that sold nothing. This
   // is the wrong-auction defect wearing a new hat, and it is a NOTE — which way
