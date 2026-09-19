@@ -241,6 +241,19 @@ for (const f of manifest.feeds) {
   check(`${f.catid}: every item has an ISO date`, items.every((i) => /^\d{4}-\d{2}-\d{2}$/.test(i.isoDate || '')), '');
   check(`${f.catid}: ids are unique`, new Set(items.map((i) => i.id)).size === items.length, '');
 }
+// The moment this feed was captured, read off the feed itself rather than off
+// the manifest's prose `fetched` line. Every assertion about WHICH items a scan
+// selects has to be judged in this frame: the fixture is frozen at 2026-08-21
+// while the corpus keeps growing, so against the wall clock the cutoff
+// eventually overtakes the newest saved post and the whole feed falls behind it.
+//
+// That is not hypothetical — it happened on 2026-09-19, when season 2027's
+// openDate arrived and moved the cutoff to 2026-08-29, eight days past the
+// newest item here. Both selection assertions below went red on `main` with no
+// data change behind them, which looks exactly like the bug they guard against.
+//
+// Derived, not written down, so re-fetching the fixtures moves it automatically.
+const FEED_AS_OF = FEED.reduce((a, i) => (i.isoDate > a ? i.isoDate : a), '');
 {
   // pubDate is the LAST post, not the topic's creation. 259798 opened
   // 2026-08-07 and its feed item is dated later. Anything that treated the feed
@@ -362,7 +375,7 @@ console.log('\nDuplicate detection\n');
     META.filter((r) => /truedungeon/i.test(r.Link)).every((r) => O.openTopicId(r.Link)), '');
   eq('an anchor does not change the id', O.openTopicId('https://www.truedungeon.com/forum?view=topic&catid=584&id=259259#471512'), '259259');
 
-  const selection = O.openSelectFeedItems(FEED, META, {});
+  const selection = O.openSelectFeedItems(FEED, META, { today: FEED_AS_OF });
   check('a scan skips every topic already recorded', selection.skipped.recorded > 0, '');
   check('  ... and none of the selected is recorded',
     selection.selected.every((i) => !recorded[i.id]), '');
@@ -386,11 +399,16 @@ console.log('\nDuplicate detection\n');
   // the outside, to a quiet week. The justification for filtering on the feed's
   // pubDate at all is that it "can only ever over-include"; that holds for a
   // cutoff at or behind today and fails for one in the future.
+  //
+  // Judged as of FEED_AS_OF, which sharpens it rather than softening it: the
+  // real corpus now holds season 2027 rows dated after this snapshot, so the
+  // "ignore dates that have not arrived" rule is exercised by real data here
+  // and not only by the synthetic 2099 row.
   const pendingRow = { openDate: '2099-01-01', auctionId: '20991', auctionSeason: '2099' };
   eq('a future openDate does not drag the cutoff forward',
-    O.openScanCutoff(META.concat([pendingRow]), TODAY_ISO), O.openScanCutoff(META, TODAY_ISO));
+    O.openScanCutoff(META.concat([pendingRow]), FEED_AS_OF), O.openScanCutoff(META, FEED_AS_OF));
   check('  ... so the feed is still scanned rather than silently emptied',
-    O.openSelectFeedItems(FEED, META.concat([pendingRow]), { today: TODAY_ISO }).selected.length > 0,
+    O.openSelectFeedItems(FEED, META.concat([pendingRow]), { today: FEED_AS_OF }).selected.length > 0,
     'a pending auction blanked the scan — every feed item fell behind the cutoff');
 
   // 602 is the general discussion category, so a topic there must look like an
