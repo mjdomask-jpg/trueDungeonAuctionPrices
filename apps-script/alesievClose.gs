@@ -38,7 +38,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-19.2';
+var ALESIEV_VERSION = '2026-09-19.3';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -188,6 +188,66 @@ var ALESIEV_CONTEXT_RULES = {
 };
 
 /**
+ * Names that are the auctioneer's FEE when withheld, and are written NOWHERE.
+ *
+ * The auctioneer takes a fee for running the auction — some Random Ultra Rares
+ * and a Golden Ticket — and it is paid out of the order rather than sold. The
+ * maintainer settled during the 2026 backfill that **the fee is never a
+ * withheld row**: withheld means the auctioneer kept back a token that the
+ * order bought and the buyers did not get to bid on, which is a fact about how
+ * much of the order reached the group. A fee is the cost of running the thing,
+ * and counting it as withheld overstates the withheld block and every funding
+ * rollup sitting above it.
+ *
+ * **This source is the first one that can state it, and the first that gets it
+ * wrong.** A forum thread does not list the fee as a lot at all, so no earlier
+ * importer ever had to decide. alesievauctions.com lists it — it is a row in
+ * the database like any other — and tags it `Withheld`, because from the site's
+ * point of view it is a lot that drew no bid. That is not our `withheld`.
+ * Measured on `20275`, the first real file: 10 of its 11 withheld rows were the
+ * fee (9 x `Random Ultra Rare` plus `Golden Ticket`). Corroboration from the
+ * other direction — all four recorded `Golden Ticket` rows in
+ * `contextItems.csv` are `token` rows with a price (`20266` at $1,254,
+ * `202644` at $855, `202645` at $701, `202647` at $652), and not one is
+ * withheld.
+ *
+ * ## Why this list is deliberately TIGHT
+ *
+ * Every other name rule in this file routes a row; this one DELETES it, and
+ * that inverts which way to lean. `forumThread.gs`'s lesson — write a rule
+ * looser than the one example you have — is about auctioneers being
+ * inconsistent with themselves in prose. It does not transfer to a rule that
+ * drops data:
+ *
+ *   - Too tight, and a fee spelling nobody has seen lands in `contextItems` as
+ *     withheld. That is today's behaviour, it is visible in the review, and the
+ *     operator deletes one row.
+ *   - Too loose, and a genuine withheld token disappears from the funding
+ *     rollups with nothing anywhere to say it ever existed.
+ *
+ * So every key here is a spelling the CORPUS already holds for these two
+ * things, and nothing is invented. The Random UR keys are `ALESIEV_CONTEXT_RULES`'
+ * own; the Golden Ticket keys are the three `contextItems.csv` records
+ * (`Golden Ticket`, `Golden Ticket Chance`, `Chance at Golden Ticket`).
+ *
+ * ## It applies on the WITHHELD path only
+ *
+ * A SOLD `Random Ultra Rare` is a lucky dip somebody paid for, which is a real
+ * market observation, and `ALESIEV_CONTEXT_RULES` still aggregates it into one
+ * `token` row the way all 21 recorded appearances are shaped. Same name,
+ * opposite treatment, and the thing that decides is column B.
+ */
+var ALESIEV_FEE_NAMES = {
+  'random ultra rare': true,
+  'random ultra rares': true,
+  'random ur': true,
+  'random urs': true,
+  'golden ticket': true,
+  'golden ticket chance': true,
+  'chance at golden ticket': true,
+};
+
+/**
  * The tab context rows are written to.
  *
  * Not in `TABS`, deliberately: that map is `trentClose.gs`'s and `checkTabs()`
@@ -319,6 +379,17 @@ function alesievContextRule(name) {
   return ALESIEV_CONTEXT_RULES[alesievContextKey(name)] || null;
 }
 
+/**
+ * Whether a withheld lot is really the auctioneer's fee. See ALESIEV_FEE_NAMES.
+ *
+ * Keyed the same way as a context rule, so the lot marker and a leading `9x`
+ * are already off by the time this is asked — `alesievReadStaging` has run
+ * `alesievNormaliseName` and `alesievContextKey` strips the rest.
+ */
+function alesievIsFeeName(name) {
+  return ALESIEV_FEE_NAMES[alesievContextKey(name)] === true;
+}
+
 // ===========================================================================
 // Pure — reading the staged export
 // ===========================================================================
@@ -353,7 +424,7 @@ function alesievReadStaging(values) {
 
   var out = {
     lots: [], onyx: [], withheld: [], augments: [], context: [],
-    unsold: [], routeErrors: [], ignored: [],
+    unsold: [], fee: [], routeErrors: [], ignored: [],
   };
   for (var i = 0; i < header.length; i++) {
     if (ALESIEV_IGNORED_HEADERS.indexOf(header[i]) !== -1) out.ignored.push(values[0][i]);
@@ -379,7 +450,16 @@ function alesievReadStaging(values) {
 
     // A withheld item never sold, so a blank price is its EXPECTED shape rather
     // than a missing value. Every other destination needs a bid.
-    if (route.destination === 'context' && route.category === 'withheld') { out.withheld.push(lot); continue; }
+    //
+    // The fee is taken out FIRST. The site tags it `Withheld` because it is a
+    // lot that drew no bid, but it is the cost of running the auction rather
+    // than a token kept back from the group — see ALESIEV_FEE_NAMES. It is
+    // written nowhere, and alesievPlanImport names every lot this dropped.
+    if (route.destination === 'context' && route.category === 'withheld') {
+      if (alesievIsFeeName(lot.name)) out.fee.push(lot);
+      else out.withheld.push(lot);
+      continue;
+    }
     if (bid === null) { out.unsold.push(lot); continue; }
 
     if (route.destination === 'onyx') { out.onyx.push(lot); continue; }
@@ -464,6 +544,17 @@ function alesievOnyxRows(onyxLots) {
  *     `tokenMetadata` for it is asking the wrong file. The rules were already
  *     written — `ALESIEV_CONTEXT_RULES` — and were simply never consulted on
  *     this path.
+ *
+ *     **No withheld lot reaches this step today, and it stays anyway.** Every
+ *     one of the four current context rules is a Random UR spelling, and as of
+ *     2026-09-19 those are also `ALESIEV_FEE_NAMES`, so `alesievReadStaging`
+ *     takes them out before this function ever sees them. The branch is kept
+ *     because the two lists answer different questions — "what does
+ *     `contextItems` call this?" and "is this the auctioneer's fee?" — and a
+ *     context rule for something that is NOT a fee would land here and abort
+ *     exactly as the Random URs did before PIPE-8. `npm run test:alesiev`
+ *     calls this function directly to keep the step proved while nothing
+ *     upstream can exercise it.
  *
  *  2. **Then `tokenMetadata`, after the Onyx marker comes off.** This is the
  *     step that keeps ordinary withheld tokens honest, and it is not
@@ -637,7 +728,7 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
   if (staged.error) return { ok: false, aborts: [staged.error], cautions: [], lots: 0 };
 
   var total = staged.lots.length + staged.onyx.length + staged.withheld.length +
-    staged.augments.length + staged.context.length + staged.unsold.length;
+    staged.augments.length + staged.context.length + staged.unsold.length + staged.fee.length;
   if (!total) return { ok: false, aborts: ['the staging tab has a header but no lots'], cautions: [], lots: 0 };
 
   var index = buildTokenIndex(tokenMetadataRows);
@@ -699,6 +790,17 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
     cautions.push(staged.unsold.length + ' lot(s) drew no bid and were dropped: ' +
       alesievLotNames(staged.unsold).join(', ') + '.');
   }
+  // Named individually rather than counted. The fee is the one thing this
+  // importer throws away on purpose, and a row that is silently discarded is a
+  // row nobody can check — if a real withheld token ever matches this list,
+  // this line is the only place it will show up.
+  if (staged.fee.length) {
+    cautions.push(staged.fee.length + " lot(s) are the auctioneer's fee and were written nowhere: " +
+      alesievLotNames(staged.fee).join(', ') + '. The site tags the fee `Withheld` because it drew no ' +
+      'bid, but a fee is the cost of running the auction rather than a token kept back from the group, ' +
+      'so it is not a withheld row. Anything in that list that IS genuinely withheld has to be added by ' +
+      'hand.');
+  }
   if (staged.ignored.length) {
     cautions.push('columns read: Item, Category and the ending bid. Ignored: ' + staged.ignored.join(', ') +
       '. "Average Bid" here is a per-lot bid statistic, NOT the pivot-over-all-bids column that ' +
@@ -717,6 +819,7 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
     context: context,
     contextLots: staged.context,
     unsold: staged.unsold,
+    fee: staged.fee,
     unresolved: result.unresolved,
     withheldLots: staged.withheld,
     augmentLots: staged.augments,
@@ -1116,6 +1219,7 @@ if (typeof module !== 'undefined') {
     alesievRoute: alesievRoute,
     alesievContextKey: alesievContextKey,
     alesievContextRule: alesievContextRule,
+    alesievIsFeeName: alesievIsFeeName,
     alesievFindColumn: alesievFindColumn,
     alesievReadStaging: alesievReadStaging,
     alesievOnyxRows: alesievOnyxRows,
@@ -1129,6 +1233,7 @@ if (typeof module !== 'undefined') {
     alesievClearOutcome: alesievClearOutcome,
     alesievContextWorksheetText: alesievContextWorksheetText,
     ALESIEV_CONTEXT_RULES: ALESIEV_CONTEXT_RULES,
+    ALESIEV_FEE_NAMES: ALESIEV_FEE_NAMES,
     ALESIEV_AUGMENT_CATEGORIES: ALESIEV_AUGMENT_CATEGORIES,
     ALESIEV_IGNORED_HEADERS: ALESIEV_IGNORED_HEADERS,
     ALESIEV_STAGING_TAB: ALESIEV_STAGING_TAB,

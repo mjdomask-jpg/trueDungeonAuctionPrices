@@ -91,12 +91,14 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-11** | A "pick any N of these" recipe is frozen to one member | a call on whether three expired recipes justify a pool rule |
 | **DATA-12** | `Relic Recipe Fragment (6 unique)` is keyed to two different years | one cell in the workbook |
 | **DATA-13** | ~~An auction that has ended but not arrived has no state~~ | **RESOLVED 2026-09-19** — `outcome = Ended`; no workbook formula and no site code had to change |
-| **DATA-14** | `C-U-R Onyx Set` forks a 24-row series | one cell — but fixing `PIPE-8` first stops it recurring |
+| **DATA-14** | ~~`C-U-R Onyx Set` forks a 24-row series~~ | **RESOLVED 2026-09-19** — cause fixed in `PIPE-8`, cell fixed in the workbook; it lands on the next publish |
 | **PIPE-7** | ~~A test pinned to a golden file's currency, not to the data~~ | **RESOLVED 2026-09-19** — the withheld audit was green the whole time; two assertions in its test suite were the block |
 | **PIPE-8** | ~~A withheld Onyx token aborts the alesiev import~~ | **RESOLVED 2026-09-19** — three-step resolution; **the workaround's tokenMetadata rows are still in the sheet and four of them collide** |
 | **DATA-15** | Four `tokenMetadata` keys carry two different categories | one sheet edit — surfaced by a new § 7 note, promote it to an error once clean |
 | **PIPE-9** | ~~No close script clears `outcome`~~ | **RESOLVED 2026-09-19** — alesiev clears it, Trent and forum remind you, all three refuse a `Failed` target |
 | **PIPE-10** | Close scripts write literals into computed `rawPricesData` columns | a call between writing the formulas and refusing to overwrite them |
+| **PIPE-11** | ~~The auctioneer's fee is imported as a withheld row~~ | **RESOLVED 2026-09-19** — `ALESIEV_FEE_NAMES`; **`20275`'s ten stale fee rows are `DATA-16`** |
+| **DATA-16** | `20275` records the auctioneer's fee as ten withheld rows | ten row deletions in the workbook — the cause is fixed, this is what it already wrote |
 
 ---
 
@@ -1595,6 +1597,12 @@ The cell is a one-line fix in the workbook. The *reason* it happened is
 > reach a row that is already published — that is a workbook edit, and while it
 > is outstanding the series stays split 24/1.
 
+> **RESOLVED 2026-09-19.** The maintainer corrected the cell in the workbook;
+> it reaches `contextItems.csv` on the next publish. Both halves are now
+> closed — the name can no longer be written, and the one row that had it is
+> fixed at the source. `20275`'s withheld block has a second, separate problem:
+> see `DATA-16`.
+
 ---
 
 ## PIPE-7. A test pinned to a golden file's currency, not to the data — RESOLVED 2026-09-19
@@ -1861,3 +1869,91 @@ Options: write the formulas the way `auctionOpen.gs` copies the last row down
 (the real fix, and it gives the `ARRAYFORMULA` option back), or declare the
 derived columns and refuse to write where a formula is found. The second is
 cheaper and still leaves the workbook unable to use the tidier formula.
+
+---
+
+## PIPE-11. The auctioneer's fee is imported as a withheld row — RESOLVED 2026-09-19
+
+The auctioneer takes a fee for running an auction — some Random Ultra Rares and
+a Golden Ticket — paid out of the order rather than sold. The maintainer settled
+during the 2026 backfill that **the fee is never a withheld row**, and until now
+nothing in the pipeline had to act on it: a forum thread does not list the fee as
+a lot at all, so the question never reached an importer.
+
+alesievauctions.com does list it. It is a row in that site's database like any
+other, and it is tagged `Withheld` — accurately, from the site's point of view,
+because it drew no bid. That is not what `withheld` means here. Withheld records
+a token the order bought that the buyers never got to bid on, which is a fact
+about how much of the order reached the group; a fee is the cost of running it.
+
+**Not an edge case.** On `20275`, the first real file this source produced,
+**10 of the 11 withheld rows were the fee** — nine Random Ultra Rares and a
+Golden Ticket.
+
+The corpus says the same thing from the other direction, twice:
+
+- All four recorded `Golden Ticket` rows in `contextItems.csv` are `token` rows
+  with a price (`20266` $1,254, `202644` $855, `202645` $701, `202647` $652).
+  Not one is withheld.
+- **An Onyx order is 21 rows.** `20275` sold 12 and withheld the rest. Counting
+  the fee as withheld gives 12 + 11 = 23, which is not a set. Excluding it gives
+  12 + 9 = **21**, exactly. That arithmetic is now pinned in
+  `alesiev-close.test.mjs` — the one real reconciliation that suite has, since
+  its fixture's prices are dummy data.
+
+**The fix.** `ALESIEV_FEE_NAMES` is consulted on the withheld path only, before
+the three-step name resolution, and a match is written nowhere. Column B is what
+decides: a *sold* `Random Ultra Rare` is a lucky dip somebody paid for and still
+aggregates into the one `token` row all 21 of its recorded appearances take.
+
+> **This is the one rule in the importer that leans TIGHT.** Every other name
+> rule routes a row; this one deletes it, which inverts the cost of being wrong.
+> `forumThread.gs`'s "write a rule looser than the one example you have" is about
+> auctioneers being inconsistent in prose and does not transfer. Too tight and an
+> unfamiliar fee spelling lands in `contextItems` where the operator can see and
+> delete it; too loose and a genuine withheld token vanishes from the funding
+> rollups with nothing anywhere to say it existed. So every key is a spelling the
+> corpus already holds, and the dropped lots are **named one by one** in the
+> CAUTION block rather than counted — that list is the only place a wrongly
+> matched row can ever surface.
+
+A side effect worth knowing: all four `ALESIEV_CONTEXT_RULES` keys are now also
+fee names, so **no withheld lot can reach step 1 of the three-step resolution**.
+The step is kept — a future context rule for something that is not a fee would
+land there and abort exactly as the Random URs did before `PIPE-8` — and the test
+suite calls `alesievWithheldRows` directly to keep it proved.
+
+The rows this already wrote are `DATA-16`.
+
+---
+
+## DATA-16. `20275` records the auctioneer's fee as ten withheld rows — OPEN, ten deletions
+
+`contextItems.csv` holds ten rows for `20275` that are the auctioneer's fee, not
+withheld items:
+
+```
+20275,2027,5,withheld,Golden Ticket,1,
+20275,2027,5,withheld,Random Ultra Rare,9,
+```
+
+(one `Golden Ticket` row and one aggregated `Random Ultra Rare` row at quantity
+9 — ten lots, two rows.)
+
+They were written before `PIPE-11`, which now drops the fee at import. The cause
+is fixed; these are what it already wrote, and **nothing in the pipeline can
+reach a published row** — this is a workbook edit.
+
+While it is outstanding:
+
+- `20275`'s withheld block reads 11 items where 9 reached the group, and every
+  funding rollup above it inherits that.
+- The auction's Onyx set does not add up. 12 sold + 11 withheld = 23; an Onyx
+  order is 21. Deleting these two rows makes it 12 + 9 = 21.
+- `validate-prices.mjs` § 6 notes the short Onyx set and points at the withheld
+  block as the explanation, which is correct in form and wrong in arithmetic.
+
+No validator can catch this on its own: a withheld fee row is structurally
+identical to a withheld token row, and telling them apart is the name rule that
+now lives in `ALESIEV_FEE_NAMES`. The § 6 check deliberately stops short of
+adding the two halves together for the same reason.
