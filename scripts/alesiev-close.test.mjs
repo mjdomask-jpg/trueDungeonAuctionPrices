@@ -374,16 +374,27 @@ console.log('\nWithheld (a shape nobody has observed yet)\n');
 // resolve — otherwise the case passes for the wrong reason.
 console.log('\nWithheld in a split Onyx order (PIPE-8)\n');
 {
-  // STEP 1 — a context rule names its own spelling. `Random URs` is the proof
-  // rather than `Random Ultra Rare`, which tokenMetadata now also holds for
-  // 2027: only the rule knows this spelling, so only the rule can have
-  // resolved it. All 21 recorded appearances say `Random Ultra Rare`, and
-  // forumClose.gs shipped `Random UR` — a name contextItems holds zero times.
-  const agg = onyxPlan([['Random URs (1 of 9)', 'Withheld', '']]);
-  check('a withheld aggregate resolves through the context rule', agg.ok, (agg.aborts || []).join('\n'));
+  // STEP 1 — a context rule names its own spelling.
+  //
+  // This is called DIRECTLY rather than through a plan, and that is the point.
+  // Every context rule is now also a fee name, so alesievReadStaging removes
+  // all four before alesievWithheldRows can see them and no plan can reach this
+  // step (see the fee section below). The step is still the thing standing
+  // between a future non-fee aggregate and the PIPE-8 abort, so it is proved
+  // here at the level that can still exercise it.
+  //
+  // `Random URs` is the proof rather than `Random Ultra Rare`, which
+  // tokenMetadata now also holds for 2027: only the rule knows this spelling,
+  // so only the rule can have resolved it. All 21 recorded appearances say
+  // `Random Ultra Rare`, and forumClose.gs shipped `Random UR` — a name
+  // contextItems holds zero times.
+  const agg = A.alesievWithheldRows(
+    [{ name: 'Random URs', rawName: 'Random URs (1 of 9)', bid: null, row: 2 }],
+    SEASON, T.buildTokenIndex(TOKENS), true);
+  eq('a withheld aggregate resolves through the context rule', agg.aborts.length, 0);
   eq('  ... under the corpus spelling, not the file\'s',
-    (agg.context[0] || {}).Item, 'Random Ultra Rare');
-  eq('  ... still as withheld', (agg.context[0] || {}).category, 'withheld');
+    (agg.rows[0] || {}).Item, 'Random Ultra Rare');
+  eq('  ... still as withheld', (agg.rows[0] || {}).category, 'withheld');
 
   // STEP 2 — tokenMetadata still runs first, and this is the case that proves
   // step 3 is not a blanket bypass: inside an Onyx auction an ordinary
@@ -441,6 +452,117 @@ console.log('\nWithheld in a split Onyx order (PIPE-8)\n');
   check('an Onyx file with no style passed says which call site forgot',
     (noStyle.cautions || []).some((c) => /no auctionStyle was passed/.test(c)),
     (noStyle.cautions || []).join(' | '));
+}
+
+// ===========================================================================
+// 6c. The auctioneer's fee is not a withheld row
+// ===========================================================================
+// The maintainer settled during the 2026 backfill that the fee — some Random
+// Ultra Rares and a Golden Ticket — is never withheld. No earlier importer had
+// to act on it, because a forum thread does not list the fee as a lot at all.
+// This source does, tagged `Withheld` because it drew no bid, and on 20275 that
+// was 10 of the 11 withheld rows.
+console.log("\nThe auctioneer's fee (never a withheld row)\n");
+{
+  const fee = onyxPlan([
+    ['Random Ultra Rare (1 of 9)', 'Withheld', ''],
+    ['Random Ultra Rare (2 of 9)', 'Withheld', ''],
+    ['Golden Ticket', 'Withheld', ''],
+    ['Bead of Asgard', 'Withheld', ''],
+  ]);
+  check('the plan is clean', fee.ok, (fee.aborts || []).join('\n'));
+  eq('a withheld Random Ultra Rare is written nowhere',
+    fee.context.filter((r) => /Random/.test(r.Item)).length, 0);
+  eq('a withheld Golden Ticket is written nowhere',
+    fee.context.filter((r) => /Golden Ticket/.test(r.Item)).length, 0);
+  eq('  ... and the genuine withheld token beside them still lands', fee.context.length, 1);
+  eq('  ... under its own name', (fee.context[0] || {}).Item, 'Bead of Asgard');
+
+  // Dropped rows are named individually, not counted. This caution is the only
+  // place a wrongly-matched withheld token could ever surface.
+  const dropped = (fee.cautions || []).filter((c) => /auctioneer's fee/.test(c));
+  eq('the dropped lots are reported', dropped.length, 1);
+  check('  ... naming every one of them',
+    /Golden Ticket/.test(dropped[0]) && /Random Ultra Rare \(1 of 9\)/.test(dropped[0]) &&
+    /Random Ultra Rare \(2 of 9\)/.test(dropped[0]), dropped[0]);
+  check('  ... and saying they were written nowhere', /written nowhere/.test(dropped[0]), dropped[0]);
+
+  // They are still READ. A file that is nothing but fee must not look like an
+  // empty staging tab, which is a different error with a different remedy.
+  eq('a dropped lot still counts as a lot read', fee.lots, 4);
+  const allFee = onyxPlan([['Golden Ticket', 'Withheld', '']]);
+  check('a file of nothing but fee is not "no lots"',
+    !(allFee.aborts || []).some((a) => /no lots/.test(a)), (allFee.aborts || []).join(' | '));
+
+  // A dropped fee lot is NOT an unsold lot. Both are dropped and both are
+  // reported, but "drew no bid" is a remark about the market and this is a
+  // statement about what the row means — the operator reads them differently.
+  eq('a fee lot is not reported as unsold', allFee.unsold.length, 0);
+  eq('  ... it is reported as fee', allFee.fee.length, 1);
+
+  // Column B decides, not the name. A SOLD Random Ultra Rare is a lucky dip
+  // somebody paid for, and it still aggregates into the one `token` row all 21
+  // recorded appearances are shaped as.
+  const sold = onyxPlan([
+    ['Random Ultra Rare (1 of 2)', 'Ultra Rare', '55'],
+    ['Random Ultra Rare (2 of 2)', 'Ultra Rare', '57'],
+  ]);
+  eq('a SOLD Random Ultra Rare is untouched by the fee rule', sold.context.length, 1);
+  eq('  ... still aggregated under the corpus spelling',
+    (sold.context[0] || {}).Item, 'Random Ultra Rare');
+  eq('  ... as a token, not withheld', (sold.context[0] || {}).category, 'token');
+  eq('  ... summing the lots\' OWN prices', (sold.context[0] || {}).price, 112);
+
+  // Every key is a spelling the corpus already holds. A rule that DELETES rows
+  // leans tight: a fee spelling this misses lands in contextItems where the
+  // operator can see and delete it, but a withheld token it wrongly matched
+  // would vanish from the funding rollups with nothing to say it existed.
+  const CONTEXT_NAMES = new Set(CONTEXT.map((r) => r.Item.toLowerCase()));
+  const invented = Object.keys(A.ALESIEV_FEE_NAMES).filter(
+    (k) => !CONTEXT_NAMES.has(k) && !Object.keys(A.ALESIEV_CONTEXT_RULES).includes(k));
+  eq('every fee name is a spelling the corpus or a context rule already holds',
+    invented.join(', '), '');
+  check('  ... including the Golden Ticket spellings contextItems records',
+    ['golden ticket', 'golden ticket chance', 'chance at golden ticket']
+      .every((k) => A.ALESIEV_FEE_NAMES[k] === true),
+    JSON.stringify(Object.keys(A.ALESIEV_FEE_NAMES)));
+
+  // And the fence, in the other direction: nothing that is not on the list is
+  // dropped, however much it looks like a fee.
+  eq('a name merely containing "ticket" is not the fee',
+    A.alesievIsFeeName('Golden Ticket Holder Pin'), false);
+  eq('  ... nor one merely containing "random"',
+    A.alesievIsFeeName('Random Rare'), false);
+  eq('the lot marker and a leading multiplier are already off by then',
+    A.alesievIsFeeName('Random Ultra Rare'), true);
+
+  // THE ONE REAL RECONCILIATION THIS SUITE HAS.
+  //
+  // Everything else here pins grammar, because the fixture's prices are dummy
+  // data and there is no auction to check them against. This is different:
+  // 20275 is a real auction, it is the file that prompted the fee rule, and an
+  // Onyx ORDER IS 21 ROWS — the invariant that holds across all 55 recorded
+  // Onyx auctions. 20275 sold 12 and withheld the rest, so the two halves have
+  // to add back up to the set.
+  //
+  // With the fee counted as withheld they add to 23, which is not a set. Take
+  // the fee out and they add to 21 exactly. That is independent evidence for
+  // this rule, arrived at from the corpus rather than from the file.
+  //
+  // PINNED TO THE ARITHMETIC, NOT TO THE NUMBERS. Both sides are counted from
+  // the shipped CSVs, so deleting 20275's ten stale fee rows — which is the
+  // matching data fix — leaves this passing. It fails if the set itself ever
+  // stops adding up, which is the alarm worth having.
+  const onyx20275 = ONYX.filter((r) => r.auctionId === '20275').length;
+  const withheld20275 = CONTEXT.filter(
+    (r) => r.auctionId === '20275' && r.category === 'withheld' && !A.alesievIsFeeName(r.Item));
+  eq('20275 sold + withheld (fee excluded) is one complete Onyx set',
+    onyx20275 + withheld20275.length, 21);
+  // Deliberately NOT asserted: that the ten stale fee rows are still THERE.
+  // It would pass today and fail the day they are deleted from the sheet —
+  // a red check on the publish that carries the fix, which is how six
+  // publishes have been blocked before. The invariant above is the durable
+  // half and it holds either way.
 }
 
 // ===========================================================================

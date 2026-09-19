@@ -649,7 +649,7 @@ things, and it should be looked at.
 |---|---|---|
 | `Augment - Player` | `contextItems` | `token`, one row per lot, at its own price |
 | `Augment - Grunnel` | `contextItems` | `grunnel`, one row per lot |
-| `Withheld` | `contextItems` | `withheld`, **aggregated per item** and with **no price** |
+| `Withheld` | `contextItems` | `withheld`, **aggregated per item** and with **no price** — unless it is [the auctioneer's fee](#the-auctioneers-fee-is-never-withheld), which is dropped |
 | `Onyx` | `onyx` | one row per lot, `Onyx Ultra Rare` |
 | anything else, or blank | `prices` + `rawPricesData` | an ordinary lot of the auction's own tokens |
 
@@ -680,6 +680,46 @@ So the split is made by name, not by the category column. The dialog shows how
 a summed row was reached — `8 @ $55 + 1 @ $57 = $497` — because a total is not
 checkable on its own and the distribution it came from is.
 
+### The auctioneer's fee is never withheld
+
+The auctioneer takes a fee for running the auction — some **Random Ultra
+Rares** and a **Golden Ticket** — and it is paid out of the order rather than
+sold. It is **not** a withheld row, and the import writes it **nowhere**.
+
+That distinction is one you settled during the 2026 backfill, and this is the
+first source that can act on it. A forum thread does not list the fee as a lot
+at all, so no earlier importer ever had to decide. This site lists it, because
+it is a row in the database like any other, and tags it `Withheld` — from the
+site's point of view it is simply a lot that drew no bid. That is not what
+`withheld` means here: withheld records a token the order bought that the
+buyers never got to bid on, which is a fact about how much of the order reached
+the group. A fee is the cost of running the thing. Counting it as withheld
+overstates the withheld block and every funding rollup above it.
+
+It is not a rare edge: on `20275`, the first real file, **10 of the 11 withheld
+rows were the fee** — nine Random Ultra Rares and a Golden Ticket.
+
+> **The dropped lots are named one by one in the CAUTION block, not counted.**
+> This is the only thing the import throws away on purpose, and a row discarded
+> in silence is a row nobody can check. **Read that list.** If something in it
+> is genuinely withheld, add the row by hand — the script will not.
+
+The list of fee names is deliberately short, and it is the one rule in this
+importer that leans *tight* rather than loose. Every other name rule routes a
+row; this one deletes it, which inverts the cost of being wrong. Too tight, and
+an unfamiliar fee spelling lands in `contextItems` as withheld — visible in the
+review, one row to delete. Too loose, and a genuine withheld token disappears
+from the funding rollups with nothing anywhere to say it existed. So every name
+on the list is a spelling the corpus already holds (`Random Ultra Rare` and its
+three variants; `Golden Ticket`, `Golden Ticket Chance`, `Chance at Golden
+Ticket`), and nothing is guessed. Add to `ALESIEV_FEE_NAMES` when a real file
+shows a new one.
+
+**A fee lot that SOLD is untouched by any of this.** The rule reads column B
+first: a `Random Ultra Rare` tagged `Ultra Rare` is a lucky dip somebody paid
+for, and it still aggregates into the one `token` row described above. Same
+name, opposite treatment, and the category column is what decides.
+
 ### A split Onyx order: withheld chase tokens
 
 An auctioneer can **withhold part of an Onyx set and sell the rest**. `20275`
@@ -693,7 +733,10 @@ that again.** A withheld name now resolves in three steps:
 
 1. **A context rule**, for an aggregate that is not a token at all —
    `Random Ultra Rare` and its spellings. It gets the corpus spelling whatever
-   the file calls it.
+   the file calls it. *Nothing reaches this step today*: all four of those
+   spellings are now fee names and are dropped before the resolution runs. The
+   step is kept for a future aggregate that is not a fee, and the test suite
+   exercises it directly.
 2. **`tokenMetadata`**, after the Onyx marker comes off. This is what still
    catches a typo on an ordinary withheld token — `20222` withholds fifteen of
    them (gold bars, trade goods, a Patron Pin) beside a complete Onyx set.
@@ -713,9 +756,15 @@ so `Non-Onyx` does not read as Onyx.
 > **`validate-prices.mjs` § 6 knows about this now too.** A short Onyx set in
 > an auction that also withholds things says so rather than reading as a gap.
 > It stops short of adding the two together, because nothing can distinguish a
-> withheld chase token from a withheld ordinary one — `20222` proves that from
-> one side and `20275`'s own Golden Ticket and nine Random Ultra Rares from the
-> other.
+> withheld chase token from a withheld ordinary one — `20222` withholds fifteen
+> ordinary tokens beside a complete Onyx set, so a withheld row is not evidence
+> of a short set by itself.
+>
+> `20275` is the case to have in mind when reading that note, and it currently
+> reads *wrong*: its 12 Onyx rows plus 11 withheld come to 23, not the 21 an
+> Onyx order is. Ten of those eleven are the auctioneer's fee, written before
+> the rule above existed — take them out and it is 12 + 9 = 21. The two rows
+> still need deleting from the workbook (`DATA-16`).
 
 ### What it does that neither other importer does
 
