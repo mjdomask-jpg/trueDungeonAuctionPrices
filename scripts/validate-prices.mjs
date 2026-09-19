@@ -715,17 +715,31 @@ console.log('5b. Every auction still has prices (auctionMetadata.csv vs prices.c
 // here because the file has no two-row convention to hide behind.
 console.log('5c. No auction records an Onyx item twice (onyx.csv)');
 {
+  // The two halves are joined on a NUL because BOTH can contain a space:
+  // `202219 +2 Chaos Cannon` splits on a space into four pieces, none of
+  // which is the item. NUL is the one byte no name has ever carried.
+  //
+  // Written as an ESCAPE, not as the raw byte. It was a literal NUL until
+  // 2026-09-19, which made git, grep and file(1) all class this file as
+  // BINARY — `grep -n` on the repo's most-edited validator returned
+  // "Binary file matches" and nothing else. Diffs survived only because the
+  // bytes sit past git's 8KB sniff window, so the damage was to everyone
+  // reading it rather than to the history.
+  //
+  // One constant rather than two literals: the join and the split have to
+  // agree, and two copies of an invisible byte is how they stop agreeing.
+  const SEP = '\u0000';
   const seen = new Map();
   for (const r of onyx) {
     if (!r.auctionId || !r.Item) continue;
-    const key = `${r.auctionId} ${r.Item}`;
+    const key = `${r.auctionId}${SEP}${r.Item}`;
     seen.set(key, (seen.get(key) || 0) + 1);
   }
   const errs = [];
   const byAuction = new Map();
   for (const [key, n] of seen) {
     if (n < 2) continue;
-    const [id, item] = key.split(' ');
+    const [id, item] = key.split(SEP);
     if (!byAuction.has(id)) byAuction.set(id, []);
     byAuction.get(id).push(`${item} x${n}`);
   }
