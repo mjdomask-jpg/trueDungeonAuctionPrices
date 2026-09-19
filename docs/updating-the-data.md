@@ -1365,14 +1365,41 @@ before anything reaches GitHub:
 | `row N (column): #REF!` — or `#N/A`, `#VALUE!`, `#DIV/0!`, `No Match Found`, `⚠` | A formula is broken, or a VLOOKUP missed and the sheet's `IFERROR` wrote its sentinel. The sentinels look like data, which is exactly why they are refused. Fix the formula — and look at what the lookup was pointing *at*: the `⚠ check name` that got through before this check existed was caused by a trailing space typed into a `tokenMetadata` display name, so the broken cell and the broken cause were on different tabs. |
 | `row N: Price is blank` / `is "-"` | A keyed price row with nothing to price, in `prices`, `onyx` or `rawPricesData`. **Blank does not mean unsold** — the site silently drops such a row, so it moves no statistic and looks healthy. Fill it in or delete the row. |
 | `row N: no auctionId` | A keyed row that joins to nothing. Wholly blank rows are fine and are skipped. |
-| `7753 rows -> 4000 (-3753)` | The tab lost more rows than a correction plausibly would (more than 2%, or 3 rows on a small file). Check for a filter left on, a sort that clipped the range, or a half-deleted tab. |
-| `7753 rows -> 15506 (+7753)` | The tab gained more than 25% (or 200 rows on a small file). Confirm it is a backfill and not a duplicated block. |
-| `the tab has no data rows at all` | Always refused, whatever the percentages say. |
+| `the tab has no data rows at all` | Always refused, whatever the percentages say — and it is the **only** row-count move that is refused outright. An empty tab is never a legitimate publish, and there is nothing to type past it. |
 
 A **CAUTION** is not a refusal. `the header row changed` appears when a column
 was renamed, added or removed — adding one is legitimate and has happened twice,
 so it asks you to look rather than standing in the way. `Nothing changed` means
 every tab already matches the repository.
+
+### When a row count moves a long way
+
+A deletion you meant is not a defect, and until 2026-09-19 the publisher could
+not tell the two apart: deleting `DATA-15`'s 22 `tokenMetadata` rows tripped a
+2% allowance and the publish was simply refused. Now the **size** of the move
+decides how hard it is to proceed, not whether you can:
+
+| The move | What you see |
+|---|---|
+| Up to 2% smaller, or 3 rows on a small file | Nothing. A correction. |
+| Up to 25% smaller (or 25 rows, whichever is more) | A **CAUTION** — `tokenMetadata.csv: 618 rows -> 596 (-22)` — on the confirmation dialog and in the PR body. Read it, and publish if it is what you did. |
+| More than that, in **either** direction | A second dialog asks you to **type the file's new row count**. Nothing is written until you do. |
+| No data rows at all | Refused. See above. |
+
+Growth is treated the same way at 25% or 200 rows: a Trent import is quiet, a
+season backfill asks you to type the count, and a duplicated block — the growth
+failure that matters — is caught by `validate-prices.mjs` check 2 in CI as well.
+
+> **If the typed prompt surprises you, press Cancel.** The number is on the
+> screen, so typing it proves nothing about the data — it only proves you read
+> the dialog, which is the whole job of that tier. A move you did not intend is
+> a filter left on, a sort that clipped the range, or a half-deleted tab, and
+> cancelling costs nothing: no file has been written at that point.
+
+A confirmed move is repeated in the PR body under *Large row moves, confirmed by
+hand in the sheet*, so whoever reviews the diff knows the size of it was
+deliberate. The **dry run names them too** — it will tell you what a publish is
+going to ask before you are standing in front of the question.
 
 ### The withheld preview, and why it no longer blocks you
 
@@ -1393,7 +1420,7 @@ that window is shut by the time a later auction exists.
 |---|---|
 | A new auction brings new withheld rows | **Passes.** Reported as new data. |
 | A value the audit covers has moved | **Fails**, naming the rows and the old and new figures. |
-| A withheld row disappeared | **Warns.** Visible; the publisher's row-delta guard is what stops a mass deletion. |
+| A withheld row disappeared | **Warns.** Visible; the publisher's row-delta guard is what makes a mass deletion something you have to confirm by hand. |
 
 So the only thing that still stops a publish is the one case that genuinely
 wants a person: a historical estimate that moved. A correction to an old price,

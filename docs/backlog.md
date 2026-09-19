@@ -99,6 +99,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-10** | Close scripts write literals into computed `rawPricesData` columns | a call between writing the formulas and refusing to overwrite them |
 | **PIPE-11** | ~~The auctioneer's fee is imported as a withheld row~~ | **RESOLVED 2026-09-19** — `ALESIEV_FEE_NAMES`; **`20275`'s ten stale fee rows are `DATA-16`** |
 | **DATA-16** | `20275` records the auctioneer's fee as ten withheld rows | ten row deletions in the workbook — the cause is fixed, this is what it already wrote |
+| **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
 
 ---
 
@@ -1957,3 +1958,66 @@ No validator can catch this on its own: a withheld fee row is structurally
 identical to a withheld token row, and telling them apart is the name rule that
 now lives in `ALESIEV_FEE_NAMES`. The § 6 check deliberately stops short of
 adding the two halves together for the same reason.
+
+---
+
+## PIPE-12. The publisher's row-delta guard refuses a deletion someone meant — RESOLVED 2026-09-19
+
+**The seventh publish block, and the second that was structural rather than a
+stale number.** `DATA-15` asks for 22 `tokenMetadata` rows to be deleted — the
+2027 Onyx set typed in as `PIPE-8`'s workaround, four of which collide with real
+`Ultra Rare` rows and cost a token its `Category`. The deletion was made in the
+workbook, and `publishToSite.gs` refused the publish:
+
+```
+tokenMetadata.csv: 618 rows -> 596 (-22). Losing more than 12 rows is refused
+ — check for a filter, a clipped sort, or a half-deleted tab.
+```
+
+12 is 2% of 618. Nothing was wrong with the data; the guard could not tell a
+reviewed, written-down deletion from a half-deleted tab, and its only verdict
+was *never*.
+
+**Why it was bound to recur.** The abort was written against an accident — a
+stray filter, a clipped sort — but it fires on a quantity, and **every hand
+cleanup of a curated file is a deletion someone meant.** `tokenMetadata` has 618
+rows, so the allowance is twelve; `DATA-16`'s ten fee rows would have squeaked
+under it and a thirteenth row of any future cleanup would not. The same is true
+in the other direction: the growth cap refused a backfill bigger than 25%.
+
+**The fix is a tier, not a bigger number.** Retuning 2% to 4% would have bought
+one publish and left the trap in place, so the size of a move now decides how
+hard it is to proceed rather than whether it is possible at all:
+
+| The move | What happens |
+|---|---|
+| Within the quiet allowance (2% or 3 rows shrinking, 25% or 200 rows growing) | Silent |
+| Past it, up to 25% or 25 rows | A **CAUTION** — named with both counts on the confirmation dialog and in the PR body |
+| Past that | A **typed confirmation** — the operator retypes the file's new row count before anything is written |
+| No data rows at all | Still a hard **abort**, with nothing to type. An empty tab is never a legitimate publish, and it is now the only categorical refusal left in that check |
+
+**What the loosening did not give up.** The bug the guard was built for cannot
+get through unseen: a truncated tab is named, with both row counts, on the
+dialog the operator must click *and* in the PR body the reviewer reads, and a
+big truncation cannot be clicked through at all — retyping the count is friction
+rather than knowledge, which is the point, because the only failure mode a
+second dialog has is being clicked without being read. The tests pin the
+**tier** each move lands in rather than the fractions, so the numbers can be
+retuned without rewriting the suite: `618 -> 596` cautions, `618 -> 300`
+confirms, `-> 0` aborts, and a duplicated block still confirms.
+
+`confirmFloor` (25 rows) is what keeps the top tier sane on a small file: 25% of
+`offAuctionPrices`'s 26 rows is six, and demanding a typed confirmation to delete
+a seventh row from a 26-row hand-curated file would be this same trap wearing a
+different number.
+
+> **A check whose only verdict is "never" is a bet that the thing it describes
+> is never legitimate.** For a row count that bet cannot be won — the operator
+> deleting rows on purpose is a routine Tuesday. The question to ask of any
+> guard on this path is not *is this suspicious* but *what does a person who
+> meant it do next*. If the answer is "edit the script", the guard is a block.
+
+Related: the `publish-check-blocks-publishing` memory, which this is the eighth
+entry in. `PIPE-6` (a fixture registry every new transmute had to be listed in)
+and this one are the two whose shape guaranteed a recurrence; the other six were
+a single stale number each.
