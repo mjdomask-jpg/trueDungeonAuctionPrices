@@ -38,7 +38,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-10.1';
+var ALESIEV_VERSION = '2026-09-19.1';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -97,6 +97,21 @@ var ALESIEV_IGNORED_HEADERS = [
 var ALESIEV_AUGMENT_RE = /^augment\s*[-–—:]\s*(.+)$/i;
 var ALESIEV_WITHHELD_RE = /^withheld\b/i;
 var ALESIEV_ONYX_RE = /^onyx\b/i;
+
+/**
+ * Whether an `auctionStyle` names an Onyx order.
+ *
+ * Anchored to the start, which is not fussiness: every recorded Onyx style
+ * begins with the word (`Onyx Ultra Condensed`, `Onyx Super Condensed`,
+ * `Safehold Onyx Super Condensed` being the one exception, handled by the
+ * word-boundary alternative). A loose `/onyx/` reads `Non-Onyx` as Onyx, which
+ * is the measured mistake that keeps `auctionOpen.gs` from guessing at all.
+ *
+ * Getting this wrong in the permissive direction switches off the
+ * `tokenMetadata` check on every withheld name in a NON-Onyx auction, so the
+ * default when it does not match is the stricter path.
+ */
+var ALESIEV_ONYX_STYLE_RE = /(^|\s)onyx\b/i;
 
 /**
  * Which `contextItems.category` an `Augment - <kind>` becomes.
@@ -435,27 +450,87 @@ function alesievOnyxRows(onyxLots) {
  * so there is no bid to transcribe, and the workbook computes the negative
  * figure as a query over `prices`. Writing a literal there would fight the
  * formula.
+ *
+ * ## The name is resolved in three steps, and the third one is the point
+ *
+ * This asked `tokenMetadata` and nothing else until 2026-09-19, when the first
+ * split Onyx order arrived and it aborted the whole import. `20275` sold 12
+ * Onyx tokens and WITHHELD 9 of the same set, plus nine Random Ultra Rares —
+ * and not one of those eleven names can be in `tokenMetadata`:
+ *
+ *  1. **A context rule names its own canonical spelling.**
+ *     `Random Ultra Rare` is an aggregate, not a token; it is the name
+ *     `contextItems` records all 21 of its appearances under, and asking
+ *     `tokenMetadata` for it is asking the wrong file. The rules were already
+ *     written — `ALESIEV_CONTEXT_RULES` — and were simply never consulted on
+ *     this path.
+ *
+ *  2. **Then `tokenMetadata`, after the Onyx marker comes off.** This is the
+ *     step that keeps ordinary withheld tokens honest, and it is not
+ *     decorative: `20222` withholds fifteen of them (gold bars, trade goods, a
+ *     Patron Pin) inside an Onyx auction, and a typo in any of those still
+ *     stops the run. `stripOnyxMarker` and `ONYX_NORMALIZATION` run first, the
+ *     same pairing and for the same reason as `alesievOnyxRows`.
+ *
+ *  3. **Then, in an ONYX auction only, the name is accepted as it stands.**
+ *     An Onyx chase token is deliberately absent from `tokenMetadata` —
+ *     measured across the corpus, 2026 has 12 of its 84 Onyx names there and
+ *     2018 has 12 of 63 — which is exactly why `alesievOnyxRows` does not
+ *     resolve a SOLD Onyx lot either. A withheld one is the same token on the
+ *     other side of the sale, so it gets the same treatment, and there is
+ *     nothing it could be checked against: it is withheld precisely because it
+ *     is not in this file's Onyx block, and in a season's first Onyx auction it
+ *     is in no other file either.
+ *
+ * Step 3 raises a CAUTION naming every lot it let through, because that is the
+ * one thing left that can catch a misspelling here — the operator reads them in
+ * the confirm dialog. Outside an Onyx auction there is no step 3 and an
+ * unresolved name still aborts.
  */
-function alesievWithheldRows(withheldLots, season, index) {
-  var groups = {}, order = [], aborts = [], i;
+function alesievWithheldRows(withheldLots, season, index, isOnyxAuction) {
+  var groups = {}, order = [], aborts = [], cautions = [], unchecked = [], i;
   for (i = 0; i < withheldLots.length; i++) {
     var lot = withheldLots[i];
     var base = stripDecorations(lot.name);
-    var token = resolveToken(base, season, index);
-    if (!token) {
-      aborts.push('row ' + lot.row + ' "' + lot.rawName + '": withheld, but "' + base +
-        '" is not a token in season ' + season + '. A withheld row is keyed to a token like any other, ' +
-        'so this either needs a tokenMetadata row or is not really withheld.');
-      continue;
+    var name = null;
+
+    var rule = alesievContextRule(lot.name);
+    if (rule) {
+      name = rule.item;
+    } else {
+      // Same pairing as alesievOnyxRows: the stripper returns early on a name
+      // with no "onyx" in it, so the normalisation has to be applied separately
+      // or a clean `Common/Uncommon/Rare Set` never reaches it.
+      var marked = stripOnyxMarker(base);
+      var normalised = ONYX_NORMALIZATION[foldName(marked.name)] || marked.name;
+      var token = resolveToken(normalised, season, index);
+      if (token) {
+        name = token.Item;
+      } else if (isOnyxAuction) {
+        name = normalised;
+        unchecked.push('"' + normalised + '"');
+      } else {
+        aborts.push('row ' + lot.row + ' "' + lot.rawName + '": withheld, but "' + base +
+          '" is not a token in season ' + season + ' and this is not an Onyx auction. A withheld row is ' +
+          'keyed to a token like any other, so this either needs a tokenMetadata row or is not really withheld.');
+        continue;
+      }
     }
+
     var q = parseQuantity(lot.name).quantity || 1;
-    if (!groups[token.Item]) { groups[token.Item] = 0; order.push(token.Item); }
-    groups[token.Item] += q;
+    if (!groups[name]) { groups[name] = 0; order.push(name); }
+    groups[name] += q;
+  }
+  if (unchecked.length) {
+    cautions.push(unchecked.length + ' withheld name(s) were taken from the file as they stand, because an Onyx ' +
+      'chase token is not in tokenMetadata and a withheld one is in no other file either: ' +
+      unchecked.join(', ') + '. Nothing can check these spellings but you — one wrong letter starts a second ' +
+      'series with half the history.');
   }
   order.sort();
   var rows = [];
   for (i = 0; i < order.length; i++) rows.push({ category: 'withheld', Item: order[i], quantity: groups[order[i]], price: '' });
-  return { rows: rows, aborts: aborts };
+  return { rows: rows, aborts: aborts, cautions: cautions };
 }
 
 /**
@@ -557,7 +632,7 @@ function alesievAggregateBreakdown(contextLots) {
  * whole file is one auction, and re-importing is the easiest mistake to make
  * with an export you can download twice.
  */
-function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPriced) {
+function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPriced, auctionStyle) {
   var staged = alesievReadStaging(values);
   if (staged.error) return { ok: false, aborts: [staged.error], cautions: [], lots: 0 };
 
@@ -598,8 +673,23 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
   for (var o = 0; o < onyx.aborts.length; o++) aborts.push(onyx.aborts[o]);
   for (var c = 0; c < onyx.cautions.length; c++) cautions.push(onyx.cautions[c]);
 
-  var withheld = alesievWithheldRows(staged.withheld, targetSeason, index);
+  // ANCHORED, for the reason auctionOpen.gs learned the hard way: a loose
+  // /onyx/ reads `Non-Onyx` as Onyx, and here that would switch off the
+  // tokenMetadata check on every withheld name in a non-Onyx auction.
+  var isOnyxAuction = ALESIEV_ONYX_STYLE_RE.test(String(auctionStyle == null ? '' : auctionStyle).trim());
+  var withheld = alesievWithheldRows(staged.withheld, targetSeason, index, isOnyxAuction);
   for (var w = 0; w < withheld.aborts.length; w++) aborts.push(withheld.aborts[w]);
+  for (var wc = 0; wc < withheld.cautions.length; wc++) cautions.push(withheld.cautions[wc]);
+
+  // An Onyx auction the caller did not name the style of. The withheld path
+  // then has no step 3 and aborts on a chase token, which is the bug this
+  // parameter exists to fix — so say which call site forgot rather than
+  // letting it look like bad data.
+  if (!auctionStyle && staged.onyx.length) {
+    cautions.push('no auctionStyle was passed for this auction, so withheld names could only be checked ' +
+      'against tokenMetadata. This file sells Onyx lots, so it is almost certainly an Onyx auction — ' +
+      'if a withheld chase token aborted below, that is why.');
+  }
 
   var context = withheld.rows
     .concat(alesievAugmentRows(staged.augments))
@@ -777,7 +867,8 @@ function alesievBuildPlan(target) {
     staging.getDataRange().getDisplayValues(),
     target.auctionSeason,
     readTab(TABS.tokens),
-    alesievAlreadyPriced(target.auctionId));
+    alesievAlreadyPriced(target.auctionId),
+    target.auctionStyle);
 }
 
 function dryRunAlesievClose() {

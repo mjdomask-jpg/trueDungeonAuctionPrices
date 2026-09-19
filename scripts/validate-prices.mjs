@@ -787,11 +787,45 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
   // NO AUCTION IN THE CORPUS SELLS TWO ONYX SETS. Removing 40 and 42 costs
   // nothing real and the doubled-block case they were meant to describe is now
   // caught precisely, and as an ERROR, by § 5c.
+  //
+  // AN ONYX ORDER IS 21 TOKENS. IT IS NOT NECESSARILY 21 ROWS IN THIS FILE,
+  // and until 2026-09-19 this note said otherwise in a way that read as a
+  // defect on correct data. `20275` sold 12 of its set and WITHHELD 9; the
+  // other nine are in `contextItems` as withheld rows, and 12 + 9 is the 21
+  // this check was looking for. It is the first split Onyx order in nine
+  // seasons and it will not be the last.
+  //
+  // The note therefore says how many withheld rows the auction also carries,
+  // and stops short of adding them up. It cannot add them up: there is no way
+  // to tell a withheld CHASE token from a withheld ordinary one. Nine Onyx
+  // auctions carry withheld rows that are nothing to do with the set —
+  // `20222` withholds fifteen gold bars, trade goods and a Patron Pin beside a
+  // complete 21-row set — and `20275`'s own block holds a Golden Ticket and
+  // nine Random Ultra Rares alongside the nine chase tokens. Every rule that
+  // would separate them (absent from `tokenMetadata`, absent from `prices`)
+  // fails on the season this matters for, because a season's first Onyx
+  // auction has no history to be absent from.
+  //
+  // So: report both numbers and name the possibility. A note that hands over
+  // what it knows beats one that asserts a total it cannot support — the 40-row
+  // allowance above is what that mistake looks like when it hardens into a rule.
   const onyxByAuction = groupBy(onyx.filter((r) => r.auctionId), (r) => r.auctionId, (r) => r);
+  const withheldByAuction = groupBy(
+    ctx.filter((r) => r.auctionId && r.category === 'withheld'), (r) => r.auctionId, (r) => r);
   const SET_SIZES = new Set([20, 21]);
-  for (const [auctionId, rows] of [...onyxByAuction].sort())
-    if (!SET_SIZES.has(rows.length))
-      warns.push(`${auctionId}: ${rows.length} Onyx rows — expected 20 or 21 for one set`);
+  for (const [auctionId, rows] of [...onyxByAuction].sort()) {
+    if (SET_SIZES.has(rows.length)) continue;
+    const withheldRows = (withheldByAuction.get(auctionId) || []).length;
+    // Only a SHORT set can be explained this way. A surplus is a doubled block
+    // or a wrong key, and § 5c is what says so precisely.
+    const couldBeSplit = rows.length < 20 && withheldRows > 0;
+    warns.push(`${auctionId}: ${rows.length} Onyx rows — expected 20 or 21 for one set` +
+      (couldBeSplit
+        ? `, but this auction also records ${withheldRows} withheld item(s). An auctioneer can withhold ` +
+          'part of an Onyx order and sell the rest, and the withheld half lands in contextItems — check the ' +
+          'two together before treating this as a gap'
+        : ''));
+  }
 
   // auctionStyle and the rows must agree in both directions. 16 auctions
   // violated this before the 2026-08-21 backfill; the count is zero today, so
@@ -903,6 +937,43 @@ console.log('7. Closed vocabularies (auctionMetadata.csv, prices.csv, onyx.csv, 
   const tokens = load('tokenMetadata.csv');
   const errs = [], warns = [];
   const fold = (v) => String(v).toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // `key` is season + Item, and it has to be unique, because everything that
+  // reads this file builds a LOOKUP off it and a lookup keeps one row per key.
+  // `buildTokenIndex` in trentClose.gs is last-wins; the workbook's own
+  // `rawPricesData!H` is a VLOOKUP, which is first-wins. Two readers, opposite
+  // answers, no message from either.
+  //
+  // WHAT IT COSTS is a token's Category, which is the field a close script
+  // stamps onto every price row it writes. A duplicate whose two rows disagree
+  // therefore decides a Category by which row happens to be last, and § 7's own
+  // check above cannot see it: both values exist in tokenMetadata, so a price
+  // row carrying either one joins fine.
+  //
+  // A NOTE, NOT AN ERROR, and deliberately so on both counts. Four of the five
+  // in the file arrived on 2026-09-19 with the 2027 Onyx set (`Ultra Rare`
+  // against `Onyx` for the same four names) and one, `2023Greaves of
+  // Absorption`, is a harmless exact repeat that has been there for seasons —
+  // so erroring would block every publish until the sheet is corrected, over a
+  // defect this check is the first thing ever to mention. Promote it once the
+  // file is clean; the backlog entry says so.
+  {
+    const byKey = new Map();
+    for (const t of tokens) {
+      const k = t.key || `${t.auctionSeason}${t.Item}`;
+      if (!t.Item) continue;
+      (byKey.get(k) ?? byKey.set(k, []).get(k)).push(t);
+    }
+    for (const [k, rows] of [...byKey].sort()) {
+      if (rows.length < 2) continue;
+      const cats = [...new Set(rows.map((r) => r.Category))];
+      warns.push(`tokenMetadata.csv: key "${k}" appears ${rows.length} times` +
+        (cats.length > 1
+          ? ` with DIFFERENT categories (${cats.join(' vs ')}) — whichever row a reader keeps decides the ` +
+            'Category stamped on every price row for that token, and the two readers disagree about which that is'
+          : ' (identical rows — harmless, but the key is still not unique)'));
+    }
+  }
 
   // `Category` is the one closed set that does NOT grow independently: every
   // category a price can carry has to exist in tokenMetadata, because that is

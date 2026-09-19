@@ -407,6 +407,35 @@ const cases = [
     return lines(t).filter((l) => !(l.startsWith('20222,') && n++ < 5)).join('\n');
   }), /Onyx rows — expected 20 or 21 for one set/, 'warn'],
 
+  // A SHORT Onyx set in an auction that also withholds things. An Onyx order
+  // is 21 TOKENS, not 21 rows in this file: 20275 sold 12 of its set and
+  // withheld 9, and the note used to read as a defect on correct data. It now
+  // says what else the auction carries and stops short of adding them up —
+  // nothing can tell a withheld CHASE token from a withheld ordinary one, and
+  // 20222 (used here) withholds fifteen that have nothing to do with its set.
+  ['6  a short Onyx set names the withheld rows beside it', () => edit('onyx.csv', (t) => {
+    let n = 0;
+    return lines(t).filter((l) => !(l.startsWith('20222,') && n++ < 5)).join('\n');
+  }), /20222: 16 Onyx rows .* also records \d+ withheld item\(s\)/, 'warn'],
+
+  // ...and the clause is CONDITIONAL, or it is just noise appended to every
+  // short set. 20182 carries no withheld rows at all.
+  ['6  a short Onyx set with nothing withheld says only that', () => edit('onyx.csv', (t) => {
+    let n = 0;
+    return lines(t).filter((l) => !(l.startsWith('20182,') && n++ < 5)).join('\n');
+  }), /20182: 16 Onyx rows — expected 20 or 21 for one set$/m, 'warn'],
+
+  // A duplicate tokenMetadata key. `key` is season+Item and everything that
+  // reads this file builds a lookup off it, so a duplicate silently decides a
+  // token's Category by which reader you ask: buildTokenIndex is last-wins,
+  // the workbook's own VLOOKUP is first-wins. Five are in the shipped file
+  // today (backlog PIPE-8), which is why it reports rather than errors.
+  ['7  a duplicate tokenMetadata key with two categories', () => edit('tokenMetadata.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('2026Aragonite,'));
+    L.splice(i + 1, 0, '2026Aragonite,2026,Aragonite,Aragonite,Trade 1');
+    return L.join('\n');
+  }), /key "2026Aragonite" appears 2 times with DIFFERENT categories \(Trade 2 vs Trade 1\)/, 'warn'],
+
   ['6  withheld recorded as a credit', () => edit('contextItems.csv', (t) =>
     t.replace('20183,2018,3,withheld,Patron Pin,1,-$114.30', '20183,2018,3,withheld,Patron Pin,1,$114.30')),
     /withheld price \$114\.3 is positive/],

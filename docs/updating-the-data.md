@@ -680,6 +680,43 @@ So the split is made by name, not by the category column. The dialog shows how
 a summed row was reached — `8 @ $55 + 1 @ $57 = $497` — because a total is not
 checkable on its own and the distribution it came from is.
 
+### A split Onyx order: withheld chase tokens
+
+An auctioneer can **withhold part of an Onyx set and sell the rest**. `20275`
+did it first, on 2026-09-19: 12 tokens sold, 9 withheld. Every one of those 9
+is a chase token, and **a chase token is deliberately not in `tokenMetadata`**
+(2026 has 12 of its 84 Onyx names there; 2018 has 12 of 63).
+
+That aborted the whole import the first time, and the 2027 Onyx set had to be
+typed into `tokenMetadata` by hand to get past it. **You should not have to do
+that again.** A withheld name now resolves in three steps:
+
+1. **A context rule**, for an aggregate that is not a token at all —
+   `Random Ultra Rare` and its spellings. It gets the corpus spelling whatever
+   the file calls it.
+2. **`tokenMetadata`**, after the Onyx marker comes off. This is what still
+   catches a typo on an ordinary withheld token — `20222` withholds fifteen of
+   them (gold bars, trade goods, a Patron Pin) beside a complete Onyx set.
+3. **In an Onyx auction only**, the name is taken as it stands.
+
+Step 3 exists because there is nothing left to check a withheld chase token
+against: it is withheld precisely because it is *not* in this file's Onyx
+block, and in a season's first Onyx auction it is in no other file either. So
+the import **lists every name it let through under step 3** in the confirm
+dialog, under CAUTION. **Read those names.** They are the only defence left,
+and one wrong letter starts a second series with half the history.
+
+Outside an Onyx auction there is no step 3 and an unresolved withheld name
+still aborts, exactly as before. The auction's style decides, matched anchored
+so `Non-Onyx` does not read as Onyx.
+
+> **`validate-prices.mjs` § 6 knows about this now too.** A short Onyx set in
+> an auction that also withholds things says so rather than reading as a gap.
+> It stops short of adding the two together, because nothing can distinguish a
+> withheld chase token from a withheld ordinary one — `20222` proves that from
+> one side and `20275`'s own Golden Ticket and nine Random Ultra Rares from the
+> other.
+
 ### What it does that neither other importer does
 
 | | |
