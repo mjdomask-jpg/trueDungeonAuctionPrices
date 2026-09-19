@@ -293,21 +293,78 @@ function gridWith(file, row, column, value) {
     !P.publishCheckAuctionIds('tokenMetadata.csv', clean['tokenMetadata.csv']).length);
 
   // --- row-count delta -----------------------------------------------------
-  check('an emptied tab always aborts', P.publishCheckRowDelta('prices.csv', 0, 7753).length === 1);
+  //
+  // The check has three tiers (see PUBLISH_ROW_DELTA): quiet, a CAUTION on the
+  // dialog and in the PR body, and a typed confirmation. Only an empty tab is
+  // still refused outright. These are pinned by TIER, not by the fractions —
+  // the numbers are a judgement call and may be retuned; what must not change
+  // is that a truncation is never silent and a big one cannot be clicked
+  // through, while a deletion someone meant has a way to happen at all.
+  const tier = (...args) => {
+    const r = P.publishCheckRowDelta(...args);
+    if (r.aborts.length) return 'abort';
+    if (r.confirm.length) return 'confirm';
+    if (r.cautions.length) return 'caution';
+    return 'quiet';
+  };
+  check('an emptied tab always aborts — nothing to type, no way past it',
+    tier('prices.csv', 0, 7753) === 'abort');
   check('an emptied tab aborts even with no previous to compare',
-    P.publishCheckRowDelta('prices.csv', 0, null).length === 1);
-  check('a truncated rawPricesData aborts (18,466 -> 12,000)',
-    P.publishCheckRowDelta('rawPricesData.csv', 12000, 18466).length === 1);
-  check('a small correction is allowed (18,466 -> 18,400, 66 rows)',
-    !P.publishCheckRowDelta('rawPricesData.csv', 18400, 18466).length);
-  check('a tiny file may lose up to 3 rows (26 -> 23) but not 4 (26 -> 22)',
-    !P.publishCheckRowDelta('offAuctionPrices.csv', 23, 26).length &&
-    P.publishCheckRowDelta('offAuctionPrices.csv', 22, 26).length === 1);
-  check('a Trent import\'s growth is allowed (7,753 -> 7,790)',
-    !P.publishCheckRowDelta('prices.csv', 7790, 7753).length);
-  check('a duplicated block\'s growth is refused (7,753 -> 15,506)',
-    P.publishCheckRowDelta('prices.csv', 15506, 7753).length === 1);
-  check('no previous file means no delta to judge', !P.publishCheckRowDelta('prices.csv', 40, null).length);
+    tier('prices.csv', 0, null) === 'abort');
+  check('a truncated rawPricesData cannot be clicked through (18,466 -> 12,000)',
+    tier('rawPricesData.csv', 12000, 18466) === 'confirm');
+  check('a small correction is quiet (18,466 -> 18,400, 66 rows)',
+    tier('rawPricesData.csv', 18400, 18466) === 'quiet');
+  check('a tiny file loses 3 rows quietly (26 -> 23) and 4 with a caution (26 -> 22)',
+    tier('offAuctionPrices.csv', 23, 26) === 'quiet' &&
+    tier('offAuctionPrices.csv', 22, 26) === 'caution');
+  check('DATA-15\'s deliberate deletion publishes, with a caution (618 -> 596)',
+    tier('tokenMetadata.csv', 596, 618) === 'caution');
+  check('a half-deleted tokenMetadata still cannot be clicked through (618 -> 300)',
+    tier('tokenMetadata.csv', 300, 618) === 'confirm');
+  check('a 26-row file is not made unmaintainable by the top tier (26 -> 8)',
+    tier('offAuctionPrices.csv', 8, 26) === 'caution');
+  check('a Trent import\'s growth is quiet (7,753 -> 7,790)',
+    tier('prices.csv', 7790, 7753) === 'quiet');
+  check('a duplicated block\'s growth needs confirming (7,753 -> 15,506)',
+    tier('prices.csv', 15506, 7753) === 'confirm');
+  check('no previous file means no delta to judge', tier('prices.csv', 40, null) === 'quiet');
+  {
+    const r = P.publishCheckRowDelta('tokenMetadata.csv', 300, 618);
+    const item = r.confirm[0];
+    check('a confirmation names both counts and the file',
+      /tokenMetadata\.csv: 618 rows -> 300 \(-318\)/.test(item.message));
+    check('the prompt asks for the NEW row count', /type the new row count.*300/s.test(P.publishConfirmPrompt(item)));
+    check('the new row count is accepted, spacing and all',
+      P.publishConfirmAccepted('300', item) && P.publishConfirmAccepted(' 300 ', item));
+    check('a wrong number, a blank and an OK-shaped answer are all refused',
+      !P.publishConfirmAccepted('618', item) && !P.publishConfirmAccepted('', item) &&
+      !P.publishConfirmAccepted('yes', item) && !P.publishConfirmAccepted(null, item));
+    check('the sheet\'s own thousands separator is forgiven',
+      P.publishConfirmAccepted('1,234', { rows: 1234 }));
+  }
+  {
+    // The tiers as the operator meets them: a caution rides along on a plan
+    // that still publishes, a confirmation is carried on the plan for the
+    // entry point to ask about, and neither makes the plan not-ok.
+    const planFor = (rows, previousRows) => P.publishPlan([{
+      file: 'tokenMetadata.csv', tab: 'tokenMetadata',
+      grid: [['key', 'auctionSeason', 'Item', 'Display Name', 'Category']].concat(
+        Array.from({ length: rows }, (_, i) => [`2027x${i}`, '2027', `x${i}`, `x${i}`, 'Ultra Rare'])),
+      text: 'x', sha: 'new', previous: { sha: 'old', rows: previousRows, header: ['key', 'auctionSeason', 'Item', 'Display Name', 'Category'] },
+    }]);
+    const cautioned = planFor(596, 618);
+    check('a cautioned shrink still publishes', cautioned.ok && cautioned.changed.length === 1);
+    check('and the caution names the move', cautioned.cautions.some(c => /618 rows -> 596 \(-22\)/.test(c)));
+    check('a cautioned shrink asks for nothing to be typed', !cautioned.confirm.length);
+    const confirmed = planFor(300, 618);
+    check('a big shrink is on the plan as a confirmation, not an abort',
+      confirmed.ok && confirmed.confirm.length === 1 && !confirmed.aborts.length);
+    check('the dry run shows what a publish would ask',
+      /NEEDS A TYPED CONFIRMATION/.test(P.publishDescribePlan(confirmed)));
+    check('the PR body tells the reviewer a large move was hand-confirmed',
+      /Large row moves, confirmed by hand/.test(P.publishPullRequestBody(confirmed)));
+  }
 
   // --- header drift --------------------------------------------------------
   const header = clean['prices.csv'][0];

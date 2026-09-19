@@ -58,7 +58,7 @@
  * Shown in every dialog, so the copy pasted into the workbook can be told apart
  * from the copy in the repo at a glance. Bump it with any change to this file.
  */
-var PUBLISH_SCRIPT_VERSION = '2026-08-21.3';
+var PUBLISH_SCRIPT_VERSION = '2026-09-19.1';
 
 /**
  * The repository this publishes into. All three values are public facts and
@@ -166,7 +166,8 @@ var PUBLISH_PRICE_COLUMNS = {
 var PUBLISH_ID_FILES = ['auctionMetadata.csv', 'prices.csv', 'onyx.csv', 'contextItems.csv', 'rawPricesData.csv'];
 
 /**
- * How far a row count may move before the publish is refused.
+ * How far a row count may move before the publish asks a question — and what
+ * kind of question.
  *
  * The plan says "a row count that has moved by more than a sane delta" and does
  * not pick a number, so these are chosen from what the files actually do, and
@@ -174,18 +175,53 @@ var PUBLISH_ID_FILES = ['auctionMetadata.csv', 'prices.csv', 'onyx.csv', 'contex
  *
  *   SHRINK is the dangerous direction. A stray filter, a sort that clipped the
  *   range, a tab half-deleted — all publish a truncated file that the site will
- *   render as though those auctions never happened. Allowance is 2% or 3 rows,
- *   whichever is larger: 370 rows on rawPricesData, 3 on offAuctionPrices.
+ *   render as though those auctions never happened. Quiet allowance is 2% or 3
+ *   rows, whichever is larger: 370 rows on rawPricesData, 3 on offAuctionPrices.
  *
  *   GROWTH is usually legitimate — a Trent import adds ~160 raw rows and ~20
  *   price rows, a season backfill adds thousands. And the growth failure mode
  *   that matters, a duplicated block, is caught by validate-prices.mjs check 2
- *   in CI. So the allowance is loose: 25% or 200 rows, whichever is larger.
+ *   in CI. So the quiet allowance is loose: 25% or 200 rows, whichever is larger.
  *
- * A file that arrives with NO data rows always aborts, whatever the fractions
- * say. An empty tab is never a legitimate publish.
+ * THE TIERS, and why this check no longer refuses outright.
+ *
+ * Until 2026-09-19 anything past the quiet allowance was an abort with no way
+ * past it, and the direction of the move was the only thing it looked at. Then
+ * `DATA-15` asked for 22 `tokenMetadata` rows to be deleted — the 2027 Onyx set
+ * typed in as PIPE-8's workaround, four of which collide with real Ultra Rare
+ * rows — and 22 is more than 2% of 618. A deliberate, reviewed, written-down
+ * deletion was indistinguishable from a half-deleted tab, and the check's only
+ * answer was never. That is the seventh time a check has blocked a publish and
+ * the second whose shape guaranteed a recurrence: EVERY hand cleanup of a
+ * curated file is a deletion someone meant.
+ *
+ * So the size of a move now picks how hard it is to proceed, not whether it is
+ * possible:
+ *
+ *   within the quiet allowance   silent
+ *   past it, up to `confirm*`    a CAUTION on the dialog and in the PR body
+ *   past `confirm*`              a typed confirmation — the operator retypes
+ *                                the file's new row count before anything is
+ *                                written (publishConfirmPrompt)
+ *
+ * The bug this was built for still cannot get through unseen: a truncated tab
+ * is named, with both counts, on the dialog the operator must click and in the
+ * PR body the reviewer reads, and a big one cannot be clicked through at all.
+ * What changed is that a person who means it can now say so.
+ *
+ * `confirmFloor` is what keeps the top tier sane on a small file: 25% of
+ * `offAuctionPrices`'s 26 rows is 6, and demanding a typed confirmation to
+ * delete 7 rows from a 26-row hand-curated file would be the same trap again.
+ *
+ * A file that arrives with NO data rows is still a hard abort, whatever the
+ * fractions say and with nothing to type. An empty tab is never a legitimate
+ * publish — that one is categorical, and it is the only one left.
  */
-var PUBLISH_ROW_DELTA = { shrinkFraction: 0.02, shrinkFloor: 3, growthFraction: 0.25, growthFloor: 200 };
+var PUBLISH_ROW_DELTA = {
+  shrinkFraction: 0.02, shrinkFloor: 3,
+  growthFraction: 0.25, growthFloor: 200,
+  confirmFraction: 0.25, confirmFloor: 25,
+};
 
 // ===========================================================================
 // Pure core
@@ -448,30 +484,71 @@ function publishCheckAuctionIds(file, grid) {
 }
 
 /**
- * Preflight 4 — an implausible row-count move. See PUBLISH_ROW_DELTA for why
- * the two directions get very different allowances.
+ * Preflight 4 — a large row-count move. See PUBLISH_ROW_DELTA for the tiers and
+ * for why the two directions get very different allowances.
+ *
+ * Returns `{ aborts, cautions, confirm }` rather than a list of aborts: the
+ * only thing this check refuses outright is an empty tab. `confirm` entries are
+ * `{ file, rows, previousRows, delta, message }` and are answered by the
+ * operator retyping the new row count — see publishConfirmPrompt.
  *
  * `previousRows` is null for a file the repository does not have yet, which is
  * not a delta at all and cannot be judged.
  */
 function publishCheckRowDelta(file, rows, previousRows) {
-  if (rows <= 0) return [file + ': the tab has no data rows at all'];
-  if (previousRows === null || previousRows === undefined) return [];
+  var out = { aborts: [], cautions: [], confirm: [] };
+  if (rows <= 0) { out.aborts.push(file + ': the tab has no data rows at all'); return out; }
+  if (previousRows === null || previousRows === undefined) return out;
+
   var delta = rows - previousRows;
+  if (delta === 0) return out;
+  var move = file + ': ' + previousRows + ' rows -> ' + rows + ' (' + (delta > 0 ? '+' : '') + delta + ')';
+  var big = Math.max(PUBLISH_ROW_DELTA.confirmFloor, Math.floor(previousRows * PUBLISH_ROW_DELTA.confirmFraction));
+
   if (delta < 0) {
-    var allowed = Math.max(PUBLISH_ROW_DELTA.shrinkFloor, Math.floor(previousRows * PUBLISH_ROW_DELTA.shrinkFraction));
-    if (-delta > allowed) {
-      return [file + ': ' + previousRows + ' rows -> ' + rows + ' (' + delta + '). Losing more than ' +
-        allowed + ' rows is refused — check for a filter, a clipped sort, or a half-deleted tab.'];
+    var quiet = Math.max(PUBLISH_ROW_DELTA.shrinkFloor, Math.floor(previousRows * PUBLISH_ROW_DELTA.shrinkFraction));
+    if (-delta <= quiet) return out;
+    if (-delta <= big) {
+      out.cautions.push(move + '. More rows than a correction usually moves — if you did not mean to ' +
+        'delete ' + (-delta) + ', look for a filter left on, a sort that clipped the range, or a ' +
+        'half-deleted tab.');
+      return out;
     }
-  } else if (delta > 0) {
-    var cap = Math.max(PUBLISH_ROW_DELTA.growthFloor, Math.floor(previousRows * PUBLISH_ROW_DELTA.growthFraction));
-    if (delta > cap) {
-      return [file + ': ' + previousRows + ' rows -> ' + rows + ' (+' + delta + '). Gaining more than ' +
-        cap + ' rows is refused — confirm this is a backfill and not a duplicated block.'];
-    }
+    out.confirm.push({
+      file: file, rows: rows, previousRows: previousRows, delta: delta,
+      message: move + '. More than ' + big + ' rows deleted — confirmed by hand before publishing.',
+    });
+    return out;
   }
-  return [];
+
+  var cap = Math.max(PUBLISH_ROW_DELTA.growthFloor, Math.floor(previousRows * PUBLISH_ROW_DELTA.growthFraction));
+  if (delta <= cap) return out;
+  out.confirm.push({
+    file: file, rows: rows, previousRows: previousRows, delta: delta,
+    message: move + '. More than ' + cap + ' rows added — confirmed by hand before publishing ' +
+      '(a backfill, not a duplicated block).',
+  });
+  return out;
+}
+
+/**
+ * The question asked before a large move is written, and what answers it.
+ *
+ * Retyping the count is friction, not knowledge — the number is on the screen.
+ * That is the point: it cannot be answered by clicking OK on a dialog you did
+ * not read, which is the only failure mode a second dialog could have. Commas
+ * and spaces are forgiven because the sheet renders the count with them.
+ */
+function publishConfirmPrompt(item) {
+  return item.message + '\n\n' +
+    (item.delta < 0
+      ? 'If a filter, a clipped sort or a half-deleted tab did this, press Cancel.'
+      : 'If this is a duplicated block rather than a backfill, press Cancel.') + '\n' +
+    'If you meant it, type the new row count for ' + item.file + ' — ' + item.rows + ' — to confirm:';
+}
+
+function publishConfirmAccepted(answer, item) {
+  return String(answer == null ? '' : answer).replace(/[,\s]/g, '') === String(item.rows);
 }
 
 /**
@@ -496,10 +573,12 @@ function publishHeaderDrift(file, header, previousHeader) {
  * `entries` are `{ file, tab, grid, text, blob, sha, previous }` — `text` is
  * Google's shape and `blob` is git's (see publishRepoText); `previous` is
  * `{ sha, rows, header }` or null when the repository has no such file. Returns
- * `{ ok, aborts, cautions, changed, unchanged }` and writes nothing.
+ * `{ ok, aborts, cautions, confirm, changed, unchanged }` and writes nothing —
+ * `confirm` holds the large row moves the operator must answer before anything
+ * is written.
  */
 function publishPlan(entries) {
-  var aborts = [], cautions = [], changed = [], unchanged = [];
+  var aborts = [], cautions = [], confirm = [], changed = [], unchanged = [];
   var config = publishConfigProblems();
   for (var p = 0; p < config.length; p++) aborts.push('configuration: ' + config[p]);
 
@@ -523,7 +602,10 @@ function publishPlan(entries) {
       unchanged.push({ file: e.file, rows: rows, bytes: publishUtf8ByteLength(blob), sha: e.sha });
       continue;
     }
-    aborts = aborts.concat(publishCheckRowDelta(e.file, rows, previousRows));
+    var rowDelta = publishCheckRowDelta(e.file, rows, previousRows);
+    aborts = aborts.concat(rowDelta.aborts);
+    cautions = cautions.concat(rowDelta.cautions);
+    confirm = confirm.concat(rowDelta.confirm);
     var drift = publishHeaderDrift(e.file, e.grid.length ? e.grid[0] : [], e.previous ? e.previous.header : null);
     if (drift) cautions.push(drift);
     changed.push({
@@ -535,7 +617,8 @@ function publishPlan(entries) {
   }
 
   if (!aborts.length && !changed.length) cautions.push('Nothing changed — every tab already matches the repository.');
-  var plan = { ok: aborts.length === 0, aborts: aborts, cautions: cautions, changed: changed, unchanged: unchanged };
+  var plan = { ok: aborts.length === 0, aborts: aborts, cautions: cautions, confirm: confirm,
+    changed: changed, unchanged: unchanged };
   // Raised last: it reads the assembled `changed` list rather than one entry.
   var withheld = publishWithheldPreviewNotice(plan);
   if (withheld) cautions.push(withheld);
@@ -648,6 +731,12 @@ function publishPullRequestBody(plan) {
     lines.push('', '**Cautions raised in the sheet:**');
     for (var j = 0; j < plan.cautions.length; j++) lines.push('- ' + plan.cautions[j].split('\n')[0]);
   }
+  // A big row move is the thing a reviewer of this PR most needs told, and the
+  // sheet is where the evidence for it was — so it travels with the diff.
+  if (plan.confirm && plan.confirm.length) {
+    lines.push('', '**Large row moves, confirmed by hand in the sheet:**');
+    for (var q = 0; q < plan.confirm.length; q++) lines.push('- ' + plan.confirm[q].message);
+  }
   // The withheld notice goes in full rather than first-line-only: it carries the
   // commands, and whoever reads this PR is the person who has to run them.
   var withheld = publishWithheldPreviewNotice(plan);
@@ -679,6 +768,13 @@ function publishDescribePlan(plan) {
   }
   for (var c = 0; c < plan.cautions.length; c++) lines.push('CAUTION: ' + plan.cautions[c]);
   if (plan.cautions.length) lines.push('');
+  // Named here as well as prompted for, so the dry run shows what a publish
+  // would ask before the operator is standing in front of the question.
+  if (plan.confirm && plan.confirm.length) {
+    lines.push('NEEDS A TYPED CONFIRMATION before anything is written:');
+    for (var q = 0; q < plan.confirm.length; q++) lines.push('  • ' + plan.confirm[q].message);
+    lines.push('');
+  }
   if (plan.changed.length) {
     lines.push(plan.changed.length + ' file(s) to publish:');
     for (var j = 0; j < plan.changed.length; j++) {
@@ -916,6 +1012,20 @@ function publishToSite() {
     ui.ButtonSet.OK_CANCEL);
   if (go !== ui.Button.OK) return;
 
+  // Asked after the summary and before the first write: a large move is the
+  // last thing the operator sees, and cancelling here has cost nothing.
+  for (var q = 0; q < plan.confirm.length; q++) {
+    var item = plan.confirm[q];
+    var answer = ui.prompt('Confirm a large row-count move (script ' + PUBLISH_SCRIPT_VERSION + ')',
+      publishConfirmPrompt(item), ui.ButtonSet.OK_CANCEL);
+    if (answer.getSelectedButton() !== ui.Button.OK || !publishConfirmAccepted(answer.getResponseText(), item)) {
+      ui.alert('Publish cancelled — nothing was written',
+        item.file + ' was not confirmed, so no file was published.\n\n' + item.message,
+        ui.ButtonSet.OK);
+      return;
+    }
+  }
+
   try {
     var treeEntries = [];
     for (var i = 0; i < plan.changed.length; i++) {
@@ -1003,6 +1113,8 @@ if (typeof module !== 'undefined') {
     publishCheckPrices: publishCheckPrices,
     publishCheckAuctionIds: publishCheckAuctionIds,
     publishCheckRowDelta: publishCheckRowDelta,
+    publishConfirmPrompt: publishConfirmPrompt,
+    publishConfirmAccepted: publishConfirmAccepted,
     publishHeaderDrift: publishHeaderDrift,
     publishPlan: publishPlan,
     publishBranchName: publishBranchName,
