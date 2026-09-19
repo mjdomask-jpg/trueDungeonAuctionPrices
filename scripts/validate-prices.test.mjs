@@ -299,6 +299,55 @@ const cases = [
     openDate: '2099-10-01', Status: 'Pending', outcome: 'Pending',
   }), /\b\d+ Pending\b.*correctly carry none/, 'warn'],
 
+  // ENDED has finished and has not been imported. This is the state § 5b
+  // itself forced into existence: with only the four above, an auction whose
+  // close file had not arrived could be `Open` — which advertises it as live on
+  // the site — or `Closed`, which fails RIGHT HERE and blocks the publish. Two
+  // real Trent auctions sat in that gap on 2026-09-19.
+  //
+  // It carries a closeDate, and that is the difference from every other case
+  // here: the auction really did end on a date, and the date is what makes
+  // clearing the outcome cell later a one-cell edit rather than two.
+  ['5b an Ended auction with no price rows is legitimate', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 auction that closed before its results arrived',
+    auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2018-10-01', closeDate: '2018-10-09', daysToClose: '8',
+    Status: 'Ended', outcome: 'Ended',
+  }), /\b\d+ Ended\b.*correctly carry none/, 'warn'],
+
+  // And the reminder that goes with it. An Ended row is invisible to every
+  // statistic on the site, which is indistinguishable from an auction that
+  // simply lost its rows — so the one thing that must not happen is for it to
+  // go quiet. Nothing clears this cell by itself, unlike `Pending`, which the
+  // site stops believing on its openDate.
+  ['4  an Ended auction keeps saying it is waiting', () => addMetaRow({
+    auctionId: '20189', auctionSeason: '2018', auctionNumber: '9',
+    auctionName: 'A 2018 auction that closed before its results arrived',
+    auctionStyle: 'Super Condensed', completionStyle: 'Lightning', auctioneer: 'Wade S',
+    Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=248428',
+    openDate: '2018-10-01', closeDate: '2018-10-09', daysToClose: '8',
+    Status: 'Ended', outcome: 'Ended',
+  }), /outcome is "Ended" — it closed.*its results are not imported yet/, 'warn'],
+
+  // The way out of the state, caught from the other side. Rows appearing under
+  // an Ended auction mean the import landed and only the cell is left — the
+  // opposite of what rows under a Failed or Pending auction mean, which is why
+  // it does not get the shared "has sold nothing" sentence.
+  ['5b an Ended auction that HAS price rows says to clear the cell', () => edit('auctionMetadata.csv', (t) => {
+    const L = withOutcomeColumn(lines(t).filter((l) => l.trim() !== ''));
+    return L.map((l, i) => (i > 0 && l.startsWith('20181,2018,1,')
+      ? setOutcome(l.replace(',3,Closed,', ',3,Ended,'), 'Ended') : l)).join('\n') + '\n';
+  }), /20181 .* is Ended but HAS rows in prices\.csv — the results have landed/, 'warn'],
+
+  // `Ended` is hand-typed into `outcome` like the other two, so the same paste
+  // defence applies: a Status that says it with a blank outcome is a value
+  // typed over the formula, which the next recalculation silently undoes.
+  ['4  Status says Ended but outcome is blank', () => edit('auctionMetadata.csv', (t) =>
+    lines(t).map((l) => (l.startsWith('20181,2018,1,') ? l.replace(',3,Closed,', ',3,Ended,') : l)).join('\n')),
+    /Status is "Ended" but outcome is blank/],
+
   // § 6, the other check the same loosening had to reach. `auctionStyle`
   // predicts an auction's CONTENT, and a pending auction has none yet — so an
   // Onyx-styled pending row with no onyx.csv rows is exactly right, and before
@@ -392,13 +441,19 @@ const cases = [
 
   // `Status` is a formula — `IF(outcome<>"", outcome, IF(closeDate="", "Open",
   // "Closed"))` — so the only values it can produce are `Open`, `Closed` and
-  // whatever `outcome` is allowed to hold, which is `Failed` and `Pending`.
-  // Four in all. This case is a fifth, and `Cancelled` is chosen on purpose: it
-  // is the plausible next member of the vocabulary, and it must be a DECISION
-  // to add rather than something that rides in on a publish.
-  ['7  Status outside its four values', () => edit('auctionMetadata.csv', (t) =>
+  // whatever `outcome` is allowed to hold, which is `Failed`, `Pending` and
+  // `Ended`. This case is one outside that set, and `Cancelled` is chosen on
+  // purpose: it is the plausible next member of the vocabulary, and it must be
+  // a DECISION to add rather than something that rides in on a publish.
+  //
+  // The expected message is matched on its PREFIX, not on the full list. The
+  // list is `[...OUTCOME_STATUSES]` and grows whenever the vocabulary does —
+  // pinning the whole sentence would make this case fail on the change it is
+  // meant to be indifferent to, which is how a check turns into a publish
+  // blocker. What must hold is that an unknown value is refused.
+  ['7  Status outside its vocabulary', () => edit('auctionMetadata.csv', (t) =>
     t.replace('2018-09-27,2018-09-30,3,Closed,', '2018-09-27,2018-09-30,3,Cancelled,')),
-    /Status "Cancelled" is not Open or Closed or Failed/],
+    /Status "Cancelled" is not Open or Closed or/],
 
   // § 4. `Status` and `outcome` are one fact written twice. In the workbook they
   // cannot disagree — one computes from the other — so a disagreement in the

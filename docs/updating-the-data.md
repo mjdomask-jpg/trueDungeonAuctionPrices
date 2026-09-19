@@ -1312,6 +1312,21 @@ So the only thing that still stops a publish is the one case that genuinely
 wants a person: a historical estimate that moved. A correction to an old price,
 or a change to the recompute itself, does that. A new auction does not.
 
+> **It blocked once more anyway, and the validator was not to blame.**
+> On 2026-09-19 the first 2027 close (`20275`, nine withheld Random Ultra
+> Rares) failed `npm test` on its publish PR and running
+> `gen-withheld-preview.mjs` cleared it — which looks exactly like the old
+> block coming back. It was not: `validate-context.mjs` was green throughout,
+> with all 73 audited values matching to the cent. Two assertions inside
+> `validate-context.test.mjs` were pinned to the shipped repo having **no**
+> un-audited rows, which is the same demand one layer down. Both now measure
+> the *delta* a mutation causes instead of the absolute count, so the audit's
+> coverage can lag without gating anything.
+>
+> The general form is worth keeping: **a check that a golden file is current is
+> a check on housekeeping, not on data.** If running a generator is what makes
+> a test pass, the test was asserting that somebody ran the generator.
+
 The publish still tells you when it touches `contextItems`, `prices` or
 `auctionMetadata`, so you know the preview has fallen behind. Bringing it
 forward is housekeeping you can batch. On the branch the publish opened:
@@ -1595,8 +1610,8 @@ change.
 | `auctionSeason` | **Yes** | Four-digit year, e.g. `2026`. |
 | `auctionNumber` | **Yes** | Sequence within the season, e.g. `47`. |
 | `auctionName` | **Yes** | Free text, shown to users. May contain commas — the sheet quotes them correctly on export. |
-| `Status` | **Yes** | **Derived, not typed.** The sheet computes it as `IF(outcome <> "", outcome, IF(closeDate = "", "Open", "Closed"))`. So it reads `Failed` when you mark `outcome`, otherwise `Open` while `closeDate` is empty and `Closed` once you fill it in — three values, all of them computed. Never type into this column: a typed value stops recomputing and the validators reject the disagreement it creates. |
-| `outcome` | Optional | **The only way to record a failure, and the only way to announce an auction early.** Blank on an ordinary auction; `Failed` on one that did not fund; `Pending` on one that has been announced but has not started. It is the input `Status` reads, which is what lets a failed auction keep its row instead of being deleted — see *Recording a failed auction* and *Recording a pending auction* below. Those two are the only values the validators accept; `Cancelled` is the obvious third one and adding it should be a decision, not a paste. |
+| `Status` | **Yes** | **Derived, not typed.** The sheet computes it as `IF(outcome <> "", outcome, IF(closeDate = "", "Open", "Closed"))`. So it reads back whatever you mark in `outcome`, otherwise `Open` while `closeDate` is empty and `Closed` once you fill it in — five values, all of them computed. Never type into this column: a typed value stops recomputing and the validators reject the disagreement it creates. |
+| `outcome` | Optional | **The only way to record a failure, to announce an auction early, or to park one whose results have not arrived.** Blank on an ordinary auction; `Failed` on one that did not fund; `Pending` on one announced but not started; `Ended` on one that has finished while its close file is still with the auctioneer. It is the input `Status` reads, which is what lets a failed auction keep its row instead of being deleted — see *Recording a failed auction*, *Recording a pending auction* and *Recording an auction that has ended but not arrived* below. Those three are the only values the validators accept; `Cancelled` is the obvious fourth one and adding it should be a decision, not a paste. |
 | `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated on **all 289 rows** — none blank, none `n/a`. Because `Status` keys off this column, clearing it is what makes an auction show as live. See the padding warning below. |
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
 | `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
@@ -1610,11 +1625,15 @@ change.
 ### Rules that matter
 
 - **Only `Status = Closed` auctions are counted.** Anything else — `Open`,
-  `Failed`, `Pending` — is loaded but excluded from every count and statistic.
-  **Measured 2026-09-11: 289 `Closed` and 5 `Failed`, with no `Open` or
-  `Pending` rows.** The three uncounted states are also the three that carry no
-  price rows, which is why `validate-prices.mjs` §§ 5b and 6 exempt all of them
-  rather than just `Failed`.
+  `Failed`, `Pending`, `Ended` — is loaded but excluded from every count and
+  statistic. The four uncounted states are also the four that carry no price
+  rows, which is why `validate-prices.mjs` §§ 5b and 6 exempt all of them
+  rather than just `Failed`. Those checks ask `Status !== 'Closed'` rather than
+  naming a list, which is why `Ended` needed no edit in either of them.
+  > `Closed` means *finished and recorded*, not merely finished. That
+  > distinction is the whole reason `Ended` exists: an auction that has stopped
+  > taking bids but whose numbers have not arrived is finished without being
+  > recorded, and calling it `Closed` is what fails § 5b.
 - **A failed auction is marked, not deleted.** Put `Failed` in `outcome` and
   leave the row alone. `Status` picks it up, every count and statistic on the
   site skips it exactly as it skips an `Open` row, and the auction keeps its
@@ -1836,6 +1855,62 @@ the future, the promote step fills `outcome` with `Pending` and says so under
 source that lists an auction before it opens, so it is the one that produces
 these — check the `Starts:` date it read, because that date is the whole
 decision.
+
+### Recording an auction that has ended but not arrived
+
+An auction that has **finished while its close file is still with the
+auctioneer** takes `Ended` in `outcome`. Put the real close date in `closeDate`
+at the same time. `Status` picks it up the way it picks up `Failed` and
+`Pending`.
+
+**This is the state to reach for the moment an auction stops taking bids and
+you do not have the numbers.** Before it existed there was nowhere to put such
+an auction and both alternatives were wrong:
+
+- Leave `closeDate` blank and it stays `Open` — and **the site advertises it as
+  live**, because `Open` is what a blank close date means. Two Trent auctions
+  sat like that on 2026-09-19, shown as taking bids after they had ended.
+- Fill `closeDate` and it becomes `Closed` — and **`validate` fails the
+  publish**, because § 5b says a closed auction with no price rows has lost its
+  prices. That check is right to say so; it is the largest silent data loss in
+  this data set. It just cannot tell "lost" from "not here yet".
+
+`Ended` is the gap between the two. Nothing else on the site or in the workbook
+had to change to allow it: the `Status` formula already passes any `outcome`
+through, and the site already ignores every status it does not recognise as
+open or pending.
+
+#### Clearing it
+
+**Delete the `outcome` cell when the prices land.** `closeDate` is already
+sitting beside it, so `Status` computes `Closed` off that with no second edit,
+and the auction rejoins every statistic on the next publish.
+
+**Unlike `Pending`, nothing clears this one for you.** A forgotten `Pending`
+corrects itself the day its `openDate` arrives, because the site reads the date
+over the label. A forgotten `Ended` leaves the auction missing from the whole
+site — which is exactly what an auction that lost its rows looks like — so
+`validate` names every `Ended` row on every run, with how many days it has been
+waiting. Treat that note as the to-do list.
+
+#### What the validators know about it
+
+- **§ 4** notes every `Ended` row and how long it has waited, and errors if
+  `Status` says `Ended` with a blank `outcome` (the formula was pasted over).
+  A `closeDate` is expected here, not refused — that is the difference from
+  `Pending`, which cannot have one.
+- **§§ 5b and 6** exempt it, the same as `Failed`, `Open` and `Pending`. If
+  price rows *do* appear under an `Ended` auction, § 5b says so and tells you
+  to clear the cell — rows under it mean the import landed, the opposite of
+  what rows under the other three mean.
+- **§ 7** accepts `Ended` in `outcome` and `Status`, and nothing else new.
+
+#### What it looks like on the site
+
+Nowhere. It is not open, not pending, and not counted — the row is simply
+absent until you clear the cell. Showing "results pending" on a card is a
+reasonable thing to want and is deliberately not built: the point of this state
+is to be short-lived.
 
 ### What `preorderTotal` counts
 
@@ -2406,14 +2481,17 @@ rows at all. `augment`-category rows exist only in 2026.
 The tab labels a column `Item` but fills it with **display names**. Don't "fix"
 that to canonical `Item` values — the join to sales is on the display name.
 
-### After any re-export: regenerate the withheld preview
+### After any re-export: regenerate the withheld preview, when convenient
 
 The withheld estimate is recomputed from live sales, so re-exporting
-`prices.csv`, `auctionMetadata.csv`, or `contextItems.csv` legitimately moves
-those figures. `docs/withheld-recompute-preview.csv` is the audited golden file
-`validate-context.mjs` checks the recompute against, so a stale preview makes
-`npm run validate` fail with a "row count differs" / "groups do not match"
-error. When the numbers really changed (not a code bug), rebuild it:
+`prices.csv`, `auctionMetadata.csv`, or `contextItems.csv` moves which rows
+`docs/withheld-recompute-preview.csv` — the audited golden file
+`validate-context.mjs` checks against — has an opinion about.
+
+**A stale preview does not fail anything, and has not since PR #72.** The audit
+compares on the intersection: rows it already covers must still match to the
+cent, rows it has never seen are reported as new data and pass. Regenerating is
+housekeeping you can batch, not a step in the publish.
 
 ```
 node scripts/gen-withheld-preview.mjs
@@ -2421,6 +2499,12 @@ node scripts/gen-withheld-preview.mjs
 
 Eyeball the diff (the `delta` column shows how each estimate moved), then
 `npm run validate` to confirm the recompute and the preview agree.
+
+> If a check ever seems to demand that you run this before publishing, that is
+> a defect in the check and not in your data — see the note under *The withheld
+> preview, and why it no longer blocks you*. It happened once, on 2026-09-19,
+> through two assertions in `validate-context.test.mjs` rather than through the
+> validator itself.
 
 ---
 
