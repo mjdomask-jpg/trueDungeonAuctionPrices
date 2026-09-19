@@ -14,7 +14,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202018,2020,18,token,Set of 2016 Monster Trophies,1,$27.00
 202018,2020,18,token,Set of 2017 Monster Trophies,1,$30.00
 202018,2020,18,token,Set of 2018 Monster Trophies,1,$26.00
-202018,2020,18,token,Set of all 6 2019 Relic Fragments,1,$75.00
+202018,2020,18,token,Relic Recipe Fragment (6 unique),1,$75.00
 202018,2020,18,token,Shirt of the Fae,1,$35.00
 202018,2020,18,token,Soul Coffer,1,$70.00
 202019,2020,19,token,4th Tooth of Cavadar,1,$76.00
@@ -52,7 +52,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20215,2021,5,token,Shirt of Baneful Prowess,1,$5.00
 20215,2021,5,token,Shirt of Blessed Strength,1,$13.00
 20216,2021,6,token,Lucky Plate Armor,1,$55.00
-20216,2021,6,token,Set of Relic Recipe Fragments,1,$60.00
+20216,2021,6,token,Relic Recipe Fragment (6 unique),1,$60.00
 20216,2021,6,token,Shield of the Scholar,1,$80.00
 20218,2021,8,token,Hat of the Hellway,1,$80.00
 20218,2021,8,token,Shaman's Belt,1,$60.00
@@ -235,7 +235,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20236,2023,6,withheld,Ring of the 4th Circle,2,-$170.67
 20236,2023,6,withheld,Ring of the 4th Circle,1,-$85.34
 20236,2023,6,token,Sacred Necklace,1,$206.00
-20236,2023,6,withheld,Ultra Rare,4,-$323.13
+20236,2023,6,withheld,Ultra Rare,4,-$322.50
 202310,2023,10,token,+2 Flaming Blade,1,$65.00
 202310,2023,10,token,Amulet of Aiming,1,$65.00
 202310,2023,10,token,Butterfly Cloak,1,$50.00
@@ -501,13 +501,13 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202424,2024,24,grunnel,Smart Token Prop,1,$51.00
 20251,2025,1,token,+3 Savage Sword,1,$120.00
 20251,2025,1,withheld,"1,000 GP Gold Bar",90,-$859.54
-20251,2025,1,token,50GP Idol: Goose,1,$20.00
-20251,2025,1,token,50GP Idol: Lion,1,$20.00
-20251,2025,1,token,50GP Idol: Locust,1,$20.00
-20251,2025,1,token,50GP Idol: Locust,1,$20.00
-20251,2025,1,token,50GP Idol: Meerkat,1,$20.00
-20251,2025,1,token,50GP Idol: Ram,1,$20.00
-20251,2025,1,token,50GP Idol: Tortoise,1,$20.00
+20251,2025,1,token,50 GP Idol: Goose,1,$20.00
+20251,2025,1,token,50 GP Idol: Lion,1,$20.00
+20251,2025,1,token,50 GP Idol: Locust,1,$20.00
+20251,2025,1,token,50 GP Idol: Locust,1,$20.00
+20251,2025,1,token,50 GP Idol: Meerkat,1,$20.00
+20251,2025,1,token,50 GP Idol: Ram,1,$20.00
+20251,2025,1,token,50 GP Idol: Tortoise,1,$20.00
 20251,2025,1,withheld,Alchemist's Ink,78,-$233.67
 20251,2025,1,withheld,Alchemist's Parchment,106,-$244.89
 20251,2025,1,withheld,Aragonite,78,-$766.05
@@ -582,7 +582,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20251,2025,1,token,Stalker Bead of Focus,1,$180.00
 20251,2025,1,token,Totem of Heroism (2022),1,$655.00
 20251,2025,1,withheld,Ultra Rare,15,"-$1,050.23"
-20251,2025,1,withheld,Wish Ring,1,-$167.57
+20251,2025,1,withheld,Wish Ring,1,-$167.34
 20251,2025,1,withheld,Wish Ring,2,-$261.93
 20255,2025,5,token,+2 Savage Sword,1,$55.50
 20255,2025,5,token,Boots of Brawling,1,$26.00
@@ -778,3 +778,27 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202518,2025,18,withheld,Oil of Enchantment,3,-$52.20
 202518,2025,18,withheld,Philosopher's Stone,10,-$23.18
 202518,2025,18,withheld,"1,000 GP Gold Bar",5,-$47.75
+20275,2027,5,withheld,Bead of Need,1,
+20275,2027,5,withheld,Blood Cult Mark,1,
+20275,2027,5,withheld,C-U-R Onyx Set,1,
+20275,2027,5,withheld,Gloves of Elder Horror,1,
+20275,2027,5,withheld,Golden Ticket,1,
+20275,2027,5,withheld,Lenses of Timestep,1,
+20275,2027,5,withheld,Mask of Foggy Health,1,
+20275,2027,5,withheld,Natasha's Nightcap,1,
+20275,2027,5,withheld,Random Ultra Rare,9,
+20275,2027,5,withheld,Spirit Pet Owl,1,
+20275,2027,5,withheld,Tobin's Cosmic Ring,1,
+20275,2027,5,token,Bead of Greed,1,$70.00
+20275,2027,5,token,Boots of the Marauder,1,$5.00
+20275,2027,5,token,Goblet of Saintly Surge,1,$55.00
+20275,2027,5,token,Greaves of Absorption (Onyx),1,$41.00
+20275,2027,5,token,Hat of Critical Thinking (Onyx),1,$46.00
+20275,2027,5,token,Hat of Critical Thinking (Onyx),1,$46.00
+20275,2027,5,token,Key of Healing,1,$27.00
+20275,2027,5,token,Lucky Charm (Onyx),1,$51.00
+20275,2027,5,token,Picc's Grindstone (Onyx),1,$71.00
+20275,2027,5,token,Pilgrim Fate Card,1,$2.00
+20275,2027,5,token,Ring of Evasion (Onyx),1,$50.00
+20275,2027,5,token,Shirt of the Imbiber (Onyx),1,$26.00
+20275,2027,5,token,Wolf Fate Card,1,$2.00
