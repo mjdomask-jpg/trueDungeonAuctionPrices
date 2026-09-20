@@ -911,90 +911,38 @@ function alesievContextWorksheetText(plan, target) {
 }
 
 /**
- * How many auctions the picker lists. A season runs to 47 rows, so the list is
- * capped even after the season scope below — but the cap is no longer what
- * keeps the list short, which is why it can afford to be generous.
- */
-var ALESIEV_PICKER_LIMIT = 10;
-
-/**
- * Every auctionMetadata row that came from alesievauctions.com, newest first.
+ * Whether an auctionMetadata row came from alesievauctions.com.
  *
- * MEMBERSHIP IS THE LINK, NOT THE AUCTIONEER. Until 2026-09-20 this listed
- * rows whose `auctioneer` was `alesiev`, which reads like the obvious test and
- * is the wrong one: the site hosts auctions other people run. Of the six site
- * rows recorded on the day this changed, two are his — the other four are Mike
- * Steele, Kusig, Flik and BasicBraining, and none of them appeared in the list.
+ * MEMBERSHIP IS THE LINK, NOT THE AUCTIONEER. Until 2026-09-20 the picker
+ * listed rows whose `auctioneer` was `alesiev`, which reads like the obvious
+ * test and is the wrong one: the site hosts auctions other people run. Of the
+ * six site rows recorded on the day this changed, two are his — the other four
+ * are Mike Steele, Kusig, Flik and BasicBraining, and none of them appeared.
  * `20275` is among them, and it is the ONE real close this path has ever seen:
- * the importer hid exactly the auctions it exists to read, and the operator had
- * to know the id already.
+ * the importer hid exactly the auctions it exists to read, and the operator
+ * had to know the id already.
  *
  * `openAlesievId` is the same anchored parse `auctionOpen.gs` keys this
  * source's duplicates on, so "a row from this site" has one definition instead
- * of two that drift. The `Link` is written by the scan and never retyped;
- * `auctioneer` is free text naming whoever ran the thing.
- *
- * NEWEST FIRST MEANS SEASON THEN NUMBER, not the auction id read as a number.
- * The ids are season-prefixed, so `Number(auctionId)` ranks `202647` — 2026
- * auction 47 — above `20271`, because six digits beat five. Every auction of
- * the season just gone therefore sorted above the season being auctioned now.
+ * of two that drift.
  */
+function alesievIsSiteRow(m) {
+  return !!openAlesievId(m.Link);
+}
+
+/** Every alesievauctions.com row, newest first. Ordering lives in trentClose.gs. */
 function alesievSiteAuctions(metaRows) {
-  var rows = [];
-  for (var i = 0; i < metaRows.length; i++) {
-    if (!metaRows[i].auctionId) continue;
-    if (!openAlesievId(metaRows[i].Link)) continue;
-    rows.push(metaRows[i]);
-  }
-  rows.sort(function (a, b) {
-    var season = Number(b.auctionSeason) - Number(a.auctionSeason);
-    if (season) return season;
-    var number = Number(b.auctionNumber) - Number(a.auctionNumber);
-    if (number) return number;
-    // Either number is blank or they tie, and NaN falls through to here.
-    return String(b.auctionId).localeCompare(String(a.auctionId));
-  });
-  return rows;
+  return closeAuctionsFrom(metaRows, alesievIsSiteRow);
 }
 
-/**
- * The slice of those the picker shows: the newest season, capped.
- *
- * SCOPED TO THE NEWEST SEASON PRESENT, not to a calendar year. A 2027 auction
- * opens in calendar 2026 — `20271` opened 2026-09-19 — so `getFullYear()`
- * would name 2026 and pin the list to the very season the operator is trying
- * to get away from. Reading the season off the rows needs no clock and no rule
- * about when a season turns over.
- *
- * Nothing is lost by scoping: the id the operator types is still looked up
- * across the whole tab, so a straggler close from a finished season imports
- * exactly as before. `hidden` is reported so the list never pretends to be
- * everything.
- */
+/** The shortlist the picker shows: this season's site auctions, capped. */
 function alesievPickerList(metaRows, limit) {
-  var all = alesievSiteAuctions(metaRows);
-  var season = all.length ? String(all[0].auctionSeason).trim() : '';
-  var inSeason = [];
-  for (var i = 0; i < all.length; i++) {
-    if (String(all[i].auctionSeason).trim() === season) inSeason.push(all[i]);
-  }
-  var shown = inSeason.slice(0, limit || ALESIEV_PICKER_LIMIT);
-  return { season: season, rows: shown, hidden: all.length - shown.length };
+  return closePickerList(metaRows, alesievIsSiteRow, limit);
 }
 
-/**
- * One line of the picker.
- *
- * The auctioneer is named because the list now spans several of them — it is
- * how the operator tells two same-day auctions apart, and it was not worth
- * showing back when every row said `alesiev`. A row with no close date reports
- * its own Status rather than a flat `(open)`, because since PR #189 a row can
- * be `Pending`: promoted, dated, and not open yet.
- */
+/** One line of it. */
 function alesievPickerLine(m) {
-  var when = m.closeDate ? 'closed ' + m.closeDate : String(m.Status || 'open').toLowerCase();
-  return '  ' + m.auctionId + '  ' + m.auctionName +
-    '  [' + (m.auctioneer || 'auctioneer not recorded') + ']  (' + when + ')';
+  return closePickerLine(m);
 }
 
 // ===========================================================================
@@ -1028,17 +976,8 @@ function alesievCheckTabs() {
  */
 function alesievTargetAuction(ui, title) {
   var meta = readTab(TABS.metadata);
-  var picker = alesievPickerList(meta);
-
-  var listed = picker.rows.map(alesievPickerLine).join('\n');
-  var prompt = 'Target auctionId?';
-  if (listed) {
-    prompt += '\n\nalesievauctions.com, season ' + picker.season + ' (newest first):\n' + listed;
-    if (picker.hidden) {
-      prompt += '\n\n' + picker.hidden + ' older auction(s) from this site are not listed. ' +
-        'Any auctionId in ' + TABS.metadata + ' can be typed.';
-    }
-  }
+  var prompt = 'Target auctionId?' +
+    closePickerPrompt(alesievPickerList(meta), 'alesievauctions.com', TABS.metadata);
   var choice = ui.prompt(title, prompt, ui.ButtonSet.OK_CANCEL);
   if (choice.getSelectedButton() !== ui.Button.OK) return null;
 
@@ -1326,7 +1265,6 @@ if (typeof module !== 'undefined') {
     alesievSiteAuctions: alesievSiteAuctions,
     alesievPickerList: alesievPickerList,
     alesievPickerLine: alesievPickerLine,
-    ALESIEV_PICKER_LIMIT: ALESIEV_PICKER_LIMIT,
     ALESIEV_CONTEXT_RULES: ALESIEV_CONTEXT_RULES,
     ALESIEV_FEE_NAMES: ALESIEV_FEE_NAMES,
     ALESIEV_AUGMENT_CATEGORIES: ALESIEV_AUGMENT_CATEGORIES,

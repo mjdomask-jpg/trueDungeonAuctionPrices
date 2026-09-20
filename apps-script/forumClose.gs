@@ -47,6 +47,12 @@
  * Everything above `--- Apps Script entry points ---` is pure. There is no
  * `onOpen` here; `trentClose.gs` calls `addForumMenu`. Every global is prefixed
  * `FORUM_` / `forum`.
+ *
+ * TWO FILES MUST BE INSTALLED ALONGSIDE IT. `trentClose.gs` for the parser and
+ * the shared close-path picker; `auctionOpen.gs` for `openTopicId` and
+ * `openAlesievId`, which between them say whether a metadata row is a forum
+ * auction. Both are parses the auction scan already keys duplicates on, reused
+ * rather than re-derived.
  */
 
 // ===========================================================================
@@ -54,7 +60,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var FORUM_VERSION = '2026-09-19.1';
+var FORUM_VERSION = '2026-09-20.1';
 
 /** The tab the operator pastes the auctioneer's file into. */
 var FORUM_STAGING_TAB = 'forumStaging';
@@ -512,6 +518,31 @@ function forumDescribePlan(plan, auctionId) {
   return lines.join('\n');
 }
 
+/**
+ * Whether an auctionMetadata row is a forum auction.
+ *
+ * The forum's identity is the topic id in its `Link`, which is what
+ * `auctionOpen.gs` keys this source's duplicates on — reused rather than
+ * re-derived, so "a forum row" has one definition. Trent's 111 rows all share
+ * one shop URL and carry no topic id, so they fall out on their own.
+ *
+ * The alesievauctions.com test comes FIRST and excludes, which is the ordering
+ * `openPlanPromotion` learned the hard way: site auction 29 and forum topic 29
+ * are different auctions, and a source added later must be ruled out before a
+ * looser test claims it. `openTopicId` matches `id=` anywhere in the URL, and
+ * no site Link carries one today — but "today" is exactly what that guard is
+ * for.
+ */
+function forumIsThreadRow(m) {
+  if (openAlesievId(m.Link)) return false;
+  return !!openTopicId(m.Link);
+}
+
+/** The shortlist the picker shows: this season's forum auctions, capped. */
+function forumPickerList(metaRows, limit) {
+  return closePickerList(metaRows, forumIsThreadRow, limit);
+}
+
 // ===========================================================================
 // --- Apps Script entry points ---
 // Everything below touches the workbook. Nothing above it does.
@@ -524,9 +555,24 @@ function addForumMenu(menu) {
     .addItem('Dry run — show what the file would import', 'dryRunForumClose');
 }
 
+/**
+ * Pick the target auction, with a shortlist of the forum's own.
+ *
+ * There was no list here at all — just "Target auctionId?" against a tab of
+ * 308 rows, so the id had to be looked up by hand every time. It is the same
+ * shortlist the alesievauctions.com importer shows, sharing `trentClose.gs`'s
+ * picker: this season's auctions from THIS source, newest first, each with its
+ * auctioneer and either the date it closed or its Status.
+ *
+ * A shortlist, never a gate. The id typed is looked up across the whole tab,
+ * so an older auction — or one recorded with no Link at all — imports exactly
+ * as before, and the season check inside the plan is what guards the choice.
+ */
 function forumTargetAuction(ui, title) {
   var meta = readTab(TABS.metadata);
-  var choice = ui.prompt(title, 'Target auctionId?', ui.ButtonSet.OK_CANCEL);
+  var prompt = 'Target auctionId?' +
+    closePickerPrompt(forumPickerList(meta), 'truedungeon.com forum', TABS.metadata);
+  var choice = ui.prompt(title, prompt, ui.ButtonSet.OK_CANCEL);
   if (choice.getSelectedButton() !== ui.Button.OK) return null;
   var auctionId = choice.getResponseText().trim();
   for (var i = 0; i < meta.length; i++) {
@@ -671,6 +717,8 @@ function forumShowContext(plan, target) {
 // Lets Node load the pure functions for testing.
 if (typeof module !== 'undefined') {
   module.exports = {
+    forumIsThreadRow: forumIsThreadRow,
+    forumPickerList: forumPickerList,
     forumNormaliseName: forumNormaliseName,
     forumReadStaging: forumReadStaging,
     forumPlanImport: forumPlanImport,

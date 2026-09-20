@@ -493,6 +493,51 @@ it.
 
 ---
 
+## The close-path picker
+
+All three importers — Trent, a forum file (and the thread reader behind it),
+and alesievauctions.com — open by asking **which auction is this for?** They
+answer it the same way, through one shortlist in `trentClose.gs`:
+
+> **`<source>`, season `<n>` (newest first):**
+> each row as `auctionId  name  [auctioneer]  (closed <date>)` — or `(open)`,
+> `(pending)`, whatever its Status says when it has no close date.
+
+Each importer supplies only the one thing that differs: whether a row came from
+**its** source. That test is the `Link` in every case, because the Link is
+written by the auction scan and never retyped.
+
+**Three things about it are deliberate, and two of them are repairs.**
+
+- **Membership is the Link, not the auctioneer.** The alesievauctions.com list
+  filtered on `auctioneer = alesiev` until 2026-09-20 and hid four rows of six:
+  the site hosts auctions other people run — Mike Steele's, Kusig's, Flik's,
+  BasicBraining's — and `20275`, the only real close that importer has ever
+  read, was one of the hidden ones. Trent's is the one source where both tests
+  agree, exactly: all 119 shop rows say `Trent` and all 119 `Trent` rows carry
+  the shop URL.
+- **Newest first is season then number**, never the `auctionId` read as a
+  number. The ids are season-prefixed, so `202647` — 2026 auction 47 — sorts
+  above `20271`, six digits beating five. Both pickers that had a list sorted
+  that way, so a finished season sat on top of the one being auctioned and
+  pushed it off the end of the list.
+- **The scope is the newest season that source has**, not the calendar year. A
+  2027 auction opens in calendar 2026 — `20271` opened 2026-09-19 — so a
+  calendar year names the season you are trying to get past.
+
+**It is a shortlist, never a gate.** The id you type is looked up across the
+whole tab, so an older auction, or one recorded with no Link at all, imports
+exactly as before; the count of everything not listed is shown so the list
+never pretends to be complete; and the season check inside the plan is what
+actually guards the choice.
+
+> **At a season boundary a list can be very short.** On 2026-09-20 the forum's
+> newest season held one auction, so its shortlist was one line and 183 were
+> counted as older. That is correct rather than broken: the auctions closing
+> now are the new season's. Type the id if you want an older one.
+
+---
+
 ## Importing a forum close from a file
 
 Some forum auctioneers send a spreadsheet of their results rather than only
@@ -558,7 +603,11 @@ appear under **TD auctions**.
 1. Paste the auctioneer's file — **including the header row** — into
    `forumStaging`.
 2. **TD auctions → Dry run — show what the file would import.** Give it the
-   target `auctionId`.
+   target `auctionId`. The prompt shortlists **this season's** forum auctions,
+   newest first, each with its auctioneer and either the date it closed or its
+   Status — [the same picker](#the-close-path-picker) the other two importers
+   use. Anything older is counted rather than listed, and any `auctionId` in
+   the tab can still be typed.
 3. Read the summary. It says which shape it detected, how many lots it read,
    what goes to each tab, and anything it could not resolve.
 4. **Import forum close from a file…** when the dry run looks right.
@@ -789,20 +838,8 @@ items appear under **TD auctions**.
 2. Paste the export — **including the header row** — into `alesievStaging`.
 3. **TD auctions → Dry run — show what the export would import.** Give it the
    target `auctionId`; the prompt shortlists **this season's** auctions from
-   alesievauctions.com, newest first, each with its auctioneer and either the
-   date it closed or its Status.
-
-   > **The shortlist is by Link, not by auctioneer, and that is the point.**
-   > The site hosts auctions other people run — of the six rows recorded on
-   > 2026-09-20 only two were alesiev's own, the rest Mike Steele's, Kusig's,
-   > Flik's and BasicBraining's. Listing by `auctioneer` hid four of six,
-   > including `20275`, the only real close this importer has ever read. It is
-   > scoped to the newest season for the same reason it is sorted by season and
-   > number rather than by `auctionId`: the ids are season-prefixed, so
-   > `202647` reads as larger than `20271` and a finished season buries the one
-   > being auctioned. The count of older site auctions is shown, and **any**
-   > `auctionId` in the tab can still be typed — the list is a shortlist, not a
-   > gate.
+   alesievauctions.com, newest first — see [the close-path
+   picker](#the-close-path-picker), whose two repairs were both found here.
 4. Read the summary: how many lots, what goes to each tab, every `contextItems`
    row spelled out, and anything it could not place.
 5. **Import alesievauctions.com close…** when the dry run looks right.
@@ -892,7 +929,8 @@ thread…**.
 1. Make sure the auction has a row in `auctionMetadata` with its forum `Link`.
    If it does not, run **Scan for new auctions…** first.
 2. **TD auctions → Read a forum close from the thread…**, and give it the
-   `auctionId`.
+   `auctionId`. This path shares the file importer's prompt, so it shows [the
+   same shortlist](#the-close-path-picker) of this season's forum auctions.
 3. Read the dialog. Then work through the `forumThreadReview` tab.
 
 ### What the review tab holds
@@ -1101,8 +1139,11 @@ per-token division, the min/max, the Onyx split — and writes the rows itself.
    row** — and paste it into the **`trentStaging`** tab. Don't tidy it first:
    the extra date columns, the varying header spellings and the unsold rows are
    all expected, and removing them by hand is the step this replaces.
-2. Run the menu item and give it the target `auctionId`. It lists the most
-   recent Trent auctions to choose from.
+2. Run the menu item and give it the target `auctionId`. It shortlists this
+   season's Trent auctions, newest first — see [the close-path
+   picker](#the-close-path-picker). The dry run shows the same list; it used to
+   show none at all, which made the step meant to be run first the harder one
+   to drive.
 3. Read the summary. It says how many lots it read, how many rows go to each
    tab, and **names every unsold lot it is dropping**. Confirm, or cancel.
 4. Then rejoin [the standard loop](#the-standard-loop) at step 2: export the

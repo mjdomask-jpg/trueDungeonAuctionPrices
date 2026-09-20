@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-19.2';
+var SCRIPT_VERSION = '2026-09-20.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -904,6 +904,122 @@ function describePlan(plan, auctionId) {
 }
 
 // ===========================================================================
+// The close-path auction picker — shared by every importer
+//
+// Each close path asks the same question first: WHICH auction is this file
+// for? The answer is a shortlist of `auctionMetadata` rows, and it is here
+// rather than in each importer because the two things that make the shortlist
+// right are both easy to get wrong, and were:
+//
+//   NEWEST FIRST IS SEASON THEN NUMBER, never the auction id read as a
+//   number. The ids are season-prefixed, so `Number(auctionId)` ranks `202647`
+//   — 2026 auction 47 — above `20271`, six digits beating five. The alesiev
+//   picker sorted that way and buried the season being auctioned under the one
+//   that had just finished.
+//
+//   THE SCOPE IS THE NEWEST SEASON PRESENT, not a calendar year. A 2027
+//   auction opens in calendar 2026 — `20271` opened 2026-09-19 — so
+//   `getFullYear()` names the season the operator is trying to get past.
+//   Reading it off the rows needs no clock and no rule about when a season
+//   turns over.
+//
+// What each path supplies is the one thing that differs: a predicate saying
+// whether a row came from ITS source. That is a Link parse in both cases so
+// far, because a Link is written by the auction scan and never retyped, while
+// `auctioneer` is free text naming whoever ran the thing — filtering the
+// alesievauctions.com list on `auctioneer = alesiev` hid four rows of six.
+// ===========================================================================
+
+/**
+ * How many auctions a picker lists. A season runs to 47 rows, so the list is
+ * capped even after the season scope — but the cap is not what keeps it short,
+ * which is why it can afford to be generous.
+ */
+var CLOSE_PICKER_LIMIT = 10;
+
+/** Every row `isFromSource` claims, newest first. */
+function closeAuctionsFrom(metaRows, isFromSource) {
+  var rows = [];
+  for (var i = 0; i < metaRows.length; i++) {
+    if (!metaRows[i].auctionId) continue;
+    if (!isFromSource(metaRows[i])) continue;
+    rows.push(metaRows[i]);
+  }
+  rows.sort(function (a, b) {
+    var season = Number(b.auctionSeason) - Number(a.auctionSeason);
+    if (season) return season;
+    var number = Number(b.auctionNumber) - Number(a.auctionNumber);
+    if (number) return number;
+    // Either number is blank or they tie, and NaN falls through to here.
+    return String(b.auctionId).localeCompare(String(a.auctionId));
+  });
+  return rows;
+}
+
+/**
+ * The slice a picker shows: the newest season that source has, capped.
+ *
+ * Nothing is lost by scoping. The id the operator types is looked up across
+ * the whole tab, so a straggler close from a finished season imports exactly
+ * as before, and `hidden` is reported so the list never pretends to be
+ * everything. A shortlist, not a gate.
+ */
+function closePickerList(metaRows, isFromSource, limit) {
+  var all = closeAuctionsFrom(metaRows, isFromSource);
+  var season = all.length ? String(all[0].auctionSeason).trim() : '';
+  var inSeason = [];
+  for (var i = 0; i < all.length; i++) {
+    if (String(all[i].auctionSeason).trim() === season) inSeason.push(all[i]);
+  }
+  var shown = inSeason.slice(0, limit || CLOSE_PICKER_LIMIT);
+  return { season: season, rows: shown, hidden: all.length - shown.length };
+}
+
+/**
+ * One line of a picker.
+ *
+ * The auctioneer is named because these lists span people — it is how the
+ * operator tells two same-day auctions apart. A row with no close date reports
+ * its own Status rather than a flat `(open)`, because since PR #189 a row can
+ * be `Pending`: promoted, dated, and not open yet.
+ */
+function closePickerLine(m) {
+  var when = m.closeDate ? 'closed ' + m.closeDate : String(m.Status || 'open').toLowerCase();
+  return '  ' + m.auctionId + '  ' + m.auctionName +
+    '  [' + (m.auctioneer || 'auctioneer not recorded') + ']  (' + when + ')';
+}
+
+/**
+ * Whether an auctionMetadata row is one of Trent's.
+ *
+ * By the Link, like the other two sources, though here it makes no difference
+ * to the answer: all 119 of his rows carry the shop URL and all 119 say
+ * `Trent`, with no row on either side of that. It is the Link anyway, because
+ * that is the field the auction scan writes and nobody retypes — and because
+ * one rule across three importers is one rule to get right.
+ *
+ * Note what this is NOT good for: identifying WHICH Trent auction a row is.
+ * Every one of his rows shares that single URL, so `auctionOpen.gs` keys his
+ * duplicates on the season and name instead. Source membership and row
+ * identity are different questions and the Link only answers the first.
+ */
+function trentIsShopRow(m) {
+  return /trenttokens\.com/i.test(String(m.Link == null ? '' : m.Link));
+}
+
+/** The prompt body a picker puts under "Target auctionId?". */
+function closePickerPrompt(picker, sourceName, metadataTab) {
+  if (!picker.rows.length) return '';
+  var text = '\n\n' + sourceName + ', season ' + picker.season + ' (newest first):\n' +
+    picker.rows.map(closePickerLine).join('\n');
+  if (picker.hidden) {
+    text += '\n\n' + picker.hidden + ' older auction(s) from this source are not listed. ' +
+      'Any auctionId in ' + metadataTab + ' can be typed.';
+  }
+  return text;
+}
+
+// ===========================================================================
 // --- Apps Script entry points ---
 // Everything below touches the workbook. Nothing above it does.
 // ===========================================================================
@@ -949,7 +1065,12 @@ function dryRunTrentClose() {
 
   var staging = SpreadsheetApp.getActive().getSheetByName(TABS.staging);
   var meta = readTab(TABS.metadata);
-  var choice = ui.prompt('Dry run', 'Target auctionId?', ui.ButtonSet.OK_CANCEL);
+  // The same shortlist the import shows. It listed nothing here, which made the
+  // dry run the harder of the two to drive — the wrong way round for the step
+  // that exists to be run first.
+  var choice = ui.prompt('Dry run',
+    'Target auctionId?' + closePickerPrompt(closePickerList(meta, trentIsShopRow), 'trenttokens.com', TABS.metadata),
+    ui.ButtonSet.OK_CANCEL);
   if (choice.getSelectedButton() !== ui.Button.OK) return;
 
   var auctionId = choice.getResponseText().trim();
@@ -1009,17 +1130,14 @@ function importTrentClose() {
 
   var staging = ss.getSheetByName(TABS.staging);
 
-  // Pick the target auction: the newest Trent row that has no prices yet.
+  // Pick the target auction: this season's Trent rows, newest first.
   var meta = readTab(TABS.metadata);
-  var candidates = meta.filter(function (m) {
-    return m.auctionId && (m.auctioneer || '').toLowerCase() === 'trent';
-  }).sort(function (a, b) { return Number(b.auctionId) - Number(a.auctionId); });
-  if (!candidates.length) { ui.alert('No Trent auctions in ' + TABS.metadata + '.'); return; }
+  var picker = closePickerList(meta, trentIsShopRow);
+  if (!picker.rows.length) { ui.alert('No Trent auctions in ' + TABS.metadata + '.'); return; }
 
   var choice = ui.prompt(
     'Import Trent close',
-    'Target auctionId?\n\nMost recent Trent auctions:\n' +
-      candidates.slice(0, 8).map(function (m) { return '  ' + m.auctionId + '  ' + m.auctionName; }).join('\n'),
+    'Target auctionId?' + closePickerPrompt(picker, 'trenttokens.com', TABS.metadata),
     ui.ButtonSet.OK_CANCEL);
   if (choice.getSelectedButton() !== ui.Button.OK) return;
 
@@ -1138,6 +1256,12 @@ if (typeof module !== 'undefined') {
     contextRows: contextRows,
     contextWorksheetText: contextWorksheetText,
     tsvCell: tsvCell,
+    trentIsShopRow: trentIsShopRow,
+    closeAuctionsFrom: closeAuctionsFrom,
+    closePickerList: closePickerList,
+    closePickerLine: closePickerLine,
+    closePickerPrompt: closePickerPrompt,
+    CLOSE_PICKER_LIMIT: CLOSE_PICKER_LIMIT,
     closeOutcomeProblem: closeOutcomeProblem,
     closeOutcomeClears: closeOutcomeClears,
     closeOutcomeReminder: closeOutcomeReminder,
