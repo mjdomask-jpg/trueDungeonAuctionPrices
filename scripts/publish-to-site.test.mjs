@@ -536,6 +536,22 @@ console.log('\nGaps found by the first real publish\n');
   check('regenerating is framed as housekeeping, not a blocker',
     notices.every((n) => /when convenient/.test(n)), notices.join('\n---\n'));
 
+  // The notice used to open with `git checkout <the branch this opens>`. The
+  // repository now deletes a head branch when its PR merges, and a publish PR
+  // merges as soon as the check is green, so that ref is gone before anyone
+  // reads the message — and `git checkout` on a missing branch reads like the
+  // operator's mistake. The commands have to start from main instead, and the
+  // work then needs its own PR because main is protected.
+  check('the regeneration starts from main, not from the deleted publish branch',
+    notices.every((n) => /origin\/main/.test(n) && !/the branch this opens/.test(n)),
+    notices.join('\n---\n'));
+  check('the notice says the work needs its own PR',
+    notices.every((n) => /gh pr create/.test(n)), notices.join('\n---\n'));
+  // One command per line: the operator runs these in Windows PowerShell, where
+  // `&&` is a parser error, and a plain list works in every shell.
+  check('no command chains with &&, which the operator\'s shell cannot parse',
+    notices.every((n) => n.indexOf('&&') === -1), notices.join('\n---\n'));
+
   check('a publish touching none of the withheld inputs says nothing',
     P.publishWithheldPreviewNotice(planWith('onyx.csv', null, null)) === null);
 
@@ -544,6 +560,18 @@ console.log('\nGaps found by the first real publish\n');
   plan.changed = [{ file: 'contextItems.csv', rows: 631, previousRows: 633, withheld: 66, previousWithheld: 68 }];
   check('the PR body carries the regeneration commands, not just a headline',
     /gen-withheld-preview\.mjs/.test(P.publishPullRequestBody(plan)));
+
+  // And in full: the prose is where the reason for starting from main and the
+  // warning to read the diff live, and the PR body is the only place most
+  // operators will read either. Derived from the notice rather than pinned to a
+  // phrase, so rewording the message does not fail this.
+  const noticeLines = P.publishWithheldPreviewNotice(plan).split('\n');
+  const prose = noticeLines.filter((l) => l.indexOf('    ') !== 0);
+  const body = P.publishPullRequestBody(plan);
+  check('the PR body keeps every prose line of the notice, not only the commands',
+    prose.every((l) => body.indexOf(l) !== -1),
+    prose.filter((l) => body.indexOf(l) === -1).join(' | '));
+  check('the commands are still fenced as bash', /```bash/.test(body), body);
 
   // And the inputs list must match what validate-context.mjs actually reads —
   // if that ever gains a fourth input this test is the thing that notices.

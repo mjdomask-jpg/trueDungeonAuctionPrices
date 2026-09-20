@@ -58,7 +58,7 @@
  * Shown in every dialog, so the copy pasted into the workbook can be told apart
  * from the copy in the repo at a glance. Bump it with any change to this file.
  */
-var PUBLISH_SCRIPT_VERSION = '2026-09-19.1';
+var PUBLISH_SCRIPT_VERSION = '2026-09-20.1';
 
 /**
  * The repository this publishes into. All three values are public facts and
@@ -693,14 +693,33 @@ function publishWithheldPreviewNotice(plan) {
   // between a closed auction and the live site. If a value the audit already
   // covers has genuinely moved, the check fails and says so itself — which is
   // the case that wants a human, and the only one that gets to stop a publish.
+  //
+  // The commands start from `origin/main`, NOT from the branch this publish
+  // opens. That branch used to be the obvious place to put the regenerated
+  // preview — it was already checked out and the work rode along with the same
+  // PR. It is gone now: the repository deletes a head branch when its PR
+  // merges, and a publish PR is merged as soon as the check goes green, so by
+  // the time anyone reads this the ref it named does not exist. `git checkout
+  // <deleted branch>` fails with "pathspec did not match", which reads like the
+  // operator's mistake rather than a stale instruction.
+  //
+  // One command per line, with no `&&`: the operator drives this from Windows
+  // PowerShell, where `&&` is a parser error, and separate lines are what works
+  // in every shell.
   return lead + '\n' +
     'docs/withheld-recompute-preview.csv is a repo file, not a tab, so this publish cannot\n' +
-    'update it. New rows will NOT fail the check. Bring the audit forward when convenient:\n' +
-    '    git fetch origin && git checkout <the branch this opens>\n' +
+    'update it. New rows will NOT fail the check. Bring the audit forward when convenient.\n' +
+    'Start from main, not from this PR\'s branch — that branch is deleted when this PR\n' +
+    'merges, so it is usually gone by the time you read this:\n' +
+    '    git fetch origin\n' +
+    '    git checkout -b withheld-preview origin/main\n' +
     '    node scripts/gen-withheld-preview.mjs\n' +
     '    npm run validate\n' +
-    '    git commit -am "Regenerate the withheld preview" && git push\n' +
-    'Read the diff first: a cent of movement is the price cascade, dollars are not.';
+    '    git commit -am "Regenerate the withheld preview"\n' +
+    '    git push -u origin HEAD\n' +
+    '    gh pr create --fill\n' +
+    'Read the diff first: a cent of movement is the price cascade, dollars are not.\n' +
+    'It needs a PR of its own: main requires build-and-validate, so a push to it is rejected.';
 }
 
 /** Branch names must be unique per run; the stamp comes from the caller. */
@@ -739,12 +758,24 @@ function publishPullRequestBody(plan) {
   }
   // The withheld notice goes in full rather than first-line-only: it carries the
   // commands, and whoever reads this PR is the person who has to run them.
+  //
+  // In full means in full. This used to keep the headline and the indented
+  // commands and drop every other line, which silently threw away both the
+  // reason the commands start from main and the warning to read the diff before
+  // committing it — the two things the operator most needs and the only place
+  // they would have read them. Prose passes through as prose; a run of indented
+  // lines becomes a fenced block.
   var withheld = publishWithheldPreviewNotice(plan);
   if (withheld) {
-    lines.push('', '### The withheld preview', '', withheld.split('\n')[0], '', '```bash');
-    var rest = withheld.split('\n').slice(1);
-    for (var k = 0; k < rest.length; k++) if (rest[k].indexOf('    ') === 0) lines.push(rest[k].trim());
-    lines.push('```');
+    lines.push('', '### The withheld preview', '');
+    var parts = withheld.split('\n'), fenced = false;
+    for (var k = 0; k < parts.length; k++) {
+      var isCommand = parts[k].indexOf('    ') === 0;
+      if (isCommand && !fenced) { lines.push('```bash'); fenced = true; }
+      if (!isCommand && fenced) { lines.push('```', ''); fenced = false; }
+      lines.push(isCommand ? parts[k].trim() : parts[k]);
+    }
+    if (fenced) lines.push('```');
   }
   lines.push('', 'Serialised with `getDisplayValues()`, so the text matches Google\'s own',
     '*Download as CSV*. The PR check runs `npm run build`, `npm run validate` and',

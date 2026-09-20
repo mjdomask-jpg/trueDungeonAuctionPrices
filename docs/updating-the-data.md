@@ -1443,18 +1443,35 @@ or a change to the recompute itself, does that. A new auction does not.
 
 The publish still tells you when it touches `contextItems`, `prices` or
 `auctionMetadata`, so you know the preview has fallen behind. Bringing it
-forward is housekeeping you can batch. On the branch the publish opened:
+forward is housekeeping you can batch, on **a branch of its own cut from
+`main`**.
+
+> **Not on the branch the publish opened.** That is what the message used to
+> say, and it stopped being true when the repository started deleting a head
+> branch as its PR merges: a publish PR merges the moment its check is green, so
+> the branch named in the message is usually gone before anyone reads it.
+> `git checkout` on it then fails with `pathspec … did not match`, which reads
+> like your mistake rather than a stale instruction. Start from `main` instead —
+> the publish has already landed there.
 
 ```bash
+git fetch origin
+git checkout -b withheld-preview origin/main
 node scripts/gen-withheld-preview.mjs
-```
-
-```bash
 npm run validate
 ```
 
-Commit the regenerated preview to that branch and push — or do it later on its
-own branch; nothing is waiting on it.
+Read the diff, then commit and open a PR like anything else. `main` requires
+`build-and-validate`, so this cannot be pushed straight to it.
+
+```bash
+git commit -am "Regenerate the withheld preview"
+git push -u origin HEAD
+gh pr create --fill
+```
+
+Nothing is waiting on any of this, so several publishes can share one
+regeneration.
 
 > **Read the diff before you commit it.** A withheld value moving by a cent is
 > the price cascade and is expected; dollars are not, and a row count that moved
