@@ -736,5 +736,119 @@ console.log('\nClearing the outcome cell (PIPE-9)\n');
     /no "outcome" column/.test(noCol), noCol);
 }
 
+// ===========================================================================
+// 10. The picker — which auctions the importer offers
+//
+// Two defects, both found by the operator rather than by this suite, because
+// the shortlist lived inside a UI function where nothing could reach it:
+//
+//   1. It listed rows whose `auctioneer` was `alesiev`. The site hosts
+//      auctions other people run, so four of the six site rows — Mike Steele,
+//      Kusig, Flik, BasicBraining — were invisible, including `20275`, the one
+//      real close this path has ever seen.
+//   2. It sorted on `Number(auctionId)`, and the ids are season-prefixed, so
+//      every 2026 auction (`202647`) outranked every 2027 one (`20271`). The
+//      season just finished sat on top of the season being auctioned.
+//
+// Pinned on constructed rows, not on the shipped CSV: `auctionMetadata.csv` is
+// republished from the workbook constantly, and a suite that pins a count or a
+// top row out of it is a publish blocked the next time an auction opens. The
+// checks against the real file below are invariants — shape, never size.
+// ===========================================================================
+console.log('\nThe picker\n');
+{
+  const row = (o) => ({
+    auctionId: '', auctionSeason: '', auctionNumber: '', auctionName: '',
+    auctioneer: '', Link: '', closeDate: '', Status: '', ...o,
+  });
+  const site = (id) => `https://alesievauctions.com/auctions/${id}`;
+  const siteRow = (season, number, o = {}) => row({
+    auctionId: `${season}${number}`, auctionSeason: String(season), auctionNumber: String(number),
+    auctionName: `Auction ${number}`, Link: site(number), ...o,
+  });
+
+  // 1 — membership is the Link.
+  const mixed = [
+    siteRow(2027, 5, { auctioneer: 'Kusig' }),
+    row({
+      auctionId: '202647', auctionSeason: '2026', auctionNumber: '47', auctioneer: 'alesiev',
+      auctionName: "Alesiev's FINAL 2026 Token Auction",
+      Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=259000',
+    }),
+  ];
+  const listedIds = A.alesievSiteAuctions(mixed).map((m) => m.auctionId);
+  eq('an auction someone else ran on the site is listed', listedIds.includes('20275'), true);
+  eq("  ... and alesiev's own FORUM auction is not", listedIds.includes('202647'), false);
+  // The anchored parse, borrowed from auctionOpen.gs so there is one definition
+  // of this source rather than two. A look-alike host is not this site.
+  eq('a look-alike host is not the site',
+    A.alesievSiteAuctions([siteRow(2027, 1, { Link: 'https://notalesievauctions.com/auctions/1' })]).length, 0);
+  eq('a row with no Link at all is not listed',
+    A.alesievSiteAuctions([siteRow(2027, 1, { Link: '' })]).length, 0);
+
+  // 2 — newest first is season then number, not the id read as a number.
+  eq('a five-digit 2027 id outranks a six-digit 2026 one',
+    A.alesievSiteAuctions([siteRow(2026, 47), siteRow(2027, 1)])[0].auctionId, '20271');
+  eq('within a season the highest number is first',
+    A.alesievSiteAuctions([siteRow(2027, 1), siteRow(2027, 11), siteRow(2027, 2)])
+      .map((m) => m.auctionNumber).join(','), '11,2,1');
+
+  // 3 — the season scope, and what it does with the rest.
+  const scoped = A.alesievPickerList([siteRow(2026, 47), siteRow(2027, 1), siteRow(2026, 12), siteRow(2027, 2)]);
+  eq('the list is scoped to the newest season present', scoped.season, '2027');
+  check('  ... so nothing from a finished season is in it',
+    scoped.rows.every((m) => m.auctionSeason === '2027'), JSON.stringify(scoped.rows.map((m) => m.auctionId)));
+  eq('  ... and the older ones are counted, not silently dropped', scoped.hidden, 2);
+
+  // The cap survives a full season (2026 ran to 47 auctions).
+  const many = A.alesievPickerList(Array.from({ length: 14 }, (_, i) => siteRow(2027, i + 1)));
+  eq('the list is capped', many.rows.length, A.ALESIEV_PICKER_LIMIT);
+  eq('  ... and the remainder counted', many.hidden, 14 - A.ALESIEV_PICKER_LIMIT);
+  eq('  ... with the newest still first', many.rows[0].auctionNumber, '14');
+
+  // Nothing to offer is not a crash: the prompt still takes a typed id.
+  const none = A.alesievPickerList([]);
+  eq('an empty tab yields an empty list', none.rows.length, 0);
+  eq('  ... and no season', none.season, '');
+
+  // 4 — the line itself.
+  const closed = A.alesievPickerLine(siteRow(2027, 5, {
+    auctioneer: 'Kusig', auctionName: 'TD Con Invite Patron (8K)', closeDate: '2026-09-19', Status: 'Closed',
+  }));
+  check('a line names the auctioneer, now that the list spans several',
+    /Kusig/.test(closed), closed);
+  check('  ... and when it closed', /closed 2026-09-19/.test(closed), closed);
+  check('  ... and the id to type', /20275/.test(closed), closed);
+  const pending = A.alesievPickerLine(siteRow(2027, 9, { auctioneer: 'BasicBraining', Status: 'Pending' }));
+  check('an unclosed row reports its own Status rather than a flat "open"',
+    /\(pending\)/.test(pending) && !/closed/.test(pending), pending);
+  const statusless = A.alesievPickerLine(siteRow(2027, 9, { auctioneer: 'Flik' }));
+  check('  ... and falls back to "open" when Status is blank', /\(open\)/.test(statusless), statusless);
+
+  // 5 — invariants against the shipped file. Shape only.
+  const META = load(dataDir, 'auctionMetadata.csv');
+  const real = A.alesievPickerList(META);
+  const fromSite = A.alesievSiteAuctions(META);
+  check('the shipped auctionMetadata has site auctions to offer', real.rows.length > 0,
+    'no alesievauctions.com Link in auctionMetadata.csv');
+  check('every auction offered came from the site',
+    real.rows.every((m) => /alesievauctions\.com/i.test(m.Link)),
+    real.rows.map((m) => `${m.auctionId} ${m.Link}`).join('\n'));
+  check('every auction offered is of the one season',
+    real.rows.every((m) => m.auctionSeason === real.season),
+    real.rows.map((m) => `${m.auctionId} ${m.auctionSeason}`).join(' '));
+  check('that season is the newest the site has',
+    real.season === String(Math.max(...fromSite.map((m) => Number(m.auctionSeason)))), real.season);
+  check('the offered ids are the newest of that season',
+    real.rows.every((m, i, a) => i === 0 || Number(a[i - 1].auctionNumber) >= Number(m.auctionNumber)),
+    real.rows.map((m) => m.auctionId).join(' '));
+
+  // Measured, not asserted: the day every site auction is his again, the old
+  // filter would look correct, and a check on that would fail for no reason.
+  const his = fromSite.filter((m) => m.auctioneer.toLowerCase() === 'alesiev').length;
+  console.log(`\nnote: ${fromSite.length} site auction(s) recorded, ${his} run by alesiev himself` +
+    ` — the auctioneer test this replaced would list ${his} of them`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

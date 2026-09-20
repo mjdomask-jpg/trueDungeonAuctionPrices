@@ -788,8 +788,21 @@ items appear under **TD auctions**.
    [the auction scan](#watching-for-new-auctions) and promote it first.
 2. Paste the export — **including the header row** — into `alesievStaging`.
 3. **TD auctions → Dry run — show what the export would import.** Give it the
-   target `auctionId`; the prompt lists alesiev's recent auctions and says which
-   are still open.
+   target `auctionId`; the prompt shortlists **this season's** auctions from
+   alesievauctions.com, newest first, each with its auctioneer and either the
+   date it closed or its Status.
+
+   > **The shortlist is by Link, not by auctioneer, and that is the point.**
+   > The site hosts auctions other people run — of the six rows recorded on
+   > 2026-09-20 only two were alesiev's own, the rest Mike Steele's, Kusig's,
+   > Flik's and BasicBraining's. Listing by `auctioneer` hid four of six,
+   > including `20275`, the only real close this importer has ever read. It is
+   > scoped to the newest season for the same reason it is sorted by season and
+   > number rather than by `auctionId`: the ids are season-prefixed, so
+   > `202647` reads as larger than `20271` and a finished season buries the one
+   > being auctioned. The count of older site auctions is shown, and **any**
+   > `auctionId` in the tab can still be typed — the list is a shortlist, not a
+   > gate.
 4. Read the summary: how many lots, what goes to each tab, every `contextItems`
    row spelled out, and anything it could not place.
 5. **Import alesievauctions.com close…** when the dry run looks right.
