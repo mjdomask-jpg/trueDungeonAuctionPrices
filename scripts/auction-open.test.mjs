@@ -1582,5 +1582,155 @@ console.log('\nStale promoted markers\n');
 }
 
 // ===========================================================================
+// 14. Forum threads that ADVERTISE an auction on the site
+//
+// The scan finds these correctly and they are not auctions: since the site
+// opened, auctioneers who moved to it still announce on the forum in a thread
+// that carries every signal a real one does. Recorded from both sources, one
+// auction becomes two rows.
+//
+// The fixtures are the whole of category 584's feed on 2026-09-20 that bore on
+// this — four adverts, the real forum auction beside them, and the two shapes
+// the rule deliberately does not act on.
+// ===========================================================================
+console.log('\nForum threads advertising a site auction\n');
+{
+  const ADS = manifest.advertisements.files;
+  for (const a of ADS) {
+    const topic = O.openParseTopic(fixture(a.file));
+    eq(`${a.id}: site auction ids in the first post`, topic.siteIds.join(','), a.expect.siteIds.join(','));
+    eq(`${a.id}: mentions the site at all`, topic.mentionsSite, a.expect.mentionsSite);
+    if (a.advertises) {
+      const recorded = byId.get(a.advertises);
+      check(`${a.id}: ... and ${a.advertises} is that very auction`,
+        O.openAlesievId(recorded.Link) === topic.siteIds[0],
+        `${recorded.Link} -> ${O.openAlesievId(recorded.Link)}, first post says ${topic.siteIds[0]}`);
+    }
+    if (a.expect.title) eq(`${a.id}: the title, decoded`, topic.title, a.expect.title);
+  }
+
+  // The og:title is double-escaped, and auctionName is promoted into
+  // auctionMetadata and published — so `&amp;` in it reaches the live site.
+  eq('a double-escaped ampersand decodes to one character',
+    O.openDecodeTitle('GT &amp;amp; Augments'), 'GT & Augments');
+  eq('  ... and a singly-escaped one still decodes exactly once',
+    O.openDecodeTitle('GT &amp; Augments'), 'GT & Augments');
+  eq('  ... a plain title is untouched', O.openDecodeTitle('GT & Augments'), 'GT & Augments');
+  check('no recorded auctionName carries an undecoded entity',
+    !META.some((m) => /&(amp|lt|gt|quot|#\d+);/i.test(m.auctionName || '')),
+    META.filter((m) => /&(amp|lt|gt|quot|#\d+);/i.test(m.auctionName || '')).map((m) => m.auctionId).join(' '));
+
+  // The first post, not the page. 259877's replies name /auctions/28 as well as
+  // the /auctions/29 its first post is about.
+  const spread = ADS.find((a) => a.wholePageIds);
+  const whole = O.openAdvertisedSiteIds(fixture(spread.file));
+  eq(`${spread.id}: the whole page names more auctions than the thread is about`,
+    whole.join(','), spread.wholePageIds.join(','));
+  check(`  ... which is why only the first post is read`,
+    whole.length > O.openParseTopic(fixture(spread.file)).siteIds.length);
+
+  // The host test is anchored, like every other one in this file.
+  eq('a look-alike host is not this site',
+    O.openAdvertisedSiteIds('see notalesievauctions.com/auctions/1 for details').length, 0);
+  eq('a scheme-less mention still resolves',
+    O.openAdvertisedSiteIds('bid at alesievauctions.com/auctions/40').join(','), '40');
+  eq('  ... and so does www with a scheme',
+    O.openAdvertisedSiteIds('https://www.alesievauctions.com/auctions/7').join(','), '7');
+  eq('the same auction linked twice is one id',
+    O.openAdvertisedSiteIds('a https://alesievauctions.com/auctions/40 b alesievauctions.com/auctions/40').join(','), '40');
+  eq('the site with no auction behind it yields no id',
+    O.openAdvertisedSiteIds('https://alesievauctions.com').length, 0);
+  eq('a page with no first post at all yields nothing', O.openFirstPostHtml('<html>nope</html>'), '');
+
+  // The three dispositions.
+  eq('an advert for a RECORDED auction resolves to its auctionId',
+    O.openAdvertisementVerdict(['29'], { 29: '20272' }, {}).auctionId, '20272');
+  eq('  ... recorded wins over listed', O.openAdvertisementVerdict(['29'], { 29: '20272' }, { 29: true }).kind, 'recorded');
+  eq('an advert for a LISTED auction defers to the site proposal',
+    O.openAdvertisementVerdict(['40'], {}, { 40: true }).kind, 'listed');
+  eq('an advert for neither is left for the operator',
+    O.openAdvertisementVerdict(['99'], {}, {}).kind, 'unknown');
+  eq('a thread with no site link is not an advert', O.openAdvertisementVerdict([], {}, {}), null);
+
+  // End to end, through a scan.
+  const item = (id) => ({ id, catid: '584', title: '', isoDate: '2026-09-19' });
+  const topicOf = (a) => O.openParseTopic(fixture(a.file));
+  const ad40 = ADS.find((a) => a.id === '259881');   // advertises /auctions/40 = 20278
+  const real = ADS.find((a) => a.id === '259882');   // Beertram's, a forum auction
+
+  const recordedScan = O.openPlanScan({
+    metaRows: META,
+    topics: [{ item: item(ad40.id), topic: topicOf(ad40) }, { item: item(real.id), topic: topicOf(real) }],
+  });
+  check('an advert for a recorded auction is NOT proposed',
+    !recordedScan.proposals.some((p) => O.openTopicId(p.link) === ad40.id),
+    recordedScan.proposals.map((p) => p.link).join('\n'));
+  check('  ... and the scan says which auction it was advertising',
+    recordedScan.notes.some((n) => n.indexOf(ad40.id) >= 0 && /already recorded as 20278/.test(n)),
+    recordedScan.notes.join('\n'));
+  check('  ... while the real forum auction beside it is still proposed',
+    recordedScan.proposals.some((p) => O.openTopicId(p.link) === real.id),
+    recordedScan.proposals.map((p) => p.link).join('\n'));
+
+  // The same advert, against a sheet that does not hold that auction yet, with
+  // the card on the listing: one proposal, from the side that reads badges.
+  const before = META.filter((r) => O.openAlesievId(r.Link) !== '40');
+  const card40 = O.openParseAlesievListing(fixture(manifest.alesiev.file))[0];
+  card40.id = '40';
+  const listedScan = O.openPlanScan({
+    metaRows: before,
+    topics: [{ item: item(ad40.id), topic: topicOf(ad40) }],
+    alesievCards: [card40],
+  });
+  eq('an advert for a LISTED auction adds no second row', listedScan.proposals.length, 1);
+  check('  ... the one row is the site card', O.openAlesievId(listedScan.proposals[0].link) === '40',
+    listedScan.proposals[0].link);
+  check('  ... which says where else it was seen',
+    listedScan.proposals[0].notes.some((n) => n.indexOf(ad40.id) >= 0), listedScan.proposals[0].notes.join(' | '));
+
+  // Neither recorded nor listed: the row stays, downgraded.
+  const orphan = O.openPlanScan({
+    metaRows: before,
+    topics: [{ item: item(ad40.id), topic: topicOf(ad40) }],
+  });
+  eq('an advert for an unknown auction keeps its row', orphan.proposals.length, 1);
+  eq('  ... but is no longer a candidate', orphan.proposals[0].verdict, O.OPEN_ADVERT_VERDICT);
+  check('  ... and says what it is and why it was kept',
+    /ADVERTISES/.test(orphan.proposals[0].notes[0]) && /auctions\/40/.test(orphan.proposals[0].notes[0]),
+    orphan.proposals[0].notes.join(' | '));
+  check('  ... and the summary counts it separately from "no 8K signal"',
+    /1 advertise an auction on alesievauctions\.com/.test(O.openDescribeScan(orphan)), O.openDescribeScan(orphan));
+
+  // A bare domain is a note and nothing more.
+  const bare = ADS.find((a) => a.id === '259832');
+  const bareScan = O.openPlanScan({ metaRows: META, topics: [{ item: item(bare.id), topic: topicOf(bare) }] });
+  eq('a bare mention of the site still proposes a row', bareScan.proposals.length, 1);
+  check('  ... left at whatever the 8K test said', bareScan.proposals[0].verdict !== O.OPEN_ADVERT_VERDICT,
+    bareScan.proposals[0].verdict);
+  check('  ... with the mention in the notes',
+    bareScan.proposals[0].notes.some((n) => /mentions alesievauctions\.com/.test(n)),
+    bareScan.proposals[0].notes.join(' | '));
+
+  // The manual half: the linkless advert, and the lock that handles it.
+  const missed = ADS.find((a) => a.id === '259878');
+  eq('the linkless advert is NOT caught automatically', topicOf(missed).siteIds.length, 0);
+  const row = (status) => { const r = O.openReviewRow({ notes: [] }); r[0] = true; r[1] = status; return r; };
+  eq('a ticked row with no status promotes', O.openIsApproved(row('')), true);
+  eq('  ... one marked duplicate does not', O.openIsApproved(row('duplicate — on the site as 20274')), false);
+  eq('  ... whatever the case', O.openIsApproved(row('DUPLICATE')), false);
+  eq('  ... and promoted still does not', O.openIsApproved(row('promoted 20278')), false);
+  // And the word survives a rescan, which is what makes it worth typing: the
+  // status column has always been carried over verbatim, keyed on topic id.
+  const typed = O.openReviewRow({ notes: [], link: 'https://truedungeon.com/forum?view=topic&catid=584&id=259878' });
+  typed[1] = 'duplicate — on the site as 20274';
+  const merged = O.openMergeReview([typed], [{
+    key: 'topic:259878', source: 'forum 584', verdict: 'candidate', notes: [],
+    link: 'https://truedungeon.com/forum?view=topic&catid=584&id=259878',
+  }], {});
+  eq('a hand-typed duplicate marker survives the next scan', merged[0][1], 'duplicate — on the site as 20274');
+  eq('  ... and still refuses to promote', O.openIsApproved(merged[0]), false);
+}
+
+// ===========================================================================
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

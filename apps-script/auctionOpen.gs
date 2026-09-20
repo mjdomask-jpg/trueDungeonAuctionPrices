@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-11.2';
+var OPEN_VERSION = '2026-09-20.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -703,10 +703,125 @@ function openTagText(chunk, tag) {
  * against the NEXT day — so a proposal near midnight is one a human should look
  * at twice, and they can only do that if the clock is on screen.
  */
+/**
+ * A forum thread that ADVERTISES an auction running on alesievauctions.com.
+ *
+ * Since the site opened, most auctioneers who moved to it still announce on the
+ * forum, in a thread that looks exactly like the real thing: an 8K title, a
+ * known auctioneer, a first post dated when the auction opened. The scan is not
+ * wrong to find it — the signal is genuine — but what it signals is an advert
+ * for an auction this pipeline already gets, better, from the site's own cards.
+ * Recorded from both, one auction becomes two rows with two auctionIds.
+ *
+ * MEASURED, 2026-09-20, over the twelve threads then in category 584's feed:
+ *
+ *   259880  Mike Steele's $8K auction        first post -> /auctions/37  = 20274
+ *   259887  Corey P's $8k Super Condensed    first post -> /auctions/43  = 202716
+ *   259877  Alesiev's Auctions - FUNDED!     first post -> /auctions/29  = 20272
+ *   259881  Flik's 2027 Onyx Augmented       first post -> /auctions/40  = 20278
+ *   259882  Beertram's Augmented Onyx 8K     no link — a REAL forum auction
+ *   + five more threads with no link, none of them a site auction
+ *
+ * Four adverts, four ids, each resolving to the row the site path had already
+ * produced, and no false positive on the genuine forum auction sitting in the
+ * same feed on the same day.
+ *
+ * THE FIRST POST ONLY. 259877's replies mention `/auctions/28` as well as the
+ * `/auctions/29` its first post is about, so a whole-page scan reads two
+ * auctions out of one thread. Same reason `forumThread.gs` prefers post #1:
+ * what the thread IS gets stated once, at the top, and discussed afterwards.
+ *
+ * WHAT IT CANNOT DO, and the reason nothing here deletes anything. 259878,
+ * "Mike Steele's $8K Auction", carries no link at all — and his auction is on
+ * the site, advertised by his OTHER thread. An advert with no link is
+ * indistinguishable from a forum auction by this rule, reaches the review tab
+ * as a candidate, and is the operator's call. That is what the `duplicate`
+ * status in `auctionOpenReview` is for.
+ */
+var OPEN_SITE_AUCTION_IN_TEXT_RE =
+  /(?:^|[^A-Za-z0-9.-])((?:https?:\/\/)?(?:www\.)?alesievauctions\.com\/auctions\/\d+)/gi;
+
+/**
+ * The site's domain with no auction behind it — a note, never a verdict.
+ *
+ * Measured on 259832, "Beta Testing: Alesiev Auctions Website", whose first
+ * post links to the site's front page. It is not an auction at all, and it is
+ * already turned away by the 8K signal test. A bare domain says somebody
+ * mentioned the site, which is not the same claim as "this thread is an advert
+ * for auction 40", so it is reported and nothing more.
+ */
+var OPEN_SITE_MENTION_RE = /(?:^|[^A-Za-z0-9.-])(?:https?:\/\/)?(?:www\.)?alesievauctions\.com/i;
+
+/**
+ * The first post's markup, from Kunena's own boundaries.
+ *
+ * A post opens with `class="kmsg-id-left"` and its body is `class="kmsgbody"`,
+ * so the first body through to the NEXT post's left rail is post #1 and nothing
+ * else. Returns '' when neither marker is there, which makes every caller's
+ * answer "no link found" rather than an exception on a page shape that changed.
+ */
+function openFirstPostHtml(html) {
+  var s = String(html == null ? '' : html);
+  var at = s.search(/class="kmsgbody"/i);
+  if (at < 0) return '';
+  var rest = s.slice(at);
+  var end = rest.search(/class="kmsg-id-left"/i);
+  return end < 0 ? rest : rest.slice(0, end);
+}
+
+/**
+ * Every alesievauctions.com auction id a piece of text links to, in order.
+ *
+ * The id itself comes from `openAlesievId`, the same parse the `Link` column is
+ * read with — a scheme-less mention (`alesievauctions.com/auctions/40`, which
+ * is how the forum renders the link text) is completed before being handed to
+ * it rather than matched by a second, looser rule. The character before the
+ * host must not be part of a domain, so `notalesievauctions.com/auctions/1`
+ * matches nothing. That is the `Non-Onyx` lesson: an unanchored host test reads
+ * a different site as this one.
+ */
+function openAdvertisedSiteIds(text) {
+  var s = String(text == null ? '' : text), out = [], seen = {}, m;
+  var re = new RegExp(OPEN_SITE_AUCTION_IN_TEXT_RE.source, 'gi');
+  while ((m = re.exec(s))) {
+    var url = m[1];
+    if (!/^https?:/i.test(url)) url = 'https://' + url;
+    var id = openAlesievId(url);
+    if (id && !seen[id]) { seen[id] = true; out.push(id); }
+  }
+  return out;
+}
+
+/**
+ * A topic title out of the og:title meta, which Kunena DOUBLE-escapes.
+ *
+ * Found live on 2026-09-20: topic 259880's og:title is
+ *
+ *   Mike Steele's $8K auction w/ GT &amp;amp; Augments - $7,663/8K, ...
+ *
+ * while the page's own `<h1>` carries a plain `&`. One decode leaves `&amp;`,
+ * and that string is the proposal's `auctionName` — so it would have been
+ * promoted into `auctionMetadata` and published to the site as the auction's
+ * name. No recorded row carries `&amp;` today only because no forum auction
+ * with an ampersand in its title has been promoted yet; this thread is one.
+ *
+ * Bounded at two passes, and the second only when the first left an entity
+ * behind. Decoding until nothing changes would eventually mangle a title that
+ * really does contain the text `&amp;` — nobody types that, but the loop has
+ * no reason to exist when the encoder in question escapes exactly twice.
+ */
+function openDecodeTitle(raw) {
+  var once = openDecodeEntities(raw);
+  return /&(amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-f]+);/i.test(once) ? openDecodeEntities(once) : once;
+}
+
 function openParseTopic(html) {
-  var out = { title: null, openDate: null, openTime: null, starter: null };
+  var out = { title: null, openDate: null, openTime: null, starter: null, siteIds: [], mentionsSite: false };
+  var firstPost = openFirstPostHtml(html);
+  out.siteIds = openAdvertisedSiteIds(firstPost);
+  out.mentionsSite = OPEN_SITE_MENTION_RE.test(firstPost);
   var m = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"/i);
-  if (m) out.title = openDecodeEntities(m[1]).trim();
+  if (m) out.title = openDecodeTitle(m[1]).trim();
   if (!out.title) {
     m = html.match(/<h1[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i);
     if (m) out.title = openHtmlToText(m[1]).replace(/^TOPIC:\s*/i, '').trim();
@@ -1037,6 +1152,42 @@ function openPromotedId(status) {
   var m = String(status == null ? '' : status).match(/^promoted\s+(\S+)/i);
   return m ? m[1] : null;
 }
+
+/**
+ * What to do with a forum topic whose first post links to the site.
+ *
+ * Three answers, and the order they are tried in is the point:
+ *
+ *   `recorded` — the site auction is already in `auctionMetadata`. The thread
+ *     is an advert for a row this pipeline holds, so nothing is proposed at
+ *     all and the scan says which auction it was. This is the steady state.
+ *   `listed`   — the site auction is on this scan's listing but not recorded
+ *     yet. Both sources are describing one auction, so the SITE's proposal is
+ *     the one kept: it reads style, completion and augments off badges, which
+ *     the forum path deliberately refuses to guess at. The thread is named in
+ *     that proposal's notes so the operator can see where it came from.
+ *   `unknown`  — a site link whose auction is neither recorded nor listed. The
+ *     row stays, because this is genuinely ambiguous: the advert may be up
+ *     before the card, or the auction may have scrolled off the listing. It is
+ *     just no longer called a candidate.
+ *
+ * Nothing here deletes a row, and nothing here ticks one.
+ */
+function openAdvertisementVerdict(siteIds, recordedSite, listedSite) {
+  var ids = siteIds || [], i;
+  for (i = 0; i < ids.length; i++) {
+    if (recordedSite && recordedSite[ids[i]]) {
+      return { kind: 'recorded', siteId: ids[i], auctionId: recordedSite[ids[i]] };
+    }
+  }
+  for (i = 0; i < ids.length; i++) {
+    if (listedSite && listedSite[ids[i]]) return { kind: 'listed', siteId: ids[i] };
+  }
+  return ids.length ? { kind: 'unknown', siteId: ids[0] } : null;
+}
+
+/** The verdict an advert whose auction is neither recorded nor listed carries. */
+var OPEN_ADVERT_VERDICT = 'advertises ' + OPEN_ALESIEV_SOURCE;
 
 /**
  * Every alesievauctions.com auction id `auctionMetadata` already records.
@@ -1527,21 +1678,59 @@ function openPlanScan(input) {
   }
 
   var knownNames = openKnownAuctioneers(metaRows);
+  var recordedSite = openRecordedAlesiev(metaRows);
+  var cards = input.alesievCards || [];
+  var listedSite = {};
+  for (var c = 0; c < cards.length; c++) if (cards[c].id) listedSite[cards[c].id] = true;
+
+  // The forum, and the adverts in it. A thread linking to an auction the site
+  // already gave us is not a second auction — see OPEN_SITE_AUCTION_IN_TEXT_RE
+  // for the measurement, and openAdvertisementVerdict for the three answers.
+  var advertisedBySite = {};
   var topics = input.topics || [];
   for (var i = 0; i < topics.length; i++) {
-    proposals.push(openForumProposal(topics[i].item, topics[i].topic, metaRows, knownNames));
+    var proposal = openForumProposal(topics[i].item, topics[i].topic, metaRows, knownNames);
+    var ad = openAdvertisementVerdict((topics[i].topic || {}).siteIds, recordedSite, listedSite);
+    var where = ad ? openAlesievUrl(ad.siteId) : '';
+
+    if (ad && ad.kind === 'recorded') {
+      notes.push('Forum: topic ' + topics[i].item.id + ' "' + proposal.auctionName + '" advertises ' +
+        where + ', which is already recorded as ' + ad.auctionId + '. Not proposed.');
+      continue;
+    }
+    if (ad && ad.kind === 'listed') {
+      if (!advertisedBySite[ad.siteId]) advertisedBySite[ad.siteId] = [];
+      advertisedBySite[ad.siteId].push(topics[i].item.id);
+      notes.push('Forum: topic ' + topics[i].item.id + ' "' + proposal.auctionName + '" advertises ' +
+        where + ', which is on the listing. Proposed once, from the site, where the badges are.');
+      continue;
+    }
+    if (ad) {
+      proposal.verdict = OPEN_ADVERT_VERDICT;
+      proposal.notes.unshift('ADVERTISES ' + where + ' — a thread about an auction on the site, not a ' +
+        'forum auction. That auction is neither recorded nor on the listing right now, so this row is ' +
+        'left for you: it may be up before the card is, or the card may have scrolled off.');
+    } else if ((topics[i].topic || {}).mentionsSite) {
+      proposal.notes.push('the first post mentions ' + OPEN_ALESIEV_SOURCE +
+        ' but links to no auction on it — read before ticking');
+    }
+    proposals.push(proposal);
   }
 
   // alesievauctions.com. Its cards are filtered here rather than in the parser
   // so that the parse and the duplicate check stay separable — the test replays
   // the whole listing and then asserts what a scan against a sheet that already
   // holds those auctions proposes, which is nothing.
-  var recordedSite = openRecordedAlesiev(metaRows);
-  var cards = input.alesievCards || [];
   var seenSite = 0;
   for (var a = 0; a < cards.length; a++) {
     if (cards[a].id && recordedSite[cards[a].id]) { seenSite++; continue; }
-    proposals.push(openAlesievProposal(cards[a], metaRows, knownNames));
+    var card = openAlesievProposal(cards[a], metaRows, knownNames);
+    var ads = cards[a].id ? advertisedBySite[cards[a].id] : null;
+    if (ads && ads.length) {
+      card.notes.push('also advertised on the forum: topic ' + ads.join(', topic ') +
+        ' — proposed once, here, because this side reads the badges');
+    }
+    proposals.push(card);
   }
   if (seenSite) {
     notes.push(OPEN_ALESIEV_SOURCE + ': ' + seenSite + ' listed auction(s) are already recorded.');
@@ -1705,9 +1894,21 @@ function openMergeReview(existingRows, proposals, recordedIds) {
   return rows.concat(keptPromoted);
 }
 
-/** True when the operator has ticked a review row that is not yet promoted. */
+/**
+ * True when the operator has ticked a review row that is not yet promoted.
+ *
+ * `duplicate` is a lock the operator sets by hand, and it is the other half of
+ * the advert detection: a thread that advertises a site auction WITHOUT
+ * linking to it cannot be recognised automatically — 259878 is the measured
+ * case — so the answer is to let a person say so once and have it stick.
+ * `openMergeReview` already carries this column across a rescan verbatim, so
+ * the word survives; all that was missing was the promote step honouring it.
+ *
+ * Refused rather than untickable, for the same reason `promoted` is: a stale
+ * tick from before the row was understood must not promote it later.
+ */
 function openIsApproved(row) {
-  if (/^promoted/i.test(String(row[1] || ''))) return false;
+  if (/^(promoted|duplicate)/i.test(String(row[1] || ''))) return false;
   var v = row[0];
   if (v === true) return true;
   return /^(true|yes|y|x|✓)$/i.test(String(v == null ? '' : v).trim());
@@ -1904,10 +2105,16 @@ function openHeaderProblems(headers) {
 
 function openDescribeScan(plan) {
   var lines = [], i;
-  var candidates = 0;
-  for (i = 0; i < plan.proposals.length; i++) if (plan.proposals[i].verdict === 'candidate') candidates++;
+  var candidates = 0, adverts = 0;
+  for (i = 0; i < plan.proposals.length; i++) {
+    if (plan.proposals[i].verdict === 'candidate') candidates++;
+    else if (plan.proposals[i].verdict === OPEN_ADVERT_VERDICT) adverts++;
+  }
+  // Counted by verdict rather than by "the rest carry no 8K signal", which
+  // stopped being true when an advert became its own answer.
   lines.push(plan.proposals.length + ' proposed row(s): ' + candidates + ' look like 8K auctions, ' +
-    (plan.proposals.length - candidates) + ' carry no 8K signal.');
+    (plan.proposals.length - candidates - adverts) + ' carry no 8K signal' +
+    (adverts ? ', ' + adverts + ' advertise an auction on ' + OPEN_ALESIEV_SOURCE : '') + '.');
   lines.push('');
   for (i = 0; i < plan.proposals.length; i++) {
     var p = plan.proposals[i];
@@ -2201,6 +2408,11 @@ if (typeof module !== 'undefined') {
     openParseTrentPage: openParseTrentPage,
     openParseFeed: openParseFeed,
     openParseTopic: openParseTopic,
+    openDecodeTitle: openDecodeTitle,
+    openFirstPostHtml: openFirstPostHtml,
+    openAdvertisedSiteIds: openAdvertisedSiteIds,
+    openAdvertisementVerdict: openAdvertisementVerdict,
+    OPEN_ADVERT_VERDICT: OPEN_ADVERT_VERDICT,
     openAlesievId: openAlesievId,
     openAlesievUrl: openAlesievUrl,
     openTimeTo24h: openTimeTo24h,

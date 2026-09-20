@@ -295,7 +295,9 @@ Then, in `auctionOpenReview`:
    *not* the same as "not an auction". Seven of the recorded auctions would read
    `no 8K signal` today, because their titles were edited after they closed.
    Rows from **alesievauctions.com** are always `candidate`; the `source`
-   column says which source a row came from.
+   column says which source a row came from. A third verdict,
+   `advertises alesievauctions.com`, is [a forum thread about a site
+   auction](#forum-threads-that-advertise-a-site-auction).
 2. **Fill in `auctionStyle`, `completionStyle`, `augmentated` and
    `targetFunding`.** The scan leaves these blank for forum auctions on purpose.
    Guessing them from the thread title was measured and it is not good enough:
@@ -459,11 +461,57 @@ row's *season baseline*, so the first auction of a new season inherits the old
 one and reads a month or so too high. The promote dialog says so in a CAUTION
 line whenever the season changes. Fix that one cell by hand.
 
+### Forum threads that advertise a site auction
+
+Since alesievauctions.com opened, most auctioneers who moved to it **still
+announce on the forum**, in a thread carrying every signal a real auction has:
+an 8K title, a known auctioneer, a first post dated when it opened. The scan is
+right to find it — what it found is an advert for an auction the site already
+gives us, with better data. Recorded from both, one auction becomes two rows
+with two `auctionId`s.
+
+**The scan reads the first post for a link to the site**, which costs nothing:
+the page is already fetched for its timestamp. What happens next depends on
+what the link resolves to.
+
+| The advertised auction is | What the scan does |
+|---|---|
+| already in `auctionMetadata` | **Nothing is proposed.** The summary names the thread and the `auctionId` it belongs to. |
+| on the site's listing, not yet recorded | **One row, from the site**, because that side reads style, completion and augments off badges rather than guessing from a title. The thread is named in that row's notes. |
+| neither | **The row stays**, with the verdict `advertises alesievauctions.com` instead of `candidate`. The advert may be up before the card is, or the card may have scrolled off. |
+
+> **Measured, 2026-09-20**, over the twelve threads then in category 584's feed:
+> four adverts, each resolving to the row the site had already produced
+> (`/auctions/37` = `20274`, `/auctions/43` = `202716`, `/auctions/29` =
+> `20272`, `/auctions/40` = `20278`), and no false positive on Beertram's
+> `202715`, a genuine forum auction sitting in the same feed the same day. The
+> pages are checked in under `fixtures/auction-open/`.
+
+**Only the first post is read.** Topic 259877's replies mention `/auctions/28`
+as well as the `/auctions/29` the thread is about, so reading the whole page
+finds two auctions in one thread. A bare `alesievauctions.com` with no auction
+behind it is a **note only** — topic 259832 is the site's own beta-test thread
+and is not an auction at all.
+
+#### When it cannot tell: mark it `duplicate`
+
+An advert that does not paste the link is indistinguishable from a forum
+auction. There is a live example: Mike Steele has two threads, and only the
+newer one links to `/auctions/37`, so the older one still arrives as a
+candidate.
+
+Type **`duplicate`** (anything starting with that word — `duplicate — on the
+site as 20274` reads best) into that row's `status` column. It behaves exactly
+like a `promoted` marker: **the promote step refuses the row even if it is
+ticked**, and the word survives every rescan, because that column has always
+been carried across verbatim.
+
 ### When it refuses
 
 | It says | What happened |
 |---|---|
 | `topic … is already recorded as 2026xx` | Between the scan and the promote, that auction was added. Nothing is written; untick the row. |
+| a ticked row is skipped, status starts `duplicate` | Deliberate — see above. Clear the status to un-mark it. |
 | `"Trent Auction 33" is already recorded as … for season 2026` | Same, for Trent. Note the season — the same name in a *different* season is a different auction and is allowed. |
 | `no season` / `no openDate` / `no auctionName` | The review row is missing something the sheet needs. Fill it in and promote again. |
 | `no "<column>" column in auctionMetadata` | A column was renamed. Fix the name in the sheet, or `OPEN_METADATA_FIELDS` in the script. |

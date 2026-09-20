@@ -118,5 +118,62 @@
       "expect": { "openDate": "2020-11-12", "openTime": "16:55", "starter": "ralykam", "auctioneer": "Ralykam" },
       "why": "case only"
     }
-  ]
+  ],
+  "advertisements": {
+    "fetched": "2026-09-20",
+    "why": "Since alesievauctions.com opened, auctioneers who moved to it still announce on the forum, in threads that look exactly like a new auction: an 8K title, a known auctioneer, a first post dated when it opened. These five are what category 584's feed held on the day the rule was written — four adverts, the real forum auction sitting beside them, and the two shapes the rule deliberately does NOT act on. Verbatim and gzipped like every other page here.",
+    "files": [
+      {
+        "file": "topic-259881.html.gz",
+        "catid": "584",
+        "id": "259881",
+        "expect": { "siteIds": ["40"], "mentionsSite": true },
+        "advertises": "20278",
+        "why": "the plain case — one line, \"Link to bid on the auction:\", one href"
+      },
+      {
+        "file": "topic-259880.html.gz",
+        "catid": "584",
+        "id": "259880",
+        "expect": {
+          "siteIds": ["37"],
+          "mentionsSite": true,
+          "title": "Mike Steele's $8K auction w/ GT & Augments - $7,663/8K, 95.8% Complete!"
+        },
+        "advertises": "20274",
+        "why": "an advert, and separately the DOUBLE-ESCAPED og:title: Kunena serves `&amp;amp;` where the page's own h1 has a plain `&`. One decode leaves `&amp;` in auctionName, which is a column this phase promotes into auctionMetadata and the site then publishes."
+      },
+      {
+        "file": "topic-259877.html.gz",
+        "catid": "584",
+        "id": "259877",
+        "expect": { "siteIds": ["29"], "mentionsSite": true },
+        "advertises": "20272",
+        "wholePageIds": ["29", "28"],
+        "why": "THE case for reading the first post only: the replies name /auctions/28 as well, so a whole-page scan reads two auctions out of one thread"
+      },
+      {
+        "file": "topic-259882.html.gz",
+        "catid": "584",
+        "id": "259882",
+        "expect": { "siteIds": [], "mentionsSite": false },
+        "reconciles": "202715",
+        "why": "the negative control — a REAL forum auction (Beertram's), in the same feed on the same day, which has to stay a candidate"
+      },
+      {
+        "file": "topic-259878.html.gz",
+        "catid": "584",
+        "id": "259878",
+        "expect": { "siteIds": [], "mentionsSite": false },
+        "why": "what the rule CANNOT do. Mike Steele has two threads; this one carries no link, and his auction is on the site (auctions/37, advertised by the other). An advert with no link is indistinguishable from a forum auction here, so it reaches the review tab as a candidate and is the operator's call — which is what the `duplicate` status exists for."
+      },
+      {
+        "file": "topic-259832.html.gz",
+        "catid": "584",
+        "id": "259832",
+        "expect": { "siteIds": [], "mentionsSite": true },
+        "why": "a bare domain with no auction behind it (\"Beta Testing: Alesiev Auctions Website\"). Not an auction at all, and already turned away by the 8K signal test — which is why a bare mention is a note and never a verdict."
+      }
+    ]
+  }
 }
