@@ -448,5 +448,101 @@ console.log('\nThe outcome cell (PIPE-9)\n');
   check('  ... without claiming Ended + closeDate is an error', !/hard ERROR/.test(ended), ended);
 }
 
+// ===========================================================================
+// The shared close-path picker
+//
+// Three importers ask the same question first — which auction is this file
+// for? — so the shortlist lives here and each path supplies only a predicate
+// saying whether a row came from its source. It is shared because the two
+// things that make it right are both easy to get wrong, and were: the alesiev
+// picker sorted on `Number(auctionId)` and buried the current season, and
+// filtered on `auctioneer` when the site hosts other people's auctions.
+//
+// Constructed rows, not the shipped CSV. auctionMetadata.csv is republished
+// from the workbook constantly, and a suite pinning a count or a top row out
+// of it is a publish blocked the next time an auction opens.
+// ===========================================================================
+console.log('\nThe shared close-path picker\n');
+{
+  // This suite reports with `check` alone; the picker cases read better as
+  // comparisons, so the failure detail shows both sides.
+  const eq = (name, got, want) => check(name, got === want, `got  ${JSON.stringify(got)}\nwant ${JSON.stringify(want)}`);
+  const row = (o) => ({
+    auctionId: '', auctionSeason: '', auctionNumber: '', auctionName: '',
+    auctioneer: '', Link: '', closeDate: '', Status: '', ...o,
+  });
+  const any = () => true;
+  const at = (season, number, o = {}) => row({
+    auctionId: `${season}${number}`, auctionSeason: String(season),
+    auctionNumber: String(number), auctionName: `Auction ${number}`, ...o,
+  });
+
+  // Ordering. The ids are season-prefixed, so reading one as a number ranks
+  // 202647 above 20271 — six digits beating five — and puts the season that
+  // just finished on top of the one being auctioned.
+  eq('a five-digit 2027 id outranks a six-digit 2026 one',
+    T.closeAuctionsFrom([at(2026, 47), at(2027, 1)], any)[0].auctionId, '20271');
+  eq('within a season the highest number is first',
+    T.closeAuctionsFrom([at(2027, 1), at(2027, 11), at(2027, 2)], any)
+      .map((m) => m.auctionNumber).join(','), '11,2,1');
+  eq('a row with no auctionId is not offered at all',
+    T.closeAuctionsFrom([at(2027, 1), row({ auctionSeason: '2027' })], any).length, 1);
+  // Blank numbers tie to NaN and must not throw the order away.
+  eq('a blank auctionNumber falls back to the id',
+    T.closeAuctionsFrom([at(2027, 1, { auctionNumber: '' }), at(2027, 2, { auctionNumber: '' })], any)
+      .map((m) => m.auctionId).join(','), '20272,20271');
+
+  // Scope. Newest season present, never a calendar year: a 2027 auction opens
+  // in calendar 2026, so getFullYear() names the season being escaped.
+  const scoped = T.closePickerList([at(2026, 47), at(2027, 1), at(2026, 12), at(2027, 2)], any);
+  eq('the list is scoped to the newest season present', scoped.season, '2027');
+  check('  ... so a finished season is not in it',
+    scoped.rows.every((m) => m.auctionSeason === '2027'), JSON.stringify(scoped.rows.map((m) => m.auctionId)));
+  eq('  ... and the rest are counted, not silently dropped', scoped.hidden, 2);
+  const capped = T.closePickerList(Array.from({ length: 14 }, (_, i) => at(2027, i + 1)), any);
+  eq('the list is capped', capped.rows.length, T.CLOSE_PICKER_LIMIT);
+  eq('  ... with the remainder counted', capped.hidden, 14 - T.CLOSE_PICKER_LIMIT);
+  const empty = T.closePickerList([], any);
+  check('nothing to offer is an empty list, not a crash', !empty.rows.length && empty.season === '');
+
+  // The line, and the prompt built from it.
+  const line = T.closePickerLine(at(2027, 5, { auctioneer: 'Kusig', closeDate: '2026-09-19', Status: 'Closed' }));
+  check('a line carries the id, the auctioneer and the close date',
+    /20275/.test(line) && /Kusig/.test(line) && /closed 2026-09-19/.test(line), line);
+  check('an unclosed row reports its own Status rather than a flat "open"',
+    /\(pending\)/.test(T.closePickerLine(at(2027, 9, { Status: 'Pending' }))));
+  check('  ... and falls back to "open" when Status is blank',
+    /\(open\)/.test(T.closePickerLine(at(2027, 9))));
+  const prompt = T.closePickerPrompt(scoped, 'a source', 'auctionMetadata');
+  check('the prompt names the source and the season', /a source, season 2027/.test(prompt), prompt);
+  check('  ... and says the older ones can still be typed',
+    /2 older auction\(s\)/.test(prompt) && /can be typed/.test(prompt), prompt);
+  eq('an empty list contributes no prompt at all', T.closePickerPrompt(empty, 'a source', 'auctionMetadata'), '');
+
+  // Trent's membership test. By Link like the others, though for this source
+  // the two agree exactly: all 119 shop rows say Trent and all 119 Trent rows
+  // carry the shop URL.
+  eq('the shop URL is a Trent row',
+    T.trentIsShopRow(row({ Link: 'https://www.trenttokens.com/collections/current-auction' })), true);
+  eq('a forum topic is not',
+    T.trentIsShopRow(row({ Link: 'https://truedungeon.com/forum?view=topic&catid=584&id=255533' })), false);
+  eq('the auction site is not',
+    T.trentIsShopRow(row({ Link: 'https://alesievauctions.com/auctions/29' })), false);
+  eq('a blank Link is not', T.trentIsShopRow(row({ Link: '' })), false);
+
+  const META = load(dataDir, 'auctionMetadata.csv');
+  const trentRows = T.closeAuctionsFrom(META, T.trentIsShopRow);
+  const real = T.closePickerList(META, T.trentIsShopRow);
+  check('the shipped auctionMetadata has Trent auctions to offer', real.rows.length > 0);
+  check('every auction offered is one of his',
+    real.rows.every((m) => /trenttokens\.com/i.test(m.Link)),
+    real.rows.map((m) => `${m.auctionId} ${m.Link}`).join('\n'));
+  // The two tests agree on this source today. If they ever stop, the Link is
+  // the one that decides — but it is worth knowing, so it is measured.
+  const byName = META.filter((m) => (m.auctioneer || '').toLowerCase() === 'trent').length;
+  console.log(`\nnote: ${trentRows.length} row(s) carry the shop URL, ${byName} say auctioneer Trent` +
+    `; ${real.rows.length} listed for season ${real.season}, ${real.hidden} older not listed`);
+}
+
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -802,8 +802,8 @@ console.log('\nThe picker\n');
 
   // The cap survives a full season (2026 ran to 47 auctions).
   const many = A.alesievPickerList(Array.from({ length: 14 }, (_, i) => siteRow(2027, i + 1)));
-  eq('the list is capped', many.rows.length, A.ALESIEV_PICKER_LIMIT);
-  eq('  ... and the remainder counted', many.hidden, 14 - A.ALESIEV_PICKER_LIMIT);
+  eq('the list is capped', many.rows.length, T.CLOSE_PICKER_LIMIT);
+  eq('  ... and the remainder counted', many.hidden, 14 - T.CLOSE_PICKER_LIMIT);
   eq('  ... with the newest still first', many.rows[0].auctionNumber, '14');
 
   // Nothing to offer is not a crash: the prompt still takes a typed id.

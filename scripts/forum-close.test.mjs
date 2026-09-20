@@ -30,15 +30,21 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(here, '..', 'public', 'data');
 const fixtureDir = join(here, '..', 'fixtures', 'forum');
 
-// --- load BOTH scripts into ONE sandbox -------------------------------------
+// --- load the scripts into ONE sandbox --------------------------------------
 // That is not a convenience: in Apps Script every .gs file in a project shares
 // one global scope, and forumClose.gs is written to call trentClose.gs's
 // functions directly. Loading them together is what the real runtime does, and
 // loading forumClose.gs alone would fail exactly as it would in the workbook if
 // trentClose.gs were missing.
+//
+// auctionOpen.gs joins them for the picker: `openTopicId` and `openAlesievId`
+// are what say whether a metadata row is a forum auction, reused from the scan
+// rather than re-derived here.
 const sandbox = { module: { exports: {} }, console };
 runInNewContext(readFileSync(join(here, '..', 'apps-script', 'trentClose.gs'), 'utf8'), sandbox);
 const T = sandbox.module.exports;
+sandbox.module = { exports: {} };
+runInNewContext(readFileSync(join(here, '..', 'apps-script', 'auctionOpen.gs'), 'utf8'), sandbox);
 sandbox.module = { exports: {} };
 runInNewContext(readFileSync(join(here, '..', 'apps-script', 'forumClose.gs'), 'utf8'), sandbox);
 const F = sandbox.module.exports;
@@ -368,6 +374,82 @@ console.log('\nInherited guards\n');
     (wrongSeason.aborts || []).join(' | '));
   const totals = F.forumReadStaging([['Item', 'Amount'], ['Totals', '999'], ['Wish Ring', '10']]);
   eq('a Totals row is not a lot', totals.lots.length, 1);
+}
+
+// ===========================================================================
+// 8. The picker — which auctions this importer offers
+//
+// There was no shortlist here at all: a bare "Target auctionId?" against a tab
+// of 308 rows. It now shows the same list the alesievauctions.com importer
+// does, through `trentClose.gs`'s shared picker, so the ordering and the
+// season scope have one implementation rather than two that drift — the
+// comparator is the subtle part, and getting it wrong is what buried the
+// current season in the other picker.
+//
+// What is tested HERE is the part that is this source's own: which rows count
+// as forum auctions. Pinned on constructed rows, because auctionMetadata.csv
+// is republished from the workbook constantly and a suite pinning a count out
+// of it is a publish blocked the next time an auction opens.
+// ===========================================================================
+console.log('\nThe picker\n');
+{
+  const row = (o) => ({
+    auctionId: '', auctionSeason: '', auctionNumber: '', auctionName: '',
+    auctioneer: '', Link: '', closeDate: '', Status: '', ...o,
+  });
+  const forumRow = (season, number, o = {}) => row({
+    auctionId: `${season}${number}`, auctionSeason: String(season), auctionNumber: String(number),
+    auctionName: `Auction ${number}`,
+    Link: `https://truedungeon.com/forum?view=topic&catid=584&id=${255000 + number}`, ...o,
+  });
+
+  // Membership: the topic id in the Link, and the other two sources out.
+  eq('a forum topic row is listed', F.forumIsThreadRow(forumRow(2027, 15)), true);
+  eq("Trent's shop URL is not a forum auction",
+    F.forumIsThreadRow(row({ Link: 'https://www.trenttokens.com/collections/current-auction' })), false);
+  eq('an alesievauctions.com row is not a forum auction',
+    F.forumIsThreadRow(row({ Link: 'https://alesievauctions.com/auctions/29' })), false);
+  eq('a row with no Link is not a forum auction', F.forumIsThreadRow(row({ Link: '' })), false);
+  // The site test runs FIRST and excludes. openTopicId matches `id=` anywhere,
+  // so a site URL that ever grows a query string must not be claimed here —
+  // site auction 29 and forum topic 29 are different auctions.
+  eq('a site row carrying an id= query is still not a forum auction',
+    F.forumIsThreadRow(row({ Link: 'https://alesievauctions.com/auctions/29?id=29' })), false);
+
+  // The shared ordering and scope, exercised through this source's predicate.
+  const list = F.forumPickerList([
+    forumRow(2026, 14), forumRow(2027, 1), forumRow(2026, 3), forumRow(2027, 11),
+    row({ auctionId: '202714', auctionSeason: '2027', auctionNumber: '14', Link: 'https://www.trenttokens.com/x' }),
+  ]);
+  eq('the list is scoped to the newest forum season', list.season, '2027');
+  eq('  ... newest first, by season then number',
+    list.rows.map((m) => m.auctionId).join(','), '202711,20271');
+  eq('  ... a Trent auction of that season is not in it',
+    list.rows.some((m) => m.auctionId === '202714'), false);
+  eq('  ... and the older forum auctions are counted, not silently dropped', list.hidden, 2);
+
+  // Invariants against the shipped file. Shape only, never size.
+  const META = load(dataDir, 'auctionMetadata.csv');
+  const real = F.forumPickerList(META);
+  const fromForum = T.closeAuctionsFrom(META, F.forumIsThreadRow);
+  check('the shipped auctionMetadata has forum auctions to offer', real.rows.length > 0);
+  check('every auction offered carries a forum topic id',
+    real.rows.every((m) => /truedungeon\.com/i.test(m.Link) && /[?&]id=\d+/.test(m.Link)),
+    real.rows.map((m) => `${m.auctionId} ${m.Link}`).join('\n'));
+  check('every auction offered is of the one season',
+    real.rows.every((m) => m.auctionSeason === real.season),
+    real.rows.map((m) => `${m.auctionId} ${m.auctionSeason}`).join(' '));
+  check('that season is the newest the forum has',
+    real.season === String(Math.max(...fromForum.map((m) => Number(m.auctionSeason)))), real.season);
+  check('no Trent or auction-site row is offered',
+    real.rows.every((m) => !/trenttokens|alesievauctions/i.test(m.Link)),
+    real.rows.map((m) => m.Link).join('\n'));
+
+  // Measured, not asserted. At a season boundary the newest forum season holds
+  // one auction, and a shortlist of one is correct rather than broken — the
+  // hidden count is shown and any id can still be typed.
+  console.log(`\nnote: ${fromForum.length} forum auction(s) recorded, ` +
+    `${real.rows.length} listed for season ${real.season}, ${real.hidden} older not listed`);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
