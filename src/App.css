@@ -134,6 +134,19 @@ header h1 {
      added to a .controls row inherits the alignment for free. */
   line-height: 22px;
 }
+/* A label whose text carries a help popover. `.controls label` is a COLUMN flex
+   with a 4px gap, so a popover dropped in beside the text is a third flex item
+   and becomes its own row — pushing the control below it out of line with every
+   other filter in the bar. Wrapping the text and the `?` in one item keeps the
+   column at two, and the fixed 22px matches the reserved height the note above
+   describes, so the control lands at exactly the same level as its neighbours.
+   Any future label with help gets the alignment by using this class. */
+.controls label .ctl-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+}
 .controls select,
 .controls input {
   font: inherit;
