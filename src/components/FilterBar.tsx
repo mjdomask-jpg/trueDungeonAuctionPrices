@@ -148,16 +148,23 @@ export function FilterBar({
 
       {show('order') && orderChoice && (
         <label>
-          Order
-          {/* "Trade 2" is the auctioneers' shorthand, and a reader who has not
-              followed the forum has no way to know what the two options are. Per
-              ui-conventions.md this is a tap-to-open popover, never a `title`. */}
-          <HintPopover label="About the order filter">
-            Season 2027 is the first to sell two different $8K orders side by side: the{' '}
-            <strong>standard</strong> one, and a <strong>Trade 2</strong> order carrying more
-            of the tier-2 trade goods. Auctioneers advertise them as Option A and Option B.
-            Filtering here shows prices from only that kind of auction.
-          </HintPopover>
+          {/* The text and its help MUST be one flex item. `.controls label` is a
+              column flex, so a bare popover beside the text becomes a THIRD row
+              and pushes the select down out of line with every other filter.
+              .ctl-label is the wrapper that keeps the column at two items. */}
+          <span className="ctl-label">
+            Order
+            {/* "Trade 2" is the auctioneers' shorthand, and a reader who has not
+                followed the forum has no way to know what the two options are.
+                Per ui-conventions.md this is a tap-to-open popover, never a
+                `title`. */}
+            <HintPopover label="About the order filter">
+              Season 2027 is the first to sell two different $8K orders side by side: the{' '}
+              <strong>standard</strong> one, and a <strong>Trade 2</strong> order carrying more
+              of the tier-2 trade goods. Auctioneers advertise them as Option A and Option B.
+              Filtering here shows prices from only that kind of auction.
+            </HintPopover>
+          </span>
           <select value={filters.order} onChange={(e) => setOrder(e.target.value as OrderFilter)}>
             <option value="all">All orders</option>
             {orderOptions.map((o) => (
