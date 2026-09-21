@@ -9,8 +9,8 @@
 // Full design: docs/context-layer-design.md. Withheld method: data-audit.md §6.1.
 
 import {
-  parseCSV, dateKey, cleanName, AUCTION_SOURCES,
-  type Sale, type AuctionMeta, type AuctionSource,
+  parseCSV, dateKey, cleanName, AUCTION_SOURCES, ORDER_VARIANTS,
+  type Sale, type AuctionMeta, type AuctionSource, type OrderVariant,
 } from './data';
 import { ERAS } from './eras';
 
@@ -250,6 +250,11 @@ export function rollupByAuction(items: ContextItem[]): Map<string, AuctionContex
 export type SourceFilter = 'all' | AuctionSource;
 export type TrentPricing = 'nominal' | 'reward-adjusted';
 export type AuctionTypeFilter = 'all' | 'augmented' | 'non-augmented' | 'golden-ticket';
+// Which of the two $8k orders an auction sold. Named `Order` rather than
+// "auction style" (the sheet's column) or "order type": `Auction type` is
+// already a control two rows up in the same bar, and it is the ORDER that
+// differs here, not the auction.
+export type OrderFilter = 'all' | OrderVariant;
 
 // The subset of filter state that selects/rescales sales. The FilterBar's
 // provenance chips act on the context-item list, not the core sales, so they are
@@ -258,6 +263,7 @@ export type ViewFilter = {
   source: SourceFilter;
   trentPricing: TrentPricing;
   auctionType: AuctionTypeFilter;
+  order: OrderFilter;
 };
 
 // Which venues ran auctions in each season, so the Source control can offer
@@ -290,6 +296,37 @@ export function sourcesInSeasons(
   const scope = seasons ? seasons.map((s) => bySeason.get(s)) : [...bySeason.values()];
   for (const set of scope) if (set) for (const src of set) present.add(src);
   return AUCTION_SOURCES.filter((s) => present.has(s));
+}
+
+// Which $8k orders each season sold, so the Order control can offer exactly the
+// ones a page can show. Same shape and same rule as sourcesBySeason above, and
+// for the same reason: the control appears only where a season holds MORE THAN
+// ONE, which is what "only show it where Trade 2 auctions exist" means once it
+// is stated as a property of the data rather than as a year.
+//
+// Stating it that way is what makes it self-retiring. Season 2027 is the first
+// to offer a choice and the company has said the second order is 2027-only, so
+// when it stops being offered the control disappears on its own — no date
+// cutoff to remember to remove, and no risk of a 2028 that quietly keeps it.
+export function orderVariantsBySeason(meta: AuctionMeta[]): Map<string, Set<OrderVariant>> {
+  const out = new Map<string, Set<OrderVariant>>();
+  for (const m of meta) {
+    let s = out.get(m.season);
+    if (!s) { s = new Set(); out.set(m.season, s); }
+    s.add(m.orderVariant);
+  }
+  return out;
+}
+
+// The order variants on offer across a set of seasons, in ORDER_VARIANTS order.
+// `seasons` undefined means "not season-scoped" — ask the whole dataset.
+export function orderVariantsInSeasons(
+  bySeason: Map<string, Set<OrderVariant>>, seasons?: string[],
+): OrderVariant[] {
+  const present = new Set<OrderVariant>();
+  const scope = seasons ? seasons.map((s) => bySeason.get(s)) : [...bySeason.values()];
+  for (const set of scope) if (set) for (const v of set) present.add(v);
+  return ORDER_VARIANTS.filter((v) => present.has(v));
 }
 
 // Seasons that actually contain a Trent auction — what the Trent-pricing control
@@ -341,22 +378,27 @@ export function auctionTypeMatches(
   }
 }
 
-// Whether an auction passes the source + auction-type controls together — the
-// auction-level half of the shared filter, shared by the sale-feed helper below
-// and the explorer (which filters its meta list directly).
+// Whether an auction passes the source + order + auction-type controls together
+// — the auction-level half of the shared filter, shared by the sale-feed helper
+// below and the explorer (which filters its meta list directly). Every control
+// that selects AUCTIONS belongs here and nowhere else: that is what keeps the
+// Prices/Timelines/Compare feeds and the Explorer's auction list agreeing about
+// which auctions are in view.
 export function passesAuctionFilters(
   m: AuctionMeta, f: ViewFilter, goldenTicketIds: Set<string>,
 ): boolean {
   if (f.source !== 'all' && m.source !== f.source) return false;
+  if (f.order !== 'all' && m.orderVariant !== f.order) return false;
   return auctionTypeMatches(m, f.auctionType, goldenTicketIds);
 }
 
 // Apply the shared view filter to a raw sale feed: drop sales whose auction fails
-// the source / auction-type controls, and rescale Trent prices by the reward rate
-// when "Reward-adjusted" is chosen. This is the single funnel every pricing page
-// runs its sales through, so Source/Trent-pricing/Auction-type behave identically
-// on Prices, Onyx, Timelines and Compare. Defaults (All sources, Nominal, All
-// types) return the feed untouched, so each page reads exactly as it did before.
+// the source / order / auction-type controls, and rescale Trent prices by the
+// reward rate when "Reward-adjusted" is chosen. This is the single funnel every
+// pricing page runs its sales through, so Source/Order/Trent-pricing/Auction-type
+// behave identically on Prices, Onyx, Timelines and Compare. Defaults (All
+// sources, All orders, Nominal, All types) return the feed untouched, so each
+// page reads exactly as it did before.
 export function applyViewFilters(
   sales: Sale[], metaById: Map<string, AuctionMeta>,
   goldenTicketIds: Set<string>, f: ViewFilter,

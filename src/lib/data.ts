@@ -42,6 +42,11 @@ export const SOURCE_LABEL: Record<AuctionSource, string> = {
 // there was nothing else to be.
 export type OrderVariant = 'Standard' | 'Trade 2';
 
+// Display order wherever the two are listed together (the Order filter). Standard
+// first: it is what every season before 2027 sold, and the one Trade 2 is the
+// alternative TO.
+export const ORDER_VARIANTS: OrderVariant[] = ['Standard', 'Trade 2'];
+
 export type AuctionMeta = {
   auctionId: string;
   season: string;

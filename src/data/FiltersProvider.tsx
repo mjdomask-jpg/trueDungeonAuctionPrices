@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   FiltersContext, makeDefaultFilters,
   type FilterState, type SourceFilter, type TrentPricing, type AuctionTypeFilter,
+  type OrderFilter,
 } from './filtersContext';
 import type { Provenance } from '../lib/context';
 
@@ -15,6 +16,7 @@ export function FiltersProvider({ children }: { children: ReactNode }) {
   const setSource = useCallback((source: SourceFilter) => setFilters((f) => ({ ...f, source })), []);
   const setTrentPricing = useCallback((trentPricing: TrentPricing) => setFilters((f) => ({ ...f, trentPricing })), []);
   const setAuctionType = useCallback((auctionType: AuctionTypeFilter) => setFilters((f) => ({ ...f, auctionType })), []);
+  const setOrder = useCallback((order: OrderFilter) => setFilters((f) => ({ ...f, order })), []);
   const toggleProvenance = useCallback((p: Provenance) => setFilters((f) => {
     const provenance = new Set(f.provenance);
     if (provenance.has(p)) provenance.delete(p); else provenance.add(p);
@@ -23,8 +25,8 @@ export function FiltersProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => setFilters(makeDefaultFilters()), []);
 
   const api = useMemo(
-    () => ({ filters, setSource, setTrentPricing, setAuctionType, toggleProvenance, reset }),
-    [filters, setSource, setTrentPricing, setAuctionType, toggleProvenance, reset],
+    () => ({ filters, setSource, setTrentPricing, setAuctionType, setOrder, toggleProvenance, reset }),
+    [filters, setSource, setTrentPricing, setAuctionType, setOrder, toggleProvenance, reset],
   );
   return <FiltersContext.Provider value={api}>{children}</FiltersContext.Provider>;
 }

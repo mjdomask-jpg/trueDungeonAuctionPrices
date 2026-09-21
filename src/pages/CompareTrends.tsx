@@ -156,7 +156,7 @@ export function CompareTrends() {
         )}
       </div>
 
-      <FilterBar controls={['source', 'trentPricing', 'auctionType']} seasons={[a, b]} collapsibleOnMobile />
+      <FilterBar controls={['source', 'trentPricing', 'auctionType', 'order']} seasons={[a, b]} collapsibleOnMobile />
 
       <p className="meta-line stats compare-summary">
         {rows.length} token{rows.length === 1 ? '' : 's'} · {summary.rose} rose ·{' '}
