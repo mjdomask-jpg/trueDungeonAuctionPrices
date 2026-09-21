@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-20.1';
+var OPEN_VERSION = '2026-09-21.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -76,6 +76,13 @@ var OPEN_TRENT_DEFAULTS = {
   augmentated: 'No',
   targetFunding: '$7,500.00',
 };
+
+/**
+ * What the sheet calls the Trade 2 order, for the note only — never written.
+ * The style records the AUCTION, so it is the Ultra Condensed line even though
+ * the page calls the ORDER Super Condensed, exactly as for the normal order.
+ */
+var OPEN_TRENT_TRADE2_STYLE = 'Trade 2 Ultra Condensed';
 
 /**
  * Both forum categories, settled. 176 recorded auctions live in 584 and 2 in
@@ -651,13 +658,75 @@ function openParseTrentPage(html) {
   m = text.match(/for an?\s+(20\d{2})\b([^\n.]*?)\$?8\s*k\b/i);
   if (m) { out.season = m[1]; out.orderStyle = m[2].replace(/\s+/g, ' ').trim() || null; }
   if (!out.season) {
-    m = text.match(/\b(20\d{2})\s+SEASON\b/i);
+    // "2026 SEASON", and since the 2027 rewrite "2027 Auction Season" — one
+    // optional word between the year and the word, because that rewrite is
+    // what showed the tight version was tight. Measured 2026-09-21: the live
+    // page yields season null and orderStyle null under the old pair of
+    // regexes, because the sentence they both key on ("This auction is for a
+    // 2026 Super Condensed $8k order") is gone. Season then fell through to
+    // openInferSeason, which is why nothing looked broken.
+    m = text.match(/\b(20\d{2})\s+(?:\w+\s+)?SEASON\b/i);
     if (m) out.season = m[1];
   }
+  out.tradeTwo = openTrentTradeTwoRule(text);
   m = text.match(/reserve total[^\n$]*\$\s*([\d,]+(?:\.\d{2})?)/i);
   if (m) out.reserve = m[1];
   m = text.match(/([^\n]*\bavailable for auction\b[^\n]*)/i);
   if (m) out.withheld = m[1].trim();
+  return out;
+}
+
+/**
+ * The season's SECOND $8K order, if the page declares one.
+ *
+ * Season 2027 added an order with more Trade 2 goods and fewer Trade 1, and
+ * Trent alternates between it and the normal order. He states the whole rule
+ * on the page:
+ *
+ *   By popular demand, the 2027 auctions will alternate between the new
+ *   "Trade 2" Super Condensed $8k option and the normal Super Condensed $8k
+ *   option.
+ *   For at least the first 20 auctions, all of the odd number auctions
+ *   (1, 3, 5, 7, 9, 11, 13, 15, 17, 19) will be Trade 2 Super Condensed.
+ *   All of the even number auctions (2, 4, ...) will be normal Super Condensed.
+ *
+ * Returns null when the page never says "Trade 2", which is every page before
+ * this season and every page after the option retires — so this whole feature
+ * switches itself off rather than needing to be removed.
+ *
+ * `oddIsTradeTwo` stays null when the page declares the option but not a
+ * parity this can read, because "declared, could not read which" and "not
+ * declared" want different notes: the first means READ THE PAGE, the second
+ * means nothing is going on.
+ *
+ * The parity is taken from a sentence naming exactly one of odd/even AND
+ * Trade 2. Requiring exactly one is what keeps a single sentence that names
+ * both ("odd are Trade 2, even are normal") from resolving on whichever word
+ * happens to be tested first — it resolves to null instead, which is the
+ * honest answer for a sentence this rule cannot parse.
+ */
+function openTrentTradeTwoRule(text) {
+  var body = String(text == null ? '' : text);
+  if (!/\btrade\s*2\b/i.test(body)) return null;
+  var out = { declared: true, oddIsTradeTwo: null, said: '', through: null };
+  var sentences = body.split(/[\n.]+/);
+  for (var i = 0; i < sentences.length; i++) {
+    var s = sentences[i];
+    if (!/\btrade\s*2\b/i.test(s)) continue;
+    var odd = /\bodd\b/i.test(s), even = /\beven\b/i.test(s);
+    if (odd === even) continue; // neither, or both — see above
+    out.oddIsTradeTwo = odd;
+    out.said = s.replace(/\s+/g, ' ').trim();
+  }
+  // The rule SCOPES ITSELF — "For at least the first 20 auctions" — and the
+  // alternation is promoted as a 2027-only experiment that may stop at that
+  // bound. Past it the page says nothing about which order an auction is, and
+  // an alternation read on for ever is a rule this script invented rather than
+  // one it read. Taken from the whole description, not just the sentence the
+  // parity came from, because the scope and the parity need not stay in one
+  // sentence; a wrong match costs a blank cell and a note, never a wrong value.
+  var scope = body.match(/first\s+(\d+)\s+auctions?\b/i);
+  if (scope) out.through = Number(scope[1]);
   return out;
 }
 
@@ -1508,6 +1577,51 @@ function openTrentProposal(page, metaRows) {
   if (page.orderStyle) notes.push('page calls the ORDER "' + page.orderStyle + '" — the sheet records the AUCTION as Ultra Condensed');
   if (page.withheld) notes.push('withheld: ' + page.withheld);
 
+  // The season's second order, if there is one. `OPEN_TRENT_DEFAULTS` holds
+  // because 110 of his 111 recorded auctions are the same order; a season that
+  // alternates breaks that, and defaulting would now be wrong every other
+  // auction rather than once ever.
+  //
+  // Where the rule says THIS auction is the Trade 2 one, `auctionStyle` is left
+  // BLANK rather than filled in, and the promote step already warns on a blank
+  // style so it cannot ride along unnoticed. Filling it in would mean
+  // translating the page's words into the sheet's — the page says "Trade 2
+  // SUPER Condensed" while the sheet records Trent as ULTRA Condensed — and
+  // that translation is exactly what OPEN_TRENT_DEFAULTS says not to do from
+  // this page. The page hedges too ("for at least the first 20 auctions"), so
+  // the rule is evidence for the operator, not a value.
+  //
+  // Where it says this one is the NORMAL order the default stands, and the note
+  // still fires: an operator who sees the reasoning on both halves can tell a
+  // rule that is being applied from one that has quietly stopped.
+  var style = OPEN_TRENT_DEFAULTS.auctionStyle;
+  if (page.tradeTwo) {
+    if (page.tradeTwo.oddIsTradeTwo === null) {
+      style = '';
+      notes.push('the page declares a "Trade 2" order this season but not which auctions get it in a form ' +
+        'this can read — auctionStyle left BLANK. Read the page and type it.');
+    } else {
+      var tradeTwoParity = page.tradeTwo.oddIsTradeTwo ? 'ODD' : 'EVEN';
+      var trentNumber = Number(page.number);
+      var isOdd = (trentNumber % 2) === 1;
+      if (page.tradeTwo.through != null && trentNumber > page.tradeTwo.through) {
+        style = '';
+        notes.push('auctionStyle left BLANK: the page\'s "Trade 2" rule covers only the first ' +
+          page.tradeTwo.through + ' auctions and this is auction ' + page.number + ', so the page no longer ' +
+          'says which of the season\'s two orders this is. Page says: "' + page.tradeTwo.said + '"');
+      } else if (isOdd === page.tradeTwo.oddIsTradeTwo) {
+        style = '';
+        notes.push('auctionStyle left BLANK: the page says ' + tradeTwoParity + '-numbered auctions are the ' +
+          '"Trade 2" order and this is auction ' + page.number + '. If the rule held, the sheet\'s value is "' +
+          OPEN_TRENT_TRADE2_STYLE + '" — but the page states it as provisional, so confirm it. Page says: "' +
+          page.tradeTwo.said + '"');
+      } else {
+        notes.push('the page says ' + tradeTwoParity + '-numbered auctions are the "Trade 2" order and this is ' +
+          'auction ' + page.number + ', so the usual ' + OPEN_TRENT_DEFAULTS.auctionStyle + ' is proposed');
+      }
+    }
+  }
+
   var target = OPEN_TRENT_DEFAULTS.targetFunding;
   if (page.reserve) {
     var fromPage = '$' + page.reserve + (page.reserve.indexOf('.') < 0 ? '.00' : '');
@@ -1529,7 +1643,7 @@ function openTrentProposal(page, metaRows) {
     number: number,
     auctionId: season.season ? openAuctionId(season.season, number) : '',
     link: OPEN_TRENT_URL,
-    auctionStyle: OPEN_TRENT_DEFAULTS.auctionStyle,
+    auctionStyle: style,
     completionStyle: OPEN_TRENT_DEFAULTS.completionStyle,
     augmentated: OPEN_TRENT_DEFAULTS.augmentated,
     targetFunding: target,
@@ -1650,6 +1764,25 @@ function openAlesievTitleConflicts(title, fields) {
   }
   if (fields.augmentated && /augment/i.test(text) && fields.augmentated === 'No') {
     out.push('the TITLE mentions augments but the card is not tagged Augmented — the badge is what was used');
+  }
+
+  // A GAP rather than a conflict: season 2027 ran two different $8K orders and
+  // the card has NO badge for which one. Measured on the shipped fixture —
+  // both cards carry Augmented, Onyx/Non-Onyx and Lightning and nothing else,
+  // while their titles say "Onyx Option A" and "Option B", and those two cards
+  // are the recorded 20272 (standard) and 20271 (Trade 2). So the one field
+  // that separates them lives in prose, which is why this reports and does not
+  // fill anything in.
+  //
+  // Reported whatever `fields` holds, unlike the two above: there is no badge
+  // to have been used, so there is nothing for the note to be redundant with.
+  var option = text.match(/\boption\s+([ab])\b/i);
+  if (option) {
+    var letter = option[1].toUpperCase();
+    out.push('the TITLE says Option ' + letter + ' and no badge carries that — season 2027 ran two $8K orders, ' +
+      'and Option B is the "Trade 2" one' +
+      (letter === 'B' ? '. If this is that order, auctionStyle wants the words "Trade 2" in it' : '') +
+      '. Check the order contents before accepting the style');
   }
   return out;
 }
@@ -2406,6 +2539,7 @@ if (typeof module !== 'undefined') {
     openMoneyFromCell: openMoneyFromCell,
     openShiftIsoDays: openShiftIsoDays,
     openParseTrentPage: openParseTrentPage,
+    openTrentTradeTwoRule: openTrentTradeTwoRule,
     openParseFeed: openParseFeed,
     openParseTopic: openParseTopic,
     openDecodeTitle: openDecodeTitle,
@@ -2461,6 +2595,7 @@ if (typeof module !== 'undefined') {
     OPEN_METADATA_FIELDS: OPEN_METADATA_FIELDS,
     OPEN_DERIVED_FIELDS: OPEN_DERIVED_FIELDS,
     OPEN_TRENT_DEFAULTS: OPEN_TRENT_DEFAULTS,
+    OPEN_TRENT_TRADE2_STYLE: OPEN_TRENT_TRADE2_STYLE,
     OPEN_TRENT_URL: OPEN_TRENT_URL,
     OPEN_FORUM_CATEGORIES: OPEN_FORUM_CATEGORIES,
     OPEN_SIGNAL_ONLY_CATEGORIES: OPEN_SIGNAL_ONLY_CATEGORIES,

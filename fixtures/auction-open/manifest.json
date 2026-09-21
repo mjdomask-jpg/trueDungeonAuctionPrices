@@ -14,6 +14,22 @@
     "reconciles": "202643",
     "why": "One page serves every Trent auction in turn, so this fixture is whichever auction was live on the fetch date. 202643 is already recorded, which makes it the duplicate case as well: a scan against this page must propose nothing and say why."
   },
+  "trent2027": {
+    "file": "trent-2027-current-auction.html.gz",
+    "url": "https://www.trenttokens.com/collections/current-auction",
+    "fetched": "2026-09-21",
+    "expect": {
+      "number": "9",
+      "startDate": "2026-09-21",
+      "season": "2027",
+      "reserve": "7,500",
+      "orderStyle": null,
+      "tradeTwoOddIsTradeTwo": true
+    },
+    "reconciles": null,
+    "why": "The SAME page a season later, kept beside the 2026 copy rather than replacing it. Trent rewrote the description for 2027 and it broke two captures at once: the sentence both the season regex and `orderStyle` key on (\"This auction is for a 2026 Super Condensed $8k order\") is gone, so against this page the shipped parser returned season null and orderStyle null. Season had a fallback and quietly took it, which is why nothing looked wrong — the fallback wanted \"2026 SEASON\" and the page now says \"2027 Auction Season\". `orderStyle` stays null here on purpose: it is a real loss, recorded rather than papered over, and the note it fed is replaced by the Trade 2 rule below. This is also the NEW-auction case the 2026 fixture cannot be, since Trent Auction 9 is not in auctionMetadata: auction 8 is the last recorded one, so a scan must PROPOSE from this page where it must stay silent on the other.",
+    "tradeTwo": "The page declares season 2027's second $8K order and which auctions get it, so the parse is checked against a rule the source states rather than against a guess: odd-numbered auctions are the \"Trade 2\" order. Auction 9 is odd, which is why the proposal leaves auctionStyle BLANK. The page hedges (\"for at least the first 20 auctions\") and so does the rule."
+  },
   "alesiev": {
     "file": "alesiev-auctions.html.gz",
     "url": "https://alesievauctions.com/auctions",

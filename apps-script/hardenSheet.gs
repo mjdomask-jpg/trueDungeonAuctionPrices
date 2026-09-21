@@ -38,7 +38,7 @@
  * `HARDEN_`/`harden`.
  */
 
-var HARDEN_VERSION = '2026-09-19.1';
+var HARDEN_VERSION = '2026-09-21.1';
 
 /**
  * Columns holding a price, by tab and header. Numeric-only validation goes on
@@ -73,11 +73,12 @@ var HARDEN_COUNT_COLUMNS = [
 
 /**
  * Vocabulary columns and their values, measured from the shipped CSVs on
- * 2026-08-24 and shown with their counts so the list can be re-derived.
+ * 2026-09-21 and shown with their counts so the list can be re-derived.
  *
  * `grows: true` means the dropdown is a HELP, not a fence: the auctioneers
  * invent formats, and `auctionStyle` has already gained `Safehold Onyx Super
- * Condensed` and `Limited` at one auction each. Those get a warning-only
+ * Condensed`, `Limited` and `Onyx Trade 2 Ultra Condensed` at one auction
+ * each — the last of those arriving mid-season. Those get a warning-only
  * dropdown, which Sheets calls "show a warning" rather than "reject input" —
  * so a genuinely new style can still be typed, and a typo still gets a red
  * flag while it is being typed.
@@ -86,20 +87,32 @@ var HARDEN_COUNT_COLUMNS = [
  * legitimately gain a member, so input is rejected outright.
  */
 var HARDEN_VOCABULARY = [
+  // Counts are as at 2026-09-21 and the ORDER is deliberate: the dropdown is
+  // written in this order and compared against it, so a reordered rule is one
+  // somebody edited by hand. New values therefore go on the END rather than in
+  // count order, which is why this list no longer descends.
+  //
+  // The last two are season 2027's second $8K order — more Trade 2 goods, fewer
+  // Trade 1 — which auctioneers call "Option B" in the auction name. It is a
+  // style rather than a column of its own because the company says 2027 only,
+  // and a style value can stop being offered while a column cannot stop
+  // existing. If 2028 runs one order, delete these two lines and re-run.
   { tab: 'auctionMetadata', header: 'auctionStyle', grows: true, values: [
-    'Ultra Condensed',              // 125
-    'Super Condensed',              // 112
-    'Onyx Super Condensed',         //  39
+    'Ultra Condensed',              // 133
+    'Super Condensed',              // 109
+    'Onyx Super Condensed',         //  47
     'Onyx Condensed',               //   5
     'Condensed',                    //   3
-    'Onyx Ultra Condensed',         //   3
+    'Onyx Ultra Condensed',         //   7
     'Safehold Onyx Super Condensed',//   1
     'Limited',                      //   1
+    'Trade 2 Ultra Condensed',      //   6
+    'Onyx Trade 2 Ultra Condensed', //   1
   ] },
   { tab: 'auctionMetadata', header: 'completionStyle', grows: true, values: [
-    'Lightning',                    // 250
-    'Fixed Date',                   //  32
-    'Semi-Lightning',               //   7
+    'Lightning',                    // 270
+    'Fixed Date',                   //  34
+    'Semi-Lightning',               //   9
   ] },
   { tab: 'contextItems', header: 'category', grows: false, values: ['token', 'grunnel', 'withheld', 'augment'] },
 

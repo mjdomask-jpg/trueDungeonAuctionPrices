@@ -100,6 +100,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-11** | ~~The auctioneer's fee is imported as a withheld row~~ | **RESOLVED 2026-09-19** — `ALESIEV_FEE_NAMES`; **`20275`'s two stale fee rows were `DATA-16`, now also resolved** |
 | **DATA-16** | ~~`20275` records the auctioneer's fee as withheld~~ | **RESOLVED 2026-09-19** — two rows (ten lots) deleted in the workbook; shipped in PR #221, and the Onyx set now adds to 21 |
 | **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
+| **DATA-17** | ~~Season 2027 runs two different $8K orders and nothing records which~~ | **RESOLVED 2026-09-21 (repo side)** — a value in `auctionStyle`, not a column; seven rows relabelled and § 6 now holds the style to the trade-good counts. **The same edit in the workbook is what is left**, or the next publish reverts it |
 
 ---
 
@@ -2131,3 +2132,110 @@ Changing it moves published withheld figures, so it wants the maintainer's call
 rather than a quiet fix. The mirrors in `scripts/validate-context.mjs` and
 `scripts/gen-withheld-preview.mjs` must move with it, and the preview must be
 regenerated in the same PR.
+---
+
+## DATA-17. Season 2027 runs two different $8K orders — RESOLVED 2026-09-21 (repo side), workbook edit outstanding
+
+**Was:** for season 2027 the company added a second $8K order — more Trade 2
+goods, fewer Trade 1 — and auctions alternate between it and the normal one.
+Nothing recorded which an auction was. Seven of the twelve closed 2027 auctions
+were already the new order, all of them labelled as though they were the old
+one, so every season-level statistic was blending two supply regimes: Mystic
+Silk runs 121 in the normal order and 50 in the new one, inside one season.
+
+**Now:** it is a value in `auctionStyle`, giving four combinations across the
+existing Onyx axis — `Ultra Condensed`, `Onyx Ultra Condensed`,
+`Trade 2 Ultra Condensed`, `Onyx Trade 2 Ultra Condensed`. `validate-prices.mjs`
+§ 6 holds the style to the rows, alongside the checks it already runs for Onyx
+and for the Condensed bags.
+
+### Why a value and not a column
+
+`auctionStyle` already records what an order *contains* — that is exactly what
+§ 6's other two checks test it against — and both fences already let it grow
+(§ 7 has `closed: false`, the dropdown is `grows: true`). Nothing parses it:
+`data.ts` copies it to `style` and two components render it as a chip. So the
+value cost **no schema change at all**.
+
+A column would have cost the publish allow-list, `auctionOpen.gs`'s promote
+list, `HARDEN_VOCABULARY`, § 7, `data.ts` and a site chip — and would have
+stayed in all of them for ever, blank on every future row. The company has said
+2027 only. **A value can stop being offered; a column cannot stop existing.**
+
+That is the whole argument, and it is the thing to re-read if 2028 brings a
+third order: the answer is another value, unless the new axis needs to be
+*filtered or computed on* rather than displayed.
+
+### Retiring it
+
+Nothing to undo. Stop typing the words; delete the two entries from
+`HARDEN_VOCABULARY` and re-run Harden to drop them from the dropdown. § 6 goes
+quiet on its own, because it calibrates from each season's labelled rows and a
+season with no `Trade 2` style has nothing to separate. Historical rows keep
+meaning what they meant.
+
+### How an auction's order is known
+
+Three sources, in descending order of trust. Only the first comes from the
+auction itself:
+
+1. **The trade goods sold.** Aragonite / Elven Bismuth / Oil of Enchantment,
+   summed over the auction's lots: **11/13/13** normal, **15/20/20** Trade 2.
+   Exact on all twelve closed 2027 auctions, and the Trade 2 signature appears
+   in no other season (`rawPricesData` begins at 2023).
+2. **The auction name.** `Option A` / `Option B`. Right on all four 2027
+   auctions whose names say either — but most say neither.
+3. **Trent's own auction number.** Odd is Trade 2, even is normal; eight for
+   eight. His per-season number from the auction name, **not** `auctionNumber`.
+
+### What the scan does with it
+
+`auctionOpen.gs` reads Trent's page, which states the rule outright. Where the
+rule says the auction in front of it is the Trade 2 one, `auctionStyle` is left
+**blank** with a note quoting the page, rather than defaulted to
+`Ultra Condensed`. Blank because filling it in would mean translating the
+page's words into the sheet's — his page says "Trade 2 **Super** Condensed"
+while the sheet records him as **Ultra** Condensed — which is the one thing
+`OPEN_TRENT_DEFAULTS` exists to say not to do. He hedges the rule himself ("for
+at least the first 20 auctions").
+
+**The rule scopes itself and the scan honours the scope.** He writes "for at
+least the first 20 auctions", and the option is promoted as 2027-only, so from
+auction 21 the style is left blank with a note saying the rule ran out rather
+than the alternation being read on for ever. Reading it past its stated bound
+would be a rule this repo invented rather than one it read. A page that stops
+mentioning Trade 2 switches the whole behaviour off.
+
+alesievauctions.com has **no badge for this**: both cards in the fixture carry
+only Augmented, Onyx/Non-Onyx and Lightning, while their titles say `Option A`
+and `Option B` — and those two cards are the recorded `20272` and `20271`. So
+the title is reported in `notes` and nothing is filled in from it. This is the
+"never prefill from prose" rule holding where the auction-site path normally
+bends it, and the reason it bends there is precisely that badges are a field
+and a title is not.
+
+### Found on the way
+
+Trent rewrote his page description for 2027, and it broke **two** captures at
+once: the sentence both the season regex and `orderStyle` key on ("This auction
+is for a 2026 Super Condensed $8k order") is gone. Against the live page the
+shipped parser returned `season: null` and `orderStyle: null`. Season has a
+second source and quietly took over, which is why nothing looked wrong — the
+fallback wanted `2026 SEASON` and the page now says `2027 Auction Season`.
+Season is repaired and pinned; `orderStyle` is still null and is pinned as
+null, recorded rather than papered over. `fixtures/auction-open/` now holds
+**both** copies of that page.
+
+**A source can change its wording and break a parse that has a fallback, and
+the fallback is what hides it.** The same shape as the forum going to adverts
+(PIPE-13's neighbours): nothing in this repo changed.
+
+### Outstanding
+
+**The workbook.** `auctionMetadata.csv` is sheet-backed, so the seven relabelled
+cells are overwritten by the next publish unless `auctionStyle` is changed in
+the workbook too. Re-run Harden for the dropdown values. Until that is done,
+this item is only half closed.
+
+The seven: `20271`, `20273`, `20274`, `202710`, `202711`, `202713`, and with
+Onyx `20275`.

@@ -191,6 +191,142 @@ console.log("Trent's collection page\n");
     fresh.notes.some((n) => /page calls the ORDER/.test(n)), fresh.notes.join(' | '));
 }
 
+
+// ===========================================================================
+// 1b. Trent's page a season later — the 2027 rewrite and the Trade 2 rule
+// ===========================================================================
+// The same URL, fetched 2026-09-21, kept BESIDE the 2026 copy rather than
+// replacing it. Two different things are proved by having both: that the
+// rewrite did not break the captures that still work, and that a season with
+// two different $8K orders is not silently defaulted to one of them.
+//
+// This is also the fixture that can test a NEW auction, which the 2026 one
+// cannot — Trent Auction 9 is not in auctionMetadata (8 is the last recorded),
+// so a scan must PROPOSE here where it must stay silent there.
+console.log('\nTrent shop page, 2027\n');
+{
+  const want = manifest.trent2027.expect;
+  const html = fixture(manifest.trent2027.file);
+  const page = O.openParseTrentPage(html);
+
+  eq('auction number', page.number, want.number);
+  eq('start date', page.startDate, want.startDate);
+  eq('reserve total', page.reserve, want.reserve);
+
+  // The season capture, which the rewrite broke. Both of the old regexes want
+  // a sentence this page no longer has; the fallback wanted "2026 SEASON" and
+  // the page says "2027 Auction Season". It failed SILENTLY, because season
+  // has a second source (openInferSeason) that quietly took over.
+  eq('season survives the rewrite', page.season, want.season);
+  check('season came from the PAGE, not from an inference',
+    /from the page/.test(O.openTrentProposal(page, META.filter((r) => r.auctionName !== 'Trent Auction 9')).notes[0]),
+    JSON.stringify(page.season));
+
+  // orderStyle is a real loss and is recorded as one rather than papered over.
+  // Pinned so that a later repair is a deliberate change to this line, not a
+  // surprise: what replaces the note it fed is the Trade 2 rule below.
+  eq('orderStyle is null on this page', page.orderStyle, want.orderStyle);
+
+  // The rule the page states. Read from the source, never guessed.
+  check('the Trade 2 option is detected', !!page.tradeTwo, JSON.stringify(page.tradeTwo));
+  eq('  ... and odd-numbered auctions are the Trade 2 ones',
+    page.tradeTwo.oddIsTradeTwo, want.tradeTwoOddIsTradeTwo);
+  check('  ... quoting the sentence it read it from',
+    /odd number auctions/i.test(page.tradeTwo.said), page.tradeTwo.said);
+
+  // THE RULE SCOPES ITSELF, and the scope is honoured. Trent writes "For at
+  // least the first 20 auctions", and the option is promoted as 2027-only, so
+  // past that bound the page has stopped saying which order an auction is.
+  // Reading the alternation on for ever would be a rule this script invented
+  // rather than one it read.
+  //
+  // The boundary is checked on both sides and on both parities, because the
+  // interesting failure is off-by-one: auction 20 is EVEN and still inside the
+  // window, so it keeps the default, while 21 is outside it and does not.
+  eq('the rule carries the scope the page states', page.tradeTwo.through, 20);
+  {
+    const numbered = (n) => {
+      const p = O.openParseTrentPage(html);
+      p.number = String(n);
+      return O.openTrentProposal(p, META.filter((r) => !new RegExp(`^Trent Auction ${n}$`).test(r.auctionName)));
+    };
+    eq('the last odd auction inside the window is still Trade 2', numbered(19).auctionStyle, '');
+    eq('the last auction inside the window is even, and keeps the default',
+      numbered(20).auctionStyle, O.OPEN_TRENT_DEFAULTS.auctionStyle);
+    eq('the first auction PAST the window is not classified at all', numbered(21).auctionStyle, '');
+    check('  ... and says the rule ran out rather than quoting a parity',
+      numbered(21).notes.some((n) => /covers only the first 20 auctions/.test(n) && /auction 21/.test(n))
+      && !numbered(21).notes.some((n) => /ODD-numbered/.test(n)),
+      numbered(21).notes.join(' | '));
+    eq('an EVEN auction past the window is not defaulted either', numbered(22).auctionStyle, '');
+  }
+
+  // A page that states a rule with no scope keeps working — the bound is
+  // optional, and its absence must not blank everything.
+  {
+    const unbounded = O.openParseTrentPage(html);
+    unbounded.tradeTwo = { declared: true, oddIsTradeTwo: true, said: 'odd auctions are Trade 2', through: null };
+    unbounded.number = '99';
+    const p = O.openTrentProposal(unbounded, META);
+    eq('no stated scope means the parity still applies', p.auctionStyle, '');
+    unbounded.number = '98';
+    eq('  ... on both halves', O.openTrentProposal(unbounded, META).auctionStyle,
+      O.OPEN_TRENT_DEFAULTS.auctionStyle);
+  }
+
+  // A page with no Trade 2 anywhere returns null, which is every page before
+  // this season and every page after the option retires. The feature switches
+  // itself off; nobody has to remember to remove it.
+  eq('the 2026 page declares no such rule',
+    O.openTrentTradeTwoRule(O.openParseTrentPage(fixture(manifest.trent.file)).text), null);
+
+  // A sentence naming BOTH parities cannot be resolved by this rule, and says
+  // so rather than picking whichever word it tested first.
+  const both = O.openTrentTradeTwoRule('odd auctions are Trade 2 and even auctions are normal');
+  check('a sentence naming both parities resolves to null, not to a guess',
+    both && both.declared === true && both.oddIsTradeTwo === null, JSON.stringify(both));
+
+  // Auction 9 is ODD, so the rule says it is the Trade 2 order — and the
+  // proposal therefore refuses to fill the style in. Blank is the point: the
+  // promote step warns on a blank style, so it cannot ride along unnoticed,
+  // whereas the old default would have been wrong every other auction.
+  const without9 = META.filter((r) => r.auctionName !== 'Trent Auction 9');
+  const fresh = O.openTrentProposal(page, without9);
+  eq('a new Trent auction proposes its name', fresh.auctionName, 'Trent Auction 9');
+  eq('  ... its season', fresh.season, '2027');
+  eq('  ... and its auctionStyle is BLANK, not the default', fresh.auctionStyle, '');
+  check('  ... with the rule, the auction number and the page\'s own words in the notes',
+    fresh.notes.some((n) => /left BLANK/.test(n) && /ODD/.test(n) && /auction 9/.test(n)
+      && /Trade 2 Ultra Condensed/.test(n) && /provisional/.test(n)),
+    fresh.notes.join(' | '));
+
+  // ...and the OTHER half of the same rule. An even auction keeps the default,
+  // so this is not "blank whenever the season is odd about anything".
+  const evenPage = O.openParseTrentPage(html);
+  evenPage.number = '10';
+  const evenProposal = O.openTrentProposal(evenPage, without9);
+  eq('an EVEN-numbered auction keeps the usual style',
+    evenProposal.auctionStyle, O.OPEN_TRENT_DEFAULTS.auctionStyle);
+  check('  ... and still says why, so a rule that stopped firing is visible',
+    evenProposal.notes.some((n) => /ODD/.test(n) && /auction 10/.test(n) && /usual/.test(n)),
+    evenProposal.notes.join(' | '));
+
+  // Declared, but with no readable parity: read the page.
+  const vaguePage = O.openParseTrentPage(html);
+  vaguePage.tradeTwo = { declared: true, oddIsTradeTwo: null, said: '' };
+  const vague = O.openTrentProposal(vaguePage, without9);
+  eq('an unreadable rule blanks the style too', vague.auctionStyle, '');
+  check('  ... and says to read the page',
+    vague.notes.some((n) => /does not say which|not which auctions/.test(n)), vague.notes.join(' | '));
+
+  // The season the rule belongs to is the one this repo now records, and the
+  // style it names has to be one auctionMetadata actually uses — a note that
+  // tells the operator to type a value nothing else accepts is worse than no
+  // note. Checked against the file rather than against a literal.
+  const styles = new Set(META.map((r) => r.auctionStyle).filter(Boolean));
+  check('the style the note names is one the sheet already uses',
+    styles.has(O.OPEN_TRENT_TRADE2_STYLE), O.OPEN_TRENT_TRADE2_STYLE);
+}
 // ===========================================================================
 // 2. Topic pages — replayed against the recorded rows
 // ===========================================================================
@@ -1270,6 +1406,43 @@ console.log('\nalesievauctions.com\n');
     mislabelled.some((n) => /TITLE says Onyx/.test(n)), mislabelled.join(' | '));
   eq('a title that agrees with its badges says nothing',
     O.openAlesievTitleConflicts('An Onyx Auction', { auctionStyle: 'Onyx Ultra Condensed', augmentated: 'Yes' }).length, 0);
+
+  // Season 2027's two $8K orders, which the CARD CANNOT EXPRESS. Measured on
+  // the shipped fixture: every tag-badge on both cards is one of Augmented,
+  // Onyx/Non-Onyx and Lightning, and the only thing separating Option A from
+  // Option B is the title. Those two cards are the recorded 20272 (standard)
+  // and 20271 (Trade 2), so this is not a hypothetical.
+  //
+  // A GAP, not a conflict, and reported whatever the badges produced — there
+  // is no badge for this one to have overridden.
+  const optionB = O.openAlesievTitleConflicts(
+    "Aleisev's Augmented TD Con Invite Patron (8K) Option B - PRE-ORDER!",
+    { auctionStyle: 'Ultra Condensed', augmentated: 'Yes' });
+  check('a title saying Option B is surfaced',
+    optionB.some((n) => /Option B/.test(n) && /Trade 2/.test(n)), optionB.join(' | '));
+  const optionA = O.openAlesievTitleConflicts(
+    "Aleisev's Augmented TD Con Invite Patron (8K) Onyx Option A - PRE-ORDER!",
+    { auctionStyle: 'Onyx Ultra Condensed', augmentated: 'Yes' });
+  check('a title saying Option A is surfaced too, and does not ask for Trade 2',
+    optionA.some((n) => /Option A/.test(n)) && !optionA.some((n) => /wants the words/.test(n)),
+    optionA.join(' | '));
+  eq('a title with no Option says nothing about one',
+    O.openAlesievTitleConflicts('An Onyx Auction', { auctionStyle: 'Onyx Ultra Condensed', augmentated: 'Yes' })
+      .filter((n) => /Option/.test(n)).length, 0);
+
+  // The real titles, off the fixture, rather than the two strings above: a
+  // parse that stops seeing "Option" in the markup would leave the hand-typed
+  // cases passing on their own.
+  {
+    const cards = O.openParseAlesievListing(fixture(manifest.alesiev.file));
+    const titles = cards.map((c) => c.title).filter((t) => /\boption\s+[ab]\b/i.test(t));
+    eq('both fixture cards name an Option', titles.length, 2);
+    for (const t of titles) {
+      check(`"${t.slice(0, 40)}..." raises the Option note`,
+        O.openAlesievTitleConflicts(t, { auctionStyle: 'Ultra Condensed', augmentated: 'Yes' })
+          .some((n) => /no badge carries that/.test(n)), t);
+    }
+  }
 }
 
 // ===========================================================================

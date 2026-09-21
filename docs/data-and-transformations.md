@@ -97,7 +97,7 @@ is back-office information retained for reference.
 | `auctionSeason`, `auctionNumber` | Yes | Season and sequence index. |
 | `auctionName` | Yes | Human-readable auction name. |
 | `auctioneer` | Optional | Who ran the auction. |
-| `auctionStyle`, `completionStyle` | Optional | How the auction was run/closed. |
+| `auctionStyle`, `completionStyle` | Optional | How the auction was run/closed. `auctionStyle` states what the order *contained*, which is why three checks hold it to the rows: Onyx, the Condensed bags, and — for season 2027 — the `Trade 2` second order. The site only ever displays it. |
 | `Link` | Optional | URL to view the original auction. |
 | `closeDate` | Yes | Date the auction closed, ISO `YYYY-MM-DD`. Used to label the "Last 5" window in the season stats line. Populated on all 289 rows today; the `n/a` placeholder older seasons used is gone as of the 2026-08-14 backfill. Legitimately blank on a still-open auction, and on a `Failed` one that ended without a close date. |
 | `openDate`, `daysToClose` | Optional | Other timing fields, backfilled to every season (2018 on). Both are populated on all 289 rows today. `daysToClose` stays nullable on purpose — an `Open` auction has not ended and a `Failed` one need not have — and a null is left out of the averages, never read as zero. |
