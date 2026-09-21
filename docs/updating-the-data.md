@@ -317,6 +317,25 @@ Then, in `auctionOpenReview`:
    page it could not read. Trent's four are prefilled too, from his 111 recorded
    rows rather than from the page.
 
+   > **Two 2027 exceptions, both about the [Trade 2
+   > order](#the-2027-trade-2-order).**
+   >
+   > Trent's page states that his odd-numbered auctions are the Trade 2 one.
+   > Where that rule says the auction in front of it *is* Trade 2,
+   > `auctionStyle` arrives **blank** with a note quoting the page, instead of
+   > his usual `Ultra Condensed`. It is blank rather than filled in because
+   > proposing a value would mean translating his words into the sheet's — his
+   > page says "Trade 2 **Super** Condensed" while the sheet records him as
+   > **Ultra** Condensed — and because he hedges the rule himself. His
+   > even-numbered auctions keep the default, and the note fires on both halves
+   > so you can see the rule is still being applied.
+   >
+   > On **alesievauctions.com** the cards have **no badge for this at all** —
+   > they carry only Augmented, Onyx/Non-Onyx and Lightning — so a title saying
+   > `Option A` or `Option B` is reported in `notes` and nothing is filled in
+   > from it. The badge-derived style still arrives; check it against the
+   > order's contents before accepting it.
+
    > **A rescan does not overwrite these four once they hold anything.** That
    > protects what you typed — but it also means a prefilled value from an
    > earlier scan is kept even if the site has since changed. When the two
@@ -396,7 +415,7 @@ so it is left alone by every later scan.
 | `auctionId` | The season and the number run together, the way all 289 recorded rows are built. |
 | `openDate` | The forum's exact first-post timestamp, not "5 days ago". For Trent, the start date his page states. For the auction site, the card's `Starts:` date — its `Ends:` line is read and then deliberately not used. |
 | `auctioneer` | The forum display name — or the auction site's `Sponsor:` line — mapped to the name you already use: `Wade Schwendemann (Dr. Uid)` to `Wade S`, `alesiev - Alex` to `alesiev`, `Alesiev (Alex)` to `alesiev`, `Nick` to `Nick Braun`. A name it cannot map is flagged as new rather than guessed. |
-| `auctionStyle`, `completionStyle`, `augmentated`, `targetFunding` | For the auction site only, read from the card's badges and `Target` line. Blank with a note wherever a badge is missing or contradicts itself. Blank for forum auctions always. |
+| `auctionStyle`, `completionStyle`, `augmentated`, `targetFunding` | For the auction site only, read from the card's badges and `Target` line. Blank with a note wherever a badge is missing or contradicts itself. Blank for forum auctions always. For Trent these are his constants — except that since 2027 `auctionStyle` is left **blank** on the auctions his page's Trade 2 rule covers; see below. |
 | Duplicates | A forum auction is identified by its topic id, so a renamed thread is still recognised. An auction-site auction is identified by the id in its URL, which is the strongest of the three. Trent's are identified by season and name, because all 111 of his rows share one URL and his numbering restarts each season. |
 | The formula columns | Left alone. See below. |
 
@@ -1884,7 +1903,7 @@ change.
 | `outcome` | Optional | **The only way to record a failure, to announce an auction early, or to park one whose results have not arrived.** Blank on an ordinary auction; `Failed` on one that did not fund; `Pending` on one announced but not started; `Ended` on one that has finished while its close file is still with the auctioneer. It is the input `Status` reads, which is what lets a failed auction keep its row instead of being deleted — see *Recording a failed auction*, *Recording a pending auction* and *Recording an auction that has ended but not arrived* below. Those three are the only values the validators accept; `Cancelled` is the obvious fourth one and adding it should be a decision, not a paste. |
 | `closeDate` | **Yes** | ISO `YYYY-MM-DD`, **zero-padded**. Populated on **all 289 rows** — none blank, none `n/a`. Because `Status` keys off this column, clearing it is what makes an auction show as live. See the padding warning below. |
 | `auctioneer` | Optional | Who ran it. Shown on the explorer and offered as a filter there. |
-| `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. |
+| `auctionStyle` | Optional | e.g. `Ultra Condensed`, `Super Condensed`, `Onyx Super Condensed`. Shown on the explorer. Season 2027 adds `Trade 2 Ultra Condensed` and `Onyx Trade 2 Ultra Condensed` — see [The 2027 Trade 2 order](#the-2027-trade-2-order). |
 | `completionStyle` | Optional | How the auction closed: `Lightning`, `Semi-Lightning`, `Fixed Date`. Shown on the explorer. |
 | `Link` | Optional | URL to the original forum thread; the "Auction link" on the explorer's expanded cards and, always visible, on the open/upcoming banner and section. Fill it in especially for any `Open` **or `Pending`** auction — it's the whole point of surfacing one. |
 | `openDate` | Optional | ISO `YYYY-MM-DD`, **zero-padded** like `closeDate`. Drives the **Analytics** page's Current Year panels — auctions are grouped and ordered by it — and the open/upcoming cards' "opened N days ago" / "in N days" line. **Populated on all 289 rows** since the backfill. It is the one date column that may hold a **future** date: on a `Pending` row it is the announced start, and it is what the site reads to decide whether that auction is upcoming or open. |
@@ -1965,6 +1984,52 @@ failed auction breaks a rule that is otherwise sound:
   directions. `auctionStyle` predicts an auction's *contents*, and a failed
   auction has none, so it is skipped. Without this an Onyx auction that failed
   is a hard error on a row that is exactly right.
+
+#### The 2027 Trade 2 order
+
+For season 2027 the company added a **second $8K order** — more Trade 2 goods,
+fewer Trade 1 — alongside the normal one. Auctioneers call the two **Option A**
+(normal) and **Option B** (Trade 2), and Trent calls his *"Trade 2" Super
+Condensed*. It crosses the Onyx axis, so there are four combinations:
+
+| | Normal | Trade 2 |
+|---|---|---|
+| **no Onyx** | `Ultra Condensed` | `Trade 2 Ultra Condensed` |
+| **Onyx** | `Onyx Ultra Condensed` | `Onyx Trade 2 Ultra Condensed` |
+
+It is a **value in `auctionStyle`, not a column.** That column already records
+what an order *contains*, both fences already let it grow (§ 7 does not close
+it, the dropdown only warns), and nothing in the site parses it — so the value
+needed no schema change. The company has said 2027 only, and a style value can
+stop being offered, while a column would stay in the schema, the publish
+allow-list and the promote list for ever. `Onyx` stays first so the Onyx styles
+sort together.
+
+**If 2028 runs one order, nothing has to be undone.** Stop typing the words;
+delete the two entries from `HARDEN_VOCABULARY` and re-run Harden if you want
+them out of the dropdown. The historical rows keep meaning what they meant.
+
+**How to tell which order an auction was**, in order of how much you should
+trust it:
+
+1. **The trade goods it sold.** Count Aragonite, Elven Bismuth and Oil of
+   Enchantment across the auction's lots: **11 / 13 / 13** is the normal order
+   and **15 / 20 / 20** is the Trade 2 one. This is what `validate-prices.mjs`
+   § 6 checks, and it is the only evidence that comes from the auction itself.
+2. **The auction name.** `Option A` is normal, `Option B` is Trade 2. Right on
+   all four of the 2027 auctions whose names say either — but most names say
+   neither.
+3. **Trent's auction number.** His **odd**-numbered auctions are Trade 2 and his
+   **even** ones normal, which held for all eight of his recorded 2027 auctions.
+   This is his own per-season number in the auction name (`Trent Auction 5`),
+   **not** the sheet's `auctionNumber`. He states it on his page and hedges it
+   ("for at least the first 20 auctions"), so confirm it against (1).
+
+§ 6 reports a disagreement as a **note**, not an error — an import can land
+before anyone types the style, and the note should say which row to look at
+rather than block the publish carrying it. It calibrates itself from each
+season's own labelled rows, so it is silent before 2027 and needs no edit if
+the option returns.
 
 #### Setting the sheet up (once)
 
@@ -2986,6 +3051,27 @@ It is a note because the disagreement can resolve either way. `20225` and
 sells none at all despite its style, so there the *style* may be what is wrong.
 The check says which auctions to look at; it does not presume which side is
 right.
+
+### `Aragonite/Elven Bismuth/Oil of Enchantment total … but auctionStyle …`
+
+Check 6, and a **note** rather than an error.
+
+The auction's Trade 2 goods add up to the season's *other* order — see [The
+2027 Trade 2 order](#the-2027-trade-2-order). Either the style is missing the
+words `Trade 2`, or it has them and should not. The message names both
+signatures so you can see which it matched.
+
+The check calibrates itself from each season's own labelled rows rather than
+from fixed counts, so it says nothing at all in a season that ran one kind of
+order. Almost always the fix is the **style**: the counts come from the lots
+that were actually sold, which nobody types.
+
+### `the label separates nothing`
+
+Check 6. Every auction in the season has the same Trade 2 signature, whether or
+not its style says `Trade 2` — so the label is not distinguishing two orders.
+Either it has been applied to a season that only ever ran one (delete it), or
+the season genuinely ran two and the labels are on the wrong rows.
 
 ### The build fails with `dist/data check FAILED`
 
