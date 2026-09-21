@@ -1306,7 +1306,21 @@ The importer sorts unresolved names into two kinds, because the fix differs:
 | `…not a token in season 2026, but it is in 2025` | It *is* a token. Either you picked the wrong auction, or `tokenMetadata` is missing a row for this season. | Fix the auction, or add the token, then re-run. |
 | `…is not a token in any season — most likely a context item` | Not a token at all. | Use the worksheet, below. |
 
-When anything falls in the second group, a **Context items** box opens with a
+**"Most likely" is a guess, and there is a third case it does not cover: a
+token you know perfectly well, under a name Trent has just changed.** Read the
+name before you reach for the worksheet. `2027 Patron Code` is the live
+example — the Patron lot lost its pin that season and the importer, which knew
+only `<year> Patron Pin and Code`, called the whole thing a context item and
+refused the file. Filing it as context would have split fifteen seasons of
+`Patron Pin` prices in two, silently, with nothing left to notice it.
+
+The fix for that case is a rule in the script, not a row in the worksheet — see
+`PATRON_PIN_RE` and `EXCEPTIONS` in `apps-script/trentClose.gs`, which all three
+close paths share. One unresolved name aborts the entire import, so this is
+worth a minute's thought: the 2027 file it first appeared in had 166 good lots
+behind that one row.
+
+When anything genuinely falls in the second group, a **Context items** box opens with a
 ready-to-paste block in `contextItems` column order:
 
 ```
