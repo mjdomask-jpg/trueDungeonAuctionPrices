@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { parseSales, parseMeta, parseGroups, type Sale, type AuctionMeta, type GroupRow } from '../lib/data';
 import {
   parseContextItems, buildContextItems, rollupByAuction, findGoldenTicketAuctions,
-  seasonsWithTrent, sourcesBySeason,
+  seasonsWithTrent, sourcesBySeason, orderVariantsBySeason,
   type RawContextItem,
 } from '../lib/context';
 import {
@@ -110,12 +110,16 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
   const trentSeasons = useMemo(() => seasonsWithTrent(meta), [meta]);
   // And which venues ran each season, which is what the Source dropdown offers.
   const seasonSources = useMemo(() => sourcesBySeason(meta), [meta]);
+  // And which of the two $8k orders each season sold, which is what the Order
+  // dropdown offers. Derived from auctionStyle per auction, so no column and no
+  // year is hardcoded — a season with one order simply never shows the control.
+  const seasonOrders = useMemo(() => orderVariantsBySeason(meta), [meta]);
 
   return (
     <AuctionDataContext.Provider
       value={{
         sales, meta, onyxSales, groupRows, contextItems, auctionContext,
-        goldenTicketAuctions, trentSeasons, seasonSources,
+        goldenTicketAuctions, trentSeasons, seasonSources, seasonOrders,
         recipes, tokenMeta, offAuctionPrices, derivedRules, loading, error,
       }}
     >

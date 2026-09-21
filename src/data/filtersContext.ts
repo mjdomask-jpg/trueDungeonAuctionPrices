@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type {
-  Provenance, SourceFilter, TrentPricing, AuctionTypeFilter,
+  Provenance, SourceFilter, TrentPricing, AuctionTypeFilter, OrderFilter,
 } from '../lib/context';
 
 // Shared view-filter state for the context layer, read by every in-scope page
@@ -11,7 +11,7 @@ import type {
 
 // The filter vocabulary lives in lib/context (with the pure filtering logic);
 // re-exported here so the UI layer keeps importing it from one place.
-export type { SourceFilter, TrentPricing, AuctionTypeFilter } from '../lib/context';
+export type { SourceFilter, TrentPricing, AuctionTypeFilter, OrderFilter } from '../lib/context';
 
 // The toggleable item provenances (everything except the implicit 'normal', which
 // is always the core prices.csv sales). Order is display order in the FilterBar.
@@ -31,6 +31,9 @@ export type FilterState = {
   source: SourceFilter;
   trentPricing: TrentPricing;
   auctionType: AuctionTypeFilter;
+  // Which of the two $8k orders — Standard or Trade 2. Season 2027 is the first
+  // to sell both, so on every earlier season the control is not offered at all.
+  order: OrderFilter;
   // Which context provenances are shown. Withheld (the only ESTIMATES) start off,
   // so headline/context views never include estimates unless asked (§5.4).
   provenance: Set<Provenance>;
@@ -44,6 +47,7 @@ export const makeDefaultFilters = (): FilterState => ({
   source: 'all',
   trentPricing: 'nominal',
   auctionType: 'all',
+  order: 'all',
   provenance: new Set<Provenance>(['released-payment', 'augment', 'grunnel', 'withheld']),
 });
 
@@ -52,6 +56,7 @@ export type FiltersApi = {
   setSource: (s: SourceFilter) => void;
   setTrentPricing: (t: TrentPricing) => void;
   setAuctionType: (a: AuctionTypeFilter) => void;
+  setOrder: (o: OrderFilter) => void;
   toggleProvenance: (p: Provenance) => void;
   reset: () => void;
 };
@@ -67,7 +72,7 @@ export function useFilters(): FiltersApi {
 // Which context-layer controls a page shows in its FilterBar. Lives here with
 // the filter state so the count helper below can too — both stay in this
 // component-free module, out of FilterBar's Fast-Refresh "components only" file.
-export type FilterControl = 'source' | 'trentPricing' | 'auctionType' | 'provenance';
+export type FilterControl = 'source' | 'trentPricing' | 'auctionType' | 'order' | 'provenance';
 
 // How many of the given controls are set away from their default — for a folded
 // panel's "N active" badge (the FilterBar's own collapsed button, and Auction
@@ -83,5 +88,6 @@ export function activeFilterCount(filters: FilterState, controls: FilterControl[
   return (show('source') && filters.source !== 'all' ? 1 : 0)
     + (show('trentPricing') && trentInView && filters.trentPricing !== 'nominal' ? 1 : 0)
     + (show('auctionType') && filters.auctionType !== 'all' ? 1 : 0)
+    + (show('order') && filters.order !== 'all' ? 1 : 0)
     + (show('provenance') && provenanceChanged ? 1 : 0);
 }

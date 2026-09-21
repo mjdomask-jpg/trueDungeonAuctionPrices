@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { type Sale, type AuctionMeta, type GroupRow, type AuctionSource } from '../lib/data';
+import { type Sale, type AuctionMeta, type GroupRow, type AuctionSource, type OrderVariant } from '../lib/data';
 import { type ContextItem, type AuctionContext } from '../lib/context';
 import { type Recipe, type TokenMeta, type OffAuctionPrice, type DerivedRule } from '../lib/transmutes';
 
@@ -29,6 +29,11 @@ export type AuctionData = {
   // builds its Source options from this, and hides the control entirely for a
   // season with only one — there is nothing to filter between.
   seasonSources: Map<string, Set<AuctionSource>>;
+  // Which $8k orders each season sold (see orderVariantsBySeason). The FilterBar
+  // builds its Order options from this and hides the control for a season with
+  // only one — every season before 2027 sold a Standard order and nothing else,
+  // so there was nothing to choose between.
+  seasonOrders: Map<string, Set<OrderVariant>>;
   // Transmutes (Phase 4). All four are optional: a missing file leaves the
   // Transmutes page empty without affecting any other view.
   recipes: Recipe[]; // bills of materials, one per (season, transmute)

@@ -204,7 +204,7 @@ export default function ExplorerPage() {
   // disclosure (rendered `bare`), so the disclosure carries one combined badge:
   // the page's pickers plus the off-default shared filters. The 10x projection is
   // a display mode, not a narrowing filter, so it's deliberately not counted.
-  const sharedControls: FilterControl[] = ['source', 'trentPricing', 'auctionType', 'provenance'];
+  const sharedControls: FilterControl[] = ['source', 'trentPricing', 'auctionType', 'order', 'provenance'];
   const filterCount = pickerCount + activeFilterCount(viewFilter, sharedControls);
   const pickers = (
     <>

@@ -1,19 +1,20 @@
 import { useEffect, useMemo } from 'react';
 import {
   useFilters, activeFilterCount, CONTEXT_PROVENANCES, PROVENANCE_NAME,
-  type FilterControl, type SourceFilter, type AuctionTypeFilter,
+  type FilterControl, type SourceFilter, type AuctionTypeFilter, type OrderFilter,
 } from '../data/filtersContext';
 import { useAuctionData } from '../data/auctionDataContext';
-import { sourcesInSeasons } from '../lib/context';
+import { sourcesInSeasons, orderVariantsInSeasons } from '../lib/context';
 import { SOURCE_LABEL } from '../lib/data';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { HintPopover } from './HintPopover';
 
 // The shared context-layer controls. One implementation, dropped into each page;
 // a page passes `controls` to show only the ones it uses, so the state shape and
 // behaviour stay identical everywhere (docs/context-layer-design.md §5.2). The
 // FilterControl type and activeFilterCount helper live in filtersContext, so
 // this stays a components-only file for Fast Refresh.
-const DEFAULT_CONTROLS: FilterControl[] = ['source', 'trentPricing', 'auctionType', 'provenance'];
+const DEFAULT_CONTROLS: FilterControl[] = ['source', 'trentPricing', 'auctionType', 'order', 'provenance'];
 
 export function FilterBar({
   controls = DEFAULT_CONTROLS,
@@ -41,8 +42,8 @@ export function FilterBar({
   // activeFilterCount. Ignores collapsibleOnMobile/mobileSummary.
   bare?: boolean;
 }) {
-  const { filters, setSource, setTrentPricing, setAuctionType, toggleProvenance } = useFilters();
-  const { trentSeasons, seasonSources } = useAuctionData();
+  const { filters, setSource, setTrentPricing, setAuctionType, setOrder, toggleProvenance } = useFilters();
+  const { trentSeasons, seasonSources, seasonOrders } = useAuctionData();
   const narrow = useMediaQuery(NARROW);
   const show = (c: FilterControl) => controls.includes(c);
   // The Trent reward-adjust only makes sense when Trent sales are in view — i.e.
@@ -68,6 +69,18 @@ export function FilterBar({
   );
   const sourceChoice = sourceOptions.length > 1;
 
+  // The $8k orders these seasons sold, offered on exactly the same terms as
+  // Source and keyed on the same joined string for the same reason. Season 2027
+  // is the first to sell two; every earlier season has one, so the control does
+  // not appear — which is what "only where Trade 2 auctions exist" means, stated
+  // as a property of the data rather than as a year. When the second order stops
+  // being offered the control retires itself.
+  const orderOptions = useMemo(
+    () => orderVariantsInSeasons(seasonOrders, seasonKey === '*' ? undefined : seasonKey.split('|')),
+    [seasonOrders, seasonKey],
+  );
+  const orderChoice = orderOptions.length > 1;
+
   // Filter state is shared across pages and survives a season change, so hiding
   // the controls is not enough: a Source of 'Trent' carried into 2019 would
   // silently empty the page with no visible control to explain it. Put them back
@@ -80,8 +93,15 @@ export function FilterBar({
       && (filters.source === 'all' || sourceOptions.includes(filters.source));
     if (!sourceOffered && filters.source !== 'all') setSource('all');
     if (!trentInData && filters.trentPricing !== 'nominal') setTrentPricing('nominal');
-  }, [sourceChoice, sourceOptions, trentInData, filters.source, filters.trentPricing,
-    setSource, setTrentPricing]);
+    // Same rule for Order, and it matters more here than anywhere: 'Trade 2'
+    // carried from 2027 back to 2026 would empty the page completely, since no
+    // earlier season has a single Trade 2 auction.
+    const orderOffered = orderChoice
+      && (filters.order === 'all' || orderOptions.includes(filters.order));
+    if (!orderOffered && filters.order !== 'all') setOrder('all');
+  }, [sourceChoice, sourceOptions, trentInData, orderChoice, orderOptions,
+    filters.source, filters.trentPricing, filters.order,
+    setSource, setTrentPricing, setOrder]);
 
   const inner = (
     <>
@@ -122,6 +142,27 @@ export function FilterBar({
             <option value="augmented">Augmented</option>
             <option value="non-augmented">Non-augmented</option>
             <option value="golden-ticket">With Golden Ticket</option>
+          </select>
+        </label>
+      )}
+
+      {show('order') && orderChoice && (
+        <label>
+          Order
+          {/* "Trade 2" is the auctioneers' shorthand, and a reader who has not
+              followed the forum has no way to know what the two options are. Per
+              ui-conventions.md this is a tap-to-open popover, never a `title`. */}
+          <HintPopover label="About the order filter">
+            Season 2027 is the first to sell two different $8K orders side by side: the{' '}
+            <strong>standard</strong> one, and a <strong>Trade 2</strong> order carrying more
+            of the tier-2 trade goods. Auctioneers advertise them as Option A and Option B.
+            Filtering here shows prices from only that kind of auction.
+          </HintPopover>
+          <select value={filters.order} onChange={(e) => setOrder(e.target.value as OrderFilter)}>
+            <option value="all">All orders</option>
+            {orderOptions.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
           </select>
         </label>
       )}
