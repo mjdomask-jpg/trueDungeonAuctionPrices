@@ -330,6 +330,14 @@ Then, in `auctionOpenReview`:
    > even-numbered auctions keep the default, and the note fires on both halves
    > so you can see the rule is still being applied.
    >
+   > **The rule scopes itself and the scan honours the scope.** He writes "for
+   > at least the first 20 auctions", so from auction 21 the page has stopped
+   > saying which order an auction is: the style arrives blank with a note
+   > saying the rule ran out, rather than the alternation being read on for
+   > ever. If he extends or drops it, the next scan reads whatever the page
+   > then says — and a page that stops mentioning Trade 2 at all switches this
+   > whole behaviour off.
+   >
    > On **alesievauctions.com** the cards have **no badge for this at all** —
    > they carry only Augmented, Onyx/Non-Onyx and Lightning — so a title saying
    > `Option A` or `Option B` is reported in `notes` and nothing is filled in
@@ -2023,7 +2031,8 @@ trust it:
    **even** ones normal, which held for all eight of his recorded 2027 auctions.
    This is his own per-season number in the auction name (`Trent Auction 5`),
    **not** the sheet's `auctionNumber`. He states it on his page and hedges it
-   ("for at least the first 20 auctions"), so confirm it against (1).
+   ("for at least the first 20 auctions"), so confirm it against (1) — and
+   treat it as saying nothing at all about auction 21 onwards.
 
 § 6 reports a disagreement as a **note**, not an error — an import can land
 before anyone types the style, and the note should say which row to look at

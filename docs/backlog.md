@@ -2199,6 +2199,13 @@ while the sheet records him as **Ultra** Condensed — which is the one thing
 `OPEN_TRENT_DEFAULTS` exists to say not to do. He hedges the rule himself ("for
 at least the first 20 auctions").
 
+**The rule scopes itself and the scan honours the scope.** He writes "for at
+least the first 20 auctions", and the option is promoted as 2027-only, so from
+auction 21 the style is left blank with a note saying the rule ran out rather
+than the alternation being read on for ever. Reading it past its stated bound
+would be a rule this repo invented rather than one it read. A page that stops
+mentioning Trade 2 switches the whole behaviour off.
+
 alesievauctions.com has **no badge for this**: both cards in the fixture carry
 only Augmented, Onyx/Non-Onyx and Lightning, while their titles say `Option A`
 and `Option B` — and those two cards are the recorded `20272` and `20271`. So

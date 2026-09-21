@@ -234,6 +234,46 @@ console.log('\nTrent shop page, 2027\n');
   check('  ... quoting the sentence it read it from',
     /odd number auctions/i.test(page.tradeTwo.said), page.tradeTwo.said);
 
+  // THE RULE SCOPES ITSELF, and the scope is honoured. Trent writes "For at
+  // least the first 20 auctions", and the option is promoted as 2027-only, so
+  // past that bound the page has stopped saying which order an auction is.
+  // Reading the alternation on for ever would be a rule this script invented
+  // rather than one it read.
+  //
+  // The boundary is checked on both sides and on both parities, because the
+  // interesting failure is off-by-one: auction 20 is EVEN and still inside the
+  // window, so it keeps the default, while 21 is outside it and does not.
+  eq('the rule carries the scope the page states', page.tradeTwo.through, 20);
+  {
+    const numbered = (n) => {
+      const p = O.openParseTrentPage(html);
+      p.number = String(n);
+      return O.openTrentProposal(p, META.filter((r) => !new RegExp(`^Trent Auction ${n}$`).test(r.auctionName)));
+    };
+    eq('the last odd auction inside the window is still Trade 2', numbered(19).auctionStyle, '');
+    eq('the last auction inside the window is even, and keeps the default',
+      numbered(20).auctionStyle, O.OPEN_TRENT_DEFAULTS.auctionStyle);
+    eq('the first auction PAST the window is not classified at all', numbered(21).auctionStyle, '');
+    check('  ... and says the rule ran out rather than quoting a parity',
+      numbered(21).notes.some((n) => /covers only the first 20 auctions/.test(n) && /auction 21/.test(n))
+      && !numbered(21).notes.some((n) => /ODD-numbered/.test(n)),
+      numbered(21).notes.join(' | '));
+    eq('an EVEN auction past the window is not defaulted either', numbered(22).auctionStyle, '');
+  }
+
+  // A page that states a rule with no scope keeps working — the bound is
+  // optional, and its absence must not blank everything.
+  {
+    const unbounded = O.openParseTrentPage(html);
+    unbounded.tradeTwo = { declared: true, oddIsTradeTwo: true, said: 'odd auctions are Trade 2', through: null };
+    unbounded.number = '99';
+    const p = O.openTrentProposal(unbounded, META);
+    eq('no stated scope means the parity still applies', p.auctionStyle, '');
+    unbounded.number = '98';
+    eq('  ... on both halves', O.openTrentProposal(unbounded, META).auctionStyle,
+      O.OPEN_TRENT_DEFAULTS.auctionStyle);
+  }
+
   // A page with no Trade 2 anywhere returns null, which is every page before
   // this season and every page after the option retires. The feature switches
   // itself off; nobody has to remember to remove it.

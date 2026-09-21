@@ -708,7 +708,7 @@ function openParseTrentPage(html) {
 function openTrentTradeTwoRule(text) {
   var body = String(text == null ? '' : text);
   if (!/\btrade\s*2\b/i.test(body)) return null;
-  var out = { declared: true, oddIsTradeTwo: null, said: '' };
+  var out = { declared: true, oddIsTradeTwo: null, said: '', through: null };
   var sentences = body.split(/[\n.]+/);
   for (var i = 0; i < sentences.length; i++) {
     var s = sentences[i];
@@ -718,6 +718,15 @@ function openTrentTradeTwoRule(text) {
     out.oddIsTradeTwo = odd;
     out.said = s.replace(/\s+/g, ' ').trim();
   }
+  // The rule SCOPES ITSELF — "For at least the first 20 auctions" — and the
+  // alternation is promoted as a 2027-only experiment that may stop at that
+  // bound. Past it the page says nothing about which order an auction is, and
+  // an alternation read on for ever is a rule this script invented rather than
+  // one it read. Taken from the whole description, not just the sentence the
+  // parity came from, because the scope and the parity need not stay in one
+  // sentence; a wrong match costs a blank cell and a note, never a wrong value.
+  var scope = body.match(/first\s+(\d+)\s+auctions?\b/i);
+  if (scope) out.through = Number(scope[1]);
   return out;
 }
 
@@ -1593,8 +1602,14 @@ function openTrentProposal(page, metaRows) {
         'this can read — auctionStyle left BLANK. Read the page and type it.');
     } else {
       var tradeTwoParity = page.tradeTwo.oddIsTradeTwo ? 'ODD' : 'EVEN';
-      var isOdd = (Number(page.number) % 2) === 1;
-      if (isOdd === page.tradeTwo.oddIsTradeTwo) {
+      var trentNumber = Number(page.number);
+      var isOdd = (trentNumber % 2) === 1;
+      if (page.tradeTwo.through != null && trentNumber > page.tradeTwo.through) {
+        style = '';
+        notes.push('auctionStyle left BLANK: the page\'s "Trade 2" rule covers only the first ' +
+          page.tradeTwo.through + ' auctions and this is auction ' + page.number + ', so the page no longer ' +
+          'says which of the season\'s two orders this is. Page says: "' + page.tradeTwo.said + '"');
+      } else if (isOdd === page.tradeTwo.oddIsTradeTwo) {
         style = '';
         notes.push('auctionStyle left BLANK: the page says ' + tradeTwoParity + '-numbered auctions are the ' +
           '"Trade 2" order and this is auction ' + page.number + '. If the rule held, the sheet\'s value is "' +
