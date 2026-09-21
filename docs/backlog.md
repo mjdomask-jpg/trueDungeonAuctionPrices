@@ -2030,3 +2030,104 @@ Related: the `publish-check-blocks-publishing` memory, which this is the eighth
 entry in. `PIPE-6` (a fixture registry every new transmute had to be listed in)
 and this one are the two whose shape guaranteed a recurrence; the other six were
 a single stale number each.
+
+## PIPE-13. The withheld audit called a backfill "drift" — RESOLVED 2026-09-20
+
+**What happened.** PR #236 published seven Trent auctions into season 2027. All
+seven close **2026-09-19**; `20274` closes **2026-09-20**. The withheld estimate
+for `20274|Ultra Rare` is the mean of same-season sales from the five most
+recent auctions closing strictly before it, so all seven landed inside its
+window: 4 sales over 2 auctions became 18 over 9, and the estimate moved
+**−502.62 → −593.42**. `validate-context.mjs` called that drift and failed the
+publish.
+
+**Why the guard believed it could not happen.** The narrowing that fixed the
+2026-09-19 block (see `PIPE-7`) rested on a claim written into the source:
+
+> a new auction cannot move an old estimate: `valueWithheld` only reads sales
+> closing STRICTLY BEFORE the withheld auction, so its window is closed by the
+> time a later auction exists.
+
+**That conflates RECORDED later with CLOSED later.** A publish that backfills an
+auction which already closed drops it straight into a window the check believed
+was sealed. The seven auctions were not new rows — they had been sitting in
+`auctionMetadata` as `Ended`, with their close dates, since the day before. This
+publish filled in their prices. Trent closes arrive in batches, on days that
+already carry alesiev auctions, so the shape recurs by construction rather than
+by coincidence.
+
+**And the documented remedy could not clear it.** Every publish PR carries the
+instruction *"Start from main, not from this PR's branch"*, which is right for
+bringing the audit forward and wrong for clearing a failure: the data producing
+the new value exists **only on the publish branch**, so regenerating from `main`
+reproduces the old number and the check fails again. The notice and
+`updating-the-data.md` now both name the exception.
+
+**The fix.** The preview records its **inputs**. `gen-withheld-preview.mjs`
+writes a `lookback_auctions` column — the auctions whose sales fed the mean —
+and the check triages a moved value instead of failing it flat:
+
+| | |
+|---|---|
+| inputs moved (an auction entered or left the window, or a quantity changed) | **note**, naming what entered and left |
+| inputs identical, value moved | **error** — a price inside an audited window was edited, or the recompute changed |
+| preview predates the column | **note** — unverified, not incorrect, the `onyxcheck` precedent |
+
+The error case is the only one that was ever worth a red, and it is the only one
+that still is. `validate-context.test.mjs` grew a case that backfills an auction
+into an audited window and asserts it does **not** block, alongside the existing
+case proving an unchanged-window move still does.
+
+**The second red in the same PR, and the same shape.** With the withheld check
+passing, `shopping-list.test.mjs` crashed. Its § 6 measures staleness on the
+newest season that can *support* the measurement; the seven auctions took 2027
+over that line, and 2027 is a season where nothing has diverged yet — so the
+flagged set came back empty, the vacuity guard reddened, and § 9, which named
+**Elven Bismuth** outright, dereferenced null three sections later. `MEASURABLE`
+was a necessary condition standing in for a sufficient one. The season is now
+chosen for the flag **actually firing**, and § 9 takes whichever good § 6
+flagged rather than naming one.
+
+> **A measurable season is not a season with anything to measure.** And a test
+> that names a row of the corpus is pinned to the corpus, however carefully the
+> comment above it explains that it is pinned to the wording.
+
+**Left open.** The lookback's tiebreak for same-day closes is
+`(a[0] < b[0] ? 1 : -1)` on the auction id — a **lexicographic** compare on a
+season-prefixed string, so `202713` (auction 13) outranks `20271` (auction 1).
+All ten 2027 auctions close on one of two days, so which five make the window is
+decided by that ordering: `20271` dropped out of `20274`'s window for no reason
+anyone would defend. Same bug class as the close-picker repair of the same day
+(*season then number, never `Number(auctionId)`*). It is in `src/lib/context.ts`
+and mirrored in both scripts, so changing it moves published estimates — a
+decision, not a cleanup. Tracked as `SITE-12`.
+
+Related: the `publish-check-blocks-publishing` memory, which this is the **ninth
+and tenth** entries in. Like `PIPE-6` and `PIPE-12`, both of these were
+structural — they would have recurred on every backfill and every quiet new
+season respectively, not once.
+
+## SITE-12. The withheld lookback breaks same-day ties lexicographically — OPEN, needs a decision
+
+`src/lib/context.ts` ranks the candidate auctions for a withheld estimate by
+close instant, then breaks ties with `a[0] < b[0] ? 1 : -1` — a string compare
+on `auctionId`. The ids are season-prefixed, so that is not "most recent first"
+and not "highest number first": it orders `20277 > 20276 > 20275 > 20273 >
+20272 > 202713 > … > 20271`, putting auction 13 ahead of auction 1.
+
+`closeDate` has **day** granularity, so the tiebreak decides real outcomes
+whenever several auctions close on one day — which is normal at the start of a
+season. Measured on 2026-09-20: nine of `20274`'s ten candidate auctions closed
+on 2026-09-19, the window keeps five, and `20271` was excluded purely because
+`'20271' < '202713'`.
+
+Ordering **season then number** would pick a different five and a different
+estimate. Neither ordering is more *correct* — within one day there is no real
+recency — but one of them is explicable and the other is an accident. The
+comment in the source calls it "a stable tiebreak", which it is; it does not
+claim to be meaningful, and it is not.
+
+Changing it moves published withheld figures, so it wants the maintainer's call
+rather than a quiet fix. The mirrors in `scripts/validate-context.mjs` and
+`scripts/gen-withheld-preview.mjs` must move with it, and the preview must be
+regenerated in the same PR.

@@ -1514,19 +1514,42 @@ the whole point of publishing from the sheet.
 
 **It doesn't any more.** The audit compares on the **intersection**: a value it
 already covers must still match to the cent, but a withheld row it has never
-seen is new data, not drift. A new auction can't move an old estimate — the
-recompute only reads sales closing *strictly before* the withheld auction, so
-that window is shut by the time a later auction exists.
+seen is new data, not drift.
+
+That was half the job. The other half was the reason given for it — *a new
+auction can't move an old estimate, because the recompute only reads sales
+closing strictly before the withheld auction* — which **is false**, and cost a
+second red publish on 2026-09-20 (PR #236). It confuses *recorded* later with
+*closed* later. Seven Trent auctions closing 2026-09-19 had their prices filled
+in the next day; `20274` closes 2026-09-20, so all seven dropped straight into
+a window the check believed was sealed, and its withheld `Ultra Rare` moved
+−502.62 → −593.42. Correct data, correct recompute, red check. Trent closes
+arrive in batches on days that already carry auctions, so it recurs by
+construction.
+
+So the preview now records each value's **inputs** — the `lookback_auctions`
+column, the auctions whose sales went into the mean — and a value that moved is
+triaged rather than failed:
 
 | What changed | What the check does |
 |---|---|
 | A new auction brings new withheld rows | **Passes.** Reported as new data. |
-| A value the audit covers has moved | **Fails**, naming the rows and the old and new figures. |
+| An auction was backfilled into an audited lookback window | **Notes** it, naming which auctions entered and left. |
+| A value moved with its inputs **unchanged** | **Fails**, naming the rows and the old and new figures. |
+| The preview predates `lookback_auctions` | **Notes** it. It can't be asked, so it is unverified, not incorrect. |
 | A withheld row disappeared | **Warns.** Visible; the publisher's row-delta guard is what makes a mass deletion something you have to confirm by hand. |
 
 So the only thing that still stops a publish is the one case that genuinely
-wants a person: a historical estimate that moved. A correction to an old price,
-or a change to the recompute itself, does that. A new auction does not.
+wants a person: **the same auctions, at the same quantities, producing a
+different number.** That means either a price inside an already-audited window
+was edited, or the recompute itself changed. Data moving does not.
+
+> **If it ever does fail, do NOT start from `main`.** That is the right advice
+> for bringing the audit forward (below) and the wrong advice for clearing a
+> failure: the data that produced the new value exists only on the publish
+> branch, so regenerating from `main` reproduces the *old* number and the check
+> fails again. Commit the regenerated preview onto the publish branch itself,
+> while it is still there. That is what cleared PR #236.
 
 > **It blocked once more anyway, and the validator was not to blame.**
 > On 2026-09-19 the first 2027 close (`20275`, nine withheld Random Ultra

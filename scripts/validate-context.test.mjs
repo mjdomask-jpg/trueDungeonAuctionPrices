@@ -7,13 +7,21 @@
 // roughly one publish in ten into manual work at a keyboard. The comparison is
 // now scoped to the intersection.
 //
-// That narrowing is only safe if it still catches real drift, so this proves
-// all three behaviours against a mutated copy of the data rather than asserting
-// the shape of the code:
+// That narrowing was only half the job. It let a new KEY through and still
+// failed any audited value that MOVED — and an audited value moves whenever an
+// auction is backfilled into a window that has already closed, which is a
+// routine publish and not a defect. So the audit now records the INPUTS behind
+// each value and triages instead of failing flat.
 //
-//   a new auction with withheld rows  -> passes  (the case that blocked)
-//   an audited value that moved       -> fails   (the audit's whole purpose)
-//   a withheld row that disappeared   -> warns   (visible, not a blocker)
+// Proved against a mutated copy of the data rather than by asserting the shape
+// of the code:
+//
+//   a new auction with withheld rows     -> passes  (the 2026-09-19 block)
+//   an auction backfilled into a window  -> notes   (the 2026-09-20 block, #236)
+//   a value that moved with its inputs
+//     unchanged                          -> fails   (the audit's whole purpose)
+//   a preview with no recorded inputs    -> notes   (unverified, not incorrect)
+//   a withheld row that disappeared      -> warns   (visible, not a blocker)
 //
 // The repo's own public/data and docs are never written to; everything runs
 // against a temp copy via --data / --docs.
@@ -49,7 +57,9 @@ function withCopy(mutate) {
   try {
     const readFile = (f) => readFileSync(join(data, f), 'utf8');
     const writeFile = (f, t) => writeFileSync(join(data, f), t);
-    mutate({ readFile, writeFile });
+    const readDoc = (f) => readFileSync(join(docs, f), 'utf8');
+    const writeDoc = (f, t) => writeFileSync(join(docs, f), t);
+    mutate({ readFile, writeFile }, { readDoc, writeDoc });
     const r = spawnSync(process.execPath, [script, '--data', data, '--docs', docs], { encoding: 'utf8' });
     return { code: r.status, out: (r.stdout ?? '') + (r.stderr ?? '') };
   } finally {
@@ -58,6 +68,23 @@ function withCopy(mutate) {
 }
 
 const append = (text, line) => text.replace(/\n?$/, '\n') + line + '\n';
+
+// auctionMetadata quotes any field holding a comma — an auction name, and every
+// money column. A plain split(',') shifts every index past the first such field,
+// so closeDate stops being closeDate on exactly the rows most likely to matter.
+const cells = (line) => {
+  const out = []; let f = '', q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) { if (c === '"') { if (line[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { out.push(f); f = ''; }
+    else f += c;
+  }
+  out.push(f);
+  return out;
+};
+const CLOSE_DATE = 9; // auctionId,season,number,name,style,completion,auctioneer,Link,openDate,closeDate
 
 console.log('Withheld audit\n');
 
@@ -140,6 +167,73 @@ const drifted = withCopy(({ readFile, writeFile }) => {
 check('a drifted audited value still FAILS', drifted.code !== 0, drifted.out);
 check('the failure names the drift and how to resolve it',
   /drifted from the audited preview/.test(drifted.out) && /gen-withheld-preview\.mjs/.test(drifted.out), drifted.out);
+
+// 2b. The same value moving, but because its INPUTS moved: an auction
+//     BACKFILLED into a window that was already audited.
+//
+//     This is the case that reddened PR #236 and it is the reason case 2 above
+//     is no longer the whole story. The narrowing used to rest on "a new
+//     auction cannot move an old estimate, because valueWithheld only reads
+//     sales closing strictly before the withheld auction" — which confuses
+//     RECORDED later with CLOSED later. Seven Trent auctions closing
+//     2026-09-19 were filled in on 2026-09-20; 20274 closes 2026-09-20, so
+//     every one of them landed inside its window and its `Ultra Rare` estimate
+//     moved -502.62 -> -593.42. Correct data, correct recompute, red publish —
+//     and unfixable from main, since the data producing the new value lives
+//     only on the publish branch.
+//
+//     So it must NOT block, and it must say which auctions entered.
+const backfilled = withCopy(({ readFile, writeFile }) => {
+  const withheldRow = readFile('contextItems.csv').split('\n').find((l) => /,withheld,/.test(l)).split(',');
+  const [auctionId, season] = withheldRow;
+  const item = withheldRow[4];
+  const close = readFile('auctionMetadata.csv').split('\n').slice(1)
+    .map(cells).find((c) => c[0] === auctionId)[CLOSE_DATE];
+  // The day BEFORE the withheld auction closes: the latest an auction can close
+  // and still be prior, so it is certain to enter the 5-most-recent window.
+  const d = new Date(close + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 1);
+  const eve = d.toISOString().slice(0, 10);
+  const cols = readFile('auctionMetadata.csv').split('\n')[0].split(',').length;
+  const row = ['999999', season, '98', 'Synthetic backfill', 'Ultra Condensed', 'Lightning', 'Tester',
+    'https://truedungeon.com/x', eve, eve, '1', 'Closed', '1', '1', '"$8,000.00"', 'No',
+    '', '', '', '$0.00', '"$8,000.00"', '$0.00'].slice(0, cols).join(',');
+  writeFile('auctionMetadata.csv', append(readFile('auctionMetadata.csv'), row));
+  writeFile('prices.csv', append(readFile('prices.csv'),
+    `999999,${season},98,${item},9999,${item},${item}`));
+});
+check('an auction BACKFILLED into an audited window does not block', backfilled.code === 0, backfilled.out);
+check('...and it is reported as inputs moving, naming what entered the lookback',
+  /inputs did \(\+999999/.test(backfilled.out), backfilled.out);
+check('...and is never called drift, which is what a red check would have claimed',
+  !/drifted from the audited preview/.test(backfilled.out), backfilled.out);
+
+// 2c. The guard cannot be armed by a preview that predates `lookback_auctions`.
+//     Such a file cannot be asked which auctions fed a value, so every moved
+//     value is UNVERIFIED, not incorrect — onyxcheck's precedent — and it says
+//     so on every run rather than going quietly green.
+const legacyPreview = withCopy(({ readFile, writeFile }, { readDoc, writeDoc }) => {
+  const lines = readDoc('withheld-recompute-preview.csv').split('\n');
+  const cut = lines[0].split(',').indexOf('lookback_auctions');
+  writeDoc('withheld-recompute-preview.csv',
+    lines.map((l) => (l.trim() ? l.split(',').filter((_, i) => i !== cut).join(',') : l)).join('\n'));
+  // ...and move a value, so there is something for it to fail to triage.
+  const withheldRow = readFile('contextItems.csv').split('\n').find((l) => /,withheld,/.test(l)).split(',');
+  const [auctionId, season] = withheldRow;
+  const item = withheldRow[4];
+  const closeOf = new Map(readFile('auctionMetadata.csv').split('\n').slice(1)
+    .map(cells).filter((c) => c[0]).map((c) => [c[0], c[CLOSE_DATE]]));
+  const pl = readFile('prices.csv').split('\n');
+  const i = pl.findIndex((l) => {
+    const c = l.split(',');
+    return c[1] === season && c[5] === item && closeOf.get(c[0]) && closeOf.get(c[0]) < closeOf.get(auctionId);
+  });
+  const c = pl[i].split(','); c[4] = String(Number(c[4]) * 4 + 5); pl[i] = c.join(',');
+  writeFile('prices.csv', pl.join('\n'));
+});
+check('a preview with no recorded lookback cannot block a publish', legacyPreview.code === 0, legacyPreview.out);
+check('...and names the column it is missing and how to get it',
+  /predates the lookback_auctions column/.test(legacyPreview.out) &&
+  /gen-withheld-preview\.mjs/.test(legacyPreview.out), legacyPreview.out);
 
 // 3. A withheld row that DISAPPEARED. Visible, but not a blocker — the
 //    publisher's row-delta guard is what stops a mass deletion.
