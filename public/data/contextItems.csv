@@ -132,7 +132,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20222,2022,2,withheld,Ring of the 5th Circle,4,
 20222,2022,2,token,Shirt of the Fae,1,$21.00
 20222,2022,2,token,Stu-pendous Pendant,1,$80.00
-20222,2022,2,withheld,Ultra Rare,6,
+20222,2022,2,withheld,Chosen Ultra Rare,6,
 202216,2022,16,token,Charm of the Faerie,1,$65.00
 202216,2022,16,token,Mage Medallion,1,$201.00
 202216,2022,16,token,Master Drinker's Gloves,1,$2.00
@@ -235,7 +235,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20236,2023,6,withheld,Ring of the 4th Circle,2,-$170.67
 20236,2023,6,withheld,Ring of the 4th Circle,1,-$85.34
 20236,2023,6,token,Sacred Necklace,1,$206.00
-20236,2023,6,withheld,Ultra Rare,4,-$317.82
+20236,2023,6,withheld,Chosen Ultra Rare,4,-$317.82
 202310,2023,10,token,+2 Flaming Blade,1,$65.00
 202310,2023,10,token,Amulet of Aiming,1,$65.00
 202310,2023,10,token,Butterfly Cloak,1,$50.00
@@ -337,7 +337,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202349,2023,49,grunnel,Prove Fear Prop,1,$60.00
 202349,2023,49,grunnel,Small Favor Scroll,1,$100.00
 202349,2023,49,grunnel,Symbol of Discord Prop,1,$10.00
-202349,2023,49,withheld,Ultra Rare,2,-$185.22
+202349,2023,49,withheld,Chosen Ultra Rare,2,-$185.22
 202350,2023,50,token,+2 Sun Scimitars (2),1,$150.00
 202350,2023,50,token,Boots of Protection,1,$180.00
 202350,2023,50,token,Chance at AoTF,1,$125.00
@@ -581,7 +581,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20251,2025,1,token,Soul Coffer (2018 Onyx),1,$90.00
 20251,2025,1,token,Stalker Bead of Focus,1,$180.00
 20251,2025,1,token,Totem of Heroism (2022),1,$655.00
-20251,2025,1,withheld,Ultra Rare,15,"-$1,050.23"
+20251,2025,1,withheld,Chosen Ultra Rare,15,"-$1,050.23"
 20251,2025,1,withheld,Wish Ring,1,-$164.95
 20251,2025,1,withheld,Wish Ring,2,-$261.93
 20255,2025,5,token,+2 Savage Sword,1,$55.50
@@ -766,7 +766,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202647,2026,47,token,Random Ultra Rare,9,$497.00
 202647,2026,47,grunnel,Tomb of Terror Redux Banner,1,$161.00
 202518,2025,18,withheld,Patron Pin,1,-$309.45
-202518,2025,18,withheld,Ultra Rare,1,-$70.02
+202518,2025,18,withheld,Chosen Ultra Rare,1,-$70.02
 202518,2025,18,withheld,Alchemist's Ink,9,-$26.96
 202518,2025,18,withheld,Alchemist's Parchment,3,-$6.93
 202518,2025,18,withheld,Aragonite,3,-$29.46
@@ -815,7 +815,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20272,2027,2,token,Earcuff of Greater Glory,1,$215.00
 20272,2027,2,token,Full Herald Chaser Set,1,$69.00
 20272,2027,2,token,Random Ultra Rare,9,$279.00
-20274,2027,4,withheld,Ultra Rare,10,
+20274,2027,4,withheld,Chosen Ultra Rare,10,
 20274,2027,4,token,Bead of the Lucky Traveler from Lady Darkhold TD Prop,1,$126.00
 20274,2027,4,token,Charm of Spell Swapping,1,$56.00
 20274,2027,4,token,Figurine of Power: Phoenix,1,$30.00
