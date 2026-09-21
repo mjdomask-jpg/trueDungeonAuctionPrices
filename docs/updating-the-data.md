@@ -2006,12 +2006,27 @@ Condensed*. It crosses the Onyx axis, so there are four combinations:
 | **Onyx** | `Onyx Ultra Condensed` | `Onyx Trade 2 Ultra Condensed` |
 
 It is a **value in `auctionStyle`, not a column.** That column already records
-what an order *contains*, both fences already let it grow (§ 7 does not close
-it, the dropdown only warns), and nothing in the site parses it — so the value
-needed no schema change. The company has said 2027 only, and a style value can
-stop being offered, while a column would stay in the schema, the publish
-allow-list and the promote list for ever. `Onyx` stays first so the Onyx styles
-sort together.
+what an order *contains*, and both fences already let it grow (§ 7 does not
+close it, the dropdown only warns) — so the value needed no schema change. The
+company has said 2027 only, and a style value can stop being offered, while a
+column would stay in the schema, the publish allow-list and the promote list
+for ever. `Onyx` stays first so the Onyx styles sort together.
+
+> **The site now READS these words, which it did not when this was written.**
+> `deriveOrderVariant()` in `src/lib/data.ts` matches `/\btrade 2\b/i` against
+> `auctionStyle` and hands the answer to the Analytics → Funding & Context →
+> **Standard vs Trade 2 order prices** view. So the words matter beyond the
+> dropdown: an auction whose style omits them is counted as a standard order in
+> that comparison. Nothing else changes — a wrong style does not move a price,
+> a total or any other panel — but it does move an auction from one side of
+> that table to the other. The `Onyx` prefix and the rest of the style are
+> ignored by the match, so all four combinations in the table above work.
+>
+> A blank `auctionStyle` (which is what the Phase-4 scan deliberately leaves on
+> the auctions Trent's own alternation rule covers — see § *Watching for new
+> auctions*) therefore reads as **standard** until a human types it. That is
+> the safe direction: it is visible in the auction's own chips on the Auction
+> Data page, and it is the same cell § 6 already nags about.
 
 **If 2028 runs one order, nothing has to be undone.** Stop typing the words;
 delete the two entries from `HARDEN_VOCABULARY` and re-run Harden if you want
@@ -2024,6 +2039,9 @@ trust it:
    Enchantment across the auction's lots: **11 / 13 / 13** is the normal order
    and **15 / 20 / 20** is the Trade 2 one. This is what `validate-prices.mjs`
    § 6 checks, and it is the only evidence that comes from the auction itself.
+   Measured 2026-09-21 across all twelve priced 2027 auctions, the recorded
+   `auctionStyle` and these counts agree **12 of 12** — which is what makes the
+   site's `deriveOrderVariant` safe to read off the style rather than the lots.
 2. **The auction name.** `Option A` is normal, `Option B` is Trade 2. Right on
    all four of the 2027 auctions whose names say either — but most names say
    neither.

@@ -8,7 +8,10 @@
 //
 // Full design: docs/context-layer-design.md. Withheld method: data-audit.md §6.1.
 
-import { parseCSV, dateKey, cleanName, type Sale, type AuctionMeta } from './data';
+import {
+  parseCSV, dateKey, cleanName, AUCTION_SOURCES,
+  type Sale, type AuctionMeta, type AuctionSource,
+} from './data';
 import { ERAS } from './eras';
 
 // How an item entered the auction — an axis ORTHOGONAL to its token category.
@@ -244,7 +247,7 @@ export function rollupByAuction(items: ContextItem[]): Map<string, AuctionContex
 // without the types depending on React. See applyViewFilters for the one place
 // pages funnel their sale feed through.
 
-export type SourceFilter = 'all' | 'Forum' | 'Trent';
+export type SourceFilter = 'all' | AuctionSource;
 export type TrentPricing = 'nominal' | 'reward-adjusted';
 export type AuctionTypeFilter = 'all' | 'augmented' | 'non-augmented' | 'golden-ticket';
 
@@ -257,9 +260,40 @@ export type ViewFilter = {
   auctionType: AuctionTypeFilter;
 };
 
-// Seasons that actually contain a Trent auction — what the Source and
-// Trent-pricing controls need to exist before they mean anything. Two gates,
-// both deliberate:
+// Which venues ran auctions in each season, so the Source control can offer
+// exactly the sources a page can actually show. Derived per auction (see
+// deriveSource), never from a calendar cutoff — the same rule as seasonsWithTrent
+// below, and for the same reason: a venue's first auction can close in the
+// calendar year before its season.
+//
+// The Source control appears only where a season holds MORE THAN ONE of these.
+// That is what has always been meant by "hide it before 2023" — every season up
+// to 2022 is Forum-only, so the dropdown could only ever filter to what was
+// already on screen. Stating it as "more than one source" rather than "has Trent"
+// is what lets 2027 offer three without a second rule.
+export function sourcesBySeason(meta: AuctionMeta[]): Map<string, Set<AuctionSource>> {
+  const out = new Map<string, Set<AuctionSource>>();
+  for (const m of meta) {
+    let s = out.get(m.season);
+    if (!s) { s = new Set(); out.set(m.season, s); }
+    s.add(m.source);
+  }
+  return out;
+}
+
+// The sources on offer across a set of seasons, in AUCTION_SOURCES order.
+// `seasons` undefined means "not season-scoped" — ask the whole dataset.
+export function sourcesInSeasons(
+  bySeason: Map<string, Set<AuctionSource>>, seasons?: string[],
+): AuctionSource[] {
+  const present = new Set<AuctionSource>();
+  const scope = seasons ? seasons.map((s) => bySeason.get(s)) : [...bySeason.values()];
+  for (const set of scope) if (set) for (const src of set) present.add(src);
+  return AUCTION_SOURCES.filter((s) => present.has(s));
+}
+
+// Seasons that actually contain a Trent auction — what the Trent-pricing control
+// needs to exist before it means anything. Two gates, both deliberate:
 //  - the ERAS.trentStartSeason floor is the HARD RULE. Trent ran no auctions
 //    before 2023, so those seasons can never offer the controls, whatever a
 //    stray row in the export might say.

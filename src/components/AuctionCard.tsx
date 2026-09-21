@@ -1,5 +1,5 @@
 import { fmtDateLong, money } from '../lib/format';
-import { TENX_PREFIX } from '../lib/data';
+import { TENX_PREFIX, SOURCE_LABEL } from '../lib/data';
 import type { AuctionGroup } from '../lib/data';
 import { isReleasedPayment, type ContextItem } from '../lib/context';
 import { ProvenanceBadge, ReleasedBadge } from './ProvenanceBadge';
@@ -27,10 +27,19 @@ export function AuctionCard({
 
   // Metadata worth showing as chips. 'n/a' and blanks are dropped rather than
   // rendered as empty chips — 42 auctions carry no style or auctioneer at all.
-  // Source (Forum/Trent) rides along so the card says where the auction ran,
-  // matching what the former Augments & Withheld cards showed.
-  const facts = [meta.style, meta.completionStyle, meta.auctioneer, meta.source]
-    .filter((v) => v && v !== 'n/a');
+  // Source (Forum / Trent / Alesiev Auctions) rides along so the card says where
+  // the auction ran, matching what the former Augments & Withheld cards showed.
+  //
+  // De-duplicated, because on a Trent auction the auctioneer and the venue are
+  // the same word and the row read "… Trent Trent". React was hiding that: the
+  // chips are keyed by their text, so the second "Trent" was a duplicate key and
+  // got dropped. Dropping it on purpose is the same output with the warning
+  // gone — and the warning was worth clearing, since a duplicate key is licence
+  // for React to omit the wrong one.
+  const facts = [...new Set(
+    [meta.style, meta.completionStyle, meta.auctioneer, SOURCE_LABEL[meta.source]]
+      .filter((v) => v && v !== 'n/a'),
+  )];
 
   // A released Golden Ticket / Random Ultra Rare is inconsistently recorded as
   // BOTH a real sale and an "included" context row (see lib/context

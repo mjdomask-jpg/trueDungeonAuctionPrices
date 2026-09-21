@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import type { AuctionMeta, Sale, GroupRow } from '../lib/data';
+import { SOURCE_LABEL, type AuctionMeta, type AuctionSource, type Sale, type GroupRow } from '../lib/data';
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
   auctionLedger,
   grunnelPerAuction, augmentedVsNot,
-  sourceOverlapSeasons, trentVsForumSeason,
+  sourceOverlapSeasons, trentVsSourceSeason,
+  orderVariantSeasons, standardVsTradeTwo,
   type LedgerRow, type GrunnelAuctionRow, type SourceTokenRow,
 } from '../lib/contextAnalytics';
 import { ERAS, groupLabel } from '../lib/eras';
@@ -13,22 +14,24 @@ import { BarChart } from './BarChart';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 // The context-layer analytics (docs/context-layer-design.md §6), the fourth
-// increment of the layer. Four questions behind one picker, so the top-level
-// Analytics toggle gains a single "Funding & Context" view rather than four more
-// buttons. Each analysis is a pure function in lib/contextAnalytics; this file is
+// increment of the layer. Several questions behind one picker, so the top-level
+// Analytics toggle gains a single "Funding & Context" view rather than one button
+// per analysis. Each is a pure function in lib/contextAnalytics; this file is
 // presentation only.
 //
 // These views deliberately do NOT read the shared FilterBar: they are intrinsic
-// comparisons (augmented vs not, Trent vs Forum), so a Source/type filter would
-// hide the very halves being compared. They compute their own splits.
+// comparisons (augmented vs not, one venue vs another, standard order vs Trade 2),
+// so a Source/type filter would hide the very halves being compared. They compute
+// their own splits, and each offers only the seasons where its split exists.
 
-type Analysis = 'ledger' | 'grunnel' | 'augmented' | 'source';
+type Analysis = 'ledger' | 'grunnel' | 'augmented' | 'source' | 'variant';
 
 const ANALYSES: { key: Analysis; label: string }[] = [
   { key: 'ledger', label: 'Auction ledger — did augments cover withholdings?' },
   { key: 'grunnel', label: 'Grunnel drops vs the preorder benchmark' },
   { key: 'augmented', label: 'Augmented vs non-augmented prices' },
-  { key: 'source', label: 'Trent vs Forum prices' },
+  { key: 'source', label: 'Trent vs other venues — prices by source' },
+  { key: 'variant', label: 'Standard vs Trade 2 order prices' },
 ];
 
 const GRUNNEL_COLOR = 'var(--series-1)';
@@ -76,6 +79,9 @@ export function ContextAnalytics({
       )}
       {hasContext && analysis === 'source' && (
         <SourceView meta={meta} sales={sales} groupRows={groupRows} />
+      )}
+      {hasContext && analysis === 'variant' && (
+        <VariantView meta={meta} sales={sales} groupRows={groupRows} />
       )}
     </>
   );
@@ -495,14 +501,18 @@ const sourcePrice = (n: number) => (Math.abs(n) < 10 ? money(n) : money0(n));
 // fall into "Other tokens", sorted last, so nothing is silently dropped.
 // `group` is the stable CSV key (ordering, React key); `label` is its heading for
 // this season, since a few groups are renamed year to year (see eras.groupLabel).
-type SourceChartGroup = { group: string; label: string; order: number; category: string; rows: SourceTokenRow[] };
+// Generic over the row type so the Standard-vs-Trade-2 view below can group its
+// own rows the same way — the folding only ever reads `item` and `category`.
+type TokenChartGroup<T> = { group: string; label: string; order: number; category: string; rows: T[] };
 
-function groupForCharts(rows: SourceTokenRow[], groupRows: GroupRow[], season: string): SourceChartGroup[] {
+function groupForCharts<T extends { item: string; category: string }>(
+  rows: T[], groupRows: GroupRow[], season: string,
+): TokenChartGroup<T>[] {
   const meta = new Map<string, { group: string; order: number; category: string }>();
   for (const g of groupRows) if (!meta.has(g.item)) meta.set(g.item, { group: g.group, order: g.groupOrder, category: g.category });
 
   const OTHER = 'Other tokens';
-  const byGroup = new Map<string, SourceChartGroup>();
+  const byGroup = new Map<string, TokenChartGroup<T>>();
   for (const r of rows) {
     const gm = meta.get(r.item);
     const group = gm?.group ?? OTHER;
@@ -530,14 +540,28 @@ function SourceView({
   groupRows: GroupRow[];
 }) {
   const narrow = useMediaQuery(NARROW);
-  const seasons = useMemo(() => sourceOverlapSeasons(sales, meta), [sales, meta]);
+  const overlaps = useMemo(() => sourceOverlapSeasons(sales, meta), [sales, meta]);
+  const seasons = useMemo(() => overlaps.map((o) => o.season), [overlaps]);
   const [picked, setPicked] = useState('');
   const season = picked && seasons.includes(picked) ? picked : (seasons[0] ?? '');
   const [pricing, setPricing] = useState<Pricing>('nominal');
 
+  // Which venues this season can be compared against. Usually one (the forum);
+  // in a season where Trent overlaps both the forum and alesievauctions.com the
+  // reader picks. `pickedOther` is not reset on a season change — it is validated
+  // against the season's own list instead, which falls back on its own.
+  const others = useMemo(
+    () => overlaps.find((o) => o.season === season)?.others ?? [],
+    [overlaps, season],
+  );
+  const [pickedOther, setPickedOther] = useState<AuctionSource | ''>('');
+  const other: AuctionSource | null =
+    (pickedOther && others.includes(pickedOther) ? pickedOther : others[0]) ?? null;
+  const otherLabel = other ? SOURCE_LABEL[other] : '';
+
   const rows = useMemo(
-    () => (season ? trentVsForumSeason(sales, meta, season) : []),
-    [sales, meta, season],
+    () => (season && other ? trentVsSourceSeason(sales, meta, season, other) : []),
+    [sales, meta, season, other],
   );
   const chartGroups = useMemo(() => groupForCharts(rows, groupRows, season), [rows, groupRows, season]);
 
@@ -545,33 +569,36 @@ function SourceView({
   const adjusted = pricing === 'adjusted';
   const trentOf = (r: SourceTokenRow) => (adjusted ? r.trentAvg * (1 - ERAS.trentRewardRate) : r.trentAvg);
   const trentLabel = adjusted ? `Trent (−${REWARD_PCT}%)` : 'Trent';
+  const heading = other ? `Trent vs ${otherLabel} prices` : 'Trent vs other venues';
 
   if (!seasons.length) {
     return (
       <section className="an-panel">
-        <h2>Trent vs Forum prices</h2>
-        <p className="empty">No token sold under both sources in any season.</p>
+        <h2>Trent vs other venues</h2>
+        <p className="empty">No token sold under Trent and another venue in the same season.</p>
       </section>
     );
   }
 
   return (
     <section className="an-panel">
-      <h2>Trent vs Forum prices</h2>
+      <h2>{heading}</h2>
       <p className="an-lede">
         {narrow ? (
-          <>Per token, its <strong>Forum</strong> vs <strong>Trent</strong> average price in one
-          season — tokens sold under both only.</>
+          <>Per token, its <strong>{otherLabel}</strong> vs <strong>Trent</strong> average price in
+          one season — tokens sold under both only.</>
         ) : (
-          <>For one season, each token that sold under <strong>both</strong> sources shows its Forum
-          average beside its Trent average — matched per token, so neither token mix nor time skews
-          the comparison. Trent can be shown nominal or <strong>reward-adjusted</strong> (−{REWARD_PCT}%,
-          the ~100 pt/$1 reward that lowers a Trent buyer's effective cost).</>
+          <>For one season, each token that sold under <strong>both</strong> venues shows its
+          {' '}{otherLabel} average beside its Trent average — matched per token, so neither token
+          mix nor time skews the comparison. Trent can be shown nominal or
+          {' '}<strong>reward-adjusted</strong> (−{REWARD_PCT}%, the ~100 pt/$1 reward that lowers a
+          Trent buyer's effective cost).</>
         )}
       </p>
       <p className="confound-note">
-        Trent auctions exist only from season {ERAS.trentStartSeason} on, so only seasons both sources
-        ran appear{narrow ? '.' : ' — comparing all-time would confound source with time.'}
+        Trent auctions exist only from season {ERAS.trentStartSeason} on, and alesievauctions.com
+        only from 2027, so only seasons both venues ran appear
+        {narrow ? '.' : ' — comparing all-time would confound venue with time.'}
       </p>
 
       <div className="an-controls">
@@ -581,6 +608,16 @@ function SourceView({
             {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
+        {/* Offered only where the season really has two venues to compare Trent
+            against; with one there is nothing to choose and the heading says it. */}
+        {others.length > 1 && (
+          <label className="an-picker">
+            Compare against
+            <select value={other ?? ''} onChange={(e) => setPickedOther(e.target.value as AuctionSource)}>
+              {others.map((o) => <option key={o} value={o}>{SOURCE_LABEL[o]}</option>)}
+            </select>
+          </label>
+        )}
         <label className="an-picker">
           Trent pricing
           <select value={pricing} onChange={(e) => setPricing(e.target.value as Pricing)}>
@@ -591,7 +628,7 @@ function SourceView({
       </div>
 
       {rows.length === 0 ? (
-        <p className="empty">No token sold under both sources in {season}.</p>
+        <p className="empty">No token sold under both venues in {season}.</p>
       ) : (
         <>
           <div className="an-scroll">
@@ -600,7 +637,7 @@ function SourceView({
                 <tr>
                   <th className="left">Token</th>
                   {!narrow && <th className="left">Category</th>}
-                  <th className="num">Forum</th>
+                  <th className="num">{otherLabel}</th>
                   <th className="num">{trentLabel}</th>
                 </tr>
               </thead>
@@ -612,7 +649,7 @@ function SourceView({
                       {narrow && r.category && <span className="an-lsub">{r.category}</span>}
                     </td>
                     {!narrow && <td className="left muted">{r.category}</td>}
-                    <td className="num">{money(r.forumAvg)}</td>
+                    <td className="num">{money(r.otherAvg)}</td>
                     <td className="num">{money(trentOf(r))}</td>
                   </tr>
                 ))}
@@ -628,16 +665,168 @@ function SourceView({
                 <BarChart
                   categories={cg.rows.map((r) => r.displayName)}
                   series={[
-                    { label: 'Forum', color: FORUM_COLOR, values: cg.rows.map((r) => r.forumAvg) },
+                    { label: otherLabel, color: FORUM_COLOR, values: cg.rows.map((r) => r.otherAvg) },
                     { label: trentLabel, color: TRENT_COLOR, values: cg.rows.map((r) => trentOf(r)) },
                   ]}
                   yLabel="Avg price" format={sourcePrice}
-                  ariaLabel={`Forum versus ${adjusted ? 'reward-adjusted ' : ''}Trent average price for ${cg.label} tokens in ${season}`}
+                  ariaLabel={`${otherLabel} versus ${adjusted ? 'reward-adjusted ' : ''}Trent average price for ${cg.label} tokens in ${season}`}
                   maxLabels={12}
                 />
               </div>
             ))}
           </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+// --- View 5: Standard vs Trade 2 -------------------------------------------
+
+// Blue against orange: the pair that stays distinguishable for the common forms
+// of colour blindness, which matters more here than on the venue charts because
+// the two series are the whole content of the view.
+const STANDARD_COLOR = 'var(--series-1)';
+const TRADE2_COLOR = 'var(--series-8)';
+
+function VariantView({
+  meta, sales, groupRows,
+}: {
+  meta: AuctionMeta[];
+  sales: Sale[];
+  groupRows: GroupRow[];
+}) {
+  const narrow = useMediaQuery(NARROW);
+  const price = (n: number) => (narrow ? moneyTight(n) : money(n));
+  // Seasons running both orders. Read from the data (deriveOrderVariant over
+  // auctionStyle), so this view appears the season a second order is offered and
+  // stops appearing when one is not — there is no year written down anywhere.
+  const seasons = useMemo(() => orderVariantSeasons(meta), [meta]);
+  const [picked, setPicked] = useState('');
+  const season = picked && seasons.includes(picked) ? picked : (seasons[0] ?? '');
+  const result = useMemo(
+    () => (season ? standardVsTradeTwo(sales, meta, season) : null),
+    [sales, meta, season],
+  );
+  const chartGroups = useMemo(
+    () => groupForCharts(result?.rows ?? [], groupRows, season),
+    [result, groupRows, season],
+  );
+
+  if (!seasons.length) {
+    return (
+      <section className="an-panel">
+        <h2>Standard vs Trade 2 order prices</h2>
+        <p className="empty">
+          No season has run both a standard and a Trade 2 order. The second order first appeared in
+          season 2027; this view fills in on its own when a season carries both.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="an-panel">
+      <h2>Standard vs Trade 2 order prices</h2>
+      <p className="an-lede">
+        {narrow ? (
+          <>Each token's average price in <strong>Trade 2</strong> auctions vs{' '}
+          <strong>standard</strong> ones, same season. Only tokens sold in both appear.</>
+        ) : (
+          <>Since season 2027 the company offers two different $8k orders — the standard one and a{' '}
+          <strong>Trade 2</strong> one, which auctioneers advertise as Option A and Option B. For one
+          season, each token's average price in Trade 2 auctions sits beside its average in standard
+          ones. Only tokens sold in <em>both</em> appear, which is what makes this a comparison of{' '}
+          <em>prices</em> rather than of what the two orders happen to contain.</>
+        )}
+      </p>
+      <p className="confound-note">
+        Read as a price question, not a supply one. The two orders ship different quantities of the
+        premium trade goods, so a token's average here says what bidders paid per token — not how
+        many of it were on offer. The split is read from each auction's recorded style, which is
+        where the sheet stores which order was sold.
+      </p>
+
+      <label className="an-picker">
+        Season
+        <select value={season} onChange={(e) => setPicked(e.target.value)}>
+          {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </label>
+
+      {result && (
+        <>
+          <p className="confound-note">
+            {result.season}: {result.tradeTwoAuctions} Trade 2 vs {result.standardAuctions} standard
+            auction{result.standardAuctions === 1 ? '' : 's'} with prices, {result.rows.length} token
+            {result.rows.length === 1 ? '' : 's'} sold in both.
+            {result.tradeTwoOnly.length > 0
+              && ` Only in Trade 2: ${result.tradeTwoOnly.join(', ')}.`}
+            {result.standardOnly.length > 0
+              && ` Only in standard: ${result.standardOnly.join(', ')}.`}
+          </p>
+
+          {result.rows.length === 0 ? (
+            <p className="empty">No token sold in both a Trade 2 and a standard auction this season.</p>
+          ) : (
+            <>
+              <div className="an-scroll">
+                <table className={`an-table an-auto${result.rows.length >= 4 ? ' banded' : ''}`}>
+                  <thead>
+                    <tr>
+                      <th className="left">Token</th>
+                      {!narrow && <th className="left">Category</th>}
+                      <th className="num">Trade 2</th>
+                      <th className="num">{narrow ? 'Std.' : 'Standard'}</th>
+                      <th className="num">Δ</th>
+                      {!narrow && <th className="num">Δ %</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.rows.map((r) => (
+                      <tr key={r.item}>
+                        <td className="left">
+                          {r.displayName}
+                          {/* Mobile drops the Category column; show it as subtext instead. */}
+                          {narrow && r.category && <span className="an-lsub">{r.category}</span>}
+                        </td>
+                        {!narrow && <td className="left muted">{r.category}</td>}
+                        <td className="num">{price(r.tradeTwoAvg)}</td>
+                        <td className="num">{price(r.standardAvg)}</td>
+                        <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>{price(r.delta)}</td>
+                        {!narrow && (
+                          <td className={`num diff ${r.delta >= 0 ? 'up' : 'down'}`}>
+                            {r.pct == null ? '—' : `${r.pct >= 0 ? '+' : ''}${(r.pct * 100).toFixed(0)}%`}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Same per-group charts as the venue view: prices here span cents
+                  (trade goods) to four figures (8k Bonus), so one chart over every
+                  token would flatten most of them onto the axis. */}
+              <div className="src-charts">
+                {chartGroups.map((cg) => (
+                  <div key={cg.group} className="src-chart">
+                    <h3 className="an-subhead" data-category={cg.category}>{cg.label}</h3>
+                    <BarChart
+                      categories={cg.rows.map((r) => r.displayName)}
+                      series={[
+                        { label: 'Standard', color: STANDARD_COLOR, values: cg.rows.map((r) => r.standardAvg) },
+                        { label: 'Trade 2', color: TRADE2_COLOR, values: cg.rows.map((r) => r.tradeTwoAvg) },
+                      ]}
+                      yLabel="Avg price" format={sourcePrice}
+                      ariaLabel={`Standard versus Trade 2 average price for ${cg.label} tokens in ${season}`}
+                      maxLabels={12}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </section>

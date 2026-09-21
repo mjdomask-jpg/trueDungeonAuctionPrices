@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { parseSales, parseMeta, parseGroups, type Sale, type AuctionMeta, type GroupRow } from '../lib/data';
 import {
-  parseContextItems, buildContextItems, rollupByAuction, findGoldenTicketAuctions, seasonsWithTrent,
+  parseContextItems, buildContextItems, rollupByAuction, findGoldenTicketAuctions,
+  seasonsWithTrent, sourcesBySeason,
   type RawContextItem,
 } from '../lib/context';
 import {
@@ -103,16 +104,18 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
     () => findGoldenTicketAuctions(sales, rawContext),
     [sales, rawContext],
   );
-  // Which seasons have Trent auctions at all — the FilterBar hides its Source
-  // and Trent-pricing controls for seasons that have none. Memoised here beside
+  // Which seasons have Trent auctions at all — the FilterBar hides its
+  // Trent-pricing control for seasons that have none. Memoised here beside
   // goldenTicketAuctions so every page shares one answer.
   const trentSeasons = useMemo(() => seasonsWithTrent(meta), [meta]);
+  // And which venues ran each season, which is what the Source dropdown offers.
+  const seasonSources = useMemo(() => sourcesBySeason(meta), [meta]);
 
   return (
     <AuctionDataContext.Provider
       value={{
         sales, meta, onyxSales, groupRows, contextItems, auctionContext,
-        goldenTicketAuctions, trentSeasons,
+        goldenTicketAuctions, trentSeasons, seasonSources,
         recipes, tokenMeta, offAuctionPrices, derivedRules, loading, error,
       }}
     >
