@@ -988,6 +988,56 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
     if (r.category === 'withheld' && price > 0) errs.push(`${where}: withheld price $${price} is positive — withheld is a debit`);
     if ((r.category === 'token' || r.category === 'grunnel') && price < 0) errs.push(`${where}: ${r.category} price $${price} is negative`);
   }
+  // A withheld row the site cannot put a value on.
+  //
+  // The site does not trust `priceAugmented` on a withheld row — it RECOMPUTES
+  // the value from that item's own same-season sales (context-layer design §4).
+  // When there are none, it falls back to the sheet's reference, and on a
+  // withheld row that cell is usually blank. So the row values at $0 and the
+  // auction's ledger reads as though nothing was withheld. Nothing errors and
+  // nothing on the site says so — which is exactly what happened to `20275`,
+  // whose nine withheld rows all showed $0 because its eight Onyx chase tokens
+  // appear in no file the estimate was reading.
+  //
+  // This is the check that would have caught it the day it landed, so it is
+  // worth having even though the two causes it found are now fixed (onyx.csv is
+  // in the estimate's feed, and an estimate with no PRIOR sale may read forward
+  // within its season).
+  //
+  // Availability only: it asks whether any same-season sale of the name exists
+  // in a DIFFERENT auction, which is the precondition for an estimate in either
+  // direction. It deliberately does not recompute the estimate — duplicating
+  // that arithmetic here would give the repo two implementations of it to keep
+  // in step, and the one that matters is the site's.
+  //
+  // A NOTE, not an error. An unpriceable withheld row can be legitimate — a
+  // token genuinely sold nowhere else that season — and the remedy is usually a
+  // missing row in another file, not a defect in this one. It should say which
+  // row to look at rather than block the publish that carries it.
+  {
+    const soldSameSeason = new Map(); // `season|name` -> Set of auctionIds
+    for (const r of [...prices, ...onyx]) {
+      const name = (r['Display Name'] || r.Item || '').trim();
+      if (!r.auctionId || !name) continue;
+      const key = `${r.auctionSeason}|${name}`;
+      const set = soldSameSeason.get(key) ?? soldSameSeason.set(key, new Set()).get(key);
+      set.add(r.auctionId);
+    }
+    for (const [i, r] of ctx.entries()) {
+      if (!r.auctionId || r.category !== 'withheld') continue;
+      const m = metaById.get(r.auctionId);
+      if (!m || m.Status !== 'Closed') continue; // the site only values closed auctions
+      const name = (r.Item || '').trim();
+      const sellers = soldSameSeason.get(`${r.auctionSeason}|${name}`) ?? new Set();
+      const elsewhere = [...sellers].filter((id) => id !== r.auctionId);
+      if (elsewhere.length) continue;
+      warns.push(`${r.auctionId} "${r.Item}" [contextItems.csv row ${i + 2}]: withheld, but season `
+        + `${r.auctionSeason} records no sale of that name in any other auction — the site cannot `
+        + 'estimate it and will show $0. Check the spelling, or whether the sale belongs in '
+        + 'prices.csv / onyx.csv');
+    }
+  }
+
   capped(err, errs); capped(note, warns);
   if (!errs.length) ok(`${onyx.length} Onyx row(s) across ${onyxByAuction.size} auction(s) and ${ctx.length} context row(s) are internally consistent`);
   // Not checkable here: the plan's Trent-completeness partition (rawPricesData

@@ -90,11 +90,17 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Classify + value context items and roll them up per auction. Depends on the
-  // raw context rows plus the core sales/meta the withheld estimate reads from,
-  // so it recomputes when any of the three settle. Empty until all are loaded.
+  // raw context rows plus the sales/meta the withheld estimate reads from, so it
+  // recomputes when any of them settle. Empty until all are loaded.
+  //
+  // BOTH sale feeds, not just prices.csv. An auctioneer can withhold part of an
+  // Onyx order (20275 withheld eight chase tokens), and those names appear in no
+  // other file — without onyx.csv here they can never match anything and the
+  // whole block values at $0. The two files share no display name at all, so
+  // this cannot disturb an estimate that was already being made.
   const contextItems = useMemo(
-    () => buildContextItems(rawContext, sales, meta),
-    [rawContext, sales, meta],
+    () => buildContextItems(rawContext, [...sales, ...onyxSales], meta),
+    [rawContext, sales, onyxSales, meta],
   );
   const auctionContext = useMemo(() => rollupByAuction(contextItems), [contextItems]);
   // Golden-Ticket auctions span both the core sales and the context rows, so this

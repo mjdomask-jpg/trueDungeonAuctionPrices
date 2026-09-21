@@ -2,9 +2,15 @@
 //
 // This module turns the raw contextItems.csv rows (auctioneer-withheld items,
 // personal-collection augments, Grunnel drops) into classified, valued
-// ContextItems, and rolls them up per auction. It reads only core sales
-// (prices.csv) to estimate withheld values, so the estimate can never feed on
-// itself (docs/data-audit.md §6, "no circularity").
+// ContextItems, and rolls them up per auction. It reads only REAL SALES — the
+// price spine (prices.csv) plus the Onyx chase sales (onyx.csv) — to estimate
+// withheld values, so the estimate can never feed on itself
+// (docs/data-audit.md §6, "no circularity").
+//
+// Onyx was added to that feed because an auctioneer can withhold part of an Onyx
+// order, and those names appear in no other file. The two files share NOT ONE
+// display name (measured: zero collisions on name, and zero on season+name), so
+// folding them together cannot change an estimate that was already being made.
 //
 // Full design: docs/context-layer-design.md. Withheld method: data-audit.md §6.1.
 
@@ -38,7 +44,12 @@ export type ContextItem = RawContextItem & {
   // withheld estimate. Lot total, i.e. already × quantity.
   value: number;
   estimate: boolean; // true only for withheld
-  n?: number; // withheld: number of prior same-season sales the estimate averaged
+  n?: number; // withheld: number of same-season sales the estimate averaged
+  // withheld: true when the estimate had to read FORWARD — no comparable sale
+  // existed before this auction closed, so it averaged later ones instead. See
+  // valueWithheld. Surfaced in the UI, because an estimate that reads the future
+  // should say so.
+  forward?: boolean;
 };
 
 // --- Parsing --------------------------------------------------------------
@@ -143,37 +154,64 @@ function buildPriceIndex(sales: Sale[], meta: AuctionMeta[]): PriceIndex {
   return { instantById, seasonById, salesByName };
 }
 
+// Average an item's sales from at most the ERAS.withheldLookbackAuctions
+// auctions NEAREST IN TIME, in the given direction. Auctions are ranked by close
+// instant, with the id as a stable tiebreak for same-day closes (that tiebreak
+// is lexicographic and is an open question — backlog SITE-12); all of an item's
+// lots within a kept auction count.
+function nearestMean(
+  sales: SaleRef[], dir: 'back' | 'forward',
+): { mean: number; n: number } {
+  const instByAuction = new Map<string, number>();
+  for (const s of sales) instByAuction.set(s.auctionId, s.inst);
+  const ranked = [...instByAuction.entries()].sort((a, b) => (dir === 'back'
+    ? b[1] - a[1] || (a[0] < b[0] ? 1 : -1)
+    : a[1] - b[1] || (a[0] < b[0] ? -1 : 1)));
+  const keep = new Set(ranked.slice(0, ERAS.withheldLookbackAuctions).map(([id]) => id));
+  const window = sales.filter((s) => keep.has(s.auctionId));
+  return { mean: window.reduce((a, s) => a + s.price, 0) / window.length, n: window.length };
+}
+
 // The point-in-time estimate for one withheld item: mean of that display name's
 // same-season sales from at most the ERAS.withheldLookbackAuctions most RECENT
 // auctions (by close date) that CLOSED strictly before this one, negated,
 // × quantity. Capping the lookback keeps the estimate near the item's value at the
 // time it was withheld rather than averaging in stale early-season sales.
-// Returns the value and the sample size n (sales in the window). n === 0 (no prior
-// sale) cannot occur for the current data (audit §6.1) but is handled: value falls
-// back to the sheet's reference so nothing silently zeroes out.
-export function valueWithheld(item: RawContextItem, idx: PriceIndex): { value: number; n: number } {
+//
+// WHEN NOTHING SOLD BEFORE, IT READS FORWARD — and only then. `20275` withheld
+// eight Onyx chase tokens and was the season's FIRST Onyx auction to close, so
+// by definition no comparable sale existed yet; the only 2027 auction carrying
+// those names closed the following day. The old rule fell back to the sheet's
+// reference, which is blank on those rows, so the whole withheld block valued at
+// $0 and the ledger read as if nothing had been withheld. Silently.
+//
+// Restricting the fallback to `n === 0` is what makes this safe to ship: every
+// estimate that had a prior sale is byte-identical to before. It is same-season
+// only, because a chase token is year-specific — a prior season's price for it
+// is not a worse estimate, it is a different token.
+//
+// n === 0 in BOTH directions still falls back to the sheet's reference so
+// nothing silently zeroes out; validate-prices §6 now names those rows, since
+// that is the case no one can see from the site.
+export function valueWithheld(
+  item: RawContextItem, idx: PriceIndex,
+): { value: number; n: number; forward: boolean } {
   const season = idx.seasonById.get(item.auctionId);
   const wInst = idx.instantById.get(item.auctionId);
-  const prior = (idx.salesByName.get(item.name) ?? []).filter(
-    (s) => s.season === season && wInst != null && s.inst < wInst,
+  const sameSeason = (idx.salesByName.get(item.name) ?? []).filter(
+    (s) => s.season === season && wInst != null,
   );
-  if (!prior.length) {
-    return { value: item.refValue ?? 0, n: 0 };
+  const prior = sameSeason.filter((s) => s.inst < wInst!);
+  if (prior.length) {
+    const { mean, n } = nearestMean(prior, 'back');
+    return { value: -mean * item.quantity, n, forward: false };
   }
-  // Keep only sales from the N most-recent prior auctions. Auctions are ranked by
-  // close instant (id as a stable tiebreak for same-day closes); all of an item's
-  // lots within a kept auction count.
-  const instByAuction = new Map<string, number>();
-  for (const s of prior) instByAuction.set(s.auctionId, s.inst);
-  const recent = new Set(
-    [...instByAuction.entries()]
-      .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? 1 : -1))
-      .slice(0, ERAS.withheldLookbackAuctions)
-      .map(([id]) => id),
-  );
-  const window = prior.filter((s) => recent.has(s.auctionId));
-  const mean = window.reduce((a, s) => a + s.price, 0) / window.length;
-  return { value: -mean * item.quantity, n: window.length };
+  const later = sameSeason.filter((s) => s.inst > wInst!);
+  if (later.length) {
+    const { mean, n } = nearestMean(later, 'forward');
+    return { value: -mean * item.quantity, n, forward: true };
+  }
+  return { value: item.refValue ?? 0, n: 0, forward: false };
 }
 
 // --- Build (the module's public entry point) -------------------------------
@@ -200,8 +238,8 @@ export function buildContextItems(
   return raw.filter((r) => closed.has(r.auctionId)).map((r) => {
     const provenance = classifyProvenance(r.category, r.name);
     if (provenance === 'withheld') {
-      const { value, n } = valueWithheld(r, idx);
-      return { ...r, provenance, value, estimate: true, n };
+      const { value, n, forward } = valueWithheld(r, idx);
+      return { ...r, provenance, value, estimate: true, n, forward };
     }
     return { ...r, provenance, value: r.refValue ?? 0, estimate: false };
   });

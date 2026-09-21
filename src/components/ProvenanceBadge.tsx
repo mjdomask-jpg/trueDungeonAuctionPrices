@@ -22,9 +22,18 @@ const HELP: Record<Provenance, string> = {
 // pattern (ui-conventions.md). Withheld reuses the neutral `est.` styling; the
 // three real-sale provenances get their own themed colours. Pass `n` on a
 // withheld badge to show the estimate's sample size.
-export function ProvenanceBadge({ provenance, n }: { provenance: Provenance; n?: number }) {
-  const body = provenance === 'withheld' && n != null
-    ? `${HELP.withheld} (n = ${n})`
+export function ProvenanceBadge(
+  { provenance, n, forward }: { provenance: Provenance; n?: number; forward?: boolean },
+) {
+  // A forward-looking estimate says so. It happens when nothing comparable had
+  // sold yet — the season's first Onyx auction withholding part of its own set
+  // is the case that forced it — and an estimate that reads the future is a
+  // different claim from one that reads the past.
+  const withheldBody = forward
+    ? 'Withheld from the auction and never sold. Nothing comparable had sold when this auction closed, so the value is an ESTIMATE from this item’s sales in the nearest LATER auctions of the same season.'
+    : HELP.withheld;
+  const body = provenance === 'withheld'
+    ? `${withheldBody}${n != null ? ` (n = ${n})` : ''}`
     : HELP[provenance];
   return (
     <HintPopover
