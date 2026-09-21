@@ -164,7 +164,8 @@ export function AuctionCard({
                         {it.name}{it.quantity > 1 ? ` ×${it.quantity}` : ''}
                       </td>
                       <td className="left">
-                        <ProvenanceBadge provenance={it.provenance} n={it.estimate ? it.n : undefined} />
+                        <ProvenanceBadge provenance={it.provenance} n={it.estimate ? it.n : undefined}
+                          forward={it.estimate ? it.forward : undefined} />
                       </td>
                       <td className={`ctx-val${it.value < 0 ? ' neg' : ''}`}>{money(it.value)}</td>
                     </tr>
