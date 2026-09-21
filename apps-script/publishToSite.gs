@@ -58,7 +58,7 @@
  * Shown in every dialog, so the copy pasted into the workbook can be told apart
  * from the copy in the repo at a glance. Bump it with any change to this file.
  */
-var PUBLISH_SCRIPT_VERSION = '2026-09-20.1';
+var PUBLISH_SCRIPT_VERSION = '2026-09-20.2';
 
 /**
  * The repository this publishes into. All three values are public facts and
@@ -686,13 +686,15 @@ function publishWithheldPreviewNotice(plan) {
     ? 'The withheld row count changes ' + countDelta.before + ' -> ' + countDelta.after + '.'
     : 'This publish touches ' + touched.join(', ') + ', which feed the withheld estimate.';
 
-  // Deliberately not alarming. New withheld rows no longer fail the PR check —
-  // validate-context.mjs compares the audited preview on the INTERSECTION, so a
-  // new auction is reported as new data rather than as drift. Regenerating is
-  // now housekeeping that brings the audit forward, not a blocker standing
-  // between a closed auction and the live site. If a value the audit already
-  // covers has genuinely moved, the check fails and says so itself — which is
-  // the case that wants a human, and the only one that gets to stop a publish.
+  // Deliberately not alarming. Neither a new withheld row nor a moved estimate
+  // fails the PR check any more: validate-context.mjs compares the audited
+  // preview on the INTERSECTION, and for a key in both it asks whether the
+  // INPUTS moved before it calls anything drift. A backfilled auction landing
+  // in an already-audited lookback window is a note naming what entered.
+  // Regenerating is housekeeping that brings the audit forward, not a blocker
+  // standing between a closed auction and the live site. Only a value that
+  // moved with its inputs unchanged still stops a publish — the one case that
+  // really does want a human.
   //
   // The commands start from `origin/main`, NOT from the branch this publish
   // opens. That branch used to be the obvious place to put the regenerated
@@ -703,12 +705,20 @@ function publishWithheldPreviewNotice(plan) {
   // <deleted branch>` fails with "pathspec did not match", which reads like the
   // operator's mistake rather than a stale instruction.
   //
+  // THE ONE EXCEPTION, and it is the case that reddened PR #236: if the check
+  // did fail, main is the wrong place to start. The data that produced the new
+  // value exists only on the publish branch, so regenerating from main
+  // reproduces the OLD number and the check fails again. Commit the regenerated
+  // preview onto the publish branch itself, while it still exists.
+  //
   // One command per line, with no `&&`: the operator drives this from Windows
   // PowerShell, where `&&` is a parser error, and separate lines are what works
   // in every shell.
   return lead + '\n' +
     'docs/withheld-recompute-preview.csv is a repo file, not a tab, so this publish cannot\n' +
-    'update it. New rows will NOT fail the check. Bring the audit forward when convenient.\n' +
+    'update it. New rows will NOT fail the check, and neither will an estimate that moved\n' +
+    'because a backfilled auction entered its lookback window — that is reported as a note\n' +
+    'naming what entered. Bring the audit forward when convenient.\n' +
     'Start from main, not from this PR\'s branch — that branch is deleted when this PR\n' +
     'merges, so it is usually gone by the time you read this:\n' +
     '    git fetch origin\n' +
@@ -719,7 +729,10 @@ function publishWithheldPreviewNotice(plan) {
     '    git push -u origin HEAD\n' +
     '    gh pr create --fill\n' +
     'Read the diff first: a cent of movement is the price cascade, dollars are not.\n' +
-    'It needs a PR of its own: main requires build-and-validate, so a push to it is rejected.';
+    'It needs a PR of its own: main requires build-and-validate, so a push to it is rejected.\n' +
+    'If the check DID fail on a moved value, do the opposite: commit the regenerated\n' +
+    'preview onto this publish branch. The data behind the new value is only here, so\n' +
+    'regenerating from main reproduces the old number and fails again.';
 }
 
 /** Branch names must be unique per run; the stamp comes from the caller. */

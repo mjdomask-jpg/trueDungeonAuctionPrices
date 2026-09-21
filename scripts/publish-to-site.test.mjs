@@ -530,9 +530,16 @@ console.log('\nGaps found by the first real publish\n');
   // validate-context.mjs compares the audited preview on the intersection, so
   // new withheld rows are new data, not drift — and a routine publish of an
   // auction with withheld items goes green without anyone opening a checkout.
+  //
+  // Pinned as a RULE, not as a sentence: the notice must deny the failure in
+  // SOME spelling and must never threaten one. A test keyed to the exact words
+  // reddens on an edit that changes nothing about what is claimed — and this is
+  // a publish-path test, so that red lands on a publish PR and looks like the
+  // publish is broken.
   const notices = [dropped, P.publishWithheldPreviewNotice(planWith('prices.csv', null, null))];
+  const denies = /(will NOT fail|does not fail|cannot fail|neither will)/;
   check('no notice claims new rows will fail the check',
-    notices.every((n) => n && /will NOT fail/.test(n) && !/WILL fail/.test(n)), notices.join('\n---\n'));
+    notices.every((n) => n && denies.test(n) && !/WILL fail/.test(n)), notices.join('\n---\n'));
   check('regenerating is framed as housekeeping, not a blocker',
     notices.every((n) => /when convenient/.test(n)), notices.join('\n---\n'));
 
