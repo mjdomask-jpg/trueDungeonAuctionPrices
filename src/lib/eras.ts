@@ -50,6 +50,32 @@ export const ERAS = {
     'Treasure Chip': 50,
   } as Record<string, number>,
 
+  // The minimum bid step each venue enforces, as bands: a lot priced BELOW `under`
+  // moves in `step` dollars. Bands are tried in order and the last one is the
+  // ceiling (`under: Infinity`). A venue absent from this map has no published
+  // ladder — see bidIncrement, which returns null rather than guessing.
+  //
+  // Supplied by the maintainer. Checked against every 2027 lot before being
+  // written down: ~94% of sub-$10 Alesiev lots sit on the $0.50 grid and ~86% of
+  // sub-$10 Trent lots on the $0.25 grid. The rest are bidders adding odd cents
+  // to break a tie ($51.01, $24.70, $9.58), which is why anything built on this
+  // ADVISES rather than decides.
+  //
+  // The FORUM is deliberately absent. It has no single auctioneer and so no one
+  // ladder, and inventing one would put a confident marker on the comparison we
+  // know least about.
+  bidIncrements: {
+    Trent: [
+      { under: 10, step: 0.25 },
+      { under: 50, step: 1 },
+      { under: Infinity, step: 5 },
+    ],
+    Alesiev: [
+      { under: 10, step: 0.5 },
+      { under: Infinity, step: 1 },
+    ],
+  } as Record<string, { under: number; step: number }[]>,
+
   // Item names that denote RANDOM ULTRA RARES (released auctioneer payment) — the
   // 9–10 unchosen URs that ship with an $8k order. This is DISTINCT from an
   // "Ultra Rare Set" (e.g. "2024 Ultra Rare Set"), which is a curated set from the
@@ -92,6 +118,32 @@ export function groupLabel(group: string, season: string | number): string {
   const year = typeof season === 'number' ? season : parseInt(season, 10);
   if (!Number.isFinite(year)) return group;
   return ranges.find((r) => year >= r.from && year <= r.to)?.label ?? group;
+}
+
+// The minimum bid step at a given price on a given venue, or null when that
+// venue publishes no ladder (the forum — see ERAS.bidIncrements).
+export function bidIncrement(venue: string, price: number): number | null {
+  const bands = ERAS.bidIncrements[venue];
+  if (!bands) return null;
+  const p = Math.abs(price);
+  return bands.find((b) => p < b.under)?.step ?? null;
+}
+
+// The coarsest step among the venues being compared at a given price — the size
+// a difference between them has to clear before it can be more than bidding
+// granularity. null when ANY venue involved has no published ladder: a step that
+// ignores one side of the comparison would understate it.
+//
+// This is ADVISORY. An average taken over many lots can legitimately resolve
+// finer than one increment, so a difference below this is muted, never dropped.
+export function comparisonIncrement(venues: string[], price: number): number | null {
+  let worst = 0;
+  for (const v of venues) {
+    const step = bidIncrement(v, price);
+    if (step == null) return null;
+    worst = Math.max(worst, step);
+  }
+  return worst || null;
 }
 
 // The reward rate in effect for a given auction. A function (not a bare constant)
