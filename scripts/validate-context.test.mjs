@@ -47,6 +47,31 @@ const check = (name, cond, detail) => {
   fail++;
 };
 
+// EVERY CSV READ BELOW SPLITS ON /\r?\n/, NEVER ON '\n'.
+//
+// This runner checks out with LF; the maintainer's box has core.autocrlf = true
+// and gets CRLF (see .gitattributes, which pins only the .gz fixtures). A naive
+// split('\n') leaves a trailing \r on the LAST cell of every row, and that is
+// invisible until something matches on it — a column NAME or a value, rather
+// than a column count or an index.
+//
+// It bit exactly once and silently. Case 2c strips `lookback_auctions` from a
+// copy of the preview to prove that a preview predating that column cannot
+// block a publish. It is the last column, so on Windows the header cell read
+// `"lookback_auctions\r"`, `indexOf` returned -1, and the filter removed
+// nothing: the guard stayed armed, correctly reported the drift the case then
+// injects, and the case failed having tested the exact opposite of what it
+// means to. `test:context` is second in the `npm test` chain, so on the
+// maintainer's own box — the one place the suite is run before a publish —
+// TEN OF THE TWELVE SUITES NEVER RAN AT ALL, and a phantom failure looked
+// identical to a real one.
+//
+// So this copes with both endings rather than normalising one away, which is
+// what pr-checks.yml already asks of this suite and what publish-to-site's
+// does. Note the shape of the trap for anything added here later: appending a
+// column moves the \r onto it, so a read that was safe becomes unsafe without
+// being touched.
+
 // Each case gets its own pristine copy, so one cannot contaminate the next.
 function withCopy(mutate) {
   const work = mkdtempSync(join(tmpdir(), 'validate-context-'));
@@ -113,7 +138,7 @@ check('the audit is comparing against a non-empty set of audited values',
 // 1. A NEW auction carrying withheld rows. This is the publish that used to
 //    block, and the operator should never need a checkout for it.
 const added = withCopy(({ readFile, writeFile }) => {
-  const cols = readFile('auctionMetadata.csv').split('\n')[0].split(',').length;
+  const cols = readFile('auctionMetadata.csv').split(/\r?\n/)[0].split(',').length;
   const row = ['202699', '2026', '99', 'Synthetic', 'Ultra Condensed', 'Lightning', 'Trent',
     'https://truedungeon.com/x', '2026-08-01', '2026-08-20', '19', 'Closed', '1', '1',
     '"$8,000.00"', 'No', '', '', '', '$0.00', '"$8,000.00"', '$0.00'].slice(0, cols).join(',');
@@ -148,12 +173,12 @@ check('and it does not disturb any audited value',
 //    the auction's own prices sit outside its own window. That is the same
 //    property that makes case 1 safe, seen from the other side.
 const drifted = withCopy(({ readFile, writeFile }) => {
-  const withheldRow = readFile('contextItems.csv').split('\n').find((l) => /,withheld,/.test(l)).split(',');
+  const withheldRow = readFile('contextItems.csv').split(/\r?\n/).find((l) => /,withheld,/.test(l)).split(',');
   const [auctionId, season] = withheldRow;
   const item = withheldRow[4];
-  const closeOf = new Map(readFile('auctionMetadata.csv').split('\n').slice(1)
+  const closeOf = new Map(readFile('auctionMetadata.csv').split(/\r?\n/).slice(1)
     .map((l) => l.split(',')).filter((c) => c[0]).map((c) => [c[0], c[8]]));
-  const lines = readFile('prices.csv').split('\n');
+  const lines = readFile('prices.csv').split(/\r?\n/);
   const i = lines.findIndex((l) => {
     const c = l.split(',');
     return c[1] === season && c[5] === item && closeOf.get(c[0]) && closeOf.get(c[0]) < closeOf.get(auctionId);
@@ -184,16 +209,16 @@ check('the failure names the drift and how to resolve it',
 //
 //     So it must NOT block, and it must say which auctions entered.
 const backfilled = withCopy(({ readFile, writeFile }) => {
-  const withheldRow = readFile('contextItems.csv').split('\n').find((l) => /,withheld,/.test(l)).split(',');
+  const withheldRow = readFile('contextItems.csv').split(/\r?\n/).find((l) => /,withheld,/.test(l)).split(',');
   const [auctionId, season] = withheldRow;
   const item = withheldRow[4];
-  const close = readFile('auctionMetadata.csv').split('\n').slice(1)
+  const close = readFile('auctionMetadata.csv').split(/\r?\n/).slice(1)
     .map(cells).find((c) => c[0] === auctionId)[CLOSE_DATE];
   // The day BEFORE the withheld auction closes: the latest an auction can close
   // and still be prior, so it is certain to enter the 5-most-recent window.
   const d = new Date(close + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 1);
   const eve = d.toISOString().slice(0, 10);
-  const cols = readFile('auctionMetadata.csv').split('\n')[0].split(',').length;
+  const cols = readFile('auctionMetadata.csv').split(/\r?\n/)[0].split(',').length;
   const row = ['999999', season, '98', 'Synthetic backfill', 'Ultra Condensed', 'Lightning', 'Tester',
     'https://truedungeon.com/x', eve, eve, '1', 'Closed', '1', '1', '"$8,000.00"', 'No',
     '', '', '', '$0.00', '"$8,000.00"', '$0.00'].slice(0, cols).join(',');
@@ -212,17 +237,17 @@ check('...and is never called drift, which is what a red check would have claime
 //     value is UNVERIFIED, not incorrect — onyxcheck's precedent — and it says
 //     so on every run rather than going quietly green.
 const legacyPreview = withCopy(({ readFile, writeFile }, { readDoc, writeDoc }) => {
-  const lines = readDoc('withheld-recompute-preview.csv').split('\n');
+  const lines = readDoc('withheld-recompute-preview.csv').split(/\r?\n/);
   const cut = lines[0].split(',').indexOf('lookback_auctions');
   writeDoc('withheld-recompute-preview.csv',
     lines.map((l) => (l.trim() ? l.split(',').filter((_, i) => i !== cut).join(',') : l)).join('\n'));
   // ...and move a value, so there is something for it to fail to triage.
-  const withheldRow = readFile('contextItems.csv').split('\n').find((l) => /,withheld,/.test(l)).split(',');
+  const withheldRow = readFile('contextItems.csv').split(/\r?\n/).find((l) => /,withheld,/.test(l)).split(',');
   const [auctionId, season] = withheldRow;
   const item = withheldRow[4];
-  const closeOf = new Map(readFile('auctionMetadata.csv').split('\n').slice(1)
+  const closeOf = new Map(readFile('auctionMetadata.csv').split(/\r?\n/).slice(1)
     .map(cells).filter((c) => c[0]).map((c) => [c[0], c[CLOSE_DATE]]));
-  const pl = readFile('prices.csv').split('\n');
+  const pl = readFile('prices.csv').split(/\r?\n/);
   const i = pl.findIndex((l) => {
     const c = l.split(',');
     return c[1] === season && c[5] === item && closeOf.get(c[0]) && closeOf.get(c[0]) < closeOf.get(auctionId);
@@ -238,7 +263,7 @@ check('...and names the column it is missing and how to get it',
 // 3. A withheld row that DISAPPEARED. Visible, but not a blocker — the
 //    publisher's row-delta guard is what stops a mass deletion.
 const removed = withCopy(({ readFile, writeFile }) => {
-  const lines = readFile('contextItems.csv').split('\n');
+  const lines = readFile('contextItems.csv').split(/\r?\n/);
   lines.splice(lines.findIndex((l) => /,withheld,/.test(l)), 1);
   writeFile('contextItems.csv', lines.join('\n'));
 });
