@@ -7,7 +7,7 @@
 //   1. Auction Ledger        — did augments cover what was withheld?
 //   2. Grunnel vs preorder   — how did Grunnel drops compare to the preorder benchmark?
 //   3. Augmented vs not      — does added supply move per-token prices, within a season?
-//   4. Trent vs a venue      — venue price levels, on overlapping seasons only.
+//   4. Venue comparison      — venue price levels, on overlapping seasons only.
 //   5. Standard vs Trade 2   — does the order a lot came from move its price?
 //
 // Views 3, 4 and 5 control for token mix by comparing the SAME token across the
@@ -299,39 +299,43 @@ export function augmentedVsNot(
   };
 }
 
-// --- View 4: Trent vs another venue, per season, per token -----------------
-// One season at a time, matched per token: for each token sold under BOTH
-// sources that season we take each source's average price. Matching per token
+// --- View 4: Venue comparison, per season, per token -----------------------
+// One season at a time, matched per token: for each token sold under two or more
+// venues that season we take each venue's average price. Matching per token
 // within a season holds both token mix and time constant, so the remaining
-// difference is the source's own price level (§5.5). Trent is shown nominal or
-// reward-adjusted (−10%, the ~100 pt/$1 reward that lowers a Trent buyer's
-// effective cost) via a toggle in the view; the adjustment is applied there so
-// this stays a plain average.
+// difference is the venue's own price level (§5.5). Trent can be shown nominal
+// or reward-adjusted (−10%, the ~100 pt/$1 reward that lowers a Trent buyer's
+// effective cost); the adjustment is applied in the view, so this stays a plain
+// average.
 //
-// Until season 2027 this was "Trent vs Forum", because Forum was the only other
-// place an auction could run. alesievauctions.com is now a third venue, and
-// folding it into Forum would be the exact error the Source split exists to
-// prevent — so the comparison takes the OTHER SIDE as a parameter and the view
-// offers whichever venues that season can actually supply. In 2027 the forum
-// side has no priced auction at all, so without this the whole analysis would
-// have vanished from the newest season the moment alesiev stopped counting as
-// Forum.
+// THIS USED TO BE ANCHORED ON TRENT — "Trent vs one other venue", with the other
+// side a parameter. That was already the second shape: it started as "Trent vs
+// Forum", because the forum was the only other place an auction could run, and
+// grew a parameter when alesievauctions.com appeared in 2027.
+//
+// Anchoring it a third time would have been the mistake. The anchor was never
+// part of the question — the question is "do venues price differently?" — and a
+// season of Forum vs Alesiev with no Trent auction would have had no analysis at
+// all. So the venue list is now read from the data, the table grows a column per
+// venue, and nothing here names a venue. Today that renders exactly the two
+// columns it always did.
 
-export type SourceTokenRow = {
+export type VenueTokenRow = {
   item: string;
   displayName: string;
   category: string;
-  trentAvg: number;
-  otherAvg: number;
+  // venue -> that venue's mean price for this token this season, and how many
+  // sales it averaged. A venue that did not sell the token is ABSENT, not zero.
+  byVenue: Map<AuctionSource, { avg: number; n: number }>;
 };
 
-// Seasons where Trent overlaps some other venue on at least one token, each with
-// the venues it overlaps (in AUCTION_SOURCES order). Newest season first. These
-// are the only seasons with a within-token comparison to draw — Trent runs from
-// season 2023 on, so earlier seasons never overlap anything.
-export type SourceOverlap = { season: string; others: AuctionSource[] };
+// Seasons with a within-token comparison to draw, each with the venues that
+// season priced (in AUCTION_SOURCES order). Newest first. A season qualifies
+// when at least one token sold under two or more venues — which is the whole
+// rule, with no venue singled out.
+export type VenueOverlap = { season: string; venues: AuctionSource[] };
 
-export function sourceOverlapSeasons(sales: Sale[], meta: AuctionMeta[]): SourceOverlap[] {
+export function venueOverlapSeasons(sales: Sale[], meta: AuctionMeta[]): VenueOverlap[] {
   const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
   // season -> item -> the venues it sold under
   const bySeason = new Map<string, Map<string, Set<AuctionSource>>>();
@@ -344,39 +348,52 @@ export function sourceOverlapSeasons(sales: Sale[], meta: AuctionMeta[]): Source
     if (!e) { e = new Set(); items.set(s.item, e); }
     e.add(src);
   }
-  const out: SourceOverlap[] = [];
+  const out: VenueOverlap[] = [];
   for (const [season, items] of bySeason) {
-    const others = AUCTION_SOURCES.filter(
-      (o) => o !== 'Trent' && [...items.values()].some((v) => v.has('Trent') && v.has(o)),
-    );
-    if (others.length) out.push({ season, others });
+    // Only count a venue that shares at least one token with another one: a
+    // venue whose whole catalogue is unique to it has nothing to compare, and a
+    // column of blanks is worse than no column.
+    const shared = new Set<AuctionSource>();
+    for (const venues of items.values()) {
+      if (venues.size < 2) continue;
+      for (const v of venues) shared.add(v);
+    }
+    if (shared.size > 1) out.push({ season, venues: AUCTION_SOURCES.filter((v) => shared.has(v)) });
   }
   return out.sort((a, b) => Number(b.season) - Number(a.season));
 }
 
-// Per-token Trent vs `other` averages for one season — tokens sold under both
-// venues only. Sorted by display name. Trent is left nominal (the view applies
-// the reward adjustment) so the caller controls that toggle.
-export function trentVsSourceSeason(
-  sales: Sale[], meta: AuctionMeta[], season: string, other: AuctionSource,
-): SourceTokenRow[] {
+// Per-token per-venue averages for one season, over the given venues. A token is
+// included when it sold under at least TWO of them — not all of them, which
+// would make a third venue's arrival silently delete rows from a comparison the
+// first two could still support. A venue that did not sell an included token is
+// simply missing from its `byVenue` map, and the view renders that as a dash.
+export function venueComparisonSeason(
+  sales: Sale[], meta: AuctionMeta[], season: string, venues: AuctionSource[],
+): VenueTokenRow[] {
   const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
-  const byItem = new Map<string, { o: number[]; t: number[]; displayName: string; category: string }>();
+  const wanted = new Set(venues);
+  const byItem = new Map<string, {
+    prices: Map<AuctionSource, number[]>; displayName: string; category: string;
+  }>();
   for (const s of sales) {
     if (s.season !== season) continue;
     const src = srcById.get(s.auctionId);
-    if (src !== other && src !== 'Trent') continue;
+    if (!src || !wanted.has(src)) continue;
     let e = byItem.get(s.item);
-    if (!e) { e = { o: [], t: [], displayName: s.displayName, category: s.category }; byItem.set(s.item, e); }
-    (src === 'Trent' ? e.t : e.o).push(s.price);
+    if (!e) { e = { prices: new Map(), displayName: s.displayName, category: s.category }; byItem.set(s.item, e); }
+    const arr = e.prices.get(src);
+    if (arr) arr.push(s.price); else e.prices.set(src, [s.price]);
   }
-  const rows: SourceTokenRow[] = [];
+  const rows: VenueTokenRow[] = [];
   for (const [item, e] of byItem) {
-    if (!e.o.length || !e.t.length) continue; // needs both venues
-    rows.push({
-      item, displayName: e.displayName, category: e.category,
-      trentAvg: mean(e.t)!, otherAvg: mean(e.o)!,
-    });
+    if (e.prices.size < 2) continue; // needs at least two venues to compare
+    const byVenue = new Map<AuctionSource, { avg: number; n: number }>();
+    for (const v of venues) {
+      const prices = e.prices.get(v);
+      if (prices?.length) byVenue.set(v, { avg: mean(prices)!, n: prices.length });
+    }
+    rows.push({ item, displayName: e.displayName, category: e.category, byVenue });
   }
   return rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
 }

@@ -1,17 +1,20 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { SOURCE_LABEL, type AuctionMeta, type AuctionSource, type Sale, type GroupRow } from '../lib/data';
+import {
+  SOURCE_LABEL, TRADE_1, TENX_PREFIX,
+  type AuctionMeta, type AuctionSource, type Sale, type GroupRow,
+} from '../lib/data';
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
   auctionLedger, ledgerBalanceOf, isCovered,
   grunnelPerAuction, augmentedVsNot,
-  sourceOverlapSeasons, trentVsSourceSeason,
+  venueOverlapSeasons, venueComparisonSeason,
   orderVariantSeasons, standardVsTradeTwo,
-  type LedgerRow, type GrunnelAuctionRow, type SourceTokenRow,
+  type LedgerRow, type GrunnelAuctionRow,
 } from '../lib/contextAnalytics';
-import { HintPopover } from './HintPopover';
-import { ERAS, groupLabel } from '../lib/eras';
+import { ERAS, groupLabel, comparisonIncrement } from '../lib/eras';
 import { money, money0, moneyTight } from '../lib/format';
 import { BarChart } from './BarChart';
+import { HintPopover } from './HintPopover';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 // The context-layer analytics (docs/context-layer-design.md §6), the fourth
@@ -31,14 +34,12 @@ const ANALYSES: { key: Analysis; label: string }[] = [
   { key: 'ledger', label: 'Auction ledger — did augments cover withholdings?' },
   { key: 'grunnel', label: 'Grunnel drops vs the preorder benchmark' },
   { key: 'augmented', label: 'Augmented vs non-augmented prices' },
-  { key: 'source', label: 'Trent vs other venues — prices by source' },
+  { key: 'source', label: 'Venue comparison — prices by source' },
   { key: 'variant', label: 'Standard vs Trade 2 order prices' },
 ];
 
 const GRUNNEL_COLOR = 'var(--series-1)';
 const PREORDER_COLOR = 'var(--series-2)';
-const FORUM_COLOR = 'var(--series-1)';
-const TRENT_COLOR = 'var(--series-2)';
 
 export function ContextAnalytics({
   meta, sales, contextItems, auctionContext, groupRows,
@@ -79,7 +80,7 @@ export function ContextAnalytics({
         <AugmentedView meta={meta} sales={sales} />
       )}
       {hasContext && analysis === 'source' && (
-        <SourceView meta={meta} sales={sales} groupRows={groupRows} />
+        <VenueView meta={meta} sales={sales} groupRows={groupRows} />
       )}
       {hasContext && analysis === 'variant' && (
         <VariantView meta={meta} sales={sales} groupRows={groupRows} />
@@ -553,7 +554,7 @@ function AugmentedView({ meta, sales }: { meta: AuctionMeta[]; sales: Sale[] }) 
   );
 }
 
-// --- View 4: Trent vs Forum ------------------------------------------------
+// --- View 4: Venue comparison ------------------------------------------------
 
 const REWARD_PCT = Math.round(ERAS.trentRewardRate * 100);
 
@@ -599,7 +600,26 @@ function groupForCharts<T extends { item: string; category: string }>(
 
 type Pricing = 'adjusted' | 'nominal';
 
-function SourceView({
+// One venue's colour in the table and charts. Keyed by venue so a column keeps
+// its colour when another venue joins or leaves the comparison — an arrival must
+// not silently repaint the venue a reader has been reading all season.
+const VENUE_COLOR: Record<AuctionSource, string> = {
+  Forum: 'var(--series-1)',
+  Trent: 'var(--series-2)',
+  Alesiev: 'var(--series-3)',
+};
+
+// Was this difference big enough to be more than bidding granularity? Returns
+// the step it was measured against, or null when it clears the step (or when no
+// step can be computed — see comparisonIncrement, which refuses if any venue in
+// the comparison publishes no ladder).
+function subIncrement(delta: number, level: number, venues: AuctionSource[]): number | null {
+  const step = comparisonIncrement(venues, level);
+  if (step == null) return null;
+  return Math.abs(delta) < step ? step : null;
+}
+
+function VenueView({
   meta, sales, groupRows,
 }: {
   meta: AuctionMeta[];
@@ -607,64 +627,103 @@ function SourceView({
   groupRows: GroupRow[];
 }) {
   const narrow = useMediaQuery(NARROW);
-  const overlaps = useMemo(() => sourceOverlapSeasons(sales, meta), [sales, meta]);
+  const overlaps = useMemo(() => venueOverlapSeasons(sales, meta), [sales, meta]);
   const seasons = useMemo(() => overlaps.map((o) => o.season), [overlaps]);
   const [picked, setPicked] = useState('');
   const season = picked && seasons.includes(picked) ? picked : (seasons[0] ?? '');
   const [pricing, setPricing] = useState<Pricing>('nominal');
+  // Default ON, matching Prices and Timelines — and here it is not a convenience
+  // but the point: see the lede and the note below the table.
+  const [tenX, setTenX] = useState(true);
+  const [onlyReal, setOnlyReal] = useState(false);
 
-  // Which venues this season can be compared against. Usually one (the forum);
-  // in a season where Trent overlaps both the forum and alesievauctions.com the
-  // reader picks. `pickedOther` is not reset on a season change — it is validated
-  // against the season's own list instead, which falls back on its own.
-  const others = useMemo(
-    () => overlaps.find((o) => o.season === season)?.others ?? [],
+  const venues = useMemo(
+    () => overlaps.find((o) => o.season === season)?.venues ?? [],
     [overlaps, season],
   );
-  const [pickedOther, setPickedOther] = useState<AuctionSource | ''>('');
-  const other: AuctionSource | null =
-    (pickedOther && others.includes(pickedOther) ? pickedOther : others[0]) ?? null;
-  const otherLabel = other ? SOURCE_LABEL[other] : '';
 
-  const rows = useMemo(
-    () => (season && other ? trentVsSourceSeason(sales, meta, season, other) : []),
-    [sales, meta, season, other],
+  const rawRows = useMemo(
+    () => (season && venues.length ? venueComparisonSeason(sales, meta, season, venues) : []),
+    [sales, meta, season, venues],
   );
-  const chartGroups = useMemo(() => groupForCharts(rows, groupRows, season), [rows, groupRows, season]);
 
-  // The Trent price the reader sees: reward-adjusted (−10%) or nominal.
   const adjusted = pricing === 'adjusted';
-  const trentOf = (r: SourceTokenRow) => (adjusted ? r.trentAvg * (1 - ERAS.trentRewardRate) : r.trentAvg);
-  const trentLabel = adjusted ? `Trent (−${REWARD_PCT}%)` : 'Trent';
-  const heading = other ? `Trent vs ${otherLabel} prices` : 'Trent vs other venues';
+
+  // Everything the table and charts read, in one pass: the reward adjustment,
+  // the 10x projection, the delta and its bid-step verdict.
+  //
+  // THE 10x IS NOT COSMETIC HERE. In 2027, 494 of 567 Trade 1 lots were 10x
+  // lots, so a per-token Trade 1 "price" is a lot price divided by ten — a
+  // quotient with two decimal places of false precision. Comparing two of those
+  // to the cent compares two quotients, not two bids. Showing the bundle puts
+  // the comparison back on the scale the bidding actually used, which is also
+  // the only scale on which the bid-step test below means anything.
+  const rows = useMemo(() => rawRows.map((r) => {
+    const scale = tenX && r.category === TRADE_1 ? 10 : 1;
+    const byVenue = new Map<AuctionSource, { avg: number; n: number }>();
+    for (const v of venues) {
+      const cell = r.byVenue.get(v);
+      if (!cell) continue;
+      const rewarded = adjusted && v === 'Trent' ? cell.avg * (1 - ERAS.trentRewardRate) : cell.avg;
+      byVenue.set(v, { avg: rewarded * scale, n: cell.n });
+    }
+    const present = venues.filter((v) => byVenue.has(v));
+    const values = present.map((v) => byVenue.get(v)!.avg);
+    // Two venues: a signed difference, later minus earlier in AUCTION_SOURCES
+    // order, so the sign means the same thing on every row. Three or more: there
+    // is no "the" difference, so the honest summary is the spread.
+    const delta = present.length === 2 ? values[1] - values[0] : Math.max(...values) - Math.min(...values);
+    const level = values.reduce((a, b) => a + b, 0) / values.length;
+    return {
+      ...r,
+      displayName: scale === 10 ? `${TENX_PREFIX}${r.displayName}` : r.displayName,
+      byVenue,
+      present,
+      delta,
+      pct: values[0] !== 0 ? delta / Math.abs(values[0]) : null,
+      // The step is measured at the price level actually on screen, so the 10x
+      // projection moves the token into the band its lots really bid in.
+      below: subIncrement(delta, level, present),
+    };
+  }), [rawRows, venues, adjusted, tenX]);
+
+  const shown = useMemo(() => (onlyReal ? rows.filter((r) => r.below == null) : rows), [rows, onlyReal]);
+  const chartGroups = useMemo(() => groupForCharts(shown, groupRows, season), [shown, groupRows, season]);
+
+  const label = (v: AuctionSource) =>
+    (adjusted && v === 'Trent' ? `Trent (−${REWARD_PCT}%)` : SOURCE_LABEL[v]);
+  // Whether a bid-step verdict is available at all this season. When one venue
+  // publishes no ladder (the forum), the marker is withheld for every row rather
+  // than computed from the other side alone.
+  const stepsKnown = venues.length > 0 && comparisonIncrement(venues, 20) != null;
+  const muted = rows.filter((r) => r.below != null).length;
+  const pair = venues.length === 2;
 
   if (!seasons.length) {
     return (
       <section className="an-panel">
-        <h2>Trent vs other venues</h2>
-        <p className="empty">No token sold under Trent and another venue in the same season.</p>
+        <h2>Venue comparison — prices by source</h2>
+        <p className="empty">No token sold under two different venues in the same season.</p>
       </section>
     );
   }
 
   return (
     <section className="an-panel">
-      <h2>{heading}</h2>
+      <h2>Venue comparison — prices by source</h2>
       <p className="an-lede">
         {narrow ? (
-          <>Per token, its <strong>{otherLabel}</strong> vs <strong>Trent</strong> average price in
-          one season — tokens sold under both only.</>
+          <>Per token, its average price at each <strong>venue</strong> that sold it in one
+          season — tokens sold at two or more venues only.</>
         ) : (
-          <>For one season, each token that sold under <strong>both</strong> venues shows its
-          {' '}{otherLabel} average beside its Trent average — matched per token, so neither token
-          mix nor time skews the comparison. Trent can be shown nominal or
-          {' '}<strong>reward-adjusted</strong> (−{REWARD_PCT}%, the ~100 pt/$1 reward that lowers a
-          Trent buyer's effective cost).</>
+          <>For one season, each token that sold at <strong>two or more</strong> venues shows its
+          average price at each — matched per token, so neither token mix nor time skews the
+          comparison. Trent can be shown nominal or <strong>reward-adjusted</strong>{' '}
+          (−{REWARD_PCT}%, the ~100 pt/$1 reward that lowers a Trent buyer's effective cost).</>
         )}
       </p>
       <p className="confound-note">
-        Trent auctions exist only from season {ERAS.trentStartSeason} on, and alesievauctions.com
-        only from 2027, so only seasons both venues ran appear
+        Only seasons where two or more venues sold the same token appear
         {narrow ? '.' : ' — comparing all-time would confound venue with time.'}
       </p>
 
@@ -675,54 +734,112 @@ function SourceView({
             {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
-        {/* Offered only where the season really has two venues to compare Trent
-            against; with one there is nothing to choose and the heading says it. */}
-        {others.length > 1 && (
+        {/* Offered only where Trent is one of the venues on screen — there is
+            nothing to reward-adjust otherwise. */}
+        {venues.includes('Trent') && (
           <label className="an-picker">
-            Compare against
-            <select value={other ?? ''} onChange={(e) => setPickedOther(e.target.value as AuctionSource)}>
-              {others.map((o) => <option key={o} value={o}>{SOURCE_LABEL[o]}</option>)}
+            Trent pricing
+            <select value={pricing} onChange={(e) => setPricing(e.target.value as Pricing)}>
+              <option value="nominal">Nominal</option>
+              <option value="adjusted">Reward-adjusted (−{REWARD_PCT}%)</option>
             </select>
           </label>
         )}
-        <label className="an-picker">
-          Trent pricing
-          <select value={pricing} onChange={(e) => setPricing(e.target.value as Pricing)}>
-            <option value="nominal">Nominal</option>
-            <option value="adjusted">Reward-adjusted (−{REWARD_PCT}%)</option>
-          </select>
+        <label className="tenx-check">
+          <input type="checkbox" checked={tenX} onChange={(e) => setTenX(e.target.checked)} />
+          Show Trade 1 as 10x
+          <HintPopover label="About the 10x view">
+            Trade 1 goods are almost always auctioned as a 10x lot — in 2027, 494 of 567 of
+            them — so the single-token price is a lot price divided by ten. Comparing two of
+            those to the cent compares two quotients rather than two bids. This shows the
+            bundle, which is the scale the bidding actually happened on.
+          </HintPopover>
         </label>
+        {stepsKnown && (
+          <label className="tenx-check">
+            <input type="checkbox" checked={onlyReal} onChange={(e) => setOnlyReal(e.target.checked)} />
+            Hide sub-increment gaps
+            <HintPopover label="About bid increments">
+              Each venue enforces a minimum bid step, and they differ: Trent moves in $0.25 under
+              $10, $1 to $49, then $5; Alesiev Auctions in $0.50 under $10, then $1. A gap smaller
+              than the coarser of the two is inside the bidding granularity, so it is marked{' '}
+              <em>&lt; step</em> — tick this to hide those rows. It is a caution and not a
+              verdict: an average over many lots can genuinely resolve finer than one increment.
+            </HintPopover>
+          </label>
+        )}
       </div>
 
       {rows.length === 0 ? (
-        <p className="empty">No token sold under both venues in {season}.</p>
+        <p className="empty">No token sold at two or more venues in {season}.</p>
       ) : (
         <>
+          <p className="meta-line">
+            {season}: {venues.map((v) => SOURCE_LABEL[v]).join(' vs ')} ·{' '}
+            {rows.length} token{rows.length === 1 ? '' : 's'} sold at two or more
+            {stepsKnown && muted > 0 && <> · {muted} differ by less than one bid increment</>}
+            {!stepsKnown && <> · bid-step marks unavailable: the forum publishes no fixed increment</>}
+          </p>
+
           <div className="an-scroll">
-            <table className={`an-table an-auto${rows.length >= 4 ? ' banded' : ''}`}>
+            <table className={`an-table an-auto${shown.length >= 4 ? ' banded' : ''}`}>
               <thead>
                 <tr>
                   <th className="left">Token</th>
                   {!narrow && <th className="left">Category</th>}
-                  <th className="num">{otherLabel}</th>
-                  <th className="num">{trentLabel}</th>
+                  {venues.map((v) => <th key={v} className="num">{label(v)}</th>)}
+                  <th className="num">
+                    {pair ? 'Δ' : 'Spread'}
+                    <HintPopover label={pair ? 'About the difference column' : 'About the spread column'}>
+                      {pair ? (
+                        <>{label(venues[1])} minus {label(venues[0])}, so a positive number means
+                        the token went for more at {SOURCE_LABEL[venues[1]]}.</>
+                      ) : (
+                        <>Highest venue average minus lowest, for the venues that sold this
+                        token. With more than two venues there is no single difference to
+                        report.</>
+                      )}{' '}
+                      A value marked <em>&lt; step</em> is smaller than the coarsest bid
+                      increment at that price, so it may be bidding granularity rather than a
+                      real gap.
+                    </HintPopover>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {shown.map((r) => (
                   <tr key={r.item}>
-                    <td className="left">
+                    <td className="left token">
                       {r.displayName}
                       {narrow && r.category && <span className="an-lsub">{r.category}</span>}
                     </td>
                     {!narrow && <td className="left muted">{r.category}</td>}
-                    <td className="num">{money(r.otherAvg)}</td>
-                    <td className="num">{money(trentOf(r))}</td>
+                    {venues.map((v) => {
+                      const cell = r.byVenue.get(v);
+                      return (
+                        <td key={v} className="num">
+                          {cell ? money(cell.avg) : <span className="muted">—</span>}
+                          {/* The sample size, because a $4 gap from 3 lots and
+                              from 300 are different claims. */}
+                          {cell && !narrow && <span className="an-lsub">n={cell.n}</span>}
+                        </td>
+                      );
+                    })}
+                    <td className={`num diff ${r.below != null ? 'muted' : r.delta >= 0 ? 'down' : 'up'}`}>
+                      {r.delta >= 0 && pair ? '+' : ''}{money(r.delta)}
+                      {r.below != null && <span className="an-lsub">&lt; step</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {shown.length === 0 && (
+            <p className="empty">
+              Every token's difference this season is smaller than one bid increment.
+            </p>
+          )}
 
           {/* One grouped-bar chart per Timelines token group, ordered by Group Order. */}
           <div className="src-charts">
@@ -731,12 +848,16 @@ function SourceView({
                 <h3 className="an-subhead" data-category={cg.category}>{cg.label}</h3>
                 <BarChart
                   categories={cg.rows.map((r) => r.displayName)}
-                  series={[
-                    { label: otherLabel, color: FORUM_COLOR, values: cg.rows.map((r) => r.otherAvg) },
-                    { label: trentLabel, color: TRENT_COLOR, values: cg.rows.map((r) => trentOf(r)) },
-                  ]}
+                  series={venues.map((v) => ({
+                    label: label(v),
+                    color: VENUE_COLOR[v],
+                    // A venue that did not sell the token plots as 0 — the bar
+                    // is simply absent, and the table above is where a reader
+                    // sees the dash that says why.
+                    values: cg.rows.map((r) => r.byVenue.get(v)?.avg ?? 0),
+                  }))}
                   yLabel="Avg price" format={sourcePrice}
-                  ariaLabel={`${otherLabel} versus ${adjusted ? 'reward-adjusted ' : ''}Trent average price for ${cg.label} tokens in ${season}`}
+                  ariaLabel={`Average price by venue for ${cg.label} tokens in ${season}`}
                   maxLabels={12}
                 />
               </div>
