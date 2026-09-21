@@ -552,20 +552,40 @@ const MEASURABLE = (season) => goods.some((g) => {
   return full && recent && full.source === 'auction' && !full.seasonMapped &&
     recent.variant === 'last5' && full.stats.n > recent.stats.n;
 });
-const STALE_SEASON = (() => {
-  for (let s = L; s >= prices.earliestPriced; s--) if (MEASURABLE(s)) return s;
-  return L;
-})();
-// The same corpus, stopped at that season, so `stalenessOf` — which reads
+// The same corpus, stopped at a season, so `stalenessOf` — which reads
 // `latestPriced` itself and takes no season argument — measures there. Capping
 // the sales is what moves `latestPriced`; nothing about the function changes.
-const stalePrices = new PriceIndex(
-  sales.filter((s) => Number(s.season) <= STALE_SEASON),
+const stalePricesAt = (season) => new PriceIndex(
+  sales.filter((s) => Number(s.season) <= season),
   parseOffAuctionPrices(read('offAuctionPrices.csv')),
   parseDerivedRules(read('derivedPrices.csv')),
   parseTokenMetadata(read('tokenMetadata.csv')),
   parseMeta(read('auctionMetadata.csv')),
 );
+// MEASURABLE is NECESSARY AND NOT SUFFICIENT, which is the second half of the
+// same lesson and cost a second red publish.
+//
+// A season where the last-5 window is a strict subset of the season can support
+// the measurement — but supporting it is not the same as anything having
+// drifted. On 2026-09-20 seven Trent auctions were backfilled into 2027, all
+// closing 2026-09-19. That took 2027 over the MEASURABLE line and the section
+// moved its measurement there, where every good's divergence is still near
+// zero: `stale` came back EMPTY, the vacuity guard reddened, and § 9 — which
+// named a good outright — dereferenced null and crashed the suite mid-run.
+//
+// So the season must also be one where the flag ACTUALLY FIRES. Nothing below
+// can say anything about the flag's wording, direction or threshold in a season
+// that flags nothing, and "this season is quiet" is a fact about the calendar,
+// not a property of the code — it must never redden a publish.
+const FLAGS = (season) => {
+  const e = new CostEngine(recipes, stalePricesAt(season), { today: TODAY });
+  return goods.some((g) => stalenessOf(g, e));
+};
+const STALE_SEASON = (() => {
+  for (let s = L; s >= prices.earliestPriced; s--) if (MEASURABLE(s) && FLAGS(s)) return s;
+  return L;
+})();
+const stalePrices = stalePricesAt(STALE_SEASON);
 const staleEngine = new CostEngine(recipes, stalePrices, { today: TODAY });
 check('the staleness season is one the measurement can actually be made in',
   stalePrices.latestPriced === STALE_SEASON && MEASURABLE(STALE_SEASON),
@@ -579,8 +599,14 @@ check('threshold is 35%', STALE_THRESHOLD === 0.35, STALE_THRESHOLD);
 // and Oil of Enchantment when written. What is asserted now is that the flag
 // fires at all — without which the divergence check below is vacuously true —
 // and the goods it names are printed so a reader sees the set move.
+//
+// With STALE_SEASON now chosen for firing rather than merely for measurability,
+// this is the corpus-wide floor: SOME season the site can price has a good
+// whose last five sales diverged. If that ever stops being true the whole
+// section is measuring nothing and should be re-derived, which is worth a red.
+// What it no longer does is redden because the NEWEST season happens to be calm.
 console.log(`        stale in season ${STALE_SEASON}` +
-  (STALE_SEASON === L ? '' : ` (latest priced is ${L}, too new to measure in)`) + ': ' +
+  (STALE_SEASON === L ? '' : ` (latest priced is ${L}; nothing has drifted there yet)`) + ': ' +
   (stale.length
     ? stale.map((x) => `${x.g} ${money(x.s.seasonAvg)} -> ${money(x.s.recentAvg)} (${(x.s.divergence * 100).toFixed(0)}%)`).join('; ')
     : 'none') + '\n');
@@ -821,19 +847,26 @@ check('every note in the closed vocabulary renders, and none renders as undefine
 // the flag's WORDING, and a season too new to measure in produces no flag to
 // word. Read off the live engine it returned null the day 2027 opened, and
 // `stalenessParts` threw rather than failing an assertion.
-const bismuth = stalenessOf('Elven Bismuth', staleEngine);
-const stalePartsBismuth = stalenessParts(bismuth, m);
+//
+// And it takes WHICHEVER good § 6 wordingCase rather than naming one. It named
+// Elven Bismuth, which is a fact about the price corpus and not about the
+// wording this section exists to pin — when a 2027 backfill moved the measured
+// season, that name resolved to null and threw HERE, three sections after the
+// assertion that would have explained why. § 6 already proves the set is
+// non-empty; a name adds nothing but a second way for a price export to go red.
+const wordingCase = stale[0];
+const staleParts = stalenessParts(wordingCase.s, m);
 check('the staleness flag names both measured numbers, in two parts',
-  stalePartsBismuth.length === 2 &&
-  /^season avg \$[\d.,]+$/.test(stalePartsBismuth[0]) &&
-  /^recent sales \$[\d.,]+$/.test(stalePartsBismuth[1]),
-  stalePartsBismuth.join(' | '));
+  staleParts.length === 2 &&
+  /^season avg \$[\d.,]+$/.test(staleParts[0]) &&
+  /^recent sales \$[\d.,]+$/.test(staleParts[1]),
+  `${wordingCase.g}: ${staleParts.join(' | ')}`);
 
 // The pivot stacks the parts and the Notes row joins them. One function, so a
 // reader switching views cannot be shown two different numbers for one good.
 check('the one-line form is exactly the two parts joined',
-  stalenessNote(bismuth, m) === stalePartsBismuth.join(' · '),
-  stalenessNote(bismuth, m));
+  stalenessNote(wordingCase.s, m) === staleParts.join(' · '),
+  stalenessNote(wordingCase.s, m));
 
 // The one thing the flag is forbidden to do. A direction word here would be a
 // forecast, and the quarter-by-quarter measurement behind STALE_THRESHOLD says
