@@ -354,6 +354,58 @@ console.log('\nContext items\n');
     wrongSeason.aborts.some((a) => /but it is in 2022/.test(a)),
     wrongSeason.aborts.join('\n'));
 
+  // THE PATRON LOT, whose spelling changes almost every season — see
+  // PATRON_PIN_RE. Trent has written it five ways across fifteen seasons and
+  // dropped the pin entirely for 2027 (`2027 Patron Code`), which aborted the
+  // whole import of that season's eighth auction: one unresolved name stops the
+  // file, so 166 good lots went nowhere.
+  //
+  // Pinned to STRUCTURE, not to the spellings the corpus happens to hold. Each
+  // of these is checked in three seasons deliberately, including seasons whose
+  // own metadata cannot help — `Patron Code` resolves in 2027 with no rule at
+  // all, because that season's `Display Name` IS `Patron Code`, and a test
+  // that only ever asked 2027 would pass with the rule deleted.
+  const patronSeasons = ['2027', '2026', '2021'];
+  const foldsToPin = [
+    '2027 Patron Code',                      // 2027: the pin is gone
+    'Patron Code',                           // the same, with no year on it
+    '2028 Patron Code',                      // a season with no metadata at all
+    '2026 Patron Pin and Code',
+    '2023 Patron Lapel Pin and Patron Code',
+    '2022 Patron Lapel Code',
+    'Patron Pin',
+  ];
+  for (const name of foldsToPin) {
+    const got = patronSeasons.map((s) => T.resolveToken(T.stripDecorations(name), s, index)?.Item ?? 'UNRESOLVED');
+    check(`"${name}" folds onto the canonical Patron Pin in every season`,
+      got.every((x) => x === 'Patron Pin'), patronSeasons.map((s, i) => `${s}: ${got[i]}`).join('\n'));
+  }
+
+  // ...and what the rule REFUSES is the half that matters. `Patron Token 1` is
+  // a different item with its own rows in every season since 2021. An
+  // unresolved name aborts the import and the operator fixes it; a name folded
+  // onto the wrong series is recorded, published, and caught by nothing.
+  const neverPin = [
+    'Patron Token 1',
+    '2025 Patron Token 1',
+    'Patron Token 1 and Code',
+    '2021 Patron Token 1 and Patron Code',
+  ];
+  for (const name of neverPin) {
+    const got = patronSeasons.map((s) => T.resolveToken(T.stripDecorations(name), s, index)?.Item ?? 'UNRESOLVED');
+    check(`"${name}" is never folded onto Patron Pin`,
+      got.every((x) => x !== 'Patron Pin'), patronSeasons.map((s, i) => `${s}: ${got[i]}`).join('\n'));
+  }
+
+  // The whole point, end to end: the lot imports rather than aborting, and it
+  // lands on the canonical Item while keeping the season's own Display Name.
+  const patronPlan = T.planImport([['Product Name', 'Highest Bid'],
+    ['2027 Patron Code', '425']], '2027', tokens);
+  const patronRow = patronPlan.prices.find((r) => r.Item === 'Patron Pin');
+  check('a 2027 Patron Code lot imports and prices as Patron Pin',
+    patronPlan.ok && patronRow && patronRow.Price === 425 && patronRow['Display Name'] === 'Patron Code',
+    `${patronPlan.aborts.join('\n')}\n${JSON.stringify(patronPlan.prices)}`);
+
   const target = { auctionId: '202647', auctionSeason: '2026', auctionNumber: '47' };
   const rows = T.contextRows(plan, target);
   check('the worksheet carries one row per context lot', rows.length === 3, JSON.stringify(rows));
