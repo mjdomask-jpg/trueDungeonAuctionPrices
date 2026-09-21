@@ -10,6 +10,7 @@ import { TenXToggle } from './TenXToggle';
 import { useTenX } from '../hooks/useTenX';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 import { moneyTight } from '../lib/format';
+import { ERAS } from '../lib/eras';
 
 // Quartiles view (Analytics). A box-and-whisker plot + quartile table for every
 // Timelines group, for one year, built from the per-lot Trent export. The raw
@@ -67,7 +68,9 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
         quartile table. The box spans the middle half of sales (Q1–Q3), the line is the median,
         and the whiskers reach the furthest sale within 1.5×IQR; dots beyond them are outliers.
         Tokens are grouped exactly as on <strong>Timelines</strong>, so each chart holds
-        similarly-priced tokens. This uses the richer per-lot Trent data (2023 on); unsold
+        similarly-priced tokens. This uses the richer per-lot data — <strong>Trent</strong>'s
+        from {ERAS.trentStartSeason} on, and <strong>Alesiev Auctions</strong>' from{' '}
+        {ERAS.alesievStartSeason} — so auctions run anywhere else contribute no lots. Unsold
         ($0.00) lots are excluded.
       </p>
 
@@ -98,9 +101,10 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
         <TenXToggle on={tenX} onChange={setTenX} />
       </div>
 
-      {/* Which auctions the window actually rests on. The per-lot feed is Trent's,
-          so the site-wide last five routinely include Forum auctions it has no
-          rows for — a quartile drawn from two auctions should say it is. */}
+      {/* Which auctions the window actually rests on. The per-lot feed covers
+          Trent and alesievauctions.com, so the site-wide last five routinely
+          include auctions it has no rows for — a quartile drawn from two
+          auctions should say it is. */}
       {grouped?.window && (
         <p className="meta-line">
           Last 5 auctions of {season}: {grouped.window.auctions.join(', ')} ·{' '}

@@ -1,7 +1,13 @@
-// Quartile analysis (Analytics → Quartiles). Built on the richer per-lot Trent
-// export in public/data/rawPricesData.csv — one row per individual lot sold,
-// which is enough data points per token to describe a distribution rather than
-// just a min/max/avg. See docs/updating-the-data.md for the file's role.
+// Quartile analysis (Analytics → Quartiles). Built on the richer per-lot export
+// in public/data/rawPricesData.csv — one row per individual lot sold, which is
+// enough data points per token to describe a distribution rather than just a
+// min/max/avg. See docs/updating-the-data.md for the file's role.
+//
+// TWO VENUES FEED IT, not one. It was Trent's export alone from season 2023;
+// alesievauctions.com's close writes the same per-lot shape from 2027. Nothing
+// in this file filters on source and nothing ever did — so the second venue
+// arrived already included, and only the prose here said otherwise. Which is
+// the trap: a comment naming one venue reads as a rule the code enforces.
 //
 // The breakdown mirrors Price Timelines exactly: tokens are grouped via
 // tokenGroups.csv (Group Order, per-token line colours) so each group holds
@@ -127,9 +133,9 @@ export type GroupedQuartiles = {
   ungrouped: string[]; // sold this year but assigned to no group
   unmatched: string[]; // grouping references a token that never appears in the raw feed
   // Present only when scoped to a recency window ("Last 5"). The per-lot feed
-  // covers Trent auctions only, while the window is the SITE-WIDE last five, so
-  // some of those auctions contribute nothing — say which, rather than quietly
-  // charting a thinner sample.
+  // covers Trent and alesievauctions.com only, while the window is the SITE-WIDE
+  // last five, so some of those auctions contribute nothing — say which, rather
+  // than quietly charting a thinner sample.
   window?: { auctions: number[]; withData: number[]; lots: number };
 };
 
@@ -159,9 +165,9 @@ function modeCategory(rows: GroupRow[]): string {
 // "Last 5" recency window. It is the SITE-WIDE last five (lastFiveAuctionNumbers
 // over prices.csv), deliberately: "Last 5" has to name the same five auctions
 // here that the Prices page names, or the two pages quietly disagree about a
-// phrase they both use. The per-lot feed only covers Trent auctions, so some of
-// those five contribute nothing — the returned `window` reports which did, and
-// the UI says so.
+// phrase they both use. The per-lot feed only covers Trent and
+// alesievauctions.com auctions, so some of those five contribute nothing — the
+// returned `window` reports which did, and the UI says so.
 export function quartilesByGroup(
   raw: RawSale[], sales: Sale[], groupRows: GroupRow[], year: string, tenX: boolean,
   windowAuctions?: number[] | null,
@@ -188,10 +194,16 @@ export function quartilesByGroup(
   const dispByItem = new Map<string, string>();
   for (const s of sales) if (s.season === year) dispByItem.set(s.item, s.displayName);
   const everInRaw = new Set(raw.map((r) => r.item));
-  // Categories the raw per-lot feed actually carries. The Trent export is a
-  // subset (no Golden Ticket, Condensed, or Safehold), so a grouped token from
-  // one of those categories is expected-absent, not a typo — only categories
+  // Categories the raw per-lot feed actually carries. It is a subset of
+  // prices.csv — today Condensed and Safehold are missing — so a grouped token
+  // from one of those categories is expected-absent, not a typo; only categories
   // present here can produce a meaningful "unmatched" (likely-typo) warning.
+  //
+  // Measured, not assumed, and the measurement moved: this used to say "no
+  // Golden Ticket, Condensed, or Safehold", and the 2027 alesievauctions.com
+  // export carries a Golden Ticket lot. Which is exactly why the set is DERIVED
+  // from the feed on every run rather than written down here — the sentence went
+  // stale, the behaviour did not.
   const rawCategories = new Set(raw.map((r) => r.category));
 
   const byGroup = new Map<string, { order: number; rows: GroupRow[] }>();
@@ -229,7 +241,7 @@ export function quartilesByGroup(
     .sort((a, b) => a.localeCompare(b));
   // A grouped token missing from the raw feed is only worth flagging when its
   // category is one the feed carries (so it's a plausible typo, not a token the
-  // Trent export never includes).
+  // per-lot exports never include).
   const unmatched = groupRows
     .filter((gr) => !everInRaw.has(gr.item) && rawCategories.has(gr.category))
     .map((gr) => gr.item)
