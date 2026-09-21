@@ -888,6 +888,90 @@ console.log('6. Onyx and context integrity (onyx.csv, contextItems.csv)');
     }
   }
 
+  // ...and for the THIRD thing `auctionStyle` predicts, new in season 2027.
+  //
+  // The company offered a second $8K order that season — more Trade 2 goods and
+  // fewer Trade 1 — and auctioneers name it "Option B" in the auction NAME.
+  // `auctionStyle` carries it as the words `Trade 2` (`Trade 2 Ultra Condensed`,
+  // `Onyx Trade 2 Ultra Condensed`) rather than a column of its own, because a
+  // style value is free to appear and free to stop appearing, while a column
+  // stays in the schema, the publish allow-list and the promote list for ever.
+  // The company says 2027 only; this check costs nothing if that holds.
+  //
+  // The discriminator is the QUANTITY of the three Trade 2 goods, summed over an
+  // auction's lots — not the lot count, because the same order is sold as 10x
+  // lots by one auctioneer and as singles by another, so lots measure the
+  // auctioneer rather than the order.
+  //
+  // Measured over every auction with lot data (rawPricesData begins at 2023):
+  // each season before 2027 has ONE signature, 2027 has two — 11/13/13 standard
+  // against 15/20/20 Trade 2 — and the Trade 2 signature appears in no other
+  // season. All twelve of 2027's closed auctions classify with nothing left
+  // over, and Trent's alternate on HIS OWN auction number, odd Trade 2 and even
+  // standard, which is not the sheet's `auctionNumber`.
+  //
+  // Nothing here is pinned to 2027 or to those numbers. The check calibrates
+  // itself per season from the auctions that ARE labelled, so it stays silent in
+  // a season with no Trade 2 style and needs no edit if the option returns in
+  // 2028. That matters because the counts are not reliably exact: 202621 is one
+  // Aragonite short of its season's signature, since an auction can withhold a
+  // lot or fail to sell one, and a check pinned to a constant would read that as
+  // a variant. Matching the OPPOSITE group's signature is a far narrower claim
+  // than failing to match your own, and it is the one that is actually evidence.
+  //
+  // A NOTE, not an error, for the reason the bag check above is a note: an
+  // import can land before anyone types the style, and this should say which
+  // auction to look at rather than block the publish that carries it.
+  const TRADE2_GOODS = ['Aragonite', 'Elven Bismuth', 'Oil of Enchantment'];
+  const TRADE2_STYLE = /trade\s*2/i;
+  {
+    const goodsQty = new Map();
+    for (const r of raw) {
+      if (!r.auctionId || !TRADE2_GOODS.includes(r.Item)) continue;
+      const { quantity } = parseLotQuantity(r.trentName);
+      const per = goodsQty.get(r.auctionId) ?? goodsQty.set(r.auctionId, new Map()).get(r.auctionId);
+      per.set(r.Item, (per.get(r.Item) || 0) + (quantity || 0));
+    }
+    const sigOf = (id) => {
+      const per = goodsQty.get(id);
+      return per ? TRADE2_GOODS.map((g) => per.get(g) || 0).join('/') : null;
+    };
+    const modal = (sigs) => {
+      const c = new Map();
+      for (const s of sigs) c.set(s, (c.get(s) || 0) + 1);
+      let best = null, n = 0;
+      for (const [s, k] of c) if (k > n) { best = s; n = k; }
+      return best;
+    };
+
+    const bySeason = new Map();
+    for (const m of meta) {
+      if (!m.auctionId || unsold(m)) continue;
+      const sig = sigOf(m.auctionId);
+      if (!sig) continue; // no lot data — unverified, not incorrect
+      const g = bySeason.get(m.auctionSeason) ?? bySeason.set(m.auctionSeason, []).get(m.auctionSeason);
+      g.push({ m, sig, labelled: TRADE2_STYLE.test(m.auctionStyle || '') });
+    }
+    for (const [season, rows] of [...bySeason].sort()) {
+      const yes = rows.filter((r) => r.labelled), no = rows.filter((r) => !r.labelled);
+      if (!yes.length || !no.length) continue; // one kind of order — nothing to tell apart
+      const yesSig = modal(yes.map((r) => r.sig)), noSig = modal(no.map((r) => r.sig));
+      if (yesSig === noSig) {
+        warns.push(`season ${season}: the ${yes.length} auction(s) whose auctionStyle says Trade 2 and the ` +
+          `${no.length} that do not both run on ${noSig} of ${TRADE2_GOODS.join('/')} — the label separates ` +
+          'nothing, so either it is on the wrong rows or these are not two different orders');
+        continue;
+      }
+      for (const r of rows) {
+        if (r.sig !== (r.labelled ? noSig : yesSig)) continue;
+        warns.push(`${r.m.auctionId} "${r.m.auctionName}": ${TRADE2_GOODS.join('/')} total ${r.sig}, which is ` +
+          `season ${season}'s ${r.labelled ? 'STANDARD' : 'TRADE 2'} order, but auctionStyle ` +
+          `"${r.m.auctionStyle}" ${r.labelled ? 'says Trade 2' : 'does not'} ` +
+          `(its Trade 2 orders run on ${yesSig}, its standard ones on ${noSig})`);
+      }
+    }
+  }
+
   // contextItems: a four-value vocabulary and an absolute sign convention.
   // withheld is what the auctioneer kept back, so it is a debit; token and
   // grunnel are what was sold, so they are credits. A sign flip here silently

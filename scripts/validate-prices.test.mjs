@@ -444,6 +444,35 @@ const cases = [
     t.replace('20183,2018,3,withheld,Patron Pin,', '20183,2018,3,retained,Patron Pin,')),
     /category "retained" is not one of/],
 
+  // Season 2027's second $8K order, the third thing § 6 holds `auctionStyle`
+  // to. Both directions, plus the degenerate case.
+  //
+  // Every expectation here is pinned to the SHAPE of the message, never to a
+  // signature: `15/20/20` is a modal computed from the season's own rows, so a
+  // publish that adds a 2027 auction which withholds one Aragonite moves it,
+  // and a case pinned to it would go red over data that is entirely correct.
+  // What must hold is that the check separated the two orders and named the
+  // row — not what the counts came out at. Same reason the Pending-Onyx case
+  // above says `\d+` where it used to say 55.
+  ['6  a Trade 2 order with no Trade 2 in its auctionStyle', () => edit('auctionMetadata.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('202710,'));
+    L[i] = L[i].replace(',Trade 2 Ultra Condensed,', ',Ultra Condensed,'); return L.join('\n');
+  }), /202710 .* is season 2027's TRADE 2 order, but auctionStyle .* does not/, 'warn'],
+
+  ['6  a standard order labelled Trade 2', () => edit('auctionMetadata.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('20276,'));
+    L[i] = L[i].replace(',Ultra Condensed,', ',Trade 2 Ultra Condensed,'); return L.join('\n');
+  }), /20276 .* is season 2027's STANDARD order, but auctionStyle .* says Trade 2/, 'warn'],
+
+  // The label applied in a season that never ran two orders. The signature
+  // check cannot speak here — there is only one kind of order to match — so
+  // the alternative is silence, which would let the label spread unchallenged
+  // through a season where it means nothing.
+  ['6  a Trade 2 label in a season with only one order', () => edit('auctionMetadata.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('202631,'));
+    L[i] = L[i].replace(',Ultra Condensed,', ',Trade 2 Ultra Condensed,'); return L.join('\n');
+  }), /season 2026: .* the label separates nothing/, 'warn'],
+
   // --- 7. closed vocabularies -----------------------------------------------
   // The defect Phase 0 actually found, reinjected: a style that differs from
   // the one beside it only in case. This is the case the dropdown is meant to
@@ -464,9 +493,16 @@ const cases = [
 
   // A genuinely new auction style must NOT fail — the vocabulary grows, and a
   // validator that blocked a publish for a new format would be worse than none.
+  //
+  // The assertion is that the new value is NAMED as a one-off, not that the
+  // column holds some particular number of values. It read `9 distinct
+  // value(s)`, and adding season 2027's two Trade 2 styles to the shipped file
+  // turned it red — a correct publish failing over a count nothing depends on,
+  // which is this repo's most-repeated way of blocking itself. What the case
+  // exists to prove is that the run stayed GREEN and said what it saw.
   ['7  a genuinely new auction style passes', () => edit('auctionMetadata.csv', (t) =>
     t.replace(',Super Condensed,Fixed Date,Wade S,', ',Quantum Condensed,Fixed Date,Wade S,')),
-    /auctionStyle: 9 distinct value\(s\)/, 'warn'],
+    /auctionStyle: \d+ distinct value\(s\); used once: "Quantum Condensed"/, 'warn'],
 
   // `Status` is a formula — `IF(outcome<>"", outcome, IF(closeDate="", "Open",
   // "Closed"))` — so the only values it can produce are `Open`, `Closed` and
