@@ -12,6 +12,13 @@ export const ERAS = {
   // a season-2023 auction, so a date cutoff would misclassify it (audit §3).
   trentStartSeason: 2023,
 
+  // alesievauctions.com, the community-built auction site, debuted in season
+  // 2027. Same rule as above: `source` is read PER AUCTION from the Link, never
+  // from this number — it exists so the COPY that tells a reader which seasons a
+  // venue covers has one place to read it from, rather than a 2027 typed into
+  // each sentence. The quartile lede and the venue comparison both use it.
+  alesievStartSeason: 2027,
+
   // Trent awards 100 points per $1 (~10% effective discount). Constant to date.
   // Written as a single rate but call sites go through trentRewardRate() so a
   // dated table could replace this later without touching them.
