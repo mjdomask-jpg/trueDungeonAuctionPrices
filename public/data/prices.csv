@@ -16,7 +16,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20181,2018,1,Patron Pin,1.25,Patron Pin,Premium
 20181,2018,1,PCH,3.25,Potion Distilled Healing,Bonus
 20181,2018,1,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
-20181,2018,1,Ultra Rare,120,Ultra Rare,Ultra Rare
+20181,2018,1,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
 20181,2018,1,Wish Ring,220,Wish Ring,Trade 4
 20182,2018,2,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20182,2018,2,1k Bonus,95,4th Tooth of Cavadar,Premium
@@ -36,7 +36,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20182,2018,2,Preorder Bonus,2,Avernons +5 Healing Cherry ,Preorder
 20182,2018,2,Rare Bag,70,Rare Bag,Condensed
 20182,2018,2,Treasure Chip,2.66,Treasure Chip (each),Preorder
-20182,2018,2,Ultra Rare,99,Ultra Rare,Ultra Rare
+20182,2018,2,Ultra Rare,99,Chosen Ultra Rare,Ultra Rare
 20182,2018,2,Uncommon Bag,77,Uncommon Bag,Condensed
 20182,2018,2,Wish Ring,250,Wish Ring,Trade 4
 20183,2018,3,"1,000 GP Gold Bar",18,"1,000 GP Gold Bar",Trade 2
@@ -56,7 +56,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20183,2018,3,Preorder Bonus,2.25,Avernons +5 Healing Cherry ,Preorder
 20183,2018,3,Rare Bag,70,Rare Bag,Condensed
 20183,2018,3,Treasure Chip,3.17,Treasure Chip (each),Preorder
-20183,2018,3,Ultra Rare,100,Ultra Rare,Ultra Rare
+20183,2018,3,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20183,2018,3,Uncommon Bag,57,Uncommon Bag,Condensed
 20183,2018,3,Wish Ring,230,Wish Ring,Trade 4
 20184,2018,4,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
@@ -74,7 +74,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20184,2018,4,PCH,0.75,Potion Distilled Healing,Bonus
 20184,2018,4,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
 20184,2018,4,Rare Bag,60,Rare Bag,Condensed
-20184,2018,4,Ultra Rare,100,Ultra Rare,Ultra Rare
+20184,2018,4,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20184,2018,4,Uncommon Bag,41,Uncommon Bag,Condensed
 20184,2018,4,Wish Ring,230,Wish Ring,Trade 4
 20185,2018,5,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
@@ -95,7 +95,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20185,2018,5,Patron Pin,3.25,Patron Pin,Premium
 20185,2018,5,PCH,3.75,Potion Distilled Healing,Bonus
 20185,2018,5,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-20185,2018,5,Ultra Rare,125,Ultra Rare,Ultra Rare
+20185,2018,5,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 20185,2018,5,Wish Ring,265,Wish Ring,Trade 4
 20186,2018,6,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20186,2018,6,1k Bonus,80,4th Tooth of Cavadar,Premium
@@ -115,7 +115,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20186,2018,6,Patron Pin,2,Patron Pin,Premium
 20186,2018,6,PCH,2.5,Potion Distilled Healing,Bonus
 20186,2018,6,Philosopher's Stone,1,Philosopher's Stone,Trade 1
-20186,2018,6,Ultra Rare,125,Ultra Rare,Ultra Rare
+20186,2018,6,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 20186,2018,6,Wish Ring,210,Wish Ring,Trade 4
 20191,2019,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20191,2019,1,1k Bonus,75,5th Tooth of Cavadar,Premium
@@ -133,7 +133,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20191,2019,1,Patron Pin,100,Patron Pin,Premium
 20191,2019,1,PCH,4,Potion Condensed Healing,Bonus
 20191,2019,1,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-20191,2019,1,Ultra Rare,100,Ultra Rare,Ultra Rare
+20191,2019,1,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20191,2019,1,Wish Ring,205,Wish Ring,Trade 4
 20192,2019,2,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20192,2019,2,1k Bonus,45,5th Tooth of Cavadar,Premium
@@ -151,7 +151,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20192,2019,2,Patron Pin,105,Patron Pin,Premium
 20192,2019,2,PCH,3,Potion Condensed Healing,Bonus
 20192,2019,2,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
-20192,2019,2,Ultra Rare,120,Ultra Rare,Ultra Rare
+20192,2019,2,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
 20192,2019,2,Wish Ring,240,Wish Ring,Trade 4
 20193,2019,3,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20193,2019,3,1k Bonus,41,5th Tooth of Cavadar,Premium
@@ -172,7 +172,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20193,2019,3,Patron Pin,2.25,Patron Pin,Premium
 20193,2019,3,PCH,2.25,Potion Condensed Healing,Bonus
 20193,2019,3,Philosopher's Stone,1,Philosopher's Stone,Trade 1
-20193,2019,3,Ultra Rare,120,Ultra Rare,Ultra Rare
+20193,2019,3,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
 20193,2019,3,Wish Ring,225,Wish Ring,Trade 4
 20194,2019,4,"1,000 GP Gold Bar",17,"1,000 GP Gold Bar",Trade 2
 20194,2019,4,1k Bonus,31,5th Tooth of Cavadar,Premium
@@ -192,7 +192,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20194,2019,4,Oil of Enchantment,15,Oil of Enchantment,Trade 2
 20194,2019,4,PCH,3.25,Potion Condensed Healing,Bonus
 20194,2019,4,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
-20194,2019,4,Ultra Rare,110,Ultra Rare,Ultra Rare
+20194,2019,4,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 20194,2019,4,Wish Ring,235,Wish Ring,Trade 4
 20195,2019,5,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 20195,2019,5,1k Bonus,32,5th Tooth of Cavadar,Premium
@@ -212,7 +212,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20195,2019,5,Oil of Enchantment,19,Oil of Enchantment,Trade 2
 20195,2019,5,PCH,2.5,Potion Condensed Healing,Bonus
 20195,2019,5,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
-20195,2019,5,Ultra Rare,115,Ultra Rare,Ultra Rare
+20195,2019,5,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 20195,2019,5,Wish Ring,220,Wish Ring,Trade 4
 20196,2019,6,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 20196,2019,6,1k Bonus,45,5th Tooth of Cavadar,Premium
@@ -233,7 +233,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20196,2019,6,Patron Pin,77,Patron Pin,Premium
 20196,2019,6,PCH,2.5,Potion Condensed Healing,Bonus
 20196,2019,6,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-20196,2019,6,Ultra Rare,105,Ultra Rare,Ultra Rare
+20196,2019,6,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 20196,2019,6,Wish Ring,235,Wish Ring,Trade 4
 20197,2019,7,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20197,2019,7,1k Bonus,33,5th Tooth of Cavadar,Premium
@@ -254,7 +254,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20197,2019,7,Patron Pin,26,Patron Pin,Premium
 20197,2019,7,PCH,3.25,Potion Condensed Healing,Bonus
 20197,2019,7,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-20197,2019,7,Ultra Rare,110,Ultra Rare,Ultra Rare
+20197,2019,7,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 20197,2019,7,Wish Ring,225,Wish Ring,Trade 4
 20198,2019,8,1k Bonus,41.5,5th Tooth of Cavadar,Premium
 20198,2019,8,2k Bonus,4,Mask of Mayhem,Premium
@@ -274,7 +274,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20198,2019,8,Patron Pin,10,Patron Pin,Premium
 20198,2019,8,PCH,2.25,Potion Condensed Healing,Bonus
 20198,2019,8,Philosopher's Stone,1,Philosopher's Stone,Trade 1
-20198,2019,8,Ultra Rare,115,Ultra Rare,Ultra Rare
+20198,2019,8,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 20198,2019,8,Wish Ring,210,Wish Ring,Trade 4
 20201,2020,1,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20201,2020,1,1k Bonus,60,6th Tooth of Cavadar,Premium
@@ -297,7 +297,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20201,2020,1,Philosopher's Stone,1,Philosopher's Stone,Trade 1
 20201,2020,1,Preorder Bonus,0.4,Averon's +3 Cherry Wine,Preorder
 20201,2020,1,Treasure Chip,3.33,Treasure Chip (each),Preorder
-20201,2020,1,Ultra Rare,100,Ultra Rare,Ultra Rare
+20201,2020,1,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20201,2020,1,Wish Ring,240,Wish Ring,Trade 4
 20202,2020,2,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20202,2020,2,1k Bonus,45,6th Tooth of Cavadar,Premium
@@ -320,7 +320,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20202,2020,2,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
 20202,2020,2,Preorder Bonus,0.4,Averon's +3 Cherry Wine,Preorder
 20202,2020,2,Treasure Chip,3.33,Treasure Chip (each),Preorder
-20202,2020,2,Ultra Rare,100,Ultra Rare,Ultra Rare
+20202,2020,2,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20202,2020,2,Wish Ring,240,Wish Ring,Trade 4
 20203,2020,3,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20203,2020,3,1k Bonus,45,6th Tooth of Cavadar,Premium
@@ -343,7 +343,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20203,2020,3,Philosopher's Stone,2.53,Philosopher's Stone,Trade 1
 20203,2020,3,Preorder Bonus,0.35,Averon's +3 Cherry Wine,Preorder
 20203,2020,3,Treasure Chip,3.5,Treasure Chip (each),Preorder
-20203,2020,3,Ultra Rare,95,Ultra Rare,Ultra Rare
+20203,2020,3,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20203,2020,3,Wish Ring,205.33,Wish Ring,Trade 4
 20204,2020,4,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 20204,2020,4,1k Bonus,45,6th Tooth of Cavadar,Premium
@@ -366,7 +366,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20204,2020,4,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 20204,2020,4,Preorder Bonus,1,Averon's +3 Cherry Wine,Preorder
 20204,2020,4,Treasure Chip,4.67,Treasure Chip (each),Preorder
-20204,2020,4,Ultra Rare,102,Ultra Rare,Ultra Rare
+20204,2020,4,Ultra Rare,102,Chosen Ultra Rare,Ultra Rare
 20204,2020,4,Wish Ring,195,Wish Ring,Trade 4
 20205,2020,5,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20205,2020,5,1k Bonus,45,6th Tooth of Cavadar,Premium
@@ -389,7 +389,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20205,2020,5,Philosopher's Stone,2.21,Philosopher's Stone,Trade 1
 20205,2020,5,Preorder Bonus,0.5,Averon's +3 Cherry Wine,Preorder
 20205,2020,5,Treasure Chip,4.67,Treasure Chip (each),Preorder
-20205,2020,5,Ultra Rare,99,Ultra Rare,Ultra Rare
+20205,2020,5,Ultra Rare,99,Chosen Ultra Rare,Ultra Rare
 20205,2020,5,Wish Ring,195,Wish Ring,Trade 4
 20206,2020,6,"1,000 GP Gold Bar",13.75,"1,000 GP Gold Bar",Trade 2
 20206,2020,6,1k Bonus,40,6th Tooth of Cavadar,Premium
@@ -411,7 +411,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20206,2020,6,PCH,1,Potion Condensed Healing,Bonus
 20206,2020,6,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 20206,2020,6,Treasure Chip,4.67,Treasure Chip (each),Preorder
-20206,2020,6,Ultra Rare,100,Ultra Rare,Ultra Rare
+20206,2020,6,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20206,2020,6,Wish Ring,200,Wish Ring,Trade 4
 20207,2020,7,"1,000 GP Gold Bar",14.5,"1,000 GP Gold Bar",Trade 2
 20207,2020,7,1k Bonus,35,6th Tooth of Cavadar,Premium
@@ -433,7 +433,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20207,2020,7,PCH,1.25,Potion Condensed Healing,Bonus
 20207,2020,7,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 20207,2020,7,Treasure Chip,4.67,Treasure Chip (each),Preorder
-20207,2020,7,Ultra Rare,105,Ultra Rare,Ultra Rare
+20207,2020,7,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 20207,2020,7,Wish Ring,205,Wish Ring,Trade 4
 20209,2020,9,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20209,2020,9,1k Bonus,30,6th Tooth of Cavadar,Premium
@@ -453,7 +453,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20209,2020,9,Oil of Enchantment,15,Oil of Enchantment,Trade 2
 20209,2020,9,PCH,2,Potion Condensed Healing,Bonus
 20209,2020,9,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-20209,2020,9,Ultra Rare,115,Ultra Rare,Ultra Rare
+20209,2020,9,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 20209,2020,9,Wish Ring,210,Wish Ring,Trade 4
 202010,2020,10,"1,000 GP Gold Bar",13.5,"1,000 GP Gold Bar",Trade 2
 202010,2020,10,1k Bonus,26.5,6th Tooth of Cavadar,Premium
@@ -472,7 +472,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202010,2020,10,Patron Pin,10.25,Patron Pin,Premium
 202010,2020,10,PCH,2.5,Potion Condensed Healing,Bonus
 202010,2020,10,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202010,2020,10,Ultra Rare,125,Ultra Rare,Ultra Rare
+202010,2020,10,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 202010,2020,10,Wish Ring,190,Wish Ring,Trade 4
 202011,2020,11,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202011,2020,11,1k Bonus,30,6th Tooth of Cavadar,Premium
@@ -487,7 +487,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202011,2020,11,Mystic Silk,1.5,Mystic Silk,Trade 1
 202011,2020,11,Oil of Enchantment,14,Oil of Enchantment,Trade 2
 202011,2020,11,Patron Pin,26,Patron Pin,Premium
-202011,2020,11,Ultra Rare,125,Ultra Rare,Ultra Rare
+202011,2020,11,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 202011,2020,11,Wish Ring,200,Wish Ring,Trade 4
 202012,2020,12,"1,000 GP Gold Bar",14.25,"1,000 GP Gold Bar",Trade 2
 202012,2020,12,1k Bonus,24,6th Tooth of Cavadar,Premium
@@ -507,7 +507,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202012,2020,12,Oil of Enchantment,14,Oil of Enchantment,Trade 2
 202012,2020,12,PCH,1.25,Potion Condensed Healing,Bonus
 202012,2020,12,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202012,2020,12,Ultra Rare,127,Ultra Rare,Ultra Rare
+202012,2020,12,Ultra Rare,127,Chosen Ultra Rare,Ultra Rare
 202012,2020,12,Wish Ring,190,Wish Ring,Trade 4
 202013,2020,13,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202013,2020,13,1k Bonus,25,6th Tooth of Cavadar,Premium
@@ -527,7 +527,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202013,2020,13,Patron Pin,3,Patron Pin,Premium
 202013,2020,13,PCH,1.5,Potion Condensed Healing,Bonus
 202013,2020,13,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
-202013,2020,13,Ultra Rare,125,Ultra Rare,Ultra Rare
+202013,2020,13,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 202013,2020,13,Wish Ring,185,Wish Ring,Trade 4
 202014,2020,14,"1,000 GP Gold Bar",14.25,"1,000 GP Gold Bar",Trade 2
 202014,2020,14,1k Bonus,24,6th Tooth of Cavadar,Premium
@@ -548,7 +548,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202014,2020,14,Patron Pin,8,Patron Pin,Premium
 202014,2020,14,PCH,2,Potion Condensed Healing,Bonus
 202014,2020,14,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
-202014,2020,14,Ultra Rare,122,Ultra Rare,Ultra Rare
+202014,2020,14,Ultra Rare,122,Chosen Ultra Rare,Ultra Rare
 202014,2020,14,Wish Ring,207,Wish Ring,Trade 4
 202015,2020,15,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202015,2020,15,1k Bonus,24.5,6th Tooth of Cavadar,Premium
@@ -569,7 +569,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202015,2020,15,Patron Pin,12,Patron Pin,Premium
 202015,2020,15,PCH,1.5,Potion Condensed Healing,Bonus
 202015,2020,15,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
-202015,2020,15,Ultra Rare,125,Ultra Rare,Ultra Rare
+202015,2020,15,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 202015,2020,15,Wish Ring,205,Wish Ring,Trade 4
 202016,2020,16,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202016,2020,16,1k Bonus,25.75,6th Tooth of Cavadar,Premium
@@ -590,7 +590,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202016,2020,16,Patron Pin,111,Patron Pin,Premium
 202016,2020,16,PCH,2.25,Potion Condensed Healing,Bonus
 202016,2020,16,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-202016,2020,16,Ultra Rare,110,Ultra Rare,Ultra Rare
+202016,2020,16,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202016,2020,16,Wish Ring,200,Wish Ring,Trade 4
 202017,2020,17,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202017,2020,17,1k Bonus,39,6th Tooth of Cavadar,Premium
@@ -608,7 +608,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202017,2020,17,Oil of Enchantment,16,Oil of Enchantment,Trade 2
 202017,2020,17,Patron Pin,2.25,Patron Pin,Premium
 202017,2020,17,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202017,2020,17,Ultra Rare,100,Ultra Rare,Ultra Rare
+202017,2020,17,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 202017,2020,17,Wish Ring,200,Wish Ring,Trade 4
 202018,2020,18,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202018,2020,18,1k Bonus,29.5,6th Tooth of Cavadar,Premium
@@ -629,7 +629,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202018,2020,18,PCH,1.5,Potion Condensed Healing,Bonus
 202018,2020,18,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202018,2020,18,Treasure Chip,4.33,Treasure Chip (each),Preorder
-202018,2020,18,Ultra Rare,98,Ultra Rare,Ultra Rare
+202018,2020,18,Ultra Rare,98,Chosen Ultra Rare,Ultra Rare
 202018,2020,18,Wish Ring,200,Wish Ring,Trade 4
 202019,2020,19,"1,000 GP Gold Bar",13.25,"1,000 GP Gold Bar",Trade 2
 202019,2020,19,1k Bonus,35.5,6th Tooth of Cavadar,Premium
@@ -651,7 +651,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202019,2020,19,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
 202019,2020,19,Preorder Bonus,0.5,Averon's +3 Cherry Wine,Preorder
 202019,2020,19,Treasure Chip,5,Treasure Chip (each),Preorder
-202019,2020,19,Ultra Rare,95,Ultra Rare,Ultra Rare
+202019,2020,19,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202019,2020,19,Wish Ring,200,Wish Ring,Trade 4
 202020,2020,20,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202020,2020,20,1k Bonus,35,6th Tooth of Cavadar,Premium
@@ -671,7 +671,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202020,2020,20,Philosopher's Stone,1,Philosopher's Stone,Trade 1
 202020,2020,20,Rare Bag,100,Rare Bag,Condensed
 202020,2020,20,Treasure Chip,3.83,Treasure Chip (each),Preorder
-202020,2020,20,Ultra Rare,100,Ultra Rare,Ultra Rare
+202020,2020,20,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 202020,2020,20,Uncommon Bag,73,Uncommon Bag,Condensed
 202020,2020,20,Wish Ring,215,Wish Ring,Trade 4
 202021,2020,21,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
@@ -693,7 +693,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202021,2020,21,PCH,1,Potion Condensed Healing,Bonus
 202021,2020,21,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202021,2020,21,Treasure Chip,4.5,Treasure Chip (each),Preorder
-202021,2020,21,Ultra Rare,96,Ultra Rare,Ultra Rare
+202021,2020,21,Ultra Rare,96,Chosen Ultra Rare,Ultra Rare
 202021,2020,21,Wish Ring,210,Wish Ring,Trade 4
 202022,2020,22,1k Bonus,35,6th Tooth of Cavadar,Premium
 202022,2020,22,2k Bonus,16,Hitchhiking Ghost: Shog,Premium
@@ -715,7 +715,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202022,2020,22,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 202022,2020,22,Preorder Bonus,0.75,Averon's +3 Cherry Wine,Preorder
 202022,2020,22,Treasure Chip,5.33,Treasure Chip (each),Preorder
-202022,2020,22,Ultra Rare,100,Ultra Rare,Ultra Rare
+202022,2020,22,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 202022,2020,22,Wish Ring,185,Wish Ring,Trade 4
 20211,2021,1,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20211,2021,1,1k Bonus,19.5,7th Tooth of Cavadar,Premium
@@ -738,7 +738,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20211,2021,1,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 20211,2021,1,Preorder Bonus,1,Potion Re-Pete Healing,Preorder
 20211,2021,1,Treasure Chip,4,Treasure Chip (each),Preorder
-20211,2021,1,Ultra Rare,115,Ultra Rare,Ultra Rare
+20211,2021,1,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 20211,2021,1,Wish Ring,210,Wish Ring,Trade 4
 20212,2021,2,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20212,2021,2,1k Bonus,25,7th Tooth of Cavadar,Premium
@@ -761,7 +761,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20212,2021,2,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 20212,2021,2,Preorder Bonus,0.75,Potion Re-Pete Healing,Preorder
 20212,2021,2,Treasure Chip,3.67,Treasure Chip (each),Preorder
-20212,2021,2,Ultra Rare,117,Ultra Rare,Ultra Rare
+20212,2021,2,Ultra Rare,117,Chosen Ultra Rare,Ultra Rare
 20212,2021,2,Wish Ring,181,Wish Ring,Trade 4
 20213,2021,3,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
 20213,2021,3,1k Bonus,30,7th Tooth of Cavadar,Premium
@@ -784,7 +784,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20213,2021,3,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20213,2021,3,Preorder Bonus,0.5,Potion Re-Pete Healing,Preorder
 20213,2021,3,Treasure Chip,4.67,Treasure Chip (each),Preorder
-20213,2021,3,Ultra Rare,117.5,Ultra Rare,Ultra Rare
+20213,2021,3,Ultra Rare,117.5,Chosen Ultra Rare,Ultra Rare
 20213,2021,3,Wish Ring,175,Wish Ring,Trade 4
 20214,2021,4,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 20214,2021,4,1k Bonus,31,7th Tooth of Cavadar,Premium
@@ -806,7 +806,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20214,2021,4,PCH,1,Potion Condensed Healing,Bonus
 20214,2021,4,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 20214,2021,4,Treasure Chip,5,Treasure Chip (each),Preorder
-20214,2021,4,Ultra Rare,115,Ultra Rare,Ultra Rare
+20214,2021,4,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 20214,2021,4,Wish Ring,175,Wish Ring,Trade 4
 20215,2021,5,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 20215,2021,5,1k Bonus,25,7th Tooth of Cavadar,Premium
@@ -826,7 +826,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20215,2021,5,Patron Pin,150,Patron Pin,Premium
 20215,2021,5,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 20215,2021,5,Treasure Chip,5,Treasure Chip (each),Preorder
-20215,2021,5,Ultra Rare,110,Ultra Rare,Ultra Rare
+20215,2021,5,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 20215,2021,5,Wish Ring,185,Wish Ring,Trade 4
 20216,2021,6,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20216,2021,6,1k Bonus,20,7th Tooth of Cavadar,Premium
@@ -847,7 +847,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20216,2021,6,Patron Pin,100,Patron Pin,Premium
 20216,2021,6,PCH,1,Potion Condensed Healing,Bonus
 20216,2021,6,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-20216,2021,6,Ultra Rare,120,Ultra Rare,Ultra Rare
+20216,2021,6,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
 20216,2021,6,Wish Ring,185,Wish Ring,Trade 4
 20217,2021,7,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20217,2021,7,1k Bonus,18,7th Tooth of Cavadar,Premium
@@ -868,7 +868,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20217,2021,7,Patron Pin,80,Patron Pin,Premium
 20217,2021,7,PCH,1,Potion Condensed Healing,Bonus
 20217,2021,7,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
-20217,2021,7,Ultra Rare,125,Ultra Rare,Ultra Rare
+20217,2021,7,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 20217,2021,7,Wish Ring,180,Wish Ring,Trade 4
 20218,2021,8,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20218,2021,8,1k Bonus,12,7th Tooth of Cavadar,Premium
@@ -889,7 +889,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20218,2021,8,Patron Pin,130,Patron Pin,Premium
 20218,2021,8,PCH,0.5,Potion Condensed Healing,Bonus
 20218,2021,8,Philosopher's Stone,4,Philosopher's Stone,Trade 1
-20218,2021,8,Ultra Rare,120,Ultra Rare,Ultra Rare
+20218,2021,8,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
 20218,2021,8,Wish Ring,175,Wish Ring,Trade 4
 20219,2021,9,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20219,2021,9,1k Bonus,11,7th Tooth of Cavadar,Premium
@@ -910,7 +910,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20219,2021,9,Patron Pin,132,Patron Pin,Premium
 20219,2021,9,PCH,1.25,Potion Condensed Healing,Bonus
 20219,2021,9,Philosopher's Stone,4,Philosopher's Stone,Trade 1
-20219,2021,9,Ultra Rare,122,Ultra Rare,Ultra Rare
+20219,2021,9,Ultra Rare,122,Chosen Ultra Rare,Ultra Rare
 20219,2021,9,Wish Ring,195,Wish Ring,Trade 4
 202110,2021,10,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202110,2021,10,1k Bonus,8.25,7th Tooth of Cavadar,Premium
@@ -930,7 +930,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202110,2021,10,Patron Pin,145,Patron Pin,Premium
 202110,2021,10,PCH,2,Potion Condensed Healing,Bonus
 202110,2021,10,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
-202110,2021,10,Ultra Rare,125,Ultra Rare,Ultra Rare
+202110,2021,10,Ultra Rare,125,Chosen Ultra Rare,Ultra Rare
 202110,2021,10,Wish Ring,180,Wish Ring,Trade 4
 202111,2021,11,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202111,2021,11,1k Bonus,23,7th Tooth of Cavadar,Premium
@@ -949,7 +949,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202111,2021,11,PCH,1,Potion Condensed Healing,Bonus
 202111,2021,11,Philosopher's Stone,5,Philosopher's Stone,Trade 1
 202111,2021,11,Rare Bag,100,Rare Bag,Condensed
-202111,2021,11,Ultra Rare,120,Ultra Rare,Ultra Rare
+202111,2021,11,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
 202111,2021,11,Uncommon Bag,60,Uncommon Bag,Condensed
 202111,2021,11,Wish Ring,200,Wish Ring,Trade 4
 202112,2021,12,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
@@ -971,7 +971,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202112,2021,12,Patron Pin,155,Patron Pin,Premium
 202112,2021,12,PCH,1,Potion Condensed Healing,Bonus
 202112,2021,12,Philosopher's Stone,4,Philosopher's Stone,Trade 1
-202112,2021,12,Ultra Rare,115,Ultra Rare,Ultra Rare
+202112,2021,12,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 202112,2021,12,Wish Ring,175,Wish Ring,Trade 4
 202113,2021,13,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202113,2021,13,1k Bonus,17,7th Tooth of Cavadar,Premium
@@ -991,7 +991,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202113,2021,13,Patron Pin,125,Patron Pin,Premium
 202113,2021,13,PCH,1.25,Potion Condensed Healing,Bonus
 202113,2021,13,Philosopher's Stone,4,Philosopher's Stone,Trade 1
-202113,2021,13,Ultra Rare,115,Ultra Rare,Ultra Rare
+202113,2021,13,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 202113,2021,13,Wish Ring,180,Wish Ring,Trade 4
 202114,2021,14,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202114,2021,14,1k Bonus,20,7th Tooth of Cavadar,Premium
@@ -1012,7 +1012,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202114,2021,14,Patron Token 1,250,Ioun Stone Mystic Orb,Premium
 202114,2021,14,PCH,0.75,Potion Condensed Healing,Bonus
 202114,2021,14,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
-202114,2021,14,Ultra Rare,110,Ultra Rare,Ultra Rare
+202114,2021,14,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202114,2021,14,Wish Ring,225,Wish Ring,Trade 4
 202115,2021,15,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202115,2021,15,1k Bonus,14,7th Tooth of Cavadar,Premium
@@ -1033,7 +1033,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202115,2021,15,Patron Token 1,250,Ioun Stone Mystic Orb,Premium
 202115,2021,15,PCH,1,Potion Condensed Healing,Bonus
 202115,2021,15,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
-202115,2021,15,Ultra Rare,110,Ultra Rare,Ultra Rare
+202115,2021,15,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202115,2021,15,Wish Ring,220,Wish Ring,Trade 4
 202116,2021,16,"1,000 GP Gold Bar",13.5,"1,000 GP Gold Bar",Trade 2
 202116,2021,16,1k Bonus,15,7th Tooth of Cavadar,Premium
@@ -1054,7 +1054,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202116,2021,16,Patron Token 1,300,Ioun Stone Mystic Orb,Premium
 202116,2021,16,PCH,1.25,Potion Condensed Healing,Bonus
 202116,2021,16,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
-202116,2021,16,Ultra Rare,110,Ultra Rare,Ultra Rare
+202116,2021,16,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202116,2021,16,Wish Ring,225,Wish Ring,Trade 4
 202117,2021,17,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202117,2021,17,1k Bonus,11,7th Tooth of Cavadar,Premium
@@ -1075,7 +1075,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202117,2021,17,Patron Token 1,275,Ioun Stone Mystic Orb,Premium
 202117,2021,17,PCH,1.75,Potion Condensed Healing,Bonus
 202117,2021,17,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
-202117,2021,17,Ultra Rare,110,Ultra Rare,Ultra Rare
+202117,2021,17,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202117,2021,17,Wish Ring,200,Wish Ring,Trade 4
 202118,2021,18,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202118,2021,18,1k Bonus,7.25,7th Tooth of Cavadar,Premium
@@ -1096,7 +1096,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202118,2021,18,Patron Token 1,280,Ioun Stone Mystic Orb,Premium
 202118,2021,18,PCH,1.25,Potion Condensed Healing,Bonus
 202118,2021,18,Philosopher's Stone,7,Philosopher's Stone,Trade 1
-202118,2021,18,Ultra Rare,105,Ultra Rare,Ultra Rare
+202118,2021,18,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 202118,2021,18,Wish Ring,190,Wish Ring,Trade 4
 202119,2021,19,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202119,2021,19,1k Bonus,8,7th Tooth of Cavadar,Premium
@@ -1116,7 +1116,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202119,2021,19,Patron Pin,0.25,Patron Pin,Premium
 202119,2021,19,PCH,1.25,Potion Condensed Healing,Bonus
 202119,2021,19,Philosopher's Stone,5,Philosopher's Stone,Trade 1
-202119,2021,19,Ultra Rare,105,Ultra Rare,Ultra Rare
+202119,2021,19,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 202119,2021,19,Wish Ring,180,Wish Ring,Trade 4
 202120,2021,20,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202120,2021,20,1k Bonus,15,7th Tooth of Cavadar,Premium
@@ -1137,7 +1137,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202120,2021,20,Patron Token 1,305,Ioun Stone Mystic Orb,Premium
 202120,2021,20,PCH,1.5,Potion Condensed Healing,Bonus
 202120,2021,20,Philosopher's Stone,3.75,Philosopher's Stone,Trade 1
-202120,2021,20,Ultra Rare,110,Ultra Rare,Ultra Rare
+202120,2021,20,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202120,2021,20,Wish Ring,205,Wish Ring,Trade 4
 202121,2021,21,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202121,2021,21,1k Bonus,7.25,7th Tooth of Cavadar,Premium
@@ -1160,7 +1160,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202121,2021,21,Patron Token 1,255,Ioun Stone Mystic Orb,Premium
 202121,2021,21,PCH,1.25,Potion Condensed Healing,Bonus
 202121,2021,21,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202121,2021,21,Ultra Rare,110,Ultra Rare,Ultra Rare
+202121,2021,21,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202121,2021,21,Wish Ring,205,Wish Ring,Trade 4
 202122,2021,22,"1,000 GP Gold Bar",13.5,"1,000 GP Gold Bar",Trade 2
 202122,2021,22,1k Bonus,10,7th Tooth of Cavadar,Premium
@@ -1181,7 +1181,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202122,2021,22,Patron Token 1,260,Ioun Stone Mystic Orb,Premium
 202122,2021,22,PCH,1,Potion Condensed Healing,Bonus
 202122,2021,22,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202122,2021,22,Ultra Rare,105,Ultra Rare,Ultra Rare
+202122,2021,22,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 202122,2021,22,Wish Ring,185,Wish Ring,Trade 4
 202123,2021,23,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202123,2021,23,1k Bonus,25,7th Tooth of Cavadar,Premium
@@ -1203,7 +1203,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202123,2021,23,PCH,1.5,Potion Condensed Healing,Bonus
 202123,2021,23,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202123,2021,23,Treasure Chip,5,Treasure Chip (each),Preorder
-202123,2021,23,Ultra Rare,115,Ultra Rare,Ultra Rare
+202123,2021,23,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 202123,2021,23,Wish Ring,175,Wish Ring,Trade 4
 202124,2021,24,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202124,2021,24,1k Bonus,21,7th Tooth of Cavadar,Premium
@@ -1224,7 +1224,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202124,2021,24,Patron Pin,180,Patron Pin,Premium
 202124,2021,24,PCH,2,Potion Condensed Healing,Bonus
 202124,2021,24,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
-202124,2021,24,Ultra Rare,115,Ultra Rare,Ultra Rare
+202124,2021,24,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 202124,2021,24,Wish Ring,185,Wish Ring,Trade 4
 20221,2022,1,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 20221,2022,1,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1245,7 +1245,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20221,2022,1,Patron Pin,510,Patron Pin,Premium
 20221,2022,1,PCH,0.75,Potion Condensed Healing,Bonus
 20221,2022,1,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
-20221,2022,1,Ultra Rare,105,Ultra Rare,Ultra Rare
+20221,2022,1,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 20221,2022,1,Wish Ring,195,Wish Ring,Trade 4
 20222,2022,2,"1,000 GP Gold Bar",12.25,"1,000 GP Gold Bar",Trade 2
 20222,2022,2,1k Bonus,100,Ring of the 5th Circle,Premium
@@ -1265,7 +1265,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20222,2022,2,PCH,0.75,Potion Condensed Healing,Bonus
 20222,2022,2,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 20222,2022,2,Preorder Bonus,2.25,+1 Turkey Leg,Preorder
-20222,2022,2,Ultra Rare,110,Ultra Rare,Ultra Rare
+20222,2022,2,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 20222,2022,2,Wish Ring,180,Wish Ring,Trade 4
 20223,2022,3,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20223,2022,3,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1288,7 +1288,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20223,2022,3,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20223,2022,3,Preorder Bonus,1.25,+1 Turkey Leg,Preorder
 20223,2022,3,Treasure Chip,2,Treasure Chip (each),Preorder
-20223,2022,3,Ultra Rare,110,Ultra Rare,Ultra Rare
+20223,2022,3,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 20223,2022,3,Wish Ring,155,Wish Ring,Trade 4
 20224,2022,4,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 20224,2022,4,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1311,7 +1311,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20224,2022,4,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
 20224,2022,4,Preorder Bonus,1.5,+1 Turkey Leg,Preorder
 20224,2022,4,Treasure Chip,2.25,Treasure Chip (each),Preorder
-20224,2022,4,Ultra Rare,105,Ultra Rare,Ultra Rare
+20224,2022,4,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 20224,2022,4,Wish Ring,180,Wish Ring,Trade 4
 20225,2022,5,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 20225,2022,5,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1330,7 +1330,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20225,2022,5,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 20225,2022,5,Preorder Bonus,1,+1 Turkey Leg,Preorder
 20225,2022,5,Treasure Chip,2,Treasure Chip (each),Preorder
-20225,2022,5,Ultra Rare,105,Ultra Rare,Ultra Rare
+20225,2022,5,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 20225,2022,5,Wish Ring,175,Wish Ring,Trade 4
 20226,2022,6,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 20226,2022,6,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -1353,7 +1353,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20226,2022,6,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20226,2022,6,Preorder Bonus,2,+1 Turkey Leg,Preorder
 20226,2022,6,Treasure Chip,2.42,Treasure Chip (each),Preorder
-20226,2022,6,Ultra Rare,105,Ultra Rare,Ultra Rare
+20226,2022,6,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 20226,2022,6,Wish Ring,151,Wish Ring,Trade 4
 20227,2022,7,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 20227,2022,7,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1376,7 +1376,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20227,2022,7,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20227,2022,7,Preorder Bonus,1,+1 Turkey Leg,Preorder
 20227,2022,7,Treasure Chip,2.25,Treasure Chip (each),Preorder
-20227,2022,7,Ultra Rare,110,Ultra Rare,Ultra Rare
+20227,2022,7,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 20227,2022,7,Wish Ring,200,Wish Ring,Trade 4
 20228,2022,8,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 20228,2022,8,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1399,7 +1399,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20228,2022,8,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20228,2022,8,Preorder Bonus,2,+1 Turkey Leg,Preorder
 20228,2022,8,Treasure Chip,2.33,Treasure Chip (each),Preorder
-20228,2022,8,Ultra Rare,105,Ultra Rare,Ultra Rare
+20228,2022,8,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 20228,2022,8,Wish Ring,180,Wish Ring,Trade 4
 20229,2022,9,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 20229,2022,9,1k Bonus,85,Ring of the 5th Circle,Premium
@@ -1422,7 +1422,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20229,2022,9,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20229,2022,9,Preorder Bonus,1.25,+1 Turkey Leg,Preorder
 20229,2022,9,Treasure Chip,2.17,Treasure Chip (each),Preorder
-20229,2022,9,Ultra Rare,100,Ultra Rare,Ultra Rare
+20229,2022,9,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20229,2022,9,Wish Ring,180,Wish Ring,Trade 4
 202210,2022,10,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202210,2022,10,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -1445,7 +1445,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202210,2022,10,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
 202210,2022,10,Preorder Bonus,1.5,+1 Turkey Leg,Preorder
 202210,2022,10,Treasure Chip,2.17,Treasure Chip (each),Preorder
-202210,2022,10,Ultra Rare,100,Ultra Rare,Ultra Rare
+202210,2022,10,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 202210,2022,10,Wish Ring,155,Wish Ring,Trade 4
 202211,2022,11,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202211,2022,11,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1468,7 +1468,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202211,2022,11,Philosopher's Stone,3.75,Philosopher's Stone,Trade 1
 202211,2022,11,Preorder Bonus,1.5,+1 Turkey Leg,Preorder
 202211,2022,11,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202211,2022,11,Ultra Rare,105,Ultra Rare,Ultra Rare
+202211,2022,11,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 202211,2022,11,Wish Ring,200,Wish Ring,Trade 4
 202212,2022,12,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202212,2022,12,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -1491,7 +1491,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202212,2022,12,Philosopher's Stone,4.25,Philosopher's Stone,Trade 1
 202212,2022,12,Preorder Bonus,1.25,+1 Turkey Leg,Preorder
 202212,2022,12,Treasure Chip,2.17,Treasure Chip (each),Preorder
-202212,2022,12,Ultra Rare,100,Ultra Rare,Ultra Rare
+202212,2022,12,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 202212,2022,12,Wish Ring,160,Wish Ring,Trade 4
 202213,2022,13,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202213,2022,13,1k Bonus,70,Ring of the 5th Circle,Premium
@@ -1514,7 +1514,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202213,2022,13,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
 202213,2022,13,Preorder Bonus,1,+1 Turkey Leg,Preorder
 202213,2022,13,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202213,2022,13,Ultra Rare,90,Ultra Rare,Ultra Rare
+202213,2022,13,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202213,2022,13,Wish Ring,170,Wish Ring,Trade 4
 202214,2022,14,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 202214,2022,14,1k Bonus,70,Ring of the 5th Circle,Premium
@@ -1537,7 +1537,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202214,2022,14,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
 202214,2022,14,Preorder Bonus,2,+1 Turkey Leg,Preorder
 202214,2022,14,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202214,2022,14,Ultra Rare,90,Ultra Rare,Ultra Rare
+202214,2022,14,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202214,2022,14,Wish Ring,165,Wish Ring,Trade 4
 202215,2022,15,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202215,2022,15,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1560,7 +1560,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202215,2022,15,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202215,2022,15,Preorder Bonus,1.25,+1 Turkey Leg,Preorder
 202215,2022,15,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202215,2022,15,Ultra Rare,95,Ultra Rare,Ultra Rare
+202215,2022,15,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202215,2022,15,Wish Ring,175,Wish Ring,Trade 4
 202216,2022,16,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202216,2022,16,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -1583,7 +1583,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202216,2022,16,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 202216,2022,16,Preorder Bonus,1,+1 Turkey Leg,Preorder
 202216,2022,16,Treasure Chip,2.42,Treasure Chip (each),Preorder
-202216,2022,16,Ultra Rare,105,Ultra Rare,Ultra Rare
+202216,2022,16,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 202216,2022,16,Wish Ring,185,Wish Ring,Trade 4
 202217,2022,17,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202217,2022,17,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1605,7 +1605,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202217,2022,17,Philosopher's Stone,5.25,Philosopher's Stone,Trade 1
 202217,2022,17,Preorder Bonus,1.25,+1 Turkey Leg,Preorder
 202217,2022,17,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202217,2022,17,Ultra Rare,95,Ultra Rare,Ultra Rare
+202217,2022,17,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202217,2022,17,Wish Ring,165,Wish Ring,Trade 4
 202218,2022,18,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202218,2022,18,1k Bonus,80,Ring of the 5th Circle,Premium
@@ -1627,7 +1627,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202218,2022,18,PCH,1,Potion Condensed Healing,Bonus
 202218,2022,18,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
 202218,2022,18,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202218,2022,18,Ultra Rare,90,Ultra Rare,Ultra Rare
+202218,2022,18,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202218,2022,18,Wish Ring,175,Wish Ring,Trade 4
 202219,2022,19,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202219,2022,19,1k Bonus,85,Ring of the 5th Circle,Premium
@@ -1650,7 +1650,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202219,2022,19,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202219,2022,19,Preorder Bonus,1,+1 Turkey Leg,Preorder
 202219,2022,19,Treasure Chip,2.5,Treasure Chip (each),Preorder
-202219,2022,19,Ultra Rare,100,Ultra Rare,Ultra Rare
+202219,2022,19,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 202219,2022,19,Wish Ring,185,Wish Ring,Trade 4
 202220,2022,20,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202220,2022,20,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -1672,7 +1672,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202220,2022,20,PCH,1,Potion Condensed Healing,Bonus
 202220,2022,20,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202220,2022,20,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202220,2022,20,Ultra Rare,90,Ultra Rare,Ultra Rare
+202220,2022,20,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202220,2022,20,Wish Ring,160,Wish Ring,Trade 4
 202221,2022,21,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202221,2022,21,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -1695,7 +1695,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202221,2022,21,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202221,2022,21,Preorder Bonus,1,+1 Turkey Leg,Preorder
 202221,2022,21,Treasure Chip,1.5,Treasure Chip (each),Preorder
-202221,2022,21,Ultra Rare,105,Ultra Rare,Ultra Rare
+202221,2022,21,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
 202221,2022,21,Wish Ring,175,Wish Ring,Trade 4
 202222,2022,22,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202222,2022,22,1k Bonus,70,Ring of the 5th Circle,Premium
@@ -1717,7 +1717,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202222,2022,22,PCH,0.75,Potion Condensed Healing,Bonus
 202222,2022,22,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
 202222,2022,22,Treasure Chip,2.5,Treasure Chip (each),Preorder
-202222,2022,22,Ultra Rare,90,Ultra Rare,Ultra Rare
+202222,2022,22,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202222,2022,22,Wish Ring,170,Wish Ring,Trade 4
 202223,2022,23,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202223,2022,23,1k Bonus,78,Ring of the 5th Circle,Premium
@@ -1739,7 +1739,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202223,2022,23,PCH,0.75,Potion Condensed Healing,Bonus
 202223,2022,23,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202223,2022,23,Treasure Chip,2.92,Treasure Chip (each),Preorder
-202223,2022,23,Ultra Rare,95,Ultra Rare,Ultra Rare
+202223,2022,23,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202223,2022,23,Wish Ring,170,Wish Ring,Trade 4
 202224,2022,24,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202224,2022,24,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -1761,7 +1761,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202224,2022,24,PCH,1,Potion Condensed Healing,Bonus
 202224,2022,24,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202224,2022,24,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202224,2022,24,Ultra Rare,95,Ultra Rare,Ultra Rare
+202224,2022,24,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202224,2022,24,Wish Ring,170,Wish Ring,Trade 4
 202225,2022,25,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202225,2022,25,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -1783,7 +1783,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202225,2022,25,PCH,1,Potion Condensed Healing,Bonus
 202225,2022,25,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 202225,2022,25,Treasure Chip,2.58,Treasure Chip (each),Preorder
-202225,2022,25,Ultra Rare,90,Ultra Rare,Ultra Rare
+202225,2022,25,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202225,2022,25,Wish Ring,172,Wish Ring,Trade 4
 202226,2022,26,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202226,2022,26,1k Bonus,60,Ring of the 5th Circle,Premium
@@ -1803,7 +1803,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202226,2022,26,PCH,1.25,Potion Condensed Healing,Bonus
 202226,2022,26,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 202226,2022,26,Treasure Chip,2.33,Treasure Chip (each),Preorder
-202226,2022,26,Ultra Rare,90,Ultra Rare,Ultra Rare
+202226,2022,26,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202226,2022,26,Wish Ring,195,Wish Ring,Trade 4
 202227,2022,27,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202227,2022,27,1k Bonus,82,Ring of the 5th Circle,Premium
@@ -1822,7 +1822,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202227,2022,27,Patron Pin,430,Patron Pin,Premium
 202227,2022,27,PCH,0.25,Potion Condensed Healing,Bonus
 202227,2022,27,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
-202227,2022,27,Ultra Rare,95,Ultra Rare,Ultra Rare
+202227,2022,27,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202227,2022,27,Wish Ring,195,Wish Ring,Trade 4
 202228,2022,28,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202228,2022,28,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -1843,7 +1843,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202228,2022,28,PCH,1.5,Potion Condensed Healing,Bonus
 202228,2022,28,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202228,2022,28,Treasure Chip,2.58,Treasure Chip (each),Preorder
-202228,2022,28,Ultra Rare,90,Ultra Rare,Ultra Rare
+202228,2022,28,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202228,2022,28,Wish Ring,200,Wish Ring,Trade 4
 202229,2022,29,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202229,2022,29,1k Bonus,55,Ring of the 5th Circle,Premium
@@ -1864,7 +1864,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202229,2022,29,Patron Pin,450,Patron Pin,Premium
 202229,2022,29,PCH,1,Potion Condensed Healing,Bonus
 202229,2022,29,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202229,2022,29,Ultra Rare,90,Ultra Rare,Ultra Rare
+202229,2022,29,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202229,2022,29,Wish Ring,185,Wish Ring,Trade 4
 202230,2022,30,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202230,2022,30,1k Bonus,70,Ring of the 5th Circle,Premium
@@ -1885,7 +1885,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202230,2022,30,Patron Pin,415,Patron Pin,Premium
 202230,2022,30,PCH,1.25,Potion Condensed Healing,Bonus
 202230,2022,30,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202230,2022,30,Ultra Rare,85,Ultra Rare,Ultra Rare
+202230,2022,30,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202230,2022,30,Wish Ring,180,Wish Ring,Trade 4
 202231,2022,31,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202231,2022,31,1k Bonus,60,Ring of the 5th Circle,Premium
@@ -1906,7 +1906,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202231,2022,31,Patron Pin,520,Patron Pin,Premium
 202231,2022,31,PCH,1,Potion Condensed Healing,Bonus
 202231,2022,31,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202231,2022,31,Ultra Rare,90,Ultra Rare,Ultra Rare
+202231,2022,31,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202231,2022,31,Wish Ring,190,Wish Ring,Trade 4
 202232,2022,32,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202232,2022,32,1k Bonus,55,Ring of the 5th Circle,Premium
@@ -1926,7 +1926,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202232,2022,32,Oil of Enchantment,6,Oil of Enchantment,Trade 2
 202232,2022,32,PCH,1.5,Potion Condensed Healing,Bonus
 202232,2022,32,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
-202232,2022,32,Ultra Rare,85,Ultra Rare,Ultra Rare
+202232,2022,32,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202232,2022,32,Wish Ring,190,Wish Ring,Trade 4
 202233,2022,33,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202233,2022,33,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -1947,7 +1947,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202233,2022,33,Patron Pin,605,Patron Pin,Premium
 202233,2022,33,PCH,1,Potion Condensed Healing,Bonus
 202233,2022,33,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202233,2022,33,Ultra Rare,90,Ultra Rare,Ultra Rare
+202233,2022,33,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202233,2022,33,Wish Ring,180,Wish Ring,Trade 4
 202234,2022,34,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202234,2022,34,1k Bonus,50,Ring of the 5th Circle,Premium
@@ -1967,7 +1967,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202234,2022,34,Patron Pin,595,Patron Pin,Premium
 202234,2022,34,PCH,0.75,Potion Condensed Healing,Bonus
 202234,2022,34,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
-202234,2022,34,Ultra Rare,90,Ultra Rare,Ultra Rare
+202234,2022,34,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202234,2022,34,Wish Ring,170,Wish Ring,Trade 4
 202235,2022,35,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202235,2022,35,1k Bonus,85,Ring of the 5th Circle,Premium
@@ -1988,7 +1988,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202235,2022,35,Patron Pin,600,Patron Pin,Premium
 202235,2022,35,PCH,1.5,Potion Condensed Healing,Bonus
 202235,2022,35,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202235,2022,35,Ultra Rare,90,Ultra Rare,Ultra Rare
+202235,2022,35,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202235,2022,35,Wish Ring,175,Wish Ring,Trade 4
 202236,2022,36,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 202236,2022,36,1k Bonus,70,Ring of the 5th Circle,Premium
@@ -2009,7 +2009,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202236,2022,36,Patron Pin,806,Patron Pin,Premium
 202236,2022,36,PCH,1.25,Potion Condensed Healing,Bonus
 202236,2022,36,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202236,2022,36,Ultra Rare,80,Ultra Rare,Ultra Rare
+202236,2022,36,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
 202236,2022,36,Wish Ring,205,Wish Ring,Trade 4
 202237,2022,37,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202237,2022,37,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -2029,7 +2029,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202237,2022,37,Patron Pin,520,Patron Pin,Premium
 202237,2022,37,PCH,1.75,Potion Condensed Healing,Bonus
 202237,2022,37,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
-202237,2022,37,Ultra Rare,85,Ultra Rare,Ultra Rare
+202237,2022,37,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202237,2022,37,Wish Ring,195,Wish Ring,Trade 4
 202238,2022,38,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202238,2022,38,1k Bonus,60,Ring of the 5th Circle,Premium
@@ -2050,7 +2050,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202238,2022,38,Patron Pin,600,Patron Pin,Premium
 202238,2022,38,PCH,1.5,Potion Condensed Healing,Bonus
 202238,2022,38,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202238,2022,38,Ultra Rare,85,Ultra Rare,Ultra Rare
+202238,2022,38,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202238,2022,38,Wish Ring,200,Wish Ring,Trade 4
 202239,2022,39,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
 202239,2022,39,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -2071,7 +2071,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202239,2022,39,Patron Pin,960,Patron Pin,Premium
 202239,2022,39,PCH,0.75,Potion Condensed Healing,Bonus
 202239,2022,39,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202239,2022,39,Ultra Rare,95,Ultra Rare,Ultra Rare
+202239,2022,39,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202239,2022,39,Wish Ring,200,Wish Ring,Trade 4
 202240,2022,40,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
 202240,2022,40,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -2092,7 +2092,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202240,2022,40,Patron Pin,700,Patron Pin,Premium
 202240,2022,40,PCH,1.5,Potion Condensed Healing,Bonus
 202240,2022,40,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202240,2022,40,Ultra Rare,85,Ultra Rare,Ultra Rare
+202240,2022,40,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202240,2022,40,Wish Ring,180,Wish Ring,Trade 4
 202241,2022,41,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202241,2022,41,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -2113,7 +2113,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202241,2022,41,Patron Pin,760,Patron Pin,Premium
 202241,2022,41,PCH,1.25,Potion Condensed Healing,Bonus
 202241,2022,41,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
-202241,2022,41,Ultra Rare,85,Ultra Rare,Ultra Rare
+202241,2022,41,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202241,2022,41,Wish Ring,205,Wish Ring,Trade 4
 202242,2022,42,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202242,2022,42,1k Bonus,60,Ring of the 5th Circle,Premium
@@ -2134,7 +2134,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202242,2022,42,Patron Pin,805,Patron Pin,Premium
 202242,2022,42,PCH,1.5,Potion Condensed Healing,Bonus
 202242,2022,42,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-202242,2022,42,Ultra Rare,85,Ultra Rare,Ultra Rare
+202242,2022,42,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202242,2022,42,Wish Ring,200,Wish Ring,Trade 4
 202243,2022,43,"1,000 GP Gold Bar",15.5,"1,000 GP Gold Bar",Trade 2
 202243,2022,43,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -2155,7 +2155,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202243,2022,43,Patron Pin,520,Patron Pin,Premium
 202243,2022,43,PCH,1,Potion Condensed Healing,Bonus
 202243,2022,43,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202243,2022,43,Ultra Rare,95,Ultra Rare,Ultra Rare
+202243,2022,43,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202243,2022,43,Wish Ring,215,Wish Ring,Trade 4
 202244,2022,44,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202244,2022,44,1k Bonus,70,Ring of the 5th Circle,Premium
@@ -2176,7 +2176,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202244,2022,44,Patron Pin,550,Patron Pin,Premium
 202244,2022,44,PCH,1.25,Potion Condensed Healing,Bonus
 202244,2022,44,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202244,2022,44,Ultra Rare,85,Ultra Rare,Ultra Rare
+202244,2022,44,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202244,2022,44,Wish Ring,220,Wish Ring,Trade 4
 202245,2022,45,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202245,2022,45,1k Bonus,65,Ring of the 5th Circle,Premium
@@ -2197,7 +2197,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202245,2022,45,Patron Pin,550,Patron Pin,Premium
 202245,2022,45,PCH,1.5,Potion Condensed Healing,Bonus
 202245,2022,45,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202245,2022,45,Ultra Rare,85,Ultra Rare,Ultra Rare
+202245,2022,45,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202245,2022,45,Wish Ring,205,Wish Ring,Trade 4
 202246,2022,46,"1,000 GP Gold Bar",13.5,"1,000 GP Gold Bar",Trade 2
 202246,2022,46,1k Bonus,60,Ring of the 5th Circle,Premium
@@ -2219,7 +2219,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202246,2022,46,Patron Token 1,245,Ghost Accelerator,Premium
 202246,2022,46,PCH,1.75,Potion Condensed Healing,Bonus
 202246,2022,46,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202246,2022,46,Ultra Rare,85,Ultra Rare,Ultra Rare
+202246,2022,46,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202246,2022,46,Wish Ring,210,Wish Ring,Trade 4
 202247,2022,47,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202247,2022,47,1k Bonus,60,Ring of the 5th Circle,Premium
@@ -2241,7 +2241,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202247,2022,47,Patron Token 1,216,Ghost Accelerator,Premium
 202247,2022,47,PCH,1.75,Potion Condensed Healing,Bonus
 202247,2022,47,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
-202247,2022,47,Ultra Rare,82,Ultra Rare,Ultra Rare
+202247,2022,47,Ultra Rare,82,Chosen Ultra Rare,Ultra Rare
 202247,2022,47,Wish Ring,211,Wish Ring,Trade 4
 202248,2022,48,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202248,2022,48,1k Bonus,70,Ring of the 5th Circle,Premium
@@ -2263,7 +2263,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202248,2022,48,Patron Token 1,200,Ghost Accelerator,Premium
 202248,2022,48,PCH,2,Potion Condensed Healing,Bonus
 202248,2022,48,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202248,2022,48,Ultra Rare,90,Ultra Rare,Ultra Rare
+202248,2022,48,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202248,2022,48,Wish Ring,215,Wish Ring,Trade 4
 202249,2022,49,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202249,2022,49,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -2283,7 +2283,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202249,2022,49,Patron Token 1,155,Ghost Accelerator,Premium
 202249,2022,49,PCH,1.25,Potion Condensed Healing,Bonus
 202249,2022,49,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-202249,2022,49,Ultra Rare,90,Ultra Rare,Ultra Rare
+202249,2022,49,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202249,2022,49,Wish Ring,215,Wish Ring,Trade 4
 202250,2022,50,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202250,2022,50,1k Bonus,85,Ring of the 5th Circle,Premium
@@ -2305,7 +2305,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202250,2022,50,Patron Token 1,135,Ghost Accelerator,Premium
 202250,2022,50,PCH,1.75,Potion Condensed Healing,Bonus
 202250,2022,50,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
-202250,2022,50,Ultra Rare,90,Ultra Rare,Ultra Rare
+202250,2022,50,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202250,2022,50,Wish Ring,215,Wish Ring,Trade 4
 20231,2023,1,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20231,2023,1,1k Bonus,75,Ring of the 4th Circle,Premium
@@ -2328,7 +2328,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20231,2023,1,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20231,2023,1,Preorder Bonus,0.75,Gib Gub's Handy Acorn,Preorder
 20231,2023,1,Treasure Chip,3,Treasure Chip (each),Preorder
-20231,2023,1,Ultra Rare,100,Ultra Rare,Ultra Rare
+20231,2023,1,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20231,2023,1,Wish Ring,195,Wish Ring,Trade 4
 20232,2023,2,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 20232,2023,2,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2351,7 +2351,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20232,2023,2,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 20232,2023,2,Preorder Bonus,0.75,Gib Gub's Handy Acorn,Preorder
 20232,2023,2,Treasure Chip,4,Treasure Chip (each),Preorder
-20232,2023,2,Ultra Rare,95,Ultra Rare,Ultra Rare
+20232,2023,2,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20232,2023,2,Wish Ring,205,Wish Ring,Trade 4
 20233,2023,3,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 20233,2023,3,1k Bonus,80,Ring of the 4th Circle,Premium
@@ -2374,7 +2374,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20233,2023,3,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 20233,2023,3,Preorder Bonus,1,Gib Gub's Handy Acorn,Preorder
 20233,2023,3,Treasure Chip,2.25,Treasure Chip (each),Preorder
-20233,2023,3,Ultra Rare,95,Ultra Rare,Ultra Rare
+20233,2023,3,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20233,2023,3,Wish Ring,205,Wish Ring,Trade 4
 20234,2023,4,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20234,2023,4,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2397,7 +2397,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20234,2023,4,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 20234,2023,4,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 20234,2023,4,Treasure Chip,3,Treasure Chip (each),Preorder
-20234,2023,4,Ultra Rare,95,Ultra Rare,Ultra Rare
+20234,2023,4,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20234,2023,4,Wish Ring,200,Wish Ring,Trade 4
 20235,2023,5,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20235,2023,5,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2420,7 +2420,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20235,2023,5,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 20235,2023,5,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 20235,2023,5,Treasure Chip,3.25,Treasure Chip (each),Preorder
-20235,2023,5,Ultra Rare,95,Ultra Rare,Ultra Rare
+20235,2023,5,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20235,2023,5,Wish Ring,195,Wish Ring,Trade 4
 20236,2023,6,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20236,2023,6,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2443,7 +2443,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20236,2023,6,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
 20236,2023,6,Preorder Bonus,0.25,Gib Gub's Handy Acorn,Preorder
 20236,2023,6,Treasure Chip,3.17,Treasure Chip (each),Preorder
-20236,2023,6,Ultra Rare,101,Ultra Rare,Ultra Rare
+20236,2023,6,Ultra Rare,101,Chosen Ultra Rare,Ultra Rare
 20236,2023,6,Wish Ring,196,Wish Ring,Trade 4
 20237,2023,7,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 20237,2023,7,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2466,7 +2466,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20237,2023,7,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 20237,2023,7,Preorder Bonus,0.25,Gib Gub's Handy Acorn,Preorder
 20237,2023,7,Treasure Chip,3.08,Treasure Chip (each),Preorder
-20237,2023,7,Ultra Rare,100,Ultra Rare,Ultra Rare
+20237,2023,7,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 20237,2023,7,Wish Ring,180,Wish Ring,Trade 4
 20238,2023,8,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20238,2023,8,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2489,7 +2489,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20238,2023,8,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 20238,2023,8,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 20238,2023,8,Treasure Chip,3.25,Treasure Chip (each),Preorder
-20238,2023,8,Ultra Rare,95,Ultra Rare,Ultra Rare
+20238,2023,8,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20238,2023,8,Wish Ring,195,Wish Ring,Trade 4
 20239,2023,9,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 20239,2023,9,1k Bonus,80,Ring of the 4th Circle,Premium
@@ -2512,7 +2512,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20239,2023,9,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 20239,2023,9,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 20239,2023,9,Treasure Chip,3,Treasure Chip (each),Preorder
-20239,2023,9,Ultra Rare,95,Ultra Rare,Ultra Rare
+20239,2023,9,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20239,2023,9,Wish Ring,200,Wish Ring,Trade 4
 202310,2023,10,"1,000 GP Gold Bar",12.25,"1,000 GP Gold Bar",Trade 2
 202310,2023,10,1k Bonus,81,Ring of the 4th Circle,Premium
@@ -2535,7 +2535,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202310,2023,10,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
 202310,2023,10,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202310,2023,10,Treasure Chip,3.33,Treasure Chip (each),Preorder
-202310,2023,10,Ultra Rare,90,Ultra Rare,Ultra Rare
+202310,2023,10,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202310,2023,10,Wish Ring,210,Wish Ring,Trade 4
 202311,2023,11,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202311,2023,11,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2558,7 +2558,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202311,2023,11,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
 202311,2023,11,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202311,2023,11,Treasure Chip,3,Treasure Chip (each),Preorder
-202311,2023,11,Ultra Rare,90,Ultra Rare,Ultra Rare
+202311,2023,11,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202311,2023,11,Wish Ring,225,Wish Ring,Trade 4
 202312,2023,12,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202312,2023,12,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2580,7 +2580,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202312,2023,12,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202312,2023,12,Preorder Bonus,1,Gib Gub's Handy Acorn,Preorder
 202312,2023,12,Treasure Chip,2.92,Treasure Chip (each),Preorder
-202312,2023,12,Ultra Rare,95,Ultra Rare,Ultra Rare
+202312,2023,12,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202312,2023,12,Wish Ring,200,Wish Ring,Trade 4
 202313,2023,13,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202313,2023,13,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2603,7 +2603,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202313,2023,13,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202313,2023,13,Preorder Bonus,0.75,Gib Gub's Handy Acorn,Preorder
 202313,2023,13,Treasure Chip,3.75,Treasure Chip (each),Preorder
-202313,2023,13,Ultra Rare,90,Ultra Rare,Ultra Rare
+202313,2023,13,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202313,2023,13,Wish Ring,200,Wish Ring,Trade 4
 202314,2023,14,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202314,2023,14,"1,000 GP Gold Bar",12.08,"1,000 GP Gold Bar",Trade 2
@@ -2643,8 +2643,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202314,2023,14,Preorder Bonus,0.25,Gib Gub's Handy Acorn,Preorder
 202314,2023,14,Treasure Chip,3.42,Treasure Chip (each),Preorder
 202314,2023,14,Treasure Chip,2.92,Treasure Chip (each),Preorder
-202314,2023,14,Ultra Rare,98,Ultra Rare,Ultra Rare
-202314,2023,14,Ultra Rare,90,Ultra Rare,Ultra Rare
+202314,2023,14,Ultra Rare,98,Chosen Ultra Rare,Ultra Rare
+202314,2023,14,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202314,2023,14,Wish Ring,201,Wish Ring,Trade 4
 202315,2023,15,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202315,2023,15,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -2667,7 +2667,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202315,2023,15,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
 202315,2023,15,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202315,2023,15,Treasure Chip,3.25,Treasure Chip (each),Preorder
-202315,2023,15,Ultra Rare,95,Ultra Rare,Ultra Rare
+202315,2023,15,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202315,2023,15,Wish Ring,190,Wish Ring,Trade 4
 202316,2023,16,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 202316,2023,16,"1,000 GP Gold Bar",11.75,"1,000 GP Gold Bar",Trade 2
@@ -2709,8 +2709,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202316,2023,16,Preorder Bonus,0.31,Gib Gub's Handy Acorn,Preorder
 202316,2023,16,Treasure Chip,3.5,Treasure Chip (each),Preorder
 202316,2023,16,Treasure Chip,3.25,Treasure Chip (each),Preorder
-202316,2023,16,Ultra Rare,100,Ultra Rare,Ultra Rare
-202316,2023,16,Ultra Rare,92,Ultra Rare,Ultra Rare
+202316,2023,16,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
+202316,2023,16,Ultra Rare,92,Chosen Ultra Rare,Ultra Rare
 202316,2023,16,Wish Ring,210,Wish Ring,Trade 4
 202317,2023,17,"1,000 GP Gold Bar",11.5,"1,000 GP Gold Bar",Trade 2
 202317,2023,17,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
@@ -2752,8 +2752,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202317,2023,17,Preorder Bonus,0.25,Gib Gub's Handy Acorn,Preorder
 202317,2023,17,Treasure Chip,3,Treasure Chip (each),Preorder
 202317,2023,17,Treasure Chip,2.52,Treasure Chip (each),Preorder
-202317,2023,17,Ultra Rare,105,Ultra Rare,Ultra Rare
-202317,2023,17,Ultra Rare,95.26,Ultra Rare,Ultra Rare
+202317,2023,17,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
+202317,2023,17,Ultra Rare,95.26,Chosen Ultra Rare,Ultra Rare
 202317,2023,17,Wish Ring,200,Wish Ring,Trade 4
 202318,2023,18,"1,000 GP Gold Bar",13.19,"1,000 GP Gold Bar",Trade 2
 202318,2023,18,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -2795,8 +2795,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202318,2023,18,Preorder Bonus,0.44,Gib Gub's Handy Acorn,Preorder
 202318,2023,18,Treasure Chip,3.67,Treasure Chip (each),Preorder
 202318,2023,18,Treasure Chip,3.58,Treasure Chip (each),Preorder
-202318,2023,18,Ultra Rare,100.26,Ultra Rare,Ultra Rare
-202318,2023,18,Ultra Rare,85.26,Ultra Rare,Ultra Rare
+202318,2023,18,Ultra Rare,100.26,Chosen Ultra Rare,Ultra Rare
+202318,2023,18,Ultra Rare,85.26,Chosen Ultra Rare,Ultra Rare
 202318,2023,18,Wish Ring,206,Wish Ring,Trade 4
 202319,2023,19,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202319,2023,19,1k Bonus,90,Ring of the 4th Circle,Premium
@@ -2819,7 +2819,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202319,2023,19,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
 202319,2023,19,Preorder Bonus,0.75,Gib Gub's Handy Acorn,Preorder
 202319,2023,19,Treasure Chip,3.25,Treasure Chip (each),Preorder
-202319,2023,19,Ultra Rare,95,Ultra Rare,Ultra Rare
+202319,2023,19,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202319,2023,19,Wish Ring,180,Wish Ring,Trade 4
 202320,2023,20,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202320,2023,20,1k Bonus,90,Ring of the 4th Circle,Premium
@@ -2842,7 +2842,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202320,2023,20,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202320,2023,20,Preorder Bonus,0.75,Gib Gub's Handy Acorn,Preorder
 202320,2023,20,Treasure Chip,3.67,Treasure Chip (each),Preorder
-202320,2023,20,Ultra Rare,95,Ultra Rare,Ultra Rare
+202320,2023,20,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202320,2023,20,Wish Ring,205,Wish Ring,Trade 4
 202321,2023,21,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202321,2023,21,1k Bonus,90,Ring of the 4th Circle,Premium
@@ -2865,7 +2865,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202321,2023,21,Philosopher's Stone,1,Philosopher's Stone,Trade 1
 202321,2023,21,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202321,2023,21,Treasure Chip,3.67,Treasure Chip (each),Preorder
-202321,2023,21,Ultra Rare,90,Ultra Rare,Ultra Rare
+202321,2023,21,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202321,2023,21,Wish Ring,190,Wish Ring,Trade 4
 202322,2023,22,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202322,2023,22,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -2907,8 +2907,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202322,2023,22,Preorder Bonus,0.44,Gib Gub's Handy Acorn,Preorder
 202322,2023,22,Treasure Chip,3.83,Treasure Chip (each),Preorder
 202322,2023,22,Treasure Chip,3.83,Treasure Chip (each),Preorder
-202322,2023,22,Ultra Rare,101,Ultra Rare,Ultra Rare
-202322,2023,22,Ultra Rare,87,Ultra Rare,Ultra Rare
+202322,2023,22,Ultra Rare,101,Chosen Ultra Rare,Ultra Rare
+202322,2023,22,Ultra Rare,87,Chosen Ultra Rare,Ultra Rare
 202322,2023,22,Wish Ring,190,Wish Ring,Trade 4
 202323,2023,23,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202323,2023,23,1k Bonus,95,Ring of the 4th Circle,Premium
@@ -2931,7 +2931,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202323,2023,23,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
 202323,2023,23,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202323,2023,23,Treasure Chip,4,Treasure Chip (each),Preorder
-202323,2023,23,Ultra Rare,90,Ultra Rare,Ultra Rare
+202323,2023,23,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202323,2023,23,Wish Ring,190,Wish Ring,Trade 4
 202324,2023,24,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202324,2023,24,1k Bonus,90,Ring of the 4th Circle,Premium
@@ -2954,7 +2954,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202324,2023,24,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
 202324,2023,24,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202324,2023,24,Treasure Chip,3.25,Treasure Chip (each),Preorder
-202324,2023,24,Ultra Rare,100,Ultra Rare,Ultra Rare
+202324,2023,24,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
 202324,2023,24,Wish Ring,195,Wish Ring,Trade 4
 202325,2023,25,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202325,2023,25,1k Bonus,89,Ring of the 4th Circle,Premium
@@ -2977,7 +2977,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202325,2023,25,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202325,2023,25,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202325,2023,25,Treasure Chip,4.33,Treasure Chip (each),Preorder
-202325,2023,25,Ultra Rare,95,Ultra Rare,Ultra Rare
+202325,2023,25,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202325,2023,25,Wish Ring,190,Wish Ring,Trade 4
 202326,2023,26,"1,000 GP Gold Bar",12.25,"1,000 GP Gold Bar",Trade 2
 202326,2023,26,"1,000 GP Gold Bar",11.75,"1,000 GP Gold Bar",Trade 2
@@ -3019,8 +3019,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202326,2023,26,Preorder Bonus,0.31,Gib Gub's Handy Acorn,Preorder
 202326,2023,26,Treasure Chip,4.08,Treasure Chip (each),Preorder
 202326,2023,26,Treasure Chip,3.88,Treasure Chip (each),Preorder
-202326,2023,26,Ultra Rare,95,Ultra Rare,Ultra Rare
-202326,2023,26,Ultra Rare,90,Ultra Rare,Ultra Rare
+202326,2023,26,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
+202326,2023,26,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202326,2023,26,Wish Ring,210,Wish Ring,Trade 4
 202327,2023,27,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202327,2023,27,1k Bonus,80,Ring of the 4th Circle,Premium
@@ -3041,7 +3041,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202327,2023,27,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202327,2023,27,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202327,2023,27,Treasure Chip,4.33,Treasure Chip (each),Preorder
-202327,2023,27,Ultra Rare,85,Ultra Rare,Ultra Rare
+202327,2023,27,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202327,2023,27,Wish Ring,180,Wish Ring,Trade 4
 202328,2023,28,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202328,2023,28,1k Bonus,90,Ring of the 4th Circle,Premium
@@ -3064,7 +3064,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202328,2023,28,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202328,2023,28,Preorder Bonus,1,Gib Gub's Handy Acorn,Preorder
 202328,2023,28,Treasure Chip,3.75,Treasure Chip (each),Preorder
-202328,2023,28,Ultra Rare,90,Ultra Rare,Ultra Rare
+202328,2023,28,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202328,2023,28,Wish Ring,190,Wish Ring,Trade 4
 202329,2023,29,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202329,2023,29,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -3083,7 +3083,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202329,2023,29,Preorder Bonus,1,Gib Gub's Handy Acorn,Preorder
 202329,2023,29,Rare Bag,65,Rare Bag,Condensed
 202329,2023,29,Treasure Chip,4.33,Treasure Chip (each),Preorder
-202329,2023,29,Ultra Rare,90,Ultra Rare,Ultra Rare
+202329,2023,29,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202329,2023,29,Uncommon Bag,65,Uncommon Bag,Condensed
 202329,2023,29,Wish Ring,175,Wish Ring,Trade 4
 202330,2023,30,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
@@ -3126,8 +3126,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202330,2023,30,Preorder Bonus,0.5,Gib Gub's Handy Acorn,Preorder
 202330,2023,30,Treasure Chip,3.92,Treasure Chip (each),Preorder
 202330,2023,30,Treasure Chip,3.83,Treasure Chip (each),Preorder
-202330,2023,30,Ultra Rare,100,Ultra Rare,Ultra Rare
-202330,2023,30,Ultra Rare,86,Ultra Rare,Ultra Rare
+202330,2023,30,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
+202330,2023,30,Ultra Rare,86,Chosen Ultra Rare,Ultra Rare
 202330,2023,30,Wish Ring,190,Wish Ring,Trade 4
 202331,2023,31,"1,000 GP Gold Bar",12.25,"1,000 GP Gold Bar",Trade 2
 202331,2023,31,1k Bonus,90,Ring of the 4th Circle,Premium
@@ -3149,7 +3149,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202331,2023,31,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
 202331,2023,31,Preorder Bonus,1,Gib Gub's Handy Acorn,Preorder
 202331,2023,31,Treasure Chip,4,Treasure Chip (each),Preorder
-202331,2023,31,Ultra Rare,90,Ultra Rare,Ultra Rare
+202331,2023,31,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202331,2023,31,Wish Ring,185,Wish Ring,Trade 4
 202332,2023,32,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202332,2023,32,1k Bonus,75,Ring of the 4th Circle,Premium
@@ -3172,7 +3172,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202332,2023,32,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202332,2023,32,Preorder Bonus,0.75,Gib Gub's Handy Acorn,Preorder
 202332,2023,32,Treasure Chip,3.6,Treasure Chip (each),Preorder
-202332,2023,32,Ultra Rare,85,Ultra Rare,Ultra Rare
+202332,2023,32,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202332,2023,32,Wish Ring,160,Wish Ring,Trade 4
 202333,2023,33,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202333,2023,33,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -3195,7 +3195,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202333,2023,33,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202333,2023,33,Preorder Bonus,0.25,Gib Gub's Handy Acorn,Preorder
 202333,2023,33,Treasure Chip,3.75,Treasure Chip (each),Preorder
-202333,2023,33,Ultra Rare,90,Ultra Rare,Ultra Rare
+202333,2023,33,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202333,2023,33,Wish Ring,190,Wish Ring,Trade 4
 202334,2023,34,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202334,2023,34,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -3217,7 +3217,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202334,2023,34,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202334,2023,34,Preorder Bonus,0.75,Gib Gub's Handy Acorn,Preorder
 202334,2023,34,Treasure Chip,3.33,Treasure Chip (each),Preorder
-202334,2023,34,Ultra Rare,85,Ultra Rare,Ultra Rare
+202334,2023,34,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202334,2023,34,Wish Ring,175,Wish Ring,Trade 4
 202335,2023,35,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 202335,2023,35,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
@@ -3257,8 +3257,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202335,2023,35,Preorder Bonus,0.31,Gib Gub's Handy Acorn,Preorder
 202335,2023,35,Treasure Chip,4.08,Treasure Chip (each),Preorder
 202335,2023,35,Treasure Chip,4.04,Treasure Chip (each),Preorder
-202335,2023,35,Ultra Rare,100.02,Ultra Rare,Ultra Rare
-202335,2023,35,Ultra Rare,95,Ultra Rare,Ultra Rare
+202335,2023,35,Ultra Rare,100.02,Chosen Ultra Rare,Ultra Rare
+202335,2023,35,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202335,2023,35,Wish Ring,195,Wish Ring,Trade 4
 202336,2023,36,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202336,2023,36,1k Bonus,92,Ring of the 4th Circle,Premium
@@ -3279,7 +3279,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202336,2023,36,Patron Pin,366,Patron Pin,Premium
 202336,2023,36,PCH,0.75,Potion Healer's Rum,Bonus
 202336,2023,36,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-202336,2023,36,Ultra Rare,92,Ultra Rare,Ultra Rare
+202336,2023,36,Ultra Rare,92,Chosen Ultra Rare,Ultra Rare
 202336,2023,36,Wish Ring,190,Wish Ring,Trade 4
 202337,2023,37,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202337,2023,37,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -3300,7 +3300,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202337,2023,37,Patron Token 1,105,Charm of Biting,Premium
 202337,2023,37,PCH,1,Potion Healer's Rum,Bonus
 202337,2023,37,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
-202337,2023,37,Ultra Rare,85,Ultra Rare,Ultra Rare
+202337,2023,37,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202337,2023,37,Wish Ring,185,Wish Ring,Trade 4
 202338,2023,38,"1,000 GP Gold Bar",14,"1,000 GP Gold Bar",Trade 2
 202338,2023,38,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -3322,7 +3322,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202338,2023,38,Patron Token 1,125,Charm of Biting,Premium
 202338,2023,38,PCH,1.25,Potion Healer's Rum,Bonus
 202338,2023,38,Philosopher's Stone,4.25,Philosopher's Stone,Trade 1
-202338,2023,38,Ultra Rare,90,Ultra Rare,Ultra Rare
+202338,2023,38,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202338,2023,38,Wish Ring,195,Wish Ring,Trade 4
 202339,2023,39,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 202339,2023,39,"1,000 GP Gold Bar",11.5,"1,000 GP Gold Bar",Trade 2
@@ -3361,8 +3361,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202339,2023,39,Patron Token 1,130,Charm of Biting,Premium
 202339,2023,39,Philosopher's Stone,1.8,Philosopher's Stone,Trade 1
 202339,2023,39,Philosopher's Stone,1.6,Philosopher's Stone,Trade 1
-202339,2023,39,Ultra Rare,100,Ultra Rare,Ultra Rare
-202339,2023,39,Ultra Rare,90.5,Ultra Rare,Ultra Rare
+202339,2023,39,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
+202339,2023,39,Ultra Rare,90.5,Chosen Ultra Rare,Ultra Rare
 202339,2023,39,Wish Ring,190,Wish Ring,Trade 4
 202340,2023,40,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202340,2023,40,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -3401,8 +3401,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202340,2023,40,Patron Token 1,135,Charm of Biting,Premium
 202340,2023,40,Philosopher's Stone,2.05,Philosopher's Stone,Trade 1
 202340,2023,40,Philosopher's Stone,1.9,Philosopher's Stone,Trade 1
-202340,2023,40,Ultra Rare,100,Ultra Rare,Ultra Rare
-202340,2023,40,Ultra Rare,95,Ultra Rare,Ultra Rare
+202340,2023,40,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
+202340,2023,40,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 202340,2023,40,Wish Ring,200,Wish Ring,Trade 4
 202341,2023,41,"1,000 GP Gold Bar",13.75,"1,000 GP Gold Bar",Trade 2
 202341,2023,41,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -3439,8 +3439,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202341,2023,41,Patron Token 1,115,Charm of Biting,Premium
 202341,2023,41,Philosopher's Stone,3.7,Philosopher's Stone,Trade 1
 202341,2023,41,Philosopher's Stone,3.1,Philosopher's Stone,Trade 1
-202341,2023,41,Ultra Rare,97,Ultra Rare,Ultra Rare
-202341,2023,41,Ultra Rare,92,Ultra Rare,Ultra Rare
+202341,2023,41,Ultra Rare,97,Chosen Ultra Rare,Ultra Rare
+202341,2023,41,Ultra Rare,92,Chosen Ultra Rare,Ultra Rare
 202341,2023,41,Wish Ring,203,Wish Ring,Trade 4
 202342,2023,42,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202342,2023,42,1k Bonus,80,Ring of the 4th Circle,Premium
@@ -3462,7 +3462,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202342,2023,42,Patron Token 1,110,Charm of Biting,Premium
 202342,2023,42,PCH,1,Potion Healer's Rum,Bonus
 202342,2023,42,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202342,2023,42,Ultra Rare,90,Ultra Rare,Ultra Rare
+202342,2023,42,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202342,2023,42,Wish Ring,210,Wish Ring,Trade 4
 202343,2023,43,"1,000 GP Gold Bar",13.25,"1,000 GP Gold Bar",Trade 2
 202343,2023,43,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -3499,8 +3499,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202343,2023,43,Patron Token 1,117,Charm of Biting,Premium
 202343,2023,43,Philosopher's Stone,2.1,Philosopher's Stone,Trade 1
 202343,2023,43,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
-202343,2023,43,Ultra Rare,100,Ultra Rare,Ultra Rare
-202343,2023,43,Ultra Rare,93,Ultra Rare,Ultra Rare
+202343,2023,43,Ultra Rare,100,Chosen Ultra Rare,Ultra Rare
+202343,2023,43,Ultra Rare,93,Chosen Ultra Rare,Ultra Rare
 202343,2023,43,Wish Ring,180,Wish Ring,Trade 4
 202344,2023,44,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 202344,2023,44,"1,000 GP Gold Bar",12.56,"1,000 GP Gold Bar",Trade 2
@@ -3539,8 +3539,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202344,2023,44,Patron Token 1,105,Charm of Biting,Premium
 202344,2023,44,Philosopher's Stone,4.6,Philosopher's Stone,Trade 1
 202344,2023,44,Philosopher's Stone,4.1,Philosopher's Stone,Trade 1
-202344,2023,44,Ultra Rare,91.01,Ultra Rare,Ultra Rare
-202344,2023,44,Ultra Rare,85,Ultra Rare,Ultra Rare
+202344,2023,44,Ultra Rare,91.01,Chosen Ultra Rare,Ultra Rare
+202344,2023,44,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202344,2023,44,Wish Ring,200,Wish Ring,Trade 4
 202345,2023,45,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202345,2023,45,"1,000 GP Gold Bar",13.5,"1,000 GP Gold Bar",Trade 2
@@ -3579,8 +3579,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202345,2023,45,Patron Token 1,88,Charm of Biting,Premium
 202345,2023,45,Philosopher's Stone,4.8,Philosopher's Stone,Trade 1
 202345,2023,45,Philosopher's Stone,2.1,Philosopher's Stone,Trade 1
-202345,2023,45,Ultra Rare,94,Ultra Rare,Ultra Rare
-202345,2023,45,Ultra Rare,70,Ultra Rare,Ultra Rare
+202345,2023,45,Ultra Rare,94,Chosen Ultra Rare,Ultra Rare
+202345,2023,45,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202345,2023,45,Wish Ring,190.25,Wish Ring,Trade 4
 202346,2023,46,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202346,2023,46,1k Bonus,47,Ring of the 4th Circle,Premium
@@ -3602,7 +3602,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202346,2023,46,Patron Token 1,81,Charm of Biting,Premium
 202346,2023,46,PCH,1,Potion Healer's Rum,Bonus
 202346,2023,46,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202346,2023,46,Ultra Rare,87,Ultra Rare,Ultra Rare
+202346,2023,46,Ultra Rare,87,Chosen Ultra Rare,Ultra Rare
 202346,2023,46,Wish Ring,181,Wish Ring,Trade 4
 202347,2023,47,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202347,2023,47,1k Bonus,85,Ring of the 4th Circle,Premium
@@ -3624,7 +3624,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202347,2023,47,Patron Token 1,90,Charm of Biting,Premium
 202347,2023,47,PCH,1,Potion Healer's Rum,Bonus
 202347,2023,47,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202347,2023,47,Ultra Rare,90,Ultra Rare,Ultra Rare
+202347,2023,47,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202347,2023,47,Wish Ring,175,Wish Ring,Trade 4
 202348,2023,48,"1,000 GP Gold Bar",13.75,"1,000 GP Gold Bar",Trade 2
 202348,2023,48,"1,000 GP Gold Bar",11.82,"1,000 GP Gold Bar",Trade 2
@@ -3663,8 +3663,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202348,2023,48,Patron Token 1,105,Charm of Biting,Premium
 202348,2023,48,Philosopher's Stone,3.1,Philosopher's Stone,Trade 1
 202348,2023,48,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-202348,2023,48,Ultra Rare,90,Ultra Rare,Ultra Rare
-202348,2023,48,Ultra Rare,84.99,Ultra Rare,Ultra Rare
+202348,2023,48,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
+202348,2023,48,Ultra Rare,84.99,Chosen Ultra Rare,Ultra Rare
 202348,2023,48,Wish Ring,195,Wish Ring,Trade 4
 202349,2023,49,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202349,2023,49,1k Bonus,80,Ring of the 4th Circle,Premium
@@ -3685,7 +3685,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202349,2023,49,Patron Token 1,80,Charm of Biting,Premium
 202349,2023,49,PCH,1.5,Potion Healer's Rum,Bonus
 202349,2023,49,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-202349,2023,49,Ultra Rare,89,Ultra Rare,Ultra Rare
+202349,2023,49,Ultra Rare,89,Chosen Ultra Rare,Ultra Rare
 202349,2023,49,Wish Ring,170,Wish Ring,Trade 4
 202350,2023,50,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202350,2023,50,1k Bonus,110,Ring of the 4th Circle,Premium
@@ -3705,7 +3705,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202350,2023,50,Patron Token 1,100,Charm of Biting,Premium
 202350,2023,50,PCH,1.75,Potion Healer's Rum,Bonus
 202350,2023,50,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202350,2023,50,Ultra Rare,90,Ultra Rare,Ultra Rare
+202350,2023,50,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202350,2023,50,Wish Ring,175,Wish Ring,Trade 4
 202351,2023,51,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202351,2023,51,1k Bonus,110,Ring of the 4th Circle,Premium
@@ -3725,7 +3725,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202351,2023,51,Patron Pin,105,Patron Pin,Premium
 202351,2023,51,Patron Token 1,87,Charm of Biting,Premium
 202351,2023,51,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
-202351,2023,51,Ultra Rare,86,Ultra Rare,Ultra Rare
+202351,2023,51,Ultra Rare,86,Chosen Ultra Rare,Ultra Rare
 202351,2023,51,Wish Ring,175,Wish Ring,Trade 4
 20241,2024,1,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 20241,2024,1,"1,000 GP Gold Bar",12.25,"1,000 GP Gold Bar",Trade 2
@@ -3763,8 +3763,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20241,2024,1,Preorder Bonus,0.69,Averon's Cherry Ale,Preorder
 20241,2024,1,Treasure Chip,2.75,Treasure Chip (each),Preorder
 20241,2024,1,Treasure Chip,2.75,Treasure Chip (each),Preorder
-20241,2024,1,Ultra Rare,80,Ultra Rare,Ultra Rare
-20241,2024,1,Ultra Rare,90,Ultra Rare,Ultra Rare
+20241,2024,1,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+20241,2024,1,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 20241,2024,1,Wish Ring,190,Wish Ring,Trade 4
 20242,2024,2,"1,000 GP Gold Bar",9.2,"1,000 GP Gold Bar",Trade 2
 20242,2024,2,1k Bonus,100,Ring of the 3rd Circle,Premium
@@ -3785,7 +3785,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20242,2024,2,Philosopher's Stone,1.7,Philosopher's Stone,Trade 1
 20242,2024,2,Preorder Bonus,0.5,Averon's Cherry Ale,Preorder
 20242,2024,2,Treasure Chip,4.3,Treasure Chip (each),Preorder
-20242,2024,2,Ultra Rare,90,Ultra Rare,Ultra Rare
+20242,2024,2,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 20242,2024,2,Wish Ring,155,Wish Ring,Trade 4
 20243,2024,3,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 20243,2024,3,1k Bonus,110,Ring of the 3rd Circle,Premium
@@ -3806,7 +3806,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20243,2024,3,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 20243,2024,3,Preorder Bonus,1.5,Averon's Cherry Ale,Preorder
 20243,2024,3,Treasure Chip,2.83,Treasure Chip (each),Preorder
-20243,2024,3,Ultra Rare,85,Ultra Rare,Ultra Rare
+20243,2024,3,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 20243,2024,3,Wish Ring,140,Wish Ring,Trade 4
 20244,2024,4,"1,000 GP Gold Bar",9.6,"1,000 GP Gold Bar",Trade 2
 20244,2024,4,1k Bonus,85,Ring of the 3rd Circle,Premium
@@ -3838,8 +3838,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20244,2024,4,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 20244,2024,4,Philosopher's Stone,1.66,Philosopher's Stone,Trade 1
 20244,2024,4,Preorder Bonus,0.63,Averon's Cherry Ale,Preorder
-20244,2024,4,Ultra Rare,80,Ultra Rare,Ultra Rare
-20244,2024,4,Ultra Rare,85,Ultra Rare,Ultra Rare
+20244,2024,4,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+20244,2024,4,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 20244,2024,4,Wish Ring,165,Wish Ring,Trade 4
 20245,2024,5,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 20245,2024,5,"1,000 GP Gold Bar",10.26,"1,000 GP Gold Bar",Trade 2
@@ -3877,8 +3877,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20245,2024,5,Preorder Bonus,0.5,Averon's Cherry Ale,Preorder
 20245,2024,5,Treasure Chip,2.17,Treasure Chip (each),Preorder
 20245,2024,5,Treasure Chip,2.58,Treasure Chip (each),Preorder
-20245,2024,5,Ultra Rare,80.25,Ultra Rare,Ultra Rare
-20245,2024,5,Ultra Rare,90.01,Ultra Rare,Ultra Rare
+20245,2024,5,Ultra Rare,80.25,Chosen Ultra Rare,Ultra Rare
+20245,2024,5,Ultra Rare,90.01,Chosen Ultra Rare,Ultra Rare
 20245,2024,5,Wish Ring,185,Wish Ring,Trade 4
 20246,2024,6,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 20246,2024,6,1k Bonus,115,Ring of the 3rd Circle,Premium
@@ -3889,7 +3889,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20246,2024,6,Safehold III,"1,555.00",Safehold III,Safehold
 20246,2024,6,Treasure Chip,3.5,Treasure Chip (each),Preorder
 20246,2024,6,Treasure Chip,1.08,Treasure Chip (each),Preorder
-20246,2024,6,Ultra Rare,85,Ultra Rare,Ultra Rare
+20246,2024,6,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 20246,2024,6,Wish Ring,155,Wish Ring,Trade 4
 20247,2024,7,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 20247,2024,7,"1,000 GP Gold Bar",10.5,"1,000 GP Gold Bar",Trade 2
@@ -3927,8 +3927,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20247,2024,7,Preorder Bonus,0.58,Averon's Cherry Ale,Preorder
 20247,2024,7,Treasure Chip,2.33,Treasure Chip (each),Preorder
 20247,2024,7,Treasure Chip,2.42,Treasure Chip (each),Preorder
-20247,2024,7,Ultra Rare,80,Ultra Rare,Ultra Rare
-20247,2024,7,Ultra Rare,85.69,Ultra Rare,Ultra Rare
+20247,2024,7,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+20247,2024,7,Ultra Rare,85.69,Chosen Ultra Rare,Ultra Rare
 20247,2024,7,Wish Ring,160,Wish Ring,Trade 4
 20248,2024,8,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 20248,2024,8,"1,000 GP Gold Bar",11.01,"1,000 GP Gold Bar",Trade 2
@@ -3966,8 +3966,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20248,2024,8,Preorder Bonus,0.57,Averon's Cherry Ale,Preorder
 20248,2024,8,Treasure Chip,2.42,Treasure Chip (each),Preorder
 20248,2024,8,Treasure Chip,2.5,Treasure Chip (each),Preorder
-20248,2024,8,Ultra Rare,80,Ultra Rare,Ultra Rare
-20248,2024,8,Ultra Rare,90,Ultra Rare,Ultra Rare
+20248,2024,8,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+20248,2024,8,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 20248,2024,8,Wish Ring,155,Wish Ring,Trade 4
 20249,2024,9,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 20249,2024,9,"1,000 GP Gold Bar",11.25,"1,000 GP Gold Bar",Trade 2
@@ -4005,8 +4005,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20249,2024,9,Preorder Bonus,0.63,Averon's Cherry Ale,Preorder
 20249,2024,9,Treasure Chip,2.17,Treasure Chip (each),Preorder
 20249,2024,9,Treasure Chip,2.5,Treasure Chip (each),Preorder
-20249,2024,9,Ultra Rare,75,Ultra Rare,Ultra Rare
-20249,2024,9,Ultra Rare,91,Ultra Rare,Ultra Rare
+20249,2024,9,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+20249,2024,9,Ultra Rare,91,Chosen Ultra Rare,Ultra Rare
 20249,2024,9,Wish Ring,155,Wish Ring,Trade 4
 202410,2024,10,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202410,2024,10,"1,000 GP Gold Bar",10.07,"1,000 GP Gold Bar",Trade 2
@@ -4044,8 +4044,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202410,2024,10,Preorder Bonus,0.57,Averon's Cherry Ale,Preorder
 202410,2024,10,Treasure Chip,2.51,Treasure Chip (each),Preorder
 202410,2024,10,Treasure Chip,2.59,Treasure Chip (each),Preorder
-202410,2024,10,Ultra Rare,79.01,Ultra Rare,Ultra Rare
-202410,2024,10,Ultra Rare,82,Ultra Rare,Ultra Rare
+202410,2024,10,Ultra Rare,79.01,Chosen Ultra Rare,Ultra Rare
+202410,2024,10,Ultra Rare,82,Chosen Ultra Rare,Ultra Rare
 202410,2024,10,Wish Ring,151,Wish Ring,Trade 4
 202411,2024,11,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202411,2024,11,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
@@ -4083,8 +4083,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202411,2024,11,Preorder Bonus,0.57,Averon's Cherry Ale,Preorder
 202411,2024,11,Treasure Chip,1.77,Treasure Chip (each),Preorder
 202411,2024,11,Treasure Chip,2.17,Treasure Chip (each),Preorder
-202411,2024,11,Ultra Rare,77,Ultra Rare,Ultra Rare
-202411,2024,11,Ultra Rare,85,Ultra Rare,Ultra Rare
+202411,2024,11,Ultra Rare,77,Chosen Ultra Rare,Ultra Rare
+202411,2024,11,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202411,2024,11,Wish Ring,145,Wish Ring,Trade 4
 202412,2024,12,"1,000 GP Gold Bar",9.04,"1,000 GP Gold Bar",Trade 2
 202412,2024,12,"1,000 GP Gold Bar",10.1,"1,000 GP Gold Bar",Trade 2
@@ -4122,8 +4122,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202412,2024,12,Preorder Bonus,0.57,Averon's Cherry Ale,Preorder
 202412,2024,12,Treasure Chip,2.67,Treasure Chip (each),Preorder
 202412,2024,12,Treasure Chip,2.59,Treasure Chip (each),Preorder
-202412,2024,12,Ultra Rare,85,Ultra Rare,Ultra Rare
-202412,2024,12,Ultra Rare,75.25,Ultra Rare,Ultra Rare
+202412,2024,12,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
+202412,2024,12,Ultra Rare,75.25,Chosen Ultra Rare,Ultra Rare
 202412,2024,12,Wish Ring,179.02,Wish Ring,Trade 4
 202413,2024,13,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 202413,2024,13,1k Bonus,130,Ring of the 3rd Circle,Premium
@@ -4144,7 +4144,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202413,2024,13,Philosopher's Stone,1.8,Philosopher's Stone,Trade 1
 202413,2024,13,Preorder Bonus,0.75,Averon's Cherry Ale,Preorder
 202413,2024,13,Treasure Chip,3.08,Treasure Chip (each),Preorder
-202413,2024,13,Ultra Rare,80,Ultra Rare,Ultra Rare
+202413,2024,13,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
 202413,2024,13,Wish Ring,145,Wish Ring,Trade 4
 202414,2024,14,"1,000 GP Gold Bar",10.03,"1,000 GP Gold Bar",Trade 2
 202414,2024,14,"1,000 GP Gold Bar",10.28,"1,000 GP Gold Bar",Trade 2
@@ -4182,8 +4182,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202414,2024,14,Preorder Bonus,0.75,Averon's Cherry Ale,Preorder
 202414,2024,14,Treasure Chip,3.01,Treasure Chip (each),Preorder
 202414,2024,14,Treasure Chip,3.08,Treasure Chip (each),Preorder
-202414,2024,14,Ultra Rare,80,Ultra Rare,Ultra Rare
-202414,2024,14,Ultra Rare,86,Ultra Rare,Ultra Rare
+202414,2024,14,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+202414,2024,14,Ultra Rare,86,Chosen Ultra Rare,Ultra Rare
 202414,2024,14,Wish Ring,150,Wish Ring,Trade 4
 202415,2024,15,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202415,2024,15,1k Bonus,101,Ring of the 3rd Circle,Premium
@@ -4202,7 +4202,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202415,2024,15,Philosopher's Stone,1.6,Philosopher's Stone,Trade 1
 202415,2024,15,Preorder Bonus,0.25,Averon's Cherry Ale,Preorder
 202415,2024,15,Treasure Chip,3.1,Treasure Chip (each),Preorder
-202415,2024,15,Ultra Rare,80,Ultra Rare,Ultra Rare
+202415,2024,15,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
 202415,2024,15,Wish Ring,146,Wish Ring,Trade 4
 202416,2024,16,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202416,2024,16,"1,000 GP Gold Bar",9.75,"1,000 GP Gold Bar",Trade 2
@@ -4240,8 +4240,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202416,2024,16,Preorder Bonus,1.06,Averon's Cherry Ale,Preorder
 202416,2024,16,Treasure Chip,3.17,Treasure Chip (each),Preorder
 202416,2024,16,Treasure Chip,3.42,Treasure Chip (each),Preorder
-202416,2024,16,Ultra Rare,70,Ultra Rare,Ultra Rare
-202416,2024,16,Ultra Rare,85,Ultra Rare,Ultra Rare
+202416,2024,16,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202416,2024,16,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202416,2024,16,Wish Ring,160,Wish Ring,Trade 4
 202417,2024,17,"1,000 GP Gold Bar",9.75,"1,000 GP Gold Bar",Trade 2
 202417,2024,17,1k Bonus,100,Ring of the 3rd Circle,Premium
@@ -4262,7 +4262,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202417,2024,17,Philosopher's Stone,1,Philosopher's Stone,Trade 1
 202417,2024,17,Preorder Bonus,1,Averon's Cherry Ale,Preorder
 202417,2024,17,Treasure Chip,2.83,Treasure Chip (each),Preorder
-202417,2024,17,Ultra Rare,75,Ultra Rare,Ultra Rare
+202417,2024,17,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
 202417,2024,17,Wish Ring,165,Wish Ring,Trade 4
 202418,2024,18,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
 202418,2024,18,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
@@ -4300,8 +4300,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202418,2024,18,Preorder Bonus,1.25,Averon's Cherry Ale,Preorder
 202418,2024,18,Treasure Chip,2.59,Treasure Chip (each),Preorder
 202418,2024,18,Treasure Chip,2.68,Treasure Chip (each),Preorder
-202418,2024,18,Ultra Rare,70,Ultra Rare,Ultra Rare
-202418,2024,18,Ultra Rare,80,Ultra Rare,Ultra Rare
+202418,2024,18,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202418,2024,18,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
 202418,2024,18,Wish Ring,160,Wish Ring,Trade 4
 202419,2024,19,"1,000 GP Gold Bar",7.75,"1,000 GP Gold Bar",Trade 2
 202419,2024,19,"1,000 GP Gold Bar",9.42,"1,000 GP Gold Bar",Trade 2
@@ -4339,8 +4339,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202419,2024,19,Preorder Bonus,0.31,Averon's Cherry Ale,Preorder
 202419,2024,19,Treasure Chip,3.85,Treasure Chip (each),Preorder
 202419,2024,19,Treasure Chip,2.59,Treasure Chip (each),Preorder
-202419,2024,19,Ultra Rare,77.77,Ultra Rare,Ultra Rare
-202419,2024,19,Ultra Rare,70,Ultra Rare,Ultra Rare
+202419,2024,19,Ultra Rare,77.77,Chosen Ultra Rare,Ultra Rare
+202419,2024,19,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202419,2024,19,Wish Ring,160.5,Wish Ring,Trade 4
 202420,2024,20,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202420,2024,20,1k Bonus,100,Ring of the 3rd Circle,Premium
@@ -4361,7 +4361,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202420,2024,20,Philosopher's Stone,2.25,Philosopher's Stone,Trade 1
 202420,2024,20,Preorder Bonus,0.5,Averon's Cherry Ale,Preorder
 202420,2024,20,Treasure Chip,3.2,Treasure Chip (each),Preorder
-202420,2024,20,Ultra Rare,70,Ultra Rare,Ultra Rare
+202420,2024,20,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202420,2024,20,Wish Ring,150,Wish Ring,Trade 4
 202421,2024,21,"1,000 GP Gold Bar",7.75,"1,000 GP Gold Bar",Trade 2
 202421,2024,21,"1,000 GP Gold Bar",9.3,"1,000 GP Gold Bar",Trade 2
@@ -4399,8 +4399,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202421,2024,21,Preorder Bonus,0.31,Averon's Cherry Ale,Preorder
 202421,2024,21,Treasure Chip,3.35,Treasure Chip (each),Preorder
 202421,2024,21,Treasure Chip,3.33,Treasure Chip (each),Preorder
-202421,2024,21,Ultra Rare,85,Ultra Rare,Ultra Rare
-202421,2024,21,Ultra Rare,70,Ultra Rare,Ultra Rare
+202421,2024,21,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
+202421,2024,21,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202421,2024,21,Wish Ring,115,Wish Ring,Trade 4
 202422,2024,22,"1,000 GP Gold Bar",8.5,"1,000 GP Gold Bar",Trade 2
 202422,2024,22,1k Bonus,105,Ring of the 3rd Circle,Premium
@@ -4421,7 +4421,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202422,2024,22,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
 202422,2024,22,Preorder Bonus,0.5,Averon's Cherry Ale,Preorder
 202422,2024,22,Treasure Chip,3,Treasure Chip (each),Preorder
-202422,2024,22,Ultra Rare,65,Ultra Rare,Ultra Rare
+202422,2024,22,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
 202422,2024,22,Wish Ring,135,Wish Ring,Trade 4
 202423,2024,23,"1,000 GP Gold Bar",8.06,"1,000 GP Gold Bar",Trade 2
 202423,2024,23,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -4455,8 +4455,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202423,2024,23,Patron Pin,535,Patron Pin,Premium
 202423,2024,23,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
 202423,2024,23,Philosopher's Stone,1.17,Philosopher's Stone,Trade 1
-202423,2024,23,Ultra Rare,81,Ultra Rare,Ultra Rare
-202423,2024,23,Ultra Rare,60.25,Ultra Rare,Ultra Rare
+202423,2024,23,Ultra Rare,81,Chosen Ultra Rare,Ultra Rare
+202423,2024,23,Ultra Rare,60.25,Chosen Ultra Rare,Ultra Rare
 202423,2024,23,Wish Ring,174,Wish Ring,Trade 4
 202424,2024,24,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202424,2024,24,1k Bonus,115,Ring of the 3rd Circle,Premium
@@ -4476,7 +4476,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202424,2024,24,Patron Pin,205,Patron Pin,Premium
 202424,2024,24,Patron Token 1,210,Hireling Baker,Premium
 202424,2024,24,Philosopher's Stone,3.25,Philosopher's Stone,Trade 1
-202424,2024,24,Ultra Rare,51,Ultra Rare,Ultra Rare
+202424,2024,24,Ultra Rare,51,Chosen Ultra Rare,Ultra Rare
 202424,2024,24,Wish Ring,155,Wish Ring,Trade 4
 202425,2024,25,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202425,2024,25,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
@@ -4511,8 +4511,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202425,2024,25,Patron Pin,206,Patron Pin,Premium
 202425,2024,25,Philosopher's Stone,2.02,Philosopher's Stone,Trade 1
 202425,2024,25,Philosopher's Stone,1.67,Philosopher's Stone,Trade 1
-202425,2024,25,Ultra Rare,90,Ultra Rare,Ultra Rare
-202425,2024,25,Ultra Rare,70,Ultra Rare,Ultra Rare
+202425,2024,25,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
+202425,2024,25,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202425,2024,25,Wish Ring,166,Wish Ring,Trade 4
 202426,2024,26,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202426,2024,26,"1,000 GP Gold Bar",11.25,"1,000 GP Gold Bar",Trade 2
@@ -4545,8 +4545,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202426,2024,26,Patron Token 1,301,Hireling Baker,Premium
 202426,2024,26,Philosopher's Stone,4.5,Philosopher's Stone,Trade 1
 202426,2024,26,Philosopher's Stone,4.5,Philosopher's Stone,Trade 1
-202426,2024,26,Ultra Rare,56,Ultra Rare,Ultra Rare
-202426,2024,26,Ultra Rare,46,Ultra Rare,Ultra Rare
+202426,2024,26,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
+202426,2024,26,Ultra Rare,46,Chosen Ultra Rare,Ultra Rare
 202426,2024,26,Wish Ring,155,Wish Ring,Trade 4
 202427,2024,27,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 202427,2024,27,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
@@ -4581,8 +4581,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202427,2024,27,Patron Token 1,255,Hireling Baker,Premium
 202427,2024,27,Philosopher's Stone,4.17,Philosopher's Stone,Trade 1
 202427,2024,27,Philosopher's Stone,3.03,Philosopher's Stone,Trade 1
-202427,2024,27,Ultra Rare,56.75,Ultra Rare,Ultra Rare
-202427,2024,27,Ultra Rare,50,Ultra Rare,Ultra Rare
+202427,2024,27,Ultra Rare,56.75,Chosen Ultra Rare,Ultra Rare
+202427,2024,27,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 202427,2024,27,Wish Ring,150,Wish Ring,Trade 4
 202428,2024,28,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 202428,2024,28,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -4617,8 +4617,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202428,2024,28,Patron Token 1,100,Hireling Baker,Premium
 202428,2024,28,Philosopher's Stone,4.58,Philosopher's Stone,Trade 1
 202428,2024,28,Philosopher's Stone,4.1,Philosopher's Stone,Trade 1
-202428,2024,28,Ultra Rare,65,Ultra Rare,Ultra Rare
-202428,2024,28,Ultra Rare,55,Ultra Rare,Ultra Rare
+202428,2024,28,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
+202428,2024,28,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202428,2024,28,Wish Ring,180,Wish Ring,Trade 4
 202429,2024,29,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202429,2024,29,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
@@ -4653,8 +4653,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202429,2024,29,Patron Token 1,80,Hireling Baker,Premium
 202429,2024,29,Philosopher's Stone,4.35,Philosopher's Stone,Trade 1
 202429,2024,29,Philosopher's Stone,3.42,Philosopher's Stone,Trade 1
-202429,2024,29,Ultra Rare,70,Ultra Rare,Ultra Rare
-202429,2024,29,Ultra Rare,60,Ultra Rare,Ultra Rare
+202429,2024,29,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202429,2024,29,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202429,2024,29,Wish Ring,175,Wish Ring,Trade 4
 202430,2024,30,"1,000 GP Gold Bar",10.27,"1,000 GP Gold Bar",Trade 2
 202430,2024,30,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
@@ -4689,8 +4689,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202430,2024,30,Patron Token 1,80,Hireling Baker,Premium
 202430,2024,30,Philosopher's Stone,3.38,Philosopher's Stone,Trade 1
 202430,2024,30,Philosopher's Stone,3.08,Philosopher's Stone,Trade 1
-202430,2024,30,Ultra Rare,77,Ultra Rare,Ultra Rare
-202430,2024,30,Ultra Rare,65,Ultra Rare,Ultra Rare
+202430,2024,30,Ultra Rare,77,Chosen Ultra Rare,Ultra Rare
+202430,2024,30,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
 202430,2024,30,Wish Ring,162,Wish Ring,Trade 4
 202431,2024,31,"1,000 GP Gold Bar",7.25,"1,000 GP Gold Bar",Trade 2
 202431,2024,31,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
@@ -4725,8 +4725,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202431,2024,31,Patron Token 1,80,Hireling Baker,Premium
 202431,2024,31,Philosopher's Stone,4.33,Philosopher's Stone,Trade 1
 202431,2024,31,Philosopher's Stone,4,Philosopher's Stone,Trade 1
-202431,2024,31,Ultra Rare,105,Ultra Rare,Ultra Rare
-202431,2024,31,Ultra Rare,65,Ultra Rare,Ultra Rare
+202431,2024,31,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
+202431,2024,31,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
 202431,2024,31,Wish Ring,177,Wish Ring,Trade 4
 202432,2024,32,"1,000 GP Gold Bar",5.25,"1,000 GP Gold Bar",Trade 2
 202432,2024,32,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
@@ -4761,8 +4761,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202432,2024,32,Patron Token 1,115,Hireling Baker,Premium
 202432,2024,32,Philosopher's Stone,4.22,Philosopher's Stone,Trade 1
 202432,2024,32,Philosopher's Stone,3.41,Philosopher's Stone,Trade 1
-202432,2024,32,Ultra Rare,75,Ultra Rare,Ultra Rare
-202432,2024,32,Ultra Rare,60,Ultra Rare,Ultra Rare
+202432,2024,32,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202432,2024,32,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202432,2024,32,Wish Ring,155,Wish Ring,Trade 4
 202433,2024,33,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202433,2024,33,"1,000 GP Gold Bar",11.25,"1,000 GP Gold Bar",Trade 2
@@ -4797,8 +4797,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202433,2024,33,Patron Token 1,105,Hireling Baker,Premium
 202433,2024,33,Philosopher's Stone,3.5,Philosopher's Stone,Trade 1
 202433,2024,33,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202433,2024,33,Ultra Rare,75,Ultra Rare,Ultra Rare
-202433,2024,33,Ultra Rare,50,Ultra Rare,Ultra Rare
+202433,2024,33,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202433,2024,33,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 202433,2024,33,Wish Ring,140,Wish Ring,Trade 4
 202434,2024,34,"1,000 GP Gold Bar",10.5,"1,000 GP Gold Bar",Trade 2
 202434,2024,34,"1,000 GP Gold Bar",21,"1,000 GP Gold Bar",Trade 2
@@ -4833,8 +4833,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202434,2024,34,Patron Token 1,75,Hireling Baker,Premium
 202434,2024,34,Philosopher's Stone,4.5,Philosopher's Stone,Trade 1
 202434,2024,34,Philosopher's Stone,3.42,Philosopher's Stone,Trade 1
-202434,2024,34,Ultra Rare,75,Ultra Rare,Ultra Rare
-202434,2024,34,Ultra Rare,50.25,Ultra Rare,Ultra Rare
+202434,2024,34,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202434,2024,34,Ultra Rare,50.25,Chosen Ultra Rare,Ultra Rare
 202434,2024,34,Wish Ring,157,Wish Ring,Trade 4
 202435,2024,35,"1,000 GP Gold Bar",9.65,"1,000 GP Gold Bar",Trade 2
 202435,2024,35,"1,000 GP Gold Bar",10.5,"1,000 GP Gold Bar",Trade 2
@@ -4869,8 +4869,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202435,2024,35,Patron Token 1,42,Hireling Baker,Premium
 202435,2024,35,Philosopher's Stone,4,Philosopher's Stone,Trade 1
 202435,2024,35,Philosopher's Stone,3,Philosopher's Stone,Trade 1
-202435,2024,35,Ultra Rare,67,Ultra Rare,Ultra Rare
-202435,2024,35,Ultra Rare,51,Ultra Rare,Ultra Rare
+202435,2024,35,Ultra Rare,67,Chosen Ultra Rare,Ultra Rare
+202435,2024,35,Ultra Rare,51,Chosen Ultra Rare,Ultra Rare
 202435,2024,35,Wish Ring,155,Wish Ring,Trade 4
 202436,2024,36,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 202436,2024,36,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
@@ -4905,8 +4905,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202436,2024,36,Patron Token 1,49,Hireling Baker,Premium
 202436,2024,36,Philosopher's Stone,4.1,Philosopher's Stone,Trade 1
 202436,2024,36,Philosopher's Stone,3.08,Philosopher's Stone,Trade 1
-202436,2024,36,Ultra Rare,76,Ultra Rare,Ultra Rare
-202436,2024,36,Ultra Rare,60,Ultra Rare,Ultra Rare
+202436,2024,36,Ultra Rare,76,Chosen Ultra Rare,Ultra Rare
+202436,2024,36,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202436,2024,36,Wish Ring,155,Wish Ring,Trade 4
 202437,2024,37,"1,000 GP Gold Bar",9.8,"1,000 GP Gold Bar",Trade 2
 202437,2024,37,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
@@ -4941,8 +4941,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202437,2024,37,Patron Token 1,56,Hireling Baker,Premium
 202437,2024,37,Philosopher's Stone,3.83,Philosopher's Stone,Trade 1
 202437,2024,37,Philosopher's Stone,3.45,Philosopher's Stone,Trade 1
-202437,2024,37,Ultra Rare,76,Ultra Rare,Ultra Rare
-202437,2024,37,Ultra Rare,55,Ultra Rare,Ultra Rare
+202437,2024,37,Ultra Rare,76,Chosen Ultra Rare,Ultra Rare
+202437,2024,37,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202437,2024,37,Wish Ring,150,Wish Ring,Trade 4
 202438,2024,38,"1,000 GP Gold Bar",9.01,"1,000 GP Gold Bar",Trade 2
 202438,2024,38,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
@@ -4977,8 +4977,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202438,2024,38,Patron Token 1,49,Hireling Baker,Premium
 202438,2024,38,Philosopher's Stone,3.1,Philosopher's Stone,Trade 1
 202438,2024,38,Philosopher's Stone,2.7,Philosopher's Stone,Trade 1
-202438,2024,38,Ultra Rare,62,Ultra Rare,Ultra Rare
-202438,2024,38,Ultra Rare,50,Ultra Rare,Ultra Rare
+202438,2024,38,Ultra Rare,62,Chosen Ultra Rare,Ultra Rare
+202438,2024,38,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 202438,2024,38,Wish Ring,150,Wish Ring,Trade 4
 202439,2024,39,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
 202439,2024,39,"1,000 GP Gold Bar",9.88,"1,000 GP Gold Bar",Trade 2
@@ -5013,8 +5013,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202439,2024,39,Patron Token 1,51,Hireling Baker,Premium
 202439,2024,39,Philosopher's Stone,3.2,Philosopher's Stone,Trade 1
 202439,2024,39,Philosopher's Stone,2.75,Philosopher's Stone,Trade 1
-202439,2024,39,Ultra Rare,55.01,Ultra Rare,Ultra Rare
-202439,2024,39,Ultra Rare,50,Ultra Rare,Ultra Rare
+202439,2024,39,Ultra Rare,55.01,Chosen Ultra Rare,Ultra Rare
+202439,2024,39,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 202439,2024,39,Wish Ring,145,Wish Ring,Trade 4
 202440,2024,40,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202440,2024,40,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
@@ -5049,8 +5049,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202440,2024,40,Patron Token 1,46.25,Hireling Baker,Premium
 202440,2024,40,Philosopher's Stone,4.08,Philosopher's Stone,Trade 1
 202440,2024,40,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
-202440,2024,40,Ultra Rare,54,Ultra Rare,Ultra Rare
-202440,2024,40,Ultra Rare,46,Ultra Rare,Ultra Rare
+202440,2024,40,Ultra Rare,54,Chosen Ultra Rare,Ultra Rare
+202440,2024,40,Ultra Rare,46,Chosen Ultra Rare,Ultra Rare
 202440,2024,40,Wish Ring,140,Wish Ring,Trade 4
 202441,2024,41,"1,000 GP Gold Bar",10.15,"1,000 GP Gold Bar",Trade 2
 202441,2024,41,"1,000 GP Gold Bar",11.25,"1,000 GP Gold Bar",Trade 2
@@ -5085,16 +5085,16 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202441,2024,41,Patron Token 1,61,Hireling Baker,Premium
 202441,2024,41,Philosopher's Stone,3.42,Philosopher's Stone,Trade 1
 202441,2024,41,Philosopher's Stone,2.59,Philosopher's Stone,Trade 1
-202441,2024,41,Ultra Rare,62,Ultra Rare,Ultra Rare
-202441,2024,41,Ultra Rare,52,Ultra Rare,Ultra Rare
+202441,2024,41,Ultra Rare,62,Chosen Ultra Rare,Ultra Rare
+202441,2024,41,Ultra Rare,52,Chosen Ultra Rare,Ultra Rare
 202441,2024,41,Wish Ring,169.45,Wish Ring,Trade 4
 20251,2025,1,1k Bonus,75,Ring of the 2nd Circle,Premium
 20251,2025,1,1k Bonus,80,Ring of the 2nd Circle,Premium
 20251,2025,1,2k Bonus,95,Mark of the 2nd Tenet,Premium
 20251,2025,1,Adventurers' Guild Button,1,Adventurers' Guild Button,Bonus
 20251,2025,1,Preorder Bonus,1,Averon's Cherry Mead,Preorder
-20251,2025,1,Ultra Rare,65,Ultra Rare,Ultra Rare
-20251,2025,1,Ultra Rare,70,Ultra Rare,Ultra Rare
+20251,2025,1,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
+20251,2025,1,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 20252,2025,2,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 20252,2025,2,1k Bonus,75,Ring of the 2nd Circle,Premium
 20252,2025,2,2k Bonus,70,Mark of the 2nd Tenet,Premium
@@ -5114,7 +5114,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20252,2025,2,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 20252,2025,2,Preorder Bonus,0.75,Averon's Cherry Mead,Preorder
 20252,2025,2,Treasure Chip,3.5,Treasure Chip (each),Preorder
-20252,2025,2,Ultra Rare,75,Ultra Rare,Ultra Rare
+20252,2025,2,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
 20252,2025,2,Wish Ring,120,Wish Ring,Trade 4
 20253,2025,3,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 20253,2025,3,"1,000 GP Gold Bar",7.76,"1,000 GP Gold Bar",Trade 2
@@ -5152,8 +5152,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20253,2025,3,Preorder Bonus,0.66,Averon's Cherry Mead,Preorder
 20253,2025,3,Treasure Chip,4.1,Treasure Chip (each),Preorder
 20253,2025,3,Treasure Chip,3.1,Treasure Chip (each),Preorder
-20253,2025,3,Ultra Rare,105,Ultra Rare,Ultra Rare
-20253,2025,3,Ultra Rare,55.01,Ultra Rare,Ultra Rare
+20253,2025,3,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
+20253,2025,3,Ultra Rare,55.01,Chosen Ultra Rare,Ultra Rare
 20253,2025,3,Wish Ring,130,Wish Ring,Trade 4
 20254,2025,4,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 20254,2025,4,"1,000 GP Gold Bar",7.75,"1,000 GP Gold Bar",Trade 2
@@ -5191,8 +5191,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20254,2025,4,Preorder Bonus,0.72,Averon's Cherry Mead,Preorder
 20254,2025,4,Treasure Chip,5.1,Treasure Chip (each),Preorder
 20254,2025,4,Treasure Chip,5.1,Treasure Chip (each),Preorder
-20254,2025,4,Ultra Rare,75,Ultra Rare,Ultra Rare
-20254,2025,4,Ultra Rare,60.25,Ultra Rare,Ultra Rare
+20254,2025,4,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+20254,2025,4,Ultra Rare,60.25,Chosen Ultra Rare,Ultra Rare
 20254,2025,4,Wish Ring,150,Wish Ring,Trade 4
 20255,2025,5,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 20255,2025,5,1k Bonus,72,Ring of the 2nd Circle,Premium
@@ -5213,7 +5213,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20255,2025,5,Philosopher's Stone,1.9,Philosopher's Stone,Trade 1
 20255,2025,5,Preorder Bonus,0.75,Averon's Cherry Mead,Preorder
 20255,2025,5,Treasure Chip,3.3,Treasure Chip (each),Preorder
-20255,2025,5,Ultra Rare,67,Ultra Rare,Ultra Rare
+20255,2025,5,Ultra Rare,67,Chosen Ultra Rare,Ultra Rare
 20255,2025,5,Wish Ring,120,Wish Ring,Trade 4
 20256,2025,6,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 20256,2025,6,"1,000 GP Gold Bar",8.5,"1,000 GP Gold Bar",Trade 2
@@ -5251,8 +5251,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20256,2025,6,Preorder Bonus,0.53,Averon's Cherry Mead,Preorder
 20256,2025,6,Treasure Chip,5.2,Treasure Chip (each),Preorder
 20256,2025,6,Treasure Chip,5.1,Treasure Chip (each),Preorder
-20256,2025,6,Ultra Rare,75,Ultra Rare,Ultra Rare
-20256,2025,6,Ultra Rare,61,Ultra Rare,Ultra Rare
+20256,2025,6,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+20256,2025,6,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
 20256,2025,6,Wish Ring,130.01,Wish Ring,Trade 4
 20257,2025,7,"1,000 GP Gold Bar",9.01,"1,000 GP Gold Bar",Trade 2
 20257,2025,7,"1,000 GP Gold Bar",8.26,"1,000 GP Gold Bar",Trade 2
@@ -5290,8 +5290,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20257,2025,7,Preorder Bonus,0.63,Averon's Cherry Mead,Preorder
 20257,2025,7,Treasure Chip,3.9,Treasure Chip (each),Preorder
 20257,2025,7,Treasure Chip,3.6,Treasure Chip (each),Preorder
-20257,2025,7,Ultra Rare,67.01,Ultra Rare,Ultra Rare
-20257,2025,7,Ultra Rare,61,Ultra Rare,Ultra Rare
+20257,2025,7,Ultra Rare,67.01,Chosen Ultra Rare,Ultra Rare
+20257,2025,7,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
 20257,2025,7,Wish Ring,131.01,Wish Ring,Trade 4
 20258,2025,8,"1,000 GP Gold Bar",8.53,"1,000 GP Gold Bar",Trade 2
 20258,2025,8,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -5329,8 +5329,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20258,2025,8,Preorder Bonus,0.53,Averon's Cherry Mead,Preorder
 20258,2025,8,Treasure Chip,4.5,Treasure Chip (each),Preorder
 20258,2025,8,Treasure Chip,3.8,Treasure Chip (each),Preorder
-20258,2025,8,Ultra Rare,70.25,Ultra Rare,Ultra Rare
-20258,2025,8,Ultra Rare,60.25,Ultra Rare,Ultra Rare
+20258,2025,8,Ultra Rare,70.25,Chosen Ultra Rare,Ultra Rare
+20258,2025,8,Ultra Rare,60.25,Chosen Ultra Rare,Ultra Rare
 20258,2025,8,Wish Ring,125.77,Wish Ring,Trade 4
 20259,2025,9,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 20259,2025,9,1k Bonus,80,Ring of the 2nd Circle,Premium
@@ -5351,7 +5351,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20259,2025,9,Philosopher's Stone,1.85,Philosopher's Stone,Trade 1
 20259,2025,9,Preorder Bonus,1,Averon's Cherry Mead,Preorder
 20259,2025,9,Treasure Chip,3.5,Treasure Chip (each),Preorder
-20259,2025,9,Ultra Rare,70,Ultra Rare,Ultra Rare
+20259,2025,9,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 20259,2025,9,Wish Ring,120,Wish Ring,Trade 4
 202510,2025,10,"1,000 GP Gold Bar",9.39,"1,000 GP Gold Bar",Trade 2
 202510,2025,10,"1,000 GP Gold Bar",8.26,"1,000 GP Gold Bar",Trade 2
@@ -5388,8 +5388,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202510,2025,10,Preorder Bonus,0.53,Averon's Cherry Mead,Preorder
 202510,2025,10,Treasure Chip,3.5,Treasure Chip (each),Preorder
 202510,2025,10,Treasure Chip,3.65,Treasure Chip (each),Preorder
-202510,2025,10,Ultra Rare,59.25,Ultra Rare,Ultra Rare
-202510,2025,10,Ultra Rare,75.01,Ultra Rare,Ultra Rare
+202510,2025,10,Ultra Rare,59.25,Chosen Ultra Rare,Ultra Rare
+202510,2025,10,Ultra Rare,75.01,Chosen Ultra Rare,Ultra Rare
 202510,2025,10,Wish Ring,130.02,Wish Ring,Trade 4
 202511,2025,11,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202511,2025,11,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
@@ -5427,8 +5427,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202511,2025,11,Preorder Bonus,0.63,Averon's Cherry Mead,Preorder
 202511,2025,11,Treasure Chip,4.1,Treasure Chip (each),Preorder
 202511,2025,11,Treasure Chip,3.7,Treasure Chip (each),Preorder
-202511,2025,11,Ultra Rare,75,Ultra Rare,Ultra Rare
-202511,2025,11,Ultra Rare,61.01,Ultra Rare,Ultra Rare
+202511,2025,11,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202511,2025,11,Ultra Rare,61.01,Chosen Ultra Rare,Ultra Rare
 202511,2025,11,Wish Ring,126.25,Wish Ring,Trade 4
 202512,2025,12,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202512,2025,12,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -5466,8 +5466,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202512,2025,12,Preorder Bonus,0.66,Averon's Cherry Mead,Preorder
 202512,2025,12,Treasure Chip,4.1,Treasure Chip (each),Preorder
 202512,2025,12,Treasure Chip,4.1,Treasure Chip (each),Preorder
-202512,2025,12,Ultra Rare,76.5,Ultra Rare,Ultra Rare
-202512,2025,12,Ultra Rare,70,Ultra Rare,Ultra Rare
+202512,2025,12,Ultra Rare,76.5,Chosen Ultra Rare,Ultra Rare
+202512,2025,12,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202512,2025,12,Wish Ring,126.25,Wish Ring,Trade 4
 202513,2025,13,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
 202513,2025,13,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -5505,8 +5505,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202513,2025,13,Preorder Bonus,0.72,Averon's Cherry Mead,Preorder
 202513,2025,13,Treasure Chip,4.2,Treasure Chip (each),Preorder
 202513,2025,13,Treasure Chip,4.1,Treasure Chip (each),Preorder
-202513,2025,13,Ultra Rare,70.26,Ultra Rare,Ultra Rare
-202513,2025,13,Ultra Rare,60,Ultra Rare,Ultra Rare
+202513,2025,13,Ultra Rare,70.26,Chosen Ultra Rare,Ultra Rare
+202513,2025,13,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202513,2025,13,Wish Ring,127,Wish Ring,Trade 4
 202514,2025,14,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 202514,2025,14,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -5544,8 +5544,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202514,2025,14,Preorder Bonus,0.68,Averon's Cherry Mead,Preorder
 202514,2025,14,Treasure Chip,4.3,Treasure Chip (each),Preorder
 202514,2025,14,Treasure Chip,3.73,Treasure Chip (each),Preorder
-202514,2025,14,Ultra Rare,77,Ultra Rare,Ultra Rare
-202514,2025,14,Ultra Rare,60,Ultra Rare,Ultra Rare
+202514,2025,14,Ultra Rare,77,Chosen Ultra Rare,Ultra Rare
+202514,2025,14,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202514,2025,14,Wish Ring,133,Wish Ring,Trade 4
 202515,2025,15,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 202515,2025,15,"1,000 GP Gold Bar",7.75,"1,000 GP Gold Bar",Trade 2
@@ -5583,8 +5583,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202515,2025,15,Preorder Bonus,0.73,Averon's Cherry Mead,Preorder
 202515,2025,15,Treasure Chip,3.8,Treasure Chip (each),Preorder
 202515,2025,15,Treasure Chip,3.7,Treasure Chip (each),Preorder
-202515,2025,15,Ultra Rare,70.01,Ultra Rare,Ultra Rare
-202515,2025,15,Ultra Rare,60.02,Ultra Rare,Ultra Rare
+202515,2025,15,Ultra Rare,70.01,Chosen Ultra Rare,Ultra Rare
+202515,2025,15,Ultra Rare,60.02,Chosen Ultra Rare,Ultra Rare
 202515,2025,15,Wish Ring,126,Wish Ring,Trade 4
 202516,2025,16,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 202516,2025,16,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
@@ -5622,8 +5622,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202516,2025,16,Preorder Bonus,0.74,Averon's Cherry Mead,Preorder
 202516,2025,16,Treasure Chip,3.6,Treasure Chip (each),Preorder
 202516,2025,16,Treasure Chip,3.5,Treasure Chip (each),Preorder
-202516,2025,16,Ultra Rare,71,Ultra Rare,Ultra Rare
-202516,2025,16,Ultra Rare,65,Ultra Rare,Ultra Rare
+202516,2025,16,Ultra Rare,71,Chosen Ultra Rare,Ultra Rare
+202516,2025,16,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
 202516,2025,16,Wish Ring,130.26,Wish Ring,Trade 4
 202517,2025,17,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202517,2025,17,"1,000 GP Gold Bar",9.01,"1,000 GP Gold Bar",Trade 2
@@ -5661,8 +5661,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202517,2025,17,Preorder Bonus,0.75,Averon's Cherry Mead,Preorder
 202517,2025,17,Treasure Chip,3.6,Treasure Chip (each),Preorder
 202517,2025,17,Treasure Chip,3.6,Treasure Chip (each),Preorder
-202517,2025,17,Ultra Rare,72,Ultra Rare,Ultra Rare
-202517,2025,17,Ultra Rare,62.25,Ultra Rare,Ultra Rare
+202517,2025,17,Ultra Rare,72,Chosen Ultra Rare,Ultra Rare
+202517,2025,17,Ultra Rare,62.25,Chosen Ultra Rare,Ultra Rare
 202517,2025,17,Wish Ring,130,Wish Ring,Trade 4
 202519,2025,19,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 202519,2025,19,1k Bonus,65,Ring of the 2nd Circle,Premium
@@ -5683,7 +5683,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202519,2025,19,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 202519,2025,19,Preorder Bonus,0.5,Averon's Cherry Mead,Preorder
 202519,2025,19,Treasure Chip,2.8,Treasure Chip (each),Preorder
-202519,2025,19,Ultra Rare,70,Ultra Rare,Ultra Rare
+202519,2025,19,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202519,2025,19,Wish Ring,120,Wish Ring,Trade 4
 202520,2025,20,"1,000 GP Gold Bar",9.1,"1,000 GP Gold Bar",Trade 2
 202520,2025,20,1k Bonus,70,Ring of the 2nd Circle,Premium
@@ -5705,7 +5705,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202520,2025,20,Philosopher's Stone,2.45,Philosopher's Stone,Trade 1
 202520,2025,20,Preorder Bonus,0.2,Averon's Cherry Mead,Preorder
 202520,2025,20,Treasure Chip,3.2,Treasure Chip (each),Preorder
-202520,2025,20,Ultra Rare,67,Ultra Rare,Ultra Rare
+202520,2025,20,Ultra Rare,67,Chosen Ultra Rare,Ultra Rare
 202520,2025,20,Wish Ring,120,Wish Ring,Trade 4
 202521,2025,21,"1,000 GP Gold Bar",9.15,"1,000 GP Gold Bar",Trade 2
 202521,2025,21,"1,000 GP Gold Bar",8.96,"1,000 GP Gold Bar",Trade 2
@@ -5743,8 +5743,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202521,2025,21,Preorder Bonus,0.75,Averon's Cherry Mead,Preorder
 202521,2025,21,Treasure Chip,3.3,Treasure Chip (each),Preorder
 202521,2025,21,Treasure Chip,3.1,Treasure Chip (each),Preorder
-202521,2025,21,Ultra Rare,75,Ultra Rare,Ultra Rare
-202521,2025,21,Ultra Rare,67.05,Ultra Rare,Ultra Rare
+202521,2025,21,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202521,2025,21,Ultra Rare,67.05,Chosen Ultra Rare,Ultra Rare
 202521,2025,21,Wish Ring,126,Wish Ring,Trade 4
 202522,2025,22,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 202522,2025,22,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
@@ -5782,8 +5782,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202522,2025,22,Preorder Bonus,0.78,Averon's Cherry Mead,Preorder
 202522,2025,22,Treasure Chip,3.4,Treasure Chip (each),Preorder
 202522,2025,22,Treasure Chip,3.3,Treasure Chip (each),Preorder
-202522,2025,22,Ultra Rare,75,Ultra Rare,Ultra Rare
-202522,2025,22,Ultra Rare,63,Ultra Rare,Ultra Rare
+202522,2025,22,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202522,2025,22,Ultra Rare,63,Chosen Ultra Rare,Ultra Rare
 202522,2025,22,Wish Ring,125,Wish Ring,Trade 4
 202523,2025,23,"1,000 GP Gold Bar",9.65,"1,000 GP Gold Bar",Trade 2
 202523,2025,23,"1,000 GP Gold Bar",9.01,"1,000 GP Gold Bar",Trade 2
@@ -5821,8 +5821,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202523,2025,23,Preorder Bonus,0.66,Averon's Cherry Mead,Preorder
 202523,2025,23,Treasure Chip,3.1,Treasure Chip (each),Preorder
 202523,2025,23,Treasure Chip,3.1,Treasure Chip (each),Preorder
-202523,2025,23,Ultra Rare,75.01,Ultra Rare,Ultra Rare
-202523,2025,23,Ultra Rare,64,Ultra Rare,Ultra Rare
+202523,2025,23,Ultra Rare,75.01,Chosen Ultra Rare,Ultra Rare
+202523,2025,23,Ultra Rare,64,Chosen Ultra Rare,Ultra Rare
 202523,2025,23,Wish Ring,155,Wish Ring,Trade 4
 202524,2025,24,"1,000 GP Gold Bar",9.54,"1,000 GP Gold Bar",Trade 2
 202524,2025,24,"1,000 GP Gold Bar",9.06,"1,000 GP Gold Bar",Trade 2
@@ -5860,8 +5860,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202524,2025,24,Preorder Bonus,0.63,Averon's Cherry Mead,Preorder
 202524,2025,24,Treasure Chip,3.23,Treasure Chip (each),Preorder
 202524,2025,24,Treasure Chip,3.1,Treasure Chip (each),Preorder
-202524,2025,24,Ultra Rare,85,Ultra Rare,Ultra Rare
-202524,2025,24,Ultra Rare,68,Ultra Rare,Ultra Rare
+202524,2025,24,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
+202524,2025,24,Ultra Rare,68,Chosen Ultra Rare,Ultra Rare
 202524,2025,24,Wish Ring,140,Wish Ring,Trade 4
 202526,2025,26,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 202526,2025,26,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -5899,8 +5899,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202526,2025,26,Preorder Bonus,0.75,Averon's Cherry Mead,Preorder
 202526,2025,26,Treasure Chip,3.1,Treasure Chip (each),Preorder
 202526,2025,26,Treasure Chip,2.98,Treasure Chip (each),Preorder
-202526,2025,26,Ultra Rare,84.25,Ultra Rare,Ultra Rare
-202526,2025,26,Ultra Rare,66.01,Ultra Rare,Ultra Rare
+202526,2025,26,Ultra Rare,84.25,Chosen Ultra Rare,Ultra Rare
+202526,2025,26,Ultra Rare,66.01,Chosen Ultra Rare,Ultra Rare
 202526,2025,26,Wish Ring,130.01,Wish Ring,Trade 4
 202527,2025,27,"1,000 GP Gold Bar",9.01,"1,000 GP Gold Bar",Trade 2
 202527,2025,27,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -5938,8 +5938,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202527,2025,27,Preorder Bonus,0.63,Averon's Cherry Mead,Preorder
 202527,2025,27,Treasure Chip,3.17,Treasure Chip (each),Preorder
 202527,2025,27,Treasure Chip,3.01,Treasure Chip (each),Preorder
-202527,2025,27,Ultra Rare,71,Ultra Rare,Ultra Rare
-202527,2025,27,Ultra Rare,64.75,Ultra Rare,Ultra Rare
+202527,2025,27,Ultra Rare,71,Chosen Ultra Rare,Ultra Rare
+202527,2025,27,Ultra Rare,64.75,Chosen Ultra Rare,Ultra Rare
 202527,2025,27,Wish Ring,136,Wish Ring,Trade 4
 202528,2025,28,"1,000 GP Gold Bar",9.75,"1,000 GP Gold Bar",Trade 2
 202528,2025,28,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
@@ -5977,8 +5977,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202528,2025,28,Preorder Bonus,0.63,Averon's Cherry Mead,Preorder
 202528,2025,28,Treasure Chip,3.25,Treasure Chip (each),Preorder
 202528,2025,28,Treasure Chip,3.6,Treasure Chip (each),Preorder
-202528,2025,28,Ultra Rare,65.01,Ultra Rare,Ultra Rare
-202528,2025,28,Ultra Rare,75,Ultra Rare,Ultra Rare
+202528,2025,28,Ultra Rare,65.01,Chosen Ultra Rare,Ultra Rare
+202528,2025,28,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
 202528,2025,28,Wish Ring,147,Wish Ring,Trade 4
 202529,2025,29,"1,000 GP Gold Bar",13.25,"1,000 GP Gold Bar",Trade 2
 202529,2025,29,"1,000 GP Gold Bar",9.75,"1,000 GP Gold Bar",Trade 2
@@ -6015,8 +6015,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202529,2025,29,Preorder Bonus,0.63,Averon's Cherry Mead,Preorder
 202529,2025,29,Treasure Chip,4.1,Treasure Chip (each),Preorder
 202529,2025,29,Treasure Chip,4.1,Treasure Chip (each),Preorder
-202529,2025,29,Ultra Rare,75.01,Ultra Rare,Ultra Rare
-202529,2025,29,Ultra Rare,66.01,Ultra Rare,Ultra Rare
+202529,2025,29,Ultra Rare,75.01,Chosen Ultra Rare,Ultra Rare
+202529,2025,29,Ultra Rare,66.01,Chosen Ultra Rare,Ultra Rare
 202529,2025,29,Wish Ring,151,Wish Ring,Trade 4
 202530,2025,30,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 202530,2025,30,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
@@ -6053,8 +6053,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202530,2025,30,Preorder Bonus,0.53,Averon's Cherry Mead,Preorder
 202530,2025,30,Treasure Chip,4.1,Treasure Chip (each),Preorder
 202530,2025,30,Treasure Chip,3.9,Treasure Chip (each),Preorder
-202530,2025,30,Ultra Rare,80,Ultra Rare,Ultra Rare
-202530,2025,30,Ultra Rare,69,Ultra Rare,Ultra Rare
+202530,2025,30,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+202530,2025,30,Ultra Rare,69,Chosen Ultra Rare,Ultra Rare
 202530,2025,30,Wish Ring,136.07,Wish Ring,Trade 4
 202532,2025,32,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 202532,2025,32,"1,000 GP Gold Bar",9.02,"1,000 GP Gold Bar",Trade 2
@@ -6092,8 +6092,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202532,2025,32,Preorder Bonus,0.66,Averon's Cherry Mead,Preorder
 202532,2025,32,Treasure Chip,4,Treasure Chip (each),Preorder
 202532,2025,32,Treasure Chip,3.8,Treasure Chip (each),Preorder
-202532,2025,32,Ultra Rare,75,Ultra Rare,Ultra Rare
-202532,2025,32,Ultra Rare,66,Ultra Rare,Ultra Rare
+202532,2025,32,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202532,2025,32,Ultra Rare,66,Chosen Ultra Rare,Ultra Rare
 202532,2025,32,Wish Ring,136.05,Wish Ring,Trade 4
 202533,2025,33,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 202533,2025,33,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
@@ -6127,8 +6127,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202533,2025,33,Patron Pin,305,Patron Pin,Premium
 202533,2025,33,Philosopher's Stone,2.34,Philosopher's Stone,Trade 1
 202533,2025,33,Philosopher's Stone,2.22,Philosopher's Stone,Trade 1
-202533,2025,33,Ultra Rare,75,Ultra Rare,Ultra Rare
-202533,2025,33,Ultra Rare,65.01,Ultra Rare,Ultra Rare
+202533,2025,33,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202533,2025,33,Ultra Rare,65.01,Chosen Ultra Rare,Ultra Rare
 202533,2025,33,Wish Ring,141.05,Wish Ring,Trade 4
 202534,2025,34,"1,000 GP Gold Bar",8.4,"1,000 GP Gold Bar",Trade 2
 202534,2025,34,"1,000 GP Gold Bar",8.2,"1,000 GP Gold Bar",Trade 2
@@ -6163,8 +6163,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202534,2025,34,Patron Pin,275,Patron Pin,Premium
 202534,2025,34,Philosopher's Stone,1.6,Philosopher's Stone,Trade 1
 202534,2025,34,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-202534,2025,34,Ultra Rare,75,Ultra Rare,Ultra Rare
-202534,2025,34,Ultra Rare,56,Ultra Rare,Ultra Rare
+202534,2025,34,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202534,2025,34,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
 202534,2025,34,Wish Ring,127,Wish Ring,Trade 4
 202535,2025,35,"1,000 GP Gold Bar",9.51,"1,000 GP Gold Bar",Trade 2
 202535,2025,35,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
@@ -6198,8 +6198,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202535,2025,35,Patron Pin,390,Patron Pin,Premium
 202535,2025,35,Philosopher's Stone,3.23,Philosopher's Stone,Trade 1
 202535,2025,35,Philosopher's Stone,2.93,Philosopher's Stone,Trade 1
-202535,2025,35,Ultra Rare,76,Ultra Rare,Ultra Rare
-202535,2025,35,Ultra Rare,65.25,Ultra Rare,Ultra Rare
+202535,2025,35,Ultra Rare,76,Chosen Ultra Rare,Ultra Rare
+202535,2025,35,Ultra Rare,65.25,Chosen Ultra Rare,Ultra Rare
 202535,2025,35,Wish Ring,147.47,Wish Ring,Trade 4
 202536,2025,36,"1,000 GP Gold Bar",10.75,"1,000 GP Gold Bar",Trade 2
 202536,2025,36,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
@@ -6233,8 +6233,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202536,2025,36,Patron Pin,255,Patron Pin,Premium
 202536,2025,36,Philosopher's Stone,3.05,Philosopher's Stone,Trade 1
 202536,2025,36,Philosopher's Stone,2.95,Philosopher's Stone,Trade 1
-202536,2025,36,Ultra Rare,75,Ultra Rare,Ultra Rare
-202536,2025,36,Ultra Rare,66,Ultra Rare,Ultra Rare
+202536,2025,36,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202536,2025,36,Ultra Rare,66,Chosen Ultra Rare,Ultra Rare
 202536,2025,36,Wish Ring,145,Wish Ring,Trade 4
 202537,2025,37,"1,000 GP Gold Bar",8.4,"1,000 GP Gold Bar",Trade 2
 202537,2025,37,1k Bonus,54,Ring of the 2nd Circle,Premium
@@ -6254,7 +6254,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202537,2025,37,Oil of Enchantment,20,Oil of Enchantment,Trade 2
 202537,2025,37,Patron Pin,300,Patron Pin,Premium
 202537,2025,37,Philosopher's Stone,2,Philosopher's Stone,Trade 1
-202537,2025,37,Ultra Rare,56,Ultra Rare,Ultra Rare
+202537,2025,37,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
 202537,2025,37,Wish Ring,120,Wish Ring,Trade 4
 202538,2025,38,"1,000 GP Gold Bar",10.3,"1,000 GP Gold Bar",Trade 2
 202538,2025,38,"1,000 GP Gold Bar",9.51,"1,000 GP Gold Bar",Trade 2
@@ -6289,8 +6289,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202538,2025,38,Patron Token 1,140,Underling Dwarf Fighter,Premium
 202538,2025,38,Philosopher's Stone,2.2,Philosopher's Stone,Trade 1
 202538,2025,38,Philosopher's Stone,1.9,Philosopher's Stone,Trade 1
-202538,2025,38,Ultra Rare,75.02,Ultra Rare,Ultra Rare
-202538,2025,38,Ultra Rare,70,Ultra Rare,Ultra Rare
+202538,2025,38,Ultra Rare,75.02,Chosen Ultra Rare,Ultra Rare
+202538,2025,38,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202538,2025,38,Wish Ring,140.25,Wish Ring,Trade 4
 202539,2025,39,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202539,2025,39,"1,000 GP Gold Bar",10.32,"1,000 GP Gold Bar",Trade 2
@@ -6324,8 +6324,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202539,2025,39,Patron Token 1,90,Underling Dwarf Fighter,Premium
 202539,2025,39,Philosopher's Stone,2.9,Philosopher's Stone,Trade 1
 202539,2025,39,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202539,2025,39,Ultra Rare,80,Ultra Rare,Ultra Rare
-202539,2025,39,Ultra Rare,72.43,Ultra Rare,Ultra Rare
+202539,2025,39,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+202539,2025,39,Ultra Rare,72.43,Chosen Ultra Rare,Ultra Rare
 202539,2025,39,Wish Ring,125,Wish Ring,Trade 4
 202540,2025,40,"1,000 GP Gold Bar",7.7,"1,000 GP Gold Bar",Trade 2
 202540,2025,40,1k Bonus,70,Ring of the 2nd Circle,Premium
@@ -6346,7 +6346,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202540,2025,40,Patron Pin,51,Patron Pin,Premium
 202540,2025,40,Patron Token 1,51,Underling Dwarf Fighter,Premium
 202540,2025,40,Philosopher's Stone,2.2,Philosopher's Stone,Trade 1
-202540,2025,40,Ultra Rare,56,Ultra Rare,Ultra Rare
+202540,2025,40,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
 202540,2025,40,Wish Ring,95,Wish Ring,Trade 4
 202541,2025,41,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202541,2025,41,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
@@ -6381,8 +6381,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202541,2025,41,Patron Token 1,100,Underling Dwarf Fighter,Premium
 202541,2025,41,Philosopher's Stone,2.8,Philosopher's Stone,Trade 1
 202541,2025,41,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
-202541,2025,41,Ultra Rare,78,Ultra Rare,Ultra Rare
-202541,2025,41,Ultra Rare,66.25,Ultra Rare,Ultra Rare
+202541,2025,41,Ultra Rare,78,Chosen Ultra Rare,Ultra Rare
+202541,2025,41,Ultra Rare,66.25,Chosen Ultra Rare,Ultra Rare
 202541,2025,41,Wish Ring,130,Wish Ring,Trade 4
 202542,2025,42,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 202542,2025,42,"1,000 GP Gold Bar",11.25,"1,000 GP Gold Bar",Trade 2
@@ -6417,8 +6417,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202542,2025,42,Patron Token 1,105,Underling Dwarf Fighter,Premium
 202542,2025,42,Philosopher's Stone,2.6,Philosopher's Stone,Trade 1
 202542,2025,42,Philosopher's Stone,1.8,Philosopher's Stone,Trade 1
-202542,2025,42,Ultra Rare,86,Ultra Rare,Ultra Rare
-202542,2025,42,Ultra Rare,70,Ultra Rare,Ultra Rare
+202542,2025,42,Ultra Rare,86,Chosen Ultra Rare,Ultra Rare
+202542,2025,42,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 202542,2025,42,Wish Ring,140,Wish Ring,Trade 4
 202543,2025,43,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202543,2025,43,1k Bonus,72,Ring of the 2nd Circle,Premium
@@ -6439,7 +6439,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202543,2025,43,Patron Pin,5,Patron Pin,Premium
 202543,2025,43,Patron Token 1,40,Underling Dwarf Fighter,Premium
 202543,2025,43,Philosopher's Stone,2.05,Philosopher's Stone,Trade 1
-202543,2025,43,Ultra Rare,63,Ultra Rare,Ultra Rare
+202543,2025,43,Ultra Rare,63,Chosen Ultra Rare,Ultra Rare
 202543,2025,43,Wish Ring,140,Wish Ring,Trade 4
 202544,2025,44,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202544,2025,44,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
@@ -6474,8 +6474,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202544,2025,44,Patron Token 1,82,Underling Dwarf Fighter,Premium
 202544,2025,44,Philosopher's Stone,2.61,Philosopher's Stone,Trade 1
 202544,2025,44,Philosopher's Stone,2.1,Philosopher's Stone,Trade 1
-202544,2025,44,Ultra Rare,85,Ultra Rare,Ultra Rare
-202544,2025,44,Ultra Rare,75.01,Ultra Rare,Ultra Rare
+202544,2025,44,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
+202544,2025,44,Ultra Rare,75.01,Chosen Ultra Rare,Ultra Rare
 202544,2025,44,Wish Ring,141,Wish Ring,Trade 4
 202545,2025,45,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 202545,2025,45,1k Bonus,62.38,Ring of the 2nd Circle,Premium
@@ -6495,7 +6495,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202545,2025,45,Patron Pin,5,Patron Pin,Premium
 202545,2025,45,Patron Token 1,77,Underling Dwarf Fighter,Premium
 202545,2025,45,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-202545,2025,45,Ultra Rare,63,Ultra Rare,Ultra Rare
+202545,2025,45,Ultra Rare,63,Chosen Ultra Rare,Ultra Rare
 202545,2025,45,Wish Ring,121,Wish Ring,Trade 4
 202546,2025,46,"1,000 GP Gold Bar",10.1,"1,000 GP Gold Bar",Trade 2
 202546,2025,46,"1,000 GP Gold Bar",9.81,"1,000 GP Gold Bar",Trade 2
@@ -6530,8 +6530,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202546,2025,46,Patron Token 1,70.26,Underling Dwarf Fighter,Premium
 202546,2025,46,Philosopher's Stone,1.68,Philosopher's Stone,Trade 1
 202546,2025,46,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-202546,2025,46,Ultra Rare,84.99,Ultra Rare,Ultra Rare
-202546,2025,46,Ultra Rare,70.02,Ultra Rare,Ultra Rare
+202546,2025,46,Ultra Rare,84.99,Chosen Ultra Rare,Ultra Rare
+202546,2025,46,Ultra Rare,70.02,Chosen Ultra Rare,Ultra Rare
 202546,2025,46,Wish Ring,110,Wish Ring,Trade 4
 20261,2026,1,"1,000 GP Gold Bar",9.75,"1,000 GP Gold Bar",Trade 2
 20261,2026,1,"1,000 GP Gold Bar",6.25,"1,000 GP Gold Bar",Trade 2
@@ -6569,8 +6569,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20261,2026,1,Preorder Bonus,0.53,Drake's Draught,Preorder
 20261,2026,1,Treasure Chip,4.2,Treasure Chip (each),Preorder
 20261,2026,1,Treasure Chip,3.8,Treasure Chip (each),Preorder
-20261,2026,1,Ultra Rare,95,Ultra Rare,Ultra Rare
-20261,2026,1,Ultra Rare,61,Ultra Rare,Ultra Rare
+20261,2026,1,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
+20261,2026,1,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
 20261,2026,1,Wish Ring,105,Wish Ring,Trade 4
 20262,2026,2,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 20262,2026,2,1k Bonus,115,Ring of the 1st Circle,Premium
@@ -6591,7 +6591,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20262,2026,2,Philosopher's Stone,1,Philosopher's Stone,Trade 1
 20262,2026,2,Preorder Bonus,0.25,Drake's Draught,Preorder
 20262,2026,2,Treasure Chip,3.5,Treasure Chip (each),Preorder
-20262,2026,2,Ultra Rare,50,Ultra Rare,Ultra Rare
+20262,2026,2,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 20262,2026,2,Wish Ring,105,Wish Ring,Trade 4
 20264,2026,4,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 20264,2026,4,1k Bonus,105,Ring of the 1st Circle,Premium
@@ -6611,7 +6611,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20264,2026,4,Philosopher's Stone,1.3,Philosopher's Stone,Trade 1
 20264,2026,4,Preorder Bonus,0.5,Drake's Draught,Preorder
 20264,2026,4,Treasure Chip,3.3,Treasure Chip (each),Preorder
-20264,2026,4,Ultra Rare,55,Ultra Rare,Ultra Rare
+20264,2026,4,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 20264,2026,4,Wish Ring,130,Wish Ring,Trade 4
 20265,2026,5,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 20265,2026,5,"1,000 GP Gold Bar",7.76,"1,000 GP Gold Bar",Trade 2
@@ -6649,8 +6649,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20265,2026,5,Preorder Bonus,0.66,Drake's Draught,Preorder
 20265,2026,5,Treasure Chip,3.5,Treasure Chip (each),Preorder
 20265,2026,5,Treasure Chip,2.4,Treasure Chip (each),Preorder
-20265,2026,5,Ultra Rare,80,Ultra Rare,Ultra Rare
-20265,2026,5,Ultra Rare,65,Ultra Rare,Ultra Rare
+20265,2026,5,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
+20265,2026,5,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
 20265,2026,5,Wish Ring,100.01,Wish Ring,Trade 4
 20266,2026,6,"1,000 GP Gold Bar",8.8,"1,000 GP Gold Bar",Trade 2
 20266,2026,6,1k Bonus,99,Ring of the 1st Circle,Premium
@@ -6671,7 +6671,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20266,2026,6,Philosopher's Stone,0.82,Philosopher's Stone,Trade 1
 20266,2026,6,Preorder Bonus,0.62,Drake's Draught,Preorder
 20266,2026,6,Treasure Chip,3,Treasure Chip (each),Preorder
-20266,2026,6,Ultra Rare,69,Ultra Rare,Ultra Rare
+20266,2026,6,Ultra Rare,69,Chosen Ultra Rare,Ultra Rare
 20266,2026,6,Wish Ring,100,Wish Ring,Trade 4
 20267,2026,7,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 20267,2026,7,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -6709,8 +6709,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20267,2026,7,Preorder Bonus,0.35,Drake's Draught,Preorder
 20267,2026,7,Treasure Chip,3.2,Treasure Chip (each),Preorder
 20267,2026,7,Treasure Chip,2.8,Treasure Chip (each),Preorder
-20267,2026,7,Ultra Rare,66,Ultra Rare,Ultra Rare
-20267,2026,7,Ultra Rare,60,Ultra Rare,Ultra Rare
+20267,2026,7,Ultra Rare,66,Chosen Ultra Rare,Ultra Rare
+20267,2026,7,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 20267,2026,7,Wish Ring,111.5,Wish Ring,Trade 4
 20268,2026,8,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 20268,2026,8,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -6748,8 +6748,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20268,2026,8,Preorder Bonus,0.44,Drake's Draught,Preorder
 20268,2026,8,Treasure Chip,2.83,Treasure Chip (each),Preorder
 20268,2026,8,Treasure Chip,2.6,Treasure Chip (each),Preorder
-20268,2026,8,Ultra Rare,70.1,Ultra Rare,Ultra Rare
-20268,2026,8,Ultra Rare,60.1,Ultra Rare,Ultra Rare
+20268,2026,8,Ultra Rare,70.1,Chosen Ultra Rare,Ultra Rare
+20268,2026,8,Ultra Rare,60.1,Chosen Ultra Rare,Ultra Rare
 20268,2026,8,Wish Ring,100.25,Wish Ring,Trade 4
 20269,2026,9,"1,000 GP Gold Bar",9.13,"1,000 GP Gold Bar",Trade 2
 20269,2026,9,"1,000 GP Gold Bar",8.5,"1,000 GP Gold Bar",Trade 2
@@ -6787,8 +6787,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20269,2026,9,Preorder Bonus,0.25,Drake's Draught,Preorder
 20269,2026,9,Treasure Chip,3.33,Treasure Chip (each),Preorder
 20269,2026,9,Treasure Chip,3.1,Treasure Chip (each),Preorder
-20269,2026,9,Ultra Rare,65.01,Ultra Rare,Ultra Rare
-20269,2026,9,Ultra Rare,55,Ultra Rare,Ultra Rare
+20269,2026,9,Ultra Rare,65.01,Chosen Ultra Rare,Ultra Rare
+20269,2026,9,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 20269,2026,9,Wish Ring,125,Wish Ring,Trade 4
 202610,2026,10,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202610,2026,10,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -6826,8 +6826,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202610,2026,10,Preorder Bonus,0.28,Drake's Draught,Preorder
 202610,2026,10,Treasure Chip,3.1,Treasure Chip (each),Preorder
 202610,2026,10,Treasure Chip,3.1,Treasure Chip (each),Preorder
-202610,2026,10,Ultra Rare,70,Ultra Rare,Ultra Rare
-202610,2026,10,Ultra Rare,60,Ultra Rare,Ultra Rare
+202610,2026,10,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202610,2026,10,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202610,2026,10,Wish Ring,105,Wish Ring,Trade 4
 202611,2026,11,"1,000 GP Gold Bar",8.81,"1,000 GP Gold Bar",Trade 2
 202611,2026,11,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -6865,8 +6865,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202611,2026,11,Preorder Bonus,0.28,Drake's Draught,Preorder
 202611,2026,11,Treasure Chip,3.1,Treasure Chip (each),Preorder
 202611,2026,11,Treasure Chip,3,Treasure Chip (each),Preorder
-202611,2026,11,Ultra Rare,68,Ultra Rare,Ultra Rare
-202611,2026,11,Ultra Rare,60,Ultra Rare,Ultra Rare
+202611,2026,11,Ultra Rare,68,Chosen Ultra Rare,Ultra Rare
+202611,2026,11,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202611,2026,11,Wish Ring,120,Wish Ring,Trade 4
 202612,2026,12,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202612,2026,12,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
@@ -6904,8 +6904,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202612,2026,12,Preorder Bonus,0.28,Drake's Draught,Preorder
 202612,2026,12,Treasure Chip,3.45,Treasure Chip (each),Preorder
 202612,2026,12,Treasure Chip,3.3,Treasure Chip (each),Preorder
-202612,2026,12,Ultra Rare,76.5,Ultra Rare,Ultra Rare
-202612,2026,12,Ultra Rare,59.25,Ultra Rare,Ultra Rare
+202612,2026,12,Ultra Rare,76.5,Chosen Ultra Rare,Ultra Rare
+202612,2026,12,Ultra Rare,59.25,Chosen Ultra Rare,Ultra Rare
 202612,2026,12,Wish Ring,120,Wish Ring,Trade 4
 202613,2026,13,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
 202613,2026,13,"1,000 GP Gold Bar",7.75,"1,000 GP Gold Bar",Trade 2
@@ -6943,8 +6943,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202613,2026,13,Preorder Bonus,0.34,Drake's Draught,Preorder
 202613,2026,13,Treasure Chip,3.6,Treasure Chip (each),Preorder
 202613,2026,13,Treasure Chip,3.4,Treasure Chip (each),Preorder
-202613,2026,13,Ultra Rare,70,Ultra Rare,Ultra Rare
-202613,2026,13,Ultra Rare,60,Ultra Rare,Ultra Rare
+202613,2026,13,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202613,2026,13,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202613,2026,13,Wish Ring,100.25,Wish Ring,Trade 4
 202614,2026,14,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
 202614,2026,14,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -6982,8 +6982,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202614,2026,14,Preorder Bonus,0.22,Drake's Draught,Preorder
 202614,2026,14,Treasure Chip,3.5,Treasure Chip (each),Preorder
 202614,2026,14,Treasure Chip,3.3,Treasure Chip (each),Preorder
-202614,2026,14,Ultra Rare,66,Ultra Rare,Ultra Rare
-202614,2026,14,Ultra Rare,56,Ultra Rare,Ultra Rare
+202614,2026,14,Ultra Rare,66,Chosen Ultra Rare,Ultra Rare
+202614,2026,14,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
 202614,2026,14,Wish Ring,120.6,Wish Ring,Trade 4
 202615,2026,15,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202615,2026,15,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -7021,8 +7021,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202615,2026,15,Preorder Bonus,0.41,Drake's Draught,Preorder
 202615,2026,15,Treasure Chip,3.51,Treasure Chip (each),Preorder
 202615,2026,15,Treasure Chip,3.5,Treasure Chip (each),Preorder
-202615,2026,15,Ultra Rare,65,Ultra Rare,Ultra Rare
-202615,2026,15,Ultra Rare,55.17,Ultra Rare,Ultra Rare
+202615,2026,15,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
+202615,2026,15,Ultra Rare,55.17,Chosen Ultra Rare,Ultra Rare
 202615,2026,15,Wish Ring,110,Wish Ring,Trade 4
 202616,2026,16,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202616,2026,16,"1,000 GP Gold Bar",7.25,"1,000 GP Gold Bar",Trade 2
@@ -7060,8 +7060,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202616,2026,16,Preorder Bonus,0.28,Drake's Draught,Preorder
 202616,2026,16,Treasure Chip,3.41,Treasure Chip (each),Preorder
 202616,2026,16,Treasure Chip,3.1,Treasure Chip (each),Preorder
-202616,2026,16,Ultra Rare,61,Ultra Rare,Ultra Rare
-202616,2026,16,Ultra Rare,52,Ultra Rare,Ultra Rare
+202616,2026,16,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
+202616,2026,16,Ultra Rare,52,Chosen Ultra Rare,Ultra Rare
 202616,2026,16,Wish Ring,110,Wish Ring,Trade 4
 202617,2026,17,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202617,2026,17,"1,000 GP Gold Bar",8.5,"1,000 GP Gold Bar",Trade 2
@@ -7099,8 +7099,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202617,2026,17,Preorder Bonus,0.28,Drake's Draught,Preorder
 202617,2026,17,Treasure Chip,3.8,Treasure Chip (each),Preorder
 202617,2026,17,Treasure Chip,3.54,Treasure Chip (each),Preorder
-202617,2026,17,Ultra Rare,66,Ultra Rare,Ultra Rare
-202617,2026,17,Ultra Rare,56.01,Ultra Rare,Ultra Rare
+202617,2026,17,Ultra Rare,66,Chosen Ultra Rare,Ultra Rare
+202617,2026,17,Ultra Rare,56.01,Chosen Ultra Rare,Ultra Rare
 202617,2026,17,Wish Ring,120,Wish Ring,Trade 4
 202618,2026,18,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202618,2026,18,1k Bonus,105,Ring of the 1st Circle,Premium
@@ -7121,7 +7121,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202618,2026,18,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
 202618,2026,18,Preorder Bonus,1.25,Drake's Draught,Preorder
 202618,2026,18,Treasure Chip,4,Treasure Chip (each),Preorder
-202618,2026,18,Ultra Rare,50,Ultra Rare,Ultra Rare
+202618,2026,18,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 202618,2026,18,Wish Ring,110,Wish Ring,Trade 4
 202619,2026,19,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202619,2026,19,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -7159,8 +7159,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202619,2026,19,Preorder Bonus,0.44,Drake's Draught,Preorder
 202619,2026,19,Treasure Chip,3.4,Treasure Chip (each),Preorder
 202619,2026,19,Treasure Chip,3.2,Treasure Chip (each),Preorder
-202619,2026,19,Ultra Rare,65,Ultra Rare,Ultra Rare
-202619,2026,19,Ultra Rare,54,Ultra Rare,Ultra Rare
+202619,2026,19,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
+202619,2026,19,Ultra Rare,54,Chosen Ultra Rare,Ultra Rare
 202619,2026,19,Wish Ring,120,Wish Ring,Trade 4
 202620,2026,20,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202620,2026,20,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -7198,8 +7198,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202620,2026,20,Preorder Bonus,0.63,Drake's Draught,Preorder
 202620,2026,20,Treasure Chip,3.6,Treasure Chip (each),Preorder
 202620,2026,20,Treasure Chip,3.5,Treasure Chip (each),Preorder
-202620,2026,20,Ultra Rare,60,Ultra Rare,Ultra Rare
-202620,2026,20,Ultra Rare,50.99,Ultra Rare,Ultra Rare
+202620,2026,20,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
+202620,2026,20,Ultra Rare,50.99,Chosen Ultra Rare,Ultra Rare
 202620,2026,20,Wish Ring,105,Wish Ring,Trade 4
 202621,2026,21,"1,000 GP Gold Bar",10,"1,000 GP Gold Bar",Trade 2
 202621,2026,21,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
@@ -7237,8 +7237,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202621,2026,21,Preorder Bonus,0.38,Drake's Draught,Preorder
 202621,2026,21,Treasure Chip,3.5,Treasure Chip (each),Preorder
 202621,2026,21,Treasure Chip,3.4,Treasure Chip (each),Preorder
-202621,2026,21,Ultra Rare,55.17,Ultra Rare,Ultra Rare
-202621,2026,21,Ultra Rare,45.99,Ultra Rare,Ultra Rare
+202621,2026,21,Ultra Rare,55.17,Chosen Ultra Rare,Ultra Rare
+202621,2026,21,Ultra Rare,45.99,Chosen Ultra Rare,Ultra Rare
 202621,2026,21,Wish Ring,135.01,Wish Ring,Trade 4
 202622,2026,22,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202622,2026,22,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
@@ -7276,8 +7276,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202622,2026,22,Preorder Bonus,0.41,Drake's Draught,Preorder
 202622,2026,22,Treasure Chip,3.6,Treasure Chip (each),Preorder
 202622,2026,22,Treasure Chip,3.23,Treasure Chip (each),Preorder
-202622,2026,22,Ultra Rare,55,Ultra Rare,Ultra Rare
-202622,2026,22,Ultra Rare,46,Ultra Rare,Ultra Rare
+202622,2026,22,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
+202622,2026,22,Ultra Rare,46,Chosen Ultra Rare,Ultra Rare
 202622,2026,22,Wish Ring,114,Wish Ring,Trade 4
 202623,2026,23,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202623,2026,23,"1,000 GP Gold Bar",9.75,"1,000 GP Gold Bar",Trade 2
@@ -7315,8 +7315,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202623,2026,23,Preorder Bonus,0.41,Drake's Draught,Preorder
 202623,2026,23,Treasure Chip,3.7,Treasure Chip (each),Preorder
 202623,2026,23,Treasure Chip,3.65,Treasure Chip (each),Preorder
-202623,2026,23,Ultra Rare,61,Ultra Rare,Ultra Rare
-202623,2026,23,Ultra Rare,48,Ultra Rare,Ultra Rare
+202623,2026,23,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
+202623,2026,23,Ultra Rare,48,Chosen Ultra Rare,Ultra Rare
 202623,2026,23,Wish Ring,110,Wish Ring,Trade 4
 202624,2026,24,"1,000 GP Gold Bar",11.25,"1,000 GP Gold Bar",Trade 2
 202624,2026,24,"1,000 GP Gold Bar",10.28,"1,000 GP Gold Bar",Trade 2
@@ -7354,8 +7354,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202624,2026,24,Preorder Bonus,0.41,Drake's Draught,Preorder
 202624,2026,24,Treasure Chip,3.6,Treasure Chip (each),Preorder
 202624,2026,24,Treasure Chip,3.6,Treasure Chip (each),Preorder
-202624,2026,24,Ultra Rare,56,Ultra Rare,Ultra Rare
-202624,2026,24,Ultra Rare,48.17,Ultra Rare,Ultra Rare
+202624,2026,24,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
+202624,2026,24,Ultra Rare,48.17,Chosen Ultra Rare,Ultra Rare
 202624,2026,24,Wish Ring,110,Wish Ring,Trade 4
 202625,2026,25,"1,000 GP Gold Bar",10.75,"1,000 GP Gold Bar",Trade 2
 202625,2026,25,"1,000 GP Gold Bar",9.27,"1,000 GP Gold Bar",Trade 2
@@ -7393,8 +7393,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202625,2026,25,Preorder Bonus,0.34,Drake's Draught,Preorder
 202625,2026,25,Treasure Chip,3.8,Treasure Chip (each),Preorder
 202625,2026,25,Treasure Chip,3.8,Treasure Chip (each),Preorder
-202625,2026,25,Ultra Rare,51,Ultra Rare,Ultra Rare
-202625,2026,25,Ultra Rare,49,Ultra Rare,Ultra Rare
+202625,2026,25,Ultra Rare,51,Chosen Ultra Rare,Ultra Rare
+202625,2026,25,Ultra Rare,49,Chosen Ultra Rare,Ultra Rare
 202625,2026,25,Wish Ring,110,Wish Ring,Trade 4
 202626,2026,26,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 202626,2026,26,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
@@ -7428,8 +7428,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202626,2026,26,Patron Pin,375,Patron Pin,Premium
 202626,2026,26,Philosopher's Stone,1.9,Philosopher's Stone,Trade 1
 202626,2026,26,Philosopher's Stone,1.13,Philosopher's Stone,Trade 1
-202626,2026,26,Ultra Rare,56.51,Ultra Rare,Ultra Rare
-202626,2026,26,Ultra Rare,50.01,Ultra Rare,Ultra Rare
+202626,2026,26,Ultra Rare,56.51,Chosen Ultra Rare,Ultra Rare
+202626,2026,26,Ultra Rare,50.01,Chosen Ultra Rare,Ultra Rare
 202626,2026,26,Wish Ring,120.01,Wish Ring,Trade 4
 202627,2026,27,"1,000 GP Gold Bar",11.5,"1,000 GP Gold Bar",Trade 2
 202627,2026,27,"1,000 GP Gold Bar",7.01,"1,000 GP Gold Bar",Trade 2
@@ -7462,8 +7462,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202627,2026,27,Patron Pin,365,Patron Pin,Premium
 202627,2026,27,Philosopher's Stone,1.38,Philosopher's Stone,Trade 1
 202627,2026,27,Philosopher's Stone,0.83,Philosopher's Stone,Trade 1
-202627,2026,27,Ultra Rare,68.5,Ultra Rare,Ultra Rare
-202627,2026,27,Ultra Rare,50.01,Ultra Rare,Ultra Rare
+202627,2026,27,Ultra Rare,68.5,Chosen Ultra Rare,Ultra Rare
+202627,2026,27,Ultra Rare,50.01,Chosen Ultra Rare,Ultra Rare
 202627,2026,27,Wish Ring,110,Wish Ring,Trade 4
 202628,2026,28,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202628,2026,28,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -7497,8 +7497,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202628,2026,28,Patron Pin,360,Patron Pin,Premium
 202628,2026,28,Philosopher's Stone,1.8,Philosopher's Stone,Trade 1
 202628,2026,28,Philosopher's Stone,0.85,Philosopher's Stone,Trade 1
-202628,2026,28,Ultra Rare,60,Ultra Rare,Ultra Rare
-202628,2026,28,Ultra Rare,49.5,Ultra Rare,Ultra Rare
+202628,2026,28,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
+202628,2026,28,Ultra Rare,49.5,Chosen Ultra Rare,Ultra Rare
 202628,2026,28,Wish Ring,96,Wish Ring,Trade 4
 202629,2026,29,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202629,2026,29,"1,000 GP Gold Bar",8.27,"1,000 GP Gold Bar",Trade 2
@@ -7532,8 +7532,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202629,2026,29,Patron Pin,370,Patron Pin,Premium
 202629,2026,29,Philosopher's Stone,1.85,Philosopher's Stone,Trade 1
 202629,2026,29,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-202629,2026,29,Ultra Rare,60,Ultra Rare,Ultra Rare
-202629,2026,29,Ultra Rare,51.05,Ultra Rare,Ultra Rare
+202629,2026,29,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
+202629,2026,29,Ultra Rare,51.05,Chosen Ultra Rare,Ultra Rare
 202629,2026,29,Wish Ring,125,Wish Ring,Trade 4
 202630,2026,30,"1,000 GP Gold Bar",10.5,"1,000 GP Gold Bar",Trade 2
 202630,2026,30,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
@@ -7567,8 +7567,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202630,2026,30,Patron Pin,405,Patron Pin,Premium
 202630,2026,30,Philosopher's Stone,1.73,Philosopher's Stone,Trade 1
 202630,2026,30,Philosopher's Stone,1.1,Philosopher's Stone,Trade 1
-202630,2026,30,Ultra Rare,70,Ultra Rare,Ultra Rare
-202630,2026,30,Ultra Rare,55,Ultra Rare,Ultra Rare
+202630,2026,30,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202630,2026,30,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202630,2026,30,Wish Ring,135,Wish Ring,Trade 4
 202631,2026,31,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
 202631,2026,31,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -7602,8 +7602,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202631,2026,31,Patron Pin,205,Patron Pin,Premium
 202631,2026,31,Philosopher's Stone,2.2,Philosopher's Stone,Trade 1
 202631,2026,31,Philosopher's Stone,1.4,Philosopher's Stone,Trade 1
-202631,2026,31,Ultra Rare,65,Ultra Rare,Ultra Rare
-202631,2026,31,Ultra Rare,55,Ultra Rare,Ultra Rare
+202631,2026,31,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
+202631,2026,31,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202631,2026,31,Wish Ring,115,Wish Ring,Trade 4
 202632,2026,32,"1,000 GP Gold Bar",7.4,"1,000 GP Gold Bar",Trade 2
 202632,2026,32,1k Bonus,85,Ring of the 1st Circle,Premium
@@ -7622,7 +7622,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202632,2026,32,Mystic Silk,0.9,Mystic Silk,Trade 1
 202632,2026,32,Oil of Enchantment,35,Oil of Enchantment,Trade 2
 202632,2026,32,Philosopher's Stone,1.1,Philosopher's Stone,Trade 1
-202632,2026,32,Ultra Rare,42,Ultra Rare,Ultra Rare
+202632,2026,32,Ultra Rare,42,Chosen Ultra Rare,Ultra Rare
 202632,2026,32,Wish Ring,86,Wish Ring,Trade 4
 202633,2026,33,"1,000 GP Gold Bar",8.33,"1,000 GP Gold Bar",Trade 2
 202633,2026,33,1k Bonus,91.25,Ring of the 1st Circle,Premium
@@ -7640,7 +7640,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202633,2026,33,Mystic Silk,1.05,Mystic Silk,Trade 1
 202633,2026,33,Oil of Enchantment,42.7,Oil of Enchantment,Trade 2
 202633,2026,33,Philosopher's Stone,1.18,Philosopher's Stone,Trade 1
-202633,2026,33,Ultra Rare,45.03,Ultra Rare,Ultra Rare
+202633,2026,33,Ultra Rare,45.03,Chosen Ultra Rare,Ultra Rare
 202633,2026,33,Wish Ring,105,Wish Ring,Trade 4
 202634,2026,34,"1,000 GP Gold Bar",8.5,"1,000 GP Gold Bar",Trade 2
 202634,2026,34,1k Bonus,100,Ring of the 1st Circle,Premium
@@ -7660,7 +7660,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202634,2026,34,Oil of Enchantment,45,Oil of Enchantment,Trade 2
 202634,2026,34,Patron Pin,235,Patron Pin,Premium
 202634,2026,34,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-202634,2026,34,Ultra Rare,55,Ultra Rare,Ultra Rare
+202634,2026,34,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202634,2026,34,Wish Ring,100,Wish Ring,Trade 4
 202635,2026,35,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
 202635,2026,35,"1,000 GP Gold Bar",8.88,"1,000 GP Gold Bar",Trade 2
@@ -7694,8 +7694,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202635,2026,35,Patron Pin,275,Patron Pin,Premium
 202635,2026,35,Philosopher's Stone,1.03,Philosopher's Stone,Trade 1
 202635,2026,35,Philosopher's Stone,0.93,Philosopher's Stone,Trade 1
-202635,2026,35,Ultra Rare,70,Ultra Rare,Ultra Rare
-202635,2026,35,Ultra Rare,55,Ultra Rare,Ultra Rare
+202635,2026,35,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202635,2026,35,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202635,2026,35,Wish Ring,122.25,Wish Ring,Trade 4
 202636,2026,36,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202636,2026,36,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -7728,8 +7728,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202636,2026,36,Patron Pin,275,Patron Pin,Premium
 202636,2026,36,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 202636,2026,36,Philosopher's Stone,1.43,Philosopher's Stone,Trade 1
-202636,2026,36,Ultra Rare,57.65,Ultra Rare,Ultra Rare
-202636,2026,36,Ultra Rare,50.01,Ultra Rare,Ultra Rare
+202636,2026,36,Ultra Rare,57.65,Chosen Ultra Rare,Ultra Rare
+202636,2026,36,Ultra Rare,50.01,Chosen Ultra Rare,Ultra Rare
 202636,2026,36,Wish Ring,121.5,Wish Ring,Trade 4
 202637,2026,37,"1,000 GP Gold Bar",9.01,"1,000 GP Gold Bar",Trade 2
 202637,2026,37,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -7761,8 +7761,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202637,2026,37,Patron Pin,255,Patron Pin,Premium
 202637,2026,37,Philosopher's Stone,1.45,Philosopher's Stone,Trade 1
 202637,2026,37,Philosopher's Stone,0.93,Philosopher's Stone,Trade 1
-202637,2026,37,Ultra Rare,57,Ultra Rare,Ultra Rare
-202637,2026,37,Ultra Rare,50.01,Ultra Rare,Ultra Rare
+202637,2026,37,Ultra Rare,57,Chosen Ultra Rare,Ultra Rare
+202637,2026,37,Ultra Rare,50.01,Chosen Ultra Rare,Ultra Rare
 202637,2026,37,Wish Ring,95.25,Wish Ring,Trade 4
 202639,2026,39,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202639,2026,39,"1,000 GP Gold Bar",8.26,"1,000 GP Gold Bar",Trade 2
@@ -7796,8 +7796,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202639,2026,39,Patron Pin,275,Patron Pin,Premium
 202639,2026,39,Philosopher's Stone,1.8,Philosopher's Stone,Trade 1
 202639,2026,39,Philosopher's Stone,1.6,Philosopher's Stone,Trade 1
-202639,2026,39,Ultra Rare,75,Ultra Rare,Ultra Rare
-202639,2026,39,Ultra Rare,60,Ultra Rare,Ultra Rare
+202639,2026,39,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+202639,2026,39,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202639,2026,39,Wish Ring,120,Wish Ring,Trade 4
 202640,2026,40,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 202640,2026,40,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
@@ -7831,8 +7831,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202640,2026,40,Patron Pin,225,Patron Pin,Premium
 202640,2026,40,Philosopher's Stone,0.9,Philosopher's Stone,Trade 1
 202640,2026,40,Philosopher's Stone,0.95,Philosopher's Stone,Trade 1
-202640,2026,40,Ultra Rare,49,Ultra Rare,Ultra Rare
-202640,2026,40,Ultra Rare,52,Ultra Rare,Ultra Rare
+202640,2026,40,Ultra Rare,49,Chosen Ultra Rare,Ultra Rare
+202640,2026,40,Ultra Rare,52,Chosen Ultra Rare,Ultra Rare
 202640,2026,40,Wish Ring,117,Wish Ring,Trade 4
 202641,2026,41,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202641,2026,41,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
@@ -7866,8 +7866,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202641,2026,41,Patron Pin,301,Patron Pin,Premium
 202641,2026,41,Philosopher's Stone,1.45,Philosopher's Stone,Trade 1
 202641,2026,41,Philosopher's Stone,1.25,Philosopher's Stone,Trade 1
-202641,2026,41,Ultra Rare,70,Ultra Rare,Ultra Rare
-202641,2026,41,Ultra Rare,61,Ultra Rare,Ultra Rare
+202641,2026,41,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+202641,2026,41,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
 202641,2026,41,Wish Ring,135,Wish Ring,Trade 4
 202642,2026,42,"1,000 GP Gold Bar",9.24,"1,000 GP Gold Bar",Trade 2
 202642,2026,42,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
@@ -7901,8 +7901,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202642,2026,42,Patron Pin,295.05,Patron Pin,Premium
 202642,2026,42,Philosopher's Stone,2.2,Philosopher's Stone,Trade 1
 202642,2026,42,Philosopher's Stone,1.4,Philosopher's Stone,Trade 1
-202642,2026,42,Ultra Rare,85,Ultra Rare,Ultra Rare
-202642,2026,42,Ultra Rare,70.1,Ultra Rare,Ultra Rare
+202642,2026,42,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
+202642,2026,42,Ultra Rare,70.1,Chosen Ultra Rare,Ultra Rare
 202642,2026,42,Wish Ring,135.03,Wish Ring,Trade 4
 202643,2026,43,"1,000 GP Gold Bar",7.75,"1,000 GP Gold Bar",Trade 2
 202643,2026,43,"1,000 GP Gold Bar",8.3,"1,000 GP Gold Bar",Trade 2
@@ -7935,8 +7935,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202643,2026,43,Patron Pin,306,Patron Pin,Premium
 202643,2026,43,Philosopher's Stone,1.05,Philosopher's Stone,Trade 1
 202643,2026,43,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-202643,2026,43,Ultra Rare,66,Ultra Rare,Ultra Rare
-202643,2026,43,Ultra Rare,80,Ultra Rare,Ultra Rare
+202643,2026,43,Ultra Rare,66,Chosen Ultra Rare,Ultra Rare
+202643,2026,43,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
 202643,2026,43,Wish Ring,140.11,Wish Ring,Trade 4
 202644,2026,44,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202644,2026,44,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
@@ -7971,8 +7971,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202644,2026,44,Patron Pin,252,Patron Pin,Premium
 202644,2026,44,Philosopher's Stone,1.35,Philosopher's Stone,Trade 1
 202644,2026,44,Philosopher's Stone,1.35,Philosopher's Stone,Trade 1
-202644,2026,44,Ultra Rare,52,Ultra Rare,Ultra Rare
-202644,2026,44,Ultra Rare,61,Ultra Rare,Ultra Rare
+202644,2026,44,Ultra Rare,52,Chosen Ultra Rare,Ultra Rare
+202644,2026,44,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
 202644,2026,44,Wish Ring,111,Wish Ring,Trade 4
 202645,2026,45,"1,000 GP Gold Bar",8.1,"1,000 GP Gold Bar",Trade 2
 202645,2026,45,2k Bonus,121,Mark of the 1st Tenet,Premium
@@ -7990,7 +7990,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202645,2026,45,Oil of Enchantment,71,Oil of Enchantment,Trade 2
 202645,2026,45,Patron Pin,277,Patron Pin,Premium
 202645,2026,45,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
-202645,2026,45,Ultra Rare,55,Ultra Rare,Ultra Rare
+202645,2026,45,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202645,2026,45,Wish Ring,120,Wish Ring,Trade 4
 202646,2026,46,"1,000 GP Gold Bar",7,"1,000 GP Gold Bar",Trade 2
 202646,2026,46,1k Bonus,42,Ring of the 1st Circle,Premium
@@ -8009,7 +8009,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202646,2026,46,Oil of Enchantment,63,Oil of Enchantment,Trade 2
 202646,2026,46,Patron Pin,142,Patron Pin,Premium
 202646,2026,46,Philosopher's Stone,0.75,Philosopher's Stone,Trade 1
-202646,2026,46,Ultra Rare,48.5,Ultra Rare,Ultra Rare
+202646,2026,46,Ultra Rare,48.5,Chosen Ultra Rare,Ultra Rare
 202646,2026,46,Wish Ring,120,Wish Ring,Trade 4
 202647,2026,47,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202647,2026,47,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
@@ -8045,8 +8045,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202647,2026,47,Patron Pin,197,Patron Pin,Premium
 202647,2026,47,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202647,2026,47,Philosopher's Stone,1,Philosopher's Stone,Trade 1
-202647,2026,47,Ultra Rare,60,Ultra Rare,Ultra Rare
-202647,2026,47,Ultra Rare,55,Ultra Rare,Ultra Rare
+202647,2026,47,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
+202647,2026,47,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202647,2026,47,Wish Ring,117,Wish Ring,Trade 4
 20275,2027,5,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
 20275,2027,5,1k Bonus,61,Ioun Stone Warden Wrath,Premium
@@ -8066,7 +8066,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20275,2027,5,Philosopher's Stone,1.28,Philosopher's Stone,Trade 1
 20275,2027,5,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20275,2027,5,Treasure Chip,3.4,Treasure Chip (each),Preorder
-20275,2027,5,Ultra Rare,51,Ultra Rare,Ultra Rare
+20275,2027,5,Ultra Rare,51,Chosen Ultra Rare,Ultra Rare
 20275,2027,5,Wish Ring,101,Wish Ring,Trade 4
 20275,2027,5,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
 20275,2027,5,1k Bonus,60,Ioun Stone Warden Wrath,Premium
@@ -8084,7 +8084,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20275,2027,5,Philosopher's Stone,0.85,Philosopher's Stone,Trade 1
 20275,2027,5,Preorder Bonus,0.5,Drake's Elixir,Preorder
 20275,2027,5,Treasure Chip,3.35,Treasure Chip (each),Preorder
-20275,2027,5,Ultra Rare,46,Ultra Rare,Ultra Rare
+20275,2027,5,Ultra Rare,46,Chosen Ultra Rare,Ultra Rare
 20271,2027,1,"1,000 GP Gold Bar",6.4,"1,000 GP Gold Bar",Trade 2
 20271,2027,1,1k Bonus,61,Ioun Stone Warden Wrath,Premium
 20271,2027,1,2k Bonus,86,Shirt of Cat's Gift,Premium
@@ -8102,7 +8102,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20271,2027,1,Philosopher's Stone,0.95,Philosopher's Stone,Trade 1
 20271,2027,1,Preorder Bonus,1,Drake's Elixir,Preorder
 20271,2027,1,Treasure Chip,4,Treasure Chip (each),Preorder
-20271,2027,1,Ultra Rare,54.05,Ultra Rare,Ultra Rare
+20271,2027,1,Ultra Rare,54.05,Chosen Ultra Rare,Ultra Rare
 20271,2027,1,Wish Ring,100,Wish Ring,Trade 4
 20271,2027,1,"1,000 GP Gold Bar",5.6,"1,000 GP Gold Bar",Trade 2
 20271,2027,1,1k Bonus,60,Ioun Stone Warden Wrath,Premium
@@ -8120,7 +8120,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20271,2027,1,Philosopher's Stone,0.85,Philosopher's Stone,Trade 1
 20271,2027,1,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20271,2027,1,Treasure Chip,4,Treasure Chip (each),Preorder
-20271,2027,1,Ultra Rare,50,Ultra Rare,Ultra Rare
+20271,2027,1,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 20272,2027,2,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
 20272,2027,2,1k Bonus,66,Ioun Stone Warden Wrath,Premium
 20272,2027,2,2k Bonus,71,Shirt of Cat's Gift,Premium
@@ -8138,7 +8138,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20272,2027,2,Philosopher's Stone,1,Philosopher's Stone,Trade 1
 20272,2027,2,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20272,2027,2,Treasure Chip,4.9,Treasure Chip (each),Preorder
-20272,2027,2,Ultra Rare,52,Ultra Rare,Ultra Rare
+20272,2027,2,Ultra Rare,52,Chosen Ultra Rare,Ultra Rare
 20272,2027,2,Wish Ring,100,Wish Ring,Trade 4
 20272,2027,2,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
 20272,2027,2,1k Bonus,62,Ioun Stone Warden Wrath,Premium
@@ -8156,7 +8156,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20272,2027,2,Philosopher's Stone,0.5,Philosopher's Stone,Trade 1
 20272,2027,2,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20272,2027,2,Treasure Chip,4.9,Treasure Chip (each),Preorder
-20272,2027,2,Ultra Rare,50,Ultra Rare,Ultra Rare
+20272,2027,2,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 20274,2027,4,"1,000 GP Gold Bar",6,"1,000 GP Gold Bar",Trade 2
 20274,2027,4,1k Bonus,66,Ioun Stone Warden Wrath,Premium
 20274,2027,4,2k Bonus,71,Shirt of Cat's Gift,Premium
@@ -8176,7 +8176,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20274,2027,4,Philosopher's Stone,0.65,Philosopher's Stone,Trade 1
 20274,2027,4,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20274,2027,4,Treasure Chip,4.15,Treasure Chip (each),Preorder
-20274,2027,4,Ultra Rare,60,Ultra Rare,Ultra Rare
+20274,2027,4,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 20274,2027,4,Wish Ring,100,Wish Ring,Trade 4
 20274,2027,4,"1,000 GP Gold Bar",6,"1,000 GP Gold Bar",Trade 2
 20274,2027,4,1k Bonus,61,Ioun Stone Warden Wrath,Premium
@@ -8194,7 +8194,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20274,2027,4,Philosopher's Stone,0.6,Philosopher's Stone,Trade 1
 20274,2027,4,Preorder Bonus,0.38,Drake's Elixir,Preorder
 20274,2027,4,Treasure Chip,4,Treasure Chip (each),Preorder
-20274,2027,4,Ultra Rare,55,Ultra Rare,Ultra Rare
+20274,2027,4,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 20273,2027,3,"1,000 GP Gold Bar",7.57,"1,000 GP Gold Bar",Trade 2
 20273,2027,3,1k Bonus,82.22,Ioun Stone Warden Wrath,Premium
 20273,2027,3,2k Bonus,95,Shirt of Cat's Gift,Premium
@@ -8213,7 +8213,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20273,2027,3,Philosopher's Stone,1.1,Philosopher's Stone,Trade 1
 20273,2027,3,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20273,2027,3,Treasure Chip,4.52,Treasure Chip (each),Preorder
-20273,2027,3,Ultra Rare,75,Ultra Rare,Ultra Rare
+20273,2027,3,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
 20273,2027,3,Wish Ring,81,Wish Ring,Trade 4
 20273,2027,3,"1,000 GP Gold Bar",5.25,"1,000 GP Gold Bar",Trade 2
 20273,2027,3,1k Bonus,71,Ioun Stone Warden Wrath,Premium
@@ -8231,7 +8231,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20273,2027,3,Philosopher's Stone,0.75,Philosopher's Stone,Trade 1
 20273,2027,3,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20273,2027,3,Treasure Chip,4.5,Treasure Chip (each),Preorder
-20273,2027,3,Ultra Rare,51.25,Ultra Rare,Ultra Rare
+20273,2027,3,Ultra Rare,51.25,Chosen Ultra Rare,Ultra Rare
 20276,2027,6,"1,000 GP Gold Bar",7,"1,000 GP Gold Bar",Trade 2
 20276,2027,6,1k Bonus,92,Ioun Stone Warden Wrath,Premium
 20276,2027,6,2k Bonus,100,Shirt of Cat's Gift,Premium
@@ -8250,7 +8250,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20276,2027,6,Philosopher's Stone,0.63,Philosopher's Stone,Trade 1
 20276,2027,6,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20276,2027,6,Treasure Chip,4.7,Treasure Chip (each),Preorder
-20276,2027,6,Ultra Rare,70,Ultra Rare,Ultra Rare
+20276,2027,6,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 20276,2027,6,Wish Ring,99.99,Wish Ring,Trade 4
 20276,2027,6,"1,000 GP Gold Bar",6.25,"1,000 GP Gold Bar",Trade 2
 20276,2027,6,1k Bonus,81,Ioun Stone Warden Wrath,Premium
@@ -8268,7 +8268,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20276,2027,6,Philosopher's Stone,0.55,Philosopher's Stone,Trade 1
 20276,2027,6,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20276,2027,6,Treasure Chip,4.5,Treasure Chip (each),Preorder
-20276,2027,6,Ultra Rare,50.12,Ultra Rare,Ultra Rare
+20276,2027,6,Ultra Rare,50.12,Chosen Ultra Rare,Ultra Rare
 202710,2027,10,"1,000 GP Gold Bar",7.5,"1,000 GP Gold Bar",Trade 2
 202710,2027,10,1k Bonus,88,Ioun Stone Warden Wrath,Premium
 202710,2027,10,2k Bonus,91.25,Shirt of Cat's Gift,Premium
@@ -8287,7 +8287,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202710,2027,10,Philosopher's Stone,1,Philosopher's Stone,Trade 1
 202710,2027,10,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202710,2027,10,Treasure Chip,4.5,Treasure Chip (each),Preorder
-202710,2027,10,Ultra Rare,65,Ultra Rare,Ultra Rare
+202710,2027,10,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
 202710,2027,10,Wish Ring,106.44,Wish Ring,Trade 4
 202710,2027,10,"1,000 GP Gold Bar",6.31,"1,000 GP Gold Bar",Trade 2
 202710,2027,10,1k Bonus,81.25,Ioun Stone Warden Wrath,Premium
@@ -8305,7 +8305,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202710,2027,10,Philosopher's Stone,0.79,Philosopher's Stone,Trade 1
 202710,2027,10,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202710,2027,10,Treasure Chip,4,Treasure Chip (each),Preorder
-202710,2027,10,Ultra Rare,50,Ultra Rare,Ultra Rare
+202710,2027,10,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 20277,2027,7,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
 20277,2027,7,1k Bonus,96,Ioun Stone Warden Wrath,Premium
 20277,2027,7,2k Bonus,101,Shirt of Cat's Gift,Premium
@@ -8324,7 +8324,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20277,2027,7,Philosopher's Stone,1.03,Philosopher's Stone,Trade 1
 20277,2027,7,Preorder Bonus,0.69,Drake's Elixir,Preorder
 20277,2027,7,Treasure Chip,4.1,Treasure Chip (each),Preorder
-20277,2027,7,Ultra Rare,70,Ultra Rare,Ultra Rare
+20277,2027,7,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
 20277,2027,7,Wish Ring,106,Wish Ring,Trade 4
 20277,2027,7,"1,000 GP Gold Bar",6.5,"1,000 GP Gold Bar",Trade 2
 20277,2027,7,1k Bonus,86,Ioun Stone Warden Wrath,Premium
@@ -8342,7 +8342,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20277,2027,7,Philosopher's Stone,0.78,Philosopher's Stone,Trade 1
 20277,2027,7,Preorder Bonus,0.66,Drake's Elixir,Preorder
 20277,2027,7,Treasure Chip,4,Treasure Chip (each),Preorder
-20277,2027,7,Ultra Rare,55,Ultra Rare,Ultra Rare
+20277,2027,7,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202711,2027,11,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202711,2027,11,1k Bonus,90.3,Ioun Stone Warden Wrath,Premium
 202711,2027,11,2k Bonus,86,Shirt of Cat's Gift,Premium
@@ -8360,7 +8360,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202711,2027,11,Patron Pin,385,Patron Code,Premium
 202711,2027,11,Philosopher's Stone,1.12,Philosopher's Stone,Trade 1
 202711,2027,11,Treasure Chip,4.5,Treasure Chip (each),Preorder
-202711,2027,11,Ultra Rare,60.5,Ultra Rare,Ultra Rare
+202711,2027,11,Ultra Rare,60.5,Chosen Ultra Rare,Ultra Rare
 202711,2027,11,Wish Ring,105,Wish Ring,Trade 4
 202711,2027,11,"1,000 GP Gold Bar",6.25,"1,000 GP Gold Bar",Trade 2
 202711,2027,11,1k Bonus,83,Ioun Stone Warden Wrath,Premium
@@ -8377,7 +8377,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202711,2027,11,Oil of Enchantment,39,Oil of Enchantment,Trade 2
 202711,2027,11,Philosopher's Stone,1.02,Philosopher's Stone,Trade 1
 202711,2027,11,Treasure Chip,4,Treasure Chip (each),Preorder
-202711,2027,11,Ultra Rare,47,Ultra Rare,Ultra Rare
+202711,2027,11,Ultra Rare,47,Chosen Ultra Rare,Ultra Rare
 202712,2027,12,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
 202712,2027,12,1k Bonus,95,Ioun Stone Warden Wrath,Premium
 202712,2027,12,2k Bonus,96,Shirt of Cat's Gift,Premium
@@ -8396,7 +8396,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202712,2027,12,Philosopher's Stone,1.31,Philosopher's Stone,Trade 1
 202712,2027,12,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202712,2027,12,Treasure Chip,3.82,Treasure Chip (each),Preorder
-202712,2027,12,Ultra Rare,66,Ultra Rare,Ultra Rare
+202712,2027,12,Ultra Rare,66,Chosen Ultra Rare,Ultra Rare
 202712,2027,12,Wish Ring,120,Wish Ring,Trade 4
 202712,2027,12,"1,000 GP Gold Bar",7.25,"1,000 GP Gold Bar",Trade 2
 202712,2027,12,1k Bonus,86,Ioun Stone Warden Wrath,Premium
@@ -8414,7 +8414,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202712,2027,12,Philosopher's Stone,0.76,Philosopher's Stone,Trade 1
 202712,2027,12,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202712,2027,12,Treasure Chip,3.55,Treasure Chip (each),Preorder
-202712,2027,12,Ultra Rare,55.25,Ultra Rare,Ultra Rare
+202712,2027,12,Ultra Rare,55.25,Chosen Ultra Rare,Ultra Rare
 202713,2027,13,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202713,2027,13,1k Bonus,105,Ioun Stone Warden Wrath,Premium
 202713,2027,13,2k Bonus,95,Shirt of Cat's Gift,Premium
@@ -8433,7 +8433,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202713,2027,13,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202713,2027,13,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202713,2027,13,Treasure Chip,4.1,Treasure Chip (each),Preorder
-202713,2027,13,Ultra Rare,75,Ultra Rare,Ultra Rare
+202713,2027,13,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
 202713,2027,13,Wish Ring,105,Wish Ring,Trade 4
 202713,2027,13,"1,000 GP Gold Bar",6.5,"1,000 GP Gold Bar",Trade 2
 202713,2027,13,1k Bonus,90,Ioun Stone Warden Wrath,Premium
@@ -8451,7 +8451,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202713,2027,13,Philosopher's Stone,1.03,Philosopher's Stone,Trade 1
 202713,2027,13,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202713,2027,13,Treasure Chip,4.1,Treasure Chip (each),Preorder
-202713,2027,13,Ultra Rare,50.05,Ultra Rare,Ultra Rare
+202713,2027,13,Ultra Rare,50.05,Chosen Ultra Rare,Ultra Rare
 202714,2027,14,"1,000 GP Gold Bar",6.25,"1,000 GP Gold Bar",Trade 2
 202714,2027,14,1k Bonus,90,Ioun Stone Warden Wrath,Premium
 202714,2027,14,2k Bonus,91,Shirt of Cat's Gift,Premium
@@ -8470,7 +8470,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202714,2027,14,Philosopher's Stone,1.48,Philosopher's Stone,Trade 1
 202714,2027,14,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202714,2027,14,Treasure Chip,4.1,Treasure Chip (each),Preorder
-202714,2027,14,Ultra Rare,60,Ultra Rare,Ultra Rare
+202714,2027,14,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202714,2027,14,Wish Ring,100.01,Wish Ring,Trade 4
 202714,2027,14,"1,000 GP Gold Bar",5.84,"1,000 GP Gold Bar",Trade 2
 202714,2027,14,1k Bonus,85,Ioun Stone Warden Wrath,Premium
@@ -8488,4 +8488,4 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202714,2027,14,Philosopher's Stone,0.63,Philosopher's Stone,Trade 1
 202714,2027,14,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202714,2027,14,Treasure Chip,4.1,Treasure Chip (each),Preorder
-202714,2027,14,Ultra Rare,50.25,Ultra Rare,Ultra Rare
+202714,2027,14,Ultra Rare,50.25,Chosen Ultra Rare,Ultra Rare
