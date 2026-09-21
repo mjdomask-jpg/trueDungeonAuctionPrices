@@ -55,6 +55,11 @@ export type LedgerRow = {
   // included items + personal augments) at least matched what they withheld.
   // Grunnel is excluded (a company drop, not the auctioneer's own offset), and the
   // funding goal is context, not part of this sum.
+  //
+  // The view can add Grunnel back on request — see ledgerBalanceOf, which is
+  // where a row's DISPLAYED balance comes from. These two fields are the
+  // Grunnel-excluded answer and stay that way, so nothing downstream has to know
+  // about the toggle.
   balance: number;
   covered: boolean;
 };
@@ -62,6 +67,27 @@ export type LedgerRow = {
 function balanceOf(released: number, augment: number, withheld: number): number {
   // withheld is ≤ 0, so adding it subtracts the withheld magnitude.
   return released + augment + withheld;
+}
+
+// A rounding guard so a $0.00 net reads as covered rather than a penny short.
+export const isCovered = (balance: number): boolean => balance >= -0.005;
+
+// The balance a reader sees, given the "Include Grunnel" choice.
+//
+// THE DEFAULT — Grunnel excluded — IS THE ONE THAT ANSWERS THE QUESTION PEOPLE
+// ASK, which is "would this auction have worked without help from the company?".
+// Grunnel is a company employee's drop, not the auctioneer offsetting their own
+// withholding, so counting it would credit the auctioneer with someone else's
+// money (design §6.1). That has always been the rule here; the toggle exists
+// because the rule was invisible, not because it was wrong.
+//
+// Checking the box adds the drop back, which answers the other question — what
+// the auction's books looked like in total, whoever paid.
+export function ledgerBalanceOf(
+  r: { released: number; augment: number; grunnel: number; withheld: number },
+  includeGrunnel: boolean,
+): number {
+  return balanceOf(r.released, r.augment, r.withheld) + (includeGrunnel ? r.grunnel : 0);
 }
 
 export function auctionLedger(
@@ -87,8 +113,7 @@ export function auctionLedger(
       grunnel: c.grunnel,
       fundingGoal: m.targetFunding,
       balance,
-      // A rounding guard so a $0.00 net reads as covered rather than a penny short.
-      covered: balance >= -0.005,
+      covered: isCovered(balance),
     });
   }
   return rows.sort((a, b) =>
@@ -113,7 +138,7 @@ function aggregate(key: string, rows: LedgerRow[]): LedgerAgg {
   const augment = sum((r) => r.augment);
   const grunnel = sum((r) => r.grunnel);
   const balance = balanceOf(released, augment, withheld);
-  return { key, n: rows.length, withheld, released, augment, grunnel, balance, covered: balance >= -0.005 };
+  return { key, n: rows.length, withheld, released, augment, grunnel, balance, covered: isCovered(balance) };
 }
 
 // One aggregate per auctioneer, most-withheld first (largest |withheld|).

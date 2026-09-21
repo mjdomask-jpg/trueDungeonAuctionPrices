@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { SOURCE_LABEL, type AuctionMeta, type AuctionSource, type Sale, type GroupRow } from '../lib/data';
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
-  auctionLedger,
+  auctionLedger, ledgerBalanceOf, isCovered,
   grunnelPerAuction, augmentedVsNot,
   sourceOverlapSeasons, trentVsSourceSeason,
   orderVariantSeasons, standardVsTradeTwo,
   type LedgerRow, type GrunnelAuctionRow, type SourceTokenRow,
 } from '../lib/contextAnalytics';
+import { HintPopover } from './HintPopover';
 import { ERAS, groupLabel } from '../lib/eras';
 import { money, money0, moneyTight } from '../lib/format';
 import { BarChart } from './BarChart';
@@ -89,6 +90,37 @@ export function ContextAnalytics({
 
 // --- View 1: Auction Ledger ------------------------------------------------
 
+// What "Included" actually names. Readers have asked, and the column heading
+// cannot say it in the space it has. Kept beside the Balance help below so the
+// two explanations of one table live together; the wording matches
+// ProvenanceBadge's `released-payment` help, which is the same fact told to
+// someone looking at a single row.
+function IncludedHelp() {
+  return (
+    <HintPopover label="What Included means">
+      Items the auctioneer would normally keep as payment for running the auction — the{' '}
+      <strong>Golden Ticket</strong> chance and the <strong>Random Ultra Rares</strong> — sold to
+      bidders instead.
+    </HintPopover>
+  );
+}
+
+// Why Grunnel is not in the balance by default. This was the real defect behind
+// the "exclude Grunnel" request: the maths already excluded it, and nothing on
+// the page said so.
+function BalanceHelp() {
+  return (
+    <HintPopover label="How Balance is calculated">
+      Included + augments − withheld. <strong>Grunnel is left out</strong>: it is a drop from a
+      company employee, not the auctioneer offsetting their own withholding, so counting it would
+      credit the auctioneer with someone else's money. That makes the default the answer to
+      "would this auction have worked without help from the company?" — tick{' '}
+      <em>Include Grunnel</em> to add it back. The funding goal is context and is never part of
+      this sum.
+    </HintPopover>
+  );
+}
+
 function coveredBadge(covered: boolean) {
   return (
     <span className={`an-verdict ${covered ? 'yes' : 'no'}`}>
@@ -99,13 +131,15 @@ function coveredBadge(covered: boolean) {
 
 // One auction as a stacked card (mobile) — the wide ledger table can't fit a
 // phone, so each auction's figures sit in a small card instead of a scrolling row.
-function LedgerCard({ r }: { r: LedgerRow }) {
-  const fig = (label: string, val: string, cls = '') => (
+function LedgerCard({ r, includeGrunnel }: { r: LedgerRow; includeGrunnel: boolean }) {
+  const fig = (label: ReactNode, val: string, cls = '') => (
     <div className="led-fig">
       <span className="led-fig-label">{label}</span>
       <span className={`led-fig-val ${cls}`}>{val}</span>
     </div>
   );
+  const balance = ledgerBalanceOf(r, includeGrunnel);
+  const covered = isCovered(balance);
   return (
     <div className="led-card">
       <div className="led-card-head">
@@ -115,15 +149,17 @@ function LedgerCard({ r }: { r: LedgerRow }) {
       <div className="led-figs">
         {fig('Funding goal', r.fundingGoal == null ? 'n/a' : money0(r.fundingGoal))}
         {fig('Withheld', r.withheld ? money0(r.withheld) : '—', 'neg')}
-        {fig('Included', r.released ? money0(r.released) : '—')}
+        {fig(<>Included <IncludedHelp /></>, r.released ? money0(r.released) : '—')}
         {fig('Augments', r.augment ? money0(r.augment) : '—')}
-        {fig('Grunnel', r.grunnel ? money0(r.grunnel) : '—', 'muted')}
+        {/* Not muted while it is IN the balance — a figure doing arithmetic
+            should not look like a footnote. */}
+        {fig('Grunnel', r.grunnel ? money0(r.grunnel) : '—', includeGrunnel ? '' : 'muted')}
       </div>
       <div className="led-balance-row">
-        <span className="led-fig-label">Balance</span>
+        <span className="led-fig-label">Balance <BalanceHelp /></span>
         {/* up=red, down=green in this theme; a covered (≥0) balance reads green. */}
-        <span className={`led-balance-val diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</span>
-        {coveredBadge(r.covered)}
+        <span className={`led-balance-val diff ${balance >= 0 ? 'down' : 'up'}`}>{money0(balance)}</span>
+        {coveredBadge(covered)}
       </div>
     </div>
   );
@@ -136,6 +172,10 @@ function LedgerView({
   auctionContext: Map<string, AuctionContext>;
 }) {
   const narrow = useMediaQuery(NARROW);
+  // Off by default: the Grunnel-excluded balance is the one that answers "would
+  // this have worked without the company's help", which is the question this
+  // table gets asked. See ledgerBalanceOf.
+  const [includeGrunnel, setIncludeGrunnel] = useState(false);
   const rows = useMemo(() => auctionLedger(meta, auctionContext), [meta, auctionContext]);
   // Grouped by season (newest first — rows are sorted season-desc). A season
   // selector shows one year at a time: the ledger is per-auction bookkeeping with
@@ -166,23 +206,45 @@ function LedgerView({
           <>For each auction with context, what the auctioneer <strong>withheld</strong> (an estimate,
           negative) against what they put back: bonus items <strong>included</strong> and personal{' '}
           <strong>augments</strong>. <strong>Balance</strong> = included + augments − withheld, and a
-          row is covered (green) when it is ≥ 0. <strong>Grunnel</strong> (a company drop) and the{' '}
-          <strong>funding goal</strong> are shown for context, not counted in the balance.</>
+          row is covered (green) when it is ≥ 0. <strong>Grunnel</strong> (a company drop) is shown
+          for context and left out of the balance — so the default answers "would this auction have
+          worked without help from the company?" — and the <strong>funding goal</strong> is never
+          part of it.</>
         )}
       </p>
 
-      {seasons.length > 0 && (
-        <label className="an-picker">
-          Season
-          <select value={season} onChange={(e) => setPicked(e.target.value)}>
-            {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+      <div className="an-controls">
+        {seasons.length > 0 && (
+          <label className="an-picker">
+            Season
+            <select value={season} onChange={(e) => setPicked(e.target.value)}>
+              {seasons.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </label>
+        )}
+        {/* Reuses the Prices page's checkbox furniture (.tenx-check) rather than
+            inventing a second checkbox style for one control. */}
+        <label className="tenx-check">
+          <input
+            type="checkbox"
+            checked={includeGrunnel}
+            onChange={(e) => setIncludeGrunnel(e.target.checked)}
+          />
+          Include Grunnel
+          <HintPopover label="About including Grunnel">
+            Adds the company's Grunnel drop into the <strong>Balance</strong>. Off by default,
+            because a drop from a company employee is not the auctioneer offsetting their own
+            withholding — leaving it out is what makes the balance say whether the auction stood
+            up on its own.
+          </HintPopover>
         </label>
-      )}
+      </div>
 
       {narrow ? (
         <div className="led-cards">
-          {seasonRows.map((r) => <LedgerCard key={r.auctionId} r={r} />)}
+          {seasonRows.map((r) => (
+            <LedgerCard key={r.auctionId} r={r} includeGrunnel={includeGrunnel} />
+          ))}
         </div>
       ) : (
         <div className="an-scroll">
@@ -192,14 +254,16 @@ function LedgerView({
                 <th className="left">Auction</th>
                 <th className="num">Funding goal</th>
                 <th className="num">Withheld</th>
-                <th className="num">Included</th>
+                <th className="num">Included <IncludedHelp /></th>
                 <th className="num">Augments</th>
                 <th className="num">Grunnel</th>
-                <th className="num">Balance</th>
+                <th className="num">Balance <BalanceHelp /></th>
               </tr>
             </thead>
             <tbody>
-              {seasonRows.map((r) => (
+              {seasonRows.map((r) => {
+                const balance = ledgerBalanceOf(r, includeGrunnel);
+                return (
                 <tr key={r.auctionId}>
                   <td className="left">
                     <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
@@ -209,10 +273,13 @@ function LedgerView({
                   <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
                   <td className="num">{r.released ? money0(r.released) : '—'}</td>
                   <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
-                  <td className="num muted">{r.grunnel ? money0(r.grunnel) : '—'}</td>
-                  <td className={`num diff ${r.balance >= 0 ? 'down' : 'up'}`}>{money0(r.balance)}</td>
+                  {/* Not muted while it is IN the balance — a figure doing
+                      arithmetic should not look like a footnote. */}
+                  <td className={`num${includeGrunnel ? '' : ' muted'}`}>{r.grunnel ? money0(r.grunnel) : '—'}</td>
+                  <td className={`num diff ${balance >= 0 ? 'down' : 'up'}`}>{money0(balance)}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
