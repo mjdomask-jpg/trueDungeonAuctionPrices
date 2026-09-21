@@ -362,6 +362,14 @@ option reads a set memoised once in the provider (`goldenTicketAuctions`);
 "Non-augmented" is the complement of "Augmented", so the 92 pre-augment-era
 auctions read as non-augmented rather than vanishing from both.
 
+**Source's options are DATA-DRIVEN, not a written list.** `FilterBar` reads
+`sourcesBySeason(meta)` from the provider and offers exactly the venues the
+seasons in view used, showing the control only where there is more than one.
+So the dropdown is two options in 2024 and three in 2027 without a rule per
+year, and a fourth venue would need no UI change. Do not add an `<option>` here
+by hand — add the derivation to `deriveSource` and a label to `SOURCE_LABEL`,
+both in `lib/data.ts`, and every page follows.
+
 **Provenance badges reuse the popover-in-a-row pattern**, not a `title`: the
 `released` / `augment` / `grunnel` / withheld-`est.` badges are `HintPopover`s
 (see "Putting a popover inside a clickable row" above) so touch users get the

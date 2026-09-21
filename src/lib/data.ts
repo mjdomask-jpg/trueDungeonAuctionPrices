@@ -17,8 +17,30 @@ export type Sale = {
 
 // Where an auction was run. Derived per-auction (see deriveSource), never from a
 // date cutoff — the first Trent auction closed Nov 2022 despite being season 2023
-// (docs/data-audit.md §3).
-export type AuctionSource = 'Forum' | 'Trent';
+// (docs/data-audit.md §3). 'Alesiev' is alesievauctions.com, the community-built
+// auction site that debuted in season 2027.
+export type AuctionSource = 'Forum' | 'Trent' | 'Alesiev';
+
+// Display order wherever the three are listed together (the Source filter, the
+// days-to-close legend): oldest venue first, newest last.
+export const AUCTION_SOURCES: AuctionSource[] = ['Forum', 'Trent', 'Alesiev'];
+
+// What a reader sees. 'Alesiev' is the internal value; the label names the VENUE,
+// because the site hosts auctions run by half a dozen different auctioneers and
+// "Alesiev" on its own reads like one of them.
+export const SOURCE_LABEL: Record<AuctionSource, string> = {
+  Forum: 'Forum',
+  Trent: 'Trent',
+  Alesiev: 'Alesiev Auctions',
+};
+
+// Which of the two $8k orders an auction sold. Season 2027 is the first to offer
+// a choice: a standard order and a "Trade 2" one alongside it, which auctioneers
+// call Option A and Option B. The sheet records it as a VALUE inside auctionStyle
+// rather than a column of its own, so this is derived (see deriveOrderVariant)
+// exactly the way `source` is. Every auction before 2027 is 'Standard' because
+// there was nothing else to be.
+export type OrderVariant = 'Standard' | 'Trade 2';
 
 export type AuctionMeta = {
   auctionId: string;
@@ -46,8 +68,12 @@ export type AuctionMeta = {
   closeDate: string;
   openDate: string;
   // --- Context layer (docs/context-layer-design.md §3.1) ---------------------
-  // Forum vs Trent, derived from auctioneer/link. Not a stored column.
+  // Forum vs Trent vs Alesiev, derived from the link (and, for Trent's own shop,
+  // the auctioneer name). Not a stored column.
   source: AuctionSource;
+  // Standard vs Trade 2, derived from the words in auctionStyle. Not a stored
+  // column either; see deriveOrderVariant for why the sheet keeps it that way.
+  orderVariant: OrderVariant;
   // Funding goal for the auction. null for the 92 auctions with no recorded
   // target — the UI substitutes the $7,500 default as an explicit ASSUMPTION
   // (see ERAS.defaultTargetFunding), never as a stored fact.
@@ -188,15 +214,37 @@ function yesNoOrNull(raw: string | undefined): boolean | null {
   return null;
 }
 
-// Forum vs Trent, per auction. Trent auctions are marked by auctioneer "Trent"
-// and/or a trenttokens.com link; everything else is Forum. Never inferred from
-// date (audit §3). Every auction now carries a Link (the pre-2023 forum threads
-// were backfilled 2026-08-14) and none of them is a trenttokens.com URL, so the
-// split is unchanged: Trent starts in 2023.
+// Which venue ran an auction, per auction. Never inferred from date (audit §3).
+// Every auction carries a Link (the pre-2023 forum threads were backfilled
+// 2026-08-14), and no pre-2023 link is a trenttokens.com or alesievauctions.com
+// URL, so the earlier seasons stay Forum exactly as before: Trent starts in 2023,
+// Alesiev in 2027.
+//
+// The LINK is read before the auctioneer name, and that ordering is the point.
+// alesievauctions.com hosts auctions run by alesiev, Mike Steele, Kusig, Flik and
+// others, so the auctioneer cannot identify the venue — keying on it is the
+// measured mistake that hid four rows of six from the pipeline's close picker
+// (CLAUDE.md, "All three close paths share ONE auction picker"). The auctioneer
+// check survives only as Trent's fallback, and today no Trent row needs it.
 export function deriveSource(auctioneer: string, link: string): AuctionSource {
-  if ((auctioneer ?? '').trim().toLowerCase() === 'trent') return 'Trent';
+  if (/alesievauctions\.com/i.test(link ?? '')) return 'Alesiev';
   if (/trenttokens\.com/i.test(link ?? '')) return 'Trent';
+  if ((auctioneer ?? '').trim().toLowerCase() === 'trent') return 'Trent';
   return 'Forum';
+}
+
+// Standard vs Trade 2, per auction, from the words in auctionStyle — the only
+// signal the data carries, and a deliberate one: the style column already records
+// what an order contains, so a new order option is a new VALUE there rather than
+// a new column (backlog DATA-17). Matches "Trade 2 Ultra Condensed" and "Onyx
+// Trade 2 Ultra Condensed" alike; anything without the phrase is the standard
+// order, which is every auction before season 2027.
+//
+// Derived rather than believed from the auction NAME: several 2027 rows are
+// titled "Option B" while their style is plain Ultra Condensed. The style column
+// is the one the pipeline validates (validate-prices §6/§7), so it wins.
+export function deriveOrderVariant(style: string): OrderVariant {
+  return /\btrade 2\b/i.test(style ?? '') ? 'Trade 2' : 'Standard';
 }
 
 export function parseMeta(text: string): AuctionMeta[] {
@@ -220,6 +268,7 @@ export function parseMeta(text: string): AuctionMeta[] {
       openMonth: intOrNull(o['Open Month']),
       closeMonth: intOrNull(o['Close Month']),
       source: deriveSource(o['auctioneer'], o['Link']),
+      orderVariant: deriveOrderVariant(o['auctionStyle']),
       targetFunding: moneyOrNull(o['targetFunding']),
       augmented: yesNoOrNull(o['augmentated']), // sheet column is misspelled "augmentated"
       augmentTokens: moneyOrNull(o['augmentTokens']),

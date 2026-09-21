@@ -15,7 +15,7 @@
 //
 // Pure functions over AuctionMeta[] / Sale[]; no React, no fetching.
 
-import type { AuctionMeta, Sale } from './data';
+import type { AuctionMeta, AuctionSource, Sale } from './data';
 
 // --- Auctioneer identity -----------------------------------------------
 
@@ -213,12 +213,16 @@ export type DaysToCloseBar = {
   days: number;
   name: string;
   auctioneer: string;
-  highlight: boolean; // the split the chart colours on
+  source: AuctionSource; // the split the chart colours on
+  highlight: boolean;    // source === 'Trent'; kept for anything reading the old shape
 };
 
-// The auctioneer the days-to-close chart singles out. Trent runs 111 of the
-// 276 auctions on record — far more than anyone else — so "Trent vs everyone
-// else" is the comparison that actually reads on that chart.
+// The auctioneer the days-to-close chart used to single out. Trent runs 111 of
+// the 276 auctions on record — far more than anyone else — so "Trent vs everyone
+// else" was the only split that read on that chart while there were two venues.
+// Since 2027 there are three, and the chart colours on `source` instead: the
+// question a reader brings to it ("does this venue close faster?") is about the
+// VENUE, and Trent is the only auctioneer for whom the two ever coincided.
 export const HIGHLIGHT_AUCTIONEER = 'trent';
 
 // One bar per closed auction that recorded a duration, ordered by close date.
@@ -233,7 +237,8 @@ export function daysToCloseByCloseDate(meta: AuctionMeta[], season: string): Day
       days: m.daysToClose as number,
       name: m.name,
       auctioneer: labels.get(auctioneerKey(m.auctioneer)) ?? m.auctioneer,
-      highlight: auctioneerKey(m.auctioneer) === HIGHLIGHT_AUCTIONEER,
+      source: m.source,
+      highlight: m.source === 'Trent',
     }));
 }
 

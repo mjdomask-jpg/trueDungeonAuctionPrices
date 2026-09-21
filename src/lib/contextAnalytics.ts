@@ -1,18 +1,21 @@
-// The four context-layer analytics (docs/context-layer-design.md §6). Each is a
+// The context-layer analytics (docs/context-layer-design.md §6). Each is a
 // pure function over the parsed data (AuctionMeta / Sale / ContextItem / the
 // per-auction AuctionContext rollup); the ContextAnalytics component renders
-// them. They answer the prompt's four questions:
+// them. They answer the prompt's four questions, plus one the data only became
+// able to answer in season 2027:
 //
 //   1. Auction Ledger        — did augments cover what was withheld?
 //   2. Grunnel vs preorder   — how did Grunnel drops compare to the preorder benchmark?
 //   3. Augmented vs not      — does added supply move per-token prices, within a season?
-//   4. Trent vs Forum        — source price levels, on overlapping seasons only.
+//   4. Trent vs a venue      — venue price levels, on overlapping seasons only.
+//   5. Standard vs Trade 2   — does the order a lot came from move its price?
 //
-// Views 3 and 4 control for token mix by comparing the SAME token across the two
-// groups rather than raw group means, and view 4 restricts to seasons both
-// sources ran (the §5.5 confound: source is confounded with time otherwise).
+// Views 3, 4 and 5 control for token mix by comparing the SAME token across the
+// two groups rather than raw group means, and each restricts itself to the
+// seasons where both sides exist (the §5.5 confound: a split is confounded with
+// time otherwise).
 
-import type { AuctionMeta, Sale } from './data';
+import { AUCTION_SOURCES, type AuctionMeta, type AuctionSource, type OrderVariant, type Sale } from './data';
 import type { ContextItem, AuctionContext } from './context';
 import { auctioneerKey, auctioneerLabels } from './analytics';
 import { ERAS } from './eras';
@@ -271,7 +274,7 @@ export function augmentedVsNot(
   };
 }
 
-// --- View 4: Trent vs Forum, per season, per token -------------------------
+// --- View 4: Trent vs another venue, per season, per token -----------------
 // One season at a time, matched per token: for each token sold under BOTH
 // sources that season we take each source's average price. Matching per token
 // within a season holds both token mix and time constant, so the remaining
@@ -279,61 +282,187 @@ export function augmentedVsNot(
 // reward-adjusted (−10%, the ~100 pt/$1 reward that lowers a Trent buyer's
 // effective cost) via a toggle in the view; the adjustment is applied there so
 // this stays a plain average.
+//
+// Until season 2027 this was "Trent vs Forum", because Forum was the only other
+// place an auction could run. alesievauctions.com is now a third venue, and
+// folding it into Forum would be the exact error the Source split exists to
+// prevent — so the comparison takes the OTHER SIDE as a parameter and the view
+// offers whichever venues that season can actually supply. In 2027 the forum
+// side has no priced auction at all, so without this the whole analysis would
+// have vanished from the newest season the moment alesiev stopped counting as
+// Forum.
 
 export type SourceTokenRow = {
   item: string;
   displayName: string;
   category: string;
   trentAvg: number;
-  forumAvg: number;
+  otherAvg: number;
 };
 
-// Seasons with at least one token sold under BOTH sources, newest first. These
-// are the only seasons with a within-token comparison to draw (Trent runs from
-// season 2023 on, so earlier seasons never overlap).
-export function sourceOverlapSeasons(sales: Sale[], meta: AuctionMeta[]): string[] {
+// Seasons where Trent overlaps some other venue on at least one token, each with
+// the venues it overlaps (in AUCTION_SOURCES order). Newest season first. These
+// are the only seasons with a within-token comparison to draw — Trent runs from
+// season 2023 on, so earlier seasons never overlap anything.
+export type SourceOverlap = { season: string; others: AuctionSource[] };
+
+export function sourceOverlapSeasons(sales: Sale[], meta: AuctionMeta[]): SourceOverlap[] {
   const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
-  // season -> item -> which sources it sold under
-  const bySeason = new Map<string, Map<string, { f: boolean; t: boolean }>>();
+  // season -> item -> the venues it sold under
+  const bySeason = new Map<string, Map<string, Set<AuctionSource>>>();
   for (const s of sales) {
     const src = srcById.get(s.auctionId);
-    if (src !== 'Forum' && src !== 'Trent') continue;
+    if (!src) continue;
     let items = bySeason.get(s.season);
     if (!items) { items = new Map(); bySeason.set(s.season, items); }
     let e = items.get(s.item);
-    if (!e) { e = { f: false, t: false }; items.set(s.item, e); }
-    if (src === 'Forum') e.f = true; else e.t = true;
+    if (!e) { e = new Set(); items.set(s.item, e); }
+    e.add(src);
   }
-  const out: string[] = [];
+  const out: SourceOverlap[] = [];
   for (const [season, items] of bySeason) {
-    if ([...items.values()].some((e) => e.f && e.t)) out.push(season);
+    const others = AUCTION_SOURCES.filter(
+      (o) => o !== 'Trent' && [...items.values()].some((v) => v.has('Trent') && v.has(o)),
+    );
+    if (others.length) out.push({ season, others });
   }
-  return out.sort((a, b) => Number(b) - Number(a));
+  return out.sort((a, b) => Number(b.season) - Number(a.season));
 }
 
-// Per-token Trent vs Forum averages for one season — tokens sold under both
-// sources only. Sorted by display name. Trent is left nominal (the view applies
+// Per-token Trent vs `other` averages for one season — tokens sold under both
+// venues only. Sorted by display name. Trent is left nominal (the view applies
 // the reward adjustment) so the caller controls that toggle.
-export function trentVsForumSeason(
-  sales: Sale[], meta: AuctionMeta[], season: string,
+export function trentVsSourceSeason(
+  sales: Sale[], meta: AuctionMeta[], season: string, other: AuctionSource,
 ): SourceTokenRow[] {
   const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
-  const byItem = new Map<string, { f: number[]; t: number[]; displayName: string; category: string }>();
+  const byItem = new Map<string, { o: number[]; t: number[]; displayName: string; category: string }>();
   for (const s of sales) {
     if (s.season !== season) continue;
     const src = srcById.get(s.auctionId);
-    if (src !== 'Forum' && src !== 'Trent') continue;
+    if (src !== other && src !== 'Trent') continue;
     let e = byItem.get(s.item);
-    if (!e) { e = { f: [], t: [], displayName: s.displayName, category: s.category }; byItem.set(s.item, e); }
-    (src === 'Forum' ? e.f : e.t).push(s.price);
+    if (!e) { e = { o: [], t: [], displayName: s.displayName, category: s.category }; byItem.set(s.item, e); }
+    (src === 'Trent' ? e.t : e.o).push(s.price);
   }
   const rows: SourceTokenRow[] = [];
   for (const [item, e] of byItem) {
-    if (!e.f.length || !e.t.length) continue; // needs both sources
+    if (!e.o.length || !e.t.length) continue; // needs both venues
     rows.push({
       item, displayName: e.displayName, category: e.category,
-      trentAvg: mean(e.t)!, forumAvg: mean(e.f)!,
+      trentAvg: mean(e.t)!, otherAvg: mean(e.o)!,
     });
   }
   return rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
+// --- View 5: Standard vs Trade 2, within one season ------------------------
+// Season 2027 is the first to sell two different $8k orders side by side — the
+// standard one and a "Trade 2" one (Option A and Option B to the auctioneers) —
+// so for the first time a reader can ask whether the order a lot came out of
+// moved its price.
+//
+// Same shape and same discipline as augmentedVsNot above: one season, matched
+// per token, only tokens sold under BOTH variants. That matters more here than
+// anywhere else on this page, because the two orders do not contain the same
+// things in the same numbers — a Trade 2 order ships 11/13/13 Aragonite / Elven
+// Bismuth / Oil of Enchantment against the standard 15/20/20. A raw group mean
+// would therefore be mostly a statement about the order's CONTENTS. Holding the
+// token constant is what leaves the price behind.
+//
+// Nothing here is pinned to 2027. The split is read from auctionStyle per auction
+// (deriveOrderVariant), and the season list below is whichever seasons hold both
+// variants — so this appears when a season runs two orders and stops appearing
+// when one does not, with no year to maintain.
+
+export type VariantSplit = {
+  item: string;
+  displayName: string;
+  category: string;
+  tradeTwoAvg: number;
+  standardAvg: number;
+  delta: number;      // tradeTwoAvg − standardAvg
+  pct: number | null; // delta / standardAvg
+};
+
+export type VariantSplitResult = {
+  season: string;
+  tradeTwoAuctions: number;
+  standardAuctions: number;
+  rows: VariantSplit[];
+  // Tokens that sold under only ONE variant, named rather than silently dropped:
+  // "which tokens does the other order not have?" is half the answer a reader
+  // came for, and the matched table structurally cannot show it.
+  tradeTwoOnly: string[];
+  standardOnly: string[];
+};
+
+// Seasons holding auctions of BOTH order variants, newest first — the only
+// seasons with a comparison to draw.
+export function orderVariantSeasons(meta: AuctionMeta[]): string[] {
+  const seen = new Map<string, Set<OrderVariant>>();
+  for (const m of meta) {
+    let s = seen.get(m.season);
+    if (!s) { s = new Set(); seen.set(m.season, s); }
+    s.add(m.orderVariant);
+  }
+  return [...seen.entries()]
+    .filter(([, v]) => v.size > 1)
+    .map(([season]) => season)
+    .sort((a, b) => Number(b) - Number(a));
+}
+
+export function standardVsTradeTwo(
+  sales: Sale[], meta: AuctionMeta[], season: string,
+): VariantSplitResult {
+  const variantById = new Map(meta.map((m) => [m.auctionId, m.orderVariant]));
+  const two = new Map<string, number[]>();
+  const std = new Map<string, number[]>();
+  const names = new Map<string, { displayName: string; category: string }>();
+  const twoAuctions = new Set<string>();
+  const stdAuctions = new Set<string>();
+
+  for (const s of sales) {
+    if (s.season !== season) continue;
+    // A sale whose auction has no metadata row cannot be attributed to either
+    // order, so it is skipped rather than defaulted into 'Standard' — the
+    // default would be invisible and would bias the side it landed on.
+    const v = variantById.get(s.auctionId);
+    if (!v) continue;
+    const isTwo = v === 'Trade 2';
+    (isTwo ? twoAuctions : stdAuctions).add(s.auctionId);
+    bucket(isTwo ? two : std, s.item, s.price);
+    if (!names.has(s.item)) names.set(s.item, { displayName: s.displayName, category: s.category });
+  }
+
+  const nameOf = (item: string) => names.get(item)?.displayName ?? item;
+  const rows: VariantSplit[] = [];
+  for (const [item, twoPrices] of two) {
+    const stdPrices = std.get(item);
+    if (!stdPrices || !stdPrices.length) continue; // needs both sides
+    const tradeTwoAvg = mean(twoPrices)!;
+    const standardAvg = mean(stdPrices)!;
+    const delta = tradeTwoAvg - standardAvg;
+    rows.push({
+      item,
+      displayName: nameOf(item),
+      category: names.get(item)?.category ?? '',
+      tradeTwoAvg,
+      standardAvg,
+      delta,
+      pct: standardAvg !== 0 ? delta / standardAvg : null,
+    });
+  }
+  rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+  const sortedNames = (items: Iterable<string>) => [...items].map(nameOf).sort((a, b) => a.localeCompare(b));
+
+  return {
+    season,
+    tradeTwoAuctions: twoAuctions.size,
+    standardAuctions: stdAuctions.size,
+    rows,
+    tradeTwoOnly: sortedNames([...two.keys()].filter((i) => !std.has(i))),
+    standardOnly: sortedNames([...std.keys()].filter((i) => !two.has(i))),
+  };
 }

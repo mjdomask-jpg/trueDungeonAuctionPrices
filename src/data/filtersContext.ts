@@ -76,7 +76,9 @@ export type FilterControl = 'source' | 'trentPricing' | 'auctionType' | 'provena
 // only counts when Trent sales are actually in view.
 export function activeFilterCount(filters: FilterState, controls: FilterControl[]): number {
   const show = (c: FilterControl) => controls.includes(c);
-  const trentInView = filters.source !== 'Forum';
+  // Matches the FilterBar's own test: Trent sales are in view unless the Source
+  // filter has narrowed to another venue.
+  const trentInView = filters.source === 'all' || filters.source === 'Trent';
   const provenanceChanged = CONTEXT_PROVENANCES.some((p) => !filters.provenance.has(p));
   return (show('source') && filters.source !== 'all' ? 1 : 0)
     + (show('trentPricing') && trentInView && filters.trentPricing !== 'nominal' ? 1 : 0)

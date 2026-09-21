@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   useFilters, activeFilterCount, CONTEXT_PROVENANCES, PROVENANCE_NAME,
   type FilterControl, type SourceFilter, type AuctionTypeFilter,
 } from '../data/filtersContext';
 import { useAuctionData } from '../data/auctionDataContext';
+import { sourcesInSeasons } from '../lib/context';
+import { SOURCE_LABEL } from '../lib/data';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
 
 // The shared context-layer controls. One implementation, dropped into each page;
@@ -40,35 +42,57 @@ export function FilterBar({
   bare?: boolean;
 }) {
   const { filters, setSource, setTrentPricing, setAuctionType, toggleProvenance } = useFilters();
-  const { trentSeasons } = useAuctionData();
+  const { trentSeasons, seasonSources } = useAuctionData();
   const narrow = useMediaQuery(NARROW);
   const show = (c: FilterControl) => controls.includes(c);
-  // The Trent reward-adjust only makes sense when Trent sales are in view.
-  const trentInView = filters.source !== 'Forum';
-  // Is there anything for the two Trent controls to act on? Undefined seasons
+  // The Trent reward-adjust only makes sense when Trent sales are in view — i.e.
+  // unless the Source filter has narrowed to some other venue.
+  const trentInView = filters.source === 'all' || filters.source === 'Trent';
+  // Is there anything for the Trent-pricing control to act on? Undefined seasons
   // means "not season-scoped" — ask the dataset instead of a season list.
   const trentInData = seasons ? seasons.some((s) => trentSeasons.has(s)) : trentSeasons.size > 0;
+  // The venues these seasons actually used. Offered only when there is more than
+  // one: with a single source the dropdown could only filter to what is already
+  // on screen. Every season up to 2022 is Forum-only; 2023-2026 add Trent; 2027
+  // adds alesievauctions.com.
+  //
+  // Keyed on a JOINED STRING, not on `seasons` itself: every caller passes the
+  // prop as an inline array (`seasons={[activeSeason]}`), so its identity changes
+  // on every render. Depending on it directly would rebuild the list each render
+  // and — worse — re-run the reset effect below each render, since that effect
+  // depends on the result.
+  const seasonKey = seasons ? seasons.join('|') : '*';
+  const sourceOptions = useMemo(
+    () => sourcesInSeasons(seasonSources, seasonKey === '*' ? undefined : seasonKey.split('|')),
+    [seasonSources, seasonKey],
+  );
+  const sourceChoice = sourceOptions.length > 1;
 
   // Filter state is shared across pages and survives a season change, so hiding
   // the controls is not enough: a Source of 'Trent' carried into 2019 would
   // silently empty the page with no visible control to explain it. Put them back
   // to their defaults whenever they stop being offered, so what the page filters
-  // on is always something the page can show you.
+  // on is always something the page can show you. Note this resets on the source
+  // being ABSENT, not just on the control being hidden — 'Alesiev' carried from
+  // 2027 back to 2026 would empty the page while the dropdown still showed.
   useEffect(() => {
-    if (trentInData) return;
-    if (filters.source !== 'all') setSource('all');
-    if (filters.trentPricing !== 'nominal') setTrentPricing('nominal');
-  }, [trentInData, filters.source, filters.trentPricing, setSource, setTrentPricing]);
+    const sourceOffered = sourceChoice
+      && (filters.source === 'all' || sourceOptions.includes(filters.source));
+    if (!sourceOffered && filters.source !== 'all') setSource('all');
+    if (!trentInData && filters.trentPricing !== 'nominal') setTrentPricing('nominal');
+  }, [sourceChoice, sourceOptions, trentInData, filters.source, filters.trentPricing,
+    setSource, setTrentPricing]);
 
   const inner = (
     <>
-      {show('source') && trentInData && (
+      {show('source') && sourceChoice && (
         <label>
           Source
           <select value={filters.source} onChange={(e) => setSource(e.target.value as SourceFilter)}>
             <option value="all">All sources</option>
-            <option value="Forum">Forum</option>
-            <option value="Trent">Trent</option>
+            {sourceOptions.map((s) => (
+              <option key={s} value={s}>{SOURCE_LABEL[s]}</option>
+            ))}
           </select>
         </label>
       )}

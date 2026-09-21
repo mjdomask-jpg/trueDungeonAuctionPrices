@@ -79,7 +79,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-8** | Build-time CSV → JSON normalization step | nothing hurts yet |
 | **SITE-9** | No React test harness | appetite |
 | **SITE-10** | Excel's handling of the exported CSV is unverified | access to Excel |
-| **SITE-11** | An auction source has only two values (Forum/Trent) and alesievauctions.com is a third | **a call on whether the split is venue or Trent-vs-everyone** — the rename may beat the addition |
+| **SITE-11** | ~~An auction source has only two values (Forum/Trent) and alesievauctions.com is a third~~ | **RESOLVED 2026-09-21** — the maintainer's call is **venue**; `AuctionSource` gains `'Alesiev'`, derived from the Link |
 | **PIPE-1** | Ingest auctioneers' external tracking sheets | sign-in access to those sheets |
 | **PIPE-2** | ~~Close handling for alesievauctions.com~~ | **RESOLVED 2026-09-10** — `alesievClose.gs`; the withheld and Onyx paths are built and tested but have never seen a real file |
 | **PIPE-3** | Bag-line grammars for four Condensed auctions | nothing — measured and specified |
@@ -1117,9 +1117,54 @@ exists for. It is one line to fix if it misbehaves. See `shopping-list.md`
 
 ---
 
-## SITE-11. An auction source has only two values, and there are now three — OPEN
+## SITE-11. An auction source has only two values, and there are now three — RESOLVED 2026-09-21
 
-`deriveSource()` in `lib/data.ts` answers `'Forum' | 'Trent'`, per auction, from
+**The maintainer's call came back: the split is the VENUE.** `AuctionSource` now
+reads `'Forum' | 'Trent' | 'Alesiev'`, and the filter tracks every auction whose
+**Link** is on `alesievauctions.com`. What shipped, against the four costs this
+item predicted:
+
+- **The exhaustive-switch cost did not materialise.** There is no switch on
+  `AuctionSource` anywhere; the comparisons that name a source do it by equality
+  and already ignored anything they did not recognise.
+- **The shared Source control got SMALLER, not bigger.** Rather than hardcode a
+  third `<option>`, `FilterBar` now builds its list from `sourcesBySeason(meta)`
+  and shows the control where a season used **more than one** venue. That is the
+  general form of the rule it already had ("hide before 2023" was only ever true
+  because 2018–2022 is Forum-only), so a fourth venue needs no UI change at all.
+- **The colour was free.** The days-to-close chart no longer colours "Trent vs
+  everyone else" — it colours on `source`, with Trent keeping `--series-1` so
+  its bars look exactly as they always did, and the legend naming only the
+  venues that actually have a bar that season.
+- **The historical rows behaved as predicted.** Reading the Link per row, not the
+  auctioneer, is what makes alesiev's six pre-site forum auctions stay Forum.
+  The Link-first ordering is now the documented reason: the site hosts auctions
+  run by alesiev, Mike Steele, Kusig, Flik, BasicBraining and cspressler, so the
+  auctioneer name cannot identify the venue — the same mistake that hid four
+  rows of six from the pipeline's close picker.
+
+Two things this item did not foresee:
+
+- **The count moved fast.** It measured 2 alesievauctions.com rows of 297 on
+  2026-09-11 and asked whether that stays small. Ten days later it is **9 of
+  313**, and every 2027 non-Trent auction with prices is on the site rather than
+  the forum. "Only 2 rows of 297 are wrong" had a short shelf life.
+- **Splitting the venue apart BROKE an existing analysis, silently.** Season
+  2027 has no priced forum auction, so the moment alesiev stopped counting as
+  Forum the "Trent vs Forum" panel would have vanished from the newest season
+  with nothing on screen to say why. Fixed in the same change by making the
+  other side a parameter (`trentVsSourceSeason`) — the lesson being that
+  *narrowing a category is a change to everything built on the wide one*.
+
+Shipped alongside the Standard vs Trade 2 analysis, which needed the same
+per-auction derivation treatment (`orderVariant`).
+
+---
+
+<details>
+<summary>The original item, as written 2026-09-11</summary>
+
+`deriveSource()` in `lib/data.ts` answered `'Forum' | 'Trent'`, per auction, from
 the auctioneer and the Link:
 
 ```ts
@@ -1166,6 +1211,8 @@ value rather than add one — cheaper, and it leaves nothing mislabelled. Today
 only 2 rows of 297 are wrong; the question is whether that stays small.
 
 **Blocked on:** the maintainer's call on that question, before any code.
+
+</details>
 
 ---
 

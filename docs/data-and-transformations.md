@@ -332,8 +332,9 @@ retired.
 
 ## Auction context layer
 
-A layer *on top of* the core sales adds each auction's **context** — who ran it
-(Forum vs Trent), its funding target, and the items that were **withheld**,
+A layer *on top of* the core sales adds each auction's **context** — where it ran
+(Forum vs Trent vs Alesiev Auctions), which $8k order it sold (Standard vs
+Trade 2), its funding target, and the items that were **withheld**,
 **augmented** (personal-collection or released auctioneer payment), or dropped in
 by **Grunnel**. It is exported as **`contextItems.csv`** (one row per context
 item: `auctionId, category, Item, quantity, priceAugmented`) and read alongside
@@ -382,9 +383,17 @@ into the four analyses on the Analytics page's **Funding & Context** view
 - **Augmented vs non-augmented** (`augmentedVsNot`) — within one season, each
   token's average price in augmented vs non-augmented auctions, over tokens sold
   in **both** (holds the token constant instead of comparing group means).
-- **Trent vs Forum** (`trentVsForum`) — matched per token within each season and
-  restricted to seasons **both** sources ran, so neither token mix nor time
-  confounds the comparison; Trent shown nominal and reward-adjusted.
+- **Trent vs another venue** (`trentVsSourceSeason`) — matched per token within
+  each season and restricted to seasons **both** venues ran, so neither token mix
+  nor time confounds the comparison; Trent shown nominal and reward-adjusted. The
+  other side is a parameter rather than "Forum", because since 2027 there are
+  three venues; `sourceOverlapSeasons` reports which ones Trent overlaps in each
+  season and the view offers a picker where there is more than one.
+- **Standard vs Trade 2** (`standardVsTradeTwo`) — within one season, each token's
+  average price in Trade 2 auctions vs standard ones, over tokens sold in **both**.
+  Seasons come from `orderVariantSeasons`, i.e. whichever hold both variants — 2027
+  today, nothing hardcoded. Tokens sold under only one variant are listed by name
+  beside the table rather than dropped.
 
 ## Validation
 

@@ -89,7 +89,8 @@ just doesn't parse most of them yet. We extend `parseMeta` in `src/lib/data.ts`:
 
 | New field on `AuctionMeta` | From column | Notes |
 | --- | --- | --- |
-| `source: 'Forum' \| 'Trent'` | *derived* | `auctioneer === 'Trent'` → Trent, else Forum. **Derived in code, no sheet change** — single source of truth (Q2). |
+| `source: 'Forum' \| 'Trent' \| 'Alesiev'` | *derived* | Read from the **Link** first — `alesievauctions.com` → Alesiev, `trenttokens.com` → Trent — with `auctioneer === 'Trent'` as Trent's only fallback; everything else is Forum. **Derived in code, no sheet change** — single source of truth (Q2). The link leads because alesievauctions.com hosts auctions run by six different auctioneers, so the auctioneer name cannot name the venue. Added season 2027 (was `'Forum' \| 'Trent'`), closing `backlog.md` SITE-11. |
+| `orderVariant: 'Standard' \| 'Trade 2'` | *derived* | From the words in `auctionStyle` (`/\btrade 2\b/i`), matching both `Trade 2 Ultra Condensed` and `Onyx Trade 2 Ultra Condensed`. Season 2027 is the first to sell two different $8k orders; the sheet records which as a **value** in `auctionStyle` rather than a column (DATA-17), so this is derived exactly the way `source` is. Everything before 2027 is `Standard`. **Not read from the auction NAME** — several 2027 rows are titled "Option B" while their style is plain `Ultra Condensed`, and the style column is the one the validators police. |
 | `targetFunding: number \| null` | `targetFunding` (O) | `null` for the 92 blanks → UI shows the **$7,500 default as an explicit assumption** (Q… /Concept 3), never as a stored fact. |
 | `augmented: boolean \| null` | `augmentated` (P) | Typo tolerated on read; normalized name in code. |
 | `augmentTokens / augmentGrunnel / augmentWithheld / augmentedTotal` | Q–T | Recomputed in code after the Q3 merge + §4 recompute rather than trusted from the sheet (the sheet's rollup is stale/miscategorized — Phase-1 §4.3). Sheet values kept only as a cross-check. |
@@ -181,8 +182,8 @@ state shape, identical everywhere:
 
 | Control | Options | Default |
 | --- | --- | --- |
-| **Source** | All · Forum · Trent | All — hidden when the seasons in view hold no Trent auction |
-| **Trent pricing** | Nominal · Reward-adjusted (−10%) | Nominal — hidden on the same test, and when Trent is filtered out of view |
+| **Source** | All · *the venues the seasons in view actually used* | All — hidden when those seasons used only **one** venue |
+| **Trent pricing** | Nominal · Reward-adjusted (−10%) | Nominal — hidden when the seasons hold no Trent auction, and when Trent is filtered out of view |
 | **Auction type** | All · Augmented · Non-augmented · With Golden Ticket | All |
 | **Item provenance** | Normal · Released payment · Augment · Grunnel · **Withheld (est.)** | All *real* on; **Withheld OFF** |
 
@@ -192,14 +193,24 @@ state shape, identical everywhere:
   the hook — the same friction as adding a season `<select>` today.
 - Not every page needs every control (e.g. Onyx has one source); `FilterBar` takes a
   prop listing which controls to show, defaulting to all.
-- **The two Trent controls only appear where there is a Trent auction to act on.**
-  A page passes the seasons it is showing (`seasons` prop); `FilterBar` tests them
-  against `seasonsWithTrent(meta)`, which requires both an actual Trent auction and
-  `season >= ERAS.trentStartSeason` — Trent ran none before 2023, so 2018–2022 can
-  never offer them. Hiding is not enough on its own: the filter state is shared and
-  survives a season change, so a Source of `Trent` carried into 2019 would empty the
-  page with no visible control to explain it. `FilterBar` therefore resets both to
-  their defaults whenever they stop being offered.
+- **Each control only appears where there is something for it to act on.** A page
+  passes the seasons it is showing (`seasons` prop).
+  - **Source** builds its options from `sourcesBySeason(meta)` and shows only where
+    those seasons used **more than one** venue. That is the general form of what used
+    to be written as "hide it before 2023": every season up to 2022 is Forum-only, so
+    the dropdown could only ever filter to what was already on screen. Stating the
+    rule as "more than one source" rather than "has Trent" is what lets 2027 offer
+    three options without a second rule, and what will let a fourth venue arrive with
+    no UI change at all.
+  - **Trent pricing** keeps its own test, `seasonsWithTrent(meta)`, which requires both
+    an actual Trent auction and `season >= ERAS.trentStartSeason` — Trent ran none
+    before 2023, so 2018–2022 can never offer it.
+- **Hiding is not enough on its own:** the filter state is shared and survives a season
+  change, so a Source of `Trent` carried into 2019 would empty the page with no visible
+  control to explain it. `FilterBar` resets both controls to their defaults whenever
+  they stop being offered — and Source resets on the chosen venue being **absent from
+  the season**, not merely on the control being hidden, because `Alesiev` carried from
+  2027 back to 2026 would empty the page while the dropdown was still on screen.
 
 ### 5.3 Per-row provenance badges
 
@@ -232,19 +243,24 @@ making the context one toggle away.
 Where a comparison is structurally biased, a themed **`.confound-note`** banner sits with
 the number:
 
-- **Trent vs Forum:** "Trent auctions exist only from season 2023 on. This comparison is
-  restricted to seasons both sources ran (2023–2026) to avoid confounding source with
-  time." The comparison logic itself restricts to overlapping seasons (never a headline
-  Trent-vs-Forum figure spanning all time).
+- **Trent vs another venue:** "Trent auctions exist only from season 2023 on, and
+  alesievauctions.com only from 2027, so only seasons both venues ran appear — comparing
+  all-time would confound venue with time." The comparison logic itself restricts to
+  overlapping seasons (never a headline figure spanning all time).
 - **Augmented vs non-augmented / Grunnel vs preorder:** note that augmented auctions and
   Grunnel drops cluster in recent seasons, and compare within-season where possible.
+- **Standard vs Trade 2:** the two orders ship different quantities of the premium trade
+  goods, so the banner says to read it as a **price** question and not a supply one — a
+  raw group mean over either order would mostly be a statement about its contents. The
+  matched-token restriction is what leaves the price behind.
 
 ---
 
-## 6. The four analytics questions → concrete views
+## 6. The analytics questions → concrete views
 
 All on the Analytics page (a new view added to its existing toggle), designed toward the
-prompt's questions:
+prompt's four questions. A fifth was added in season 2027, when the data first became
+able to answer it — see item 5.
 
 1. **Did augments cover withholdings?** — a per-auction **"Auction Ledger"**: columns for
    withheld total (recomputed, negative), released-payment total, personal-augment total,
@@ -260,8 +276,23 @@ prompt's questions:
 3. **Augmented vs non-augmented auction prices** — compare per-token price levels in
    augmented vs non-augmented auctions **within the same season**, to test whether added
    supply depresses prices or attracts bidders. Rendered as a season-controlled delta.
-4. **Trent vs Forum** — nominal and reward-adjusted (−10%), **restricted to overlapping
-   seasons**, with the §5.5 confound banner. Reuses the Source + Trent-pricing filters.
+4. **Trent vs another venue** — nominal and reward-adjusted (−10%), **restricted to
+   overlapping seasons**, with the §5.5 confound banner. Was "Trent vs Forum" until
+   season 2027, when a third venue appeared and folding it into Forum would have been
+   the exact error the Source split exists to prevent. The other side is now a
+   parameter: `sourceOverlapSeasons` returns each season with the venues Trent actually
+   overlaps there, and a **Compare against** picker appears only where a season offers
+   more than one. 2027 is the case that forced it — it has no priced forum auction at
+   all, so without this the analysis would simply have vanished from the newest season.
+5. **Standard vs Trade 2 order prices** — same shape and same discipline as item 3: one
+   season, matched per token, only tokens sold under **both** orders. Season 2027 is the
+   first to sell two different $8k orders (auctioneers advertise them as Option A and
+   Option B), so this is the first season with a comparison to draw. Nothing is pinned
+   to 2027: `orderVariantSeasons(meta)` is whichever seasons hold both variants, so the
+   view appears when a season runs two orders and stops when one does not. Tokens that
+   sold under only one variant are **named** rather than silently dropped — "which
+   tokens does the other order not have?" is half the answer a reader came for, and a
+   matched table structurally cannot show it.
 
 ---
 

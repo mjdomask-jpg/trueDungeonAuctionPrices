@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { AuctionMeta } from '../lib/data';
+import { SOURCE_LABEL, AUCTION_SOURCES, type AuctionMeta, type AuctionSource } from '../lib/data';
 import {
   closedByMonthAndAuctioneer, auctionsByOpenDate, daysToCloseByCloseDate,
-  closedByCloseMonth, avgDaysByCloseMonth, HIGHLIGHT_AUCTIONEER, auctioneerLabels,
+  closedByCloseMonth, avgDaysByCloseMonth,
 } from '../lib/analytics';
 import { fmtCloseDate } from '../lib/format';
 import { MonthAccordion } from './MonthAccordion';
@@ -15,10 +15,20 @@ import { BarChart } from './BarChart';
 // which is what makes the prior-year comparison honest: season month 3 is the
 // third month of each season's run, whatever calendar month it fell in.
 
-// Trent runs the clear majority of auctions, so the days-to-close chart splits
-// on him rather than colouring 40 auctioneers indistinguishably.
-const HIGHLIGHT_COLOR = 'var(--series-1)';
-const OTHER_COLOR = 'var(--series-3)';
+// The days-to-close chart colours on the VENUE, not on the 40-odd auctioneers —
+// which would be indistinguishable — and not on "Trent vs everyone else", which
+// is what it did while Forum and Trent were the only two places an auction could
+// run. Since season 2027 there are three, and "everyone else" would have quietly
+// merged the forum with alesievauctions.com.
+//
+// Trent keeps --series-1 so a reader who knows the old chart sees his bars the
+// same colour they have always been; the new venue takes an unused hue rather
+// than displacing one.
+const SOURCE_COLOR: Record<AuctionSource, string> = {
+  Trent: 'var(--series-1)',
+  Forum: 'var(--series-3)',
+  Alesiev: 'var(--series-5)',
+};
 
 const CURRENT_COLOR = 'var(--series-1)';
 const PRIOR_COLOR = 'var(--series-3)';
@@ -84,9 +94,10 @@ export function CurrentYearStats({
   const toggle = (set: (fn: (s: Set<number>) => Set<number>) => void, m: number) =>
     set((s) => { const n = new Set(s); if (n.has(m)) n.delete(m); else n.add(m); return n; });
 
-  // The highlighted auctioneer's display name, taken from the data rather than
-  // hardcoded, so the legend matches whatever spelling the sheet uses.
-  const highlightName = auctioneerLabels(meta).get(HIGHLIGHT_AUCTIONEER) ?? 'Highlighted';
+  // The venues this season's bars actually cover, in the canonical order, so the
+  // legend names three colours in 2027 and two in 2026 rather than always listing
+  // a venue with no bar on screen.
+  const barSources = AUCTION_SOURCES.filter((s) => bars.some((b) => b.source === s));
 
   const totalClosed = byOpenDate.reduce((a, g) => a + g.rows.length, 0);
   const missingDuration = totalClosed - bars.length;
@@ -209,17 +220,21 @@ export function CurrentYearStats({
       <section className="an-panel" id="days-to-close">
         <h2>Days to close, by close date</h2>
         <p className="an-lede">
-          One bar per auction, in close-date order.{' '}
-          <span style={{ color: HIGHLIGHT_COLOR }}>■</span> {highlightName}
-          {' · '}
-          <span style={{ color: OTHER_COLOR }}>■</span> everyone else.
-          {missingDuration > 0 && ` ${missingDuration} auction${missingDuration === 1 ? '' : 's'} left out — no duration recorded.`}
+          One bar per auction, in close-date order, coloured by where it ran.{' '}
+          {barSources.map((s, i) => (
+            <span key={s}>
+              {i > 0 && ' · '}
+              <span style={{ color: SOURCE_COLOR[s] }}>■</span> {SOURCE_LABEL[s]}
+            </span>
+          ))}
+          {'. '}
+          {missingDuration > 0 && `${missingDuration} auction${missingDuration === 1 ? '' : 's'} left out — no duration recorded.`}
         </p>
         <BarChart
           categories={bars.map((b) => fmtCloseDate(b.closeDate) ?? b.closeDate)}
-          series={[{ label: 'Days to close', color: OTHER_COLOR, values: bars.map((b) => b.days) }]}
-          barColors={bars.map((b) => (b.highlight ? HIGHLIGHT_COLOR : OTHER_COLOR))}
-          hints={bars.map((b) => `${b.auctioneer} — ${b.name}`)}
+          series={[{ label: 'Days to close', color: SOURCE_COLOR.Forum, values: bars.map((b) => b.days) }]}
+          barColors={bars.map((b) => SOURCE_COLOR[b.source])}
+          hints={bars.map((b) => `${b.auctioneer} (${SOURCE_LABEL[b.source]}) — ${b.name}`)}
           yLabel="Days" format={(n) => String(Math.round(n))}
           ariaLabel={`Days to close for each ${season} auction, in close-date order`}
         />
