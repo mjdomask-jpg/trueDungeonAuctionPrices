@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-20.1';
+var SCRIPT_VERSION = '2026-09-21.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -163,8 +163,38 @@ var EXCEPTIONS = {
   '1,000 gp reserve bar': '1,000 GP Gold Bar',
 };
 
-/** Patron pin ships with a code and the name carries the year. */
-var PATRON_PIN_RE = /^\d{4} patron (lapel )?pin and (patron )?code$/;
+/**
+ * The Patron lot, whose spelling changes almost every season.
+ *
+ * It ships with a code and the name carries the year: `2026 Patron Pin and
+ * Code`, `2023 Patron Lapel Pin and Patron Code`. From 2027 THE PIN IS GONE —
+ * Trent sells `2027 Patron Code`, the code always having been the part with
+ * the value — and the old pattern, which required the word `pin` and the word
+ * `and`, refused it. It is the same price series either way and has to fold
+ * onto `Patron Pin` to sit beside the fourteen seasons in front of it.
+ *
+ * `forumThread.gs` already reads the forum's version of this, and more loosely
+ * (THREAD_FALLBACKS, the `pin|code|package|badge` rule — it has to cope with
+ * `Patron Package:` and `Patron badge and access`). The three CLOSE paths share
+ * this resolver and had only the one shape, so Trent's, alesiev's file and the
+ * auction site's export all failed here together.
+ *
+ * Written as a structure rather than as the four spellings measured, because
+ * the next season's is not knowable — that is what made this a recurring
+ * failure rather than a one-off. What it refuses is the load-bearing part:
+ * `token` is not one of the alternatives, so `Patron Token 1` — a DIFFERENT
+ * item with its own rows in every season since 2021 — cannot fold in here
+ * however it is decorated. Silently renaming it would be the worse failure,
+ * since an unresolved name stops the import and a wrong one does not.
+ *
+ * Bare `Patron Code` is covered too, and needs to be. It resolves for 2027
+ * without this — that season's `Display Name` in `tokenMetadata` IS
+ * `Patron Code`, which is how alesievauctions.com's 20274 and 20275 got their
+ * rows — but that is one season's metadata rather than a rule, and it would
+ * lapse the moment 2028 is added with any other display name.
+ */
+var PATRON_PIN_RE =
+  /^((19|20)\d{2} )?patron (lapel )?(pin|code)( and (patron )?(lapel )?(pin|code))?$/;
 
 /**
  * Onyx names that differ from how the site stores them.
