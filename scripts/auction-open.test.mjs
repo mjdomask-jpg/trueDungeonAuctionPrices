@@ -201,8 +201,10 @@ console.log("Trent's collection page\n");
 // two different $8K orders is not silently defaulted to one of them.
 //
 // This is also the fixture that can test a NEW auction, which the 2026 one
-// cannot — Trent Auction 9 is not in auctionMetadata (8 is the last recorded),
-// so a scan must PROPOSE here where it must stay silent there.
+// cannot — the page was fetched while auction 9 was still open, so filtering
+// its (now-recorded) row back out of META below recreates that moment: a scan
+// must PROPOSE here where it must stay silent there. Auction 10 has since been
+// recorded too and is filtered out alongside it (see `withoutNew` below).
 console.log('\nTrent shop page, 2027\n');
 {
   const want = manifest.trent2027.expect;
@@ -290,8 +292,16 @@ console.log('\nTrent shop page, 2027\n');
   // proposal therefore refuses to fill the style in. Blank is the point: the
   // promote step warns on a blank style, so it cannot ride along unnoticed,
   // whereas the old default would have been wrong every other auction.
-  const without9 = META.filter((r) => r.auctionName !== 'Trent Auction 9');
-  const fresh = O.openTrentProposal(page, without9);
+  //
+  // Both 9 and 10 are excluded from META, not just 9: this section needs TWO
+  // still-hypothetical auctions (one odd, one even) to exercise both halves of
+  // the rule, and a publish that records either one for real — as one
+  // eventually will — must not make this section start asserting on data that
+  // is no longer hypothetical. Filtering only 9 did exactly that once auction
+  // 10 was actually published: `openTrentProposal` hit its "already recorded"
+  // branch and returned an object with no `auctionStyle`/`notes` at all.
+  const withoutNew = META.filter((r) => r.auctionName !== 'Trent Auction 9' && r.auctionName !== 'Trent Auction 10');
+  const fresh = O.openTrentProposal(page, withoutNew);
   eq('a new Trent auction proposes its name', fresh.auctionName, 'Trent Auction 9');
   eq('  ... its season', fresh.season, '2027');
   eq('  ... and its auctionStyle is BLANK, not the default', fresh.auctionStyle, '');
@@ -304,7 +314,7 @@ console.log('\nTrent shop page, 2027\n');
   // so this is not "blank whenever the season is odd about anything".
   const evenPage = O.openParseTrentPage(html);
   evenPage.number = '10';
-  const evenProposal = O.openTrentProposal(evenPage, without9);
+  const evenProposal = O.openTrentProposal(evenPage, withoutNew);
   eq('an EVEN-numbered auction keeps the usual style',
     evenProposal.auctionStyle, O.OPEN_TRENT_DEFAULTS.auctionStyle);
   check('  ... and still says why, so a rule that stopped firing is visible',
@@ -314,7 +324,7 @@ console.log('\nTrent shop page, 2027\n');
   // Declared, but with no readable parity: read the page.
   const vaguePage = O.openParseTrentPage(html);
   vaguePage.tradeTwo = { declared: true, oddIsTradeTwo: null, said: '' };
-  const vague = O.openTrentProposal(vaguePage, without9);
+  const vague = O.openTrentProposal(vaguePage, withoutNew);
   eq('an unreadable rule blanks the style too', vague.auctionStyle, '');
   check('  ... and says to read the page',
     vague.notes.some((n) => /does not say which|not which auctions/.test(n)), vague.notes.join(' | '));
