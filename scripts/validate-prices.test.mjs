@@ -637,10 +637,29 @@ const cases = [
     /differ only in punctuation or a trailing plural/, 'warn'],
 
   // The cross-file half: a context item spelled unlike the canonical token.
-  // Confined to contextItems, this pair is invisible.
-  ['8  context item disagrees with tokenMetadata', () => edit('contextItems.csv', (t) =>
-    t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
-      '202019,2020,19,token,Wish  Ring,1,$145.00')),
+  // Confined to contextItems, this pair is invisible — but only if nothing in
+  // contextItems.csv ALREADY names the token this injects a near-miss of. If it
+  // does, `source` (validate-prices.mjs § 8) binds the canonical spelling to
+  // contextItems.csv instead of tokenMetadata.csv, the message never gets a
+  // bracket tag this case recognises, and it reports MISSED even though the
+  // defect is still caught — just by the in-file check the case above already
+  // tests. Happened for real 2026-09-22: a legitimate "Wish Ring" context row
+  // landed near the old hardcoded target. Pick a tokenMetadata Item with NO
+  // contextItems row at run time, so a future publish can't retarget this.
+  ['8  context item disagrees with tokenMetadata', () => {
+    const ctxRows = lines(readFileSync(join(TMP, 'contextItems.csv'), 'utf8')).slice(1);
+    const ctxItems = new Set(ctxRows.map((l) => splitLine(l).cells[4]?.trim().toLowerCase()).filter(Boolean));
+    const tokenText = readFileSync(join(TMP, 'tokenMetadata.csv'), 'utf8');
+    const tokenRows = lines(tokenText).slice(1);
+    const safe = tokenRows
+      .map((l) => splitLine(l).cells[2])
+      .find((n) => n && n.includes(' ') && !ctxItems.has(n.trim().toLowerCase()));
+    if (!safe) throw new Error('every tokenMetadata Item with a space already has a contextItems row -- cannot build this case');
+    const doubled = safe.replace(' ', '  ');
+    edit('contextItems.csv', (t) =>
+      t.replace('202019,2020,19,token,Bead of the Lucky Traveler,1,$145.00',
+        `202019,2020,19,token,${doubled},1,$145.00`));
+  },
     /\[tokenMetadata\.csv\]|\[prices\.csv\]|\[onyx\.csv\]/],
 
   // THE 2026-09-18 DEFECT, in one line. A `Unique` -> `unique` rename reached
