@@ -2,10 +2,9 @@
 
 Everything on the live site is computed from the CSV files in `public/data/`.
 Most are exported from the Google Sheet, a few are edited by hand, and one —
-`rawPricesData.csv` — is the per-lot sales export (Trent auctions only) that
-drives the Analytics → **Quartiles** view. Nothing is precomputed and nothing is
-stored in a database — change a CSV, and every number, chart and table
-recomputes itself.
+`rawPricesData.csv` — is the per-lot sales export that drives the Analytics →
+**Quartiles** view. Nothing is precomputed and nothing is stored in a database —
+change a CSV, and every number, chart and table recomputes itself.
 
 This document assumes no prior knowledge. Work top to bottom the first time.
 
@@ -115,19 +114,28 @@ next time.
 falling back to earlier prices, an auction-number gap left by a deleted row,
 the skipped link check.
 
-**Warnings (`!`) are not automatically fine.** Two of them are standing — known
-and decided — so the useful question is not "are there warnings" but *"is this
-warning new?"* The standing set, as of 2026-08-21:
+**Warnings (`!`) are not automatically fine.** Some are standing — known and
+decided — so the useful question is not "are there warnings" but *"is this
+warning new?"* The standing set, as of **2026-09-22** (ten: nine from
+`validate-prices`, one from `validate-context`):
 
 | Warning | Why it's there |
 |---|---|
 | `20251 FERRET HORDE AUCTION targetFunding > $8,000` | a genuine $10,250 auction |
 | `202647 "Golden Ticket": priced … with no lots` | it sold, but its lot was routed to `contextItems` as funding rather than into `rawPricesData` |
+| `202647 "Random Ultra Rare": priced … with no lots` | its price is derived from the lot-group **total** its context row records; the lots themselves were never written. `DATA-18` |
+| `20275: 12 Onyx rows — … also records 9 withheld item(s)` | a **split Onyx order** — 12 sold, 9 withheld. 12 + 9 = 21, which is what an Onyx order is |
+| `20192` / `20225` *Condensed order … but `prices.csv` has neither bag* | two auctions whose Rare/Uncommon Bag rows were never recorded. Real gaps, not fixable from anything we have |
+| four `differ only in punctuation or a trailing plural` pairs | Figurine of Power ×2, Silver Ship Passage, Mighty Short Bow. **Never merged automatically** — `+1 Turkey Leg` and `+1 Turkey Leg of Smiting` are different tokens, so a human decides |
 
 **Anything else means your export introduced it. Stop and look.** The six
 warnings that stood here when the validator shipped were all real defects, and
 all six were corrected in the sheet on 2026-08-21 — that is what this table is
 for.
+
+> Two entries left this table on 2026-09-22 rather than being explained away:
+> `20271` and `20272` each had a Random Ultra Rare priced with no lots, and now
+> have their lots, so § 1 reconciles them.
 
 ### Step 5 — Check it in a browser (optional but recommended)
 
@@ -796,13 +804,41 @@ The export labels **`Pick Your Purple`** and **`Random Ultra Rare`** both
 
 - **`Pick Your Purple`** is a buyer choosing any Ultra Rare. That is a market
   observation, so it prices as `Ultra Rare` in the spine like any other lot.
-- **`Random Ultra Rare`** is a lucky dip. All 21 of its appearances in
-  `contextItems.csv` are **one aggregated `token` row** — quantity, and the
-  lots' prices **summed**.
+- **`Random Ultra Rare`** is a lucky dip, and it is recorded **twice, on
+  purpose** — as one aggregated `token` row in `contextItems.csv` carrying the
+  quantity and the lots' prices **summed**, *and* as ordinary price rows.
 
-So the split is made by name, not by the category column. The dialog shows how
-a summed row was reached — `8 @ $55 + 1 @ $57 = $497` — because a total is not
+So the split is made by name, not by the category column: the two names produce
+different `Item`s, and only one of them is a token. The dialog shows how a
+summed row was reached — `8 @ $55 + 1 @ $57 = $497` — because a total is not
 checkable on its own and the distribution it came from is.
+
+#### Why a Random Ultra Rare is written to two files
+
+Since **2026-09-22** a sold Random Ultra Rare reaches the price spine as well:
+one `rawPricesData` row **per lot**, and a min/max pair in `prices`. The
+aggregated `contextItems` row is unchanged and still written.
+
+They are two different facts and neither file can hold the other:
+
+| | what it says | who reads it |
+|---|---|---|
+| `contextItems` | nine tokens, **$279 between them** | Funding & Context's **Included** column |
+| `prices` / `rawPricesData` | what a buyer paid **per token** — $31 | the Prices tab, Trends, Quartiles |
+
+`prices.csv` has no quantity column, so a price row cannot express the total;
+the context row cannot express a per-token price. Summing the price rows would
+report an eighth of the money. **Do not delete one as a duplicate of the other**
+— the import's CAUTION block says so on every run that produces them.
+
+This is why the site's Auction Data card shows a Random Ultra Rare twice: once
+as a sale, once as the lot row carrying `×9` and the total.
+
+> **It is not gated on a season.** The rule is that a file giving per-lot prices
+> gets per-lot treatment, and alesievauctions.com is simply the first source
+> that does. The 22 pre-2027 rows on the Prices tab are a single rate apiece
+> because an aggregate is all anybody ever recorded for them — see `DATA-18`,
+> which tracks recovering the real lots from the forum threads.
 
 ### The auctioneer's fee is never withheld
 
@@ -841,8 +877,9 @@ shows a new one.
 
 **A fee lot that SOLD is untouched by any of this.** The rule reads column B
 first: a `Random Ultra Rare` tagged `Ultra Rare` is a lucky dip somebody paid
-for, and it still aggregates into the one `token` row described above. Same
-name, opposite treatment, and the category column is what decides.
+for, and it still aggregates into the one `token` row described above — and
+now publishes its lots to the price spine as well. Same name, opposite
+treatment, and the category column is what decides.
 
 ### A split Onyx order: withheld chase tokens
 
@@ -897,7 +934,8 @@ so `Non-Onyx` does not read as Onyx.
 | **Names every augment** | The forum file calls six different grunnel augments `Grunnel Augment` and leaves you to name them from the thread. This source names each one, so the `contextItems` rows come out complete. |
 | **Writes `closeDate`** | It asks for the close date and writes it to `auctionMetadata`, then reads the cell back to check Sheets did not reformat it. `Status`, `daysToClose` and `Close Month` are formulas and follow on their own. |
 | **Clears `outcome`** | In the same pass. A `Pending` or `Ended` cell **outranks `closeDate`** in the `Status` formula, so writing the date alone leaves the auction un-Closed — and a `Pending` row carrying a `closeDate` is a hard error at the PR gate. It says what it cleared; it never does it silently. |
-| **Refuses a re-import** | If `prices` already holds rows for the chosen auction it stops. An export you can download twice is easy to import twice. |
+| **Refuses a re-import** | If `prices` already holds rows for the chosen auction it stops. An export you can download twice is easy to import twice. The **dry run still shows the whole plan** and hands you the rows, so picking up rows a newer script writes does not mean deleting the auction first. |
+| **Refuses the wrong auction** | The export carries **no auction id** — the auction is whichever one you pick. If the plan's prices match a *different* auction already in the spine, to the cent, it stops and names it. That is the stale-staging-tab mistake, and it happened: `20275`'s export left in the tab, `20272` picked, and both are season 2027 so the season check passed. |
 
 ### Installing it (once)
 
@@ -916,7 +954,15 @@ items appear under **TD auctions**.
    alesievauctions.com, newest first — see [the close-path
    picker](#the-close-path-picker), whose two repairs were both found here.
 4. Read the summary: how many lots, what goes to each tab, every `contextItems`
-   row spelled out, and anything it could not place.
+   row spelled out, and anything it could not place. A second dialog follows
+   with the rows as **pasteable blocks** — `contextItems`, `prices` and
+   `rawPricesData`, each under its own header. A real import writes all three
+   for you; they are here because a dry run cannot, and because an auction that
+   already has prices refuses the import, which makes pasting the rows you are
+   missing the only way to pick up rows a newer script writes.
+   **Paste each block under its matching header** — `rawPricesData` puts
+   `trentName`/`trentPrice` before `Item`/`Price` and `prices` does not, so
+   crossing them files the per-token price as the lot total.
 5. **Import alesievauctions.com close…** when the dry run looks right.
 6. It asks for the **close date**, as `YYYY-MM-DD`. This is when the auction
    *actually* closed — **not** the `Ends:` date on the site's card, which is the
@@ -942,13 +988,21 @@ Everything below stops the run and writes **nothing** — never half an auction.
 | a name is *not a token in season N, but it is in M* | You probably picked the wrong auction. If not, `tokenMetadata` is missing a row for this season. |
 | a name is *not a token in any season* | It is probably a context item. The dialog hands you a filled-in worksheet for it. |
 | *this file looks like season N* | The export and the chosen auction disagree about the season. Check the auction. |
-| *this auction already has rows in `prices`* | It has been imported. Delete the existing rows first if you meant to replace them. |
+| *this auction already has rows in `prices`* | It has been imported. Delete the existing rows first if you meant to replace them — **or** take the rows you are missing from the dry run's pasteable blocks, which is usually what you want. |
+| *this export is auction N's, not M's* | The staging tab is still holding the last import. Paste the right export and run again. It is sure enough to abort: the two agree on every priced item **to the cent**, which `validate-prices.mjs` § 2 already treats as an error. |
 | an augment kind it does not know | Decide which `contextItems.category` it takes and add it to `ALESIEV_AUGMENT_CATEGORIES`. |
 | a multi-token **Onyx** lot | Split it by hand. All 1,155 recorded Onyx rows are single tokens, so dividing this one either way would be a guess. |
 
 An auction is only *caution*ed, not stopped, when nothing in the export is
 unique to one season — that means the season check could not engage, not that
 something is wrong.
+
+> **An abort still tells you what it would have written.** A refusal to write is
+> not the same as a problem with the rows, and the dialog keeps the two apart:
+> *"the rows themselves are complete — what it would have written"* means only
+> the writing was refused, while *"INCOMPLETE — at least one lot produced no
+> row"* means the plan is partial and is **not** a set to paste. The pasteable
+> blocks appear only in the first case.
 
 ### What it does not do
 
@@ -967,8 +1021,10 @@ editor's contents.
 > in `fixtures/alesiev/` has **dummy prices** — it is an extract showing which
 > rows and columns a close carries, not a record of an auction that happened, so
 > there is nothing to reconcile it against. What stands in: every name the
-> importer writes is asserted to be one `tokenMetadata`, `contextItems` or
-> `onyx` **already holds**, and the shapes nobody has seen yet — a withheld
+> importer writes is asserted to be one `tokenMetadata`, `contextItems`, `onyx`
+> or **`prices`** already holds — the price spine belongs in that list because a
+> name can legitimately live in one file and not another, and a check reading
+> one file calls that an invention. The shapes nobody has seen yet — a withheld
 > block, an Onyx lot, an unknown augment kind — are constructed in the test. The
 > withheld and Onyx paths are therefore **built and tested but never run against
 > a real file**; check the first one of each carefully.
@@ -2464,6 +2520,20 @@ earliest priced season — every pre-2018 recipe falls back to it).
 - **This file is the source of truth for `Display Name` and `Category`.** If it
   disagrees with `tokenMetadata.csv`, `prices.csv` wins and `tokenMetadata`
   should be corrected to match.
+- **`Random Ultra Rare` is a row here and is not a token.** It has no
+  `tokenMetadata` entry in any season, by design — it is an aggregate's name.
+  From 2027 its rows are ordinary min/max summaries over real lots; the 22
+  earlier ones are a **single rate** apiece, derived from the lot-group total
+  its `contextItems` row records, because that aggregate is all anybody wrote
+  down. Where such an auction recorded more than one group, the published rate
+  is the **quantity-weighted most common** one — the rule this corpus reads
+  every multi-lot price by (`backfill/QUESTIONS-2026.md` § 1). `DATA-18` tracks
+  replacing those with the real lots.
+- **`auctionSeason` and `auctionNumber` must match the auction they name.**
+  They are repeated on every row beside an `auctionId` that already encodes
+  both, and § 4c holds them to `auctionMetadata`. A publish once pasted the
+  auction id into the season column of one row; everything validated clean and
+  a Build Calculator test failed eight assertions three layers away.
 
 ### Gotcha
 
@@ -2482,15 +2552,24 @@ to produce them is retired.
 **Drives:** the Analytics → **Quartiles** view *only*. Nothing else reads it, so
 a stale or missing file affects that one view and no other page.
 
-**Update when:** you have refreshed per-lot results. ~18,000 rows today. Unlike
+**Update when:** you have refreshed per-lot results. ~20,400 rows today. Unlike
 `prices.csv` (which keeps only each auction's high/low points), this is **every
 individual lot**, which is what makes the box plots and quartile tables
 possible. Seasons 2023 on.
 
-> **It is no longer Trent-only.** 110 of the 111 auctions here are Trent's; the
-> 111th, `202647`, is alesiev's **forum** auction — the first non-Trent
-> auctioneer to supply per-lot data. Expect more of these, and don't assume a
-> row in this file means the Trent runbook applies to it.
+> **It is no longer Trent-only, and the share is growing.** As of 2026-09-22,
+> 118 of its 123 auctions are Trent's. The other five are `202647` — alesiev's
+> **forum** auction, the first non-Trent auctioneer to supply per-lot data — and
+> `20271`, `20272`, `20274`, `20275` from **alesievauctions.com**, whose export
+> is one row per lot by construction. Don't assume a row in this file means the
+> Trent runbook applies to it.
+>
+> **Nor that the Trent parser wrote it.** Since 2026-09-22 some rows are written
+> by `alesievSpineRows` instead — the lots behind an aggregate like
+> `Random Ultra Rare`, which has no `tokenMetadata` entry and which the Trent
+> resolver is right to refuse. `scripts/trent-close.test.mjs` replays this whole
+> file through that parser, so it skips those rows and prints the count it
+> skipped.
 
 ### Columns
 
@@ -2850,20 +2929,36 @@ rows at all. `augment`-category rows exist only in 2026.
   context validator warns on Ultra-Rare-looking names that aren't listed.
 - **`targetFunding` above $8,000** (in `auctionMetadata.csv`) is allowed but
   flagged by the validator as an exception, not an error.
-- **A Golden Ticket recorded in both sheets is expected.** A released Golden
-  Ticket (or Random Ultra Rare) sometimes appears both as a real sale in
-  `prices.csv` and as a `released-payment` row here — it was the auctioneer's to
-  keep, then sold. The Auction Data cards show it **once**: the real sale row
-  wins (it carries the realised price and gets a "released" badge), and the
-  duplicate context row is dropped from that card's Withheld & augmented list.
-  This dedup is presentation-only — the Analytics *Funding & Context* ledger
-  still counts the full context feed — so nothing here needs de-duplicating by
-  hand.
+- **A Golden Ticket belongs in `prices.csv`, not here.** It used to be recorded
+  in both, inconsistently — four auctions had it twice and one had it only as a
+  context row. Since **2026-09-22** the four duplicates are gone and every
+  Golden Ticket sale lives in the price spine. The ledger's **Included** column
+  reads both feeds and counts it once, so it no longer matters which file
+  recorded it; a duplicate that does turn up is dropped from the Auction Data
+  card (presentation only) and counted once in the ledger.
+  A **`Chance at Golden Ticket`** / **`Golden Ticket Chance`** row is a
+  different thing — a raffle entry, not the ticket — and stays here as an
+  augment.
+- **A Random Ultra Rare IS recorded in both, on purpose.** Its row here carries
+  the quantity and the lot total, which is what **Included** reports; its
+  `prices` rows carry the per-token price, which is what the Prices tab shows.
+  `prices.csv` has no quantity column, so neither file can express the other and
+  the two do not add up. Do not delete either as a duplicate — see
+  [the alesiev importer](#the-two-names-category-cannot-tell-apart).
 
 ### Gotcha
 
 The tab labels a column `Item` but fills it with **display names**. Don't "fix"
 that to canonical `Item` values — the join to sales is on the display name.
+
+That trap caught the alesiev importer itself: it wrote a withheld row under the
+canonical `Item`, so `20272`'s withheld `Patron Code` went in as **`Patron
+Pin`** — the 2027 `Item` for that token — and matched nothing, valuing at $0
+until it was corrected by hand. Fixed on 2026-09-22; it now writes the season's
+display name. The corpus was unanimous all along: of the withheld rows whose
+name appears in `tokenMetadata` under only one of the two columns, **all 49 are
+display names and none is an `Item`**, across 123 tokens whose two columns
+differ.
 
 ### After any re-export: regenerate the withheld preview, when convenient
 
@@ -2909,7 +3004,15 @@ Controls how tokens are grouped into charts on the Timelines page, and their lin
 colours. Columns: `Category`, `Item`, `Display Name`, `Group`, `Group Order`,
 `Line Color`. Keyed on `Item`; `Display Name` here is an authoring aid the site
 ignores. A group may span categories, so ordering uses the global `Group Order`.
-Currently 28 rows.
+Currently 29 rows.
+
+> **It is hand-authored and nothing publishes it**, so its rows and the price
+> spine's can disagree — and the site says so out loud. An `Item` here with no
+> sales behind it renders *"Grouping references 1 unknown token (check the Item
+> names in `tokenGroups.csv`)"* on Trends, visible to every reader. So when a
+> new token needs a chart group, **land the data first and this file second**.
+> `Random Ultra Rare` was added this way on 2026-09-22, deliberately after its
+> price rows and not with them.
 
 **`Group` is a stable key, not the heading.** It joins tokens to a chart and
 orders the charts; the heading a reader actually sees is resolved per season. Most
@@ -3028,6 +3131,25 @@ Season 2023 is exempt: those fifteen auctions record a single averaged price
 instead, so all the validator can say there is whether the number sits inside the
 lot range, and it says it as a warning.
 
+**The most common way to hit this is adding lots without replacing the summary.**
+When an item gains per-lot rows for the first time, its old single price row is
+no longer the whole story: `prices` has to become the min/max **pair**, and the
+old row must be **deleted**, not left beside them. `20271` did exactly this —
+`[36, 41.78, 47]` where the nine lots give `[36, 47]`.
+
+### `<file> row N "<item>": auction X is season Y, but the row says Z`
+
+Check 4c. `auctionSeason` and `auctionNumber` are repeated on every row of the
+four keyed files, beside an `auctionId` that already encodes both, and this
+holds them to what `auctionMetadata` records. Fix the cell in the **workbook**,
+not in the CSV, or the next publish writes it again.
+
+It exists because a publish once pasted the auction id into the season column of
+a single `prices.csv` row. Nothing read a price row's season except to group by
+it, so `npm run validate` was **0 errors** — and what failed was
+`shopping-list.test.mjs`, with eight assertions about Ultra Rare vintages and
+the last-5 toggle, none of which mentions a season. Three layers from the cause.
+
 ### `auctions X, Y have identical price blocks`
 
 Check 2. Two auctions whose every item and every price agree to the cent — which
@@ -3145,9 +3267,12 @@ This runbook hardcodes things that live in the repo, so it goes stale silently.
 | `apps-script/auctionOpen.gs` | run `npm run test:open`, update [Watching for new auctions](#watching-for-new-auctions), bump `OPEN_VERSION`, and paste the file over the workbook's editor |
 | `apps-script/forumClose.gs` | run `npm run test:forum`, update [Importing a forum close from a file](#importing-a-forum-close-from-a-file), bump `FORUM_VERSION`, and paste the file over the workbook's editor |
 | `apps-script/forumThread.gs` | run `npm run test:thread`, update [Reading a forum close from the thread](#reading-a-forum-close-from-the-thread), bump `THREAD_VERSION`, and paste the file over the workbook's editor |
+| `apps-script/alesievClose.gs` | run `npm run test:alesiev`, update [Importing an alesievauctions.com close](#importing-an-alesievauctionscom-close), bump `ALESIEV_VERSION`, and paste the file over the workbook's editor. **Check what `main` already holds first** — a bump that matches the existing value is a silent no-op, and the version in the dialog is the only way to tell which copy actually ran |
 | `apps-script/hardenSheet.gs` | run `npm run test:harden`, update [Hardening the sheet](#hardening-the-sheet), bump `HARDEN_VERSION`, and paste the file over the workbook's editor |
+| **what any close path writes to `rawPricesData`** | `scripts/trent-close.test.mjs` replays a reconstructed paste of **every** row in that file through the Trent parser. A row written by some other builder — `alesievSpineRows`'s aggregate lots, say — aborts the whole auction there, and the test is green until the data arrives, so the conflict only shows up on the publish. The skip list comes from `ALESIEV_CONTEXT_RULES`' `spine` declarations, not a literal |
 | **a formula column in `auctionMetadata`** | `OPEN_DERIVED_FIELDS` in `apps-script/auctionOpen.gs` if Phase 4 also computes a value for it, `OPEN_METADATA_FIELDS` if it does not. A column that becomes a formula and stays on the plain write list gets frozen on every new auction — which is what happened to `augmentated`. **Do not verify this arithmetically**: a formula whose output equals what a human would type agrees with a literal on every row, and that is exactly how `auctionId` and `augmentated` were missed for four months. Run `hardenSheet.gs`'s dry run instead — it classifies columns by reading formulas, not values |
 | **which files are sheet-backed** | `PUBLISH_FILES` and `PUBLISH_NEVER` in `apps-script/publishToSite.gs`, plus [Hand-authored files](#hand-authored-files). The publish suite asserts the allow-list equals the CSVs on disk minus the hand-authored two, so adding a data file without updating the list fails `npm test` |
+| **the withheld rule** | `scripts/lib/withheld.mjs` **and** `src/lib/context.ts`. They are two deliberate copies — the browser code is TypeScript and the CI scripts are plain `.mjs` — so changing one and not the other means the generator writes a golden file the checker passes and the site disagrees with. The `.mjs` half was extracted for exactly that reason: `validate-context.mjs` and `gen-withheld-preview.mjs` each carried their own copy, and when `context.ts` gained the Onyx feed neither followed |
 | the `Category` list | the shared rules section |
 | which columns a parser reads | the Required column of that file's table |
 
