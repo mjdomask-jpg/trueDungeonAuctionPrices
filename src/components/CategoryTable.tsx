@@ -68,19 +68,23 @@ function Row(
     <tr>
       <td className="left token">
         {r.displayName}
-        {/* A Random Ultra Rare's price is a MEAN and no other row in this table
-            is. The auctioneer sold nine of them as one lot group and recorded
-            one total, so the per-token figure is that total divided by the
-            count — never an observed single sale. Said here because the number
-            looks exactly like every other number in the column. */}
+        {/* A Random Ultra Rare's price is derived from a lot-group TOTAL and no
+            other row in this table is. Only the total was recorded, so the
+            per-token figure is that total divided by the count — never an
+            observed single sale. Where an auction recorded more than one group,
+            the published rate is the quantity-weighted MOST COMMON one, which
+            is the rule this corpus reads every multi-lot price by (settled in
+            the 2026 backfill; `forumThread.gs` uses the same mode). Said here
+            because the number looks exactly like every other number in the
+            column. */}
         {isRandomUltraRare(r.displayName) && (
           <HintPopover label="About the Random Ultra Rare price">
-            A <strong>mean</strong>, not a sale. Random Ultra Rares are sold as a lot — usually
-            nine at once — and only the lot's total was recorded, so the price here is that
-            total divided by the count. Where an auction sold two or three separate lots the
-            min and max are those lots' rates; where it sold one, min and max are the same
-            number because there is only one rate to report. The lot sizes and totals are on
-            each auction's card under <em>Auction Data</em>.
+            Not a single sale. Random Ultra Rares go as a lot — usually nine at once — and what
+            was recorded is the <strong>lot's total</strong>, so the price here is that total
+            divided by the count. Where an auction sold them in more than one group, the rate
+            shown is the one <strong>most of the tokens</strong> went at — the same most-common
+            rule every multi-lot price on this site is read by. Each auction's lot sizes and
+            totals are on its card under <em>Auction Data</em>.
           </HintPopover>
         )}
       </td>

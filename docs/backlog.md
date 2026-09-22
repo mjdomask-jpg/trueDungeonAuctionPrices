@@ -101,7 +101,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-16** | ~~`20275` records the auctioneer's fee as withheld~~ | **RESOLVED 2026-09-19** — two rows (ten lots) deleted in the workbook; shipped in PR #221, and the Onyx set now adds to 21 |
 | **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
 | **DATA-17** | ~~Season 2027 runs two different $8K orders and nothing records which~~ | **RESOLVED 2026-09-21 (repo side)** — a value in `auctionStyle`, not a column; seven rows relabelled and § 6 now holds the style to the trade-good counts. **The same edit in the workbook is what is left**, or the next publish reverts it |
-| **DATA-18** | A Random Ultra Rare's published price is a **mean** — the only one in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each mean with its lots |
+| **DATA-18** | A Random Ultra Rare's published price comes from a **lot total**, not a recorded sale — the only such row in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each derived rate with its lots |
 
 ---
 
@@ -2290,18 +2290,23 @@ Onyx `20275`.
 
 ---
 
-## DATA-18. A Random Ultra Rare's price is a mean, and the threads hold the real sales — OPEN
+## DATA-18. A Random Ultra Rare's price comes from a lot total, and the threads hold the real sales — OPEN
 
 Item 4 of the 2026-09-21 batch put `Random Ultra Rare` on the Prices tab. Its
-price there is **a mean**, and it is the only row in that file that is one.
+price there is derived from a lot-group **total** rather than from any recorded
+sale, and it is the only row in that file that is.
 
 The source is a `contextItems.csv` row per auction carrying a quantity and a
 **lot-group total** — nine Random Ultra Rares, $376.00 between them — so the
 published per-token figure is `total ÷ quantity`, $41.78. `rawPricesData.csv`
 holds **zero** Random Ultra Rare lots across the whole corpus, so there is no
-per-lot data to recover a real min/max from. Two auctions (`202321`, `202645`)
-sold theirs in two and three separate groups and do get a genuine min/max out of
-that; the other 20 publish a single rate, min and max equal.
+per-lot data to recover a real min/max from. **Every one of the 22 publishes a
+single rate**, min and max equal — including the two auctions (`202321`,
+`202645`) that recorded two and three separate groups, because a multi-lot price
+in this corpus is read as the **quantity-weighted most common** one and not as a
+range (`backfill/QUESTIONS-2026.md` § 1, the rule `forumThread.gs` already
+scores 513 of 576 with). `202321` went 7 tokens at $75 and 2 at $76 → **$75**;
+`202645` went 6 at $55, 2 at $61 and 1 at $54 → **$55**.
 
 Consequences, accepted knowingly when it shipped:
 
