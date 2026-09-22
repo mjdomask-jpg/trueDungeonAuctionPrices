@@ -1906,7 +1906,25 @@ td.strong { font-weight: 600; color: var(--text-h); }
 
 /* Season + Trent-pricing pickers on one row (Trent vs Forum), wrapping on a
    phone so neither select is crushed. */
-.an-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; }
+.an-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; margin-bottom: 14px; }
+
+/* A bare checkbox in that row has to line up with the selects beside it, and two
+   things were stopping it. `align-items: flex-end` aligns MARGIN boxes, so
+   .an-picker's own 14px bottom margin (it is styled to stand alone too) left the
+   checkbox sitting 14px below the select it reads as a sibling of — the spacing
+   belongs to the row, above. And an unstyled <label> is only its line box tall,
+   so even once bottom-aligned its centre missed the select's; matching the
+   select's height puts the two centre lines together. The .controls row solves
+   the same problem the same way for the Prices page's 10x toggle. */
+.an-controls .an-picker { margin-bottom: 0; }
+.an-controls .tenx-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  height: 32px; /* .an-picker select's height, and 44px with it on a phone. */
+  cursor: pointer;
+}
 
 /* Per-group grouped-bar charts under the Trent vs Forum table — a responsive
    column of small multiples, one per Timelines token group. */
@@ -2316,6 +2334,8 @@ table.an-opens col.col-days { width: 16%; }
   .an-picker select { font-size: 16px; }
   /* .an-picker sets its own height rather than using --control-h. */
   .an-picker select { height: 44px; }
+  /* Kept equal to the select above, so the checkbox stays centred against it. */
+  .an-controls .tenx-check { height: 44px; }
 
   /* Analytics token tables (Augmented, Trent vs Forum) on a phone: tighten the
      horizontal padding and let a long numeric header wrap (e.g. Trent vs Forum's

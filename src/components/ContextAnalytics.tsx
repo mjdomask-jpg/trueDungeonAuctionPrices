@@ -859,6 +859,7 @@ function VenueView({
                   yLabel="Avg price" format={sourcePrice}
                   ariaLabel={`Average price by venue for ${cg.label} tokens in ${season}`}
                   maxLabels={12}
+                  tokenCategories
                 />
               </div>
             ))}
@@ -1009,6 +1010,7 @@ function VariantView({
                       yLabel="Avg price" format={sourcePrice}
                       ariaLabel={`Standard versus Trade 2 average price for ${cg.label} tokens in ${season}`}
                       maxLabels={12}
+                      tokenCategories
                     />
                   </div>
                 ))}

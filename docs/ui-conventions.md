@@ -324,6 +324,17 @@ viewport. This is a browser threshold, not a taste call — the site's controls
 inherit 12px from their uppercase labels, so the override lives in the
 `max-width: 640px` block at the foot of `App.css`.
 
+## Always check clipping on a phone
+
+**Any new chart, table or row of labels gets looked at narrow before it is called
+done.** Clipping is the failure mode this site hits most often, because the
+desktop layout almost always looks fine and much of the traffic is someone on a
+phone — so the desktop view is the one that tells you least. Check the real
+geometry rather than the impression: measure a label's box against its slot and
+against the SVG's own width (`getBBox()` on the `<text>`), or the cell against
+the column. Note that the Browser pane needs a **reload** after a resize, or
+`useMediaQuery` keeps reporting the old width and renders the wrong branch.
+
 ## Shared filter bar & provenance badges
 
 **The context-layer filters are one component, dropped into every in-scope page.**
@@ -575,3 +586,16 @@ Hand-rolled zero-dependency SVG, themed with the same CSS variables. A null data
 point renders as a **gap, never a zero-height bar** — the distinction between "no
 data" and "zero" carries real meaning here, since cadence columns only start in
 2022.
+
+**Trade good names shorten to their abbreviations on a phone.** This is the
+default for any axis or legend labelled with token display names, not a
+per-chart decision: the codes are printed on the physical tokens, so players
+read `AI` or `10x DS` at a glance, and they are what stops a long name from
+clipping in the first place. Use `tokenAbbreviation()` in
+`src/lib/tokenAbbreviations.ts` — the one place that mapping lives, and it
+already understands the synthetic `10x ` prefix. `BoxPlot` and `PriceTimeline`
+apply it to their legends unconditionally; `BarChart` takes it as the opt-in
+`tokenCategories` prop, because five of its seven callers plot auction numbers,
+close dates, months or seasons, where there is nothing to abbreviate. **Axis labels
+only** — the tooltip keeps the full name, so tapping a bar is still how a reader
+who doesn't know a code reads it.

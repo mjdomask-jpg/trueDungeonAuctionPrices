@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { NARROW, useMediaQuery } from '../hooks/useMediaQuery';
+import { tokenAbbreviation } from '../lib/tokenAbbreviations';
 
 // Hand-rolled SVG bar chart — zero dependencies, themes via CSS variables,
 // same approach as PriceTimeline (see the note there on why we don't take a
@@ -31,6 +32,14 @@ export type BarChartProps = {
   ariaLabel: string;
   /** Show every nth category label; defaults to a fit-to-width stride. */
   maxLabels?: number;
+  /**
+   * Opt in when the categories are token display names: phones swap in the
+   * community abbreviations printed on the physical tokens, which is what keeps
+   * a long name from clipping off the axis. Same mechanism as BoxPlot's and
+   * PriceTimeline's legends. Off by default, because the charts that plot
+   * auctions, auctioneers or months have nothing to abbreviate.
+   */
+  tokenCategories?: boolean;
 };
 
 // Below this many categories a phone renders the chart in a compact fit-to-card
@@ -61,6 +70,7 @@ function niceNum(x: number, round: boolean): number {
 
 export function BarChart({
   categories, series, barColors, hints, yLabel, format, ariaLabel, maxLabels = 12,
+  tokenCategories = false,
 }: BarChartProps) {
   const [hover, setHover] = useState<number | null>(null);
   const narrow = useMediaQuery(NARROW);
@@ -106,6 +116,11 @@ export function BarChart({
   const barW = groupW / series.length;
 
   const showLegend = series.length > 1;
+
+  // Axis labels only — the tooltip keeps the full name, so tapping a bar is
+  // still how a reader who doesn't know a code reads it.
+  const axisLabel = (cat: string) => (narrow && tokenCategories ? tokenAbbreviation(cat) : cat);
+
   // Fewer x-labels on a compact chart — the box is half as wide.
   const stride = Math.max(1, Math.ceil(categories.length / (compact ? Math.min(maxLabels, 8) : maxLabels)));
 
@@ -183,7 +198,7 @@ export function BarChart({
           {/* x labels, strided so they never collide */}
           {categories.map((cat, i) => (i % stride === 0 || i === categories.length - 1) && (
             <text key={cat + i} x={M.left + slotW * (i + 0.5)} y={H - M.bottom + 18}
-              textAnchor="middle" fontSize={axisFont} fill="var(--text)">{cat}</text>
+              textAnchor="middle" fontSize={axisFont} fill="var(--text)">{axisLabel(cat)}</text>
           ))}
         </svg>
 
