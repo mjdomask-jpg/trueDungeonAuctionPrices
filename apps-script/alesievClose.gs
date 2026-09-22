@@ -41,7 +41,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-22.1';
+var ALESIEV_VERSION = '2026-09-22.2';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -753,7 +753,10 @@ function alesievSpineRows(contextLots) {
       var q = parseQuantity(lot.name);
       var unit = roundCents(lot.bid / (q.quantity || 1));
       rows.push({
-        trentName: lot.rawName,
+        // `lot.name`, not `lot.rawName` — the NORMALISED name, which is what
+        // processAuction puts in this column for every other lot in the file.
+        // The `(1 of 9)` marker is off by then, as it is on an Aragonite row.
+        trentName: lot.name,
         trentPrice: lot.bid,
         Item: g.rule.item,
         Price: unit,
@@ -849,9 +852,19 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
       targetSeason + ' — check you picked the right auction');
   }
 
+  // A REFUSAL TO WRITE IS NOT A PROBLEM WITH THE ROWS, and keeping the two
+  // apart is what lets a dry run hand over the rows safely.
+  //
+  // Every other abort here means the file could not be read into complete rows
+  // — a name resolved to nothing, a lot size disagreed with itself — and a plan
+  // carrying one is PARTIAL. Handing those to an operator to paste would write
+  // half an auction. This one is different in kind: the rows are whole and
+  // correct, and writing them a second time is the only thing wrong with it.
+  var writeRefusals = [];
   if (alreadyPriced) {
-    aborts.push('this auction already has rows in ' + TABS.prices + '. Importing again would double every ' +
-      'price. If you meant to replace them, delete the existing rows first.');
+    writeRefusals.push('this auction already has rows in ' + TABS.prices + '. Importing again would double every ' +
+      'price. If you meant to replace them, delete the existing rows first — or take the rows you are ' +
+      'missing from the dry run and paste those.');
   }
 
   var result = processAuction(staged.lots, targetSeason, index);
@@ -919,8 +932,12 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
   }
 
   return {
-    ok: aborts.length === 0,
-    aborts: aborts,
+    ok: aborts.length === 0 && writeRefusals.length === 0,
+    aborts: aborts.concat(writeRefusals),
+    // Every lot in the file produced its rows — true even when `ok` is false,
+    // if the only thing standing in the way is a refusal to write. It is what
+    // the dry run gates its pasteable blocks on.
+    rowsComplete: aborts.length === 0,
     cautions: cautions,
     seasons: seasons,
     lots: total,
@@ -946,14 +963,28 @@ function alesievLotNames(lots) {
 /** A short human summary of a plan, for the confirmation dialog. */
 function alesievDescribePlan(plan, auctionId, closeDate) {
   var lines = [], i;
+  // AN ABORT SAYS WHAT IT WOULD HAVE WRITTEN, and until 2026-09-22 it did not —
+  // it printed the problems and returned, so the plan below was never reached.
+  //
+  // That reads as obviously safe and is the wrong call, for the same reason the
+  // publisher's shrink guard was (PIPE-12): ask what a person who MEANT it does
+  // next. Re-importing an auction to pick up rows a newer script writes is a
+  // real errand — `20271` and `20272` needed exactly that when the Random Ultra
+  // Rare lots started reaching the price spine — and the `already has rows`
+  // abort fires on the DRY RUN too, where nothing can be written by definition.
+  // So the one dialog that exists to answer "what would this do?" answered
+  // "nothing", which is true of the writing and useless about the question.
+  //
+  // The aborts still lead, and `ok` still gates every write. This only stops
+  // the description being withheld along with the write.
   if (!plan.ok) {
     lines.push('NOTHING WILL BE WRITTEN — ' + plan.aborts.length + ' problem(s):');
     for (i = 0; i < plan.aborts.length; i++) lines.push('  • ' + plan.aborts[i]);
-    if (plan.cautions.length) {
-      lines.push('');
-      for (i = 0; i < plan.cautions.length; i++) lines.push('  note: ' + plan.cautions[i]);
-    }
-    return lines.join('\n');
+    lines.push('');
+    lines.push(plan.rowsComplete
+      ? 'The rows themselves are complete — what it would have written:'
+      : 'What it got as far as building. INCOMPLETE — at least one lot produced no row, '
+        + 'so this is not a set to paste:');
   }
   lines.push('Auction ' + auctionId + ' — ' + plan.lots + ' rows read:');
   lines.push('  ' + plan.raw.length + ' priced lots  ->  ' + TABS.raw);
@@ -1011,6 +1042,47 @@ function alesievContextWorksheetText(plan, target) {
     var row = plan.context[i];
     var cells = [target.auctionId, target.auctionSeason, target.auctionNumber,
       row.category, row.Item, row.quantity, row.price];
+    var out = [];
+    for (var c = 0; c < cells.length; c++) out.push(tsvCell(cells[c]));
+    lines.push(out.join('\t'));
+  }
+  return lines.join('\n');
+}
+
+/** The header rows the two price tabs are pasted under, in their own order. */
+var ALESIEV_RAW_COLUMNS = ['auctionId', 'auctionSeason', 'auctionNumber',
+  'trentName', 'trentPrice', 'Item', 'Price', 'Category'];
+var ALESIEV_PRICE_COLUMNS = ['auctionId', 'auctionSeason', 'auctionNumber',
+  'Item', 'Price', 'Display Name', 'Category'];
+
+/**
+ * The `prices` and `rawPricesData` rows, as pasteable TSV.
+ *
+ * On an ordinary import these are written for you and nobody needs to see them.
+ * They are handed over for the case the worksheet box already exists to serve —
+ * A DRY RUN, and in particular a re-import. When an auction already has price
+ * rows the import aborts (rightly: running it twice doubles every price), so
+ * the only way to pick up rows a newer script would write is to take the ones
+ * you are missing and paste them. Before this the dialog printed counts and the
+ * operator had no way to get the rows at all.
+ *
+ * `kind` picks the tab, because the two differ in column ORDER rather than in
+ * content and pasting one under the other's header would put the per-token
+ * price where the lot total goes. Built from the same field order
+ * `importAlesievClose` writes, and `alesiev-close.test.mjs` pins the two
+ * together so they cannot drift apart.
+ */
+function alesievPriceWorksheetText(plan, target, kind) {
+  var rows = kind === 'raw' ? plan.raw : plan.prices;
+  if (!rows || !rows.length) return '';
+  var header = kind === 'raw' ? ALESIEV_RAW_COLUMNS : ALESIEV_PRICE_COLUMNS;
+  var lines = [header.join('\t')];
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var cells = [target.auctionId, target.auctionSeason, target.auctionNumber].concat(
+      kind === 'raw'
+        ? [r.trentName, r.trentPrice, r.Item, r.Price, r.Category]
+        : [r.Item, r.Price, r['Display Name'], r.Category]);
     var out = [];
     for (var c = 0; c < cells.length; c++) out.push(tsvCell(cells[c]));
     lines.push(out.join('\t'));
@@ -1129,7 +1201,10 @@ function dryRunAlesievClose() {
   var plan = alesievBuildPlan(target);
   ui.alert('Dry run — nothing written (script ' + ALESIEV_VERSION + ')',
     alesievDescribePlan(plan, target.auctionId, null), ui.ButtonSet.OK);
-  alesievShowContext(plan, target);
+  // The price rows too, and only here: a real import writes them itself, and
+  // handing the operator a second copy to paste is how an auction gets its
+  // prices twice.
+  alesievShowContext(plan, target, true);
 }
 
 function importAlesievClose() {
@@ -1320,10 +1395,15 @@ function alesievClearOutcome(sheet, rowIndex, outcomeCol, rowValues) {
  * so a dry run can be checked, and so a failed import still hands over what it
  * had worked out.
  */
-function alesievShowContext(plan, target) {
+function alesievShowContext(plan, target, withPrices) {
   var text = alesievContextWorksheetText(plan, target);
   var unknown = plan.unresolved ? contextWorksheetText(plan, target) : '';
-  if (!text && !unknown) return;
+  // Only when every lot produced its rows. A plan that aborted on a name it
+  // could not resolve is PARTIAL, and pasting it would write half an auction.
+  var showPrices = withPrices && plan.rowsComplete;
+  var priceText = showPrices ? alesievPriceWorksheetText(plan, target, 'prices') : '';
+  var rawText = showPrices ? alesievPriceWorksheetText(plan, target, 'raw') : '';
+  if (!text && !unknown && !priceText && !rawText) return;
   var esc = function (t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var html = '<div style="font:13px/1.5 Arial,sans-serif">';
   if (text) {
@@ -1341,10 +1421,27 @@ function alesievShowContext(plan, target) {
       '<textarea readonly style="width:100%;height:7em;font:12px monospace" onclick="this.select()">' +
       esc(unknown) + '</textarea>';
   }
+  if (priceText || rawText) {
+    html += '<p style="margin-top:1em">A real import writes these two for you. They are here because a ' +
+      'dry run cannot, and because an auction that <b>already has price rows</b> aborts the import — so ' +
+      'taking the rows you are missing and pasting them is the only way to pick up rows a newer script ' +
+      'writes. <b>Each block has its own header order</b>; paste under the matching one, and do not ' +
+      'paste a row the tab already holds.</p>';
+    if (priceText) {
+      html += '<p style="margin:0.6em 0 0.2em"><code>prices</code></p>' +
+        '<textarea readonly style="width:100%;height:5em;font:12px monospace" onclick="this.select()">' +
+        esc(priceText) + '</textarea>';
+    }
+    if (rawText) {
+      html += '<p style="margin:0.6em 0 0.2em"><code>rawPricesData</code></p>' +
+        '<textarea readonly style="width:100%;height:7em;font:12px monospace" onclick="this.select()">' +
+        esc(rawText) + '</textarea>';
+    }
+  }
   html += '</div>';
   SpreadsheetApp.getUi().showModalDialog(
-    HtmlService.createHtmlOutput(html).setWidth(720).setHeight(430),
-    'Context items');
+    HtmlService.createHtmlOutput(html).setWidth(720).setHeight(560),
+    priceText || rawText ? 'Rows this export produces' : 'Context items');
 }
 
 // Lets Node load the pure functions for testing; Apps Script has no `module`.
@@ -1371,6 +1468,7 @@ if (typeof module !== 'undefined') {
     alesievCloseDateProblem: alesievCloseDateProblem,
     alesievClearOutcome: alesievClearOutcome,
     alesievContextWorksheetText: alesievContextWorksheetText,
+    alesievPriceWorksheetText: alesievPriceWorksheetText,
     alesievSiteAuctions: alesievSiteAuctions,
     alesievPickerList: alesievPickerList,
     alesievPickerLine: alesievPickerLine,
