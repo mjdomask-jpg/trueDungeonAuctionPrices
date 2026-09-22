@@ -151,7 +151,9 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20192,2019,2,Patron Pin,105,Patron Pin,Premium
 20192,2019,2,PCH,3,Potion Condensed Healing,Bonus
 20192,2019,2,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
+20192,2019,2,Rare Bag,81,Rare Bag,Condensed
 20192,2019,2,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
+20192,2019,2,Uncommon Bag,43,Uncommon Bag,Condensed
 20192,2019,2,Wish Ring,240,Wish Ring,Trade 4
 20193,2019,3,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20193,2019,3,1k Bonus,41,5th Tooth of Cavadar,Premium
@@ -808,6 +810,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20214,2021,4,Treasure Chip,5,Treasure Chip (each),Preorder
 20214,2021,4,Ultra Rare,115,Chosen Ultra Rare,Ultra Rare
 20214,2021,4,Wish Ring,175,Wish Ring,Trade 4
+20214,2021,4,Random Ultra Rare,77.5,Random Ultra Rare,Ultra Rare
 20215,2021,5,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 20215,2021,5,1k Bonus,25,7th Tooth of Cavadar,Premium
 20215,2021,5,2k Bonus,2,Goggles of Ethereal Vision,Premium
@@ -952,6 +955,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202111,2021,11,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
 202111,2021,11,Uncommon Bag,60,Uncommon Bag,Condensed
 202111,2021,11,Wish Ring,200,Wish Ring,Trade 4
+202111,2021,11,Random Ultra Rare,92.5,Random Ultra Rare,Ultra Rare
 202112,2021,12,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202112,2021,12,1k Bonus,11,7th Tooth of Cavadar,Premium
 202112,2021,12,2k Bonus,0.25,Goggles of Ethereal Vision,Premium
@@ -1162,6 +1166,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202121,2021,21,Philosopher's Stone,3,Philosopher's Stone,Trade 1
 202121,2021,21,Ultra Rare,110,Chosen Ultra Rare,Ultra Rare
 202121,2021,21,Wish Ring,205,Wish Ring,Trade 4
+202121,2021,21,Random Ultra Rare,80,Random Ultra Rare,Ultra Rare
 202122,2021,22,"1,000 GP Gold Bar",13.5,"1,000 GP Gold Bar",Trade 2
 202122,2021,22,1k Bonus,10,7th Tooth of Cavadar,Premium
 202122,2021,22,2k Bonus,0.25,Goggles of Ethereal Vision,Premium
@@ -1330,7 +1335,9 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20225,2022,5,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 20225,2022,5,Preorder Bonus,1,+1 Turkey Leg,Preorder
 20225,2022,5,Treasure Chip,2,Treasure Chip (each),Preorder
+20225,2022,5,Rare Bag,70,Rare Bag,Condensed
 20225,2022,5,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
+20225,2022,5,Uncommon Bag,55,Uncommon Bag,Condensed
 20225,2022,5,Wish Ring,175,Wish Ring,Trade 4
 20226,2022,6,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 20226,2022,6,1k Bonus,75,Ring of the 5th Circle,Premium
@@ -2285,6 +2292,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202249,2022,49,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 202249,2022,49,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202249,2022,49,Wish Ring,215,Wish Ring,Trade 4
+202249,2022,49,Random Ultra Rare,75,Random Ultra Rare,Ultra Rare
 202250,2022,50,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 202250,2022,50,1k Bonus,85,Ring of the 5th Circle,Premium
 202250,2022,50,2k Bonus,8,+1 Turkey Leg of Smiting,Premium
@@ -2376,6 +2384,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20233,2023,3,Treasure Chip,2.25,Treasure Chip (each),Preorder
 20233,2023,3,Ultra Rare,95,Chosen Ultra Rare,Ultra Rare
 20233,2023,3,Wish Ring,205,Wish Ring,Trade 4
+20233,2023,3,Random Ultra Rare,75,Random Ultra Rare,Ultra Rare
 20234,2023,4,"1,000 GP Gold Bar",13,"1,000 GP Gold Bar",Trade 2
 20234,2023,4,1k Bonus,85,Ring of the 4th Circle,Premium
 20234,2023,4,2k Bonus,16,Grunnel's +2 Pointy Stick,Premium
@@ -2867,6 +2876,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202321,2023,21,Treasure Chip,3.67,Treasure Chip (each),Preorder
 202321,2023,21,Ultra Rare,90,Chosen Ultra Rare,Ultra Rare
 202321,2023,21,Wish Ring,190,Wish Ring,Trade 4
+202321,2023,21,Random Ultra Rare,75,Random Ultra Rare,Ultra Rare
 202322,2023,22,"1,000 GP Gold Bar",15,"1,000 GP Gold Bar",Trade 2
 202322,2023,22,"1,000 GP Gold Bar",12.5,"1,000 GP Gold Bar",Trade 2
 202322,2023,22,1k Bonus,95.01,Ring of the 4th Circle,Premium
@@ -3219,6 +3229,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202334,2023,34,Treasure Chip,3.33,Treasure Chip (each),Preorder
 202334,2023,34,Ultra Rare,85,Chosen Ultra Rare,Ultra Rare
 202334,2023,34,Wish Ring,175,Wish Ring,Trade 4
+202334,2023,34,Random Ultra Rare,76,Random Ultra Rare,Ultra Rare
 202335,2023,35,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 202335,2023,35,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202335,2023,35,1k Bonus,95,Ring of the 4th Circle,Premium
@@ -4204,6 +4215,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202415,2024,15,Treasure Chip,3.1,Treasure Chip (each),Preorder
 202415,2024,15,Ultra Rare,80,Chosen Ultra Rare,Ultra Rare
 202415,2024,15,Wish Ring,146,Wish Ring,Trade 4
+202415,2024,15,Random Ultra Rare,45.5,Random Ultra Rare,Ultra Rare
 202416,2024,16,"1,000 GP Gold Bar",8.75,"1,000 GP Gold Bar",Trade 2
 202416,2024,16,"1,000 GP Gold Bar",9.75,"1,000 GP Gold Bar",Trade 2
 202416,2024,16,1k Bonus,125,Ring of the 3rd Circle,Premium
@@ -5095,6 +5107,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20251,2025,1,Preorder Bonus,1,Averon's Cherry Mead,Preorder
 20251,2025,1,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
 20251,2025,1,Ultra Rare,70,Chosen Ultra Rare,Ultra Rare
+20251,2025,1,Random Ultra Rare,50,Random Ultra Rare,Ultra Rare
 20252,2025,2,"1,000 GP Gold Bar",9,"1,000 GP Gold Bar",Trade 2
 20252,2025,2,1k Bonus,75,Ring of the 2nd Circle,Premium
 20252,2025,2,2k Bonus,70,Mark of the 2nd Tenet,Premium
@@ -6166,6 +6179,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202534,2025,34,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
 202534,2025,34,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
 202534,2025,34,Wish Ring,127,Wish Ring,Trade 4
+202534,2025,34,Random Ultra Rare,34.5,Random Ultra Rare,Ultra Rare
 202535,2025,35,"1,000 GP Gold Bar",9.51,"1,000 GP Gold Bar",Trade 2
 202535,2025,35,"1,000 GP Gold Bar",9.26,"1,000 GP Gold Bar",Trade 2
 202535,2025,35,1k Bonus,66,Ring of the 2nd Circle,Premium
@@ -6256,6 +6270,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202537,2025,37,Philosopher's Stone,2,Philosopher's Stone,Trade 1
 202537,2025,37,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
 202537,2025,37,Wish Ring,120,Wish Ring,Trade 4
+202537,2025,37,Random Ultra Rare,27.5,Random Ultra Rare,Ultra Rare
 202538,2025,38,"1,000 GP Gold Bar",10.3,"1,000 GP Gold Bar",Trade 2
 202538,2025,38,"1,000 GP Gold Bar",9.51,"1,000 GP Gold Bar",Trade 2
 202538,2025,38,1k Bonus,80,Ring of the 2nd Circle,Premium
@@ -6348,6 +6363,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202540,2025,40,Philosopher's Stone,2.2,Philosopher's Stone,Trade 1
 202540,2025,40,Ultra Rare,56,Chosen Ultra Rare,Ultra Rare
 202540,2025,40,Wish Ring,95,Wish Ring,Trade 4
+202540,2025,40,Random Ultra Rare,36,Random Ultra Rare,Ultra Rare
 202541,2025,41,"1,000 GP Gold Bar",11,"1,000 GP Gold Bar",Trade 2
 202541,2025,41,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 202541,2025,41,1k Bonus,81,Ring of the 2nd Circle,Premium
@@ -6441,6 +6457,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202543,2025,43,Philosopher's Stone,2.05,Philosopher's Stone,Trade 1
 202543,2025,43,Ultra Rare,63,Chosen Ultra Rare,Ultra Rare
 202543,2025,43,Wish Ring,140,Wish Ring,Trade 4
+202543,2025,43,Random Ultra Rare,41,Random Ultra Rare,Ultra Rare
 202544,2025,44,"1,000 GP Gold Bar",12,"1,000 GP Gold Bar",Trade 2
 202544,2025,44,"1,000 GP Gold Bar",10.25,"1,000 GP Gold Bar",Trade 2
 202544,2025,44,1k Bonus,86,Ring of the 2nd Circle,Premium
@@ -6613,6 +6630,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20264,2026,4,Treasure Chip,3.3,Treasure Chip (each),Preorder
 20264,2026,4,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 20264,2026,4,Wish Ring,130,Wish Ring,Trade 4
+20264,2026,4,Random Ultra Rare,41,Random Ultra Rare,Ultra Rare
 20265,2026,5,"1,000 GP Gold Bar",9.5,"1,000 GP Gold Bar",Trade 2
 20265,2026,5,"1,000 GP Gold Bar",7.76,"1,000 GP Gold Bar",Trade 2
 20265,2026,5,1k Bonus,125,Ring of the 1st Circle,Premium
@@ -7624,6 +7642,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202632,2026,32,Philosopher's Stone,1.1,Philosopher's Stone,Trade 1
 202632,2026,32,Ultra Rare,42,Chosen Ultra Rare,Ultra Rare
 202632,2026,32,Wish Ring,86,Wish Ring,Trade 4
+202632,2026,32,Random Ultra Rare,34.5,Random Ultra Rare,Ultra Rare
 202633,2026,33,"1,000 GP Gold Bar",8.33,"1,000 GP Gold Bar",Trade 2
 202633,2026,33,1k Bonus,91.25,Ring of the 1st Circle,Premium
 202633,2026,33,2k Bonus,88.25,Mark of the 1st Tenet,Premium
@@ -7642,6 +7661,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202633,2026,33,Philosopher's Stone,1.18,Philosopher's Stone,Trade 1
 202633,2026,33,Ultra Rare,45.03,Chosen Ultra Rare,Ultra Rare
 202633,2026,33,Wish Ring,105,Wish Ring,Trade 4
+202633,2026,33,Random Ultra Rare,39.98,Random Ultra Rare,Ultra Rare
 202634,2026,34,"1,000 GP Gold Bar",8.5,"1,000 GP Gold Bar",Trade 2
 202634,2026,34,1k Bonus,100,Ring of the 1st Circle,Premium
 202634,2026,34,2k Bonus,85,Mark of the 1st Tenet,Premium
@@ -7974,6 +7994,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202644,2026,44,Ultra Rare,52,Chosen Ultra Rare,Ultra Rare
 202644,2026,44,Ultra Rare,61,Chosen Ultra Rare,Ultra Rare
 202644,2026,44,Wish Ring,111,Wish Ring,Trade 4
+202644,2026,44,Random Ultra Rare,48,Random Ultra Rare,Ultra Rare
 202645,2026,45,"1,000 GP Gold Bar",8.1,"1,000 GP Gold Bar",Trade 2
 202645,2026,45,2k Bonus,121,Mark of the 1st Tenet,Premium
 202645,2026,45,8k Bonus,226,Path to Enlightenment (Fragment 4),Premium
@@ -7992,6 +8013,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202645,2026,45,Philosopher's Stone,1.5,Philosopher's Stone,Trade 1
 202645,2026,45,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202645,2026,45,Wish Ring,120,Wish Ring,Trade 4
+202645,2026,45,Random Ultra Rare,55,Random Ultra Rare,Ultra Rare
+202645,2026,45,Golden Ticket,701,Golden Ticket,Golden Ticket
 202646,2026,46,"1,000 GP Gold Bar",7,"1,000 GP Gold Bar",Trade 2
 202646,2026,46,1k Bonus,42,Ring of the 1st Circle,Premium
 202646,2026,46,2k Bonus,74,Mark of the 1st Tenet,Premium
@@ -8011,6 +8034,7 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202646,2026,46,Philosopher's Stone,0.75,Philosopher's Stone,Trade 1
 202646,2026,46,Ultra Rare,48.5,Chosen Ultra Rare,Ultra Rare
 202646,2026,46,Wish Ring,120,Wish Ring,Trade 4
+202646,2026,46,Random Ultra Rare,43.56,Random Ultra Rare,Ultra Rare
 202647,2026,47,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202647,2026,47,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202647,2026,47,1k Bonus,62,Ring of the 1st Circle,Premium
@@ -8048,43 +8072,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202647,2026,47,Ultra Rare,60,Chosen Ultra Rare,Ultra Rare
 202647,2026,47,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
 202647,2026,47,Wish Ring,117,Wish Ring,Trade 4
-20275,2027,5,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
-20275,2027,5,1k Bonus,61,Ioun Stone Warden Wrath,Premium
-20275,2027,5,Patron Pin,350,Patron Code,Premium
-20275,2027,5,2k Bonus,58,Shirt of Cat's Gift,Premium
-20275,2027,5,8k Bonus,1055,1st Codex of the Familiar,Premium
-20275,2027,5,Alchemist's Ink,2.47,Alchemist's Ink,Trade 1
-20275,2027,5,Alchemist's Parchment,1.9,Alchemist's Parchment,Trade 1
-20275,2027,5,Aragonite,9,Aragonite,Trade 2
-20275,2027,5,Darkwood Plank,0.8,Darkwood Plank,Trade 1
-20275,2027,5,Dwarven Steel,1.3,Dwarven Steel,Trade 1
-20275,2027,5,Elven Bismuth,36,Elven Bismuth,Trade 2
-20275,2027,5,Enchanter's Munition,4.1,Enchanter's Munition,Trade 1
-20275,2027,5,Minotaur Hide,3.2,Minotaur Hide,Trade 1
-20275,2027,5,Mystic Silk,1.28,Mystic Silk,Trade 1
-20275,2027,5,Oil of Enchantment,48.5,Oil of Enchantment,Trade 2
-20275,2027,5,Philosopher's Stone,1.28,Philosopher's Stone,Trade 1
-20275,2027,5,Preorder Bonus,0.63,Drake's Elixir,Preorder
-20275,2027,5,Treasure Chip,3.4,Treasure Chip (each),Preorder
-20275,2027,5,Ultra Rare,51,Chosen Ultra Rare,Ultra Rare
-20275,2027,5,Wish Ring,101,Wish Ring,Trade 4
-20275,2027,5,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
-20275,2027,5,1k Bonus,60,Ioun Stone Warden Wrath,Premium
-20275,2027,5,2k Bonus,57,Shirt of Cat's Gift,Premium
-20275,2027,5,Alchemist's Ink,2.37,Alchemist's Ink,Trade 1
-20275,2027,5,Alchemist's Parchment,1.6,Alchemist's Parchment,Trade 1
-20275,2027,5,Aragonite,7.5,Aragonite,Trade 2
-20275,2027,5,Darkwood Plank,0.65,Darkwood Plank,Trade 1
-20275,2027,5,Dwarven Steel,1.2,Dwarven Steel,Trade 1
-20275,2027,5,Elven Bismuth,34,Elven Bismuth,Trade 2
-20275,2027,5,Enchanter's Munition,4,Enchanter's Munition,Trade 1
-20275,2027,5,Minotaur Hide,3.1,Minotaur Hide,Trade 1
-20275,2027,5,Mystic Silk,1.1,Mystic Silk,Trade 1
-20275,2027,5,Oil of Enchantment,47.5,Oil of Enchantment,Trade 2
-20275,2027,5,Philosopher's Stone,0.85,Philosopher's Stone,Trade 1
-20275,2027,5,Preorder Bonus,0.5,Drake's Elixir,Preorder
-20275,2027,5,Treasure Chip,3.35,Treasure Chip (each),Preorder
-20275,2027,5,Ultra Rare,46,Chosen Ultra Rare,Ultra Rare
+202647,2026,47,Random Ultra Rare,55,Random Ultra Rare,Ultra Rare
+202647,2026,47,Random Ultra Rare,57,Random Ultra Rare,Ultra Rare
 20271,2027,1,"1,000 GP Gold Bar",6.4,"1,000 GP Gold Bar",Trade 2
 20271,2027,1,1k Bonus,61,Ioun Stone Warden Wrath,Premium
 20271,2027,1,2k Bonus,86,Shirt of Cat's Gift,Premium
@@ -8121,6 +8110,8 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20271,2027,1,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20271,2027,1,Treasure Chip,4,Treasure Chip (each),Preorder
 20271,2027,1,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
+20271,2027,1,Random Ultra Rare,47,Random Ultra Rare,Ultra Rare
+20271,2027,1,Random Ultra Rare,36,Random Ultra Rare,Ultra Rare
 20272,2027,2,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
 20272,2027,2,1k Bonus,66,Ioun Stone Warden Wrath,Premium
 20272,2027,2,2k Bonus,71,Shirt of Cat's Gift,Premium
@@ -8157,6 +8148,45 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20272,2027,2,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20272,2027,2,Treasure Chip,4.9,Treasure Chip (each),Preorder
 20272,2027,2,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
+20272,2027,2,Random Ultra Rare,31,Random Ultra Rare,Ultra Rare
+20272,2027,2,Random Ultra Rare,31,Random Ultra Rare,Ultra Rare
+20273,2027,3,"1,000 GP Gold Bar",7.57,"1,000 GP Gold Bar",Trade 2
+20273,2027,3,1k Bonus,82.22,Ioun Stone Warden Wrath,Premium
+20273,2027,3,2k Bonus,95,Shirt of Cat's Gift,Premium
+20273,2027,3,8k Bonus,1705,1st Codex of the Familiar,Premium
+20273,2027,3,Alchemist's Ink,2.63,Alchemist's Ink,Trade 1
+20273,2027,3,Alchemist's Parchment,1.43,Alchemist's Parchment,Trade 1
+20273,2027,3,Aragonite,8.25,Aragonite,Trade 2
+20273,2027,3,Darkwood Plank,0.73,Darkwood Plank,Trade 1
+20273,2027,3,Dwarven Steel,1.03,Dwarven Steel,Trade 1
+20273,2027,3,Elven Bismuth,28,Elven Bismuth,Trade 2
+20273,2027,3,Enchanter's Munition,3.45,Enchanter's Munition,Trade 1
+20273,2027,3,Minotaur Hide,2.13,Minotaur Hide,Trade 1
+20273,2027,3,Mystic Silk,0.55,Mystic Silk,Trade 1
+20273,2027,3,Oil of Enchantment,55,Oil of Enchantment,Trade 2
+20273,2027,3,Patron Pin,405,Patron Code,Premium
+20273,2027,3,Philosopher's Stone,1.1,Philosopher's Stone,Trade 1
+20273,2027,3,Preorder Bonus,0.63,Drake's Elixir,Preorder
+20273,2027,3,Treasure Chip,4.52,Treasure Chip (each),Preorder
+20273,2027,3,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
+20273,2027,3,Wish Ring,81,Wish Ring,Trade 4
+20273,2027,3,"1,000 GP Gold Bar",5.25,"1,000 GP Gold Bar",Trade 2
+20273,2027,3,1k Bonus,71,Ioun Stone Warden Wrath,Premium
+20273,2027,3,2k Bonus,75.1,Shirt of Cat's Gift,Premium
+20273,2027,3,Alchemist's Ink,2.55,Alchemist's Ink,Trade 1
+20273,2027,3,Alchemist's Parchment,1.33,Alchemist's Parchment,Trade 1
+20273,2027,3,Aragonite,7.25,Aragonite,Trade 2
+20273,2027,3,Darkwood Plank,0.63,Darkwood Plank,Trade 1
+20273,2027,3,Dwarven Steel,0.73,Dwarven Steel,Trade 1
+20273,2027,3,Elven Bismuth,23.5,Elven Bismuth,Trade 2
+20273,2027,3,Enchanter's Munition,3.4,Enchanter's Munition,Trade 1
+20273,2027,3,Minotaur Hide,2.13,Minotaur Hide,Trade 1
+20273,2027,3,Mystic Silk,0.55,Mystic Silk,Trade 1
+20273,2027,3,Oil of Enchantment,37.75,Oil of Enchantment,Trade 2
+20273,2027,3,Philosopher's Stone,0.75,Philosopher's Stone,Trade 1
+20273,2027,3,Preorder Bonus,0.63,Drake's Elixir,Preorder
+20273,2027,3,Treasure Chip,4.5,Treasure Chip (each),Preorder
+20273,2027,3,Ultra Rare,51.25,Chosen Ultra Rare,Ultra Rare
 20274,2027,4,"1,000 GP Gold Bar",6,"1,000 GP Gold Bar",Trade 2
 20274,2027,4,1k Bonus,66,Ioun Stone Warden Wrath,Premium
 20274,2027,4,2k Bonus,71,Shirt of Cat's Gift,Premium
@@ -8195,43 +8225,43 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20274,2027,4,Preorder Bonus,0.38,Drake's Elixir,Preorder
 20274,2027,4,Treasure Chip,4,Treasure Chip (each),Preorder
 20274,2027,4,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
-20273,2027,3,"1,000 GP Gold Bar",7.57,"1,000 GP Gold Bar",Trade 2
-20273,2027,3,1k Bonus,82.22,Ioun Stone Warden Wrath,Premium
-20273,2027,3,2k Bonus,95,Shirt of Cat's Gift,Premium
-20273,2027,3,8k Bonus,1705,1st Codex of the Familiar,Premium
-20273,2027,3,Alchemist's Ink,2.63,Alchemist's Ink,Trade 1
-20273,2027,3,Alchemist's Parchment,1.43,Alchemist's Parchment,Trade 1
-20273,2027,3,Aragonite,8.25,Aragonite,Trade 2
-20273,2027,3,Darkwood Plank,0.73,Darkwood Plank,Trade 1
-20273,2027,3,Dwarven Steel,1.03,Dwarven Steel,Trade 1
-20273,2027,3,Elven Bismuth,28,Elven Bismuth,Trade 2
-20273,2027,3,Enchanter's Munition,3.45,Enchanter's Munition,Trade 1
-20273,2027,3,Minotaur Hide,2.13,Minotaur Hide,Trade 1
-20273,2027,3,Mystic Silk,0.55,Mystic Silk,Trade 1
-20273,2027,3,Oil of Enchantment,55,Oil of Enchantment,Trade 2
-20273,2027,3,Patron Pin,405,Patron Code,Premium
-20273,2027,3,Philosopher's Stone,1.1,Philosopher's Stone,Trade 1
-20273,2027,3,Preorder Bonus,0.63,Drake's Elixir,Preorder
-20273,2027,3,Treasure Chip,4.52,Treasure Chip (each),Preorder
-20273,2027,3,Ultra Rare,75,Chosen Ultra Rare,Ultra Rare
-20273,2027,3,Wish Ring,81,Wish Ring,Trade 4
-20273,2027,3,"1,000 GP Gold Bar",5.25,"1,000 GP Gold Bar",Trade 2
-20273,2027,3,1k Bonus,71,Ioun Stone Warden Wrath,Premium
-20273,2027,3,2k Bonus,75.1,Shirt of Cat's Gift,Premium
-20273,2027,3,Alchemist's Ink,2.55,Alchemist's Ink,Trade 1
-20273,2027,3,Alchemist's Parchment,1.33,Alchemist's Parchment,Trade 1
-20273,2027,3,Aragonite,7.25,Aragonite,Trade 2
-20273,2027,3,Darkwood Plank,0.63,Darkwood Plank,Trade 1
-20273,2027,3,Dwarven Steel,0.73,Dwarven Steel,Trade 1
-20273,2027,3,Elven Bismuth,23.5,Elven Bismuth,Trade 2
-20273,2027,3,Enchanter's Munition,3.4,Enchanter's Munition,Trade 1
-20273,2027,3,Minotaur Hide,2.13,Minotaur Hide,Trade 1
-20273,2027,3,Mystic Silk,0.55,Mystic Silk,Trade 1
-20273,2027,3,Oil of Enchantment,37.75,Oil of Enchantment,Trade 2
-20273,2027,3,Philosopher's Stone,0.75,Philosopher's Stone,Trade 1
-20273,2027,3,Preorder Bonus,0.63,Drake's Elixir,Preorder
-20273,2027,3,Treasure Chip,4.5,Treasure Chip (each),Preorder
-20273,2027,3,Ultra Rare,51.25,Chosen Ultra Rare,Ultra Rare
+20275,2027,5,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
+20275,2027,5,1k Bonus,61,Ioun Stone Warden Wrath,Premium
+20275,2027,5,Patron Pin,350,Patron Code,Premium
+20275,2027,5,2k Bonus,58,Shirt of Cat's Gift,Premium
+20275,2027,5,8k Bonus,1055,1st Codex of the Familiar,Premium
+20275,2027,5,Alchemist's Ink,2.47,Alchemist's Ink,Trade 1
+20275,2027,5,Alchemist's Parchment,1.9,Alchemist's Parchment,Trade 1
+20275,2027,5,Aragonite,9,Aragonite,Trade 2
+20275,2027,5,Darkwood Plank,0.8,Darkwood Plank,Trade 1
+20275,2027,5,Dwarven Steel,1.3,Dwarven Steel,Trade 1
+20275,2027,5,Elven Bismuth,36,Elven Bismuth,Trade 2
+20275,2027,5,Enchanter's Munition,4.1,Enchanter's Munition,Trade 1
+20275,2027,5,Minotaur Hide,3.2,Minotaur Hide,Trade 1
+20275,2027,5,Mystic Silk,1.28,Mystic Silk,Trade 1
+20275,2027,5,Oil of Enchantment,48.5,Oil of Enchantment,Trade 2
+20275,2027,5,Philosopher's Stone,1.28,Philosopher's Stone,Trade 1
+20275,2027,5,Preorder Bonus,0.63,Drake's Elixir,Preorder
+20275,2027,5,Treasure Chip,3.4,Treasure Chip (each),Preorder
+20275,2027,5,Ultra Rare,51,Chosen Ultra Rare,Ultra Rare
+20275,2027,5,Wish Ring,101,Wish Ring,Trade 4
+20275,2027,5,"1,000 GP Gold Bar",6.2,"1,000 GP Gold Bar",Trade 2
+20275,2027,5,1k Bonus,60,Ioun Stone Warden Wrath,Premium
+20275,2027,5,2k Bonus,57,Shirt of Cat's Gift,Premium
+20275,2027,5,Alchemist's Ink,2.37,Alchemist's Ink,Trade 1
+20275,2027,5,Alchemist's Parchment,1.6,Alchemist's Parchment,Trade 1
+20275,2027,5,Aragonite,7.5,Aragonite,Trade 2
+20275,2027,5,Darkwood Plank,0.65,Darkwood Plank,Trade 1
+20275,2027,5,Dwarven Steel,1.2,Dwarven Steel,Trade 1
+20275,2027,5,Elven Bismuth,34,Elven Bismuth,Trade 2
+20275,2027,5,Enchanter's Munition,4,Enchanter's Munition,Trade 1
+20275,2027,5,Minotaur Hide,3.1,Minotaur Hide,Trade 1
+20275,2027,5,Mystic Silk,1.1,Mystic Silk,Trade 1
+20275,2027,5,Oil of Enchantment,47.5,Oil of Enchantment,Trade 2
+20275,2027,5,Philosopher's Stone,0.85,Philosopher's Stone,Trade 1
+20275,2027,5,Preorder Bonus,0.5,Drake's Elixir,Preorder
+20275,2027,5,Treasure Chip,3.35,Treasure Chip (each),Preorder
+20275,2027,5,Ultra Rare,46,Chosen Ultra Rare,Ultra Rare
 20276,2027,6,"1,000 GP Gold Bar",7,"1,000 GP Gold Bar",Trade 2
 20276,2027,6,1k Bonus,92,Ioun Stone Warden Wrath,Premium
 20276,2027,6,2k Bonus,100,Shirt of Cat's Gift,Premium
@@ -8269,43 +8299,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20276,2027,6,Preorder Bonus,0.63,Drake's Elixir,Preorder
 20276,2027,6,Treasure Chip,4.5,Treasure Chip (each),Preorder
 20276,2027,6,Ultra Rare,50.12,Chosen Ultra Rare,Ultra Rare
-202710,2027,10,"1,000 GP Gold Bar",7.5,"1,000 GP Gold Bar",Trade 2
-202710,2027,10,1k Bonus,88,Ioun Stone Warden Wrath,Premium
-202710,2027,10,2k Bonus,91.25,Shirt of Cat's Gift,Premium
-202710,2027,10,8k Bonus,1606,1st Codex of the Familiar,Premium
-202710,2027,10,Alchemist's Ink,2.6,Alchemist's Ink,Trade 1
-202710,2027,10,Alchemist's Parchment,1.6,Alchemist's Parchment,Trade 1
-202710,2027,10,Aragonite,11,Aragonite,Trade 2
-202710,2027,10,Darkwood Plank,0.73,Darkwood Plank,Trade 1
-202710,2027,10,Dwarven Steel,1.7,Dwarven Steel,Trade 1
-202710,2027,10,Elven Bismuth,32,Elven Bismuth,Trade 2
-202710,2027,10,Enchanter's Munition,3.7,Enchanter's Munition,Trade 1
-202710,2027,10,Minotaur Hide,2.38,Minotaur Hide,Trade 1
-202710,2027,10,Mystic Silk,0.73,Mystic Silk,Trade 1
-202710,2027,10,Oil of Enchantment,41,Oil of Enchantment,Trade 2
-202710,2027,10,Patron Pin,435,Patron Code,Premium
-202710,2027,10,Philosopher's Stone,1,Philosopher's Stone,Trade 1
-202710,2027,10,Preorder Bonus,0.63,Drake's Elixir,Preorder
-202710,2027,10,Treasure Chip,4.5,Treasure Chip (each),Preorder
-202710,2027,10,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
-202710,2027,10,Wish Ring,106.44,Wish Ring,Trade 4
-202710,2027,10,"1,000 GP Gold Bar",6.31,"1,000 GP Gold Bar",Trade 2
-202710,2027,10,1k Bonus,81.25,Ioun Stone Warden Wrath,Premium
-202710,2027,10,2k Bonus,90,Shirt of Cat's Gift,Premium
-202710,2027,10,Alchemist's Ink,2.4,Alchemist's Ink,Trade 1
-202710,2027,10,Alchemist's Parchment,1.4,Alchemist's Parchment,Trade 1
-202710,2027,10,Aragonite,8.5,Aragonite,Trade 2
-202710,2027,10,Darkwood Plank,0.53,Darkwood Plank,Trade 1
-202710,2027,10,Dwarven Steel,1.6,Dwarven Steel,Trade 1
-202710,2027,10,Elven Bismuth,26,Elven Bismuth,Trade 2
-202710,2027,10,Enchanter's Munition,3.7,Enchanter's Munition,Trade 1
-202710,2027,10,Minotaur Hide,2.28,Minotaur Hide,Trade 1
-202710,2027,10,Mystic Silk,0.55,Mystic Silk,Trade 1
-202710,2027,10,Oil of Enchantment,34.75,Oil of Enchantment,Trade 2
-202710,2027,10,Philosopher's Stone,0.79,Philosopher's Stone,Trade 1
-202710,2027,10,Preorder Bonus,0.63,Drake's Elixir,Preorder
-202710,2027,10,Treasure Chip,4,Treasure Chip (each),Preorder
-202710,2027,10,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 20277,2027,7,"1,000 GP Gold Bar",8.25,"1,000 GP Gold Bar",Trade 2
 20277,2027,7,1k Bonus,96,Ioun Stone Warden Wrath,Premium
 20277,2027,7,2k Bonus,101,Shirt of Cat's Gift,Premium
@@ -8343,6 +8336,43 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20277,2027,7,Preorder Bonus,0.66,Drake's Elixir,Preorder
 20277,2027,7,Treasure Chip,4,Treasure Chip (each),Preorder
 20277,2027,7,Ultra Rare,55,Chosen Ultra Rare,Ultra Rare
+202710,2027,10,"1,000 GP Gold Bar",7.5,"1,000 GP Gold Bar",Trade 2
+202710,2027,10,1k Bonus,88,Ioun Stone Warden Wrath,Premium
+202710,2027,10,2k Bonus,91.25,Shirt of Cat's Gift,Premium
+202710,2027,10,8k Bonus,1606,1st Codex of the Familiar,Premium
+202710,2027,10,Alchemist's Ink,2.6,Alchemist's Ink,Trade 1
+202710,2027,10,Alchemist's Parchment,1.6,Alchemist's Parchment,Trade 1
+202710,2027,10,Aragonite,11,Aragonite,Trade 2
+202710,2027,10,Darkwood Plank,0.73,Darkwood Plank,Trade 1
+202710,2027,10,Dwarven Steel,1.7,Dwarven Steel,Trade 1
+202710,2027,10,Elven Bismuth,32,Elven Bismuth,Trade 2
+202710,2027,10,Enchanter's Munition,3.7,Enchanter's Munition,Trade 1
+202710,2027,10,Minotaur Hide,2.38,Minotaur Hide,Trade 1
+202710,2027,10,Mystic Silk,0.73,Mystic Silk,Trade 1
+202710,2027,10,Oil of Enchantment,41,Oil of Enchantment,Trade 2
+202710,2027,10,Patron Pin,435,Patron Code,Premium
+202710,2027,10,Philosopher's Stone,1,Philosopher's Stone,Trade 1
+202710,2027,10,Preorder Bonus,0.63,Drake's Elixir,Preorder
+202710,2027,10,Treasure Chip,4.5,Treasure Chip (each),Preorder
+202710,2027,10,Ultra Rare,65,Chosen Ultra Rare,Ultra Rare
+202710,2027,10,Wish Ring,106.44,Wish Ring,Trade 4
+202710,2027,10,"1,000 GP Gold Bar",6.31,"1,000 GP Gold Bar",Trade 2
+202710,2027,10,1k Bonus,81.25,Ioun Stone Warden Wrath,Premium
+202710,2027,10,2k Bonus,90,Shirt of Cat's Gift,Premium
+202710,2027,10,Alchemist's Ink,2.4,Alchemist's Ink,Trade 1
+202710,2027,10,Alchemist's Parchment,1.4,Alchemist's Parchment,Trade 1
+202710,2027,10,Aragonite,8.5,Aragonite,Trade 2
+202710,2027,10,Darkwood Plank,0.53,Darkwood Plank,Trade 1
+202710,2027,10,Dwarven Steel,1.6,Dwarven Steel,Trade 1
+202710,2027,10,Elven Bismuth,26,Elven Bismuth,Trade 2
+202710,2027,10,Enchanter's Munition,3.7,Enchanter's Munition,Trade 1
+202710,2027,10,Minotaur Hide,2.28,Minotaur Hide,Trade 1
+202710,2027,10,Mystic Silk,0.55,Mystic Silk,Trade 1
+202710,2027,10,Oil of Enchantment,34.75,Oil of Enchantment,Trade 2
+202710,2027,10,Philosopher's Stone,0.79,Philosopher's Stone,Trade 1
+202710,2027,10,Preorder Bonus,0.63,Drake's Elixir,Preorder
+202710,2027,10,Treasure Chip,4,Treasure Chip (each),Preorder
+202710,2027,10,Ultra Rare,50,Chosen Ultra Rare,Ultra Rare
 202711,2027,11,"1,000 GP Gold Bar",8,"1,000 GP Gold Bar",Trade 2
 202711,2027,11,1k Bonus,90.3,Ioun Stone Warden Wrath,Premium
 202711,2027,11,2k Bonus,86,Shirt of Cat's Gift,Premium
@@ -8489,31 +8519,6 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 202714,2027,14,Preorder Bonus,0.63,Drake's Elixir,Preorder
 202714,2027,14,Treasure Chip,4.1,Treasure Chip (each),Preorder
 202714,2027,14,Ultra Rare,50.25,Chosen Ultra Rare,Ultra Rare
-20214,2021,4,Random Ultra Rare,77.5,Random Ultra Rare,Ultra Rare
-202111,2021,11,Random Ultra Rare,92.5,Random Ultra Rare,Ultra Rare
-202121,2021,21,Random Ultra Rare,80,Random Ultra Rare,Ultra Rare
-202249,2022,49,Random Ultra Rare,75,Random Ultra Rare,Ultra Rare
-20233,2023,3,Random Ultra Rare,75,Random Ultra Rare,Ultra Rare
-202321,2023,21,Random Ultra Rare,75,Random Ultra Rare,Ultra Rare
-202334,2023,34,Random Ultra Rare,76,Random Ultra Rare,Ultra Rare
-202415,2024,15,Random Ultra Rare,45.5,Random Ultra Rare,Ultra Rare
-20251,2025,1,Random Ultra Rare,50,Random Ultra Rare,Ultra Rare
-202534,2025,34,Random Ultra Rare,34.5,Random Ultra Rare,Ultra Rare
-202537,2025,37,Random Ultra Rare,27.5,Random Ultra Rare,Ultra Rare
-202540,2025,40,Random Ultra Rare,36,Random Ultra Rare,Ultra Rare
-202543,2025,43,Random Ultra Rare,41,Random Ultra Rare,Ultra Rare
-20264,2026,4,Random Ultra Rare,41,Random Ultra Rare,Ultra Rare
-202632,2026,32,Random Ultra Rare,34.5,Random Ultra Rare,Ultra Rare
-202633,2026,33,Random Ultra Rare,39.98,Random Ultra Rare,Ultra Rare
-202644,2026,44,Random Ultra Rare,48,Random Ultra Rare,Ultra Rare
-202645,2026,45,Random Ultra Rare,55,Random Ultra Rare,Ultra Rare
-202646,2026,46,Random Ultra Rare,43.56,Random Ultra Rare,Ultra Rare
-202647,2026,47,Random Ultra Rare,55.22,Random Ultra Rare,Ultra Rare
-202645,2026,45,Golden Ticket,701,Golden Ticket,Golden Ticket
-20272,2027,2,Random Ultra Rare,31,Random Ultra Rare,Ultra Rare
-20272,2027,2,Random Ultra Rare,31,Random Ultra Rare,Ultra Rare
-20271,2027,1,Random Ultra Rare,47,Random Ultra Rare,Ultra Rare
-20271,2027,1,Random Ultra Rare,36,Random Ultra Rare,Ultra Rare
 202719,2027,19,"1,000 GP Gold Bar",9.25,"1,000 GP Gold Bar",Trade 2
 202719,2027,19,1k Bonus,78.22,Ioun Stone Warden Wrath,Premium
 202719,2027,19,2k Bonus,76.59,Shirt of Cat's Gift,Premium

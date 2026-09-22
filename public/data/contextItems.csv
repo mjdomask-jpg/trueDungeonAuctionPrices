@@ -226,7 +226,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20236,2023,6,withheld,Amulet of Magnifying,1,-$0.52
 20236,2023,6,token,Bead of Guided Strike,1,$42.00
 20236,2023,6,token,Belt of the Deadshot,1,$81.00
-20236,2023,6,token,Figurine of Power Reaver,1,$16.00
+20236,2023,6,token,Figurine of Power: Reaver,1,$16.00
 20236,2023,6,token,Ioun Stone Mystic Orb,1,$101.00
 20236,2023,6,token,Ioun Stone Platinum Nugget,1,$102.00
 20236,2023,6,token,Lucky Kilt,1,$39.00
@@ -360,12 +360,12 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202351,2023,51,token,Ioun Stone Mystic Orb,1,$36.00
 202351,2023,51,withheld,Path to Enlightenment (Fragment 1),1,-$541.74
 202351,2023,51,grunnel,Sellenwa's Seal,1,$56.00
-202351,2023,51,token,Silver Ship Passage: Mirthwood,1,$86.00
+202351,2023,51,token,Silver Ship Passage Mirthwood,1,$86.00
 202351,2023,51,grunnel,Small Favor Scroll,1,$105.00
 202351,2023,51,token,Totem of Heroism,1,$505.00
 20242,2024,2,token,Cloak of Retribution,1,$71.00
 20242,2024,2,token,Druegar's Death Die,1,$71.00
-20242,2024,2,token,Figurine of Power Phoenix,1,$46.00
+20242,2024,2,token,Figurine of Power: Phoenix,1,$46.00
 20242,2024,2,token,Gauntlets of Divine Guidance,1,$51.00
 20242,2024,2,token,Greater Bead of Binding,1,$11.00
 20242,2024,2,token,Greater Ring of Havoc,1,$180.00
@@ -436,7 +436,7 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202415,2024,15,token,Darkwood Plank (Bundle),1,$42.00
 202415,2024,15,token,Dwarven Steel (Bundle),1,$24.00
 202415,2024,15,token,Elven Bismuth (Bundle),1,$51.00
-202415,2024,15,token,Figurine of Power Phoenix,1,$46.00
+202415,2024,15,token,Figurine of Power: Phoenix,1,$46.00
 202415,2024,15,token,Greater Bead of Whispers,1,$146.00
 202415,2024,15,token,Greater Charm Bracelets,1,$196.00
 202415,2024,15,token,Ioun Stone Kyanite Cube,1,$37.00
