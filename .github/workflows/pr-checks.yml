@@ -35,25 +35,42 @@ jobs:
       - run: npm run build
       # The recipe/schema, context and price-reconciliation validators — the
       # gate the deploy workflow doesn't run (the whole reason for this PR
-      # check).
+      # check). This is THE data-quality gate and runs unconditionally.
       - run: npm run validate
-      # Six suites covering what the data itself cannot. The mutation test
-      # proves the reconciliation checks still fire, by injecting one known
-      # defect at a time into a copy of the data — without it a check can rot
-      # into a no-op and the run stays green. The Trent suite replays every
-      # Trent auction in the repo through the Apps Script importer, which
-      # otherwise only ever runs inside a spreadsheet where nothing can test it.
-      # The publish suite does the same for the auto-publish script, and its
-      # core assertion — that a grid of display values re-serialises to the
-      # shipped CSV byte for byte — is what stands between the sheet and eight
-      # silently corrupted data files. The auction-open suite replays saved
-      # copies of Trent's shop page and the forum's feeds and topic pages, so a
-      # markup change at either source fails here rather than silently
-      # proposing nothing. The forum suite replays three real auctioneer files,
-      # including the one that must be REFUSED — a pivot over every bid rather
-      # than the winning ones, which reconciles with no auction on any item.
-      #
+
+      # Everything past this point decides whether the PR needs the eleven
+      # `test:code` suites (apps-script importers + the shopping calculator,
+      # plus the mutation tests that prove the three validators above still
+      # fire). Those suites replay against the live `public/data/*.csv` for
+      # realism, but they exist to catch regressions in CODE — and a publish
+      # PR (opened by `publishToSite.gs`, which only ever writes existing CSVs
+      # under `public/data/`) never touches any of that code. On that kind of
+      # PR the suites can only ever pass uninformatively or false-positive on
+      # a test literal the growing corpus outran — 11 of 13 documented
+      # incidents were exactly that (see the `publish-check-blocks-publishing`
+      # write-up), `auction-open.test.mjs` alone three times. So: skip
+      # `test:code` when every changed file is a plain MODIFICATION under
+      # `public/data/` (an add/delete there — a new or removed CSV — still
+      # runs the full suite, since `publish-to-site.test.mjs` is what checks
+      # the published-file allow-list). `test:tokendb` reconciles against
+      # tokendb.com directly and is not code-coupled, so it always runs.
+      - name: Determine whether this PR touches anything besides public/data
+        id: scope
+        run: |
+          CHANGED=$(git diff --name-status "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+          echo "$CHANGED"
+          NON_DATA=$(echo "$CHANGED" | awk -F'\t' '$1 != "M" || $2 !~ /^public\/data\//')
+          if [ -n "$NON_DATA" ]; then
+            echo "Touches code (or adds/removes a data file) — running the full suite."
+            echo "code_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Touches only existing public/data files — skipping test:code."
+            echo "code_changed=false" >> "$GITHUB_OUTPUT"
+          fi
       # NOTE for anyone touching the publish suite: this runner checks out with
       # LF line endings while the maintainer's Windows box has CRLF, so the
       # suite must not assume either. It detects which and says so in its output.
       - run: npm test
+        if: steps.scope.outputs.code_changed == 'true'
+      - run: npm run test:tokendb
+        if: steps.scope.outputs.code_changed == 'false'

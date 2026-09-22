@@ -1457,8 +1457,16 @@ editor is an edit nothing tests.
 menu click. It reads the eight sheet-backed tabs, writes them as CSV, compares
 each against what the repository already holds, commits only what changed as a
 **single commit on a new branch**, and opens a **pull request with auto-merge**.
-The PR check then runs `npm run build`, `npm run validate` and `npm test`, and
-merging triggers the deploy.
+The PR check then runs `npm run build` and `npm run validate` unconditionally.
+A pure data publish (every changed file a plain modification under
+`public/data/`) also runs `test:tokendb`; anything else — a code change, or a
+data file being added or removed — runs the full `npm test`. See
+`pr-checks.yml`'s own comments for why: the other eleven suites replay against
+live `public/data` but exist to catch regressions in the importer/calculator
+CODE, which a pure data publish never touches, and re-running them there was
+the repeated source of red checks on good data (see
+`publish-check-blocks-publishing` in the maintainer's notes). Merging triggers
+the deploy either way.
 
 **It never commits to `main` directly, and that is not a stylistic choice.**
 `deploy.yml` runs on push to `main` and does **not** run `npm run validate`;
