@@ -43,6 +43,23 @@ const sandbox = { module: { exports: {} }, console };
 runInNewContext(readFileSync(join(here, '..', 'apps-script', 'trentClose.gs'), 'utf8'), sandbox);
 const T = sandbox.module.exports;
 
+// alesievClose.gs too, and only for one thing: the list of Items it publishes
+// to the price spine WITHOUT going through this parser. They share one global
+// scope in Apps Script, so loading them together is what the real runtime does,
+// and asking the rule table beats hardcoding a name here that would then be
+// wrong the day a second aggregate is added. auctionOpen.gs is its dependency.
+sandbox.module = { exports: {} };
+runInNewContext(readFileSync(join(here, '..', 'apps-script', 'auctionOpen.gs'), 'utf8'), sandbox);
+sandbox.module = { exports: {} };
+runInNewContext(readFileSync(join(here, '..', 'apps-script', 'alesievClose.gs'), 'utf8'), sandbox);
+const A = sandbox.module.exports;
+const SPINE_AGGREGATES = new Set(
+  Object.keys(A.ALESIEV_CONTEXT_RULES)
+    .map((k) => A.ALESIEV_CONTEXT_RULES[k])
+    .filter((r) => r.spine)
+    .map((r) => r.item),
+);
+
 // --- tiny RFC-4180 CSV parser (mirror of parseCSV) --------------------------
 function parseCSV(text) {
   const rows = []; let row = [], field = '', q = false;
@@ -141,9 +158,27 @@ for (const p of prices) (pricesByAuction.get(p.auctionId) ?? pricesByAuction.set
 
 {
   const aborted = [], unitWrong = [], itemWrong = [], summaryWrong = [], seasonWrong = [], countOdd = [];
-  let lots = 0, auctions = 0, summarised = 0;
+  let lots = 0, auctions = 0, summarised = 0, skippedLots = 0;
 
-  for (const [auctionId, rows] of [...byAuction].sort()) {
+  for (const [auctionId, allRows] of [...byAuction].sort()) {
+    // AN AGGREGATE'S LOTS ARE NOT THIS PARSER'S TO REPRODUCE, and since
+    // 2026-09-22 rawPricesData holds some.
+    //
+    // A sold Random Ultra Rare now reaches the price spine as nine separately
+    // priced lots (PR #263), written by `alesievSpineRows` and NOT by
+    // processAuction — because `Random Ultra Rare` is an aggregate's name and
+    // has no tokenMetadata row in any season, by design. Replaying those rows
+    // through the Trent parser asks it to resolve a name it is right to refuse,
+    // and it aborted the whole auction: 18 rows took `20271` and `20272` down
+    // with them on the publish that first carried them.
+    //
+    // So the replay's claim narrows to what it was always really asserting —
+    // every lot THIS parser produced, it still produces. The excluded Items
+    // come from the rule table rather than a literal, and the count is printed
+    // below: an exclusion nobody can see is how a narrow rule quietly widens.
+    const rows = allRows.filter((r) => !SPINE_AGGREGATES.has(r.Item));
+    skippedLots += allRows.length - rows.length;
+    if (!rows.length) continue;
     const season = rows[0].auctionSeason;
     // Reconstruct the paste: Trent's two columns, exactly as they arrived.
     const grid = [["Product Name", "Highest Bid"]].concat(rows.map((r) => [r.trentName, r.trentPrice]));
@@ -200,6 +235,13 @@ for (const p of prices) (pricesByAuction.get(p.auctionId) ?? pricesByAuction.set
 
   const show = (list, n = 6) => list.slice(0, n).join('\n') + (list.length > n ? `\n… and ${list.length - n} more` : '');
   check(`no auction aborts (${auctions} auctions, ${lots} lots — 110 Trent + 1 forum)`, !aborted.length, show(aborted));
+  // Reported every run, never silent, for validate-prices § 1's reason: an
+  // exclusion that grows without anyone noticing is how a rule stops being the
+  // narrow mechanical one it claims to be.
+  if (skippedLots) {
+    console.log(`        · ${skippedLots} lot(s) skipped as aggregate rows this parser does not write: `
+      + `${[...SPINE_AGGREGATES].sort().join(', ')}`);
+  }
   check('every lot name resolves to the Item the sheet recorded', !itemWrong.length, show(itemWrong));
   check('every lot divides down to the per-token price the sheet recorded', !unitWrong.length, show(unitWrong));
   check(`every min/max summary is reproduced exactly (${summarised} auctions, every season)`, !summaryWrong.length, show(summaryWrong));
