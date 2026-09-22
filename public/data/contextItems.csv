@@ -667,7 +667,6 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20264,2026,4,augment,Ring of the 3rd Circle,1,$85.00
 20264,2026,4,augment,Ring of the Siren,1,$21.00
 20264,2026,4,augment,Silver Ship Passage Melonbrandt,1,$55.00
-20266,2026,6,token,Golden Ticket,1,"$1,254.00"
 20266,2026,6,withheld,Ring of the 1st Circle,4,-$449.16
 202632,2026,32,augment,D&D for up to 6 players,1,$155.00
 202632,2026,32,withheld,Patron Pin,1,-$365.26
@@ -716,7 +715,6 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202644,2026,44,token,"""Red Key""",1,$407.00
 202644,2026,44,token,Baby Tater That Needs a Name,1,$57.00
 202644,2026,44,token,Ella's Final Set of Gnomish Goggles,1,$177.00
-202644,2026,44,token,Golden Ticket,1,$855.00
 202644,2026,44,token,Princess Embers' Flaming Hot Cheeto,1,$202.00
 202644,2026,44,token,Random Ultra Rare,9,$432.00
 202644,2026,44,token,Tabor's Onyx Dagger #6,1,$257.00
@@ -729,7 +727,6 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202645,2026,45,grunnel,Curse of Crimson Isle Coaching Room Banner,1,$126.00
 202645,2026,45,token,Druegar's Death Die,1,$54.00
 202645,2026,45,token,Elven Bismuth,2,$132.00
-202645,2026,45,token,Golden Ticket,1,$701.00
 202645,2026,45,token,Ioun Stone Gold Nugget,1,$124.00
 202645,2026,45,token,Ioun Stone Platinum Nugget,1,$68.00
 202645,2026,45,grunnel,Portal Viewer #1,1,$66.00
@@ -761,7 +758,6 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 202647,2026,47,grunnel,Borrowed Ring #4 St Lorca,1,$112.00
 202647,2026,47,token,Censer and 2 of each incense,1,$47.00
 202647,2026,47,grunnel,GenCon 2026 Tornado Bucket,1,$103.00
-202647,2026,47,token,Golden Ticket,1,$652.00
 202647,2026,47,grunnel,Green Key,1,$455.00
 202647,2026,47,token,Random Ultra Rare,9,$497.00
 202647,2026,47,grunnel,Tomb of Terror Redux Banner,1,$161.00
