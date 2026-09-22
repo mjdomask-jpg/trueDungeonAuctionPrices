@@ -41,7 +41,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-20.1';
+var ALESIEV_VERSION = '2026-09-22.1';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -183,11 +183,47 @@ var ALESIEV_GOLD_BAR_RE = /^([\d,]+)\s+GP\s+Gold\s+Bars?$/i;
  * two. (`forumClose.gs` had this backwards until 2026-09-10 — it wrote
  * `Random UR`, which appears nowhere in `contextItems.csv`.)
  */
+/**
+ * `spine` is what changed on 2026-09-22, and it is not a second routing — the
+ * context row still goes exactly where it went.
+ *
+ * A Random Ultra Rare is TWO facts and they live in two files. The aggregated
+ * `contextItems` row carries the quantity and the lot-group TOTAL, which is what
+ * Funding & Context reports as `Included`, and nothing else knows there were
+ * nine. The price spine carries what a buyer paid per token, which is what the
+ * Prices tab, Trends and Quartiles read. A price row cannot express the first
+ * (there is no quantity column) and the context row cannot express the second,
+ * so both are written and the two do not add up. See
+ * `docs/context-layer-design.md` §2.
+ *
+ * Until now only the context half existed, and the 22 historical rows on the
+ * Prices tab are a single rate apiece — the quantity-weighted most common one,
+ * because an aggregate is all anybody recorded (`DATA-18`).
+ *
+ * **THIS SOURCE IS DIFFERENT AND THAT IS THE WHOLE POINT.** alesievauctions.com
+ * exports one row per lot out of its database, so a Random Ultra Rare arrives as
+ * nine separately-priced lots, and there is no reason to flatten nine
+ * observations into one. They go to `rawPricesData` like any other lot and
+ * publish a real min/max — which makes § 1 reconcile them, and makes Quartiles
+ * able to show the token at all.
+ *
+ * **No season gate, deliberately.** "From 2027 forward" is where this lands, but
+ * it is not what the rule says: the rule is that a file giving per-lot prices
+ * gets per-lot treatment. 2027 is simply when a source that does so first
+ * existed, which is the same reasoning `ERAS.alesievStartSeason` already
+ * carries — venue is read per auction, never from the number. A season cutoff
+ * would be a rule this repo invented rather than one it read.
+ *
+ * A rule with no `spine` writes the context row and nothing else, which is what
+ * a genuine context-only aggregate should do.
+ */
+var ALESIEV_RANDOM_UR_SPINE = { Category: 'Ultra Rare', displayName: 'Random Ultra Rare' };
+
 var ALESIEV_CONTEXT_RULES = {
-  'random ultra rare': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
-  'random ultra rares': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
-  'random ur': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
-  'random urs': { category: 'token', aggregate: true, item: 'Random Ultra Rare' },
+  'random ultra rare': { category: 'token', aggregate: true, item: 'Random Ultra Rare', spine: ALESIEV_RANDOM_UR_SPINE },
+  'random ultra rares': { category: 'token', aggregate: true, item: 'Random Ultra Rare', spine: ALESIEV_RANDOM_UR_SPINE },
+  'random ur': { category: 'token', aggregate: true, item: 'Random Ultra Rare', spine: ALESIEV_RANDOM_UR_SPINE },
+  'random urs': { category: 'token', aggregate: true, item: 'Random Ultra Rare', spine: ALESIEV_RANDOM_UR_SPINE },
 };
 
 /**
@@ -681,6 +717,64 @@ function alesievNamedContextRows(contextLots) {
 }
 
 /**
+ * The same lots again, as PRICE SPINE rows — one `rawPricesData` row per lot and
+ * a min/max summary — for any context rule carrying a `spine`.
+ *
+ * Its own builder rather than a push into `staged.lots`, for the reason
+ * `alesievOnyxRows` is: `processAuction` resolves a lot's name through
+ * `tokenMetadata`, and `Random Ultra Rare` appears there ZERO times. It is an
+ * aggregate's name, not a token's, so asking that file for it is asking the
+ * wrong file — the rule names its own spelling and that is the one to write.
+ *
+ * The summary rule is `processAuction`'s, deliberately copied rather than
+ * approximated: max, then min only when the item had MORE THAN ONE LOT. The
+ * test is the lot count and not whether the two are equal, so nine lots that
+ * all fetched $55 still publish a pair — which says the price held across the
+ * lots rather than being seen once. (§ 1 compares distinct values, so a pair of
+ * equal prices reconciles against a single recorded row either way.)
+ *
+ * No `isBidFloorArtifact` test: these lots are single tokens — the export's
+ * `(1 of 9)` is a lot NUMBER, already taken off by alesievNormaliseName — and
+ * that rule only ever excludes a multi-token lot sitting at the opening bid.
+ */
+function alesievSpineRows(contextLots) {
+  var groups = {}, order = [], rows = [], prices = [], i;
+  for (i = 0; i < contextLots.length; i++) {
+    var rule = alesievContextRule(contextLots[i].name);
+    if (!rule || !rule.spine) continue;
+    var key = alesievContextKey(contextLots[i].name);
+    if (!groups[key]) { groups[key] = { rule: rule, lots: [] }; order.push(key); }
+    groups[key].lots.push(contextLots[i]);
+  }
+  for (i = 0; i < order.length; i++) {
+    var g = groups[order[i]], units = [];
+    for (var j = 0; j < g.lots.length; j++) {
+      var lot = g.lots[j];
+      var q = parseQuantity(lot.name);
+      var unit = roundCents(lot.bid / (q.quantity || 1));
+      rows.push({
+        trentName: lot.rawName,
+        trentPrice: lot.bid,
+        Item: g.rule.item,
+        Price: unit,
+        Category: g.rule.spine.Category,
+      });
+      units.push(unit);
+    }
+    if (!units.length) continue;
+    var emit = function (price) {
+      prices.push({
+        Item: g.rule.item, Price: price,
+        'Display Name': g.rule.spine.displayName, Category: g.rule.spine.Category,
+      });
+    };
+    emit(Math.max.apply(null, units));
+    if (units.length > 1) emit(Math.min.apply(null, units));
+  }
+  return { raw: rows, prices: prices };
+}
+
+/**
  * How an aggregated total was arrived at — `8 @ $55 + 1 @ $57 = $497`.
  *
  * A total is not checkable on its own; the distribution it came from is. Same
@@ -762,6 +856,20 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
 
   var result = processAuction(staged.lots, targetSeason, index);
   for (var a = 0; a < result.aborts.length; a++) aborts.push(result.aborts[a]);
+
+  // The named context lots ALSO reach the price spine, for any rule carrying a
+  // `spine` — the context row keeps the total Funding & Context reads, and
+  // these are what the Prices tab shows. Two facts, two files, deliberately.
+  var spine = alesievSpineRows(staged.context);
+  for (var s = 0; s < spine.raw.length; s++) result.raw.push(spine.raw[s]);
+  for (var sp = 0; sp < spine.prices.length; sp++) result.prices.push(spine.prices[sp]);
+  if (spine.prices.length) {
+    cautions.push('a Random Ultra Rare is written TWICE on purpose: ' + spine.raw.length + ' lot(s) to ' +
+      TABS.raw + ' with ' + (spine.prices.length > 1 ? 'a min/max pair' : 'one row') + ' in ' + TABS.prices +
+      ', AND the aggregated ' + ALESIEV_CONTEXT_TAB + ' row below. The price row is per token; the context row ' +
+      'carries the quantity and the lot total, which is the figure Funding & Context reports as Included. ' +
+      'Neither file can express the other, so do not delete one as a duplicate.');
+  }
 
   var onyx = alesievOnyxRows(staged.onyx);
   for (var o = 0; o < onyx.aborts.length; o++) aborts.push(onyx.aborts[o]);
@@ -1256,6 +1364,7 @@ if (typeof module !== 'undefined') {
     alesievWithheldRows: alesievWithheldRows,
     alesievAugmentRows: alesievAugmentRows,
     alesievNamedContextRows: alesievNamedContextRows,
+    alesievSpineRows: alesievSpineRows,
     alesievAggregateBreakdown: alesievAggregateBreakdown,
     alesievPlanImport: alesievPlanImport,
     alesievDescribePlan: alesievDescribePlan,

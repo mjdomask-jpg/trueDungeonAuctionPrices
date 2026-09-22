@@ -210,9 +210,20 @@ console.log(`\nThe sample export — ${FIXTURE.rows} rows, season ${SEASON}\n`);
   // EVERY name written must be one the data already holds. This is the
   // substitute for a reconciliation: a plausible invention passes a parser test
   // and fails validate-prices at the PR gate instead.
-  const knownItems = new Set(TOKENS.map((t) => t.Item));
+  // THE CORPUS IS tokenMetadata AND THE PRICE SPINE, for the same reason the
+  // fee-name check widened on 2026-09-21: a name can legitimately live in one
+  // file and not the other, and a check reading one file calls that an
+  // invention. `Random Ultra Rare` is the live case — it is an AGGREGATE's
+  // name, deliberately absent from the token dictionary (zero rows), and
+  // published in `prices.csv` 22 times since 2026-09-22. Narrowing this to
+  // tokenMetadata would mean the importer could never write a name the site
+  // already shows.
+  const knownItems = new Set([...TOKENS.map((t) => t.Item), ...PRICES.map((r) => r.Item)]);
   const strayPrice = good.prices.map((r) => r.Item).filter((i) => !knownItems.has(i));
-  eq('every priced Item is one tokenMetadata already holds', strayPrice.join(', '), '');
+  eq('every priced Item is one the corpus already holds', strayPrice.join(', '), '');
+  check('  ... and the wider corpus still rejects a name nothing publishes',
+    !knownItems.has('Random UR') && !knownItems.has('Pick Your Purple'),
+    'a name no row uses resolved against the corpus');
   // The sample's only context row: four `Augment - Player` lots all drew no bid,
   // and there are no withheld or Onyx rows, so what is left is the nine
   // `Random Ultra Rare` lots — of which TWO sold. An unsold lucky-dip lot is
@@ -269,8 +280,27 @@ console.log('\nThe two names Category calls the same thing\n');
   // Summing each lot's OWN price, never quantity x a representative price.
   // 202647's row read $495 (9 x $55) until it was corrected to $497.
   eq('  ... and their prices SUMMED, not multiplied', rur[0].price, 167);
-  check('  ... and it sets no price row', !p.prices.some((r) => /random/i.test(r.Item)),
-    JSON.stringify(p.prices));
+
+  // AND IT NOW SETS PRICE ROWS TOO — the change of 2026-09-22. It used to set
+  // none, because the only Random Ultra Rare data anyone had was an aggregate.
+  // This source gives three separately-priced lots, so there is nothing to
+  // flatten: they reach rawPricesData like any other lot and publish a real
+  // min/max. The split column B cannot make is untouched by that — a Pick Your
+  // Purple still prices as `Ultra Rare` and a lucky dip as `Random Ultra Rare`,
+  // which is the whole reason this block exists.
+  const rurPrices = p.prices.filter((r) => r.Item === 'Random Ultra Rare');
+  eq('  ... and it NOW sets a min/max pair as well', rurPrices.length, 2);
+  eq('  ... at the max', Math.max(...rurPrices.map((r) => r.Price)), 57);
+  eq('  ... and the min', Math.min(...rurPrices.map((r) => r.Price)), 55);
+  eq('  ... under the spine\'s own category, not the context row\'s',
+    [...new Set(rurPrices.map((r) => r.Category))].join(','), 'Ultra Rare');
+  eq('  ... with every lot in rawPricesData',
+    p.raw.filter((r) => r.Item === 'Random Ultra Rare').length, 3);
+  // The two files say different things and neither can say the other's. Pinned
+  // because deleting one as a duplicate is the obvious wrong move: $167 over
+  // three is what Funding & Context reports, $57/$55 is what a buyer paid.
+  check('  ... and the context TOTAL is not any price row',
+    !rurPrices.some((r) => r.Price === rur[0].price), JSON.stringify(rurPrices));
 
   const breakdown = A.alesievAggregateBreakdown(p.contextLots);
   eq('the dialog shows how the total was reached',
