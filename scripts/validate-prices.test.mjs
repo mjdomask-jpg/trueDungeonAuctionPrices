@@ -214,6 +214,28 @@ const cases = [
     return L.join('\n');
   }), /202618 .*preorderTotal is \$240 but its rows give \$.*Treasure Chip \$9 x 50/],
 
+  // § 4c is the check that was missing on 2026-09-22, when a publish pasted an
+  // auction id into a price row's season column. Everything here passed and
+  // `shopping-list.test.mjs` failed eight assertions about Ultra Rare vintages
+  // instead — three layers from the cause and naming nothing near it.
+  //
+  // The mutation is the REAL one, verbatim: season becomes the id. Pinned to
+  // the shape of the message rather than to 202714's row number, so a re-export
+  // that moves the row still lands.
+  ['4c a price row whose season is not its auction\'s', () => edit('prices.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('202642,2026,42,Aragonite,'));
+    const c = L[i].split(','); c[1] = c[0]; L[i] = c.join(',');
+    return L.join('\n');
+  }), /prices\.csv row \d+ "Aragonite": auction 202642 is season 2026, but the row says 202642/],
+
+  // And the other half of the same identity, on a different file so the check
+  // is not shown to work on one loader only.
+  ['4c a context row whose number is not its auction\'s', () => edit('contextItems.csv', (t) => {
+    const L = lines(t); const i = L.findIndex((l) => l.startsWith('202645,2026,45,'));
+    const c = L[i].split(','); c[2] = '99'; L[i] = c.join(',');
+    return L.join('\n');
+  }), /contextItems\.csv row \d+ .*auction 202645 is number 45, but the row says 99/],
+
   ['5  a "-" price', () => edit('prices.csv', (t) =>
     t.replace('202642,2026,42,Aragonite,15,', '202642,2026,42,Aragonite,-,')),
     /has Price = "-"/],

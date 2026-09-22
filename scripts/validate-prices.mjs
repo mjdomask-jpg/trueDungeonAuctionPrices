@@ -561,6 +561,62 @@ console.log('4b. preorderTotal reconcile (auctionMetadata.csv vs prices.csv)');
 }
 
 // ===========================================================================
+// 4c. Every keyed row agrees with the auction it names
+// ===========================================================================
+// `auctionSeason` and `auctionNumber` are repeated on every row of the four
+// keyed files, beside an `auctionId` that already encodes both. § 4 asserts
+// that identity for `auctionMetadata` itself — `auctionId === season + number`
+// — and until 2026-09-22 nothing asserted it anywhere else.
+//
+// WHAT GOT THROUGH. A publish carried one cell of `prices.csv` where the
+// auction id had been pasted into the season column: `202714,202714,14,...`
+// against 36 sibling rows reading `202714,2027,14,...`. Everything in this
+// file passed — 0 errors — because nothing here reads a price row's season
+// except to group by it, and a group of one behaves. The site does not: season
+// `202714` is a season of its own, so the Build Calculator lost its current
+// season and `shopping-list.test.mjs` failed EIGHT assertions about Ultra Rare
+// vintages and the last-5 toggle, none of which mentions a season column. The
+// check that finally caught it was three layers from the cause and the message
+// pointed nowhere near it.
+//
+// So this is the cheap, exact version of the same invariant, said where the
+// data is: a row's season and number must be the ones `auctionMetadata`
+// records for its id. Compared as STRINGS, because that is what a paste
+// corrupts and `Number('2027') === Number('2027.0')` would forgive a cell that
+// changed type on the way through Sheets ([[sheet-roundtrip-coerces-values]]).
+//
+// An id no auction records is reported too, in its own bucket: it is the same
+// fault at one remove — a row keyed to an auction that does not exist — and
+// the corpus has none today, which is what makes it an error rather than a
+// note.
+console.log('4c. Keyed rows agree with auctionMetadata (prices, onyx, rawPricesData, contextItems)');
+{
+  const errs = [], orphans = [];
+  let checked = 0;
+  for (const [file, rows] of [
+    ['prices.csv', prices], ['onyx.csv', onyx],
+    ['rawPricesData.csv', raw], ['contextItems.csv', ctx],
+  ]) {
+    rows.forEach((r, i) => {
+      if (!r.auctionId) return;
+      const m = metaById.get(r.auctionId);
+      if (!m) { orphans.push(`${file} row ${i + 2}: auctionId ${r.auctionId} is in no auctionMetadata row`); return; }
+      checked++;
+      const name = r.Item || r.trentName || '';
+      if (r.auctionSeason !== m.auctionSeason)
+        errs.push(`${file} row ${i + 2}${name ? ` "${name}"` : ''}: auction ${r.auctionId} is season `
+          + `${m.auctionSeason}, but the row says ${r.auctionSeason || '(blank)'}`);
+      if (r.auctionNumber !== m.auctionNumber)
+        errs.push(`${file} row ${i + 2}${name ? ` "${name}"` : ''}: auction ${r.auctionId} is number `
+          + `${m.auctionNumber}, but the row says ${r.auctionNumber || '(blank)'}`);
+    });
+  }
+  capped(err, errs); capped(err, orphans);
+  if (!errs.length && !orphans.length)
+    ok(`${checked} keyed row(s) across four files carry their auction's own season and number`);
+}
+
+// ===========================================================================
 // 5. A Price that is not a number, in every keyed price file
 // ===========================================================================
 // Two causes have been seen and neither is legitimate: "-" pasted out of the
