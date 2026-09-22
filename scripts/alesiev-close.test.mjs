@@ -457,6 +457,28 @@ console.log('\nWithheld (a shape nobody has observed yet)\n');
   // down the unsold path.
   check('a blank price does not make a withheld row "unsold"',
     p.unsold.length === 0, JSON.stringify(p.unsold));
+
+  // THE NAME IS THE DISPLAY NAME, NOT THE CANONICAL ITEM, and it is the
+  // difference between a valued row and a $0 one. `contextItems.Item` holds
+  // display names and the withheld estimate joins on them, against an index
+  // built from the price spine's `Display Name` column.
+  //
+  // 20272 is the case that found it: its withheld `Patron Code` was written as
+  // `Patron Pin` — the 2027 Item — and corrected by hand afterwards.
+  const patron = plan([['Patron Code', 'Withheld', '']]);
+  check('  ... the plan is clean', patron.ok, (patron.aborts || []).join('\n'));
+  eq('a withheld row carries the season\'s DISPLAY name', patron.context[0].Item, 'Patron Code');
+  // Pinned to the corpus rather than to the pair: of the withheld rows whose
+  // name appears in tokenMetadata under only one of the two columns, every one
+  // is the display name and none is the Item. If that ever stops being true the
+  // convention has changed and this rule should change with it.
+  const itemOnly = new Set(TOKENS.map((t) => t.Item));
+  const dispOnly = new Set(TOKENS.map((t) => t['Display Name']));
+  const wrongWay = CONTEXT.filter((c) => c.category === 'withheld'
+    && itemOnly.has(c.Item) && !dispOnly.has(c.Item));
+  eq('  ... which is what every recorded withheld row does', wrongWay.length, 0);
+  check('  ... and the corpus really does distinguish the two',
+    TOKENS.some((t) => t.Item !== t['Display Name']), 'no token has a display name of its own');
 }
 
 // ===========================================================================
@@ -676,6 +698,71 @@ console.log("\nThe auctioneer's fee (never a withheld row)\n");
   // a red check on the publish that carries the fix, which is how six
   // publishes have been blocked before. The invariant above is the durable
   // half and it holds either way.
+}
+
+// ===========================================================================
+// 6d. The export carries no auction id, so the wrong one gets imported
+// ===========================================================================
+// THIS HAPPENED, on 2026-09-22, and only because it was a dry run did it not
+// reach the sheet. `20275`'s export was still in the staging tab, the operator
+// picked `20272`, and the plan came out complete and plausible and entirely
+// wrong — nine withheld Onyx tokens and thirteen token rows that belong to a
+// different auction. The season check, which the code called "the only defence
+// against importing this onto the wrong auction", passed: both are 2027.
+//
+// A row keyed to the wrong auction is well-formed in every way a validator
+// checks, which is why this has to be caught here or not at all.
+console.log('\nThe wrong auction\n');
+{
+  const block = (auctionId, pairs) =>
+    pairs.map(([Item, Price]) => ({ auctionId, Item, Price }));
+  // Five items is the floor — § 2's, because a block of one or two can collide
+  // by chance. A real auction carries about twenty.
+  const pairs = [['Aragonite', 8], ['Aragonite', 7.5], ['Elven Bismuth', 28],
+    ['Mystic Silk', 1.1], ['Wish Ring', 101], ['Patron Pin', 350]];
+  const mine = block('', pairs).map(({ Item, Price }) => ({ Item, Price }));
+
+  const recorded = block('20275', pairs).concat(block('20271', [
+    ['Aragonite', 9], ['Elven Bismuth', 36], ['Mystic Silk', 1.28],
+    ['Wish Ring', 120], ['Patron Pin', 277], ['Oil of Enchantment', 71],
+  ]));
+
+  const hit = A.alesievWrongAuctionAbort(mine, '20272', recorded);
+  check('an export matching ANOTHER auction aborts', /20275/.test(hit), hit || '(no abort)');
+  check('  ... and names the auction it really belongs to',
+    /this export is auction 20275's, not 20272's/.test(hit), hit);
+  check('  ... and says where to look', /staging tab/.test(hit), hit);
+
+  // The target's own block matching is what a RE-IMPORT looks like, and must
+  // not fire — that is the errand the dry run exists for.
+  eq('the target matching itself is not a problem',
+    A.alesievWrongAuctionAbort(mine, '20275', recorded), '');
+
+  // Order must not matter: the sheet's row order is not load-bearing anywhere
+  // else either, and a signature that depended on it would miss every real case.
+  const shuffled = mine.slice().reverse();
+  check('the signature ignores row order',
+    A.alesievWrongAuctionAbort(shuffled, '20272', recorded) !== '', 'order changed the answer');
+
+  // One different cent is a different auction. That is the limit of an exact
+  // signature and it is stated rather than papered over: this catches a stale
+  // tab, not a re-download that gained a bid.
+  const nudged = mine.map((r, i) => (i === 0 ? { Item: r.Item, Price: 8.01 } : r));
+  eq('a single changed price is no longer a match',
+    A.alesievWrongAuctionAbort(nudged, '20272', recorded), '');
+
+  eq('a block too small to be distinctive never fires',
+    A.alesievWrongAuctionAbort(mine.slice(0, 3), '20272', recorded), '');
+  eq('and with nothing recorded there is nothing to match',
+    A.alesievWrongAuctionAbort(mine, '20272', []), '');
+
+  // The check that cannot run says so, rather than passing quietly — the plan
+  // entry point takes the recorded rows as optional arguments, and a caller
+  // that forgets them would otherwise get a silent all-clear.
+  const unchecked = plan([['Aragonite (1 of 2)', 'Trade', '12']]);
+  check('a plan built without the recorded prices says the check did not run',
+    (unchecked.cautions || []).some((c) => /wrong-auction check did not run/.test(c)),
+    (unchecked.cautions || []).join(' | '));
 }
 
 // ===========================================================================

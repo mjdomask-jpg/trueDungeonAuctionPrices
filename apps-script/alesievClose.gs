@@ -41,7 +41,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-22.2';
+var ALESIEV_VERSION = '2026-09-22.3';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -635,7 +635,23 @@ function alesievWithheldRows(withheldLots, season, index, isOnyxAuction) {
       var normalised = ONYX_NORMALIZATION[foldName(marked.name)] || marked.name;
       var token = resolveToken(normalised, season, index);
       if (token) {
-        name = token.Item;
+        // THE DISPLAY NAME, NOT THE CANONICAL ITEM, and the difference is not
+        // cosmetic. `contextItems.Item` holds display names (data-audit §C8) and
+        // the withheld ESTIMATE joins on them: the index is built from the price
+        // spine's `Display Name` column, so a row this writes under an Item that
+        // differs from its display name matches nothing and values at $0.
+        //
+        // `20272` is the case that found it. Its withheld `Patron Code` was
+        // written as `Patron Pin` — the 2027 Item for that token — and somebody
+        // corrected the row by hand afterwards. `prices.csv` carries Item
+        // `Patron Pin` with Display Name `Patron Code`, so the uncorrected row
+        // would have matched nothing at all.
+        //
+        // The corpus is unanimous: of the 49 withheld rows whose name appears in
+        // `tokenMetadata` under only one of the two columns, all 49 are the
+        // DISPLAY name and none is the Item. 123 tokenMetadata rows have the two
+        // differing, so this is a live distinction and not a technicality.
+        name = token['Display Name'] || token.Item;
       } else if (isOnyxAuction) {
         name = normalised;
         unchecked.push('"' + normalised + '"');
@@ -778,6 +794,88 @@ function alesievSpineRows(contextLots) {
 }
 
 /**
+ * An auction's price block as one comparable string — `item=p1/p2|item=p1/p2`.
+ *
+ * Exactly the signature `validate-prices.mjs` § 2 uses to catch a price block
+ * pasted onto two auctions, and deliberately the same one: two auctions that
+ * agree on every item to the cent are already an ERROR at the PR gate, so
+ * matching here cannot be a false positive on data this repo would accept.
+ */
+function alesievBlockSignature(priceRows) {
+  var byItem = {}, items = [], i;
+  for (i = 0; i < priceRows.length; i++) {
+    var item = String(priceRows[i].Item == null ? '' : priceRows[i].Item).trim();
+    if (!item) continue;
+    var price = roundCents(Number(priceRows[i].Price));
+    if (isNaN(price)) continue;
+    if (!byItem[item]) { byItem[item] = []; items.push(item); }
+    byItem[item].push(price);
+  }
+  items.sort();
+  var parts = [];
+  for (i = 0; i < items.length; i++) {
+    byItem[items[i]].sort(function (a, b) { return a - b; });
+    parts.push(items[i] + '=' + byItem[items[i]].join('/'));
+  }
+  return { signature: parts.join('|'), items: items.length };
+}
+
+/**
+ * Whether this export is the WRONG AUCTION'S, and the abort naming the one it
+ * actually belongs to.
+ *
+ * **The export carries no auction identifier.** The auction is whatever the
+ * operator picked in the dialog, and until 2026-09-22 the season check was the
+ * only thing standing between a stale staging tab and rows keyed to the wrong
+ * auction — the code said so in as many words. A season is not much of a
+ * filter: `20272` and `20275` are both 2027, so leaving `20275`'s export in the
+ * tab and picking `20272` produced a complete, plausible, entirely wrong plan.
+ * That happened, on a dry run, and only the dry run stood between it and the
+ * sheet. It is the defect this data set produces most often and the one no
+ * validator downstream can see, because a row keyed to the wrong auction is
+ * well-formed in every way that a validator checks.
+ *
+ * So the plan is fingerprinted and compared against every auction the price
+ * spine already holds. A match on the TARGET is expected — that is what
+ * re-importing an auction looks like. A match on any other auction is this
+ * mistake, and it aborts naming the auction it found, because "your staging tab
+ * holds 20275" is the sentence that ends the confusion.
+ *
+ * `MIN_ITEMS` is § 2's, for § 2's reason: a block of one or two items can
+ * collide by chance, and a real auction carries about twenty.
+ *
+ * **What it cannot catch**, stated rather than papered over: an export of the
+ * wrong auction that is not the one already recorded — a re-download that
+ * gained a bid, or an auction never imported. The signature is exact, so a
+ * single changed cent misses. It catches the stale-tab case, which is the one
+ * that has actually happened, and it never fires on data that is right.
+ */
+var ALESIEV_SIGNATURE_MIN_ITEMS = 5;
+
+function alesievWrongAuctionAbort(planPrices, targetAuctionId, recordedPriceRows) {
+  var mine = alesievBlockSignature(planPrices);
+  if (mine.items < ALESIEV_SIGNATURE_MIN_ITEMS) return '';
+  var byAuction = {}, ids = [], i;
+  for (i = 0; i < recordedPriceRows.length; i++) {
+    var row = recordedPriceRows[i];
+    var id = String(row.auctionId == null ? '' : row.auctionId).trim();
+    if (!id || id === String(targetAuctionId)) continue;
+    if (!byAuction[id]) { byAuction[id] = []; ids.push(id); }
+    byAuction[id].push(row);
+  }
+  for (i = 0; i < ids.length; i++) {
+    var theirs = alesievBlockSignature(byAuction[ids[i]]);
+    if (theirs.items < ALESIEV_SIGNATURE_MIN_ITEMS) continue;
+    if (theirs.signature !== mine.signature) continue;
+    return 'this export is auction ' + ids[i] + "'s, not " + targetAuctionId + "'s — its " + mine.items +
+      ' priced items match ' + ids[i] + ' exactly, to the cent. The export carries no auction id, so the ' +
+      'auction is whichever one you picked; the staging tab is almost certainly still holding the last ' +
+      'import. Paste the right export and run again.';
+  }
+  return '';
+}
+
+/**
  * How an aggregated total was arrived at — `8 @ $55 + 1 @ $57 = $497`.
  *
  * A total is not checkable on its own; the distribution it came from is. Same
@@ -823,7 +921,8 @@ function alesievAggregateBreakdown(contextLots) {
  * whole file is one auction, and re-importing is the easiest mistake to make
  * with an export you can download twice.
  */
-function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPriced, auctionStyle) {
+function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPriced, auctionStyle,
+  recordedPrices, targetAuctionId) {
   var staged = alesievReadStaging(values);
   if (staged.error) return { ok: false, aborts: [staged.error], cautions: [], lots: 0 };
 
@@ -882,6 +981,19 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
       ', AND the aggregated ' + ALESIEV_CONTEXT_TAB + ' row below. The price row is per token; the context row ' +
       'carries the quantity and the lot total, which is the figure Funding & Context reports as Included. ' +
       'Neither file can express the other, so do not delete one as a duplicate.');
+  }
+
+  // Is this export even this auction's? An ABORT rather than a refusal, and
+  // deliberately: rows keyed to the wrong auction are complete and well-formed,
+  // so `rowsComplete` has to go false or the dry run would hand them over to be
+  // pasted under the wrong id — which is the whole accident, one step later.
+  if (recordedPrices && targetAuctionId) {
+    var wrong = alesievWrongAuctionAbort(result.prices, targetAuctionId, recordedPrices);
+    if (wrong) aborts.push(wrong);
+  } else {
+    // A check that cannot run says so, rather than passing quietly.
+    cautions.push('the wrong-auction check did not run: no recorded ' + TABS.prices + ' rows were supplied ' +
+      'to compare this export against. Nothing here can tell you the staging tab holds a different auction.');
   }
 
   var onyx = alesievOnyxRows(staged.onyx);
@@ -1175,21 +1287,24 @@ function alesievTargetAuction(ui, title) {
   return null;
 }
 
-/** Whether `prices` already holds rows for this auction. */
-function alesievAlreadyPriced(auctionId) {
-  var rows = readTab(TABS.prices);
-  for (var i = 0; i < rows.length; i++) if (String(rows[i].auctionId).trim() === String(auctionId)) return true;
-  return false;
-}
 
 function alesievBuildPlan(target) {
   var staging = SpreadsheetApp.getActive().getSheetByName(ALESIEV_STAGING_TAB);
+  // One read of `prices`, used for both questions it can answer: does this
+  // auction already have rows, and does this export belong to a different one.
+  var recordedPrices = readTab(TABS.prices);
+  var alreadyPriced = false;
+  for (var i = 0; i < recordedPrices.length; i++) {
+    if (String(recordedPrices[i].auctionId).trim() === String(target.auctionId)) { alreadyPriced = true; break; }
+  }
   return alesievPlanImport(
     staging.getDataRange().getDisplayValues(),
     target.auctionSeason,
     readTab(TABS.tokens),
-    alesievAlreadyPriced(target.auctionId),
-    target.auctionStyle);
+    alreadyPriced,
+    target.auctionStyle,
+    recordedPrices,
+    target.auctionId);
 }
 
 function dryRunAlesievClose() {
@@ -1462,6 +1577,8 @@ if (typeof module !== 'undefined') {
     alesievAugmentRows: alesievAugmentRows,
     alesievNamedContextRows: alesievNamedContextRows,
     alesievSpineRows: alesievSpineRows,
+    alesievBlockSignature: alesievBlockSignature,
+    alesievWrongAuctionAbort: alesievWrongAuctionAbort,
     alesievAggregateBreakdown: alesievAggregateBreakdown,
     alesievPlanImport: alesievPlanImport,
     alesievDescribePlan: alesievDescribePlan,
