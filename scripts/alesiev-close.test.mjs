@@ -248,6 +248,71 @@ console.log(`\nThe sample export — ${FIXTURE.rows} rows, season ${SEASON}\n`);
   const dupe = A.alesievPlanImport(SAMPLE, SEASON, TOKENS, true);
   check('an auction that already has prices aborts',
     dupe.aborts.some((a) => /already has rows/.test(a)), dupe.aborts.join(' | '));
+  // ... AND ITS ROWS ARE STILL COMPLETE. A refusal to WRITE is not a problem
+  // with the rows, and keeping the two apart is what lets the dry run hand them
+  // over: re-importing an auction to pick up rows a newer script writes is a
+  // real errand, and until 2026-09-22 the dialog answered it with "nothing will
+  // be written" and no rows at all.
+  eq('  ... but its rows are complete, because the refusal is about writing', dupe.rowsComplete, true);
+  eq('  ... and it is not ok, so nothing writes', dupe.ok, false);
+  check('  ... and the abort says what to do instead',
+    dupe.aborts.some((a) => /paste those/.test(a)), dupe.aborts.join(' | '));
+
+  // The other direction: a plan that could not read a lot into rows is PARTIAL,
+  // and handing that over to paste would write half an auction.
+  const broken = plan([
+    ['Aragonite (1 of 2)', 'Trade', '12'],
+    ['Nonesuch Widget Of Nothing', 'Trade', '9'],
+  ]);
+  eq('a plan that could not resolve a lot is NOT complete', broken.rowsComplete, false);
+}
+
+// ===========================================================================
+// 3b. The rows a dry run hands over
+// ===========================================================================
+console.log('\nPasteable rows\n');
+{
+  const target = { auctionId: '20279', auctionSeason: '2027', auctionNumber: '9' };
+  const p = plan([
+    ['Aragonite (1 of 2)', 'Trade', '12'],
+    ['Aragonite (2 of 2)', 'Trade', '14'],
+  ]);
+  const priceText = A.alesievPriceWorksheetText(p, target, 'prices');
+  const rawText = A.alesievPriceWorksheetText(p, target, 'raw');
+  const rows = (t) => t.split('\n').map((l) => l.split('\t'));
+
+  // THE TWO TABS DIFFER IN COLUMN ORDER, not in content, and pasting one under
+  // the other's header puts the per-token price where the lot total goes. So
+  // both headers are pinned, and pinned against the order
+  // `importAlesievClose` actually writes rather than against a comment.
+  eq('the prices block carries the prices header',
+    rows(priceText)[0].join(','),
+    'auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category');
+  eq('the rawPricesData block carries its own, different header',
+    rows(rawText)[0].join(','),
+    'auctionId,auctionSeason,auctionNumber,trentName,trentPrice,Item,Price,Category');
+  check('  ... and they are not the same order',
+    rows(priceText)[0].join(',') !== rows(rawText)[0].join(','), 'the two headers match');
+
+  eq('every lot is a rawPricesData row', rows(rawText).length - 1, 2);
+  eq('  ... keyed to the auction', rows(rawText)[1].slice(0, 3).join(','), '20279,2027,9');
+  // The NORMALISED name — the `(1 of 2)` lot marker is off by the time a row is
+  // built, which is what every alesiev raw row already looks like.
+  eq('  ... carrying the lot name', rows(rawText)[1][3], 'Aragonite');
+  eq('  ... and the lot TOTAL, not the per-token price', rows(rawText)[1][4], '12');
+  eq('the min/max pair is two price rows', rows(priceText).length - 1, 2);
+  eq('  ... also keyed to the auction', rows(priceText)[1].slice(0, 3).join(','), '20279,2027,9');
+
+  // The header count and the row width have to agree, or a paste lands one
+  // column over and every cell after it is wrong.
+  for (const [name, text] of [['prices', priceText], ['rawPricesData', rawText]]) {
+    const r = rows(text);
+    check(`every ${name} row is as wide as its header`,
+      r.every((line) => line.length === r[0].length), JSON.stringify(r));
+  }
+
+  eq('an empty plan hands over nothing',
+    A.alesievPriceWorksheetText({ prices: [], raw: [] }, target, 'prices'), '');
 }
 
 // ===========================================================================
