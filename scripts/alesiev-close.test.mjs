@@ -73,6 +73,7 @@ const grid = (f) => parseCSV(readFileSync(join(fixtureDir, f), 'utf8'));
 const TOKENS = load(dataDir, 'tokenMetadata.csv');
 const CONTEXT = load(dataDir, 'contextItems.csv');
 const ONYX = load(dataDir, 'onyx.csv');
+const PRICES = load(dataDir, 'prices.csv');
 const manifest = JSON.parse(readFileSync(join(fixtureDir, 'manifest.json'), 'utf8'));
 const FIXTURE = manifest.files[0];
 const SAMPLE = grid(FIXTURE.file);
@@ -517,15 +518,32 @@ console.log("\nThe auctioneer's fee (never a withheld row)\n");
   // leans tight: a fee spelling this misses lands in contextItems where the
   // operator can see and delete it, but a withheld token it wrongly matched
   // would vanish from the funding rollups with nothing to say it existed.
-  const CONTEXT_NAMES = new Set(CONTEXT.map((r) => r.Item.toLowerCase()));
+  //
+  // THE CORPUS HERE IS THE CONTEXT ROWS **AND THE PRICE SPINE**, and the second
+  // half is not decoration. A fee name's job is to match what the data calls
+  // the token, and which FILE names it is a recording decision that moves: the
+  // Golden Ticket is a released payment the spine has carried since 2025 and
+  // contextItems recorded in parallel for four auctions, and the moment those
+  // four duplicates were deleted a check reading contextItems alone called
+  // `golden ticket` an invented name. Narrowing the corpus to one file is what
+  // turns a correct data change into a red check on the publish PR.
+  const CORPUS_NAMES = new Set([
+    ...CONTEXT.map((r) => r.Item),
+    ...PRICES.map((r) => r.Item), ...PRICES.map((r) => r['Display Name']),
+  ].filter(Boolean).map((s) => s.toLowerCase()));
   const invented = Object.keys(A.ALESIEV_FEE_NAMES).filter(
-    (k) => !CONTEXT_NAMES.has(k) && !Object.keys(A.ALESIEV_CONTEXT_RULES).includes(k));
+    (k) => !CORPUS_NAMES.has(k) && !Object.keys(A.ALESIEV_CONTEXT_RULES).includes(k));
   eq('every fee name is a spelling the corpus or a context rule already holds',
     invented.join(', '), '');
-  check('  ... including the Golden Ticket spellings contextItems records',
+  check('  ... including the three Golden Ticket spellings the corpus records',
     ['golden ticket', 'golden ticket chance', 'chance at golden ticket']
       .every((k) => A.ALESIEV_FEE_NAMES[k] === true),
     JSON.stringify(Object.keys(A.ALESIEV_FEE_NAMES)));
+  // Widening the corpus must not make the check vacuous: `Random UR` is the
+  // name forumClose.gs once invented, and nothing in either file uses it.
+  check('  ... and the wider corpus would still catch an invented spelling',
+    !CORPUS_NAMES.has('random ur') && !CORPUS_NAMES.has('goldenticket'),
+    'a name no row uses resolved against the corpus');
 
   // And the fence, in the other direction: nothing that is not on the list is
   // dropped, however much it looks like a fee.
