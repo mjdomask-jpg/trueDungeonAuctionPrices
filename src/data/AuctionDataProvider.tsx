@@ -102,7 +102,12 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
     () => buildContextItems(rawContext, [...sales, ...onyxSales], meta),
     [rawContext, sales, onyxSales, meta],
   );
-  const auctionContext = useMemo(() => rollupByAuction(contextItems), [contextItems]);
+  // Both sale feeds again: the rollup reads them for a released Golden Ticket
+  // the context rows do not carry (see rollupByAuction on why only the GT).
+  const auctionContext = useMemo(
+    () => rollupByAuction(contextItems, [...sales, ...onyxSales]),
+    [contextItems, sales, onyxSales],
+  );
   // Golden-Ticket auctions span both the core sales and the context rows, so this
   // recomputes when either settles. Cheap (a single pass over each) and shared by
   // every page's FilterBar.

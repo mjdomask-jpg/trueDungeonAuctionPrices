@@ -1,7 +1,7 @@
 import { fmtDateLong, money } from '../lib/format';
 import { TENX_PREFIX, SOURCE_LABEL } from '../lib/data';
 import type { AuctionGroup } from '../lib/data';
-import { isReleasedPayment, type ContextItem } from '../lib/context';
+import { isGoldenTicket, isReleasedPayment, type ContextItem } from '../lib/context';
 import { ProvenanceBadge, ReleasedBadge } from './ProvenanceBadge';
 
 // One auction in the explorer: a header carrying the auction's metadata, and
@@ -41,17 +41,28 @@ export function AuctionCard({
       .filter((v) => v && v !== 'n/a'),
   )];
 
-  // A released Golden Ticket / Random Ultra Rare is inconsistently recorded as
-  // BOTH a real sale and an "included" context row (see lib/context
-  // isReleasedPayment). The sale row is canonical — it carries the realised
-  // price and gets a "released" badge below — so drop the context duplicate to
-  // keep the item from appearing twice in one card. Purely presentational: the
-  // shared context feed (and the Analytics ledger built on it) is untouched.
-  const saleNames = new Set<string>();
-  for (const r of rows) { saleNames.add(r.displayName.toLowerCase()); saleNames.add(r.item.toLowerCase()); }
-  const ctxItems = context.filter(
-    (it) => !(it.provenance === 'released-payment' && saleNames.has(it.name.toLowerCase())),
-  );
+  // A released Golden Ticket is recorded as BOTH a real sale and an "included"
+  // context row in four auctions (see lib/context isReleasedPayment). The sale
+  // row is canonical — it carries the realised price and gets a "released"
+  // badge below — so drop the context duplicate to keep the item from appearing
+  // twice in one card. Purely presentational: the shared context feed (and the
+  // Analytics ledger built on it) is untouched.
+  //
+  // THE GOLDEN TICKET AND NOTHING ELSE, because it is the only released payment
+  // whose two records say the same thing. One ticket sold for one price: the
+  // context row adds nothing, so it goes. A Random Ultra Rare's context row is
+  // nine tokens for $376.00 beside a $41.78 PER-TOKEN sale — the quantity and
+  // the lot total live only there, the sale rows are derived from them, and
+  // dropping any of them would delete the numbers a reader came for. (The price
+  // test would not save us either: the grouped view hands this component one
+  // averaged row per item, so a min/max pair arrives as its mean and matches
+  // neither lot.)
+  const gtSales = rows.filter((r) => isGoldenTicket(r.displayName) || isGoldenTicket(r.item));
+  const ctxItems = context.filter((it) => !(
+    it.provenance === 'released-payment'
+    && isGoldenTicket(it.name)
+    && gtSales.some((r) => Math.abs(r.price - it.value) < 0.005)
+  ));
 
   return (
     <details

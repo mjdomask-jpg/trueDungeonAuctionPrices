@@ -37,6 +37,26 @@ row*, not a new bucket rows must be physically moved into.
 `normal` is the implicit default for every current `prices.csv` row. The other four are
 the context layer.
 
+### `released` reads both feeds, and only the Golden Ticket comes off the spine
+
+Which file records a released payment is a recording decision, not a fact about the
+auction, so the ledger's **Included** figure (`AuctionContext.released`) is summed from
+`contextItems.csv` *and* from Golden Ticket sales in the price spine. A Golden Ticket is
+the auctioneer's fee; selling it releases it, and the Auction Data cards have badged
+those sale rows `released` since this layer shipped — but until 2026-09-21 only a GT
+that *also* reached `contextItems` counted, so twelve auctions that sold theirs read
+`$0`. Where both feeds record one Golden Ticket the context row wins and it counts once.
+
+**A Random Ultra Rare is never read off the price spine, and the reason is quantity.**
+Its context row carries `quantity` and the lot-group **total** ($376.00 for nine); a
+price row is per-token by construction ($41.78) and `prices.csv` has no quantity column
+at all. Summing price rows would report $1,332 across the corpus where $10,514 was
+released — an eighth of the money. So the context row is the released fact and the price
+row (added for the Prices tab in item 4 of the 2026-09-21 batch) is the market
+observation, and the two do not add up. The same asymmetry is why `AuctionCard` drops a
+duplicate **Golden Ticket** context row but never a Random Ultra Rare one: the GT's two
+records say the same thing, the Random UR's do not.
+
 ---
 
 ## 2. Concept 5 recommendation — Golden Tickets & Random Ultra Rares

@@ -101,7 +101,9 @@ function IncludedHelp() {
     <HintPopover label="What Included means">
       Items the auctioneer would normally keep as payment for running the auction — the{' '}
       <strong>Golden Ticket</strong> chance and the <strong>Random Ultra Rares</strong> — sold to
-      bidders instead.
+      bidders instead. Counted wherever the auction recorded them: a Golden Ticket is included
+      whether it was logged as a sale or as an added item, and the Random Ultra Rares carry the
+      lot's <em>total</em>, not the per-token price the Prices tab shows.
     </HintPopover>
   );
 }

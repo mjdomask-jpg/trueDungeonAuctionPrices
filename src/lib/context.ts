@@ -98,7 +98,15 @@ export function isRandomUltraRare(name: string): boolean {
 // to keep), so both classify as released-payment (design §2). Exported so the
 // Auction Data cards can badge these rows and drop the context-sheet duplicate.
 export function isReleasedPayment(name: string): boolean {
-  return isRandomUltraRare(name) || (name ?? '').trim().toLowerCase() === 'golden ticket';
+  return isRandomUltraRare(name) || isGoldenTicket(name);
+}
+
+// The ticket itself, never a CHANCE at one. `Chance at Golden Ticket` and
+// `Golden Ticket Chance` are three recorded context rows and a different thing
+// — a raffle entry the auctioneer sold, not the auctioneer's own fee released —
+// so they classify as augments, which is where they have always landed.
+export function isGoldenTicket(name: string): boolean {
+  return (name ?? '').trim().toLowerCase() === 'golden ticket';
 }
 
 // Map a raw category (+ item name) to a provenance. The 2026 `augment` label is
@@ -264,15 +272,55 @@ const emptyRollup = (auctionId: string): AuctionContext => ({
 });
 
 // Sum the classified items per auction into AuctionContext rows.
-export function rollupByAuction(items: ContextItem[]): Map<string, AuctionContext> {
+//
+// `released` reads BOTH FEEDS, because which file recorded a released payment is
+// a recording decision and not a fact about the auction. A Golden Ticket is the
+// auctioneer's fee; selling it releases it to bidders, and the Auction Data
+// cards have badged those sale rows as released since this layer shipped — but
+// until now only a GT that reached contextItems counted toward the ledger's
+// "Included", so twelve auctions that sold theirs read $0.
+//
+// ONLY THE GOLDEN TICKET IS READ OFF THE PRICE SPINE, and the reason is
+// quantity. A context row carries `quantity` and the lot-group TOTAL ($376.00
+// for nine Random Ultra Rares); a price row is per-token by construction
+// ($41.78) and prices.csv has no quantity column at all. Summing price rows for
+// a Random Ultra Rare would report an eighth of the money — $1,332 across the
+// corpus against the $10,514 actually released — so a Random Ultra Rare's
+// released value comes from its context row and from nowhere else, whether or
+// not the price spine also carries it for the Prices tab to show. A Golden
+// Ticket is one token in one row, so its price IS the whole amount and either
+// feed says the same thing; where both do, the context row wins and it counts
+// once.
+export function rollupByAuction(
+  items: ContextItem[], sales: Sale[] = [],
+): Map<string, AuctionContext> {
   const byAuction = new Map<string, AuctionContext>();
+  const open = (auctionId: string): AuctionContext => {
+    const found = byAuction.get(auctionId);
+    if (found) return found;
+    const made = emptyRollup(auctionId);
+    byAuction.set(auctionId, made);
+    return made;
+  };
+  // Auctions whose context rows already account for the Golden Ticket.
+  const claimed = new Set<string>();
   for (const it of items) {
-    let a = byAuction.get(it.auctionId);
-    if (!a) { a = emptyRollup(it.auctionId); byAuction.set(it.auctionId, a); }
-    if (it.provenance === 'released-payment') a.released += it.value;
-    else if (it.provenance === 'augment') a.augment += it.value;
+    const a = open(it.auctionId);
+    if (it.provenance === 'released-payment') {
+      a.released += it.value;
+      if (isGoldenTicket(it.name)) claimed.add(it.auctionId);
+    } else if (it.provenance === 'augment') a.augment += it.value;
     else if (it.provenance === 'grunnel') a.grunnel += it.value;
     else if (it.provenance === 'withheld') a.withheld += it.value;
+    a.augmentedTotal = a.released + a.augment + a.grunnel + a.withheld;
+  }
+  for (const s of sales) {
+    if (!isGoldenTicket(s.displayName) && !isGoldenTicket(s.item)) continue;
+    if (claimed.has(s.auctionId)) continue;
+    // An auction whose only context is a released sale still belongs in the
+    // ledger: "released their Golden Ticket, withheld nothing" is an answer.
+    const a = open(s.auctionId);
+    a.released += s.price;
     a.augmentedTotal = a.released + a.augment + a.grunnel + a.withheld;
   }
   return byAuction;

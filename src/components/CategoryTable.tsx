@@ -1,5 +1,7 @@
 import { type ItemRow } from '../lib/data';
 import { money } from '../lib/format';
+import { isRandomUltraRare } from '../lib/context';
+import { HintPopover } from './HintPopover';
 
 // Which stat group the table shows. Seven columns don't fit a phone — the six
 // numbers get ~38px each, of which 24px is padding, so prices collide. Narrow
@@ -64,7 +66,24 @@ function Row(
 ) {
   return (
     <tr>
-      <td className="left token">{r.displayName}</td>
+      <td className="left token">
+        {r.displayName}
+        {/* A Random Ultra Rare's price is a MEAN and no other row in this table
+            is. The auctioneer sold nine of them as one lot group and recorded
+            one total, so the per-token figure is that total divided by the
+            count — never an observed single sale. Said here because the number
+            looks exactly like every other number in the column. */}
+        {isRandomUltraRare(r.displayName) && (
+          <HintPopover label="About the Random Ultra Rare price">
+            A <strong>mean</strong>, not a sale. Random Ultra Rares are sold as a lot — usually
+            nine at once — and only the lot's total was recorded, so the price here is that
+            total divided by the count. Where an auction sold two or three separate lots the
+            min and max are those lots' rates; where it sold one, min and max are the same
+            number because there is only one rate to report. The lot sizes and totals are on
+            each auction's card under <em>Auction Data</em>.
+          </HintPopover>
+        )}
+      </td>
       {showLast5 && (
         <>
           <td className="last5">{money(r.last5?.max)}</td>

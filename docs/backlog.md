@@ -101,6 +101,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-16** | ~~`20275` records the auctioneer's fee as withheld~~ | **RESOLVED 2026-09-19** — two rows (ten lots) deleted in the workbook; shipped in PR #221, and the Onyx set now adds to 21 |
 | **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
 | **DATA-17** | ~~Season 2027 runs two different $8K orders and nothing records which~~ | **RESOLVED 2026-09-21 (repo side)** — a value in `auctionStyle`, not a column; seven rows relabelled and § 6 now holds the style to the trade-good counts. **The same edit in the workbook is what is left**, or the next publish reverts it |
+| **DATA-18** | A Random Ultra Rare's published price is a **mean** — the only one in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each mean with its lots |
 
 ---
 
@@ -2286,3 +2287,50 @@ this item is only half closed.
 
 The seven: `20271`, `20273`, `20274`, `202710`, `202711`, `202713`, and with
 Onyx `20275`.
+
+---
+
+## DATA-18. A Random Ultra Rare's price is a mean, and the threads hold the real sales — OPEN
+
+Item 4 of the 2026-09-21 batch put `Random Ultra Rare` on the Prices tab. Its
+price there is **a mean**, and it is the only row in that file that is one.
+
+The source is a `contextItems.csv` row per auction carrying a quantity and a
+**lot-group total** — nine Random Ultra Rares, $376.00 between them — so the
+published per-token figure is `total ÷ quantity`, $41.78. `rawPricesData.csv`
+holds **zero** Random Ultra Rare lots across the whole corpus, so there is no
+per-lot data to recover a real min/max from. Two auctions (`202321`, `202645`)
+sold theirs in two and three separate groups and do get a genuine min/max out of
+that; the other 20 publish a single rate, min and max equal.
+
+Consequences, accepted knowingly when it shipped:
+
+- Quartiles never shows the token at all — it reads per-lot data, and there is
+  none.
+- The "Last 5" figures are means of means.
+- `validate-prices.mjs` § 1 warns on three of the 22 (`202647`, `20271`,
+  `20272` — the only ones carrying per-lot data at all): *priced in prices.csv
+  with no lots in rawPricesData*. Correct and expected.
+
+**The route out is already built.** The historical backfill project fetched and
+parsed every page of every forum thread 2018–2026 and wrote 29 auctioneer
+grammars to read priced lines out of them (`backfill/`, and
+`apps-script/forumThread.gs`). Those threads name individual Random Ultra Rare
+sales that never reached the per-lot file — `Random URs (9)` headings with a
+price per line is a shape `forumThread.gs` already reads. Recrawling them for
+Random UR lots would replace each mean with the lots behind it, and then:
+
+- `rawPricesData` carries the lots, § 1 reconciles them, and the mean becomes a
+  real min/max.
+- The Prices tab's "this is a mean" hint (`CategoryTable`) can come off for the
+  seasons that are backfilled.
+- The Auction Data card stops needing to show the same sale twice.
+
+**The ledger is not waiting on this.** Its **Included** figure reads the context
+row's total and will keep doing so for as long as the context row is the thing
+that knows how many tokens there were — see `docs/context-layer-design.md` §2.
+Per-lot rows would let that change; nothing about it is blocked meanwhile.
+
+Asked for by the maintainer when approving Q6 of the 2026-09-21 plan, on the
+grounds that the mean is a stopgap with a known way out and not a permanent
+shape.
