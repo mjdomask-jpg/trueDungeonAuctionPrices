@@ -151,7 +151,9 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20192,2019,2,Patron Pin,105,Patron Pin,Premium
 20192,2019,2,PCH,3,Potion Condensed Healing,Bonus
 20192,2019,2,Philosopher's Stone,1.75,Philosopher's Stone,Trade 1
+20192,2019,2,Rare Bag,81,Rare Bag,Condensed
 20192,2019,2,Ultra Rare,120,Chosen Ultra Rare,Ultra Rare
+20192,2019,2,Uncommon Bag,43,Uncommon Bag,Condensed
 20192,2019,2,Wish Ring,240,Wish Ring,Trade 4
 20193,2019,3,"1,000 GP Gold Bar",16,"1,000 GP Gold Bar",Trade 2
 20193,2019,3,1k Bonus,41,5th Tooth of Cavadar,Premium
@@ -1330,7 +1332,9 @@ auctionId,auctionSeason,auctionNumber,Item,Price,Display Name,Category
 20225,2022,5,Philosopher's Stone,2.5,Philosopher's Stone,Trade 1
 20225,2022,5,Preorder Bonus,1,+1 Turkey Leg,Preorder
 20225,2022,5,Treasure Chip,2,Treasure Chip (each),Preorder
+20225,2022,5,Rare Bag,70,Rare Bag,Condensed
 20225,2022,5,Ultra Rare,105,Chosen Ultra Rare,Ultra Rare
+20225,2022,5,Uncommon Bag,55,Uncommon Bag,Condensed
 20225,2022,5,Wish Ring,175,Wish Ring,Trade 4
 20226,2022,6,"1,000 GP Gold Bar",12.75,"1,000 GP Gold Bar",Trade 2
 20226,2022,6,1k Bonus,75,Ring of the 5th Circle,Premium
