@@ -19,6 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
+import { buildWithheldIndex, valueWithheld } from './lib/withheld.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // --data / --docs point the run at directories other than the repo's own, so
@@ -61,48 +62,29 @@ const dateKey = (iso) => (/^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10) : ''
 const cleanName = (s) => (s ?? '').replace(/^['`](?=[-+=@])/, '');
 
 // --- load ---
-const sales = objs(read(dataDir, 'prices.csv'))
+// BOTH price feeds, as the site does. An auctioneer can withhold part of an
+// Onyx order and those names are in no other file; prices.csv alone can never
+// value one. The two share no display name, so this disturbs nothing else.
+const priceRows = (file) => objs(read(dataDir, file))
   .map((o) => ({ auctionId: o.auctionId, season: o.auctionSeason, displayName: cleanName(o['Display Name']), price: money(o.Price) }))
   .filter((s) => s.auctionId && Number.isFinite(s.price));
+const sales = [...priceRows('prices.csv'), ...priceRows('onyx.csv')];
 const meta = objs(read(dataDir, 'auctionMetadata.csv')).filter((o) => o.auctionId && /^\d+$/.test(o.auctionSeason));
 const ctx = objs(read(dataDir, 'contextItems.csv')).filter((o) => o.auctionId);
 // Context layer is Closed-auctions-only (mirror of buildContextItems).
 const closedAuctions = new Set(meta.filter((m) => m.Status === 'Closed').map((m) => m.auctionId));
 
-// --- mirror of context.ts ordering + recompute ---
+// --- domain constants ---
 const RANDOM_UR = new Set(['random ultra rare']);
 const TRENT_START_SEASON = 2023;
 const GT_ERA_DATE = '2024-11-27';
-const WITHHELD_LOOKBACK_AUCTIONS = 5; // mirror of ERAS.withheldLookbackAuctions
 
 const metaById = new Map(meta.map((m) => [m.auctionId, m]));
-function instant(m) {
-  const k = dateKey(m.closeDate);
-  if (k) return Date.parse(k);
-  return -1e15 + Number(m.auctionSeason) * 1000 + Number(m.auctionNumber);
-}
-const instantById = new Map(meta.map((m) => [m.auctionId, instant(m)]));
-const seasonById = new Map(meta.map((m) => [m.auctionId, m.auctionSeason]));
-const salesByName = new Map();
-for (const s of sales) {
-  const inst = instantById.get(s.auctionId); if (inst == null) continue;
-  (salesByName.get(s.displayName) ?? salesByName.set(s.displayName, []).get(s.displayName))
-    .push({ season: s.season, inst, auctionId: s.auctionId, price: s.price });
-}
-function valueWithheld(name, auctionId, qty, refValue) {
-  const season = seasonById.get(auctionId), wInst = instantById.get(auctionId);
-  const prior = (salesByName.get(name) ?? []).filter((s) => s.season === season && wInst != null && s.inst < wInst);
-  if (!prior.length) return { value: refValue ?? 0, n: 0, window: '' };
-  // Keep the N most-recent prior auctions (close instant desc, id tiebreak).
-  const instByAuction = new Map();
-  for (const s of prior) instByAuction.set(s.auctionId, s.inst);
-  const recent = new Set([...instByAuction.entries()]
-    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? 1 : -1))
-    .slice(0, WITHHELD_LOOKBACK_AUCTIONS).map(([id]) => id));
-  const window = prior.filter((s) => recent.has(s.auctionId));
-  const mean = window.reduce((a, s) => a + s.price, 0) / window.length;
-  return { value: -mean * qty, n: window.length, window: [...recent].sort().join(';') };
-}
+// The recompute itself lives in scripts/lib/withheld.mjs, shared with
+// gen-withheld-preview.mjs. It used to be copied into both, and when
+// context.ts changed neither copy followed — the generator would have written
+// a golden file this checker then passed, while the site disagreed with both.
+const withheldIdx = buildWithheldIndex(sales, meta);
 
 let fail = 0, warn = 0;
 const err = (m) => { console.error('  ✗ ' + m); fail++; };
@@ -112,7 +94,7 @@ const note = (m) => { console.warn('  ! ' + m); warn++; };
 const withheld = ctx.filter((r) => r.category === 'withheld' && closedAuctions.has(r.auctionId)).map((r) => {
   const qty = parseFloat(r.quantity) || 1;
   const name = cleanName(r.Item);
-  const { value, window } = valueWithheld(name, r.auctionId, qty, money(r.priceAugmented));
+  const { value, window } = valueWithheld(name, r.auctionId, qty, money(r.priceAugmented), withheldIdx);
   return { auctionId: r.auctionId, name, value, qty, window };
 });
 const previewText = read(docsDir, 'withheld-recompute-preview.csv');
