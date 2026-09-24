@@ -31,10 +31,25 @@ function bucket<K>(map: Map<K, number[]>, key: K, value: number): void {
 
 // --- View 1: Auction Ledger ------------------------------------------------
 // Per auction: what the auctioneer withheld (negative) against what they put
-// back — released payment, personal augments — and the funding-target reduction
-// (an auctioneer who lowered the $8k goal "covered" differently). Grunnel is
-// shown but NOT counted toward "covered": it is a company drop, not the
-// auctioneer offsetting their own withholding (design §6.1).
+// back — released payment, personal augments — and how far their funding goal
+// sat from the customary one. Grunnel is shown but NOT counted toward "covered":
+// it is a company drop, not the auctioneer offsetting their own withholding
+// (design §6.1).
+//
+// THE GOAL AND THE FEE ARE TWO HALVES OF ONE TRADE, which is why the goal is a
+// term here and not context. The custom is: the auctioneer keeps the fee (the
+// Random Ultra Rares and the Golden Ticket) and sets the goal at $7,500, paying
+// the last $500 of the order themselves. An auctioneer who releases the fee
+// raises the goal to $8,000 instead — every one of the 16 auctions that sold
+// their Golden Ticket did — so the bidders' extra $500 is what pays for it.
+// Crediting the released fee without debiting that $500 credited those
+// auctioneers twice, and ignoring a goal set BELOW the custom hid a cash
+// contribution entirely (20275, $6,750). Measured 2026-09-24, design §6.1.
+//
+// The baseline is the customary $7,500, not the $8,000 the order costs. $8,000
+// would credit every ordinary auction $500 for the discount that bought the fee
+// it kept — coherent only if the kept fee were debited at the same time, which
+// needs an estimate of the fee for every auction and is backlog SITE-13.
 
 export type LedgerRow = {
   auctionId: string;
@@ -47,14 +62,18 @@ export type LedgerRow = {
   released: number;
   augment: number;
   grunnel: number;
-  // The auction's funding target (auctionMetadata column O, targetFunding). Shown
-  // as context — what the auctioneer asked bidders for — not a term in the balance.
+  // The auction's funding target (auctionMetadata column O, targetFunding).
   // null when the auction recorded no target.
   fundingGoal: number | null;
-  // released + augment + withheld. ≥ 0 ⇒ what the auctioneer put back (bonus-
-  // included items + personal augments) at least matched what they withheld.
-  // Grunnel is excluded (a company drop, not the auctioneer's own offset), and the
-  // funding goal is context, not part of this sum.
+  // The customary goal minus this auction's: +$350 for a $7,150 goal (the
+  // auctioneer paid $350 more of the order than custom asks), −$500 for $8,000.
+  // null when there is nothing to measure — no recorded goal, or a goal above
+  // the order cost, which only a pooled multi-order auction has (20251) and
+  // which says nothing about one order's custom. null counts as $0.
+  goalOffset: number | null;
+  // released + augment + withheld + goalOffset. ≥ 0 ⇒ the auctioneer put back
+  // at least as much as custom asks of them. Grunnel is excluded (a company
+  // drop, not the auctioneer's own offset).
   //
   // The view can add Grunnel back on request — see ledgerBalanceOf, which is
   // where a row's DISPLAYED balance comes from. These two fields are the
@@ -64,9 +83,17 @@ export type LedgerRow = {
   covered: boolean;
 };
 
-function balanceOf(released: number, augment: number, withheld: number): number {
+export function goalOffsetOf(targetFunding: number | null): number | null {
+  if (targetFunding == null) return null;
+  if (targetFunding > ERAS.orderCost) return null;
+  return ERAS.defaultTargetFunding - targetFunding;
+}
+
+function balanceOf(
+  released: number, augment: number, withheld: number, goalOffset: number | null,
+): number {
   // withheld is ≤ 0, so adding it subtracts the withheld magnitude.
-  return released + augment + withheld;
+  return released + augment + withheld + (goalOffset ?? 0);
 }
 
 // A rounding guard so a $0.00 net reads as covered rather than a penny short.
@@ -84,34 +111,42 @@ export const isCovered = (balance: number): boolean => balance >= -0.005;
 // Checking the box adds the drop back, which answers the other question — what
 // the auction's books looked like in total, whoever paid.
 export function ledgerBalanceOf(
-  r: { released: number; augment: number; grunnel: number; withheld: number },
+  r: { released: number; augment: number; grunnel: number; withheld: number; goalOffset: number | null },
   includeGrunnel: boolean,
 ): number {
-  return balanceOf(r.released, r.augment, r.withheld) + (includeGrunnel ? r.grunnel : 0);
+  return balanceOf(r.released, r.augment, r.withheld, r.goalOffset) + (includeGrunnel ? r.grunnel : 0);
 }
 
+// One row per auction with context, PLUS every closed auction whose goal alone
+// moves its balance. An auction with no context rows and a $7,150 goal is a
+// contribution the ledger could not see while it listed only the auctions with
+// context. Closed only: an open auction's augments are recorded at close, so a
+// live one would read Short on its goal before anything else is counted.
 export function auctionLedger(
   meta: AuctionMeta[], ctx: Map<string, AuctionContext>,
 ): LedgerRow[] {
-  const byId = new Map(meta.map((m) => [m.auctionId, m]));
   const labels = auctioneerLabels(meta);
+  const none = { released: 0, augment: 0, grunnel: 0, withheld: 0 };
   const rows: LedgerRow[] = [];
-  for (const [id, c] of ctx) {
-    const m = byId.get(id);
-    if (!m) continue;
-    const balance = balanceOf(c.released, c.augment, c.withheld);
+  for (const m of meta) {
+    const goalOffset = goalOffsetOf(m.targetFunding);
+    const c = ctx.get(m.auctionId);
+    if (!c && !(m.status === 'Closed' && goalOffset)) continue;
+    const { released, augment, grunnel, withheld } = c ?? none;
+    const balance = balanceOf(released, augment, withheld, goalOffset);
     rows.push({
-      auctionId: id,
+      auctionId: m.auctionId,
       season: m.season,
       auctionNumber: m.auctionNumber,
       name: m.name,
       auctioneer: labels.get(auctioneerKey(m.auctioneer)) ?? m.auctioneer,
       source: m.source,
-      withheld: c.withheld,
-      released: c.released,
-      augment: c.augment,
-      grunnel: c.grunnel,
+      withheld,
+      released,
+      augment,
+      grunnel,
       fundingGoal: m.targetFunding,
+      goalOffset,
       balance,
       covered: isCovered(balance),
     });
@@ -127,6 +162,7 @@ export type LedgerAgg = {
   released: number;
   augment: number;
   grunnel: number;
+  goalOffset: number;
   balance: number;
   covered: boolean;
 };
@@ -137,8 +173,9 @@ function aggregate(key: string, rows: LedgerRow[]): LedgerAgg {
   const released = sum((r) => r.released);
   const augment = sum((r) => r.augment);
   const grunnel = sum((r) => r.grunnel);
-  const balance = balanceOf(released, augment, withheld);
-  return { key, n: rows.length, withheld, released, augment, grunnel, balance, covered: isCovered(balance) };
+  const goalOffset = sum((r) => r.goalOffset ?? 0);
+  const balance = balanceOf(released, augment, withheld, goalOffset);
+  return { key, n: rows.length, withheld, released, augment, grunnel, goalOffset, balance, covered: isCovered(balance) };
 }
 
 // One aggregate per auctioneer, most-withheld first (largest |withheld|).

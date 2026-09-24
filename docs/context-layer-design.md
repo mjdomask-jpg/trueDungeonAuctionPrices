@@ -284,10 +284,46 @@ able to answer it — see item 5.
 
 1. **Did augments cover withholdings?** — a per-auction **"Auction Ledger"**: columns for
    withheld total (recomputed, negative), released-payment total, personal-augment total,
-   grunnel total, and the **funding-target reduction** (`8000 − targetFunding`, since an
-   auctioneer who lowered the goal "covered" differently). A **Covered?** verdict =
-   `augments + released + target-reduction ≥ |withheld|`. Aggregable per auctioneer and
-   overall. This is the headline use of the fixed rollups (§3.1) and the recompute (§4).
+   grunnel total, and the **goal offset** (`7500 − targetFunding`). A **Covered?**
+   verdict = `released + augments + goal offset ≥ |withheld|`, Grunnel excluded unless
+   the reader ticks it in. Aggregable per auctioneer and overall. This is the headline use
+   of the fixed rollups (§3.1) and the recompute (§4).
+
+   **The goal offset — as built 2026-09-24, after it had been dropped.** This design
+   always had a goal term; the first build shipped it as `8000 − targetFunding` and a
+   rework (`3e9b7e3`) then removed it, calling the goal "context". Community feedback
+   named what that cost, from two sides: an auctioneer who set a **$6,750** goal (20275)
+   read *Short* with $750 of their own money uncounted, and one who released the Golden
+   Ticket (20274) was credited $1,251 for it while the $500 the bidders added to pay for
+   it counted nowhere.
+
+   **The goal and the fee are two halves of one trade.** By custom the auctioneer keeps
+   the fee (Random Ultra Rares and the Golden Ticket) and sets the goal at $7,500, paying
+   the last $500 themselves. Releasing the fee comes with an $8,000 goal instead:
+   measured, **all 16** auctions that sold their Golden Ticket set $8,000, as did 21 of
+   the 24 that released any fee item; one auctioneer's thread states the rule outright
+   (202018). So the baseline is the **customary $7,500**, and the offset is signed —
+   below it is a credit, above it a debit. That one term answers both complaints without
+   a single new row.
+
+   **Why not the $8,000 order cost.** It would credit every ordinary auction $500 for the
+   discount that bought the fee it kept, and it leaves 20274 exactly where it was — it
+   fixes neither complaint. `$8,000` is coherent only paired with a **debit for the fee
+   kept**, which is a different lens ("who came out ahead in dollars" rather than "who
+   departed from custom") and needs an estimated fee for every auction; that is
+   `SITE-13`. The two lenses differ by `$500 − fee value` per auction, so they agreed
+   while nine Random URs were worth about $500 and parted when the Golden Ticket joined
+   the fee.
+
+   **Three edge rules.** A **blank** goal offsets $0 — the $7,500 default stays an
+   assumption, never a stored fact. A goal **above** the order cost offsets nothing,
+   because only a pooled multi-order auction has one (20251, $10,250). And an auction
+   with **no context rows** now joins the ledger when its goal alone moves the balance,
+   but only once **closed**, since augments are recorded at close.
+
+   **The verdict is only as good as the fee record.** An `$8,000` goal with no released
+   fee reads as a $500 debit, and "no fee row" cannot tell *kept* from *released but not
+   recorded*. The thread check that preceded the build found both: see `DATA-19`.
 2. **How did Grunnel items contribute vs the preorder benchmark?** — per season, mean
    Grunnel item value vs mean **preorder** item value that season (the natural benchmark,
    since Grunnel offsets expired preorder bonuses). Phase-1 spot-check: preorder ≈ $2/yr

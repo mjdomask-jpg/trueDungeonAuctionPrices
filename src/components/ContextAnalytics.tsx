@@ -103,7 +103,9 @@ function IncludedHelp() {
       <strong>Golden Ticket</strong> chance and the <strong>Random Ultra Rares</strong> — sold to
       bidders instead. Counted wherever the auction recorded them: a Golden Ticket is included
       whether it was logged as a sale or as an added item, and the Random Ultra Rares carry the
-      lot's <em>total</em>, not the per-token price the Prices tab shows.
+      lot's <em>total</em>, not the per-token price the Prices tab shows. Releasing the fee
+      usually comes with an $8,000 goal rather than the customary $7,500 — the bidders' extra
+      $500 is what pays for it — and the <strong>goal offset</strong> counts that.
     </HintPopover>
   );
 }
@@ -114,15 +116,39 @@ function IncludedHelp() {
 function BalanceHelp() {
   return (
     <HintPopover label="How Balance is calculated">
-      Included + augments − withheld. <strong>Grunnel is left out</strong>: it is a drop from a
+      Included + augments − withheld + goal offset. At or above zero, the auctioneer put back at
+      least what custom asks of them. <strong>Grunnel is left out</strong>: it is a drop from a
       company employee, not the auctioneer offsetting their own withholding, so counting it would
       credit the auctioneer with someone else's money. That makes the default the answer to
       "would this auction have worked without help from the company?" — tick{' '}
-      <em>Include Grunnel</em> to add it back. The funding goal is context and is never part of
-      this sum.
+      <em>Include Grunnel</em> to add it back.
     </HintPopover>
   );
 }
+
+// The goal offset is the term readers are least likely to expect, and the one
+// whose sign is easiest to misread, so it explains itself where it is shown.
+function GoalOffsetHelp() {
+  const base = money0(ERAS.defaultTargetFunding);
+  return (
+    <HintPopover label="What the goal offset means">
+      How far the funding goal sat from the customary <strong>{base}</strong>. By custom the
+      auctioneer keeps the fee — the Random Ultra Rares and the Golden Ticket — and pays the last
+      {' '}{money0(ERAS.orderCost - ERAS.defaultTargetFunding)} of the {money0(ERAS.orderCost)} order
+      themselves. A goal <strong>below</strong> {base} is more of the order paid by the auctioneer,
+      and counts for them; a goal <strong>above</strong> it is more paid by the bidders, and counts
+      against them. An auctioneer who releases the fee usually sets the goal at{' '}
+      {money0(ERAS.orderCost)}, so the Golden Ticket they include and the $500 the bidders add
+      are both counted. <em>n/a</em> means no single-order goal to compare: none was recorded, or it
+      was a pooled auction for more than one order.
+    </HintPopover>
+  );
+}
+
+// Signed, because the offset's sign IS its meaning: "+$350" reads as a credit
+// where a bare "$350" beside a column of negatives would not.
+const signed0 = (n: number) => (n > 0 ? '+' : '') + money0(n);
+const offsetText = (n: number | null) => (n == null ? 'n/a' : n === 0 ? '—' : signed0(n));
 
 function coveredBadge(covered: boolean) {
   return (
@@ -151,6 +177,8 @@ function LedgerCard({ r, includeGrunnel }: { r: LedgerRow; includeGrunnel: boole
       </div>
       <div className="led-figs">
         {fig('Funding goal', r.fundingGoal == null ? 'n/a' : money0(r.fundingGoal))}
+        {fig(<>Goal offset <GoalOffsetHelp /></>, offsetText(r.goalOffset),
+          r.goalOffset == null ? 'muted' : r.goalOffset < 0 ? 'neg' : '')}
         {fig('Withheld', r.withheld ? money0(r.withheld) : '—', 'neg')}
         {fig(<>Included <IncludedHelp /></>, r.released ? money0(r.released) : '—')}
         {fig('Augments', r.augment ? money0(r.augment) : '—')}
@@ -203,16 +231,18 @@ function LedgerView({
       <p className="an-lede">
         {narrow ? (
           <>Per auction: what the auctioneer <strong>withheld</strong> (estimated, negative) vs what
-          they put back — bonuses <strong>included</strong> and personal <strong>augments</strong>. A{' '}
-          <strong>Balance</strong> ≥ 0 means they covered it.</>
+          they put back — bonuses <strong>included</strong>, personal <strong>augments</strong>, and a
+          goal below {money0(ERAS.defaultTargetFunding)}. A <strong>Balance</strong> ≥ 0 means they
+          covered it.</>
         ) : (
-          <>For each auction with context, what the auctioneer <strong>withheld</strong> (an estimate,
-          negative) against what they put back: bonus items <strong>included</strong> and personal{' '}
-          <strong>augments</strong>. <strong>Balance</strong> = included + augments − withheld, and a
-          row is covered (green) when it is ≥ 0. <strong>Grunnel</strong> (a company drop) is shown
-          for context and left out of the balance — so the default answers "would this auction have
-          worked without help from the company?" — and the <strong>funding goal</strong> is never
-          part of it.</>
+          <>For each auction, what the auctioneer <strong>withheld</strong> (an estimate, negative)
+          against what they put back: bonus items <strong>included</strong>, personal{' '}
+          <strong>augments</strong>, and the <strong>goal offset</strong> — how far the funding goal
+          sat from the customary {money0(ERAS.defaultTargetFunding)}. <strong>Balance</strong> =
+          included + augments − withheld + goal offset, and a row is covered (green) when it is ≥ 0.
+          {' '}<strong>Grunnel</strong> (a company drop) is shown for context and left out of the
+          balance, so the default answers "would this auction have worked without help from the
+          company?"</>
         )}
       </p>
 
@@ -256,6 +286,7 @@ function LedgerView({
               <tr>
                 <th className="left">Auction</th>
                 <th className="num">Funding goal</th>
+                <th className="num">Goal offset <GoalOffsetHelp /></th>
                 <th className="num">Withheld</th>
                 <th className="num">Included <IncludedHelp /></th>
                 <th className="num">Augments</th>
@@ -273,6 +304,9 @@ function LedgerView({
                     <span className="an-lsub">#{r.auctionNumber} · {r.auctioneer}</span>
                   </td>
                   <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
+                  <td className={`num${r.goalOffset != null && r.goalOffset < 0 ? ' neg' : ''}`}>
+                    {r.goalOffset == null ? <span className="muted">n/a</span> : offsetText(r.goalOffset)}
+                  </td>
                   <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
                   <td className="num">{r.released ? money0(r.released) : '—'}</td>
                   <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
