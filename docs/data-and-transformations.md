@@ -373,11 +373,14 @@ into the four analyses on the Analytics page's **Funding & Context** view
 (design §6), all pure over the parsed data:
 
 - **Auction ledger** (`auctionLedger`) — per auction, coverage = released +
-  personal-augments + funding-target reduction (`orderCost − targetFunding`) −
+  personal-augments + goal offset (`defaultTargetFunding − targetFunding`, the customary
+  $7,500 baseline — design §6 item 1 says why not the order cost) −
   withheld; `≥ 0` ⇒ *Covered*. Grunnel is shown but excluded from the verdict (a
   company drop, not the auctioneer's own offset), and an auction with no recorded
-  target contributes **$0** reduction, never the assumed default, so coverage is
-  never fabricated. Aggregated per auctioneer and overall.
+  target — or a pooled one above the order cost — contributes a **$0** offset, never
+  the assumed default, so coverage is never fabricated. A closed auction with no
+  context rows is listed when its goal alone moves the balance. Aggregated per
+  auctioneer and overall.
 - **Grunnel vs preorder** (`grunnelVsPreorder`) — mean Grunnel item value vs mean
   `Preorder`-category sale price, per season.
 - **Augmented vs non-augmented** (`augmentedVsNot`) — within one season, each

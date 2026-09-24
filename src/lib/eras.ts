@@ -29,9 +29,12 @@ export const ERAS = {
   // first GT sale is auction 202520, closed 2024-11-27 (audit §5).
   goldenTicketGuarantee: { firstSaleAuctionId: '202520', date: '2024-11-27' },
 
-  // The advertised order cost, and the assumed funding target when an auction's
-  // own target is unknown (92 auctions). The default is an ASSUMPTION and must be
-  // surfaced as one in the UI, never presented as a recorded fact (Concept 3).
+  // The advertised order cost, and the CUSTOMARY funding target: an auctioneer
+  // keeps the fee (Random Ultra Rares, Golden Ticket) and pays the last $500
+  // themselves. It is the Auction Ledger's baseline for the goal offset
+  // (contextAnalytics goalOffsetOf). Where an auction's own target is unknown it
+  // is an ASSUMPTION and must be surfaced as one in the UI, never presented as a
+  // recorded fact (Concept 3) — the ledger counts a blank goal as $0 instead.
   orderCost: 8000,
   defaultTargetFunding: 7500,
 

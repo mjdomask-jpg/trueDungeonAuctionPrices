@@ -102,6 +102,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
 | **DATA-17** | ~~Season 2027 runs two different $8K orders and nothing records which~~ | **RESOLVED 2026-09-21 (repo side)** — a value in `auctionStyle`, not a column; seven rows relabelled and § 6 now holds the style to the trade-good counts. **The same edit in the workbook is what is left**, or the next publish reverts it |
 | **DATA-18** | A Random Ultra Rare's published price comes from a **lot total**, not a recorded sale — the only such row in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each derived rate with its lots |
+| **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
+| **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
 
 ---
 
@@ -2339,3 +2341,102 @@ Per-lot rows would let that change; nothing about it is blocked meanwhile.
 Asked for by the maintainer when approving Q6 of the 2026-09-21 plan, on the
 grounds that the mean is a stopgap with a known way out and not a permanent
 shape.
+
+---
+
+## SITE-13. The ledger has no "full order" lens — OPEN, needs a decision
+
+**Raised 2026-09-24**, alongside the goal offset that shipped in the ledger
+(`docs/context-layer-design.md` §6 item 1). The ledger now measures an
+auctioneer against the **custom** — keep the fee, set a $7,500 goal — so an
+auction that follows it reads $0 whatever the fee was worth. That is one honest
+question. Community feedback also asked the other one: *who came out ahead in
+dollars?* Answering it needs the order's real cost, $8,000, as the baseline
+**and** a debit for the fee the auctioneer kept, so that releasing it is simply
+the absence of a debit rather than a credit.
+
+**The two lenses differ by `$500 − fee value` per auction**, which is why this
+is more than a toggle:
+
+| Era | Fee | Worth, measured | Full-order lens vs the custom |
+|---|---|---|---|
+| to 2024 | nine Random Ultra Rares | $675–$830 a set 2021–23, $280–$500 lately | within a few hundred dollars |
+| 2025 on | the same **plus a Golden Ticket** | GT $650–$1,250 | roughly **$700–$1,200 lower**, on every auction that kept it |
+
+81 auctions from 2025 on record no Golden Ticket release and a $7,500 goal. The custom
+lens reads all of them $0; the full-order lens reads them all well short. **Neither
+is wrong — they answer different questions**, and the second is the one behind
+"the $7,500 custom predates the Golden Ticket".
+
+**Do not build it as "baseline: $7,500 / $8,000".** An $8,000 baseline without
+the fee debit credits every ordinary auction $500 for the discount that paid for
+the fee it kept, and leaves the auction that prompted the feedback (20274) exactly
+where it was. The choice has to switch the baseline and the fee treatment together.
+
+**If built, derive the kept fee — never write it as rows.** Recording the fee as
+`withheld` would put a withheld row on nearly every auction and break the rule
+that withheld means an exception (the maintainer's objection, 2026-09-24). An
+estimate at render time: 9 × the season's Random Ultra Rare rate + the season's
+mean Golden Ticket price from 2025, minus whatever the auction released, labelled
+as an estimate. Open points:
+
+- **9 or 10 Random URs per order.** 2025's four released sets were 10; everything
+  else is 9, and threads speak of "the possible 10th".
+- **No Random UR price before 2021.** The lens cannot be computed honestly for
+  2018–2020 and should say so rather than borrow a later season's rate.
+- **Only 2027's GT price is 20274's own.** A season mean from one sale is thin.
+
+## DATA-19. Four auctions' fee and withheld records disagree with their threads — OPEN, workbook edit
+
+**Found 2026-09-24**, checking the goal offset before it shipped. An `$8,000`
+goal with no released fee reads as a $500 debit, and "no fee row" cannot tell
+*kept* from *released but never recorded*. So the threads of every closed
+`$8,000` auction with no released fee (28) were swept, all of them already on
+disk in `backfill/`. Most say nothing or confirm the fee was kept — including
+20236 and 202351, whose short verdicts are therefore real. Four do not:
+
+| Auction | Thread says | Recorded | Fix | Ledger (goal offset) |
+|---|---|---|---|---|
+| **20226** Casey Wren | Random URs **up for bid**, 8 sold (5 @ $81, 3 @ $80); a "full disclosure" list of four tokens and 8 Treasure Chips kept | nothing | add the release and the withheld list | −$500 → **$0** |
+| **202225** Casey Wren | *"Yes, even the random URs"* — 9 sold (8 @ $66, 1 @ $71) | nothing | add the release | −$219 → **+$380** |
+| **202247** Casey Wren | Patron Pin + code kept in post #1, then **put back in** on page 3 | a `withheld` Patron Pin row **and** the pin's $161 sale | delete the withheld row | −$604 → **−$74** |
+| **202640** alesiev | *"Random URs … for cheap!"* (posts #26, #30) | no release | add the release — **value unknown** | unchanged until then |
+
+Measured by running the site's own ledger over the CSVs with the rows below
+applied. **202640's figure is not in the thread** — alesiev tracked results in a
+Google sheet he reuses and wipes (`backfill/alesiev-tracker-2026-08-26.csv` is
+the empty evidence), so the maintainer's own records are the only source.
+
+Paste rows, `contextItems` (released Random URs carry the lot **total**, as the
+22 existing rows do; withheld value left blank for the site's estimate):
+
+```
+20226,2022,6,token,Random Ultra Rare,8,$645.00
+202225,2022,25,token,Random Ultra Rare,9,$599.00
+20226,2022,6,withheld,+1 Turkey Leg of Smiting,1,
+20226,2022,6,withheld,Ring of the 5th Circle,1,
+20226,2022,6,withheld,Lenses of Hunting,1,
+20226,2022,6,withheld,Adventurers' Guild Button,1,
+20226,2022,6,withheld,Treasure Chip (each),8,
+```
+
+and `prices`, one row at the quantity-weighted most common rate (the house rule
+for a Random UR price row — see `DATA-18`):
+
+```
+20226,2022,6,Random Ultra Rare,81,Random Ultra Rare,Ultra Rare
+202225,2022,25,Random Ultra Rare,66,Random Ultra Rare,Ultra Rare
+```
+
+Delete from `contextItems`: `202247,2022,47,withheld,Patron Pin,1,`.
+
+**Names.** The thread's "Turkey Leg of Smiting" is written `+1 Turkey Leg of
+Smiting` because that is 2022's `2k Bonus` spelling — not `+1 Turkey Leg`, a
+different token. "Adventurer's Guild Badge" is `Adventurers' Guild Button`, the
+name every other withheld row uses.
+
+**Why the 2022 sweep missed 20226.** Its withheld sift read 202247's
+identically-worded *"In full disclosure, … will not be included"* and not
+20226's, and the released Random URs were never a thing the sweep looked for.
+`DATA-18`'s recrawl for `Random URs (N)` headings would find the two 2022
+releases on its own; the withheld list needs a human.
