@@ -321,6 +321,11 @@ able to answer it — see item 5.
    with **no context rows** now joins the ledger when its goal alone moves the balance,
    but only once **closed**, since augments are recorded at close.
 
+   **Trent's reward points are not a term, and never were.** Counting them was asked
+   for (2026-09-24) and declined: they change what a bidder paid, not how the order was
+   funded, and the *Reward-adjusted* setting already shows them as a price discount. The
+   reasoning and the price measurement are in `backlog.md` § *Dropped*.
+
    **The verdict is only as good as the fee record.** An `$8,000` goal with no released
    fee reads as a $500 debit, and "no fee row" cannot tell *kept* from *released but not
    recorded*. The thread check that preceded the build found both: see `DATA-19`.
