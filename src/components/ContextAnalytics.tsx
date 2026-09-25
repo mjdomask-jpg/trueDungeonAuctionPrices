@@ -121,7 +121,10 @@ function BalanceHelp() {
       company employee, not the auctioneer offsetting their own withholding, so counting it would
       credit the auctioneer with someone else's money. That makes the default the answer to
       "would this auction have worked without help from the company?" — tick{' '}
-      <em>Include Grunnel</em> to add it back.
+      <em>Include Grunnel</em> to add it back. <strong>Trent's reward points are left out
+      too</strong>: they change what a bidder effectively paid, not how the order was funded —
+      bidders still pay the full goal. The <em>Reward-adjusted</em> setting on the price pages
+      and in Venue comparison shows them as the {REWARD_PCT}% discount they are.
     </HintPopover>
   );
 }
