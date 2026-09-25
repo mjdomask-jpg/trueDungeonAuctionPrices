@@ -2944,9 +2944,10 @@ rows at all. `augment`-category rows exist only in 2026.
   reads both feeds and counts it once, so it no longer matters which file
   recorded it; a duplicate that does turn up is dropped from the Auction Data
   card (presentation only) and counted once in the ledger.
-  A **`Chance at Golden Ticket`** / **`Golden Ticket Chance`** row is a
-  different thing — a raffle entry, not the ticket — and stays here as an
-  augment.
+  A **`Golden Ticket Chance`** row is a different thing — a raffle entry, not
+  the ticket — and stays here as an augment. Spell it that way: the one row
+  written `Chance at Golden Ticket` was renamed on 2026-09-24, and the
+  alesievauctions.com importer's fee list no longer knows the old spelling.
 - **A Random Ultra Rare IS recorded in both, on purpose.** Its row here carries
   the quantity and the lot total, which is what **Included** reports; its
   `prices` rows carry the per-token price, which is what the Prices tab shows.

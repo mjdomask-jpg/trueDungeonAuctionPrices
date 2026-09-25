@@ -101,8 +101,9 @@ export function isReleasedPayment(name: string): boolean {
   return isRandomUltraRare(name) || isGoldenTicket(name);
 }
 
-// The ticket itself, never a CHANCE at one. `Chance at Golden Ticket` and
-// `Golden Ticket Chance` are three recorded context rows and a different thing
+// The ticket itself, never a CHANCE at one. `Golden Ticket Chance` (three
+// recorded context rows, one spelled `Chance at Golden Ticket` until
+// 2026-09-24) is a different thing
 // — a raffle entry the auctioneer sold, not the auctioneer's own fee released —
 // so they classify as augments, which is where they have always landed.
 export function isGoldenTicket(name: string): boolean {

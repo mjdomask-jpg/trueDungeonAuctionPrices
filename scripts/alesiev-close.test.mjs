@@ -652,8 +652,8 @@ console.log("\nThe auctioneer's fee (never a withheld row)\n");
     (k) => !CORPUS_NAMES.has(k) && !Object.keys(A.ALESIEV_CONTEXT_RULES).includes(k));
   eq('every fee name is a spelling the corpus or a context rule already holds',
     invented.join(', '), '');
-  check('  ... including the three Golden Ticket spellings the corpus records',
-    ['golden ticket', 'golden ticket chance', 'chance at golden ticket']
+  check('  ... including the two Golden Ticket spellings the corpus records',
+    ['golden ticket', 'golden ticket chance']
       .every((k) => A.ALESIEV_FEE_NAMES[k] === true),
     JSON.stringify(Object.keys(A.ALESIEV_FEE_NAMES)));
   // Widening the corpus must not make the check vacuous: `Random UR` is the
