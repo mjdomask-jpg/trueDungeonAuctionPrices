@@ -41,7 +41,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-22.3';
+var ALESIEV_VERSION = '2026-09-24.1';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -266,8 +266,11 @@ var ALESIEV_CONTEXT_RULES = {
  *
  * So every key here is a spelling the CORPUS already holds for these two
  * things, and nothing is invented. The Random UR keys are `ALESIEV_CONTEXT_RULES`'
- * own; the Golden Ticket keys are the three `contextItems.csv` records
- * (`Golden Ticket`, `Golden Ticket Chance`, `Chance at Golden Ticket`).
+ * own; the Golden Ticket keys are the two spellings the data records
+ * (`Golden Ticket`, `Golden Ticket Chance`). A third, `Chance at Golden
+ * Ticket`, was retired when the sheet renamed its one row (20214) to
+ * `Golden Ticket Chance` on 2026-09-24, and its key went with it: a key no row
+ * spells is an invented name, and this list leans tight.
  *
  * ## It applies on the WITHHELD path only
  *
@@ -283,7 +286,6 @@ var ALESIEV_FEE_NAMES = {
   'random urs': true,
   'golden ticket': true,
   'golden ticket chance': true,
-  'chance at golden ticket': true,
 };
 
 /**
