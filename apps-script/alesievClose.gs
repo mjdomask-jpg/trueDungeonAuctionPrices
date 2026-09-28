@@ -2,10 +2,18 @@
  * Phase 5 (part three) — close automation for alesievauctions.com.
  *
  * Phase 4 already watches that site and proposes its auctions into
- * `auctionMetadata` from server-rendered cards. This is the other half: the
- * export the site produces when an auction closes, read straight into
- * `rawPricesData`, `prices`, `onyx`, `contextItems` and the auction's
- * `closeDate`.
+ * `auctionMetadata`. This is the other half: an auction's final bids, read
+ * straight into `rawPricesData`, `prices`, `onyx`, `contextItems` and the
+ * auction's `closeDate`.
+ *
+ * **Since 2026-09-28 the lots come from the site's API** (`GET
+ * /auctions/:id/final-bids`, see `alesievFinalBidsGrid`), asked for by the id in
+ * the row's Link. The pasted export in `alesievStaging` is kept as a named
+ * fallback. Both become the same three-column grid, so from
+ * `alesievReadStaging` on there is one path. The API's first real answer,
+ * auction 39, replays to `20275`'s recorded rows exactly — 37 prices, 141 lots,
+ * 12 Onyx, 22 context rows — which the checked-in export sample never could,
+ * because its prices are dummy data.
  *
  * **It is treated like Trent's close, not like a forum close, and the reason is
  * the source rather than the shape.** A forum auctioneer writes a spreadsheet
@@ -28,7 +36,9 @@
  * needs that file installed to work at all. `auctionOpen.gs` is the second
  * dependency: `openIsoFromCell` reads the close date back, and `openAlesievId`
  * decides whether a metadata row came from this site — the same anchored parse
- * the scan keys duplicates on, rather than a second one that would drift.
+ * the scan keys duplicates on, rather than a second one that would drift. Its
+ * `openAlesievApiGet` also makes this file's API call, so the token, the
+ * no-redirect rule and the error wording live in one place for both files.
  *
  * WHAT IS SHARED AND WHAT IS NEW. The quantity rule, the name resolution, the
  * per-token division, the min/max, the bid-floor exclusion and the season check
@@ -41,7 +51,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-09-24.1';
+var ALESIEV_VERSION = '2026-09-28.2';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -509,6 +519,109 @@ function alesievReadStaging(values) {
     out.lots.push(lot);
   }
   return out;
+}
+
+// ===========================================================================
+// Pure — reading the API's final bids
+// ===========================================================================
+
+/**
+ * The grid a final-bids response becomes: the same three columns
+ * `alesievReadStaging` reads out of a pasted export, by the same headers.
+ */
+var ALESIEV_API_COLUMNS = ['Item', 'Category', 'Current Bid'];
+
+/**
+ * `GET /auctions/:id/final-bids` to the grid a pasted export gives, so
+ * everything from `alesievReadStaging` on is shared and the API path cannot
+ * route a lot differently from the export path.
+ *
+ * Returns `{ grid, siteId, title, status, total, lotSum }` or `{ error }`.
+ *
+ * **Three fields per item are carried and no others** — `title`, `category`,
+ * `currentBid`. The response also holds bid counts and high, low, median and
+ * average bids, which the site's maintainer asked us to treat as not public. A
+ * grid that never holds them cannot leak them into a tab, a dialog or a
+ * fixture, and this repository is public.
+ *
+ * **The auction id must be the one asked for.** The pasted export carried no
+ * id at all, which is why `alesievWrongAuctionAbort` exists and why a stale
+ * staging tab once produced a complete, plausible plan for the wrong auction.
+ * The API's answer names its auction, so a mismatch refuses outright.
+ *
+ * No quoting rules. The export wrapped a comma-bearing name in literal quotes,
+ * and a pasted name beginning with `+` is a formula to Sheets; a JSON title is
+ * the name as the site stores it, and never passes through a cell.
+ * `alesievUnquote` still runs on it and changes nothing.
+ */
+function alesievFinalBidsGrid(json, expectedSiteId) {
+  if (!json || json.ok !== true) {
+    return { error: 'the API did not return final bids' + (json && json.error ? ' ("' + json.error + '")' : '') };
+  }
+  var auction = json.auction && typeof json.auction === 'object' ? json.auction : {};
+  var id = String(auction.id == null ? '' : auction.id).trim();
+  if (id !== String(expectedSiteId)) {
+    return {
+      error: 'asked for the final bids of site auction ' + expectedSiteId + ' and the API answered for ' +
+        (id ? 'auction ' + id : 'no auction id at all') + '. Nothing was read.',
+    };
+  }
+  if (!Array.isArray(json.items) || !json.items.length) {
+    return { error: 'the API returned no items for site auction ' + id };
+  }
+  var grid = [ALESIEV_API_COLUMNS.slice()], lotSum = 0;
+  for (var i = 0; i < json.items.length; i++) {
+    var item = json.items[i] || {};
+    var where = 'item ' + (i + 1) + (item.itemId != null ? ' (site item ' + item.itemId + ')' : '');
+    if (typeof item.title !== 'string' || !item.title.trim()) return { error: where + ' has no title' };
+    var bid = item.currentBid;
+    if (bid != null && (typeof bid !== 'number' || !isFinite(bid))) {
+      return { error: where + ' "' + item.title + '" has a currentBid that is not a number: ' + JSON.stringify(bid) };
+    }
+    if (bid != null) lotSum = roundCents(lotSum + bid);
+    grid.push([item.title.trim(), item.category == null ? '' : String(item.category).trim(), bid == null ? '' : String(bid)]);
+  }
+  // The ACTUAL close, in Eastern — see openEasternFromInstant. Null when the
+  // API sends none or sends something that is not an ISO instant; the import
+  // then asks for the date as it always did, rather than guessing one.
+  var closed = openEasternFromInstant(auction.closedAt);
+  return {
+    grid: grid,
+    siteId: id,
+    title: String(auction.title == null ? '' : auction.title),
+    status: String(auction.status == null ? '' : auction.status),
+    total: typeof auction.totalCurrentBids === 'number' ? auction.totalCurrentBids : null,
+    lotSum: lotSum,
+    closeDate: closed ? closed.date : null,
+    closeTime: closed ? closed.time : '',
+    closedAt: auction.closedAt == null ? '' : String(auction.closedAt),
+  };
+}
+
+/**
+ * The line that says where a plan's lots came from, plus a caution when the
+ * lots do not add up to the site's own total.
+ *
+ * `totalCurrentBids` is the site's sum over every lot, and it is the one
+ * reconciliation the API offers for free: measured on auction 39 the items sum
+ * to it exactly, $6,751.12. A mismatch is a CAUTION rather than an abort — the
+ * rows are still what the site says each lot fetched — but it means the list
+ * and the total disagree, which is worth a look before writing.
+ */
+function alesievApiSourceNotes(read) {
+  var notes = { source: 'the site API — auction ' + read.siteId + ' "' + read.title + '", status ' +
+    (read.status || '(none)'), cautions: [] };
+  if (read.total !== null && roundCents(read.total) !== roundCents(read.lotSum)) {
+    notes.cautions.push('the lots sum to $' + read.lotSum + ' but the site reports a total of $' + read.total +
+      '. The item list and the total disagree — check the auction on the site before writing.');
+  }
+  if (read.closedAt && !read.closeDate) {
+    notes.cautions.push('the site sent closedAt "' + read.closedAt + '", which is not an ISO time, so the close ' +
+      'date will be asked for instead.');
+  } else if (!read.closedAt) {
+    notes.cautions.push('the site sent no closedAt, so the close date will be asked for.');
+  }
+  return notes;
 }
 
 // ===========================================================================
@@ -1075,7 +1188,7 @@ function alesievLotNames(lots) {
 }
 
 /** A short human summary of a plan, for the confirmation dialog. */
-function alesievDescribePlan(plan, auctionId, closeDate) {
+function alesievDescribePlan(plan, auctionId, closeDate, closeNote) {
   var lines = [], i;
   // AN ABORT SAYS WHAT IT WOULD HAVE WRITTEN, and until 2026-09-22 it did not —
   // it printed the problems and returned, so the plan below was never reached.
@@ -1100,7 +1213,8 @@ function alesievDescribePlan(plan, auctionId, closeDate) {
       : 'What it got as far as building. INCOMPLETE — at least one lot produced no row, '
         + 'so this is not a set to paste:');
   }
-  lines.push('Auction ' + auctionId + ' — ' + plan.lots + ' rows read:');
+  lines.push('Auction ' + auctionId + ' — ' + plan.lots + ' rows read' +
+    (plan.source ? ' from ' + plan.source : '') + ':');
   lines.push('  ' + plan.raw.length + ' priced lots  ->  ' + TABS.raw);
   lines.push('  ' + plan.prices.length + ' min/max rows  ->  ' + TABS.prices);
   if (plan.onyx.length) lines.push('  ' + plan.onyx.length + ' Onyx rows  ->  ' + TABS.onyx);
@@ -1112,7 +1226,7 @@ function alesievDescribePlan(plan, auctionId, closeDate) {
         (row.price === '' ? '  (no price — the sheet computes it)' : '  $' + row.price));
     }
   }
-  if (closeDate) lines.push('  closeDate ' + closeDate + '  ->  ' + TABS.metadata);
+  if (closeDate) lines.push('  closeDate ' + closeDate + (closeNote ? ' (' + closeNote + ')' : '') + '  ->  ' + TABS.metadata);
   var breakdown = alesievAggregateBreakdown(plan.contextLots || []);
   if (breakdown.length) {
     lines.push('');
@@ -1244,18 +1358,27 @@ function alesievPickerLine(m) {
 // Everything below touches the workbook. Nothing above it does.
 // ===========================================================================
 
-/** `trentClose.gs`'s single onOpen calls this; there is no onOpen here. */
+/**
+ * `trentClose.gs`'s single onOpen calls this; there is no onOpen here.
+ *
+ * The API is the ordinary path. The pasted export stays as a fallback, named as
+ * one, until the API has carried a season — it is the only way to import if
+ * the API is down or the token has lapsed, and it costs nothing to keep.
+ */
 function addAlesievMenu(menu) {
   return menu
     .addSeparator()
     .addItem('Import alesievauctions.com close…', 'importAlesievClose')
-    .addItem('Dry run — show what the export would import', 'dryRunAlesievClose');
+    .addItem('Dry run — show what the site would import', 'dryRunAlesievClose')
+    .addItem('Import from a pasted export (fallback)…', 'importAlesievCloseFromExport')
+    .addItem('Dry run — pasted export (fallback)', 'dryRunAlesievCloseFromExport');
 }
 
-function alesievCheckTabs() {
+/** `fromExport` asks for the staging tab too; the API path does not need it. */
+function alesievCheckTabs(fromExport) {
   var ss = SpreadsheetApp.getActive();
   var problems = checkTabs();
-  if (!ss.getSheetByName(ALESIEV_STAGING_TAB)) problems.push('no tab named "' + ALESIEV_STAGING_TAB + '"');
+  if (fromExport && !ss.getSheetByName(ALESIEV_STAGING_TAB)) problems.push('no tab named "' + ALESIEV_STAGING_TAB + '"');
   if (!ss.getSheetByName(ALESIEV_CONTEXT_TAB)) problems.push('no tab named "' + ALESIEV_CONTEXT_TAB + '"');
   return problems;
 }
@@ -1290,8 +1413,45 @@ function alesievTargetAuction(ui, title) {
 }
 
 
-function alesievBuildPlan(target) {
-  var staging = SpreadsheetApp.getActive().getSheetByName(ALESIEV_STAGING_TAB);
+/**
+ * The lots for one auction, from the API (`fromExport` false) or the staging
+ * tab. `{ values, source, cautions }` or `{ error }`.
+ *
+ * The API is asked by the id in the row's LINK — the same parse the picker and
+ * the scan use — so the auction whose bids are read is the auction the
+ * operator picked, by construction rather than by trust.
+ */
+function alesievReadLots(target, fromExport) {
+  if (fromExport) {
+    var staging = SpreadsheetApp.getActive().getSheetByName(ALESIEV_STAGING_TAB);
+    return { values: staging.getDataRange().getDisplayValues(), source: 'the pasted export in ' + ALESIEV_STAGING_TAB, cautions: [] };
+  }
+  var siteId = openAlesievId(target.Link);
+  if (!siteId) {
+    return {
+      error: 'auction ' + target.auctionId + ' has no alesievauctions.com Link ("' + (target.Link || '') + '"), so ' +
+        'there is no site auction to ask the API about. Fix the Link, or use the pasted-export fallback.',
+    };
+  }
+  var got = openAlesievApiGet('/auctions/' + encodeURIComponent(siteId) + '/final-bids');
+  if (got.error) {
+    return {
+      error: 'site auction ' + siteId + ': ' + got.error + '. Final bids exist only once an auction has CLOSED on ' +
+        'the site; if it has, the pasted-export fallback still works.',
+    };
+  }
+  var read = alesievFinalBidsGrid(got.json, siteId);
+  if (read.error) return { error: read.error };
+  var notes = alesievApiSourceNotes(read);
+  return {
+    values: read.grid, source: notes.source, cautions: notes.cautions,
+    closeDate: read.closeDate, closeTime: read.closeTime,
+  };
+}
+
+function alesievBuildPlan(target, fromExport) {
+  var lots = alesievReadLots(target, fromExport);
+  if (lots.error) return { error: lots.error };
   // One read of `prices`, used for both questions it can answer: does this
   // auction already have rows, and does this export belong to a different one.
   var recordedPrices = readTab(TABS.prices);
@@ -1299,44 +1459,58 @@ function alesievBuildPlan(target) {
   for (var i = 0; i < recordedPrices.length; i++) {
     if (String(recordedPrices[i].auctionId).trim() === String(target.auctionId)) { alreadyPriced = true; break; }
   }
-  return alesievPlanImport(
-    staging.getDataRange().getDisplayValues(),
+  var plan = alesievPlanImport(
+    lots.values,
     target.auctionSeason,
     readTab(TABS.tokens),
     alreadyPriced,
     target.auctionStyle,
     recordedPrices,
     target.auctionId);
+  plan.source = lots.source;
+  plan.cautions = lots.cautions.concat(plan.cautions);
+  return { plan: plan, closeDate: lots.closeDate || null, closeTime: lots.closeTime || '' };
 }
 
-function dryRunAlesievClose() {
+function dryRunAlesievClose() { alesievDryRun(false); }
+function dryRunAlesievCloseFromExport() { alesievDryRun(true); }
+function importAlesievClose() { alesievImport(false); }
+function importAlesievCloseFromExport() { alesievImport(true); }
+
+function alesievDryRun(fromExport) {
   var ui = SpreadsheetApp.getUi();
-  var missing = alesievCheckTabs();
+  var missing = alesievCheckTabs(fromExport);
   if (missing.length) { ui.alert('Cannot run', 'Tab problems:\n  • ' + missing.join('\n  • '), ui.ButtonSet.OK); return; }
-  var target = alesievTargetAuction(ui, 'Dry run');
+  var target = alesievTargetAuction(ui, fromExport ? 'Dry run — pasted export' : 'Dry run');
   if (!target) return;
-  var plan = alesievBuildPlan(target);
+  var built = alesievBuildPlan(target, fromExport);
+  if (built.error) { ui.alert('Cannot run (script ' + ALESIEV_VERSION + ')', built.error, ui.ButtonSet.OK); return; }
+  var plan = built.plan;
   ui.alert('Dry run — nothing written (script ' + ALESIEV_VERSION + ')',
-    alesievDescribePlan(plan, target.auctionId, null), ui.ButtonSet.OK);
+    alesievDescribePlan(plan, target.auctionId, built.closeDate,
+      built.closeDate ? "the site's closedAt, " + built.closeTime + ' Eastern' : ''), ui.ButtonSet.OK);
   // The price rows too, and only here: a real import writes them itself, and
   // handing the operator a second copy to paste is how an auction gets its
   // prices twice.
   alesievShowContext(plan, target, true);
 }
 
-function importAlesievClose() {
+function alesievImport(fromExport) {
   var ui = SpreadsheetApp.getUi();
   var ss = SpreadsheetApp.getActive();
-  var missing = alesievCheckTabs();
+  var missing = alesievCheckTabs(fromExport);
   if (missing.length) {
     ui.alert('Cannot run', 'Tab problems:\n  • ' + missing.join('\n  • ') +
       '\n\nFix the names at the top of the script, or create the tab.', ui.ButtonSet.OK);
     return;
   }
-  var target = alesievTargetAuction(ui, 'Import alesievauctions.com close');
+  var target = alesievTargetAuction(ui, fromExport
+    ? 'Import alesievauctions.com close — pasted export' : 'Import alesievauctions.com close');
   if (!target) return;
 
-  var plan = alesievBuildPlan(target);
+  var built = alesievBuildPlan(target, fromExport);
+  if (built.error) { ui.alert('Cannot import (script ' + ALESIEV_VERSION + ')', built.error, ui.ButtonSet.OK); return; }
+  var plan = built.plan;
   if (!plan.ok) {
     ui.alert('Import aborted — nothing written (script ' + ALESIEV_VERSION + ')',
       alesievDescribePlan(plan, target.auctionId, null), ui.ButtonSet.OK);
@@ -1344,19 +1518,39 @@ function importAlesievClose() {
     return;
   }
 
-  // The close date is not in the export. Ask for it, refuse anything but ISO,
-  // and let the operator skip it — the rows are still worth writing without it,
-  // and a blank closeDate simply leaves Status computing `Open`.
   var closeDate = null;
   var held = String(target.closeDate || '').trim();
-  var dateChoice = ui.prompt('Close date',
+  var siteClose = built.closeDate && !alesievCloseDateProblem(built.closeDate) ? built.closeDate : null;
+  if (siteClose) {
+    // The site states when the auction ACTUALLY closed (`closedAt`), so
+    // nothing is typed. The one choice left is a recorded date that disagrees
+    // with it — never overwritten without asking, since a hand-set date may be
+    // a deliberate correction.
+    closeDate = siteClose;
+    if (held && held !== siteClose) {
+      var which = ui.alert('Close date',
+        'Auction ' + target.auctionId + ' already records closeDate ' + held + ', but the site says it closed ' +
+          siteClose + ' (' + built.closeTime + ' Eastern).\n\nYES: replace it with ' + siteClose +
+          '.\nNO: keep ' + held + '.\nCANCEL: import nothing.',
+        ui.ButtonSet.YES_NO_CANCEL);
+      if (which === ui.Button.CANCEL || which === ui.Button.CLOSE) return;
+      if (which === ui.Button.NO) closeDate = null;
+    }
+  }
+
+  // No closedAt — the pasted export never carries one, and an API answer
+  // without it is cautioned above. Ask for it, refuse anything but ISO, and let
+  // the operator skip it — the rows are still worth writing without it, and a
+  // blank closeDate simply leaves Status computing `Open`.
+  var dateChoice = siteClose ? null : ui.prompt('Close date',
     'Close date for auction ' + target.auctionId + ', as YYYY-MM-DD.\n\n' +
       (held ? 'This auction already records ' + held + '. Leave blank to keep it.\n\n'
             : 'Leave blank to skip — Status stays "Open" until closeDate is filled in.\n\n') +
-      'This is when the auction ACTUALLY closed, which is not the "Ends:" date on the card.',
+      'This is when the auction ACTUALLY closed, which is not the scheduled end the site shows ' +
+      '(a Lightning auction can close on its opening day).',
     ui.ButtonSet.OK_CANCEL);
-  if (dateChoice.getSelectedButton() !== ui.Button.OK) return;
-  var typed = dateChoice.getResponseText().trim();
+  if (dateChoice && dateChoice.getSelectedButton() !== ui.Button.OK) return;
+  var typed = dateChoice ? dateChoice.getResponseText().trim() : '';
   if (typed) {
     var problem = alesievCloseDateProblem(typed);
     if (problem) { ui.alert('Cannot import', problem, ui.ButtonSet.OK); return; }
@@ -1379,7 +1573,8 @@ function importAlesievClose() {
   }
   if (closeDate) destinations.push(TABS.metadata + ' closeDate for ' + target.auctionId);
 
-  var summary = alesievDescribePlan(plan, target.auctionId, closeDate);
+  var summary = alesievDescribePlan(plan, target.auctionId, closeDate,
+    siteClose && closeDate === siteClose ? "the site's closedAt, " + built.closeTime + ' Eastern' : '');
   var go = ui.alert('Import alesievauctions.com close (script ' + ALESIEV_VERSION + ')',
     summary + '\n\nWriting to:\n  ' + destinations.join('\n  ') + '\n\nWrite these rows?', ui.ButtonSet.OK_CANCEL);
   if (go !== ui.Button.OK) return;
@@ -1574,6 +1769,9 @@ if (typeof module !== 'undefined') {
     alesievIsFeeName: alesievIsFeeName,
     alesievFindColumn: alesievFindColumn,
     alesievReadStaging: alesievReadStaging,
+    alesievFinalBidsGrid: alesievFinalBidsGrid,
+    alesievApiSourceNotes: alesievApiSourceNotes,
+    ALESIEV_API_COLUMNS: ALESIEV_API_COLUMNS,
     alesievOnyxRows: alesievOnyxRows,
     alesievWithheldRows: alesievWithheldRows,
     alesievAugmentRows: alesievAugmentRows,

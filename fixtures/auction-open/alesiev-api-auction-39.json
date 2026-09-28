@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "auction": {
+    "id": 39,
+    "title": "Kusig's Augmented Onyx 8K Condensed Option B - GHC Delivery Available!",
+    "description": "8K Auction with player augments and $6,750 funding goal. Items withheld: 9x Random UR, Golden Ticket, Bead of Need, Blood Cult Mark, Gloves of Elder Horror, Lenses of Timestep, Mask of Foggy Health, Natasha's Nightcap, Spirit Pet Owl, Tobin's Cosmic Ring, and CUR Onyx Set",
+    "sponsor": "Kusig",
+    "startsAt": "2026-09-19T04:00:00.000Z",
+    "endsAt": "2026-09-25T22:00:00.000Z",
+    "isCharityAuction": false,
+    "fundingGoal": 6750,
+    "totalCurrentBids": 6751.12,
+    "status": "Funded",
+    "closedAt": "2026-09-19T13:02:58.000Z",
+    "format": "Lightning",
+    "tags": {
+      "augmented": true,
+      "onyx": true
+    },
+    "itemCount": 185
+  }
+}

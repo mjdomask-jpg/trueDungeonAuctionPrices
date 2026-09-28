@@ -26,6 +26,11 @@
 //      The whole risk of reading an export someone else generates is the day it
 //      changes shape.
 //
+// SINCE 2026-09-28 THERE IS ALSO A REAL ONE. The site's API answered for
+// auction 39, which is 20275 and already in the shipped CSVs, and the last
+// section replays it against all four files row for row. The dummy export
+// still pins grammar; the API fixture pins numbers.
+//
 // Run: node scripts/alesiev-close.test.mjs
 
 import { readFileSync } from 'node:fs';
@@ -1048,6 +1053,144 @@ console.log('\nThe picker\n');
   const his = fromSite.filter((m) => m.auctioneer.toLowerCase() === 'alesiev').length;
   console.log(`\nnote: ${fromSite.length} site auction(s) recorded, ${his} run by alesiev himself` +
     ` — the auctioneer test this replaced would list ${his} of them`);
+}
+
+// ===========================================================================
+// The site's API — final bids
+// ===========================================================================
+//
+// THIS IS THE RECONCILIATION THE HEADER SAYS THIS SUITE COULD NOT HAVE. Site
+// auction 39 is 20275, a real close already in the shipped CSVs, so its final
+// bids are replayed through the same planner and compared against every row
+// 20275 holds in four files. The withheld and Onyx paths ran on 20275's real
+// export in the workbook (PIPE-8), but no test had replayed real data through
+// them until this.
+console.log('\nThe site API — final bids\n');
+{
+  const API_FIXTURE = manifest.files.find((f) => f.file === 'api-39-final-bids.json');
+  const json = JSON.parse(readFileSync(join(fixtureDir, API_FIXTURE.file), 'utf8'));
+
+  // 1 — the fixture itself. This repository is public, and the maintainer asked
+  // for the bid statistics to be treated as not public. A re-fetched response
+  // pasted in whole would bring them back; this is what stops it.
+  const allowed = ['title', 'category', 'currentBid'];
+  const leaked = json.items.filter((i) => Object.keys(i).some((k) => !allowed.includes(k)));
+  eq('the fixture carries only title, category and currentBid per item', leaked.length, 0);
+  eq('  ... and nothing beyond id, title, status, total and closedAt on the auction',
+    Object.keys(json.auction).sort().join(','), 'closedAt,id,status,title,totalCurrentBids');
+
+  // 2 — the grid.
+  const read = A.alesievFinalBidsGrid(json, '39');
+  check('a final-bids response reads', !read.error, read.error);
+  eq('  ... into the three columns the export reader looks for', read.grid[0].join('|'), A.ALESIEV_API_COLUMNS.join('|'));
+  eq('  ... one row per item', read.grid.length - 1, json.items.length);
+  eq('  ... naming the site auction it answered for', read.siteId, '39');
+  eq('the lots sum to the site\'s own total, to the cent', read.lotSum, read.total);
+  eq('  ... so there is no caution at all', A.alesievApiSourceNotes(read).cautions.length, 0);
+
+  // closedAt — the ACTUAL close, which the import writes instead of asking.
+  eq('closedAt becomes the close date, in Eastern', read.closeDate, '2026-09-19');
+  eq('  ... at the time it closed', read.closeTime, '09:02');
+  const bare = (patch) => A.alesievFinalBidsGrid({ ...json, auction: { ...json.auction, ...patch } }, '39');
+  eq('no closedAt means no close date', bare({ closedAt: undefined }).closeDate, null);
+  check('  ... and a caution saying it will be asked for',
+    A.alesievApiSourceNotes(bare({ closedAt: undefined })).cautions.some((c) => /no closedAt/.test(c)), '');
+  eq('a closedAt that is not an ISO instant is refused, not guessed at', bare({ closedAt: '19/09/2026' }).closeDate, null);
+  check('  ... and says so', A.alesievApiSourceNotes(bare({ closedAt: '19/09/2026' })).cautions.some((c) => /not an ISO time/.test(c)), '');
+  eq('a close just after midnight UTC is still the evening before in Eastern',
+    bare({ closedAt: '2026-09-20T02:30:00.000Z' }).closeDate, '2026-09-19');
+  const described = A.alesievDescribePlan({ ok: true, lots: 1, raw: [], prices: [], onyx: [], context: [], cautions: [] },
+    '20275', read.closeDate, "the site's closedAt, 09:02 Eastern");
+  check('the plan says the close date came from the site',
+    /closeDate 2026-09-19 \(the site's closedAt, 09:02 Eastern\)/.test(described), described);
+  check('  ... and a list that does NOT sum to the total is flagged',
+    A.alesievApiSourceNotes({ ...read, total: 7000 }).cautions.some((c) => /disagree/.test(c)),
+    JSON.stringify(A.alesievApiSourceNotes({ ...read, total: 7000 })));
+  eq('a title beginning "+" arrives as the name, not a formula',
+    read.grid.find((r) => r[0].startsWith('+1 '))?.[0], '+1 Voidbane Cannon');
+  eq('a title with a comma arrives with no quotes to strip',
+    read.grid.find((r) => /Gold Bar/.test(r[0]))?.[0], '5,000 GP Gold Bar (1 of 9)');
+
+  // The private fields never reach the grid, even when the response has them.
+  const secret = 987654.32;
+  const full = {
+    ok: true, auction: { id: 39, title: 't', status: 'Funded', totalCurrentBids: 10 },
+    items: [{ itemId: 1, title: 'Wish Ring', category: 'Premium', startingBid: 0.5, currentBid: 10,
+      bidCount: 7, highBid: secret, averageBid: secret, medianBid: secret, lowBid: secret }],
+  };
+  const fullRead = A.alesievFinalBidsGrid(full, 39);
+  check('high, average, median and low bids and the bid count never reach the grid',
+    fullRead.grid.every((r) => r.length === 3) && !JSON.stringify(fullRead.grid).includes(String(secret)) &&
+    !fullRead.grid.flat().includes('7'),
+    JSON.stringify(fullRead.grid));
+
+  // 3 — what refuses. The id check is the one the export never had.
+  check('an answer for a DIFFERENT auction refuses',
+    /answered for auction 40/.test(A.alesievFinalBidsGrid({ ...json, auction: { ...json.auction, id: 40 } }, '39').error || ''),
+    JSON.stringify(A.alesievFinalBidsGrid({ ...json, auction: { ...json.auction, id: 40 } }, '39')));
+  check('  ... and so does one naming no auction',
+    /no auction id/.test(A.alesievFinalBidsGrid({ ok: true, items: json.items }, '39').error || ''), '');
+  check('ok: false refuses, quoting the site',
+    /not closed yet/.test(A.alesievFinalBidsGrid({ ok: false, error: 'not closed yet' }, '39').error || ''), '');
+  check('an empty item list refuses',
+    !!A.alesievFinalBidsGrid({ ok: true, auction: { id: 39 }, items: [] }, '39').error, '');
+  check('a bid that is not a number refuses rather than reading as unsold',
+    /not a number/.test(A.alesievFinalBidsGrid({ ok: true, auction: { id: 39 }, items: [{ title: 'Wish Ring', currentBid: '10' }] }, '39').error || ''), '');
+  check('an item with no title refuses',
+    /has no title/.test(A.alesievFinalBidsGrid({ ok: true, auction: { id: 39 }, items: [{ title: ' ', currentBid: 1 }] }, '39').error || ''), '');
+  eq('a null bid is a blank cell — unsold, or withheld',
+    A.alesievFinalBidsGrid({ ok: true, auction: { id: 39 }, items: [{ title: 'Wish Ring', category: 'Premium', currentBid: null }] }, '39').grid[1][2], '');
+
+  // 4 — the reconciliation.
+  const META = load(dataDir, 'auctionMetadata.csv');
+  const RAW = load(dataDir, 'rawPricesData.csv');
+  const target = META.find((m) => m.auctionId === API_FIXTURE.auction);
+  eq('the fixture\'s auction is recorded, with the site id in its Link',
+    target && sandbox.openAlesievId(target.Link), '39');
+  eq('the site\'s closedAt is the closeDate 20275 records', read.closeDate, target.closeDate);
+  const p = A.alesievPlanImport(read.grid, target.auctionSeason, TOKENS, false, target.auctionStyle, PRICES, target.auctionId);
+  check('the plan for 20275 is clean', p.ok, p.aborts.join('\n'));
+
+  const money = (s) => Number(String(s).replace(/[$,\s]/g, ''));
+  const mine = (id) => (r) => r.auctionId === id;
+  // Multiset difference, both ways — a row the plan invents and a row it loses
+  // are both failures, and a count alone would let one hide the other.
+  const reconcile = (name, planned, recorded) => {
+    const want = recorded.map((r) => JSON.stringify(r));
+    const extra = [];
+    for (const row of planned.map((r) => JSON.stringify(r))) {
+      const at = want.indexOf(row);
+      if (at === -1) extra.push(row); else want.splice(at, 1);
+    }
+    check(`${name}: ${planned.length} planned rows reproduce ${recorded.length} recorded ones exactly`,
+      planned.length === API_FIXTURE.reconciles[name] && !extra.length && !want.length,
+      `expected ${API_FIXTURE.reconciles[name]}\nplan only: ${extra.join('\n')}\nrecorded only: ${want.join('\n')}\n` +
+      'If 20275 was CORRECTED in the sheet on purpose, the fixture is what is stale: update its manifest ' +
+      'counts, or re-fetch final bids and strip them as the manifest describes.');
+  };
+  reconcile('prices.csv',
+    p.prices.map((r) => [r.Item, money(r.Price), r['Display Name'], r.Category]),
+    PRICES.filter(mine('20275')).map((r) => [r.Item, money(r.Price), r['Display Name'], r.Category]));
+  reconcile('rawPricesData.csv',
+    p.raw.map((r) => [r.trentName, money(r.trentPrice), r.Item, money(r.Price), r.Category]),
+    RAW.filter(mine('20275')).map((r) => [r.trentName, money(r.trentPrice), r.Item, money(r.Price), r.Category]));
+  reconcile('onyx.csv',
+    p.onyx.map((r) => [r.Item, money(r.Price), r['Display Name'], r.Category]),
+    ONYX.filter(mine('20275')).map((r) => [r.Item, money(r.Price), r['Display Name'], r.Category]));
+  // A withheld row's price is a sheet QUERY, never written by the importer —
+  // so it is compared as blank on both sides.
+  reconcile('contextItems.csv',
+    p.context.map((r) => [r.category, r.Item, Number(r.quantity), r.category === 'withheld' ? '' : money(r.price)]),
+    CONTEXT.filter(mine('20275')).map((r) => [r.category, r.Item, Number(r.quantity),
+      r.category === 'withheld' ? '' : money(r.priceAugmented)]));
+  eq('the ten fee lots are dropped and named', p.fee.length, 10);
+
+  // 5 — the export's old accident, one layer down. Even with the id check
+  // bypassed — the API's answer for 39 aimed at a DIFFERENT auction — the
+  // fingerprint still names the auction these prices belong to.
+  const wrong = A.alesievPlanImport(read.grid, '2027', TOKENS, false, 'Onyx Ultra Condensed', PRICES, '20272');
+  check('aimed at the wrong auction, the prices still say they are 20275\'s',
+    wrong.aborts.some((a) => /auction 20275's, not 20272's/.test(a)), wrong.aborts.join('\n'));
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

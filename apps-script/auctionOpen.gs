@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-21.1';
+var OPEN_VERSION = '2026-09-28.2';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -132,10 +132,11 @@ var OPEN_SIGNAL_ONLY_CATEGORIES = { 602: true };
  *
  * Two more consequences worth stating:
  *
- *   - **One fetch per scan.** Everything a row needs is on the listing page —
- *     sponsor, start, target and every badge — so no per-auction page is
- *     fetched at all. The forum path needs a feed AND a topic page because the
- *     feed's date is the last post; this listing states the start date itself.
+ *   - **Since 2026-09-28 the fields come from the site's API**, one call per
+ *     auction `auctionMetadata` does not yet hold, and the listing is fetched
+ *     only for its card ids — see OPEN_ALESIEV_API_BASE. The badge parse below
+ *     is kept as the FALLBACK for a card the API could not answer, and for a
+ *     workbook with no token set, and a proposal read that way says so.
  *   - **No triage.** Every card on a dedicated auction site is an auction, so
  *     there is no equivalent of category 584's charity threads and eBay
  *     listings and every proposal is a `candidate`. The title is still run
@@ -219,8 +220,12 @@ var OPEN_ALESIEV_TAGS = {
  * nothing here decides a value, so an unobserved wording costs the operator a
  * missing hint rather than a wrong cell. Whatever the chip says is reported
  * verbatim on every proposal either way.
+ *
+ * `funded` joined on 2026-09-28: the API reports a CLOSED Lightning auction as
+ * `Funded` (auction 39, which is `20275` and closed on its opening day). The
+ * API's `status` goes through this same test.
  */
-var OPEN_ALESIEV_ENDED_RE = /ended|closed|complete|finished|archiv|cancel/i;
+var OPEN_ALESIEV_ENDED_RE = /ended|closed|complete|finished|archiv|cancel|funded/i;
 
 /**
  * Title phrases from OPEN_PHRASE_HINTS that a badge now answers better.
@@ -232,6 +237,46 @@ var OPEN_ALESIEV_ENDED_RE = /ended|closed|complete|finished|archiv|cancel/i;
  * badge covers: charity, eBay, cancelled, pre-order, Safehold, Golden Ticket.
  */
 var OPEN_ALESIEV_BADGE_NOTE_RE = /condensed|onyx|augment|lightning/i;
+
+/**
+ * The site's API, which its maintainer built for this project in September
+ * 2026 so the pipeline could stop scraping. `GET /auctions/:id` answers
+ * everything a metadata row needs; `GET /auctions/:id/final-bids` is the close
+ * (`alesievClose.gs`).
+ *
+ * **It has no listing endpoint that anyone has confirmed**, so the listing PAGE
+ * is still fetched — for its card ids and nothing else. The API authenticates
+ * before it routes (a made-up path answers 401, not 404, measured 2026-09-28),
+ * so whether `/auctions` exists cannot be found out without the token. If it
+ * does, `openParseAlesievListing` can retire; until then it is the discovery
+ * step and the badge parse behind it is the FALLBACK for a card the API could
+ * not answer.
+ *
+ * The token lives in Script Properties under OPEN_ALESIEV_TOKEN_PROPERTY and
+ * never in this file, for `publishToken`'s reason: the script body is visible to
+ * every editor of the workbook, and to its version history for ever.
+ */
+var OPEN_ALESIEV_API_BASE = OPEN_ALESIEV_ORIGIN + '/api/v1';
+var OPEN_ALESIEV_TOKEN_PROPERTY = 'ALESIEV_API_TOKEN';
+
+/**
+ * How many auctions one scan may ask the API about. Only UNRECORDED ids are
+ * asked, so this is a ceiling on a season-opening week, not a normal load.
+ */
+var OPEN_ALESIEV_API_FETCH_CAP = 25;
+
+/**
+ * The API's `format` to the sheet's `completionStyle`, keyed on a folded
+ * spelling. Only the three values `auctionMetadata` already records are here;
+ * anything else is left blank with a note, because § 7 of `validate-prices.mjs`
+ * treats a near-miss spelling as an ERROR at the PR gate. Only `Lightning` has
+ * been seen from the API.
+ */
+var OPEN_ALESIEV_COMPLETION_STYLES = {
+  'lightning': 'Lightning',
+  'fixed date': 'Fixed Date',
+  'semi lightning': 'Semi-Lightning',
+};
 
 /**
  * The category RSS feed, not the HTML listing. The feed is one request per
@@ -1151,6 +1196,250 @@ function openAlesievFields(card) {
 }
 
 // ===========================================================================
+// Pure parsers — the alesievauctions.com API
+// ===========================================================================
+
+/** The nth Sunday of a month (0-based month), as a day of that month. */
+function openNthSunday(year, month, n) {
+  var first = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  return 1 + ((7 - first) % 7) + (n - 1) * 7;
+}
+
+/** An ISO instant WITH its zone. A zoneless one is read differently by different engines. */
+var OPEN_ISO_INSTANT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * A UTC instant to its date and 24-hour time in US Eastern. Null when the value
+ * is not an ISO instant.
+ *
+ * **The zone is Eastern, and it is NOT the spreadsheet's.** The API gives an
+ * instant and a date needs a zone. Measured on the one API sample that is also
+ * a recorded row: auction 39 has `startsAt` `2026-09-19T04:00:00.000Z` and
+ * `20275` records `openDate` 2026-09-19. That is midnight Eastern. Read in the
+ * spreadsheet's zone, which is Central, it is 23:00 on the 18th — a day early,
+ * the off-by-one `openNormaliseReviewValues` exists to prevent, arriving from
+ * the other side. The sample only fitted Eastern (UTC fitted too); the RULE is
+ * the maintainer's, confirmed 2026-09-28: auctioneers on this site schedule in
+ * US Eastern. The same conversion reads `closedAt`, and 20275's
+ * `13:02:58Z` is 09:02 Eastern on its recorded closeDate.
+ *
+ * Arithmetic rather than `Intl` or `Utilities.formatDate`: this section has to
+ * run the same in Node and in Apps Script, and a timezone database is the thing
+ * those two are least likely to agree on. The US rule since 2007 — daylight
+ * time from the second Sunday in March at 02:00 local (07:00 UTC) to the first
+ * Sunday in November at 02:00 local (06:00 UTC).
+ */
+function openEasternFromInstant(value) {
+  var s = String(value == null ? '' : value).trim();
+  if (!OPEN_ISO_INSTANT_RE.test(s)) return null;
+  var ms = Date.parse(s);
+  if (!isFinite(ms)) return null;
+  var year = new Date(ms).getUTCFullYear();
+  var dstStart = Date.UTC(year, 2, openNthSunday(year, 2, 2), 7);
+  var dstEnd = Date.UTC(year, 10, openNthSunday(year, 10, 1), 6);
+  var local = new Date(ms + (ms >= dstStart && ms < dstEnd ? -4 : -5) * 3600000);
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  return {
+    date: local.getUTCFullYear() + '-' + pad(local.getUTCMonth() + 1) + '-' + pad(local.getUTCDate()),
+    time: pad(local.getUTCHours()) + ':' + pad(local.getUTCMinutes()),
+  };
+}
+
+/**
+ * One `GET /auctions/:id` response to the CARD shape `openParseAlesievCard`
+ * produces, so the proposal, the duplicate check and the numbering are shared
+ * and only the reading of the four fields differs (`openAlesievApiFields`).
+ *
+ * Returns `{ card }` or `{ error }`. **A response naming a different auction
+ * from the one asked for is an error, not a card.** The id is this source's
+ * whole duplicate defence, and a cache or a bug serving the wrong auction
+ * would otherwise be proposed under the right Link.
+ *
+ * `endsAt` is carried for the note only — it is the SCHEDULED end, and
+ * `closeDate` is when the auction actually closed. Auction 39 was scheduled to
+ * end 2026-09-25 and `20275` closed on the 19th, its opening day.
+ *
+ * `closedAt` IS that actual close, added by the site's maintainer on
+ * 2026-09-28 (auction 39: `2026-09-19T13:02:58.000Z`, 09:02 Eastern, the
+ * recorded `closeDate`). It is still only a note HERE: promotion creates an
+ * auction open, and `alesievClose.gs` writes `closeDate` from the same field
+ * when it imports the prices, so the date and the rows land together.
+ */
+function openAlesievApiCard(json, expectedId) {
+  if (!json || json.ok !== true || !json.auction || typeof json.auction !== 'object') {
+    return { error: 'the API did not return an auction' + (json && json.error ? ' ("' + json.error + '")' : '') };
+  }
+  var a = json.auction;
+  var id = a.id == null ? '' : String(a.id).trim();
+  if (!/^\d+$/.test(id)) return { error: 'the API returned an auction with no usable id (' + JSON.stringify(a.id) + ')' };
+  if (expectedId != null && id !== String(expectedId)) {
+    return { error: 'asked the API for auction ' + expectedId + ' and it answered with auction ' + id };
+  }
+  var text = function (v) { return v == null ? '' : String(v).replace(/\s+/g, ' ').trim(); };
+  var start = openEasternFromInstant(a.startsAt);
+  var end = openEasternFromInstant(a.endsAt);
+  var closed = openEasternFromInstant(a.closedAt);
+  return {
+    card: {
+      href: openAlesievUrl(id), id: id,
+      title: text(a.title), intro: text(a.description),
+      status: text(a.status), statusClass: '', tags: [], meta: [],
+      sponsor: text(a.sponsor),
+      startDate: start ? start.date : null, startTime: start ? start.time : '', startRaw: text(a.startsAt),
+      endDate: end ? end.date : null, endRaw: text(a.endsAt),
+      closeDate: closed ? closed.date : null, closeTime: closed ? closed.time : '', closeRaw: text(a.closedAt),
+      target: typeof a.fundingGoal === 'number' ? String(a.fundingGoal) : null,
+      itemCount: a.itemCount == null ? null : String(a.itemCount),
+      api: { tags: a.tags, format: a.format, fundingGoal: a.fundingGoal, isCharityAuction: a.isCharityAuction },
+    },
+  };
+}
+
+/**
+ * What an API response's status means, or '' when it is usable JSON.
+ *
+ * Pure so both callers — this scan and `alesievClose.gs` — word a failure the
+ * same way, and so the wording is tested. The API's own `error` string is
+ * quoted when it sends one; it is the most specific thing available, and it
+ * never contains the token (measured: a request without one answers `Missing
+ * or malformed Authorization header`).
+ */
+function openAlesievApiProblem(code, json) {
+  var said = json && json.error ? ' — the site says "' + json.error + '"' : '';
+  if (code >= 200 && code < 300) {
+    if (!json || typeof json !== 'object') return 'the API answered HTTP ' + code + ' but not with JSON';
+    if (json.ok === false) return 'the API answered HTTP ' + code + ' with ok: false' + said;
+    return '';
+  }
+  if (code >= 300 && code < 400) {
+    return 'the API redirected (HTTP ' + code + '), and a redirect is not followed because it would carry the token ' +
+      'to wherever it points';
+  }
+  if (code === 401 || code === 403) {
+    return 'the API refused the token (HTTP ' + code + ')' + said + '. Check Script Property ' +
+      OPEN_ALESIEV_TOKEN_PROPERTY + ' holds the current token';
+  }
+  if (code === 404) return 'the API has no such auction (HTTP 404)' + said;
+  return 'the API answered HTTP ' + code + said;
+}
+
+/**
+ * The four fields, from the API's record of the auction rather than its badges.
+ *
+ * **Stricter than the badge parse, deliberately.** The page renders only the
+ * badges that apply, so a missing badge had to mean "off". A JSON field can say
+ * `false`, so here only `true` and `false` decide, and a missing or non-boolean
+ * tag leaves the cell blank with a note — absence is no longer evidence.
+ *
+ * A tag this does not read is reported, not dropped. The 2027 Trade 2 order has
+ * no tag today and lives only in the title ("Option B"); if the site adds one,
+ * this note is where it will first show up.
+ */
+function openAlesievApiFields(card) {
+  var api = card.api || {};
+  var tags = api.tags && typeof api.tags === 'object' ? api.tags : {};
+  var out = { auctionStyle: '', completionStyle: '', augmentated: '', targetFunding: '', notes: [] };
+
+  if (typeof api.fundingGoal === 'number' && isFinite(api.fundingGoal) && api.fundingGoal > 0) {
+    out.targetFunding = openMoneyFromCell(api.fundingGoal);
+  } else {
+    out.notes.push('the API gave no usable fundingGoal (' + JSON.stringify(api.fundingGoal) + ') — targetFunding left blank');
+  }
+
+  if (tags.onyx === true) out.auctionStyle = OPEN_ALESIEV_ONYX_STYLE;
+  else if (tags.onyx === false) out.auctionStyle = OPEN_ALESIEV_BASELINE_STYLE;
+  else out.notes.push('auctionStyle left blank: the API sent no true/false "onyx" tag (' + JSON.stringify(tags.onyx) + ')');
+
+  if (tags.augmented === true) out.augmentated = 'Yes';
+  else if (tags.augmented === false) out.augmentated = 'No';
+  else out.notes.push('augmentated left blank: the API sent no true/false "augmented" tag (' + JSON.stringify(tags.augmented) + ')');
+
+  var format = String(api.format == null ? '' : api.format).trim();
+  var style = OPEN_ALESIEV_COMPLETION_STYLES[format.toLowerCase().replace(/[\s_-]+/g, ' ')];
+  if (style) {
+    out.completionStyle = style;
+  } else {
+    var known = [];
+    for (var k in OPEN_ALESIEV_COMPLETION_STYLES) known.push(OPEN_ALESIEV_COMPLETION_STYLES[k]);
+    out.notes.push('completionStyle left blank: the API format is ' + (format ? '"' + format + '"' : 'missing') +
+      ', which is none of ' + known.join(', '));
+  }
+
+  for (var tag in tags) {
+    if (!Object.prototype.hasOwnProperty.call(tags, tag) || tag === 'onyx' || tag === 'augmented') continue;
+    out.notes.push('the API carries a "' + tag + '" tag (' + JSON.stringify(tags[tag]) + ') this scan does not read — ' +
+      'if it says which $8K order this is, auctionStyle may want it');
+  }
+  if (api.isCharityAuction === true) {
+    out.notes.push('the site flags this as a CHARITY auction, which is not an 8K group buy — check before ticking');
+  }
+  return out;
+}
+
+/**
+ * The site auction ids a scan asks the API about: every listed card and every
+ * forum advert whose id `auctionMetadata` does not already hold — listing
+ * first, each id once, at most `cap`.
+ *
+ * The adverts are the gain. A thread linking to an auction that is neither
+ * recorded nor on the listing used to be left as `advertises
+ * alesievauctions.com` for a person to chase; the API can answer for it
+ * directly.
+ */
+function openAlesievIdsToAsk(cards, topics, metaRows, cap) {
+  var recorded = openRecordedAlesiev(metaRows || []);
+  var seen = {}, ids = [], overflow = 0;
+  var add = function (id) {
+    if (!id || recorded[id] || seen[id]) return;
+    seen[id] = true;
+    if (ids.length < cap) ids.push(id); else overflow++;
+  };
+  var i, j;
+  for (i = 0; i < (cards || []).length; i++) add(cards[i].id);
+  for (i = 0; i < (topics || []).length; i++) {
+    var siteIds = ((topics[i] || {}).topic || {}).siteIds || [];
+    for (j = 0; j < siteIds.length; j++) add(siteIds[j]);
+  }
+  return { ids: ids, overflow: overflow };
+}
+
+/**
+ * The listing's cards with the API's answers folded in.
+ *
+ * `answers` maps an id to what `openAlesievApiCard` returned. A card the API
+ * answered for is REPLACED by the API's card; one it failed on keeps its badge
+ * parse and carries `apiError`, which the proposal reports — a fallback that
+ * says nothing is how a scraper quietly comes back. An answered id with no card
+ * on the listing is a forum advert's, and is appended with `fromAdvert`.
+ */
+function openAlesievMergeApi(cards, answers) {
+  var out = [], onListing = {}, notes = [], i;
+  var copy = function (o, extra) {
+    var c = {}, k;
+    for (k in o) if (Object.prototype.hasOwnProperty.call(o, k)) c[k] = o[k];
+    for (k in extra) c[k] = extra[k];
+    return c;
+  };
+  answers = answers || {};
+  for (i = 0; i < (cards || []).length; i++) {
+    var card = cards[i], answer = card.id ? answers[card.id] : null;
+    if (card.id) onListing[card.id] = true;
+    if (answer && answer.card) { out.push(answer.card); continue; }
+    out.push(answer && answer.error ? copy(card, { apiError: answer.error }) : card);
+  }
+  for (var id in answers) {
+    if (!Object.prototype.hasOwnProperty.call(answers, id) || onListing[id]) continue;
+    if (answers[id].card) {
+      out.push(copy(answers[id].card, { fromAdvert: true }));
+    } else {
+      notes.push(OPEN_ALESIEV_SOURCE + ': a forum thread links to auction ' + id + ', which is not on the listing, ' +
+        'and the API could not answer for it either: ' + answers[id].error);
+    }
+  }
+  return { cards: out, notes: notes };
+}
+
+// ===========================================================================
 // Pure rules — numbering, names, triage
 // ===========================================================================
 
@@ -1676,14 +1965,28 @@ function openAlesievProposal(card, metaRows, knownNames) {
   var openDate = card.startDate || '';
   var season = openInferSeason(title, openDate, metaRows);
   var who = openMatchAuctioneer(card.sponsor, knownNames);
-  var fields = openAlesievFields(card);
+  // The API's record where there is one; the listing's badges only as the
+  // fallback, and then said so below.
+  var fields = card.api ? openAlesievApiFields(card) : openAlesievFields(card);
   var number = openNextNumber(metaRows, season.season);
+  var from = card.api ? 'from the API' : 'on the card';
 
   var notes = [];
+  if (card.apiError) {
+    notes.push('the API could not answer for this auction (' + card.apiError + '), so every field below was read ' +
+      "off the listing's badges instead — check them");
+  }
+  if (card.fromAdvert) {
+    notes.push('not on the listing — found through a forum thread linking to it, and read from the API');
+  }
   if (!card.id) notes.push('NO auction id in the card link ("' + card.href + '") — this row cannot be checked for duplicates. Do not promote it.');
-  if (!openDate) notes.push('NO Starts line on the card — openDate is blank and the row cannot be promoted without one');
-  if (!title) notes.push('NO title on the card');
-  if (!card.sponsor) notes.push('no Sponsor line on the card — auctioneer left blank');
+  if (!openDate) {
+    notes.push(card.api
+      ? 'NO usable startsAt from the API (' + JSON.stringify(card.startRaw) + ') — openDate is blank and the row cannot be promoted without one'
+      : 'NO Starts line on the card — openDate is blank and the row cannot be promoted without one');
+  }
+  if (!title) notes.push('NO title ' + from);
+  if (!card.sponsor) notes.push('no sponsor ' + from + ' — auctioneer left blank');
 
   notes = notes.concat(fields.notes);
   notes.push('season ' + season.how);
@@ -1697,11 +2000,19 @@ function openAlesievProposal(card, metaRows, knownNames) {
       notes.push('that status reads as FINISHED rather than upcoming — check whether this auction has already closed, because a promoted row is created open');
     }
   }
+  if (card.closeDate) {
+    notes.push('the site says it CLOSED ' + card.closeDate + ' at ' + card.closeTime + ' Eastern — a promoted row is ' +
+      'still created open; importing the close writes that closeDate along with the prices');
+  } else if (card.closeRaw) {
+    notes.push('the API sent a closedAt that is not an ISO time (' + JSON.stringify(card.closeRaw) + ') — ignored');
+  }
   if (card.endRaw) {
     notes.push('site says it ends ' + (card.endDate || card.endRaw) + ' — closeDate stays blank on purpose and is filled when the auction actually closes');
   }
   if (card.startTime && (card.startTime >= '22:00' || card.startTime <= '02:00')) {
-    notes.push('starts at ' + card.startTime + ' — the site renders times in its own timezone, so check which day this belongs to');
+    notes.push(card.api
+      ? 'starts at ' + card.startTime + ' Eastern (the API says ' + card.startRaw + ') — check which day this belongs to'
+      : 'starts at ' + card.startTime + ' — the site renders times in its own timezone, so check which day this belongs to');
   }
   // The site is the one source that lists an auction BEFORE it opens — a forum
   // thread and Trent's shop page both appear when the auction does — so this is
@@ -1779,7 +2090,7 @@ function openAlesievTitleConflicts(title, fields) {
   var option = text.match(/\boption\s+([ab])\b/i);
   if (option) {
     var letter = option[1].toUpperCase();
-    out.push('the TITLE says Option ' + letter + ' and no badge carries that — season 2027 ran two $8K orders, ' +
+    out.push('the TITLE says Option ' + letter + ' and no badge carries that, nor any API tag — season 2027 ran two $8K orders, ' +
       'and Option B is the "Trade 2" one' +
       (letter === 'B' ? '. If this is that order, auctionStyle wants the words "Trade 2" in it' : '') +
       '. Check the order contents before accepting the style');
@@ -1814,7 +2125,7 @@ function openPlanScan(input) {
   var recordedSite = openRecordedAlesiev(metaRows);
   var cards = input.alesievCards || [];
   var listedSite = {};
-  for (var c = 0; c < cards.length; c++) if (cards[c].id) listedSite[cards[c].id] = true;
+  for (var c = 0; c < cards.length; c++) if (cards[c].id) listedSite[cards[c].id] = cards[c];
 
   // The forum, and the adverts in it. A thread linking to an auction the site
   // already gave us is not a second auction — see OPEN_SITE_AUCTION_IN_TEXT_RE
@@ -1835,7 +2146,9 @@ function openPlanScan(input) {
       if (!advertisedBySite[ad.siteId]) advertisedBySite[ad.siteId] = [];
       advertisedBySite[ad.siteId].push(topics[i].item.id);
       notes.push('Forum: topic ' + topics[i].item.id + ' "' + proposal.auctionName + '" advertises ' +
-        where + ', which is on the listing. Proposed once, from the site, where the badges are.');
+        where + (listedSite[ad.siteId].fromAdvert
+          ? ", which is not on the listing but the site's API answered for it. Proposed once, from the API."
+          : ', which is on the listing. Proposed once, from the site, where the badges are.'));
       continue;
     }
     if (ad) {
@@ -2277,7 +2590,75 @@ function addOpenMenu(menu) {
   return menu
     .addSeparator()
     .addItem('Scan for new auctions…', 'scanAuctionOpens')
-    .addItem('Promote approved auctions…', 'promoteAuctionOpens');
+    .addItem('Promote approved auctions…', 'promoteAuctionOpens')
+    .addItem('Check the alesievauctions.com API token', 'checkAlesievApi');
+}
+
+/** The API token from Script Properties, or null. Never shown, never logged. */
+function openAlesievToken() {
+  return PropertiesService.getScriptProperties().getProperty(OPEN_ALESIEV_TOKEN_PROPERTY) || null;
+}
+
+/**
+ * One authenticated GET against the site's API: `{ json }` or `{ error }`.
+ * Never throws, so one auction the API cannot answer is not a dead scan.
+ *
+ * **Redirects are NOT followed.** UrlFetchApp re-sends every header to wherever
+ * a redirect points, the Authorization header included, so following one would
+ * hand the token to a host nobody chose. A 3xx is reported as an error instead.
+ */
+function openAlesievApiGet(path) {
+  var token = openAlesievToken();
+  if (!token) return { error: 'no API token is set (Script Property ' + OPEN_ALESIEV_TOKEN_PROPERTY + ')' };
+  var response;
+  try {
+    response = UrlFetchApp.fetch(OPEN_ALESIEV_API_BASE + path, {
+      muteHttpExceptions: true,
+      followRedirects: false,
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+    });
+  } catch (e) {
+    return { error: 'the request failed: ' + (e && e.message ? e.message : e) };
+  }
+  var json = null;
+  try { json = JSON.parse(response.getContentText()); } catch (e) { json = null; }
+  var problem = openAlesievApiProblem(response.getResponseCode(), json);
+  return problem ? { error: problem } : { json: json };
+}
+
+/**
+ * Menu item: prove the token works, without anybody having to see it.
+ *
+ * Asks the API for the newest auction `auctionMetadata` links to on the site
+ * and says what came back. That is also the smoke test for the parse, because
+ * the answer is run through the same `openAlesievApiCard` the scan uses.
+ */
+function checkAlesievApi() {
+  var ui = SpreadsheetApp.getUi();
+  var title = 'alesievauctions.com API (script ' + OPEN_VERSION + ')';
+  if (!openAlesievToken()) {
+    ui.alert(title, 'No token is set. In the Apps Script editor: Project Settings > Script Properties > ' +
+      'Add script property, name "' + OPEN_ALESIEV_TOKEN_PROPERTY + '", value the token the site gave you. ' +
+      'See docs/updating-the-data.md.', ui.ButtonSet.OK);
+    return;
+  }
+  var recorded = openRecordedAlesiev(openReadTab(OPEN_TABS.metadata)), newest = null;
+  for (var id in recorded) if (newest === null || Number(id) > Number(newest)) newest = id;
+  if (newest === null) {
+    ui.alert(title, 'A token is set, but ' + OPEN_TABS.metadata + ' links to no auction on the site to ask about.', ui.ButtonSet.OK);
+    return;
+  }
+  var got = openAlesievApiGet('/auctions/' + encodeURIComponent(newest));
+  if (got.error) { ui.alert(title, 'The token did NOT work.\n\nAuction ' + newest + ': ' + got.error, ui.ButtonSet.OK); return; }
+  var parsed = openAlesievApiCard(got.json, newest);
+  if (parsed.error) { ui.alert(title, 'The token works, but the answer did not parse: ' + parsed.error, ui.ButtonSet.OK); return; }
+  var c = parsed.card, f = openAlesievApiFields(c);
+  ui.alert(title, 'The token works.\n\nAuction ' + newest + ' (recorded as ' + recorded[newest] + '):\n' +
+    '  ' + c.title + '\n  sponsor ' + c.sponsor + ', status ' + c.status +
+    (c.closeDate ? ', closed ' + c.closeDate + ' ' + c.closeTime + ' Eastern' : '') + '\n' +
+    '  opens ' + (c.startDate || '?') + ' ' + c.startTime + ' Eastern, target ' + (f.targetFunding || '?') + '\n' +
+    '  style ' + (f.auctionStyle || '(blank)') + ', ' + (f.completionStyle || '(blank)') + ', augmented ' + (f.augmentated || '(blank)') +
+    (f.notes.length ? '\n\nNotes:\n  • ' + f.notes.join('\n  • ') : ''), ui.ButtonSet.OK);
 }
 
 /** Read a tab as objects keyed by its header row, using displayed text. */
@@ -2392,14 +2773,37 @@ function scanAuctionOpens() {
     topics.push({ item: item, topic: openParseTopic(html) });
   }
 
-  var plan = openPlanScan({ metaRows: metaRows, trentPage: trentPage, topics: topics, alesievCards: alesievCards });
+  // The API, for every UNRECORDED auction the listing or a forum advert names.
+  // After the topics, because an advert's id is only known once its first post
+  // has been read.
+  var ask = openAlesievIdsToAsk(alesievCards, topics, metaRows, OPEN_ALESIEV_API_FETCH_CAP);
+  var answers = {}, answered = 0;
+  if (ask.ids.length && !openAlesievToken()) {
+    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': NO API TOKEN is set (Script Property ' + OPEN_ALESIEV_TOKEN_PROPERTY +
+      "), so the listing's badges were read instead, as before the API existed. See docs/updating-the-data.md.");
+  } else {
+    for (i = 0; i < ask.ids.length; i++) {
+      var got = openAlesievApiGet('/auctions/' + encodeURIComponent(ask.ids[i]));
+      answers[ask.ids[i]] = got.error ? { error: got.error } : openAlesievApiCard(got.json, ask.ids[i]);
+      if (answers[ask.ids[i]].card) answered++;
+    }
+  }
+  if (ask.overflow) {
+    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': ' + ask.overflow + ' more unrecorded auction(s) left for the next run (API cap ' +
+      OPEN_ALESIEV_API_FETCH_CAP + ').');
+  }
+  var merged = openAlesievMergeApi(alesievCards, answers);
+  fetchNotes = fetchNotes.concat(merged.notes);
+
+  var plan = openPlanScan({ metaRows: metaRows, trentPage: trentPage, topics: topics, alesievCards: merged.cards });
   plan.notes = plan.notes.concat(fetchNotes);
   plan.notes.push('Looked at forum topics with a post since ' + selection.cutoff + ': ' +
     selection.selected.length + ' fetched, ' + selection.skipped.recorded + ' already recorded, ' +
     selection.skipped.old + ' older than the cutoff' +
     (selection.skipped.offTopic ? ', ' + selection.skipped.offTopic + ' in the general category with no 8K signal' : '') +
     (selection.skipped.overflow ? ', ' + selection.skipped.overflow + ' left for the next run (fetch cap)' : '') + '.');
-  plan.notes.push('Read ' + alesievCards.length + ' auction card(s) from ' + OPEN_ALESIEV_LISTING_URL + '.');
+  plan.notes.push('Read ' + alesievCards.length + ' auction card(s) from ' + OPEN_ALESIEV_LISTING_URL +
+    (ask.ids.length ? '; asked the API about ' + ask.ids.length + ' unrecorded auction(s), ' + answered + ' answered' : '') + '.');
 
   openWriteReview(plan.proposals, openRecordedAuctionIds(metaRows));
   ui.alert('Scan complete (script ' + OPEN_VERSION + ')', openDescribeScan(plan), ui.ButtonSet.OK);
@@ -2557,6 +2961,12 @@ if (typeof module !== 'undefined') {
     openAlesievFields: openAlesievFields,
     openAlesievProposal: openAlesievProposal,
     openAlesievTitleConflicts: openAlesievTitleConflicts,
+    openEasternFromInstant: openEasternFromInstant,
+    openAlesievApiCard: openAlesievApiCard,
+    openAlesievApiProblem: openAlesievApiProblem,
+    openAlesievApiFields: openAlesievApiFields,
+    openAlesievIdsToAsk: openAlesievIdsToAsk,
+    openAlesievMergeApi: openAlesievMergeApi,
     openRecordedAlesiev: openRecordedAlesiev,
     openRecordedAuctionIds: openRecordedAuctionIds,
     openPromotedId: openPromotedId,
@@ -2604,6 +3014,8 @@ if (typeof module !== 'undefined') {
     OPEN_ALESIEV_ONYX_STYLE: OPEN_ALESIEV_ONYX_STYLE,
     OPEN_ALESIEV_BASELINE_STYLE: OPEN_ALESIEV_BASELINE_STYLE,
     OPEN_ALESIEV_TAGS: OPEN_ALESIEV_TAGS,
+    OPEN_ALESIEV_TOKEN_PROPERTY: OPEN_ALESIEV_TOKEN_PROPERTY,
+    OPEN_ALESIEV_COMPLETION_STYLES: OPEN_ALESIEV_COMPLETION_STYLES,
     OPEN_VERSION: OPEN_VERSION,
   };
 }

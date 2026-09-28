@@ -73,6 +73,26 @@
       }
     ]
   },
+  "alesievApi": {
+    "file": "alesiev-api-auction-39.json",
+    "url": "https://alesievauctions.com/api/v1/auctions/39",
+    "fetched": "2026-09-28",
+    "source": "The first answer from the site's API, supplied by the user on 2026-09-28 as `20275-metadata_closedAt.json` (the first sample again, plus `closedAt`, which the maintainer added the same day). Unchanged.",
+    "reconciles": "20275",
+    "why": "Unlike the listing fixture, this one is a recorded auction, so the proposal it produces is checked against 20275's row field by field. Two differences are EXPECTED and asserted: auctionStyle is proposed as `Onyx Ultra Condensed` where the sheet records `Onyx Trade 2 Ultra Condensed` (no tag carries the Trade 2 order; the title says `Option B` and the proposal notes it), and the auction is 'Funded' — closed — so the status note fires.",
+    "timezone": "startsAt is `2026-09-19T04:00:00.000Z` and 20275's openDate is 2026-09-19: midnight EASTERN. In the spreadsheet's Central zone it is 23:00 on the 18th, which is why the scan does not convert in the spreadsheet's zone.",
+    "expect": {
+      "id": "39",
+      "openDate": "2026-09-19",
+      "openTime": "00:00",
+      "auctioneer": "Kusig",
+      "targetFunding": "$6,750.00",
+      "auctionStyle": "Onyx Ultra Condensed",
+      "completionStyle": "Lightning",
+      "augmentated": "Yes",
+      "link": "https://alesievauctions.com/auctions/39"
+    }
+  },
   "feeds": [
     { "file": "forum-feed-584.xml.gz", "catid": "584", "url": "https://truedungeon.com/forum?view=category&catid=584&format=feed&type=rss" },
     { "file": "forum-feed-602.xml.gz", "catid": "602", "url": "https://truedungeon.com/forum?view=category&catid=602&format=feed&type=rss" }

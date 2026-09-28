@@ -249,14 +249,38 @@ guess. Where the evidence goes back to being as weak as the forum's, so does the
 behaviour: a badge that is missing, ambiguous or contradicts its own label
 leaves the cell **blank with a note**, exactly as a thread title does.
 
+**Since 2026-09-28 those fields come from the site's API, not its cards.** The
+site's maintainer built one for this project (`GET /api/v1/auctions/:id`), so the
+scan now asks the API about every site auction `auctionMetadata` does not hold
+yet — the listing page is still fetched, but only for its auction ids, because
+no list endpoint has been confirmed. It needs a token; see [The site's API
+token](#the-sites-api-token-once). Without one, or when the API cannot answer
+for an auction, the scan falls back to reading the cards exactly as before and
+**says so in that row's `notes`**. The API is stricter than the cards in one
+way: a card only shows the badges that apply, so a missing badge meant "no",
+but the API can say `false`, so a *missing* tag now leaves the cell blank with a
+note. It also resolves a forum advert whose auction is not on the listing,
+which used to be left for you as `advertises alesievauctions.com`.
+
+`openDate` comes from the API's `startsAt`, which is a UTC time, read in
+**Eastern** time, because auctioneers on this site schedule in US Eastern
+(confirmed 2026-09-28). Auction 39 starts `2026-09-19T04:00Z` and `20275`
+records 2026-09-19. The workbook's own timezone is Central, where that instant
+is 11pm on the 18th, a day early. If the API says an auction has already
+closed (`closedAt`), the proposal notes the date, but the row is still created
+open. [Importing the close](#importing-an-alesievauctionscom-close) writes
+`closeDate` from that same field, together with the prices.
+
 Three more things worth knowing:
 
 - **Every card is a candidate.** There is no equivalent of category 584's
   charity auctions and eBay listings, so nothing is triaged. The title is still
   checked for the phrases that matter (charity, cancelled, pre-order, Golden
-  Ticket) and they appear in `notes`.
-- **One fetch, no per-auction pages.** Everything a row needs is on the listing.
-- **The `Ends:` line is deliberately ignored.** It is the *scheduled* end;
+  Ticket) and they appear in `notes`, and so is the API's charity flag.
+- **The Trade 2 order is still title-only.** Neither the cards nor the API tag
+  it, so `Option B` in a title stays a note and `auctionStyle` is proposed
+  without `Trade 2` in it. Add it by hand when the note fires.
+- **The `Ends:` line is deliberately ignored**, and so is the API's `endsAt`. It is the *scheduled* end;
   `closeDate` is when the auction actually closed, and they differ whenever an
   auction is extended, ends early on funding, or fails. It goes in `notes`. A
   blank `closeDate` is also what makes `Status` compute `Open`.
@@ -286,6 +310,28 @@ third file. Do the Trent install first if you have not
 You do **not** create the review tab. The scan makes `auctionOpenReview` the
 first time it runs, and that tab is the only thing this script creates without
 being asked.
+
+### The site's API token (once)
+
+The site's API wants a bearer token, which its maintainer issues. **It goes in
+Script Properties and nowhere else**, for the same reason as the [GitHub
+token](#the-token--you-create-and-store-this-nobody-else-touches-it): the script
+body is visible to everyone who can edit the workbook, and to its version
+history, for ever. Never paste it into a script file, a sheet cell, a chat or a
+commit.
+
+1. In the Apps Script editor: **Project Settings → Script Properties → Add
+   script property**.
+2. Name **`ALESIEV_API_TOKEN`**, value the token. Save.
+3. Reload the spreadsheet, then **TD auctions → Check the alesievauctions.com
+   API token**. It asks the API about the newest site auction you have recorded
+   and shows what came back: the title, the sponsor, the status and the four
+   fields the scan would propose. If the token is wrong it says the API refused
+   it, and never shows the token.
+
+Both scripts read that one property: the scan, and [the
+close](#importing-an-alesievauctionscom-close). To replace the token, edit the
+property's value. Nothing else changes.
 
 ### Using it
 
@@ -721,8 +767,20 @@ against `prices.csv`.
 
 ## Importing an alesievauctions.com close
 
-alesievauctions.com hosts auctions in its own database and produces a close
-export when one ends. `apps-script/alesievClose.gs` imports it.
+alesievauctions.com hosts auctions in its own database, and
+`apps-script/alesievClose.gs` imports one when it closes.
+
+**Since 2026-09-28 it reads the site's API** (`GET
+/api/v1/auctions/:id/final-bids`), asking by the id in the auction's `Link`.
+There is nothing to download or paste. It needs [the API
+token](#the-sites-api-token-once). The pasted export still works, as a fallback
+under its own menu items, for when the API is down or the token has lapsed. Both
+go through the same reader, so the rules below apply to either.
+
+The API reads only three fields per lot: `title`, `category` and `currentBid`.
+The response also carries bid counts and high, low, median and average bids,
+which the site's maintainer asked us to treat as **not public**. They are never
+read, so they cannot reach a tab, a dialog or the repo's test data.
 
 **It is treated like a Trent close, not like a forum close**, and the reason is
 the source rather than the shape. A forum auctioneer builds a results file by
@@ -932,24 +990,29 @@ so `Non-Onyx` does not read as Onyx.
 | | |
 |---|---|
 | **Names every augment** | The forum file calls six different grunnel augments `Grunnel Augment` and leaves you to name them from the thread. This source names each one, so the `contextItems` rows come out complete. |
-| **Writes `closeDate`** | It asks for the close date and writes it to `auctionMetadata`, then reads the cell back to check Sheets did not reformat it. `Status`, `daysToClose` and `Close Month` are formulas and follow on their own. |
+| **Writes `closeDate`** | From the site's `closedAt` when the API sends one, and by asking you otherwise. It writes the date to `auctionMetadata`, then reads the cell back to check Sheets did not reformat it. `Status`, `daysToClose` and `Close Month` are formulas and follow on their own. |
 | **Clears `outcome`** | In the same pass. A `Pending` or `Ended` cell **outranks `closeDate`** in the `Status` formula, so writing the date alone leaves the auction un-Closed — and a `Pending` row carrying a `closeDate` is a hard error at the PR gate. It says what it cleared; it never does it silently. |
 | **Refuses a re-import** | If `prices` already holds rows for the chosen auction it stops. An export you can download twice is easy to import twice. The **dry run still shows the whole plan** and hands you the rows, so picking up rows a newer script writes does not mean deleting the auction first. |
-| **Refuses the wrong auction** | The export carries **no auction id** — the auction is whichever one you pick. If the plan's prices match a *different* auction already in the spine, to the cent, it stops and names it. That is the stale-staging-tab mistake, and it happened: `20275`'s export left in the tab, `20272` picked, and both are season 2027 so the season check passed. |
+| **Refuses the wrong auction** | **From the API it cannot happen:** the response names its auction, and one naming any auction but the one asked for is refused before a lot is read. The pasted export carries **no auction id**, so on that path, if the plan's prices match a *different* auction already in the spine, to the cent, it stops and names it. That is the stale-staging-tab mistake, and it happened: `20275`'s export left in the tab, `20272` picked, and both are season 2027 so the season check passed. |
+| **Checks the site's own total** (API only) | The lots must add up to the auction's `totalCurrentBids`. If they don't, the dialog says so as a caution. For auction 39 they agree exactly: $6,751.12. |
 
 ### Installing it (once)
 
 Add it as another file in the same Apps Script project (**File → New →
 Script**, name it `alesievClose`), paste in `site/apps-script/alesievClose.gs`,
-and add a tab called exactly **`alesievStaging`**. Reload the spreadsheet; two
-items appear under **TD auctions**.
+and set [the API token](#the-sites-api-token-once). Reload the spreadsheet; four
+items appear under **TD auctions**. A tab called exactly **`alesievStaging`** is
+needed only for the pasted-export fallback.
 
 ### Using it
 
-1. The auction must already be in `auctionMetadata`. If it is not, run
-   [the auction scan](#watching-for-new-auctions) and promote it first.
-2. Paste the export — **including the header row** — into `alesievStaging`.
-3. **TD auctions → Dry run — show what the export would import.** Give it the
+1. The auction must already be in `auctionMetadata`, with its
+   `alesievauctions.com/auctions/N` **Link**. That link is how the API is asked.
+   If the auction isn't there, run [the auction scan](#watching-for-new-auctions)
+   and promote it first.
+2. The auction must have **closed on the site**. Final bids don't exist before
+   that, and the API refuses to return them.
+3. **TD auctions → Dry run — show what the site would import.** Give it the
    target `auctionId`; the prompt shortlists **this season's** auctions from
    alesievauctions.com, newest first — see [the close-path
    picker](#the-close-path-picker), whose two repairs were both found here.
@@ -964,13 +1027,27 @@ items appear under **TD auctions**.
    `trentName`/`trentPrice` before `Item`/`Price` and `prices` does not, so
    crossing them files the per-token price as the lot total.
 5. **Import alesievauctions.com close…** when the dry run looks right.
-6. It asks for the **close date**, as `YYYY-MM-DD`. This is when the auction
-   *actually* closed — **not** the `Ends:` date on the site's card, which is the
-   scheduled end and parts company with the real one whenever an auction is
-   extended, ends early on funding, or fails. Leave it blank to skip; `Status`
+6. **The close date comes from the site.** The API's `closedAt` is when the
+   auction *actually* closed. It's converted to an Eastern date and written to
+   `closeDate`, and the summary says so (`closeDate 2026-09-19 (the site's
+   closedAt, 09:02 Eastern)`). This is **not** the scheduled end (the card's
+   `Ends:` line, or the API's `endsAt`). Auction 39 was scheduled to end on the
+   25th and `20275` closed on the 19th, when it funded. If the auction already
+   records a *different* `closeDate`, you're asked whether to replace it, keep
+   it, or cancel. A date set by hand may be a deliberate correction, so it is
+   never overwritten silently.
+
+   If the API sends no `closedAt` (and the pasted export never has one), you're
+   asked for the date as `YYYY-MM-DD` instead. Leave it blank to skip; `Status`
    stays `Open` until it is filled in.
 7. Export the changed tabs and run `npm run validate`, or publish from the
    sheet.
+
+**The fallback.** If the API is down or the token has lapsed, paste the site's
+export (**including the header row**) into `alesievStaging` and use **Dry run —
+pasted export (fallback)** and then **Import from a pasted export (fallback)…**.
+Everything above applies, except the auction-id check. An export carries no
+id, so the to-the-cent fingerprint is the only defence there.
 
 Type the close date in ISO or it is refused rather than converted. That is not
 fussiness: a date written to a sheet in any other shape gets coerced on the way
@@ -990,6 +1067,11 @@ Everything below stops the run and writes **nothing** — never half an auction.
 | *this file looks like season N* | The export and the chosen auction disagree about the season. Check the auction. |
 | *this auction already has rows in `prices`* | It has been imported. Delete the existing rows first if you meant to replace them — **or** take the rows you are missing from the dry run's pasteable blocks, which is usually what you want. |
 | *this export is auction N's, not M's* | The staging tab is still holding the last import. Paste the right export and run again. It is sure enough to abort: the two agree on every priced item **to the cent**, which `validate-prices.mjs` § 2 already treats as an error. |
+| *the API refused the token* | Check the `ALESIEV_API_TOKEN` Script Property holds the current token. **TD auctions → Check the alesievauctions.com API token** tests it. |
+| *the API has no such auction (HTTP 404)* | Either the auction has not closed on the site yet, or the `Link` in `auctionMetadata` points at the wrong auction. |
+| *has no alesievauctions.com Link* | The `Link` cell is not a site auction URL. Fix it, or use the pasted-export fallback. |
+| *the API answered for auction N* | The API returned a different auction from the one asked for. Nothing was read. Tell the site's maintainer. |
+| *the API redirected* | Not followed on purpose: a redirect would carry the token to wherever it points. Tell the site's maintainer. |
 | an augment kind it does not know | Decide which `contextItems.category` it takes and add it to `ALESIEV_AUGMENT_CATEGORIES`. |
 | a multi-token **Onyx** lot | Split it by hand. All 1,155 recorded Onyx rows are single tokens, so dividing this one either way would be a guess. |
 
@@ -1025,9 +1107,17 @@ editor's contents.
 > or **`prices`** already holds — the price spine belongs in that list because a
 > name can legitimately live in one file and not another, and a check reading
 > one file calls that an invention. The shapes nobody has seen yet — a withheld
-> block, an Onyx lot, an unknown augment kind — are constructed in the test. The
-> withheld and Onyx paths are therefore **built and tested but never run against
-> a real file**; check the first one of each carefully.
+> block, an Onyx lot, an unknown augment kind — are constructed in the test.
+>
+> **The API fixture DOES reconcile, and it is the first on this path that
+> can.** `fixtures/alesiev/api-39-final-bids.json` is site auction 39, which is
+> `20275`, replayed against every row `20275` holds: 37 `prices`, 141
+> `rawPricesData`, 12 `onyx` and 22 `contextItems`, all exact, withheld and
+> Onyx paths included. It is **stripped** to `title`, `category` and
+> `currentBid` because this repository is public, and a test fails if a
+> re-fetched response is ever checked in with the private fields still in it.
+> If `20275` is deliberately corrected in the sheet, that test goes red on the
+> next code PR. The fixture is what's stale then, not the correction.
 
 ---
 
