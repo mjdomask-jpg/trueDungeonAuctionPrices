@@ -1799,9 +1799,35 @@ regeneration.
 > preview when you *cannot* explain the drift destroys the check — you would be
 > comparing the recompute against a baseline built from the same data.
 
-**Regenerating is deliberately not automated**, for that reason. If the publisher
+**The publisher deliberately never regenerates it**, for that reason. If it
 rebuilt the golden file from the data it had just published, the check would be
 comparing the data against itself and would never fail again.
+
+**`scripts/regen-withheld-preview.ps1` does the chores and keeps the reading.**
+From PowerShell in `site`:
+
+```powershell
+.\scripts\regen-withheld-preview.ps1 -DryRun   # report only, then put everything back
+.\scripts\regen-withheld-preview.ps1           # the same, then commit + PR if you type yes
+```
+
+It needs a working tree with no uncommitted tracked changes. It fetches, cuts
+`withheld-preview-<date>` from `origin/main`, runs the generator, and compares
+the result with the preview `main` holds, sorting every change into the same
+buckets the check uses:
+
+| Bucket | Meaning |
+|---|---|
+| New rows | a new auction brought withheld items — expected |
+| Cent moves | within $0.01, the price cascade — expected |
+| Backfill moves | the value moved **and** its `lookback_auctions` changed; the table names the auctions that entered and left |
+| **UNEXPLAINED** | moved with the **same** auctions and quantity — a price edited inside an audited window, or the recompute changed |
+| **Removed rows** | a withheld row disappeared — fine if you deleted it on purpose, alarming if you didn't |
+
+Then it runs `npm run validate` and asks. Nothing is committed unless you type
+`yes`. On a dry run, a no, or any failure, it deletes the branch and puts you
+back on the branch you started from. After a yes it commits, pushes and opens
+the PR. Merge it once `build-and-validate` is green.
 
 ### Two things it does not do
 
@@ -3071,12 +3097,17 @@ compares on the intersection: rows it already covers must still match to the
 cent, rows it has never seen are reported as new data and pass. Regenerating is
 housekeeping you can batch, not a step in the publish.
 
-```
-node scripts/gen-withheld-preview.mjs
+```powershell
+.\scripts\regen-withheld-preview.ps1 -DryRun
 ```
 
-Eyeball the diff (the `delta` column shows how each estimate moved), then
-`npm run validate` to confirm the recompute and the preview agree.
+That script (see *The withheld preview, and why it no longer blocks you*) does
+the branch, the generator, the comparison against `main` and `npm run
+validate`, and only commits after you type `yes`. By hand it is
+`node scripts/gen-withheld-preview.mjs`, then read the diff, then `npm run
+validate`. The `delta` column is the move against the spreadsheet's original
+figure, not against the last preview, so the script's comparison is the one to
+read.
 
 > If a check ever seems to demand that you run this before publishing, that is
 > a defect in the check and not in your data — see the note under *The withheld
