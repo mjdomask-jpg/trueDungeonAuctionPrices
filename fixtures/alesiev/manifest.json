@@ -25,6 +25,23 @@
       ],
       "namesColumnBCannotSplit": "`Pick Your Purple` (34 lots) and `Random Ultra Rare` (9 lots) are BOTH labelled `Ultra Rare`, and they belong in different files. A PYP is a buyer choosing any Ultra Rare — a market observation, and it goes in the price spine as `Ultra Rare` (a new EXCEPTIONS entry). A Random Ultra Rare is a lucky dip, and all 21 of its recorded appearances in contextItems.csv are ONE aggregated `token` row. So the split is by NAME, and it is what keeps `random ultra rare` deliberately out of EXCEPTIONS.",
       "ignoredColumns": "Starting Bid, Bid Count, High Bid, Average Bid, Median Bid, Low Bid. `Current Bid` is the ending bid. Note that `Average Bid` here is a per-lot bid statistic sitting beside a genuine winning-bid column — forumClose.gs REFUSES any file carrying that header, correctly for its own source, which is why this export gets its own reader rather than going through forumReadStaging."
+    },
+    {
+      "file": "api-39-final-bids.json",
+      "url": "https://alesievauctions.com/api/v1/auctions/39/final-bids",
+      "fetched": "2026-09-28",
+      "source": "The first answer from the site's API, supplied by the user on 2026-09-28 as `20275-final-bids_closedAt.json` (the first sample again, plus `closedAt`, added the same day). Site auction 39 is `20275` (Kusig's Option B), whose rows were imported from the site's export on 2026-09-19.",
+      "stripped": "Each item keeps ONLY `title`, `category` and `currentBid`, and the auction object only `id`, `title`, `status`, `totalCurrentBids` and `closedAt`. The response also carries `itemId`, `startingBid`, `bidCount`, `highBid`, `averageBid`, `medianBid` and `lowBid`; the site maintainer asked for the bid statistics to be treated as NOT PUBLIC, and this repository is public. Nothing reads them, so nothing is lost. Values are otherwise unchanged.",
+      "auction": "20275",
+      "season": "2027",
+      "auctionStyle": "Onyx Trade 2 Ultra Condensed",
+      "reconciles": {
+        "prices.csv": 37,
+        "rawPricesData.csv": 141,
+        "onyx.csv": 12,
+        "contextItems.csv": 22
+      },
+      "why": "THE FIRST FIXTURE ON THIS PATH THAT RECONCILES. The export sample above is dummy data; this is a real close, and replayed through alesievPlanImport it reproduces every row 20275 holds in all four files exactly, withheld and Onyx paths included — the two paths no checked-in fixture had exercised with real prices (they ran on 20275's export in the workbook; see PIPE-8). The 166 lots with a bid sum to the site's own totalCurrentBids, $6,751.12. 19 items carry no bid: 9 withheld tokens and 10 lots of the auctioneer's fee (9 Random Ultra Rare + Golden Ticket), which ALESIEV_FEE_NAMES drops."
     }
   ]
 }

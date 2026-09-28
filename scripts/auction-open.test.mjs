@@ -1915,5 +1915,173 @@ console.log('\nForum threads advertising a site auction\n');
 }
 
 // ===========================================================================
+// The site's API — GET /auctions/:id
+// ===========================================================================
+//
+// Unlike the listing fixture, this answer is a RECORDED auction: site auction
+// 39 is 20275. So the proposal it makes is compared field by field with the row
+// the sheet holds, against the sheet WITHOUT that row — the corpus as the scan
+// would have met it.
+console.log('\nalesievauctions.com API\n');
+{
+  const spec = manifest.alesievApi;
+  const json = JSON.parse(readFileSync(join(fixtureDir, spec.file), 'utf8'));
+  const recorded = byId.get(spec.reconciles);
+  const without = META.filter((r) => r.auctionId !== spec.reconciles);
+  const known = O.openKnownAuctioneers(META);
+
+  const read = O.openAlesievApiCard(json, spec.expect.id);
+  check('the API answer reads as a card', !!read.card, read.error);
+  const card = read.card;
+  eq('  ... with the id it was asked for', card.id, spec.expect.id);
+  eq('  ... and the Link built from it', card.href, spec.expect.link);
+
+  const p = O.openAlesievProposal(card, without, known);
+  eq('openDate — startsAt read in EASTERN time', p.openDate, spec.expect.openDate);
+  eq('  ... which is what 20275 records', p.openDate, recorded.openDate);
+  eq('  ... at midnight', p.openTime, spec.expect.openTime);
+  eq('auctioneer from the sponsor', p.auctioneer, recorded.auctioneer);
+  eq('targetFunding from fundingGoal, in the sheet\'s format', p.targetFunding, recorded.targetFunding);
+  eq('completionStyle from format', p.completionStyle, recorded.completionStyle);
+  eq('augmentated from the augmented tag', p.augmentated, recorded.augmentated);
+  eq('the Link', p.link, recorded.Link);
+  eq('the auction name, verbatim', p.auctionName, json.auction.title);
+  eq('season from the recorded span', p.season, recorded.auctionSeason);
+  // The one EXPECTED difference. No tag carries the 2027 Trade 2 order, so the
+  // tags give the Onyx style and the title's "Option B" is left as a note —
+  // the same line the badge path draws, for the same reason.
+  eq('auctionStyle is the Onyx style the tags support', p.auctionStyle, spec.expect.auctionStyle);
+  check('  ... and 20275 records it with "Trade 2" in it, which only the title says',
+    recorded.auctionStyle === 'Onyx Trade 2 Ultra Condensed' && p.notes.some((n) => /Option B/.test(n) && /Trade 2/.test(n)),
+    `${recorded.auctionStyle} | ${p.notes.join(' | ')}`);
+  check('a Funded auction is flagged as finished',
+    p.notes.some((n) => /status: Funded/.test(n)) && p.notes.some((n) => /FINISHED/.test(n)), p.notes.join(' | '));
+  eq('closedAt is read in Eastern', `${card.closeDate} ${card.closeTime}`, '2026-09-19 09:02');
+  eq('  ... and is the closeDate 20275 records', card.closeDate, recorded.closeDate);
+  check('  ... which the scan NOTES and does not propose — promotion creates an auction open',
+    p.notes.some((n) => /CLOSED 2026-09-19 at 09:02 Eastern/.test(n)) && !('closeDate' in p), p.notes.join(' | '));
+  const noClose = O.openAlesievApiCard({ ...json, auction: { ...json.auction, closedAt: null } }, '39').card;
+  check('an auction with no closedAt says nothing about closing',
+    !O.openAlesievProposal(noClose, without, known).notes.some((n) => /CLOSED|closedAt/.test(n)), '');
+  const badClose = O.openAlesievApiCard({ ...json, auction: { ...json.auction, closedAt: 'yesterday' } }, '39').card;
+  check('a closedAt that is not ISO is reported and ignored',
+    badClose.closeDate === null && O.openAlesievProposal(badClose, without, known).notes.some((n) => /not an ISO time/.test(n)), '');
+  check('the scheduled end is a note and never the closeDate',
+    p.notes.some((n) => /ends 2026-09-25/.test(n)) && !('closeDate' in p), p.notes.join(' | '));
+  check('a midnight start says which clock it read',
+    p.notes.some((n) => /00:00 Eastern/.test(n) && /2026-09-19T04:00:00\.000Z/.test(n)), p.notes.join(' | '));
+  check('the withheld list in the description is carried as a note',
+    p.notes.some((n) => /^withheld: /.test(n)), p.notes.join(' | '));
+  // "nor any API tag" is the Option B note, which names both on purpose.
+  check('no note says the fields came off badges',
+    !p.notes.some((n) => /badge/i.test(n) && !/nor any API tag/.test(n)), p.notes.join(' | '));
+
+  // Against the live sheet it is already recorded, and a scan says so.
+  const live = O.openPlanScan({ metaRows: META, alesievCards: [card] });
+  eq('against the live sheet, the API card proposes nothing', live.proposals.length, 0);
+
+  // --- the timezone ---------------------------------------------------------
+  const et = (s) => { const r = O.openEasternFromInstant(s); return r && `${r.date} ${r.time}`; };
+  eq('summer is UTC-4', et('2026-07-04T16:00:00.000Z'), '2026-07-04 12:00');
+  eq('winter is UTC-5', et('2026-12-25T05:00:00Z'), '2026-12-25 00:00');
+  eq('the Central-zone mistake would be a day early; Eastern is not', et('2026-09-19T04:00:00.000Z'), '2026-09-19 00:00');
+  eq('the last instant before the spring change is still standard', et('2027-03-14T06:59:00Z'), '2027-03-14 01:59');
+  eq('  ... and the first after it is daylight', et('2027-03-14T07:00:00Z'), '2027-03-14 03:00');
+  eq('the last instant before the autumn change is still daylight', et('2026-11-01T05:59:00Z'), '2026-11-01 01:59');
+  eq('  ... and the first after it is standard', et('2026-11-01T06:00:00Z'), '2026-11-01 01:00');
+  eq('an explicit offset is honoured', et('2026-09-19T00:00:00-04:00'), '2026-09-19 00:00');
+  eq('a timestamp with NO zone is refused rather than guessed at', O.openEasternFromInstant('2026-09-19T04:00:00'), null);
+  eq('  ... and so is a bare date', O.openEasternFromInstant('2026-09-19'), null);
+  eq('  ... and nothing at all', O.openEasternFromInstant(null), null);
+
+  // --- stricter than the badges ---------------------------------------------
+  const withAuction = (patch) => O.openAlesievApiCard({ ...json, auction: { ...json.auction, ...patch } }, '39').card;
+  const fieldsOf = (patch) => O.openAlesievApiFields(withAuction(patch));
+  const noTags = fieldsOf({ tags: {} });
+  eq('a MISSING onyx tag leaves auctionStyle blank — absence is not "off" in JSON', noTags.auctionStyle, '');
+  eq('  ... and the same for augmented', noTags.augmentated, '');
+  check('  ... each with a note', noTags.notes.filter((n) => /left blank/.test(n)).length === 2, noTags.notes.join(' | '));
+  eq('a false onyx tag is the baseline style', fieldsOf({ tags: { onyx: false, augmented: false } }).auctionStyle, O.OPEN_ALESIEV_BASELINE_STYLE);
+  eq('  ... and false augmented is No', fieldsOf({ tags: { onyx: false, augmented: false } }).augmentated, 'No');
+  eq('a STRING "true" is not true', fieldsOf({ tags: { onyx: 'true', augmented: true } }).auctionStyle, '');
+  const newTag = fieldsOf({ tags: { onyx: true, augmented: true, trade2: true } });
+  check('a tag this scan does not read is reported, not dropped',
+    newTag.notes.some((n) => /"trade2" tag/.test(n)), newTag.notes.join(' | '));
+  eq('an unknown format leaves completionStyle blank', fieldsOf({ format: 'Sudden Death' }).completionStyle, '');
+  eq('Fixed Date is recognised in the API\'s spelling', fieldsOf({ format: 'fixed_date' }).completionStyle, 'Fixed Date');
+  eq('Semi-Lightning too', fieldsOf({ format: 'semi-lightning' }).completionStyle, 'Semi-Lightning');
+  check('every completion style the API can produce is one auctionMetadata already uses',
+    Object.values(O.OPEN_ALESIEV_COMPLETION_STYLES).every((s) => META.some((r) => r.completionStyle === s)),
+    Object.values(O.OPEN_ALESIEV_COMPLETION_STYLES).join(', '));
+  eq('a missing fundingGoal leaves targetFunding blank', fieldsOf({ fundingGoal: null }).targetFunding, '');
+  eq('a goal over $1,000 carries its comma', fieldsOf({ fundingGoal: 8000 }).targetFunding, '$8,000.00');
+  check('a charity auction is flagged', fieldsOf({ isCharityAuction: true }).notes.some((n) => /CHARITY/.test(n)), '');
+  const noStart = O.openAlesievProposal(withAuction({ startsAt: 'next Tuesday' }), without, known);
+  eq('an unreadable startsAt leaves openDate blank', noStart.openDate, '');
+  check('  ... and says the API is where it came from',
+    noStart.notes.some((n) => /NO usable startsAt from the API/.test(n)), noStart.notes.join(' | '));
+
+  // --- what refuses ---------------------------------------------------------
+  check('an answer for a DIFFERENT auction is an error, not a card',
+    /answered with auction 40/.test(O.openAlesievApiCard({ ...json, auction: { ...json.auction, id: 40 } }, '39').error || ''), '');
+  check('ok: false is an error quoting the site',
+    /nope/.test(O.openAlesievApiCard({ ok: false, error: 'nope' }, '39').error || ''), '');
+  check('an auction with no id is an error', !!O.openAlesievApiCard({ ok: true, auction: {} }, '39').error, '');
+
+  // --- the HTTP wording, shared with the close ------------------------------
+  eq('a 200 with JSON is fine', O.openAlesievApiProblem(200, json), '');
+  check('a 200 that is not JSON is not fine', /not with JSON/.test(O.openAlesievApiProblem(200, null)), '');
+  check('a 401 names the Script Property to fix',
+    new RegExp(O.OPEN_ALESIEV_TOKEN_PROPERTY).test(O.openAlesievApiProblem(401, { ok: false, error: 'Missing or malformed Authorization header.' })), '');
+  check('  ... and quotes the site', /Missing or malformed/.test(O.openAlesievApiProblem(401, { ok: false, error: 'Missing or malformed Authorization header.' })), '');
+  check('a redirect is refused, because it would carry the token', /redirect/.test(O.openAlesievApiProblem(302, null)), '');
+  check('a 404 says there is no such auction', /no such auction/.test(O.openAlesievApiProblem(404, null)), '');
+
+  // --- which ids a scan asks about, and folding the answers in --------------
+  const listed = O.openParseAlesievListing(fixture(manifest.alesiev.file));   // ids 29 and 28
+  const advertTopic = (ids) => ({ item: { id: '1' }, topic: { siteIds: ids } });
+  eq('only UNRECORDED ids are asked about — against the live sheet, the listing needs nothing',
+    O.openAlesievIdsToAsk(listed, [], META, 25).ids.length, 0);
+  eq('  ... against the sheet the fixture found, both cards are asked about',
+    O.openAlesievIdsToAsk(listed, [], BEFORE_2027, 25).ids.join(','), listed.map((c) => c.id).join(','));
+  eq('an advert\'s id is asked about too, once',
+    O.openAlesievIdsToAsk(listed, [advertTopic(['39', '29'])], BEFORE_2027, 25).ids.join(','), '29,28,39');
+  const capped = O.openAlesievIdsToAsk(listed, [advertTopic(['39'])], BEFORE_2027, 2);
+  eq('the cap holds', capped.ids.length, 2);
+  eq('  ... and the rest are counted', capped.overflow, 1);
+
+  const mergedCards = O.openAlesievMergeApi(listed, { 29: { error: 'the API has no such auction (HTTP 404)' }, 39: read });
+  eq('a card the API failed on is kept', mergedCards.cards.filter((c) => c.id === '29').length, 1);
+  check('  ... carrying why, so the proposal can say its fields came off badges',
+    /HTTP 404/.test(mergedCards.cards.find((c) => c.id === '29').apiError || ''), '');
+  check('  ... without touching the card it was given', !('apiError' in listed[0]) && !('apiError' in listed[1]), '');
+  const fallback = O.openAlesievProposal(mergedCards.cards.find((c) => c.id === '29'), BEFORE_2027, known);
+  check('that proposal says the API could not answer and the badges were read instead',
+    fallback.notes.some((n) => /API could not answer/.test(n) && /badges/.test(n)), fallback.notes.join(' | '));
+  eq('  ... and still reads its badges', fallback.auctionStyle, O.OPEN_ALESIEV_ONYX_STYLE);
+  const fromAdvert = mergedCards.cards.find((c) => c.id === '39');
+  check('an advert-only id the API answered is appended, marked', fromAdvert && fromAdvert.fromAdvert === true, '');
+  check('an advert-only id the API could NOT answer is a scan note',
+    O.openAlesievMergeApi([], { 77: { error: 'HTTP 500' } }).notes.some((n) => /auction 77/.test(n) && /HTTP 500/.test(n)), '');
+
+  // End to end: an advert for an auction that is on NO listing, which used to
+  // be left as "advertises alesievauctions.com" for a person to chase.
+  const ADS_FILES = manifest.advertisements.files;
+  const ad40 = ADS_FILES.find((a) => a.id === '259881');   // first post links /auctions/40
+  const beforeForty = META.filter((r) => O.openAlesievId(r.Link) !== '40');
+  const answer40 = O.openAlesievApiCard({ ...json, auction: { ...json.auction, id: 40, status: 'Live' } }, '40');
+  const scan = O.openPlanScan({
+    metaRows: beforeForty,
+    topics: [{ item: { id: ad40.id, catid: '584', title: '', isoDate: '2026-09-19' }, topic: O.openParseTopic(fixture(ad40.file)) }],
+    alesievCards: O.openAlesievMergeApi([], { 40: answer40 }).cards,
+  });
+  eq('an advert the API can resolve becomes ONE proposal', scan.proposals.length, 1);
+  eq('  ... from the site, not the forum', O.openAlesievId(scan.proposals[0].link), '40');
+  eq('  ... as a candidate, not "advertises"', scan.proposals[0].verdict, 'candidate');
+  check('  ... and the scan says the API answered for it',
+    scan.notes.some((n) => /API answered for it/.test(n)), scan.notes.join('\n'));
+}
+
+// ===========================================================================
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -104,6 +104,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-18** | A Random Ultra Rare's published price comes from a **lot total**, not a recorded sale — the only such row in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each derived rate with its lots |
 | **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
 | **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
+| **PIPE-14** | The alesievauctions.com API is wired in; two of four open questions answered the same day | **asked of the site's maintainer**: a list endpoint (worth having) and a Trade 2 tag (probably not — 2027 only). Close time and timezone are **answered** |
 
 ---
 
@@ -2441,3 +2442,49 @@ identically-worded *"In full disclosure, … will not be included"* and not
 20226's, and the released Random URs were never a thing the sweep looked for.
 `DATA-18`'s recrawl for `Random URs (N)` headings would find the two 2022
 releases on its own; the withheld list needs a human.
+
+---
+
+## PIPE-14. The alesievauctions.com API is wired in; two of four questions answered the same day — OPEN, two asks with the site's maintainer
+
+The site's maintainer built an API for this project (2026-09-28) so the
+pipeline could stop scraping. `auctionOpen.gs` now reads an auction's fields
+from `GET /api/v1/auctions/:id`, and `alesievClose.gs` reads a close from
+`GET /api/v1/auctions/:id/final-bids` instead of a pasted export. The first
+answer, site auction 39, replays to `20275`'s recorded rows exactly (37 prices,
+141 lots, 12 Onyx, 22 context rows), and its lots sum to the site's own total.
+See `docs/updating-the-data.md` § *The site's API token*.
+
+Four things the API could settle were raised the day it was wired in:
+
+1. **A list endpoint — ASKED.** Only `/auctions/:id` exists so far, so the
+   scan still fetches the listing PAGE to learn which ids exist, and the badge
+   parser stays as the fallback. Whether one already existed could not be
+   probed: the API checks the token before it routes, so a made-up path answers
+   401 too (measured 2026-09-28). When it lands, `openParseAlesievListing` can
+   retire, and the "zero cards found" failure goes with it. **This is the one
+   worth having.**
+2. **The actual close time — ANSWERED 2026-09-28.** The maintainer added
+   `closedAt` to both responses the same day. Auction 39's
+   `2026-09-19T13:02:58Z` is 09:02 Eastern on `20275`'s recorded
+   `closeDate`. The close importer now writes `closeDate` from it instead of
+   asking (it asks only when `closedAt` is absent, or when a different date is
+   already recorded). The scan notes it but still creates the row open.
+3. **Which $8K order — ASKED, and of doubtful value.** `tags` carries `onyx`
+   and `augmented` only, so season 2027's Trade 2 order is read off
+   `Option B` in the title and left as a note (`DATA-17`). The maintainer's
+   own caveat is the right one: the option is promoted as 2027-only, so a tag
+   would be written for one season — the reasoning that made Trade 2 a VALUE
+   rather than a column. **No code waits on it.** The scan already reports any
+   tag it doesn't read, so if one appears it shows up in the notes, and wiring
+   it in would be a small change.
+4. **The timezone — ANSWERED 2026-09-28.** Auctioneers on this site schedule in
+   US Eastern. `startsAt` and `closedAt` are read in Eastern, which was
+   already the measured choice (the workbook's Central zone would put `20275`
+   a day early). Now it is a fact rather than a fit.
+
+Not a question, but a note for whoever next touches this: **the bid statistics
+the API returns (`bidCount`, `highBid`, `averageBid`, `medianBid`, `lowBid`) are
+not public, per the maintainer.** Nothing reads them, the checked-in fixture is
+stripped of them, and `test:alesiev` fails if a re-fetched response is checked
+in with them still there. This repository is public.
