@@ -17,14 +17,13 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20222,Ring of the 5th Circle,4,5,,-312.0,,FIXED_was_error,202221;20223;20224;20225;20226,back
 20222,Chosen Ultra Rare,6,5,,-636.0,,FIXED_was_error,202221;20223;20224;20225;20226,back
 202217,Patron Pin,1,5,,-423.0,,FIXED_was_error,202210;202211;202212;202219;20229,back
-202247,Patron Pin,1,5,,-530.0,,FIXED_was_error,202242;202243;202244;202245;202246,back
 202249,Orb of Dragonkind (Great Wyrm),1,5,,-385.0,,FIXED_was_error,202244;202245;202246;202247;202248,back
 20236,Adventurers' Guild Button,2,5,-10.5,-2.0,8.5,recomputed,20231;20232;20233;20234;20235,back
 20236,Amulet of Magnifying,1,5,-0.52,-0.8,-0.28,recomputed,20231;20232;20233;20234;20235,back
 20236,Amulet of Magnifying,1,5,-0.52,-0.8,-0.28,recomputed,20231;20232;20233;20234;20235,back
 20236,Ring of the 4th Circle,2,5,-170.67,-164.0,6.67,recomputed,20231;20232;20233;20234;20235,back
 20236,Ring of the 4th Circle,1,5,-85.34,-82.0,3.34,recomputed,20231;20232;20233;20234;20235,back
-20236,Chosen Ultra Rare,4,5,-317.07,-384.0,-66.93,recomputed,20231;20232;20233;20234;20235,back
+20236,Chosen Ultra Rare,4,5,-315.31,-384.0,-68.69,recomputed,20231;20232;20233;20234;20235,back
 202312,Patron Pin,1,5,-318.25,-434.0,-115.75,recomputed,202310;202311;20237;20238;20239,back
 202327,Path to Enlightenment (Fragment 1),1,5,-541.74,-533.6,8.14,recomputed,202322;202323;202324;202325;202326,back
 202327,Patron Pin,1,5,-318.25,-501.09,-182.84,recomputed,202322;202323;202324;202325;202326,back
@@ -70,7 +69,7 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20251,Philosopher's Stone,220,10,-509.99,-507.98,2.01,recomputed,202517;202521;202522;202523;202524,back
 20251,Ring of the 2nd Circle,2,10,-157.59,-170.6,-13.01,recomputed,202517;202521;202522;202523;202524,back
 20251,Chosen Ultra Rare,15,10,-1050.23,-1059.46,-9.23,recomputed,202517;202521;202522;202523;202524,back
-20251,Wish Ring,1,5,-164.55,-135.2,29.35,recomputed,202517;202521;202522;202523;202524,back
+20251,Wish Ring,1,5,-163.7,-135.2,28.5,recomputed,202517;202521;202522;202523;202524,back
 20251,Wish Ring,2,5,-261.93,-270.4,-8.47,recomputed,202517;202521;202522;202523;202524,back
 20255,Mark of the 2nd Tenet,2,8,-162.07,-161.94,0.13,recomputed,20251;202519;202523;202524;202526,back
 20255,Ring of the 2nd Circle,4,9,-315.18,-316.0,-0.82,recomputed,20251;202519;202523;202524;202526,back
@@ -83,15 +82,23 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 202634,Elven Bismuth,2,8,-63.35,-65.28,-1.93,recomputed,202628;202629;202630;202632;202633,back
 202634,Oil of Enchantment,2,8,-86.79,-87.67,-0.88,recomputed,202628;202629;202630;202632;202633,back
 202645,Ring of the 1st Circle,8,10,-898.32,-756.86,141.46,recomputed,202640;202641;202642;202643;202644,back
-20275,Bead of Need,1,1,,-96.0,,FIXED_was_error,20272,forward
-20275,Blood Cult Mark,1,1,,-70.0,,FIXED_was_error,20272,forward
+20275,Bead of Need,1,3,,-89.67,,FIXED_was_error,202717;20272;20278,forward
+20275,Blood Cult Mark,1,3,,-63.67,,FIXED_was_error,202717;20272;20278,forward
 20275,C/UC/R Set,1,1,,-117.0,,FIXED_was_error,20272,forward
-20275,Gloves of Elder Horror,1,1,,-61.0,,FIXED_was_error,20272,forward
-20275,Lenses of Timestep,1,1,,-51.0,,FIXED_was_error,20272,forward
-20275,Mask of Foggy Health,1,1,,-59.0,,FIXED_was_error,20272,forward
-20275,Natasha's Nightcap,1,1,,-89.0,,FIXED_was_error,20272,forward
-20275,Spirit Pet Owl,1,1,,-79.0,,FIXED_was_error,20272,forward
-20275,Tobin's Cosmic Ring,1,1,,-61.0,,FIXED_was_error,20272,forward
-20271,Patron Code,1,4,,-404.25,,FIXED_was_error,202714;202719;202720;20274,forward
+20275,Gloves of Elder Horror,1,3,,-55.0,,FIXED_was_error,202717;20272;20278,forward
+20275,Lenses of Timestep,1,3,,-45.33,,FIXED_was_error,202717;20272;20278,forward
+20275,Mask of Foggy Health,1,3,,-61.67,,FIXED_was_error,202717;20272;20278,forward
+20275,Natasha's Nightcap,1,3,,-74.0,,FIXED_was_error,202717;20272;20278,forward
+20275,Spirit Pet Owl,1,3,,-74.33,,FIXED_was_error,202717;20272;20278,forward
+20275,Tobin's Cosmic Ring,1,3,,-71.0,,FIXED_was_error,202717;20272;20278,forward
+20271,Patron Code,1,5,,-413.6,,FIXED_was_error,202714;202719;202720;20274;20278,forward
 20272,Patron Code,1,5,,-422.0,,FIXED_was_error,202713;20273;20275;20276;20277,back
 20274,Chosen Ultra Rare,10,10,,-593.42,,FIXED_was_error,202713;20273;20275;20276;20277,back
+202717,1st Codex of the Familiar,1,5,,-1397.6,,FIXED_was_error,202714;202719;20272;20274;20277,back
+202717,Patron Code,1,5,,-415.4,,FIXED_was_error,202714;202719;20274;20276;20277,back
+20226,+1 Turkey Leg of Smiting,1,4,,-47.5,,FIXED_was_error,20221;202221;20223;20224,back
+20226,Ring of the 5th Circle,1,4,,-78.75,,FIXED_was_error,20221;202221;20223;20224,back
+20226,Lenses of Hunting,1,4,,-1.5,,FIXED_was_error,20221;202221;20223;20224,back
+20226,Adventurers' Guild Button,1,4,,-2.06,,FIXED_was_error,20221;202221;20223;20224,back
+20226,Treasure Chip (each),8,3,,-15.33,,FIXED_was_error,202221;20223;20224,back
+20278,1st Codex of the Familiar,1,5,,-1362.6,,FIXED_was_error,202714;202719;20272;202720;20274,back
