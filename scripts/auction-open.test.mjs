@@ -2050,7 +2050,7 @@ console.log('\nalesievauctions.com API\n');
   eq('the cap holds', capped.ids.length, 2);
   eq('  ... and the rest are counted', capped.overflow, 1);
 
-  const mergedCards = O.openAlesievMergeApi(listed, { 29: { error: 'the API has no such auction (HTTP 404)' }, 39: read });
+  const mergedCards = O.openAlesievMergeApi(listed, { 29: { error: 'the API has no such auction (HTTP 404)' }, 39: read }, [], { 39: true });
   eq('a card the API failed on is kept', mergedCards.cards.filter((c) => c.id === '29').length, 1);
   check('  ... carrying why, so the proposal can say its fields came off badges',
     /HTTP 404/.test(mergedCards.cards.find((c) => c.id === '29').apiError || ''), '');
@@ -2073,13 +2073,92 @@ console.log('\nalesievauctions.com API\n');
   const scan = O.openPlanScan({
     metaRows: beforeForty,
     topics: [{ item: { id: ad40.id, catid: '584', title: '', isoDate: '2026-09-19' }, topic: O.openParseTopic(fixture(ad40.file)) }],
-    alesievCards: O.openAlesievMergeApi([], { 40: answer40 }).cards,
+    alesievCards: O.openAlesievMergeApi([], { 40: answer40 }, [], { 40: true }).cards,
   });
   eq('an advert the API can resolve becomes ONE proposal', scan.proposals.length, 1);
   eq('  ... from the site, not the forum', O.openAlesievId(scan.proposals[0].link), '40');
   eq('  ... as a candidate, not "advertises"', scan.proposals[0].verdict, 'candidate');
   check('  ... and the scan says the API answered for it',
     scan.notes.some((n) => /API answered for it/.test(n)), scan.notes.join('\n'));
+}
+
+// ===========================================================================
+// The site's API — GET /auctions, the list
+// ===========================================================================
+//
+// Every valid auction id, closed ones included. The list is what the scan now
+// DISCOVERS auctions with; the listing page is the fallback. Assertions about
+// the live sheet are relational — "the scan asks about exactly the listed ids
+// the sheet does not hold" — so recording auction 48 does not turn this red.
+console.log('\nalesievauctions.com API — the auction list\n');
+{
+  const spec = manifest.alesievApiList;
+  const json = JSON.parse(readFileSync(join(fixtureDir, spec.file), 'utf8'));
+  const list = O.openAlesievApiIds(json);
+  check('the list reads', !list.error, list.error);
+  eq('  ... every id, as a string', list.ids.join(','), json.auctionIds.map(String).join(','));
+  eq('  ... with nothing skipped', list.bad.length, 0);
+
+  const recorded = O.openRecordedAlesiev(META);
+  const unrecorded = list.ids.filter((id) => !recorded[id]);
+  eq('the scan asks about exactly the listed ids the sheet does not hold',
+    O.openAlesievIdsToAsk(list.ids, [], META, 25).ids.join(','), unrecorded.join(','));
+  eq('  ... and none of them is an advert', Object.keys(O.openAlesievIdsToAsk(list.ids, [], META, 25).advertOnly).length, 0);
+  // When the fixture was taken, every recorded site auction was on it — the
+  // list includes CLOSED auctions, which is what makes this check possible.
+  const inFixtureEra = META.filter((r) => { const id = O.openAlesievId(r.Link); return id && Number(id) <= Math.max(...list.ids.map(Number)); });
+  eq('every recorded site auction up to the list\'s newest id is on it',
+    O.openAlesievDroppedFromList(list.ids, inFixtureEra).length, 0);
+  check('the list holds closed auctions as well as open ones',
+    list.ids.some((id) => recorded[id] && byId.get(recorded[id])?.Status === 'Closed'), '');
+
+  // What refuses, and what is merely reported.
+  check('an EMPTY list is an error, not a quiet week',
+    /EMPTY/.test(O.openAlesievApiIds({ ok: true, auctionIds: [] }).error || ''), '');
+  check('ok: false is an error quoting the site',
+    /nope/.test(O.openAlesievApiIds({ ok: false, error: 'nope' }).error || ''), '');
+  check('a list with no auctionIds array is an error', !!O.openAlesievApiIds({ ok: true, auctions: [] }).error, '');
+  const odd = O.openAlesievApiIds({ ok: true, auctionIds: [28, 'x', -3, 1.5, null, '29', 28] });
+  eq('an entry that is not an id is skipped', odd.ids.join(','), '28,29');
+  eq('  ... and reported, not dropped silently', odd.bad.length, 4);
+  eq('  ... and a repeated id counts once', odd.ids.filter((id) => id === '28').length, 1);
+
+  eq('a recorded auction missing from the list is named',
+    O.openAlesievDroppedFromList(['28'], META.filter((r) => ['28', '29'].includes(O.openAlesievId(r.Link)))).join(' | '),
+    `${recorded['29']} (site 29)`);
+
+  // --- the fallbacks ------------------------------------------------------
+  const page = O.openParseAlesievListing(fixture(manifest.alesiev.file));   // cards 29 and 28
+  const apiCard = O.openAlesievApiCard(JSON.parse(readFileSync(join(fixtureDir, manifest.alesievApi.file), 'utf8')), '39');
+  const as = (id) => ({ ...apiCard, card: { ...apiCard.card, id, href: O.openAlesievUrl(id) } });
+
+  // List read, every detail read: API cards only, and the page never enters.
+  const clean = O.openAlesievMergeApi([], { 29: as('29'), 28: as('28') }, [], {});
+  eq('with the list and every answer, the cards are the API\'s', clean.cards.filter((c) => c.api).length, 2);
+  check('  ... none marked as found through an advert', clean.cards.every((c) => !c.fromAdvert), '');
+
+  // List read, one detail failed: the page is the fallback for THAT card only.
+  const partial = O.openAlesievMergeApi([], { 29: as('29'), 28: { error: 'HTTP 500' } }, page, {});
+  eq('one failed detail falls back to its page card', partial.cards.length, 2);
+  const fallback28 = partial.cards.find((c) => c.id === '28');
+  check('  ... which is the badge parse, carrying why', fallback28 && !fallback28.api && /HTTP 500/.test(fallback28.apiError), '');
+  check('  ... while the one that answered stays the API\'s', partial.cards.find((c) => c.id === '29').api, '');
+  const pageOnlyId = O.openAlesievMergeApi([], { 29: as('29') }, page, {});
+  eq('a page card the list does not name is NOT used — the list is every valid auction',
+    pageOnlyId.cards.map((c) => c.id).join(','), '29');
+  check('a failed id the page does not show either is a scan note naming the list',
+    O.openAlesievMergeApi([], { 48: { error: 'HTTP 500' } }, page, {}).notes.some((n) => /auction 48 is on the API's list/.test(n)), '');
+
+  // List unreadable: the page is the discovery step, exactly as before.
+  const legacy = O.openAlesievMergeApi(page, {}, [], {});
+  eq('without the list, the page\'s cards are proposed from their badges', legacy.cards.length, page.length);
+  eq('  ... asking the API about the same ids the page shows',
+    O.openAlesievIdsToAsk(page, [], BEFORE_2027, 25).ids.join(','), page.map((c) => c.id).join(','));
+
+  // End to end: a list-sourced card says it was the site's list, not the page.
+  const listScan = O.openPlanScan({ metaRows: BEFORE_2027, alesievCards: clean.cards });
+  check('a list-sourced proposal does not claim its fields came off badges',
+    listScan.proposals.every((p) => !p.notes.some((n) => /badges instead/.test(n))), '');
 }
 
 // ===========================================================================

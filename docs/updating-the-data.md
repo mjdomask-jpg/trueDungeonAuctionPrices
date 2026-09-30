@@ -249,14 +249,25 @@ guess. Where the evidence goes back to being as weak as the forum's, so does the
 behaviour: a badge that is missing, ambiguous or contradicts its own label
 leaves the cell **blank with a note**, exactly as a thread title does.
 
-**Since 2026-09-28 those fields come from the site's API, not its cards.** The
-site's maintainer built one for this project (`GET /api/v1/auctions/:id`), so the
-scan now asks the API about every site auction `auctionMetadata` does not hold
-yet — the listing page is still fetched, but only for its auction ids, because
-no list endpoint has been confirmed. It needs a token; see [The site's API
-token](#the-sites-api-token-once). Without one, or when the API cannot answer
-for an auction, the scan falls back to reading the cards exactly as before and
-**says so in that row's `notes`**. The API is stricter than the cards in one
+**Since 2026-09-28 this side of the scan runs on the site's API, not its
+page.** The site's maintainer built one for this project. `GET
+/api/v1/auctions` lists every valid auction id (closed ones too), and `GET
+/api/v1/auctions/:id` gives the fields for each id `auctionMetadata` does not
+hold yet. It needs a token; see [The site's API
+token](#the-sites-api-token-once).
+
+**The listing page is still there as the fallback**, in two places:
+
+- If the list can't be read (no token, an HTTP error, a malformed answer, or an
+  empty list, which can't be right when it includes closed auctions), the scan
+  reads the page to find auctions, exactly as it did before the API.
+- If the list is read but one auction's details can't be, the page is fetched
+  for that card only.
+
+Either way, a row whose fields came off the page **says so in its `notes`**.
+The scan's summary says which path it took. It also names any recorded site
+auction that has dropped off the API's list, which suggests it was withdrawn or
+deleted on the site; nothing is changed for it. The API is stricter than the cards in one
 way: a card only shows the badges that apply, so a missing badge meant "no",
 but the API can say `false`, so a *missing* tag now leaves the cell blank with a
 note. It also resolves a forum advert whose auction is not on the listing,
@@ -324,9 +335,11 @@ commit.
    script property**.
 2. Name **`ALESIEV_API_TOKEN`**, value the token. Save.
 3. Reload the spreadsheet, then **TD auctions → Check the alesievauctions.com
-   API token**. It asks the API about the newest site auction you have recorded
-   and shows what came back: the title, the sponsor, the status and the four
-   fields the scan would propose. If the token is wrong it says the API refused
+   API token**. It reads the auction list (how many auctions, which aren't
+   recorded yet, and any recorded one that has dropped off it), then asks about
+   the newest site auction you have recorded. It shows what came back: the
+   title, the sponsor, the status, when it closed, and the four fields the scan
+   would propose. If the token is wrong it says the API refused
    it, and never shows the token.
 
 Both scripts read that one property: the scan, and [the
