@@ -1,8 +1,9 @@
 /**
  * Phase 4 — Auction-open automation.
  *
- * Watches the three places an 8K auction can open — Trent's shop page, the
- * forum's two auction categories, and alesievauctions.com — and proposes the
+ * Watches the four places an 8K auction can open — Trent's shop page, the
+ * forum's two auction categories, alesievauctions.com and Utaku's
+ * auction.utakustradecaravan.com — and proposes the
  * `auctionMetadata` row each new one needs. Proposals land in a review tab. A human ticks the ones that
  * are real, and a second menu item appends those to `auctionMetadata`.
  *
@@ -22,7 +23,7 @@
  * SpreadsheetApp, no UrlFetchApp, no I/O, no globals mutated. That is what
  * makes it testable off-platform, and it is worth keeping that way.
  *
- * This file has no `onOpen`. All six .gs files in this project share ONE
+ * This file has no `onOpen`. All the .gs files in this project share ONE
  * global scope, so a second `onOpen` would replace the first rather than add to
  * it and a menu would silently vanish. `trentClose.gs`'s `onOpen` calls
  * `addOpenMenu` when this file is present. Every global here is prefixed
@@ -39,7 +40,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-28.3';
+var OPEN_VERSION = '2026-09-29.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -331,6 +332,52 @@ var OPEN_MAX_TOPIC_FETCHES = 25;
  */
 var OPEN_AUCTIONEER_ALIASES = {
   'utaku soto': 'Matt Soto',
+  // His own auction site names its seller `Utaku`. The sheet holds 44 of his
+  // auctions (2021-2023, many titled `UTC: …`, his Trade Caravan) under
+  // `Matt Soto`; 202722, typed by hand, said `Utaku` and started a second
+  // series with one auction in it.
+  'utaku': 'Matt Soto',
+};
+
+/**
+ * The fourth source: auction.utakustradecaravan.com, Utaku's own auction site.
+ *
+ * A site like alesievauctions.com, and unlike it in the two ways that decide
+ * this code:
+ *
+ *   - **Its page is client-rendered** (the HTML is `Loading…`), so there are no
+ *     cards to scrape and no fallback. Everything comes from the public JSON the
+ *     page itself loads — `/api/state`, no token.
+ *   - **It shows ONE auction at a time, at one URL.** `/api/state` is the
+ *     current auction; `/api/history` lists archived ones (number, title,
+ *     dates, totals — not items). No auction has a URL of its own, so every
+ *     Utaku row carries the same Link and the Link cannot tell two apart. The
+ *     OPEN DATE does, the way Trent's are told apart by season and name: an
+ *     auction's `startedAt` in Eastern, which is how the site itself shows
+ *     every time. `utakuClose.gs` identifies an auction the same way.
+ */
+var OPEN_UTAKU_SOURCE = 'auction.utakustradecaravan.com';
+var OPEN_UTAKU_URL = 'https://auction.utakustradecaravan.com/';
+var OPEN_UTAKU_API_BASE = 'https://auction.utakustradecaravan.com/api';
+
+/** Anchored on the host: a forum post that merely names the site is not a Utaku row. */
+var OPEN_UTAKU_LINK_RE = /^https?:\/\/auction\.utakustradecaravan\.com(\/|$)/i;
+
+/** The site mentioned in a forum post — an advert for an auction there. */
+var OPEN_UTAKU_MENTION_RE = /(?:^|[^A-Za-z0-9.-])(?:https?:\/\/)?auction\.utakustradecaravan\.com/i;
+
+/** The verdict a forum thread advertising the site carries. */
+var OPEN_UTAKU_ADVERT_VERDICT = 'advertises ' + OPEN_UTAKU_SOURCE;
+
+/**
+ * The page's own sticker vocabulary (`STICKER_OPTIONS` in its source, read
+ * 2026-09-29). Each can also be blank, which the page renders as no sticker.
+ */
+var OPEN_UTAKU_STICKERS = {
+  onyx: ['onyx', 'non_onyx'],
+  condense: ['condensed', 'super_condensed'],
+  augment: ['augmented', 'non_augmented'],
+  tradeGoods: ['option_a', 'option_b'],
 };
 
 /**
@@ -933,10 +980,12 @@ function openDecodeTitle(raw) {
 }
 
 function openParseTopic(html) {
-  var out = { title: null, openDate: null, openTime: null, starter: null, siteIds: [], mentionsSite: false };
+  var out = { title: null, openDate: null, openTime: null, starter: null, siteIds: [], mentionsSite: false, mentionsUtaku: false };
   var firstPost = openFirstPostHtml(html);
   out.siteIds = openAdvertisedSiteIds(firstPost);
   out.mentionsSite = OPEN_SITE_MENTION_RE.test(firstPost);
+  // Utaku's site has no per-auction URL, so the host alone is the advert.
+  out.mentionsUtaku = OPEN_UTAKU_MENTION_RE.test(firstPost);
   var m = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"/i);
   if (m) out.title = openDecodeTitle(m[1]).trim();
   if (!out.title) {
@@ -1809,6 +1858,236 @@ function openSeasonSpans(metaRows) {
 }
 
 // ===========================================================================
+// Pure — auction.utakustradecaravan.com
+// ===========================================================================
+
+function openIsUtakuLink(link) {
+  return OPEN_UTAKU_LINK_RE.test(String(link == null ? '' : link).trim());
+}
+
+/**
+ * Every Utaku auction `auctionMetadata` records, keyed by OPEN DATE — the
+ * site's only per-auction identity (see OPEN_UTAKU_SOURCE). The cell goes
+ * through `openIsoFromCell`, so a date Sheets displays as `9/24/2026` still
+ * matches.
+ */
+function openRecordedUtaku(metaRows) {
+  var seen = {};
+  for (var i = 0; i < metaRows.length; i++) {
+    if (!openIsUtakuLink(metaRows[i].Link)) continue;
+    var d = openIsoFromCell(metaRows[i].openDate);
+    if (d) seen[d] = metaRows[i].auctionId;
+  }
+  return seen;
+}
+
+/**
+ * The page's four stickers to an `auctionStyle`, or blank with the reason.
+ *
+ * `{ style, notes }`. **The stickers are discrete fields**, which is why they
+ * may fill the style when a title may not — the rule alesievauctions.com's
+ * badges bent first. That bend stopped at Trade 2 there only because those
+ * cards carry the option in the TITLE; here it is a field of its own, so it is
+ * read (maintainer, 2026-09-29).
+ *
+ *   onyx       -> `Onyx ` or nothing
+ *   tradeGoods -> `option_b` is Trade 2, `option_a` the standard order. Option
+ *                 B is what every auctioneer calls the Trade 2 order (20275,
+ *                 20271), and Utaku's #1 agrees from its own lots: Aragonite /
+ *                 Elven Bismuth / Oil of Enchantment at 15 / 20 / 20 is the
+ *                 Trade 2 count.
+ *   condense   -> `super_condensed` is recorded `Ultra Condensed`, the sheet's
+ *                 convention for every 2027 order whatever the venue calls it.
+ *                 A plain `condensed` is NOT translated: the sheet's `Condensed`
+ *                 means the order carried a Rare Bag and an Uncommon Bag, and a
+ *                 sticker cannot say that.
+ *
+ * Any sticker blank or unknown leaves the WHOLE style blank. Half a style is a
+ * wrong style that looks right. `utakuClose.gs` checks a recorded style against
+ * this same function.
+ */
+function openUtakuStyle(stickers) {
+  var st = stickers || {}, notes = [];
+  var read = function (key) {
+    var v = String(st[key] == null ? '' : st[key]).trim();
+    if (OPEN_UTAKU_STICKERS[key].indexOf(v) === -1) {
+      notes.push(v ? 'the "' + key + '" sticker reads "' + v + '", which the page did not define on 2026-09-29'
+                   : 'the page shows no "' + key + '" sticker');
+      return null;
+    }
+    return v;
+  };
+  var onyx = read('onyx'), trade = read('tradeGoods'), condense = read('condense');
+  if (condense === 'condensed') {
+    notes.push('the sticker says plain "Condensed", and the sheet\'s Condensed means a Rare Bag and an Uncommon ' +
+      'Bag came with the order — that is not something a sticker can confirm');
+    condense = null;
+  }
+  if (onyx === null || trade === null || condense === null) return { style: '', notes: notes };
+  return {
+    style: (onyx === 'onyx' ? 'Onyx ' : '') + (trade === 'option_b' ? 'Trade 2 ' : '') + 'Ultra Condensed',
+    notes: notes,
+  };
+}
+
+/**
+ * The site's current auction and its archive, as one list of
+ * `{ number, title, startedAt, closedAt, recoupTarget, stickers, seller,
+ * status, archived }`.
+ *
+ * The ARCHIVE is read for one reason: the site shows one auction at a time, so
+ * an auction that opens and closes between two scans would otherwise never be
+ * seen at all. An archived entry carries no stickers (measured shape of the
+ * page's history table: number, title, dates, raised, goal, lot cost), so it
+ * is proposed with its style blank.
+ */
+function openUtakuAuctions(state, history) {
+  var out = [], notes = [], seen = {};
+  var s = state && state.settings;
+  if (!s || typeof s !== 'object') {
+    notes.push(OPEN_UTAKU_SOURCE + ': the site returned no auction settings, so its current auction could not be read.');
+  } else {
+    var items = Array.isArray(state.items) ? state.items : [];
+    var live = 0;
+    for (var i = 0; i < items.length; i++) if (items[i] && items[i].status === 'live') live++;
+    // The page's own rule: Closed when nothing is live, Paused when bidding is
+    // paused, otherwise Live.
+    var status = !items.length ? 'no items listed' : !live ? 'closed' : s.paused ? 'paused' : 'live';
+    var lc = state.lastClosed || null;
+    out.push({
+      number: s.auctionNumber == null ? '' : String(s.auctionNumber),
+      title: String(s.title == null ? '' : s.title).trim(),
+      startedAt: s.startedAt, presaleStart: s.presaleStart,
+      closedAt: lc && lc.current === true && String(lc.auctionNumber) === String(s.auctionNumber) ? lc.closedAt : null,
+      recoupTarget: s.recoupTarget, stickers: s.stickers || null,
+      seller: String(s.sellerName == null ? '' : s.sellerName).trim(),
+      status: status, archived: false,
+    });
+    seen[String(s.auctionNumber)] = true;
+  }
+  var list = Array.isArray(history) ? history : [];
+  for (var h = 0; h < list.length; h++) {
+    var e = list[h] || {};
+    if (seen[String(e.auctionNumber)]) continue;
+    seen[String(e.auctionNumber)] = true;
+    out.push({
+      number: e.auctionNumber == null ? '' : String(e.auctionNumber),
+      title: String(e.title == null ? '' : e.title).trim(),
+      startedAt: e.startedAt, presaleStart: null, closedAt: e.closedAt || e.endedAt || null,
+      recoupTarget: e.recoupTarget, stickers: e.stickers || null,
+      seller: s && s.sellerName ? String(s.sellerName).trim() : '',
+      status: 'archived', archived: true,
+    });
+  }
+  return { auctions: out, notes: notes };
+}
+
+/**
+ * One proposal from one Utaku auction.
+ *
+ * Filled in: `auctionStyle` from the stickers, `augmentated` from its sticker
+ * (a formula column — see OPEN_DERIVED_FIELDS — so the sheet's own formula
+ * wins at promotion and this is only a cross-check), `targetFunding` from
+ * `recoupTarget`. `recoupTarget` and not `lotCost`: `lotCost` is the $8,000 the
+ * order costs, `recoupTarget` the goal the page's progress bar counts to, and
+ * the one 202722 records.
+ *
+ * NOT filled in: `completionStyle`. The site has no field for it; the title
+ * says `Lightning`, and a title is prose, so that is a note — the forum path's
+ * measured rule.
+ */
+function openUtakuProposal(a, metaRows, knownNames) {
+  var started = openEasternFromInstant(a.startedAt);
+  var openDate = started ? started.date : '';
+  var season = openInferSeason(a.title, openDate, metaRows);
+  var who = openMatchAuctioneer(a.seller || 'Utaku', knownNames);
+  var notes = [];
+
+  if (!started) notes.push('NO usable startedAt from the site (' + JSON.stringify(a.startedAt) + ') — openDate is blank and the row cannot be promoted without one');
+  if (a.archived) {
+    notes.push('found in the site\'s ARCHIVE, not as its current auction — it opened and closed between scans. The archive ' +
+      'carries no stickers, so auctionStyle and augmentated are blank: type them from the order');
+  }
+  notes.push('the site calls this auction #' + a.number + (a.title ? ' — its title may repeat across auctions, so ' +
+    'consider naming the number in auctionName' : ''));
+
+  var style = { style: '', notes: [] }, augmentated = '';
+  if (a.stickers) {
+    style = openUtakuStyle(a.stickers);
+    for (var i = 0; i < style.notes.length; i++) notes.push('auctionStyle left blank: ' + style.notes[i]);
+    var aug = String(a.stickers.augment == null ? '' : a.stickers.augment).trim();
+    if (aug === 'augmented') augmentated = 'Yes';
+    else if (aug === 'non_augmented') augmentated = 'No';
+    else notes.push('augmentated left blank: the augment sticker reads ' + (aug ? '"' + aug + '"' : 'nothing'));
+  }
+
+  var targetFunding = '';
+  if (typeof a.recoupTarget === 'number' && isFinite(a.recoupTarget) && a.recoupTarget > 0) {
+    targetFunding = openMoneyFromCell(a.recoupTarget);
+  } else {
+    notes.push('the site gave no usable goal (recoupTarget ' + JSON.stringify(a.recoupTarget) + ') — targetFunding left blank');
+  }
+
+  if (/\blightning\b/i.test(a.title)) {
+    notes.push('the TITLE says Lightning — completionStyle is left for you, because the site has no field for it');
+  } else {
+    notes.push('completionStyle left blank: the site has no field for it and the title does not say');
+  }
+  notes.push('season ' + season.how);
+  if (who.how === 'alias') notes.push('auctioneer "' + who.auctioneer + '" from the site\'s seller name "' + a.seller + '"');
+  else if (who.how === 'new') notes.push('NEW auctioneer "' + who.auctioneer + '" — no recorded auction uses that name');
+  else if (who.how !== 'exact') notes.push('auctioneer matched by ' + who.how + ' from "' + a.seller + '"');
+  notes.push('site status: ' + a.status);
+  if (started) notes.push('started ' + started.time + ' Eastern');
+  if (a.presaleStart) notes.push('presale opened ' + a.presaleStart + ' (the site\'s own words)');
+  var closed = openEasternFromInstant(a.closedAt);
+  if (closed) {
+    notes.push('the site says it CLOSED ' + closed.date + ' at ' + closed.time + ' Eastern — a promoted row is still ' +
+      'created open; importing the close (utakuClose.gs) writes that closeDate along with the prices');
+  }
+
+  return {
+    key: 'utaku:' + openDate,
+    source: OPEN_UTAKU_SOURCE,
+    verdict: 'candidate',
+    openDate: openDate,
+    openTime: started ? started.time : '',
+    auctioneer: who.auctioneer,
+    auctionName: a.title,
+    season: season.season,
+    number: '',
+    auctionId: '',
+    link: OPEN_UTAKU_URL,
+    auctionStyle: style.style,
+    completionStyle: '',
+    augmentated: augmentated,
+    targetFunding: targetFunding,
+    notes: notes,
+  };
+}
+
+/**
+ * The site's JSON to proposals, dropping auctions already recorded (by open
+ * date). `{ proposals, notes }`.
+ */
+function openUtakuProposals(state, history, metaRows, knownNames) {
+  var read = openUtakuAuctions(state, history);
+  var recorded = openRecordedUtaku(metaRows);
+  var proposals = [], notes = read.notes.slice();
+  for (var i = 0; i < read.auctions.length; i++) {
+    var a = read.auctions[i];
+    var started = openEasternFromInstant(a.startedAt);
+    if (started && recorded[started.date]) {
+      notes.push(OPEN_UTAKU_SOURCE + ': auction #' + a.number + ' (opened ' + started.date + ') is already recorded as ' +
+        recorded[started.date] + '.');
+      continue;
+    }
+    proposals.push(openUtakuProposal(a, metaRows, knownNames));
+  }
+  return { proposals: proposals, notes: notes };
+}
+
+// ===========================================================================
 // Pure planning — proposals for the review tab
 // ===========================================================================
 
@@ -2232,6 +2511,17 @@ function openPlanScan(input) {
             : ', which is on the listing. Proposed once, from the site, where the badges are.'));
       continue;
     }
+    // Utaku's site has no per-auction URL, so a link to the host IS the
+    // advert, and there is no id to resolve it to. The row stays — this is the
+    // `unknown` answer, not the `recorded` one — but it is not a candidate:
+    // the site's own proposal, from its API, is the one to tick.
+    if (!ad && (topics[i].topic || {}).mentionsUtaku) {
+      proposal.verdict = OPEN_UTAKU_ADVERT_VERDICT;
+      proposal.notes.unshift('ADVERTISES ' + OPEN_UTAKU_SOURCE + ' — a thread about an auction on Utaku\'s site, not a ' +
+        'forum auction. That site is scanned directly; if its auction is recorded or proposed, mark this row duplicate.');
+      proposals.push(proposal);
+      continue;
+    }
     if (ad) {
       proposal.verdict = OPEN_ADVERT_VERDICT;
       proposal.notes.unshift('ADVERTISES ' + where + ' — a thread about an auction on the site, not a ' +
@@ -2261,6 +2551,14 @@ function openPlanScan(input) {
   }
   if (seenSite) {
     notes.push(OPEN_ALESIEV_SOURCE + ': ' + seenSite + ' listed auction(s) are already recorded.');
+  }
+
+  // auction.utakustradecaravan.com — only when the scan read it, so a caller
+  // that passes nothing gets exactly what it got before this source existed.
+  if (input.utakuState || input.utakuHistory) {
+    var utaku = openUtakuProposals(input.utakuState, input.utakuHistory, metaRows, knownNames);
+    proposals = proposals.concat(utaku.proposals);
+    notes = notes.concat(utaku.notes);
   }
 
   proposals.sort(function (a, b) {
@@ -2319,6 +2617,9 @@ function openReviewKey(row) {
   // rescan would drop the operator's tick on the floor.
   var siteId = openAlesievId(link);
   if (siteId) return 'alesiev:' + siteId;
+  // Same hole, fourth source: every Utaku row shares one Link, so it is keyed
+  // by its open date, as its proposal is (see OPEN_UTAKU_SOURCE).
+  if (openIsUtakuLink(link)) return 'utaku:' + openIsoFromCell(row[4]);
   return 'trent:' + String(row[7] || '').trim().toLowerCase();
 }
 
@@ -2464,6 +2765,7 @@ function openPlanPromotion(reviewRows, metaRows, headers, todayIso) {
   var recordedTopics = openRecordedTopics(metaRows);
   var recordedTrent = openRecordedTrentNames(metaRows);
   var recordedSite = openRecordedAlesiev(metaRows);
+  var recordedUtaku = openRecordedUtaku(metaRows);
   var lastSeason = null;
   for (i = 0; i < metaRows.length; i++) lastSeason = String(metaRows[i].auctionSeason);
 
@@ -2494,12 +2796,18 @@ function openPlanPromotion(reviewRows, metaRows, headers, todayIso) {
     if (!name) { problems.push(label + ': no auctionName'); continue; }
     if (topicId && recordedTopics[topicId]) { problems.push(label + ': topic ' + topicId + ' is already recorded as ' + recordedTopics[topicId]); continue; }
     if (siteId && recordedSite[siteId]) { problems.push(label + ': ' + OPEN_ALESIEV_SOURCE + ' auction ' + siteId + ' is already recorded as ' + recordedSite[siteId]); continue; }
-    // Only rows from neither of the id-bearing sources fall through to the
-    // name check. Without the `siteId` guard an alesievauctions.com row would
-    // be tested against Trent's names, match none of them, and be promoted with
-    // no duplicate check at all — the one failure this phase exists to prevent.
+    var isUtaku = openIsUtakuLink(link);
+    if (isUtaku && recordedUtaku[openDate]) {
+      problems.push(label + ': the ' + OPEN_UTAKU_SOURCE + ' auction that opened ' + openDate + ' is already recorded as ' + recordedUtaku[openDate]);
+      continue;
+    }
+    // Only rows from none of the keyed sources fall through to the name check.
+    // Without the `siteId` guard an alesievauctions.com row would be tested
+    // against Trent's names, match none of them, and be promoted with no
+    // duplicate check at all — the one failure this phase exists to prevent.
+    // A Utaku row is the same case again, and its date check is above.
     var trentKey = openTrentKey(season, name);
-    if (!topicId && !siteId && recordedTrent[trentKey]) { problems.push(label + ': "' + name + '" is already recorded as ' + recordedTrent[trentKey] + ' for season ' + season); continue; }
+    if (!topicId && !siteId && !isUtaku && recordedTrent[trentKey]) { problems.push(label + ': "' + name + '" is already recorded as ' + recordedTrent[trentKey] + ' for season ' + season); continue; }
 
     if (next[season] === undefined) next[season] = openNextNumber(metaRows, season);
     var number = next[season]++;
@@ -2632,16 +2940,18 @@ function openHeaderProblems(headers) {
 
 function openDescribeScan(plan) {
   var lines = [], i;
-  var candidates = 0, adverts = 0;
+  var candidates = 0, adverts = 0, utakuAdverts = 0;
   for (i = 0; i < plan.proposals.length; i++) {
     if (plan.proposals[i].verdict === 'candidate') candidates++;
     else if (plan.proposals[i].verdict === OPEN_ADVERT_VERDICT) adverts++;
+    else if (plan.proposals[i].verdict === OPEN_UTAKU_ADVERT_VERDICT) utakuAdverts++;
   }
   // Counted by verdict rather than by "the rest carry no 8K signal", which
   // stopped being true when an advert became its own answer.
   lines.push(plan.proposals.length + ' proposed row(s): ' + candidates + ' look like 8K auctions, ' +
-    (plan.proposals.length - candidates - adverts) + ' carry no 8K signal' +
-    (adverts ? ', ' + adverts + ' advertise an auction on ' + OPEN_ALESIEV_SOURCE : '') + '.');
+    (plan.proposals.length - candidates - adverts - utakuAdverts) + ' carry no 8K signal' +
+    (adverts ? ', ' + adverts + ' advertise an auction on ' + OPEN_ALESIEV_SOURCE : '') +
+    (utakuAdverts ? ', ' + utakuAdverts + ' advertise ' + OPEN_UTAKU_SOURCE : '') + '.');
   lines.push('');
   for (i = 0; i < plan.proposals.length; i++) {
     var p = plan.proposals[i];
@@ -2802,6 +3112,27 @@ function openNormaliseReviewValues(rows, timeZone) {
   return rows;
 }
 
+/**
+ * One GET against Utaku's public API: `{ json }` or `{ error }`. Never throws.
+ * No token, and redirects are not followed — an answer from anywhere but this
+ * host is not this site's. `utakuClose.gs` makes its own calls through this.
+ */
+function openUtakuApiGet(path) {
+  var response;
+  try {
+    response = UrlFetchApp.fetch(OPEN_UTAKU_API_BASE + path, {
+      muteHttpExceptions: true, followRedirects: false, headers: { Accept: 'application/json' },
+    });
+  } catch (e) {
+    return { error: 'the request for ' + path + ' failed: ' + (e && e.message ? e.message : e) };
+  }
+  var code = response.getResponseCode();
+  if (code < 200 || code >= 300) return { error: 'the site answered HTTP ' + code + ' for ' + path };
+  try { return { json: JSON.parse(response.getContentText()) }; } catch (e) {
+    return { error: 'the site\'s answer for ' + path + ' was not JSON' };
+  }
+}
+
 /** One GET. Returns null rather than throwing, so one dead source is not a dead run. */
 function openFetch(url) {
   var response = UrlFetchApp.fetch(url, {
@@ -2931,7 +3262,17 @@ function scanAuctionOpens() {
   var merged = openAlesievMergeApi(siteList ? [] : alesievCards, answers, fallbackCards, ask.advertOnly);
   fetchNotes = fetchNotes.concat(merged.notes);
 
-  var plan = openPlanScan({ metaRows: metaRows, trentPage: trentPage, topics: topics, alesievCards: merged.cards });
+  // auction.utakustradecaravan.com: public, no token, and no page to fall back
+  // on — the page is drawn by JavaScript from this same JSON.
+  var utakuState = openUtakuApiGet('/state');
+  var utakuHistory = openUtakuApiGet('/history');
+  if (utakuState.error) fetchNotes.push(OPEN_UTAKU_SOURCE + ': ' + utakuState.error + ' — its current auction was not scanned.');
+  if (utakuHistory.error) fetchNotes.push(OPEN_UTAKU_SOURCE + ': ' + utakuHistory.error + ' — its archive was not scanned.');
+
+  var plan = openPlanScan({
+    metaRows: metaRows, trentPage: trentPage, topics: topics, alesievCards: merged.cards,
+    utakuState: utakuState.json || null, utakuHistory: Array.isArray(utakuHistory.json) ? utakuHistory.json : null,
+  });
   plan.notes = plan.notes.concat(fetchNotes);
   plan.notes.push('Looked at forum topics with a post since ' + selection.cutoff + ': ' +
     selection.selected.length + ' fetched, ' + selection.skipped.recorded + ' already recorded, ' +
@@ -3156,6 +3497,17 @@ if (typeof module !== 'undefined') {
     OPEN_ALESIEV_TAGS: OPEN_ALESIEV_TAGS,
     OPEN_ALESIEV_TOKEN_PROPERTY: OPEN_ALESIEV_TOKEN_PROPERTY,
     OPEN_ALESIEV_COMPLETION_STYLES: OPEN_ALESIEV_COMPLETION_STYLES,
+    openIsUtakuLink: openIsUtakuLink,
+    openRecordedUtaku: openRecordedUtaku,
+    openUtakuStyle: openUtakuStyle,
+    openUtakuAuctions: openUtakuAuctions,
+    openUtakuProposal: openUtakuProposal,
+    openUtakuProposals: openUtakuProposals,
+    OPEN_UTAKU_STICKERS: OPEN_UTAKU_STICKERS,
+    OPEN_UTAKU_SOURCE: OPEN_UTAKU_SOURCE,
+    OPEN_UTAKU_URL: OPEN_UTAKU_URL,
+    OPEN_UTAKU_ADVERT_VERDICT: OPEN_UTAKU_ADVERT_VERDICT,
+    OPEN_AUCTIONEER_ALIASES: OPEN_AUCTIONEER_ALIASES,
     OPEN_VERSION: OPEN_VERSION,
   };
 }

@@ -209,9 +209,10 @@ open the live site and confirm your change is visible.
 
 ## Watching for new auctions
 
-`apps-script/auctionOpen.gs` watches the three places an 8K auction opens —
-Trent's shop page, the forum's two auction categories, and
-**[alesievauctions.com](https://alesievauctions.com/auctions)** — and proposes
+`apps-script/auctionOpen.gs` watches the four places an 8K auction opens —
+Trent's shop page, the forum's two auction categories,
+**[alesievauctions.com](https://alesievauctions.com/auctions)** and
+**[Utaku's site](#utakus-site-auctionutakustradecaravancom)** — and proposes
 the `auctionMetadata` row each new one needs. It replaces checking the forum by
 hand, and it removes the two mistakes that come with typing a row from scratch:
 a reused `auctionNumber`, and an `openDate` remembered rather than read.
@@ -600,11 +601,51 @@ like a `promoted` marker: **the promote step refuses the row even if it is
 ticked**, and the word survives every rescan, because that column has always
 been carried across verbatim.
 
+### Utaku's site (auction.utakustradecaravan.com)
+
+The fourth source, scanned on every run with no setup: its API is public and
+needs no token. The page itself is drawn by JavaScript, so there is **no page
+to fall back on** — if the API can't be read, the scan says so in its notes and
+that source is simply empty for that run.
+
+**The site shows one auction at a time, at one URL.** So:
+
+- **Every Utaku row carries the same Link**, `https://auction.utakustradecaravan.com/`,
+  and the Link cannot tell two auctions apart. The **open date** does: an
+  auction's start time in Eastern (the site shows every time in Eastern) is its
+  `openDate`, and the scan and the promote step both treat a second Utaku row
+  with the same `openDate` as a duplicate. The close importer identifies an
+  auction the same way.
+- **The archive is read too.** An auction that opens and closes between two
+  scans is gone from the site's front page by the next one, so the scan also
+  lists the site's archive and proposes any archived auction not yet recorded.
+  An archived auction has no stickers, so its style is left blank with a note.
+
+**What it fills in:**
+
+| Column | From |
+|---|---|
+| `auctionStyle` | the site's four stickers: Onyx → `Onyx`, Option B → `Trade 2`, Super Condensed → `Ultra Condensed`. A plain `Condensed`, a blank sticker or an unknown value leaves the **whole** style blank with a note |
+| `augmentated` | the Augmented sticker (the sheet's formula still wins at promotion) |
+| `targetFunding` | the site's goal (`recoupTarget`), **not** the $8,000 lot cost |
+| `auctioneer` | **`Matt Soto`** — the site calls its seller `Utaku`, and the sheet holds 44 of his earlier auctions under `Matt Soto` |
+| `completionStyle` | nothing — the site has no field for it. The title's `Lightning` is a note |
+
+The site's own auction number (#1, #2, …) goes in the notes, because its titles
+may repeat from one auction to the next. Name the number in `auctionName` if you
+want the rows told apart at a glance.
+
+**A forum thread linking to the site** is marked
+`advertises auction.utakustradecaravan.com` rather than proposed as a
+candidate. The site's own proposal is the one to tick; mark the thread
+`duplicate` once its auction is recorded.
+
 ### When it refuses
 
 | It says | What happened |
 |---|---|
 | `topic … is already recorded as 2026xx` | Between the scan and the promote, that auction was added. Nothing is written; untick the row. |
+| `the auction.utakustradecaravan.com auction that opened … is already recorded as …` | A Utaku row with that `openDate` already exists — the open date is how this site's auctions are told apart. |
 | a ticked row is skipped, status starts `duplicate` | Deliberate — see above. Clear the status to un-mark it. |
 | `"Trent Auction 33" is already recorded as … for season 2026` | Same, for Trent. Note the season — the same name in a *different* season is a different auction and is allowed. |
 | `no season` / `no openDate` / `no auctionName` | The review row is missing something the sheet needs. Fill it in and promote again. |
@@ -1184,7 +1225,10 @@ Add it as another file in the same Apps Script project (**File → New →
 Script**, name it `utakuClose`) and paste in `site/apps-script/utakuClose.gs`.
 It needs `trentClose.gs`, `auctionOpen.gs` and `alesievClose.gs` installed
 too, and **re-paste `trentClose.gs`** (version `2026-09-29.1` or later) — its
-menu is what shows the four new items. A tab called exactly **`utakuStaging`**
+menu is what shows the four new items. Since `utakuClose.gs` `2026-09-29.2` it
+calls the site through `auctionOpen.gs`, which must then be `2026-09-29.1` or
+later: **paste the two together**, or the close stops with
+`openUtakuApiGet is not defined`. A tab called exactly **`utakuStaging`**
 is needed only for the pasted-export fallback.
 
 ### Using it

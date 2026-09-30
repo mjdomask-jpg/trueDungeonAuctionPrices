@@ -140,7 +140,7 @@ console.log('\nStickers\n');
   check('and says why', U.utakuStyleFromStickers({ onyx: 'onyx', condense: 'hyper_condensed', tradeGoods: 'option_b' }).notes.some((n) => /hyper_condensed/.test(n)));
   // Every value the page defines, and nothing else — pinned so a new one is a
   // decision rather than a silent blank.
-  eq('the vocabulary is the page\'s', plain(U.UTAKU_STICKERS), {
+  eq('the vocabulary is the page\'s', plain(sandbox.OPEN_UTAKU_STICKERS), {
     onyx: ['onyx', 'non_onyx'], condense: ['condensed', 'super_condensed'],
     augment: ['augmented', 'non_augmented'], tradeGoods: ['option_a', 'option_b'],
   });
