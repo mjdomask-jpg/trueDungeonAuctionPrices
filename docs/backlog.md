@@ -105,8 +105,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
 | **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
-| **PIPE-15** | auction.utakustradecaravan.com, the fourth venue — **close and open scan built 2026-09-29** | two workbook cells on `202722` (`auctionStyle` lacks Onyx; `auctioneer` should be `Matt Soto`) |
-| **SITE-14** | A Utaku auction is shown as a Forum auction | nothing — `SITE-11`'s venue decision applied to a fourth host |
+| **PIPE-15** | auction.utakustradecaravan.com, the fourth venue — **close and open scan built 2026-09-29** | one workbook cell: `202722`'s `auctioneer` should be `Matt Soto` (its style is fixed and its close is published, #297) |
+| **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
 
 ---
 
@@ -2515,7 +2515,8 @@ with the maintainer on 2026-09-29, before any code:
   Quartiles weighs this venue like the others.
 - **Style: warn, never correct.** `202722` records `Trade 2 Ultra Condensed`;
   the stickers and its 21 Onyx lots say `Onyx Trade 2 Ultra Condensed`, and
-  § 6 fails the publish until the cell is fixed. **Workbook edit outstanding.**
+  § 6 fails the publish until the cell is fixed. **Fixed in the workbook and
+  published in #297.**
 
 **What is left:**
 
@@ -2535,17 +2536,44 @@ with the maintainer on 2026-09-29, before any code:
    auctions (2021-2023, many titled `UTC: …`) under `Matt Soto`, and the scan
    already aliased the forum name `Utaku Soto` to him. `202722` was typed
    `Utaku`, a second series of one; the scan now maps the site's seller name
-   `Utaku` to `Matt Soto`. **`202722`'s `auctioneer` cell is the second
-   workbook edit outstanding**, beside its `auctionStyle`.
-2. **The site calls this venue `Forum`** — `SITE-14`.
+   `Utaku` to `Matt Soto`. **`202722`'s `auctioneer` cell is the workbook edit
+   still outstanding.** Its `auctionStyle` was corrected, and the close
+   imported and published, in #297: 37 `prices`, 149 `rawPricesData` and 21
+   `onyx` rows, exactly the counts the dry run predicted.
+2. **The site calls this venue `Forum`** — `SITE-14`, **deferred** until it is
+   clear how many auctions he runs there.
 3. **Courtesy, not code:** tell Utaku the importer reads `/api/state`, and that
    the bidders' maximum bids and nicknames are public in it.
 
-## SITE-14. A Utaku auction is shown as a Forum auction — OPEN
+## SITE-14. A Utaku auction is shown as a Forum auction — DEFERRED (maintainer, 2026-09-30)
 
 `deriveSource` (`src/lib/data.ts`) knows two site hosts and calls everything
-else `Forum`, so `202722` — and its per-lot data, once imported — sits under
-Forum in the Source filter and Venue comparison. `SITE-11` already settled that
-the split is the VENUE, so this is that decision applied to a fourth one: a
-`'Utaku'` value derived from the Link, the way `'Alesiev'` was. Not done in the
-close PR because it is a site release, not a pipeline change.
+else `Forum`, so `202722` and its per-lot data sit under Forum in the Source
+filter and Venue comparison. `SITE-11` settled that the split is the VENUE, so
+the eventual change is small: a `'Utaku'` value derived from the Link, the way
+`'Alesiev'` was.
+
+**Deferred on purpose, and not for lack of a design.** The maintainer wants to
+see how many auctions Utaku actually runs on his own site before giving it a
+venue of its own. As of this entry there is ONE (`202722`), and a venue with
+one auction is a Source-filter option and a Venue-comparison column that
+compare almost nothing. Two outcomes would make the work unnecessary:
+
+- **He stops.** A one-off site does not earn a permanent venue.
+- **He moves onto alesievauctions.com**, as most forum auctioneers already
+  have. His rows would then carry that site's Link and read as `Alesiev` with
+  no code change at all, because the venue is derived from the Link.
+
+**What it costs to wait:** his auctions read as `Forum`. That is not a strange
+home for them. He ran 44 forum auctions as `Matt Soto` between 2021 and 2023,
+and Forum is the venue that has always held him. The pipeline side is
+unaffected: the scan and the close read his site today (`PIPE-15`), and the
+per-lot data lands in Quartiles either way, because nothing there filters on
+venue.
+
+**Revisit when** he has run enough auctions on the site to judge, or at the
+latest at the end of season 2027. Count them with the Link:
+`auction.utakustradecaravan.com` rows in `auctionMetadata`. If it is worth
+doing then, it is the SITE-11 pattern: the `AuctionSource` union, its display
+order and label, `deriveSource`, `eras.ts`, and the comments that enumerate
+venues.
