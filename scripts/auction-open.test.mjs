@@ -2178,7 +2178,9 @@ console.log('\nauction.utakustradecaravan.com\n');
 
   check('the site\'s Link is a Utaku link', O.openIsUtakuLink('https://auction.utakustradecaravan.com/'), '');
   check('a forum URL naming the site is not', !O.openIsUtakuLink('https://truedungeon.com/forum?q=auction.utakustradecaravan.com'), '');
-  eq('recorded Utaku auctions are keyed by open date', JSON.stringify(plain(O.openRecordedUtaku(META))), '{"2026-09-24":"202722"}');
+  // One key, not the whole map: his next auction is a publish, and a publish
+  // must not turn this suite red.
+  eq('recorded Utaku auctions are keyed by open date', plain(O.openRecordedUtaku(META))['2026-09-24'], '202722');
 
   // Utaku IS Matt Soto: 44 recorded auctions under that name, many `UTC: …`.
   const soto = META.filter((r) => r.auctioneer === 'Matt Soto').length;
