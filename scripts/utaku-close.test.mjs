@@ -247,12 +247,18 @@ console.log('\nAuction #1, planned\n');
   eq('an Onyx style gets no style caution', p.cautions.filter((c) => /auctionStyle/.test(c)), []);
   check('a pasted export gets no sticker check', p.cautions.every((c) => !/stickers/.test(c)));
 
-  // The style 202722 actually records.
-  const recorded = plain(plan(EXPORT, { style: TARGET.auctionStyle, stickers: STATE.settings.stickers }));
-  check('the recorded style is "Trade 2 Ultra Condensed"', TARGET.auctionStyle === 'Trade 2 Ultra Condensed', TARGET.auctionStyle);
-  check('...and the close still plans — a caution never blocks', recorded.ok);
+  // The style 202722 was first recorded with, missing Onyx. CONSTRUCTED, not
+  // read from auctionMetadata.csv: this test first read the shipped cell, and
+  // when the workbook corrected it (#297, a pure-data publish that skips
+  // test:code) main went red with nothing wrong in the data. A test pinned to a
+  // shipped VALUE blocks the very fix it is about.
+  const WRONG = 'Trade 2 Ultra Condensed';
+  const recorded = plain(plan(EXPORT, { style: WRONG, stickers: STATE.settings.stickers }));
+  check('a style missing Onyx still plans — a caution never blocks', recorded.ok);
   check('the stickers caution names the right style', recorded.cautions.some((c) => /stickers say "Onyx Trade 2 Ultra Condensed"/.test(c)), recorded.cautions);
   check('the Onyx lots caution names § 6', recorded.cautions.some((c) => /21 Onyx token\(s\).*§ 6/.test(c)), recorded.cautions);
+  const right = plain(plan(EXPORT, { style: 'Onyx Trade 2 Ultra Condensed', stickers: STATE.settings.stickers }));
+  eq('the corrected style draws no style caution', right.cautions.filter((c) => /auctionStyle/.test(c)), []);
 }
 
 // ===========================================================================
@@ -300,11 +306,15 @@ console.log('\nPicker and dialog\n');
 // ===========================================================================
 {
   const site = META.filter((m) => U.utakuIsSiteRow(m)).map((m) => m.auctionId);
-  eq('202722 is the only Utaku row today', site, ['202722']);
+  // Membership, never a count: his next auction is a publish, and a publish
+  // must not turn this suite red.
+  check('202722 is a Utaku row', site.includes('202722'), site);
+  check('...and every Utaku row carries the site\'s Link', META.filter((m) => U.utakuIsSiteRow(m))
+    .every((m) => m.Link.startsWith('https://auction.utakustradecaravan.com')));
   check('a forum post mentioning the site is not a Utaku row',
     !U.utakuIsSiteRow({ Link: 'https://truedungeon.com/forum?q=auction.utakustradecaravan.com' }));
   const picker = plain(U.utakuPickerList(META));
-  eq('the picker lists it', picker.rows.map((r) => r.auctionId), ['202722']);
+  check('the picker lists it', picker.rows.some((r) => r.auctionId === '202722'), picker.rows.map((r) => r.auctionId));
 
   const text = U.utakuDescribePlan(plan(EXPORT), '202722', '2026-09-29', 'the site\'s close, 19:10 Eastern');
   check('the dialog names the lot count, the total and the close', /149 lots/.test(text) && /\$7007\.45/.test(text) && /closeDate 2026-09-29/.test(text));
