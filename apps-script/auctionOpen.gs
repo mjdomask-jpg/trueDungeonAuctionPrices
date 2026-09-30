@@ -39,7 +39,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-28.2';
+var OPEN_VERSION = '2026-09-28.3';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -244,13 +244,16 @@ var OPEN_ALESIEV_BADGE_NOTE_RE = /condensed|onyx|augment|lightning/i;
  * everything a metadata row needs; `GET /auctions/:id/final-bids` is the close
  * (`alesievClose.gs`).
  *
- * **It has no listing endpoint that anyone has confirmed**, so the listing PAGE
- * is still fetched — for its card ids and nothing else. The API authenticates
- * before it routes (a made-up path answers 401, not 404, measured 2026-09-28),
- * so whether `/auctions` exists cannot be found out without the token. If it
- * does, `openParseAlesievListing` can retire; until then it is the discovery
- * step and the badge parse behind it is the FALLBACK for a card the API could
- * not answer.
+ * **`GET /auctions` lists every valid auction id** (added the same day, at our
+ * request — see `openAlesievApiIds`), so the whole scan is API-driven: the list
+ * says which auctions exist and `/auctions/:id` says what each one is.
+ *
+ * **The listing PAGE and its badge parse are the FALLBACK**, in two places.
+ * If the list cannot be read — no token, an HTTP error, a malformed or empty
+ * answer — the page is the discovery step exactly as it was before the API.
+ * And if the list is read but one auction's details cannot be, the page is
+ * fetched for that card alone. Either way the proposal says its fields came
+ * off badges; a fallback that says nothing is how a scraper quietly comes back.
  *
  * The token lives in Script Properties under OPEN_ALESIEV_TOKEN_PROPERTY and
  * never in this file, for `publishToken`'s reason: the script body is visible to
@@ -1377,43 +1380,113 @@ function openAlesievApiFields(card) {
 }
 
 /**
- * The site auction ids a scan asks the API about: every listed card and every
- * forum advert whose id `auctionMetadata` does not already hold — listing
- * first, each id once, at most `cap`.
+ * `GET /auctions` to the site's auction ids, as strings. Returns `{ ids, bad }`
+ * or `{ error }`.
  *
- * The adverts are the gain. A thread linking to an auction that is neither
- * recorded nor on the listing used to be left as `advertises
- * alesievauctions.com` for a person to chase; the API can answer for it
- * directly.
+ * The endpoint (added by the site's maintainer on 2026-09-28) lists every
+ * VALID auction — closed ones included, so on the day it arrived it held all
+ * nine recorded site auctions plus one new one — and nothing else:
+ * `{ "ok": true, "auctionIds": [28, 29, ...] }`. The fields come from
+ * `/auctions/:id`, which the scan already calls for each unrecorded id.
+ *
+ * **An empty list is an error, not a quiet week.** It holds closed auctions
+ * too, so it can only be empty if something is wrong, and treating it as
+ * "nothing new" is the zero-card mistake the page parser guards against,
+ * arriving through the API. The scan falls back to the page instead.
+ *
+ * An entry that is not a positive whole number is skipped and REPORTED in
+ * `bad` rather than failing the list: one odd id should not cost the whole
+ * source, and should not vanish either.
  */
-function openAlesievIdsToAsk(cards, topics, metaRows, cap) {
-  var recorded = openRecordedAlesiev(metaRows || []);
-  var seen = {}, ids = [], overflow = 0;
-  var add = function (id) {
-    if (!id || recorded[id] || seen[id]) return;
-    seen[id] = true;
-    if (ids.length < cap) ids.push(id); else overflow++;
-  };
-  var i, j;
-  for (i = 0; i < (cards || []).length; i++) add(cards[i].id);
-  for (i = 0; i < (topics || []).length; i++) {
-    var siteIds = ((topics[i] || {}).topic || {}).siteIds || [];
-    for (j = 0; j < siteIds.length; j++) add(siteIds[j]);
+function openAlesievApiIds(json) {
+  if (!json || json.ok !== true) {
+    return { error: 'the API did not return an auction list' + (json && json.error ? ' ("' + json.error + '")' : '') };
   }
-  return { ids: ids, overflow: overflow };
+  if (!Array.isArray(json.auctionIds)) return { error: 'the API auction list has no auctionIds array' };
+  var ids = [], bad = [], seen = {};
+  for (var i = 0; i < json.auctionIds.length; i++) {
+    var s = String(json.auctionIds[i] == null ? '' : json.auctionIds[i]).trim();
+    if (!/^[1-9]\d*$/.test(s)) { bad.push(JSON.stringify(json.auctionIds[i])); continue; }
+    if (seen[s]) continue;
+    seen[s] = true;
+    ids.push(s);
+  }
+  if (!ids.length) return { error: 'the API auction list is EMPTY — it includes closed auctions, so that cannot be right' };
+  return { ids: ids, bad: bad };
 }
 
 /**
- * The listing's cards with the API's answers folded in.
+ * Recorded site auctions the API's list no longer carries.
  *
- * `answers` maps an id to what `openAlesievApiCard` returned. A card the API
- * answered for is REPLACED by the API's card; one it failed on keeps its badge
- * parse and carries `apiError`, which the proposal reports — a fallback that
- * says nothing is how a scraper quietly comes back. An answered id with no card
- * on the listing is a forum advert's, and is appended with `fromAdvert`.
+ * The list is every VALID auction, so a recorded one missing from it has been
+ * withdrawn or deleted on the site since it was promoted. That is a note, not a
+ * change: the row may be a real closed auction the site tidied away, and only a
+ * person can say. Returned as `auctionId (site N)` strings, sorted by site id.
  */
-function openAlesievMergeApi(cards, answers) {
-  var out = [], onListing = {}, notes = [], i;
+function openAlesievDroppedFromList(listIds, metaRows) {
+  var listed = {}, out = [], recorded = openRecordedAlesiev(metaRows || []);
+  for (var i = 0; i < (listIds || []).length; i++) listed[String(listIds[i])] = true;
+  var ids = [];
+  for (var id in recorded) if (Object.prototype.hasOwnProperty.call(recorded, id) && !listed[id]) ids.push(id);
+  ids.sort(function (a, b) { return Number(a) - Number(b); });
+  for (var j = 0; j < ids.length; j++) out.push(recorded[ids[j]] + ' (site ' + ids[j] + ')');
+  return out;
+}
+
+/**
+ * The site auction ids a scan asks the API about: every listed id and every
+ * forum advert whose id `auctionMetadata` does not already hold — listing
+ * first, each id once, at most `cap`.
+ *
+ * `listed` is the API's own list, or — when that could not be read — the cards
+ * off the listing page; either ids or objects carrying `.id` are accepted.
+ *
+ * The adverts are the gain. A thread linking to an auction that is neither
+ * recorded nor listed used to be left as `advertises alesievauctions.com` for a
+ * person to chase; the API can answer for it directly. `advertOnly` marks
+ * those, so the proposal can say how it was found.
+ */
+function openAlesievIdsToAsk(listed, topics, metaRows, cap) {
+  var recorded = openRecordedAlesiev(metaRows || []);
+  var seen = {}, ids = [], overflow = 0, advertOnly = {};
+  var add = function (id, fromAdvert) {
+    if (!id || recorded[id] || seen[id]) return;
+    seen[id] = true;
+    if (fromAdvert) advertOnly[id] = true;
+    if (ids.length < cap) ids.push(id); else overflow++;
+  };
+  var i, j;
+  for (i = 0; i < (listed || []).length; i++) {
+    var item = listed[i];
+    add(item && typeof item === 'object' ? item.id : String(item), false);
+  }
+  for (i = 0; i < (topics || []).length; i++) {
+    var siteIds = ((topics[i] || {}).topic || {}).siteIds || [];
+    for (j = 0; j < siteIds.length; j++) add(siteIds[j], true);
+  }
+  return { ids: ids, overflow: overflow, advertOnly: advertOnly };
+}
+
+/**
+ * The cards a scan proposes from, with the API's answers folded in.
+ *
+ *   - `cards` are the BASE: the listing page's cards when the page is the
+ *     discovery step (the API list could not be read), and empty when the API
+ *     list is. A base card the API answered for is REPLACED by the API's card;
+ *     one it failed on keeps its badge parse and carries `apiError`.
+ *   - Every other answered id is appended — marked `fromAdvert` when
+ *     `advertOnly` says a forum thread is the only reason it was asked about.
+ *   - An id the API failed on that is not a base card is looked for in
+ *     `fallbackCards` (the page, fetched only because something failed) and,
+ *     found there, is used with `apiError`. Not found, it is a scan note.
+ *
+ * Page cards the API list does not name are never used: the list is every
+ * valid auction, so a card outside it is not one. A fallback that says nothing
+ * is how a scraper quietly comes back, which is why `apiError` travels with
+ * every card read off badges.
+ */
+function openAlesievMergeApi(cards, answers, fallbackCards, advertOnly) {
+  var out = [], inBase = {}, notes = [], onPage = {}, i;
   var copy = function (o, extra) {
     var c = {}, k;
     for (k in o) if (Object.prototype.hasOwnProperty.call(o, k)) c[k] = o[k];
@@ -1421,19 +1494,25 @@ function openAlesievMergeApi(cards, answers) {
     return c;
   };
   answers = answers || {};
+  advertOnly = advertOnly || {};
+  for (i = 0; i < (fallbackCards || []).length; i++) if (fallbackCards[i].id) onPage[fallbackCards[i].id] = fallbackCards[i];
   for (i = 0; i < (cards || []).length; i++) {
     var card = cards[i], answer = card.id ? answers[card.id] : null;
-    if (card.id) onListing[card.id] = true;
+    if (card.id) inBase[card.id] = true;
     if (answer && answer.card) { out.push(answer.card); continue; }
     out.push(answer && answer.error ? copy(card, { apiError: answer.error }) : card);
   }
   for (var id in answers) {
-    if (!Object.prototype.hasOwnProperty.call(answers, id) || onListing[id]) continue;
+    if (!Object.prototype.hasOwnProperty.call(answers, id) || inBase[id]) continue;
     if (answers[id].card) {
-      out.push(copy(answers[id].card, { fromAdvert: true }));
+      out.push(advertOnly[id] ? copy(answers[id].card, { fromAdvert: true }) : answers[id].card);
+    } else if (onPage[id]) {
+      out.push(copy(onPage[id], { apiError: answers[id].error }));
     } else {
-      notes.push(OPEN_ALESIEV_SOURCE + ': a forum thread links to auction ' + id + ', which is not on the listing, ' +
-        'and the API could not answer for it either: ' + answers[id].error);
+      notes.push(OPEN_ALESIEV_SOURCE + ': ' + (advertOnly[id]
+        ? 'a forum thread links to auction ' + id + ', which is not listed'
+        : 'auction ' + id + ' is on the API\'s list') +
+        ', but the API could not answer for it (' + answers[id].error + ') and the listing page does not show it either.');
     }
   }
   return { cards: out, notes: notes };
@@ -2148,7 +2227,9 @@ function openPlanScan(input) {
       notes.push('Forum: topic ' + topics[i].item.id + ' "' + proposal.auctionName + '" advertises ' +
         where + (listedSite[ad.siteId].fromAdvert
           ? ", which is not on the listing but the site's API answered for it. Proposed once, from the API."
-          : ', which is on the listing. Proposed once, from the site, where the badges are.'));
+          : listedSite[ad.siteId].api
+            ? ", which the site lists. Proposed once, from the site's API."
+            : ', which is on the listing. Proposed once, from the site, where the badges are.'));
       continue;
     }
     if (ad) {
@@ -2642,18 +2723,34 @@ function checkAlesievApi() {
       'See docs/updating-the-data.md.', ui.ButtonSet.OK);
     return;
   }
-  var recorded = openRecordedAlesiev(openReadTab(OPEN_TABS.metadata)), newest = null;
+  var metaRows = openReadTab(OPEN_TABS.metadata);
+  var recorded = openRecordedAlesiev(metaRows), newest = null;
   for (var id in recorded) if (newest === null || Number(id) > Number(newest)) newest = id;
+
+  // The list first: it is what the scan discovers auctions with.
+  var listGot = openAlesievApiGet('/auctions');
+  var list = listGot.error ? { error: listGot.error } : openAlesievApiIds(listGot.json);
+  var listLine;
+  if (list.error) {
+    listLine = 'Auction list: FAILED — ' + list.error + '. A scan would read the listing page instead.';
+  } else {
+    var fresh = [];
+    for (var l = 0; l < list.ids.length; l++) if (!recorded[list.ids[l]]) fresh.push(list.ids[l]);
+    var gone = openAlesievDroppedFromList(list.ids, metaRows);
+    listLine = 'Auction list: ' + list.ids.length + ' auction(s); not yet recorded: ' + (fresh.length ? fresh.join(', ') : 'none') +
+      (gone.length ? '; recorded but no longer listed: ' + gone.join(', ') : '') +
+      (list.bad.length ? '; skipped non-ids: ' + list.bad.join(', ') : '');
+  }
   if (newest === null) {
-    ui.alert(title, 'A token is set, but ' + OPEN_TABS.metadata + ' links to no auction on the site to ask about.', ui.ButtonSet.OK);
+    ui.alert(title, listLine + '\n\n' + OPEN_TABS.metadata + ' links to no auction on the site, so no single auction was asked about.', ui.ButtonSet.OK);
     return;
   }
   var got = openAlesievApiGet('/auctions/' + encodeURIComponent(newest));
-  if (got.error) { ui.alert(title, 'The token did NOT work.\n\nAuction ' + newest + ': ' + got.error, ui.ButtonSet.OK); return; }
+  if (got.error) { ui.alert(title, 'The token did NOT work.\n\n' + listLine + '\n\nAuction ' + newest + ': ' + got.error, ui.ButtonSet.OK); return; }
   var parsed = openAlesievApiCard(got.json, newest);
-  if (parsed.error) { ui.alert(title, 'The token works, but the answer did not parse: ' + parsed.error, ui.ButtonSet.OK); return; }
+  if (parsed.error) { ui.alert(title, listLine + '\n\nThe token works, but the answer did not parse: ' + parsed.error, ui.ButtonSet.OK); return; }
   var c = parsed.card, f = openAlesievApiFields(c);
-  ui.alert(title, 'The token works.\n\nAuction ' + newest + ' (recorded as ' + recorded[newest] + '):\n' +
+  ui.alert(title, 'The token works.\n\n' + listLine + '\n\nAuction ' + newest + ' (recorded as ' + recorded[newest] + '):\n' +
     '  ' + c.title + '\n  sponsor ' + c.sponsor + ', status ' + c.status +
     (c.closeDate ? ', closed ' + c.closeDate + ' ' + c.closeTime + ' Eastern' : '') + '\n' +
     '  opens ' + (c.startDate || '?') + ' ' + c.startTime + ' Eastern, target ' + (f.targetFunding || '?') + '\n' +
@@ -2718,7 +2815,29 @@ function openFetch(url) {
 }
 
 /**
- * Fetch both sources, propose rows, write the review tab. Writes NOTHING to
+ * The alesievauctions.com listing PAGE, parsed to cards — the scrape, used
+ * only as the fallback now. Pushes a note onto `fetchNotes` when the page
+ * cannot be fetched or yields no cards, because a parser that finds nothing
+ * looks exactly like a site with no auctions.
+ */
+function openAlesievFetchPage(fetchNotes) {
+  var html = openFetch(OPEN_ALESIEV_LISTING_URL);
+  if (!html) {
+    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the listing page could not be fetched either, so that side of this scan is empty.');
+    return [];
+  }
+  var cards = openParseAlesievListing(html);
+  if (!cards.length) {
+    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the listing page was fetched (' + html.length +
+      ' chars) but NO auction cards were found in it. Either it is genuinely empty or the markup ' +
+      'has changed — open ' + OPEN_ALESIEV_LISTING_URL + ' and check, because a parser that finds ' +
+      'nothing looks exactly like a site with no auctions.');
+  }
+  return cards;
+}
+
+/**
+ * Fetch every source, propose rows, write the review tab. Writes NOTHING to
  * `auctionMetadata`.
  */
 function scanAuctionOpens() {
@@ -2749,18 +2868,28 @@ function scanAuctionOpens() {
     feedItems = feedItems.concat(openParseFeed(xml, cat));
   }
 
-  // One fetch, and everything a row needs is on it — no per-auction page.
-  var alesievHtml = openFetch(OPEN_ALESIEV_LISTING_URL);
-  var alesievCards = [];
-  if (!alesievHtml) {
-    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the listing could not be fetched, so that side of this scan is empty.');
+  // alesievauctions.com: which auctions exist. The API's list when it can be
+  // read; the listing page — the scrape — when it cannot.
+  var hasToken = !!openAlesievToken();
+  var siteList = null, alesievCards = [], pageFetched = false;
+  var listRead = hasToken ? openAlesievApiGet('/auctions')
+    : { error: 'NO API TOKEN is set (Script Property ' + OPEN_ALESIEV_TOKEN_PROPERTY + '; see docs/updating-the-data.md)' };
+  var listParsed = listRead.error ? { error: listRead.error } : openAlesievApiIds(listRead.json);
+  if (listParsed.error) {
+    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the API auction list could not be read — ' + listParsed.error +
+      ". The listing PAGE was read instead, as before the API existed.");
+    alesievCards = openAlesievFetchPage(fetchNotes);
+    pageFetched = true;
   } else {
-    alesievCards = openParseAlesievListing(alesievHtml);
-    if (!alesievCards.length) {
-      fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the listing was fetched (' + alesievHtml.length +
-        ' chars) but NO auction cards were found in it. Either it is genuinely empty or the markup ' +
-        'has changed — open ' + OPEN_ALESIEV_LISTING_URL + ' and check, because a parser that finds ' +
-        'nothing looks exactly like a site with no auctions.');
+    siteList = listParsed.ids;
+    if (listParsed.bad.length) {
+      fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the API auction list carried ' + listParsed.bad.length +
+        ' entr(y/ies) that are not auction ids, skipped: ' + listParsed.bad.join(', '));
+    }
+    var dropped = openAlesievDroppedFromList(siteList, metaRows);
+    if (dropped.length) {
+      fetchNotes.push(OPEN_ALESIEV_SOURCE + ': recorded but no longer on the API\'s list of valid auctions — ' +
+        'withdrawn or deleted on the site? Nothing was changed: ' + dropped.join(', '));
     }
   }
 
@@ -2773,26 +2902,33 @@ function scanAuctionOpens() {
     topics.push({ item: item, topic: openParseTopic(html) });
   }
 
-  // The API, for every UNRECORDED auction the listing or a forum advert names.
-  // After the topics, because an advert's id is only known once its first post
-  // has been read.
-  var ask = openAlesievIdsToAsk(alesievCards, topics, metaRows, OPEN_ALESIEV_API_FETCH_CAP);
-  var answers = {}, answered = 0;
-  if (ask.ids.length && !openAlesievToken()) {
-    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': NO API TOKEN is set (Script Property ' + OPEN_ALESIEV_TOKEN_PROPERTY +
-      "), so the listing's badges were read instead, as before the API existed. See docs/updating-the-data.md.");
+  // The API, for every UNRECORDED auction the list (or the page) or a forum
+  // advert names. After the topics, because an advert's id is only known once
+  // its first post has been read.
+  var ask = openAlesievIdsToAsk(siteList || alesievCards, topics, metaRows, OPEN_ALESIEV_API_FETCH_CAP);
+  var answers = {}, answered = 0, failed = 0;
+  if (!hasToken) {
+    // Already said once, where the list could not be read. With no token every
+    // proposal is a badge parse, and each one says so.
   } else {
     for (i = 0; i < ask.ids.length; i++) {
       var got = openAlesievApiGet('/auctions/' + encodeURIComponent(ask.ids[i]));
       answers[ask.ids[i]] = got.error ? { error: got.error } : openAlesievApiCard(got.json, ask.ids[i]);
-      if (answers[ask.ids[i]].card) answered++;
+      if (answers[ask.ids[i]].card) answered++; else failed++;
     }
   }
   if (ask.overflow) {
     fetchNotes.push(OPEN_ALESIEV_SOURCE + ': ' + ask.overflow + ' more unrecorded auction(s) left for the next run (API cap ' +
       OPEN_ALESIEV_API_FETCH_CAP + ').');
   }
-  var merged = openAlesievMergeApi(alesievCards, answers);
+  // The per-auction fallback: the list was read but some details were not, so
+  // the page is fetched once, for those cards only.
+  var fallbackCards = [];
+  if (siteList && failed) {
+    fallbackCards = openAlesievFetchPage(fetchNotes);
+    pageFetched = true;
+  }
+  var merged = openAlesievMergeApi(siteList ? [] : alesievCards, answers, fallbackCards, ask.advertOnly);
   fetchNotes = fetchNotes.concat(merged.notes);
 
   var plan = openPlanScan({ metaRows: metaRows, trentPage: trentPage, topics: topics, alesievCards: merged.cards });
@@ -2802,8 +2938,10 @@ function scanAuctionOpens() {
     selection.skipped.old + ' older than the cutoff' +
     (selection.skipped.offTopic ? ', ' + selection.skipped.offTopic + ' in the general category with no 8K signal' : '') +
     (selection.skipped.overflow ? ', ' + selection.skipped.overflow + ' left for the next run (fetch cap)' : '') + '.');
-  plan.notes.push('Read ' + alesievCards.length + ' auction card(s) from ' + OPEN_ALESIEV_LISTING_URL +
-    (ask.ids.length ? '; asked the API about ' + ask.ids.length + ' unrecorded auction(s), ' + answered + ' answered' : '') + '.');
+  plan.notes.push(OPEN_ALESIEV_SOURCE + ': ' +
+    (siteList ? 'the API lists ' + siteList.length + ' auction(s)' : 'read ' + alesievCards.length + ' card(s) off the listing page') +
+    (ask.ids.length ? '; asked the API about ' + ask.ids.length + ' unrecorded auction(s), ' + answered + ' answered' : '; none unrecorded') +
+    (siteList && pageFetched ? '; the listing page was fetched as a fallback for ' + failed + ' of them' : '') + '.');
 
   openWriteReview(plan.proposals, openRecordedAuctionIds(metaRows));
   ui.alert('Scan complete (script ' + OPEN_VERSION + ')', openDescribeScan(plan), ui.ButtonSet.OK);
@@ -2967,6 +3105,8 @@ if (typeof module !== 'undefined') {
     openAlesievApiFields: openAlesievApiFields,
     openAlesievIdsToAsk: openAlesievIdsToAsk,
     openAlesievMergeApi: openAlesievMergeApi,
+    openAlesievApiIds: openAlesievApiIds,
+    openAlesievDroppedFromList: openAlesievDroppedFromList,
     openRecordedAlesiev: openRecordedAlesiev,
     openRecordedAuctionIds: openRecordedAuctionIds,
     openPromotedId: openPromotedId,

@@ -104,7 +104,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-18** | A Random Ultra Rare's published price comes from a **lot total**, not a recorded sale — the only such row in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each derived rate with its lots |
 | **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
 | **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
-| **PIPE-14** | The alesievauctions.com API is wired in; two of four open questions answered the same day | **asked of the site's maintainer**: a list endpoint (worth having) and a Trade 2 tag (probably not — 2027 only). Close time and timezone are **answered** |
+| **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
 | **PIPE-15** | auction.utakustradecaravan.com, the fourth venue — **close built 2026-09-29** (`utakuClose.gs`) | the open scan (decisions made, held for another branch's `auctionOpen.gs` edits) and a workbook fix to `202722`'s `auctionStyle` |
 | **SITE-14** | A Utaku auction is shown as a Forum auction | nothing — `SITE-11`'s venue decision applied to a fourth host |
 
@@ -2447,7 +2447,7 @@ releases on its own; the withheld list needs a human.
 
 ---
 
-## PIPE-14. The alesievauctions.com API is wired in; two of four questions answered the same day — OPEN, two asks with the site's maintainer
+## PIPE-14. The alesievauctions.com API is wired in; three of four questions answered the same day — OPEN, one optional ask left
 
 The site's maintainer built an API for this project (2026-09-28) so the
 pipeline could stop scraping. `auctionOpen.gs` now reads an auction's fields
@@ -2459,13 +2459,16 @@ See `docs/updating-the-data.md` § *The site's API token*.
 
 Four things the API could settle were raised the day it was wired in:
 
-1. **A list endpoint — ASKED.** Only `/auctions/:id` exists so far, so the
-   scan still fetches the listing PAGE to learn which ids exist, and the badge
-   parser stays as the fallback. Whether one already existed could not be
-   probed: the API checks the token before it routes, so a made-up path answers
-   401 too (measured 2026-09-28). When it lands, `openParseAlesievListing` can
-   retire, and the "zero cards found" failure goes with it. **This is the one
-   worth having.**
+1. **A list endpoint — ANSWERED 2026-09-28.** The maintainer added `GET
+   /api/v1/auctions` the same day: `{ "ok": true, "auctionIds": [...] }`,
+   every VALID auction, closed ones included (all nine recorded site auctions
+   plus a new one, 48). The scan now discovers auctions from it
+   (`openAlesievApiIds`). An empty list is treated as an error, since it can't
+   be empty when it holds closed auctions. A recorded auction that drops off
+   the list is named in the scan notes. `openParseAlesievListing` did **not**
+   retire: at the maintainer's request the listing page stays as the FALLBACK,
+   used when the list can't be read and, per card, when one auction's details
+   can't be.
 2. **The actual close time — ANSWERED 2026-09-28.** The maintainer added
    `closedAt` to both responses the same day. Auction 39's
    `2026-09-19T13:02:58Z` is 09:02 Eastern on `20275`'s recorded
