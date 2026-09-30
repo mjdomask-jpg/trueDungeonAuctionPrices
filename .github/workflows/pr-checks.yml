@@ -54,6 +54,8 @@ jobs:
       # runs the full suite, since `publish-to-site.test.mjs` is what checks
       # the published-file allow-list). `test:tokendb` reconciles against
       # tokendb.com directly and is not code-coupled, so it always runs.
+      # Skipped HERE, not skipped: `code-tests-on-publish` below still runs
+      # them on a publish, where a failure is visible but cannot block.
       - name: Determine whether this PR touches anything besides public/data
         id: scope
         run: |
@@ -74,3 +76,72 @@ jobs:
         if: steps.scope.outputs.code_changed == 'true'
       - run: npm run test:tokendb
         if: steps.scope.outputs.code_changed == 'false'
+
+  # The other half of that skip, added 2026-09-30 after the FOURTEENTH time.
+  #
+  # Skipping `test:code` on a publish keeps a stale test from blocking good
+  # data — right — but it also means a publish that breaks a test MERGES
+  # SILENTLY, and the red lands on the next unrelated code PR, three steps
+  # from the cause. #297 corrected a cell that utaku-close.test.mjs had pinned;
+  # #298, a docs PR, is where it surfaced.
+  #
+  # So on a pure-data PR the suites still run — HERE, in a job the ruleset does
+  # NOT require (only `build-and-validate` gates a merge). It cannot block a
+  # publish. When it fails it goes red AND comments on the PR, because publish
+  # PRs auto-merge and a red X on a merged PR is easy never to see; the comment
+  # is a notification. Runs in parallel rather than after build-and-validate so
+  # it checks out while the PR is still open.
+  code-tests-on-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      # The same test as build-and-validate's scope step, deliberately: this
+      # job runs exactly where that one skips.
+      - name: Is this a pure-data PR?
+        id: scope
+        run: |
+          CHANGED=$(git diff --name-status "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+          NON_DATA=$(echo "$CHANGED" | awk -F'\t' '$1 != "M" || $2 !~ /^public\/data\//')
+          if [ -n "$NON_DATA" ]; then
+            echo "Touches code — build-and-validate runs the full suite, so nothing to do here."
+            echo "data_only=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "data_only=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v5
+        if: steps.scope.outputs.data_only == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        if: steps.scope.outputs.data_only == 'true'
+      - name: Run test:code against this data
+        id: tests
+        if: steps.scope.outputs.data_only == 'true'
+        continue-on-error: true
+        run: npm run test:code 2>&1 | tee test-code.log
+      - name: Say so on the PR, then fail this (non-blocking) job
+        if: steps.tests.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          SUITES=$(sed -n '/--- test:code summary ---/,$p' test-code.log | grep '^FAIL' | awk '{print $2}' | paste -sd, - | sed 's/,/, /g')
+          {
+            echo "### ⚠️ This publish breaks a code test: ${SUITES:-see the log}"
+            echo
+            echo "**The publish is NOT blocked.** \`build-and-validate\` gates merging, and it validated this data."
+            echo
+            echo "Almost always this means a test **pinned a value from the shipped CSVs** (a cell, a count, a list of rows) that this publish legitimately changed. **Fix the TEST, not the data**, in a code PR. Until then every code PR fails \`build-and-validate\` on the same test."
+            echo
+            echo "Log: $RUN_URL"
+          } > body.md
+          cat body.md >> "$GITHUB_STEP_SUMMARY"
+          gh pr comment "$PR" --body-file body.md
+          exit 1

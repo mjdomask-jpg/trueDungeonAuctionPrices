@@ -1727,6 +1727,16 @@ the repeated source of red checks on good data (see
 `publish-check-blocks-publishing` in the maintainer's notes). Merging triggers
 the deploy either way.
 
+**They still run on a publish, in a second check that cannot block it**
+(`code-tests-on-publish`, added 2026-09-30). The skip alone had a cost: a
+publish that broke a test merged silently, and the red check appeared on the
+NEXT code PR, far from the cause. #297 did exactly that. Now, if a publish
+breaks a test, that check goes red and **comments on the publish PR** — a
+notification, since publish PRs auto-merge before anyone looks — naming the
+suite. The publish still merges. What it almost always means: a test pinned a
+value from the shipped CSVs that the publish legitimately changed. Fix the
+**test** in a code PR; the data is fine.
+
 **It never commits to `main` directly, and that is not a stylistic choice.**
 `deploy.yml` runs on push to `main` and does **not** run `npm run validate`;
 only `pr-checks.yml` does, and only on pull requests. A direct commit would skip
