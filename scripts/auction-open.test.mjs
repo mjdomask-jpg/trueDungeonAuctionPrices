@@ -2162,5 +2162,116 @@ console.log('\nalesievauctions.com API — the auction list\n');
 }
 
 // ===========================================================================
+// auction.utakustradecaravan.com — the fourth source
+// ===========================================================================
+// The fixture is the stripped /api/state utakuClose.gs's test uses: Utaku's
+// auction #1, which IS 202722. So against the shipped sheet the scan must
+// propose nothing, and against a sheet without 202722 it must propose exactly
+// the row a person typed — bar the three cells that person got wrong.
+console.log('\nauction.utakustradecaravan.com\n');
+{
+  const STATE_TEXT = readFileSync(join(here, '..', 'fixtures', 'utaku', 'api-state-auction-1.json'), 'utf8');
+  const STATE = JSON.parse(STATE_TEXT);
+  const known = O.openKnownAuctioneers(META);
+  const WITHOUT = META.filter((r) => r.auctionId !== '202722');
+  const plain = (x) => JSON.parse(JSON.stringify(x));
+
+  check('the site\'s Link is a Utaku link', O.openIsUtakuLink('https://auction.utakustradecaravan.com/'), '');
+  check('a forum URL naming the site is not', !O.openIsUtakuLink('https://truedungeon.com/forum?q=auction.utakustradecaravan.com'), '');
+  eq('recorded Utaku auctions are keyed by open date', JSON.stringify(plain(O.openRecordedUtaku(META))), '{"2026-09-24":"202722"}');
+
+  // Utaku IS Matt Soto: 44 recorded auctions under that name, many `UTC: …`.
+  const soto = META.filter((r) => r.auctioneer === 'Matt Soto').length;
+  check(`Matt Soto has ${soto} recorded auctions — the series Utaku belongs to`, soto >= 44, String(soto));
+  const who = plain(O.openMatchAuctioneer('Utaku', known));
+  eq('the site\'s seller name "Utaku" maps to Matt Soto', `${who.auctioneer}/${who.how}`, 'Matt Soto/alias');
+
+  eq('stickers: #1 is Onyx Trade 2 Ultra Condensed', O.openUtakuStyle(STATE.settings.stickers).style, 'Onyx Trade 2 Ultra Condensed');
+  eq('stickers: Option A, non-Onyx is the plain order',
+    O.openUtakuStyle({ onyx: 'non_onyx', condense: 'super_condensed', tradeGoods: 'option_a' }).style, 'Ultra Condensed');
+  eq('stickers: plain Condensed is not translated',
+    O.openUtakuStyle({ onyx: 'onyx', condense: 'condensed', tradeGoods: 'option_b' }).style, '');
+  eq('stickers: a missing one blanks the style', O.openUtakuStyle({ onyx: 'onyx', condense: 'super_condensed' }).style, '');
+
+  // Against the shipped sheet: 202722 is recorded, so nothing is proposed.
+  const live = plain(O.openPlanScan({ metaRows: META, utakuState: STATE, utakuHistory: [] }));
+  eq('against the shipped sheet, #1 proposes nothing', live.proposals.filter((p) => p.source === O.OPEN_UTAKU_SOURCE).length, 0);
+  check('  ... and says it is 202722', live.notes.some((n) => /auction #1 \(opened 2026-09-24\) is already recorded as 202722/.test(n)), live.notes.join(' | '));
+
+  // Without 202722: the row a person had to type.
+  const scan = plain(O.openPlanScan({ metaRows: WITHOUT, utakuState: STATE, utakuHistory: [] }));
+  const mine = scan.proposals.filter((p) => p.source === O.OPEN_UTAKU_SOURCE);
+  eq('without 202722, #1 is proposed once', mine.length, 1);
+  const p = mine[0];
+  const next = Math.max(...WITHOUT.filter((r) => r.auctionSeason === '2027').map((r) => Number(r.auctionNumber))) + 1;
+  eq('  openDate is startedAt in Eastern — the recorded openDate', p.openDate, '2026-09-24');
+  eq('  first post time', p.openTime, '17:52');
+  eq('  season from the title', p.season, '2027');
+  eq('  numbered after the season\'s last', p.auctionId, `2027${next}`);
+  eq('  Link is the site', p.link, 'https://auction.utakustradecaravan.com/');
+  eq('  auctioneer Matt Soto, not the "Utaku" typed into 202722', p.auctioneer, 'Matt Soto');
+  eq('  auctionStyle from the stickers — the Onyx 202722 is missing', p.auctionStyle, 'Onyx Trade 2 Ultra Condensed');
+  eq('  augmentated from its sticker', p.augmentated, 'No');
+  eq('  targetFunding is recoupTarget, as recorded', p.targetFunding, '$7,000.00');
+  eq('  completionStyle is typed, not read off the title', p.completionStyle, '');
+  check('  ... and the note says the title reads Lightning', p.notes.some((n) => /TITLE says Lightning/.test(n)), p.notes.join(' | '));
+  check('  the note names the site\'s number', p.notes.some((n) => /auction #1\b/.test(n)), '');
+  check('  the note carries the actual close, which the row does not', p.notes.some((n) => /CLOSED 2026-09-29 at 19:10 Eastern/.test(n)), p.notes.join(' | '));
+  eq('  a candidate', p.verdict, 'candidate');
+
+  // The review tab: the row must key the way its proposal does, or a rescan
+  // drops the operator's tick — the hole alesievauctions.com rows fell into.
+  const row = O.openReviewRow(p);
+  eq('the review row keys by its open date', O.openReviewKey(row), 'utaku:2026-09-24');
+  eq('  ... the same key its proposal carries', p.key, 'utaku:2026-09-24');
+  row[0] = true;
+  const merged = O.openMergeReview([row], [p]);
+  eq('  a tick survives a rescan', merged[0][0], true);
+  const asDate = row.slice(); asDate[4] = '9/24/2026';
+  eq('  ... even when Sheets has redisplayed the date', O.openReviewKey(asDate), 'utaku:2026-09-24');
+
+  // Promotion.
+  const promoted = plain(O.openPlanPromotion([row], WITHOUT, HEADERS, '2026-09-29'));
+  eq('promotes against a sheet without it', promoted.rows.length, 1);
+  eq('  with the site\'s Link', promoted.rows[0].fields.Link, 'https://auction.utakustradecaravan.com/');
+  const blocked = plain(O.openPlanPromotion([row], META, HEADERS, '2026-09-29'));
+  eq('refuses when that open date is already a Utaku row', blocked.rows.length, 0);
+  check('  ... naming it', blocked.problems.some((x) => /opened 2026-09-24 is already recorded as 202722/.test(x)), blocked.problems.join(' | '));
+  const other = row.slice(); other[4] = '2026-10-02'; other[7] = 'Trent Auction 1';
+  const notTrent = plain(O.openPlanPromotion([other], META, HEADERS, '2026-09-29'));
+  eq('a Utaku row never falls through to Trent\'s NAME check', notTrent.rows.length, 1);
+
+  // The archive: an auction that opened and closed between two scans.
+  const archived = { auctionNumber: 0, title: 'Utaku\'s Auction Block - 2027 warm-up', startedAt: '2026-09-10T15:00:00.000Z',
+    closedAt: '2026-09-12T20:00:00.000Z', recoupTarget: 6500, raised: 6600, lotCost: 8000 };
+  const withArchive = plain(O.openPlanScan({ metaRows: META, utakuState: STATE, utakuHistory: [archived] }));
+  const old = withArchive.proposals.filter((x) => x.source === O.OPEN_UTAKU_SOURCE);
+  eq('an unrecorded ARCHIVED auction is proposed', old.length, 1);
+  eq('  on its own open date', old[0].openDate, '2026-09-10');
+  eq('  with no style — the archive has no stickers', old[0].auctionStyle, '');
+  check('  ... and says why', old[0].notes.some((n) => /ARCHIVE/.test(n)), '');
+  eq('  goal from the archive', old[0].targetFunding, '$6,500.00');
+  const again = plain(O.openUtakuAuctions(STATE, [{ auctionNumber: 1, startedAt: STATE.settings.startedAt }]));
+  eq('the current auction listed in the archive too is read once', again.auctions.length, 1);
+
+  const open = JSON.parse(STATE_TEXT); open.items[0].status = 'live';
+  eq('a live item makes the status live', O.openUtakuAuctions(open, []).auctions[0].status, 'live');
+  check('no settings is a note, not a crash', O.openUtakuAuctions({}, []).notes.length === 1, '');
+  const legacy = plain(O.openPlanScan({ metaRows: WITHOUT }));
+  eq('a scan that did not read the site proposes nothing from it', legacy.proposals.filter((x) => x.source === O.OPEN_UTAKU_SOURCE).length, 0);
+
+  // A forum thread advertising the site.
+  const html = '<meta property="og:title" content="UTC: Auction Block is LIVE">' +
+    '<div class="kmsgbody">Bid at <a href="https://auction.utakustradecaravan.com/">auction.utakustradecaravan.com</a></div>';
+  const topic = O.openParseTopic(html);
+  check('a first post linking the site is read as a Utaku advert', topic.mentionsUtaku === true, '');
+  check('a post that does not is not', O.openParseTopic('<div class="kmsgbody">8K auction here</div>').mentionsUtaku === false, '');
+  const adScan = plain(O.openPlanScan({ metaRows: META,
+    topics: [{ item: { id: '999001', catid: '584', title: topic.title, isoDate: '2026-09-24' }, topic }] }));
+  eq('  ... proposed as an advert, not a candidate', adScan.proposals[0].verdict, O.OPEN_UTAKU_ADVERT_VERDICT);
+  check('  ... and the summary counts it', /1 advertise auction\.utakustradecaravan\.com/.test(O.openDescribeScan(adScan)), O.openDescribeScan(adScan));
+}
+
+// ===========================================================================
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

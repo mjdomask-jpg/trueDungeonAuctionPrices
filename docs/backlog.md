@@ -105,7 +105,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
 | **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
-| **PIPE-15** | auction.utakustradecaravan.com, the fourth venue — **close built 2026-09-29** (`utakuClose.gs`) | the open scan (decisions made, held for another branch's `auctionOpen.gs` edits) and a workbook fix to `202722`'s `auctionStyle` |
+| **PIPE-15** | auction.utakustradecaravan.com, the fourth venue — **close and open scan built 2026-09-29** | two workbook cells on `202722` (`auctionStyle` lacks Onyx; `auctioneer` should be `Matt Soto`) |
 | **SITE-14** | A Utaku auction is shown as a Forum auction | nothing — `SITE-11`'s venue decision applied to a fourth host |
 
 ---
@@ -2496,7 +2496,7 @@ in with them still there. This repository is public.
 
 ---
 
-## PIPE-15. auction.utakustradecaravan.com — close BUILT 2026-09-29, open scan OPEN
+## PIPE-15. auction.utakustradecaravan.com — close and open scan BUILT 2026-09-29, two workbook cells outstanding
 
 Utaku's Trade Caravan is the fourth venue and the second auction site. Its first
 auction, `202722`, was recorded by hand and closed 2026-09-29.
@@ -2519,15 +2519,24 @@ with the maintainer on 2026-09-29, before any code:
 
 **What is left:**
 
-1. **The open scan.** `auctionOpen.gs` does not watch this site yet. The
-   decisions are made: stickers fill `auctionStyle` (they are discrete fields,
-   Option B included — `utakuStyleFromStickers` is already written and
-   tested); `recoupTarget` is `targetFunding`; `startedAt` in Eastern is
-   `openDate`; `completionStyle` (`Lightning`) is only in the title, so it
-   is a note; `augmentated` is a formula column and is not written. The
-   duplicate key has to be the start date, since the site gives no auction a
-   URL of its own. Held back only because another branch had uncommitted
-   edits to `auctionOpen.gs` on the day.
+1. ~~**The open scan.**~~ **BUILT 2026-09-29** (`auctionOpen.gs`
+   `2026-09-29.1`, operator side in `updating-the-data.md` § *Utaku's site*).
+   Stickers fill `auctionStyle` (Option B included — the rule moved into
+   `auctionOpen.gs` as `openUtakuStyle` and the close calls it);
+   `recoupTarget` is `targetFunding`; `startedAt` in Eastern is `openDate` AND
+   the duplicate key, in the scan, the review tab and the promote step;
+   `completionStyle` is a note. It also reads the site's **archive**, so an
+   auction that opens and closes between scans is still proposed, and a forum
+   thread linking to the site is marked an advert. Run against the live site
+   the day it was built, it recognised auction #1 as `202722` and proposed
+   nothing.
+
+   **Found building it: Utaku IS Matt Soto.** The sheet holds 44 of his
+   auctions (2021-2023, many titled `UTC: …`) under `Matt Soto`, and the scan
+   already aliased the forum name `Utaku Soto` to him. `202722` was typed
+   `Utaku`, a second series of one; the scan now maps the site's seller name
+   `Utaku` to `Matt Soto`. **`202722`'s `auctioneer` cell is the second
+   workbook edit outstanding**, beside its `auctionStyle`.
 2. **The site calls this venue `Forum`** — `SITE-14`.
 3. **Courtesy, not code:** tell Utaku the importer reads `/api/state`, and that
    the bidders' maximum bids and nicknames are public in it.

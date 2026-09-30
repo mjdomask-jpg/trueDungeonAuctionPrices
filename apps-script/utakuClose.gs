@@ -53,8 +53,9 @@
  * Everything above `--- Apps Script entry points ---` is pure. Every global is
  * prefixed `UTAKU_` / `utaku`, because all the .gs files in this project share
  * ONE global scope. It needs three of them installed: `trentClose.gs` for the
- * parser and the picker, `auctionOpen.gs` for `openEasternFromInstant` and
- * `openIsoFromCell`, and `alesievClose.gs` for the wrong-auction fingerprint
+ * parser and the picker, `auctionOpen.gs` for `openEasternFromInstant`,
+ * `openIsoFromCell` and the site itself (`openUtakuApiGet`, `openIsUtakuLink`,
+ * `openUtakuStyle` — the scan reads the same site), and `alesievClose.gs` for the wrong-auction fingerprint
  * and the close-date write — shared rather than copied, so the two site paths
  * cannot drift apart.
  */
@@ -64,23 +65,16 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var UTAKU_VERSION = '2026-09-29.1';
+var UTAKU_VERSION = '2026-09-29.2';
 
 /** The tab the operator pastes the site's export into. */
 var UTAKU_STAGING_TAB = 'utakuStaging';
 
-var UTAKU_API_BASE = 'https://auction.utakustradecaravan.com/api';
-
-/**
- * Whether a Link is this site's. Anchored on the host, so a forum post that
- * merely mentions the site is not a Utaku row.
- *
- * The site has no per-auction URL — one page shows whichever auction is
- * current — so every Utaku row carries this same Link, and it answers "which
- * venue" and never "which auction". `utakuApiRead` identifies the auction by
- * its start date instead.
- */
-var UTAKU_LINK_RE = /^https?:\/\/auction\.utakustradecaravan\.com(\/|$)/i;
+// The site's host, its API and its sticker vocabulary are `auctionOpen.gs`'s
+// (OPEN_UTAKU_*), which scans the same site for new auctions: one definition
+// of "a Utaku row" and of what a sticker means, used by both files. Referenced
+// only inside functions, never at the top level, because Apps Script does not
+// promise which file's globals are set first.
 
 /** The four columns, by header. The export's own are `Item`, `Quantity`, `Price/unit`, `Line total`. */
 var UTAKU_NAME_HEADERS = ['item'];
@@ -120,17 +114,6 @@ var UTAKU_MOJIBAKE = [
   ['â€™', '’'], ['â€˜', '‘'], ['â€œ', '“'], ['â€\u009d', '”'],
 ];
 var UTAKU_MOJIBAKE_LEFT_RE = /â€|Ã|Â/;
-
-/**
- * The page's own sticker vocabulary (`STICKER_OPTIONS` in its source, read
- * 2026-09-29). Each can also be blank, which the page renders as no sticker.
- */
-var UTAKU_STICKERS = {
-  onyx: ['onyx', 'non_onyx'],
-  condense: ['condensed', 'super_condensed'],
-  augment: ['augmented', 'non_augmented'],
-  tradeGoods: ['option_a', 'option_b'],
-};
 
 // ===========================================================================
 // Pure — names
@@ -413,49 +396,11 @@ function utakuApiRead(state, history, target) {
 
 /**
  * The page's four stickers to an `auctionStyle`, or blank with the reason.
- *
- * `{ style, notes }`. **The stickers are discrete fields**, which is why they
- * may fill the style when a title may not — the rule alesievauctions.com's
- * badges bent first. That bend stopped at Trade 2 there only because those
- * cards carry the option in the TITLE; here it is a field of its own, so it is
- * read.
- *
- *   onyx       -> `Onyx ` or nothing
- *   tradeGoods -> `option_b` is Trade 2, `option_a` the standard order. Option
- *                 B is what every auctioneer calls the Trade 2 order (20275,
- *                 20271), and #1's own lots agree: Aragonite / Elven Bismuth /
- *                 Oil of Enchantment at 15 / 20 / 20 is the Trade 2 count.
- *   condense   -> `super_condensed` is recorded `Ultra Condensed`, the sheet's
- *                 convention for every 2027 order whatever the venue calls it.
- *                 A plain `condensed` is NOT translated: the sheet's `Condensed`
- *                 means the order carried a Rare Bag and an Uncommon Bag, and a
- *                 sticker cannot say that.
- *
- * Any sticker blank or unknown leaves the WHOLE style blank. Half a style is
- * a wrong style that looks right.
+ * The rule is `auctionOpen.gs`'s `openUtakuStyle` — the scan proposes a style
+ * with it, and this file checks a recorded style against the same answer.
  */
 function utakuStyleFromStickers(stickers) {
-  var st = stickers || {}, notes = [];
-  var read = function (key) {
-    var v = String(st[key] == null ? '' : st[key]).trim();
-    if (UTAKU_STICKERS[key].indexOf(v) === -1) {
-      notes.push(v ? 'the "' + key + '" sticker reads "' + v + '", which the page did not define on 2026-09-29'
-                   : 'the page shows no "' + key + '" sticker');
-      return null;
-    }
-    return v;
-  };
-  var onyx = read('onyx'), trade = read('tradeGoods'), condense = read('condense');
-  if (condense === 'condensed') {
-    notes.push('the sticker says plain "Condensed", and the sheet\'s Condensed means a Rare Bag and an Uncommon ' +
-      'Bag came with the order — that is not something a sticker can confirm');
-    condense = null;
-  }
-  if (onyx === null || trade === null || condense === null) return { style: '', notes: notes };
-  return {
-    style: (onyx === 'onyx' ? 'Onyx ' : '') + (trade === 'option_b' ? 'Trade 2 ' : '') + 'Ultra Condensed',
-    notes: notes,
-  };
+  return openUtakuStyle(stickers);
 }
 
 /**
@@ -649,9 +594,15 @@ function utakuDescribePlan(plan, auctionId, closeDate, closeNote) {
   return lines.join('\n');
 }
 
-/** Whether an auctionMetadata row came from this site. By the Link, like every close path. */
+/**
+ * Whether an auctionMetadata row came from this site. By the Link, like every
+ * close path, and by the scan's own test (`openIsUtakuLink`), so "a Utaku row"
+ * has one definition. The Link answers "which venue" and never "which
+ * auction" — every Utaku row carries the same one; `utakuApiRead` identifies
+ * the auction by its start date.
+ */
 function utakuIsSiteRow(m) {
-  return UTAKU_LINK_RE.test(String(m.Link == null ? '' : m.Link).trim());
+  return openIsUtakuLink(m.Link);
 }
 
 function utakuPickerList(metaRows, limit) {
@@ -698,39 +649,18 @@ function utakuTargetAuction(ui, title) {
   return null;
 }
 
-/**
- * One public GET: `{ json }` or `{ error }`. Never throws. No token, and
- * redirects are not followed — an answer from anywhere but this host is not
- * this site's.
- */
-function utakuApiGet(path) {
-  var response;
-  try {
-    response = UrlFetchApp.fetch(UTAKU_API_BASE + path, {
-      muteHttpExceptions: true, followRedirects: false, headers: { Accept: 'application/json' },
-    });
-  } catch (e) {
-    return { error: 'the request failed: ' + (e && e.message ? e.message : e) };
-  }
-  var code = response.getResponseCode();
-  if (code < 200 || code >= 300) return { error: 'the site answered HTTP ' + code + ' for ' + path };
-  try { return { json: JSON.parse(response.getContentText()) }; } catch (e) {
-    return { error: 'the site\'s answer for ' + path + ' was not JSON' };
-  }
-}
-
-/** The bids for one auction, from the API or the staging tab. */
+/** The bids for one auction, from the API (via `auctionOpen.gs`'s openUtakuApiGet) or the staging tab. */
 function utakuReadLots(target, fromExport) {
   if (fromExport) {
     var staging = SpreadsheetApp.getActive().getSheetByName(UTAKU_STAGING_TAB);
     return { values: staging.getDataRange().getDisplayValues(), source: 'the pasted export in ' + UTAKU_STAGING_TAB, cautions: [], stickers: null };
   }
-  var state = utakuApiGet('/state');
+  var state = openUtakuApiGet('/state');
   if (state.error) return { error: state.error + '. The pasted-export fallback still works.' };
   var read = utakuApiRead(state.json, [], target);
   if (read.notCurrent) {
     // Only now is the history worth a request: to say where the auction went.
-    var history = utakuApiGet('/history');
+    var history = openUtakuApiGet('/history');
     if (!history.error && Array.isArray(history.json)) read = utakuApiRead(state.json, history.json, target);
   }
   if (read.error) return { error: read.error };
@@ -869,7 +799,6 @@ if (typeof module !== 'undefined') {
     utakuIsSiteRow: utakuIsSiteRow,
     utakuPickerList: utakuPickerList,
     UTAKU_LOT_SIZES: UTAKU_LOT_SIZES,
-    UTAKU_STICKERS: UTAKU_STICKERS,
     UTAKU_GRID_HEADER: UTAKU_GRID_HEADER,
     UTAKU_VERSION: UTAKU_VERSION,
   };
