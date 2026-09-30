@@ -105,7 +105,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
 | **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
-| **PIPE-15** | auction.utakustradecaravan.com, the fourth venue — **close and open scan built 2026-09-29** | one workbook cell: `202722`'s `auctioneer` should be `Matt Soto` (its style is fixed and its close is published, #297) |
+| **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, deferred |
 | **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
 
 ---
@@ -2496,7 +2496,7 @@ in with them still there. This repository is public.
 
 ---
 
-## PIPE-15. auction.utakustradecaravan.com — close and open scan BUILT 2026-09-29, two workbook cells outstanding
+## PIPE-15. auction.utakustradecaravan.com — RESOLVED 2026-09-30
 
 Utaku's Trade Caravan is the fourth venue and the second auction site. Its first
 auction, `202722`, was recorded by hand and closed 2026-09-29.
@@ -2518,7 +2518,7 @@ with the maintainer on 2026-09-29, before any code:
   § 6 fails the publish until the cell is fixed. **Fixed in the workbook and
   published in #297.**
 
-**What is left:**
+**What was left, and where it stands:**
 
 1. ~~**The open scan.**~~ **BUILT 2026-09-29** (`auctionOpen.gs`
    `2026-09-29.1`, operator side in `updating-the-data.md` § *Utaku's site*).
@@ -2536,10 +2536,10 @@ with the maintainer on 2026-09-29, before any code:
    auctions (2021-2023, many titled `UTC: …`) under `Matt Soto`, and the scan
    already aliased the forum name `Utaku Soto` to him. `202722` was typed
    `Utaku`, a second series of one; the scan now maps the site's seller name
-   `Utaku` to `Matt Soto`. **`202722`'s `auctioneer` cell is the workbook edit
-   still outstanding.** Its `auctionStyle` was corrected, and the close
-   imported and published, in #297: 37 `prices`, 149 `rawPricesData` and 21
-   `onyx` rows, exactly the counts the dry run predicted.
+   `Utaku` to `Matt Soto`. **Both of `202722`'s cells are now fixed.** Its
+   `auctionStyle` was corrected, and the close imported and published, in #297:
+   37 `prices`, 149 `rawPricesData` and 21 `onyx` rows, exactly the counts the
+   dry run predicted. Its `auctioneer` became `Matt Soto` in #300.
 2. **The site calls this venue `Forum`** — `SITE-14`, **deferred** until it is
    clear how many auctions he runs there.
 3. **Courtesy, not code:** tell Utaku the importer reads `/api/state`, and that
