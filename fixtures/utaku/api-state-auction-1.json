@@ -1,0 +1,647 @@
+{
+  "settings": {
+    "title": "Utaku's Auction Block - Lightning 2027 8K Preorders",
+    "auctionNumber": 1,
+    "sellerName": "Utaku",
+    "lotCost": 8000,
+    "recoupTarget": 7000,
+    "presaleStart": "09/24/2026 11:35 AM PT",
+    "startedAt": "2026-09-24T21:52:04.207Z",
+    "endsAt": "2026-10-24T21:52:04.207Z",
+    "stickers": {
+      "onyx": "onyx",
+      "condense": "super_condensed",
+      "augment": "non_augmented",
+      "tradeGoods": "option_b"
+    },
+    "raised": 7007.45
+  },
+  "items": [
+    {
+      "name": "2027 Treasure Chips",
+      "category": "Presale Specials",
+      "status": "closed",
+      "quantity": 50,
+      "winners": [
+        {
+          "allocated": 40,
+          "paidPrice": 4.1
+        },
+        {
+          "allocated": 10,
+          "paidPrice": 3.85
+        }
+      ]
+    },
+    {
+      "name": "Drake’s Elixir",
+      "category": "Presale Specials",
+      "status": "closed",
+      "quantity": 32,
+      "winners": [
+        {
+          "allocated": 32,
+          "paidPrice": 0.5
+        }
+      ]
+    },
+    {
+      "name": "1st Codex of the Familiar",
+      "category": "8K Speicial Items",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 1301
+        }
+      ]
+    },
+    {
+      "name": "Ioun Stone Warden Wrath",
+      "category": "8K Speicial Items",
+      "status": "closed",
+      "quantity": 8,
+      "winners": [
+        {
+          "allocated": 8,
+          "paidPrice": 61
+        }
+      ]
+    },
+    {
+      "name": "Shirt of Cat's Gift",
+      "category": "8K Speicial Items",
+      "status": "closed",
+      "quantity": 4,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 66
+        },
+        {
+          "allocated": 1,
+          "paidPrice": 66
+        },
+        {
+          "allocated": 1,
+          "paidPrice": 66
+        },
+        {
+          "allocated": 1,
+          "paidPrice": 65
+        }
+      ]
+    },
+    {
+      "name": "Wish Ring",
+      "category": "8K Speicial Items",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 101
+        }
+      ]
+    },
+    {
+      "name": "+1 Voidbane Cannon (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 40
+        }
+      ]
+    },
+    {
+      "name": "+2 Cosmic Hammer (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 46
+        }
+      ]
+    },
+    {
+      "name": "Bead of Need (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 71
+        }
+      ]
+    },
+    {
+      "name": "Blood Cult Mark (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 60
+        }
+      ]
+    },
+    {
+      "name": "Carter's Tome of Insight (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 81
+        }
+      ]
+    },
+    {
+      "name": "Charm of Coordination (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 53
+        }
+      ]
+    },
+    {
+      "name": "Cosmic Armor (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 42
+        }
+      ]
+    },
+    {
+      "name": "Crypt Cloak (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 46
+        }
+      ]
+    },
+    {
+      "name": "Earcuff of Murmurs (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 41
+        }
+      ]
+    },
+    {
+      "name": "Gloves of Elder Horror (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 42
+        }
+      ]
+    },
+    {
+      "name": "Ioun Stone Amethyst Sphere (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 41
+        }
+      ]
+    },
+    {
+      "name": "Kilt of Kthala (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 36
+        }
+      ]
+    },
+    {
+      "name": "Lenses of Timestep (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 36
+        }
+      ]
+    },
+    {
+      "name": "Mask of Foggy Health (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 45
+        }
+      ]
+    },
+    {
+      "name": "Mask of Unlucky Heroism (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 41
+        }
+      ]
+    },
+    {
+      "name": "Natasha's Nightcap (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 61
+        }
+      ]
+    },
+    {
+      "name": "Necklace of Baubles (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 47
+        }
+      ]
+    },
+    {
+      "name": "Ring of Kthala (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 41
+        }
+      ]
+    },
+    {
+      "name": "Spirit Pet Owl (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 96
+        }
+      ]
+    },
+    {
+      "name": "Tobin's Cosmic Ring (Onyx)",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 61
+        }
+      ]
+    },
+    {
+      "name": "Full Onyx C/U/R Set",
+      "category": "Onyx Tokens",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 81
+        }
+      ]
+    },
+    {
+      "name": "PYP Ultra Rare",
+      "category": "Pick Your Purple Ultra Rares",
+      "status": "closed",
+      "quantity": 16,
+      "winners": [
+        {
+          "allocated": 3,
+          "paidPrice": 52
+        },
+        {
+          "allocated": 3,
+          "paidPrice": 52
+        },
+        {
+          "allocated": 5,
+          "paidPrice": 52
+        },
+        {
+          "allocated": 5,
+          "paidPrice": 51
+        }
+      ]
+    },
+    {
+      "name": "Alchemist's Ink",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 40,
+      "winners": [
+        {
+          "allocated": 24,
+          "paidPrice": 2.5
+        },
+        {
+          "allocated": 10,
+          "paidPrice": 2.5
+        },
+        {
+          "allocated": 5,
+          "paidPrice": 2.5
+        },
+        {
+          "allocated": 1,
+          "paidPrice": 2.25
+        }
+      ]
+    },
+    {
+      "name": "Alchemist's Parchment",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 40,
+      "winners": [
+        {
+          "allocated": 12,
+          "paidPrice": 1.6
+        },
+        {
+          "allocated": 10,
+          "paidPrice": 1.6
+        },
+        {
+          "allocated": 18,
+          "paidPrice": 1.35
+        }
+      ]
+    },
+    {
+      "name": "Aragonite",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 15,
+      "winners": [
+        {
+          "allocated": 5,
+          "paidPrice": 7.25
+        },
+        {
+          "allocated": 2,
+          "paidPrice": 7.25
+        },
+        {
+          "allocated": 8,
+          "paidPrice": 7
+        }
+      ]
+    },
+    {
+      "name": "Darkwood Plank",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 50,
+      "winners": [
+        {
+          "allocated": 20,
+          "paidPrice": 0.7
+        },
+        {
+          "allocated": 30,
+          "paidPrice": 0.5
+        }
+      ]
+    },
+    {
+      "name": "Dwarven Steel",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 40,
+      "winners": [
+        {
+          "allocated": 10,
+          "paidPrice": 1.75
+        },
+        {
+          "allocated": 30,
+          "paidPrice": 1.5
+        }
+      ]
+    },
+    {
+      "name": "Elven Bismuth",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 20,
+      "winners": [
+        {
+          "allocated": 2,
+          "paidPrice": 29.25
+        },
+        {
+          "allocated": 3,
+          "paidPrice": 29.25
+        },
+        {
+          "allocated": 5,
+          "paidPrice": 29.25
+        },
+        {
+          "allocated": 4,
+          "paidPrice": 29.25
+        },
+        {
+          "allocated": 2,
+          "paidPrice": 29.25
+        },
+        {
+          "allocated": 1,
+          "paidPrice": 29.25
+        },
+        {
+          "allocated": 3,
+          "paidPrice": 29
+        }
+      ]
+    },
+    {
+      "name": "Enchanter's Munition",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 20,
+      "winners": [
+        {
+          "allocated": 15,
+          "paidPrice": 3.6
+        },
+        {
+          "allocated": 5,
+          "paidPrice": 3.6
+        }
+      ]
+    },
+    {
+      "name": "Minotaur Hide",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 40,
+      "winners": [
+        {
+          "allocated": 15,
+          "paidPrice": 2.6
+        },
+        {
+          "allocated": 13,
+          "paidPrice": 2.5
+        },
+        {
+          "allocated": 12,
+          "paidPrice": 2.35
+        }
+      ]
+    },
+    {
+      "name": "Mystic Silk",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 50,
+      "winners": [
+        {
+          "allocated": 50,
+          "paidPrice": 0.5
+        }
+      ]
+    },
+    {
+      "name": "Oil of Enchantment",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 20,
+      "winners": [
+        {
+          "allocated": 5,
+          "paidPrice": 41
+        },
+        {
+          "allocated": 3,
+          "paidPrice": 41
+        },
+        {
+          "allocated": 4,
+          "paidPrice": 41
+        },
+        {
+          "allocated": 4,
+          "paidPrice": 41
+        },
+        {
+          "allocated": 2,
+          "paidPrice": 41
+        },
+        {
+          "allocated": 2,
+          "paidPrice": 40.75
+        }
+      ]
+    },
+    {
+      "name": "Philosopher's Stone",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 50,
+      "winners": [
+        {
+          "allocated": 50,
+          "paidPrice": 1.15
+        }
+      ]
+    },
+    {
+      "name": "1K Gold Bar",
+      "category": "Trade Goods",
+      "status": "closed",
+      "quantity": 45,
+      "winners": [
+        {
+          "allocated": 2,
+          "paidPrice": 7.25
+        },
+        {
+          "allocated": 17,
+          "paidPrice": 7
+        },
+        {
+          "allocated": 26,
+          "paidPrice": 7
+        }
+      ]
+    },
+    {
+      "name": "2027 Patron Code",
+      "category": "8K Special Items",
+      "status": "closed",
+      "quantity": 1,
+      "winners": [
+        {
+          "allocated": 1,
+          "paidPrice": 370
+        }
+      ]
+    }
+  ],
+  "lastClosed": {
+    "auctionNumber": 1,
+    "title": "Utaku's Auction Block - Lightning 2027 8K Preorders",
+    "closedAt": "2026-09-29T23:10:11.047Z",
+    "current": true
+  }
+}

@@ -624,8 +624,8 @@ it.
 
 ## The close-path picker
 
-All three importers — Trent, a forum file (and the thread reader behind it),
-and alesievauctions.com — open by asking **which auction is this for?** They
+All four importers — Trent, a forum file (and the thread reader behind it),
+alesievauctions.com and Utaku's site — open by asking **which auction is this for?** They
 answer it the same way, through one shortlist in `trentClose.gs`:
 
 > **`<source>`, season `<n>` (newest first):**
@@ -1118,6 +1118,118 @@ editor's contents.
 > re-fetched response is ever checked in with the private fields still in it.
 > If `20275` is deliberately corrected in the sheet, that test goes red on the
 > next code PR. The fixture is what's stale then, not the correction.
+
+---
+
+## Importing a Utaku close
+
+**auction.utakustradecaravan.com** is Utaku's own auction site — the fourth
+venue, and the second auction *site*. `apps-script/utakuClose.gs` imports one
+of its auctions when it closes, into `rawPricesData`, `prices`, `onyx` and the
+auction's `closeDate`. Its first close is `202722` (the site's auction #1).
+
+### How it differs from every other close
+
+**The export is one row per WINNING BID, not one row per lot.** The site sells a
+quantity of each item and every bidder names a quantity and a price per unit,
+so `Alchemist's Parchment, 12, 1.6, 19.2` is somebody taking twelve at $1.60.
+
+**So each bid is split into virtual lots of the size the other venues sell**,
+because Quartiles weighs every `rawPricesData` row equally and one row per
+token would give this venue ten times the weight:
+
+| Item | Lot size |
+|---|---|
+| every Trade 1 good | 10 |
+| Treasure Chip | 10 |
+| `1,000 GP Gold Bar` | 5 (alesievauctions.com's size; Trent sells fours) |
+| `Preorder Bonus` (Drake's Elixir in 2027) | 4 (alesievauctions.com's; Trent sells eights) |
+| anything else — Trade 2, premium slots, Pick Your Purple | 1 per token |
+
+A remainder is a lot of its own: twelve Parchment is `10x` + `2x`, and a
+remainder of one is `1x Alchemist's Ink`, which the corpus already spells that
+way. The per-token price is always the bid's own. The dialog lists how every
+bid was split.
+
+**The site's page has no HTML to read** — it is drawn by JavaScript — but it
+loads everything from a public JSON endpoint, `/api/state`, which needs no
+token. That is the normal path. On auction #1 its winners reproduced the export
+73 rows of 73 and summed to the site's own $7,007.45 raised.
+
+**The API only ever holds the CURRENT auction.** When Utaku launches the next
+one, the last one's bids are gone from it — `/api/history` keeps an archived
+auction's dates and totals, not its items. **Import a close before the next
+auction launches**, or use the pasted export.
+
+The API also exposes each winner's maximum bid and nickname and the seller's
+payment details. None of it is read, and the test data is stripped of it —
+this repository is public.
+
+### Installing it (once)
+
+Add it as another file in the same Apps Script project (**File → New →
+Script**, name it `utakuClose`) and paste in `site/apps-script/utakuClose.gs`.
+It needs `trentClose.gs`, `auctionOpen.gs` and `alesievClose.gs` installed
+too, and **re-paste `trentClose.gs`** (version `2026-09-29.1` or later) — its
+menu is what shows the four new items. A tab called exactly **`utakuStaging`**
+is needed only for the pasted-export fallback.
+
+### Using it
+
+1. The auction must already be in `auctionMetadata`, with a Link on
+   `auction.utakustradecaravan.com` and its **`openDate`**. The site gives no
+   auction a URL of its own, so the importer identifies the auction by its
+   start date: the site's `startedAt`, in Eastern, must be the row's
+   `openDate`, or it refuses and says which auction the site is holding.
+2. **TD auctions → Dry run — show what Utaku's site would import.** Pick the
+   auction. Read the dialog: bids, lots, prices, Onyx rows, the close date and
+   any cautions.
+3. **TD auctions → Import Utaku close…** writes the rows and the `closeDate`
+   (from the site's own close time), and clears a leftover `Pending`/`Ended`
+   `outcome`, exactly as the alesievauctions.com importer does.
+
+**The fallback**: download the export, and bring it into the `utakuStaging` tab
+with **File → Import** (or paste from the original file). Then use the two
+*pasted export (fallback)* items. There is no close time in the export, so it
+asks for the date.
+
+> **Do not open the export in Excel and re-save it.** It is valid UTF-8; Excel
+> reads it as Windows-1252 and shows `Drake’s Elixir` as `Drakeâ€™s Elixir`.
+> The importer repairs that one pattern and refuses any other garbled
+> character rather than guessing.
+
+### What it checks
+
+- **Every row's `Line total`** must equal Quantity × Price/unit to the cent, or
+  nothing is written.
+- **Every dollar lands once**: the lots and Onyx rows written must add back up
+  to the bids exactly.
+- **The style.** It compares `auctionStyle` with the site's stickers (API
+  only) and with whether the auction sold Onyx tokens (both paths), and
+  **warns — it never corrects the cell.** Stickers map as Onyx → `Onyx`,
+  Option B → `Trade 2`, Super Condensed → `Ultra Condensed`. A plain
+  `Condensed`, a blank sticker or an unknown value is left for you. Fix any
+  mismatch in the sheet before publishing: an Onyx close under a non-Onyx style
+  fails `validate-prices` § 6.
+- **The same refusals as the other site path**: an auction already priced, bids
+  that fingerprint as a different recorded auction, a season mismatch, a name
+  that resolves to nothing, and more than one of an Onyx token.
+
+### What it does not do
+
+- **No `contextItems` rows.** The export cannot say an item was withheld or an
+  augment, and the default fee (Random URs and the Golden Ticket) never appears
+  in it. A name that resolves to no token stops the run and lands in the
+  context worksheet for you to place by hand.
+- **It does not find an auction.** Record it in `auctionMetadata` first.
+
+### Changing the script
+
+`apps-script/utakuClose.gs` is the source of truth. Edit it here, **bump
+`UTAKU_VERSION`**, run `npm run test:utaku`, then paste it over the editor's
+contents. `fixtures/utaku/` holds auction #1 both ways — the export
+byte-for-byte, and `/api/state` stripped to the fields the script reads — and
+the test asserts the two produce the same rows.
 
 ---
 

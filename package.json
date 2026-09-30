@@ -23,6 +23,7 @@
     "preview": "vite preview",
     "test:forum": "node scripts/forum-close.test.mjs",
     "test:alesiev": "node scripts/alesiev-close.test.mjs",
+    "test:utaku": "node scripts/utaku-close.test.mjs",
     "test:thread": "node scripts/forum-thread.test.mjs",
     "test:harden": "node scripts/harden-sheet.test.mjs",
     "test:shopping": "node scripts/shopping-list.test.mjs",

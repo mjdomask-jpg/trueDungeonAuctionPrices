@@ -25,6 +25,7 @@ const suites = [
   ['test:open', 'auction-open.test.mjs'],
   ['test:forum', 'forum-close.test.mjs'],
   ['test:alesiev', 'alesiev-close.test.mjs'],
+  ['test:utaku', 'utaku-close.test.mjs'],
   ['test:thread', 'forum-thread.test.mjs'],
   ['test:harden', 'harden-sheet.test.mjs'],
   ['test:shopping', 'shopping-list.test.mjs'],

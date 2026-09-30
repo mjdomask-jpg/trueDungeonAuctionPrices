@@ -105,6 +105,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
 | **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
 | **PIPE-14** | The alesievauctions.com API is wired in; two of four open questions answered the same day | **asked of the site's maintainer**: a list endpoint (worth having) and a Trade 2 tag (probably not — 2027 only). Close time and timezone are **answered** |
+| **PIPE-15** | auction.utakustradecaravan.com, the fourth venue — **close built 2026-09-29** (`utakuClose.gs`) | the open scan (decisions made, held for another branch's `auctionOpen.gs` edits) and a workbook fix to `202722`'s `auctionStyle` |
+| **SITE-14** | A Utaku auction is shown as a Forum auction | nothing — `SITE-11`'s venue decision applied to a fourth host |
 
 ---
 
@@ -2488,3 +2490,50 @@ the API returns (`bidCount`, `highBid`, `averageBid`, `medianBid`, `lowBid`) are
 not public, per the maintainer.** Nothing reads them, the checked-in fixture is
 stripped of them, and `test:alesiev` fails if a re-fetched response is checked
 in with them still there. This repository is public.
+
+---
+
+## PIPE-15. auction.utakustradecaravan.com — close BUILT 2026-09-29, open scan OPEN
+
+Utaku's Trade Caravan is the fourth venue and the second auction site. Its first
+auction, `202722`, was recorded by hand and closed 2026-09-29.
+
+**The close is built** — `apps-script/utakuClose.gs`, `npm run test:utaku`,
+operator side in `updating-the-data.md` § *Importing a Utaku close*. Settled
+with the maintainer on 2026-09-29, before any code:
+
+- **API first, export as the fallback.** The page is client-rendered, but the
+  public `/api/state` it loads holds every winner; it reproduced the export 73
+  of 73 and summed to the site's `raised`. It holds only the CURRENT auction,
+  so the export path will be needed, not just kept.
+- **Virtual lots.** The export is one row per winning bid; each is split into
+  the lot size other venues sell (Trade 1 and Treasure Chips 10, gold bars 5,
+  Drake's Elixir 4 — alesievauctions.com's sizes where Trent differs), so
+  Quartiles weighs this venue like the others.
+- **Style: warn, never correct.** `202722` records `Trade 2 Ultra Condensed`;
+  the stickers and its 21 Onyx lots say `Onyx Trade 2 Ultra Condensed`, and
+  § 6 fails the publish until the cell is fixed. **Workbook edit outstanding.**
+
+**What is left:**
+
+1. **The open scan.** `auctionOpen.gs` does not watch this site yet. The
+   decisions are made: stickers fill `auctionStyle` (they are discrete fields,
+   Option B included — `utakuStyleFromStickers` is already written and
+   tested); `recoupTarget` is `targetFunding`; `startedAt` in Eastern is
+   `openDate`; `completionStyle` (`Lightning`) is only in the title, so it
+   is a note; `augmentated` is a formula column and is not written. The
+   duplicate key has to be the start date, since the site gives no auction a
+   URL of its own. Held back only because another branch had uncommitted
+   edits to `auctionOpen.gs` on the day.
+2. **The site calls this venue `Forum`** — `SITE-14`.
+3. **Courtesy, not code:** tell Utaku the importer reads `/api/state`, and that
+   the bidders' maximum bids and nicknames are public in it.
+
+## SITE-14. A Utaku auction is shown as a Forum auction — OPEN
+
+`deriveSource` (`src/lib/data.ts`) knows two site hosts and calls everything
+else `Forum`, so `202722` — and its per-lot data, once imported — sits under
+Forum in the Source filter and Venue comparison. `SITE-11` already settled that
+the split is the VENUE, so this is that decision applied to a fourth one: a
+`'Utaku'` value derived from the Link, the way `'Alesiev'` was. Not done in the
+close PR because it is a site release, not a pipeline change.
