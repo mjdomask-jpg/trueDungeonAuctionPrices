@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-21.1';
+var SCRIPT_VERSION = '2026-09-29.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -161,6 +161,11 @@ var EXCEPTIONS = {
   '1,000 gp bar': '1,000 GP Gold Bar',
   '1,000 gp bars': '1,000 GP Gold Bar',
   '1,000 gp reserve bar': '1,000 GP Gold Bar',
+
+  // --- auction.utakustradecaravan.com (utakuClose.gs) ---------------------
+  // Its first close, 202722, sold sixteen of these. `1K Gold Bar`, its other
+  // spelling nothing else resolves, is already `1k gold bar` above.
+  'pyp ultra rare': 'Ultra Rare',
 };
 
 /**
@@ -219,6 +224,11 @@ var ONYX_NORMALIZATION = {
   'common/uncommon/rare set': 'C/UC/R Set',
   'c-u-r onyx set': 'C/UC/R Set',
   'c-u-r set': 'C/UC/R Set',
+  // auction.utakustradecaravan.com, 202722. `Full` and the mid-name `Onyx` are
+  // both where no strip in stripOnyxMarker reaches, so the whole name is the
+  // key; the bare form is here for the reason `c-u-r set` is.
+  'full onyx c/u/r set': 'C/UC/R Set',
+  'c/u/r set': 'C/UC/R Set',
 };
 
 var ONYX_CATEGORY = 'Onyx Ultra Rare';
@@ -1061,8 +1071,9 @@ function closePickerPrompt(picker, sourceName, metadataTab) {
  * onOpen in another file would not add a second menu — it would replace this
  * function and one menu would silently vanish. Phase 3 (`publishToSite.gs`),
  * Phase 4 (`auctionOpen.gs`) and Phase 5 (`forumClose.gs`, `forumThread.gs`,
- * `alesievClose.gs`) therefore contribute their items through `addPublishMenu`,
- * `addOpenMenu`, `addForumMenu`, `addThreadMenu` and `addAlesievMenu` instead.
+ * `alesievClose.gs`, `utakuClose.gs`) therefore contribute their items through
+ * `addPublishMenu`, `addOpenMenu`, `addForumMenu`, `addThreadMenu`,
+ * `addAlesievMenu` and `addUtakuMenu` instead.
  * The typeof guards keep this file working on its own when any of them is not
  * installed.
  *
@@ -1078,6 +1089,7 @@ function onOpen() {
   if (typeof addForumMenu === 'function') addForumMenu(menu);
   if (typeof addThreadMenu === 'function') addThreadMenu(menu);
   if (typeof addAlesievMenu === 'function') addAlesievMenu(menu);
+  if (typeof addUtakuMenu === 'function') addUtakuMenu(menu);
   if (typeof addOpenMenu === 'function') addOpenMenu(menu);
   if (typeof addHardenMenu === 'function') addHardenMenu(menu);
   if (typeof addPublishMenu === 'function') addPublishMenu(menu);

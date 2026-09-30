@@ -1,0 +1,31 @@
+{
+  "source": "auction.utakustradecaravan.com — Utaku's Trade Caravan, the fourth venue and the second auction site. Its first auction, site #1, is 202722 in auctionMetadata.",
+  "files": [
+    {
+      "file": "utaku-auction-1-export.csv",
+      "fetched": "2026-09-29",
+      "source": "The site's close export for auction #1, supplied by the maintainer on 2026-09-29 as `utaku_auction_1.csv`. Byte-for-byte unchanged, CRLF line endings included.",
+      "headers": "Item | Quantity | Price/unit | Line total",
+      "shape": "one row per WINNING BID, with the bidder stripped — not one row per lot. A bid is a quantity at a price per unit; the same item appears on as many rows as it had winners.",
+      "rows": 73,
+      "total": 7007.45,
+      "auction": "202722",
+      "season": "2027",
+      "encoding": "Valid UTF-8. `Drake’s Elixir` carries a CURLY apostrophe (U+2019), which Excel shows as `Drakeâ€™s Elixir` because it opens a BOM-less CSV as Windows-1252. The file is not corrupt; a copy re-saved from Excel would be, and utakuCleanName repairs that one pattern and refuses any other.",
+      "reconciles": "Nothing recorded yet — 202722 has no price rows. It DOES reconcile with the API fixture beside it: the same 73 bids, and $7,007.45 is the site's own `raised`."
+    },
+    {
+      "file": "api-state-auction-1.json",
+      "url": "https://auction.utakustradecaravan.com/api/state",
+      "fetched": "2026-09-29",
+      "source": "The public JSON the site's own page loads (no token). Fetched a few hours after auction #1 closed, while it was still the current auction.",
+      "stripped": "Kept: settings.{title, auctionNumber, sellerName, lotCost, recoupTarget, presaleStart, startedAt, endsAt, stickers, raised}; per item {name, category, status, quantity, winners[].{allocated, paidPrice}}; lastClosed. DROPPED: every winner's `moniker`, `maxPrice` (the bidder's private ceiling) and requested `qty`; every item's `leaders`, `bidderCount`, `currentPrice`, `minPricePerUnit`, `increment`, `id`; and settings.paymentNotes (the seller's payment handles). This repository is public, and utakuClose.gs reads none of them. The test fails if any comes back.",
+      "notes": [
+        "The page is rendered client-side — its HTML is `Loading…` — so this endpoint is the ONLY machine-readable source Apps Script can reach.",
+        "It holds the CURRENT auction only. `/api/history` (empty on this date) keeps an archived auction's dates and totals but not its items, so a close must be imported before Utaku launches the next auction, or from the export.",
+        "`category` is free text typed by the seller: `8K Speicial Items` and `8K Special Items` both appear. Nothing routes on it.",
+        "The stickers read onyx / super_condensed / non_augmented / option_b, i.e. `Onyx Trade 2 Ultra Condensed`. auctionMetadata records 202722 as `Trade 2 Ultra Condensed` — missing Onyx — which the close cautions on rather than corrects."
+      ]
+    }
+  ]
+}

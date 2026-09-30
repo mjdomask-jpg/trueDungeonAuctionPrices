@@ -442,9 +442,11 @@ console.log('4. Metadata hygiene (auctionMetadata.csv)');
     // linking there is as expected as one linking to a forum thread. It
     // surfaced on the first publish that carried one, as two warnings nobody
     // could act on — and a warning that cannot be acted on trains people to
-    // skip the whole list.
-    else if (!/^https?:\/\/(www\.)?(truedungeon\.com|trenttokens\.com|alesievauctions\.com)\//i.test(m.Link))
-      warns.push(`${where}: Link is not a truedungeon.com, trenttokens.com or alesievauctions.com URL — ${m.Link}`);
+    // skip the whole list. `auction.utakustradecaravan.com` is the same story
+    // again (utakuClose.gs, 2026-09-29): 202722 warned from the day it was
+    // recorded.
+    else if (!/^https?:\/\/(www\.)?(truedungeon\.com|trenttokens\.com|alesievauctions\.com|auction\.utakustradecaravan\.com)\//i.test(m.Link))
+      warns.push(`${where}: Link is not a truedungeon.com, trenttokens.com, alesievauctions.com or auction.utakustradecaravan.com URL — ${m.Link}`);
     const season = Number(m.auctionSeason), number = Number(m.auctionNumber);
     if (Number.isFinite(season) && Number.isFinite(number)) {
       const s = numbersBySeason.get(season) ?? numbersBySeason.set(season, new Map()).get(season);
