@@ -70,6 +70,13 @@ maintenance surface; (c) **manual entry only** (the Should-have secondary-price 
 already covers this). Recommendation: ship manual entry, treat scraping as deferred,
 and if pursued, do the build-time snapshot. See Phase 8.
 
+> **Corrected 2026-10-02: the CORS premise above is false.** trenttokens.com is
+> Shopify, and `/products.json` sends `access-control-allow-origin: *`, so path (b)
+> is never needed and path (a) needs no infra beyond a scheduled GitHub Action.
+> The catalogue is 49 pages, which still makes (a) the right shape. Measurements,
+> coverage against the recipes, and the trade-good trap (they are listed only as
+> `0.00` auction lots) are in [`backlog.md`](./backlog.md) `SITE-5`.
+
 ---
 
 ## 2. The build calculator (the headline user request)
@@ -645,7 +652,7 @@ have anticipated — it predates the accuracy release — are settled as F1–F3
 
 ### Phase 8 — Could-haves: third-party prices (deferred) — tracked as `SITE-5`
 §2.3 + §1c: trenttokens build-time snapshot, auto-fill lowest price, buy link. Do
-last; re-confirm appetite for the infra first. **Pending status lives in
+last; re-confirm appetite first (no new infra is needed — see the §1c correction). **Pending status lives in
 [`backlog.md`](./backlog.md) as `SITE-5`** — this section is the design, not the
 list.
 
@@ -714,7 +721,7 @@ Both moved 2026-09-03, and both are still open:
 5  ─ needs IngredientType data; UR two-year rule free if 4 shipped
 6  ─ needs Omni recipes (exist); independent of 4/5
 7  ─ independent (global selector)
-8  ─ needs infra decision (§1c)
+8  ─ needs appetite only; the §1c infra block was a false premise (2026-10-02)
 9  ─ independent of 4/5/7; couple to 6 (both are line-level substitution).
      Touches 2/3's math (on-hand, cost-to-finish, break-even) but needs no new engine
 ```

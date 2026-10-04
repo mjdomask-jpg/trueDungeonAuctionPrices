@@ -73,7 +73,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-2** | ~~Transmute row height at 375px~~ | **CLOSED 2026-09-12** — the maintainer's real-phone verdict came back: it reads fine, the wrap was the right trade |
 | **SITE-3** | ~~Shopping List drawer row names ellipsize~~ | **RESOLVED 2026-09-12** — a wider drawer on desktop, a two-line picked row on phones; 150 of 174 names clipped → 3 |
 | **SITE-4** | Transmutes "most-withheld components" callout | appetite — an optional stretch from the context layer |
-| **SITE-5** | Third-party prices (trenttokens snapshot, auto-fill, buy link) | re-confirming appetite for the infra |
+| **SITE-5** | Third-party prices (trenttokens snapshot, auto-fill, buy link) | **appetite only** — the CORS block it was parked behind does not exist (measured 2026-10-02); a scheduled snapshot needs no new hosting |
 | **SITE-6** | Non-standard `Expires` dates | data authoring — the engine already reads the column |
 | **SITE-7** | Calculator persistence of on-hand counts and overrides | a stable line identity; **not** scope |
 | **SITE-8** | Build-time CSV → JSON normalization step | nothing hurts yet |
@@ -1032,13 +1032,66 @@ denominations as tokens moves names between the two columns.
 ## SITE-5. Third-party prices — OPEN (deferred, was "Phase 8")
 
 `transmutes-expansion-plan.md` § 2.3 + § 1c: a trenttokens build-time snapshot,
-auto-fill of the lowest third-party price, and a buy link. **Do this last, and
-re-confirm appetite for the infra before starting** — it is the only item on the
-list that adds a scraping dependency and an architectural risk to a site whose
-whole design is "static, no backend".
+auto-fill of the lowest third-party price, and a buy link. **Re-confirm appetite
+before starting** — it adds a dependency on another site's catalogue to a site
+whose whole design is "static, no backend".
 
 The manual secondary-price box shipped instead, which was the 2026-08-10 decision
 (§ 9 Q3): manual entry only for now.
+
+### The CORS premise was wrong (measured 2026-10-02)
+
+§ 1c parked this behind infrastructure because "a browser `fetch` to
+trenttokens.com will be blocked by CORS". **It is not.** trenttokens.com is
+Shopify, and Shopify's public catalogue endpoint answers any origin:
+
+```
+GET https://trenttokens.com/products.json?limit=250&page=N
+access-control-allow-origin: *
+```
+
+No proxy, Worker or backend is needed, and moving off GitHub Pages buys this
+item nothing — the question came up when Cloudflare Pages was considered for
+the treasure-pull project, and the answer was that `SITE-5` is buildable on the
+hosting the site already has. The § 1c premise was never checked; it was
+reasoned from "a different site, so CORS", which is usually true and here is
+not. (The same assumption was right about truedungeontokens.com in `PIPE-4`,
+for a different reason: that site's endpoint needs a session cookie.)
+
+**What the catalogue actually holds**, from one full pull that day:
+
+- **12,201 products over 49 pages** of 250. `product_type` separates them:
+  11,587 `Token`, 324 `Auction` + 33 `auction`, a few sets, cases and a button.
+- **A live per-page-load fetch is the wrong shape** — 49 requests to price one
+  recipe. A **scheduled snapshot** (a GitHub Actions cron that pulls the
+  catalogue, keeps only rows a recipe names, and commits a small JSON to
+  `public/data/`) is the path § 1c already preferred, and it is now unblocked.
+  The snapshot is stale between runs; label the date.
+- **Titles parse.** `Name - Year (Colour)` with an optional ` - <suffix>` reads
+  **11,578 of 11,587** `Token` titles. The suffix (`C211`, `C37`, `UR`, `T`) is
+  undeciphered — do not key on it. Years can carry a letter (`2005b`,
+  `2005UR`); a few titles drop the closing paren or append a condition
+  (`1 Charge Used`, `Unusable`) and should be skipped, not repaired.
+- **Coverage is partial.** Of **450** distinct ingredient `Item | ResolvedYear`
+  pairs in `transmuteRecipes.csv`, **155** have an in-stock listing at the
+  exact name and year, **216** match a name in some other year only, and **79**
+  match nothing. Name-only matches are not prices for the recipe — a token's
+  year is part of its identity.
+- **Trade goods are not sold at a fixed price at all.** Oil of Enchantment,
+  Aragonite, Mystic Silk and the rest appear only as `Auction` products
+  (`Aragonite #7`, `10x Mystic Silks #1`) priced **`0.00`** — that is the lot,
+  not a bid. Exclude every `Auction`-type product, or a trade good prices at
+  zero. The trade ladder stays on auction data, which is where it belongs.
+- **It is an asking price, not a sale.** It belongs in the calculator's
+  **secondary-price** slot — exactly what "auto-fill" meant — and must never
+  enter `prices.csv` or any statistic built on it.
+
+**What is left is not infrastructure:** the name/year match (the measure
+above is a lower-cased exact match on `Item`; `Display Name` and
+category lines like `Ultra Rare robe` were not tried), what to show when
+only another year is in stock, and whether to tell Trent before pointing a
+scheduled job at his store. Throttle the job and run it no more than daily —
+it is someone else's shop.
 
 > Related but distinct: `PIPE-4` is about reading a player's *own collection* off
 > a third-party site, not prices. Both touch truedungeontokens.com; neither
