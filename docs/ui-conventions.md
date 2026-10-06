@@ -558,6 +558,26 @@ chip labelling a row you can already read, not to a control you pick from.
   7.16:1. Darkening the *fill* so white could work would have meant reaching
   `#c2560a`, which no longer reads as Legendary orange and crowds Omni.
 
+### An input's outline contrasts 3:1, and more in dark mode
+
+**An `<input>` or `<select>` takes `--control-border`, never `--border`.**
+Nothing but its outline says a box is a box, and WCAG 1.4.11 asks 3:1 of
+that outline against whatever sits behind it. `--border` is a card's edge:
+1.24:1 on white and 1.21:1 on the dark card, fine for a card, which its
+contents and shadow already mark out, and nearly invisible on a control.
+
+Dark mode gets a wide margin over 3:1 (4.70:1 on `--card`), not the bare
+minimum. It is the theme people use with the screen turned down, in bed or
+in a dark room, and dimming a screen narrows every contrast on it. The
+treasure-pull recorder learned this on 2026-10-05: at 1.76:1 its count boxes
+all but vanished on a phone at half brightness. Check a new value on both
+`--card` and `--bg`, in both themes, since a control can sit on either; the
+light value first tried there passed on white at 3.17:1 and failed on the
+page at 2.98:1.
+
+A button or chip that carries its own label is identified by the label, so
+it keeps `--border`.
+
 ### A status colour is never the only thing saying the status
 
 `--live` (red) means an auction is taking bids right now; `--pending` (amber)

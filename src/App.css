@@ -155,7 +155,7 @@ header h1 {
   line-height: normal;
   height: var(--control-h);
   padding: 0 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   background: var(--card);
   color: var(--text-h);
@@ -1067,7 +1067,7 @@ td.diff.down { color: var(--diff-down); }
 .cl-hand input {
   box-sizing: border-box; flex: 0 0 66px; width: 66px; height: 34px; text-align: center;
   padding: 0 4px; font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
-  border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-h);
+  border: 1px solid var(--control-border); border-radius: 6px; background: var(--bg); color: var(--text-h);
 }
 .cl-hand input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 .cl-dash { color: var(--text); }
@@ -1095,7 +1095,7 @@ td.diff.down { color: var(--diff-down); }
    it. Styled on .cl-money-in rather than .cl-editor so the per-line override
    editor and the Phase 3 buy-it box are the same control, not two that have to
    be kept looking alike. */
-.cl-money-in { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+.cl-money-in { display: inline-flex; align-items: center; border: 1px solid var(--control-border); border-radius: 6px; background: var(--bg); }
 .cl-money-in:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
 .cl-dollar { padding-left: 8px; color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
 .cl-money-in input { width: 78px; font: inherit; font-size: 14px; padding: 5px 8px 5px 3px; border: none; background: transparent; color: var(--text-h); font-variant-numeric: tabular-nums; }
@@ -1193,7 +1193,7 @@ td.diff.down { color: var(--diff-down); }
    the drawer doesn't read as a foreign control. */
 .calc-dbody .search input {
   width: 100%; font: inherit; font-size: 16px; height: 32px; padding: 0 10px;
-  border: 1px solid var(--border); border-radius: 8px;
+  border: 1px solid var(--control-border); border-radius: 8px;
   background: var(--card); color: var(--text-h);
 }
 .calc-dbody .search input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
@@ -2192,7 +2192,7 @@ td.strong { font-weight: 600; color: var(--text-h); }
   letter-spacing: 0;
   height: 32px;
   padding: 0 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   background: var(--card);
   color: var(--text-h);
@@ -3106,7 +3106,7 @@ table.an-opens col.col-days { width: 16%; }
 .sl-pv .pv-hand input {
   box-sizing: border-box; width: 44px; height: 28px; text-align: center;
   padding: 0 3px; font: inherit; font-size: 13px; font-variant-numeric: tabular-nums;
-  border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-h);
+  border: 1px solid var(--control-border); border-radius: 6px; background: var(--bg); color: var(--text-h);
 }
 .sl-pv .pv-hand input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 .sl-pv .pv-hand .sl-netted { display: block; text-align: left; margin-top: 3px; }

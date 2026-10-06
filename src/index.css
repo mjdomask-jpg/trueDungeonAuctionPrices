@@ -21,6 +21,18 @@
   --band: rgba(16, 24, 40, 0.035);
   --shadow: rgba(16, 24, 40, 0.06) 0 1px 3px, rgba(16, 24, 40, 0.04) 0 8px 24px;
 
+  /* The outline of a box a visitor types into or picks from: inputs and
+     selects, which nothing but their border identifies. --border is a card's
+     edge, 1.24:1 on white, and a control drawn in it all but vanishes; WCAG
+     1.4.11 asks 3:1 of a control's outline against what is behind it. Light
+     #858c99 is 3.38:1 on --card and 3.18:1 on --bg. Dark #7d8597 is 4.70:1
+     and 5.10:1: a wide margin, because dark mode is the one used with the
+     screen turned down, which narrows every difference. Learned on the
+     treasure-pull recorder (2026-10-05), whose count boxes disappeared in
+     dark mode on a phone at half brightness. See ui-conventions.md
+     § Colour and contrast. */
+  --control-border: #858c99;
+
   /* Categorical chart palette (dataviz skill's validated 8-hue set, light
      steps). Slot order is the CVD-safety mechanism — do not reorder. Validated
      against the --card surface (#fff): all checks pass; aqua/yellow/magenta sit
@@ -89,6 +101,7 @@
   --nav-hover: rgba(255, 255, 255, 0.06);
   --band: rgba(255, 255, 255, 0.04);
   --shadow: rgba(0, 0, 0, 0.4) 0 1px 3px, rgba(0, 0, 0, 0.3) 0 8px 24px;
+  --control-border: #7d8597;
 
   /* Same eight hues stepped for the dark --card surface (#171a22), validated
      as a set (worst adjacent CVD ΔE 10.3 — floor band, held up by the legend). */
