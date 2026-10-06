@@ -91,7 +91,7 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 20275,Natasha's Nightcap,1,4,,-70.75,,FIXED_was_error,202717;20272;202722;20278,forward
 20275,Spirit Pet Owl,1,4,,-79.75,,FIXED_was_error,202717;20272;202722;20278,forward
 20275,Tobin's Cosmic Ring,1,4,,-68.5,,FIXED_was_error,202717;20272;202722;20278,forward
-20271,Patron Code,1,1,,-421.0,,FIXED_was_error,202726,back
+20271,Patron Code,1,5,,-413.6,,FIXED_was_error,202714;202719;202720;20274;20278,forward
 20272,Patron Code,1,5,,-422.0,,FIXED_was_error,202713;20273;20275;20276;20277,back
 20274,Chosen Ultra Rare,10,10,,-593.42,,FIXED_was_error,202713;20273;20275;20276;20277,back
 202717,1st Codex of the Familiar,1,5,,-1397.6,,FIXED_was_error,202714;202719;20272;20274;20277,back
