@@ -106,3 +106,9 @@ auctionId,item(DisplayName),quantity,n_prior_sales_in_lookback,old_value,new_PIT
 202716,1st Codex of the Familiar,1,5,,-1323.4,,FIXED_was_error,202719;202720;202721;202722;20279,back
 202718,Chosen Ultra Rare,10,10,,-595.74,,FIXED_was_error,202716;202723;202725;202726;202727,back
 202718,Random Ultra Rare,9,10,,-333.0,,FIXED_was_error,202716;202717;202725;20278;20279,back
+202520,Random Ultra Rare,9,1,,-450.0,,FIXED_was_error,20251,back
+20262,Random Ultra Rare,9,1,,-369.0,,FIXED_was_error,20264,back
+20266,Random Ultra Rare,9,5,,-371.66,,FIXED_was_error,202632;202633;20264;202640;202644,forward
+202634,Random Ultra Rare,9,3,,-346.44,,FIXED_was_error,202632;202633;20264,back
+20262,Path to Enlightenment (Fragment 4),1,5,,-1611.6,,FIXED_was_error,202617;202619;202620;202621;20264,back
+202545,Random Ultra Rare,9,5,,-340.2,,FIXED_was_error,20251;202534;202537;202540;202543,back
