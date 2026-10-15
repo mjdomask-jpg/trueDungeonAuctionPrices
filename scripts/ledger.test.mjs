@@ -20,6 +20,11 @@
 //                                         while open
 //   Grunnel stays out unless asked        the toggle adds it on top of the offset
 //   the aggregate carries the offset      and a null offset sums as $0
+//   the full-order lens (SITE-13)         $8,000 baseline + an estimated kept-fee
+//                                         debit; season rates borrow only from
+//                                         EARLIER seasons, else n/a; released or
+//                                         withheld fee items are never debited
+//                                         twice; Trent's points only on request
 //
 // Run: node scripts/ledger.test.mjs
 
@@ -145,6 +150,105 @@ const offsets = rows.reduce((a, r) => a + (r.goalOffset ?? 0), 0);
 check('the aggregate sums the offset, a null one as $0', near(all.goalOffset, offsets), all.goalOffset);
 check('the aggregate balance is the sum of the row balances',
   near(all.balance, rows.reduce((a, r) => a + r.balance, 0)), all.balance);
+
+// --- the full-order lens (SITE-13) ------------------------------------------
+// Measured against the $8,000 order cost, with the fee the auctioneer KEPT
+// debited at an estimate: nine Random Ultra Rares at the season's rate, plus a
+// Golden Ticket in its era. Every figure below is constructed.
+
+console.log('full-order lens');
+const { fullOrderLedger, fullOrderBalanceOf, feeRatesBySeason, trentSubsidyOf } = an;
+
+let fn = 0;
+const fm = (id, season, targetFunding, closeDate, { status = 'Closed', source = 'Forum' } = {}) => ({
+  auctionId: id, season, auctionNumber: ++fn, name: `Auction ${id}`,
+  auctioneer: `Auctioneer ${id}`, source, status, targetFunding, closeDate,
+});
+const item = (auctionId, category, name, quantity, value) => ({
+  auctionId, category, name, quantity, refValue: value, value,
+  provenance: category === 'withheld' ? 'withheld'
+    : /^(random ultra rare|golden ticket)$/i.test(name) ? 'released-payment' : 'augment',
+  estimate: category === 'withheld',
+});
+const gtSale = (auctionId, season, price) => ({
+  auctionId, season, auctionNumber: 0, item: 'Golden Ticket', price,
+  displayName: 'Golden Ticket', category: 'Golden Ticket',
+});
+
+const FM = [
+  fm('kept20', '2020', 7500, '2019-10-01'),            // before any Random UR sold
+  fm('rur24', '2024', 8000, '2023-12-01'),             // sets 2024's rate: $50
+  fm('preGt25', '2025', 7500, '2024-10-01'),           // before the GT guarantee
+  fm('gt25', '2025', 7500, '2025-01-15'),              // GT owed, none sold yet
+  fm('rel26', '2026', 8000, '2025-12-01'),             // released the whole fee
+  fm('gtOnly26', '2026', 8000, '2025-12-02'),          // 202718's shape
+  fm('plain26', '2026', 7500, '2025-12-03'),           // the custom
+  fm('part26', '2026', 7500, '2025-12-04'),            // released six of nine
+  fm('pooled26', '2026', 10250, '2025-12-05'),         // 20251's shape
+  fm('open26', '2026', 7500, '', { status: 'Open' }),
+  fm('trent26', '2026', 7500, '2025-12-06', { source: 'Trent' }),
+  fm('plain27', '2027', 7500, '2026-10-01'),           // no 2027 sales yet
+];
+const FI = [
+  item('rur24', 'token', 'Random Ultra Rare', 9, 450),
+  item('rel26', 'token', 'Random Ultra Rare', 9, 360),
+  item('gtOnly26', 'token', 'Golden Ticket', 1, 800),
+  item('gtOnly26', 'withheld', 'Random Ultra Rare', 9, -400),
+  item('part26', 'token', 'Random Ultra Rare', 6, 270),
+];
+const FS = [gtSale('rel26', '2026', 1000)];
+const FC = new Map([
+  ['rur24', ctx(450, 0, 0)],
+  ['rel26', ctx(1360, 0, 0)],
+  ['gtOnly26', ctx(800, 0, -400)],
+  ['part26', ctx(270, 0, 0)],
+]);
+
+const rates = feeRatesBySeason(FM, FI, FS);
+check('a Random UR rate is quantity-weighted over the season\'s lots ($630 / 15 = $42)',
+  near(rates.get('2026').rur.rate, 42) && rates.get('2026').rur.n === 2, JSON.stringify(rates.get('2026')));
+check('a Golden Ticket rate averages one price per auction, either feed ($1,000, $800)',
+  near(rates.get('2026').gt.rate, 900) && rates.get('2026').gt.n === 2);
+check('a season with no sales borrows the most recent EARLIER one',
+  rates.get('2027').rur.season === '2026' && rates.get('2025').rur.season === '2024');
+check('nothing is borrowed from a LATER season',
+  rates.get('2020').rur === null && rates.get('2025').gt === null);
+
+const full = fullOrderLedger(FM, FC, FI, FS);
+const fr = (id) => full.find((r) => r.auctionId === id);
+const fee26 = 9 * 42 + 900;
+
+check('the custom: +$500 offset less the whole fee ($378 + $900)',
+  near(fr('plain26').orderOffset, 500) && near(fr('plain26').feeKept.value, -fee26)
+  && near(fr('plain26').fullBalance, 500 - fee26), fr('plain26').fullBalance);
+check('the two lenses differ by $500 − fee value',
+  near(fr('plain26').fullBalance - fr('plain26').balance, 500 - fee26));
+check('a released fee is not debited, and an $8,000 goal offsets nothing',
+  near(fr('rel26').feeKept.value, 0) && near(fr('rel26').fullBalance, 1360));
+check('Random URs recorded WITHHELD are not debited twice',
+  fr('gtOnly26').feeKept.rurKept === 0 && near(fr('gtOnly26').fullBalance, 400));
+check('a partial release debits only what was kept (3 × $42 + GT)',
+  fr('part26').feeKept.rurKept === 3 && near(fr('part26').fullBalance, 270 + 500 - (126 + 900)));
+check('a borrowed rate prices the start of a season',
+  near(fr('plain27').feeKept.value, -fee26) && fr('plain27').feeKept.rur.season === '2026');
+check('no Golden Ticket is owed before its guarantee',
+  fr('preGt25').feeKept.gtKept === false && near(fr('preGt25').fullBalance, 500 - 450));
+check('a GT owed with no GT sale in or before its season ⇒ not computable',
+  fr('gt25').feeKept === null && fr('gt25').fullBalance === null);
+check('no Random UR sale in or before the season ⇒ not computable',
+  fr('kept20').feeKept === null && fullOrderBalanceOf(fr('kept20'), true, true) === null);
+check('a pooled auction has no single-order offset ⇒ not computable',
+  fr('pooled26').orderOffset === null && fr('pooled26').fullBalance === null);
+check('every CLOSED auction is listed, context or not, and no open one',
+  fr('plain26') && fr('trent26') && fr('open26') === undefined
+  && full.length === FM.filter((m) => m.status === 'Closed').length);
+
+check('Trent\'s points are 10% of the goal, and only at Trent',
+  near(trentSubsidyOf(FM.find((m) => m.auctionId === 'trent26')), 750)
+  && trentSubsidyOf(FM.find((m) => m.auctionId === 'plain26')) === 0);
+check('the points count only when asked',
+  near(fullOrderBalanceOf(fr('trent26'), false, false), 500 - fee26)
+  && near(fullOrderBalanceOf(fr('trent26'), false, true), 500 - fee26 + 750));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${pass} passed, ${fail} failed`);

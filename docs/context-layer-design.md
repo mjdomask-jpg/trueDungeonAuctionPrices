@@ -329,6 +329,18 @@ able to answer it — see item 5.
    **The verdict is only as good as the fee record.** An `$8,000` goal with no released
    fee reads as a $500 debit, and "no fee row" cannot tell *kept* from *released but not
    recorded*. The thread check that preceded the build found both: see `DATA-19`.
+
+   **The second lens: the full order (2026-10-15, `SITE-13`).** A *Measure against*
+   picker adds the other question, "who came out ahead in dollars?". It measures
+   against the `$8,000` order cost **and** debits the fee the auctioneer kept,
+   estimated at render time and never written as rows. The fee is nine Random Ultra
+   Rares plus, in the Golden Ticket era, one Golden Ticket, each at its season's
+   average sale. A season with no sales borrows the nearest **earlier** one; with
+   none earlier it reads *n/a* (2018–2020). Fee items released or recorded withheld
+   are already in their own columns, so they are not debited again. Every closed
+   auction is listed, since one that recorded nothing still kept a fee. Trent's
+   reward points can be counted as an augment here, opt-in and off by default; the
+   custom lens still never counts them.
 2. **How did Grunnel items contribute vs the preorder benchmark?** — per season, mean
    Grunnel item value vs mean **preorder** item value that season (the natural benchmark,
    since Grunnel offsets expired preorder bonuses). Phase-1 spot-check: preorder ≈ $2/yr
