@@ -38,6 +38,12 @@ export const ERAS = {
   orderCost: 8000,
   defaultTargetFunding: 7500,
 
+  // The Random Ultra Rares in an $8k order's fee — the guarantee. 2025's four
+  // released lots were sold as "Random URs (9-10)" and recorded as ten; nine is
+  // what an order promises, so the full-order lens prices nine (maintainer,
+  // 2026-10-15, backlog SITE-13).
+  feeRandomUltraRares: 9,
+
   // Withheld estimates average an item's sales from at most this many of the most
   // recent prior same-season auctions (by close date) in which it sold — so the
   // estimate reflects the item's value near when it was withheld, not stale early-

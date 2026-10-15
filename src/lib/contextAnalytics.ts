@@ -16,9 +16,9 @@
 // time otherwise).
 
 import { AUCTION_SOURCES, type AuctionMeta, type AuctionSource, type OrderVariant, type Sale } from './data';
-import type { ContextItem, AuctionContext } from './context';
+import { isGoldenTicket, isRandomUltraRare, type ContextItem, type AuctionContext } from './context';
 import { auctioneerKey, auctioneerLabels } from './analytics';
-import { ERAS } from './eras';
+import { ERAS, inGoldenTicketEra, trentRewardRate } from './eras';
 
 const mean = (xs: number[]): number | null =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
@@ -48,8 +48,8 @@ function bucket<K>(map: Map<K, number[]>, key: K, value: number): void {
 //
 // The baseline is the customary $7,500, not the $8,000 the order costs. $8,000
 // would credit every ordinary auction $500 for the discount that bought the fee
-// it kept — coherent only if the kept fee were debited at the same time, which
-// needs an estimate of the fee for every auction and is backlog SITE-13.
+// it kept — coherent only if the kept fee is debited at the same time. That is
+// the second lens, fullOrderLedger below (backlog SITE-13).
 
 export type LedgerRow = {
   auctionId: string;
@@ -126,33 +126,42 @@ export function auctionLedger(
   meta: AuctionMeta[], ctx: Map<string, AuctionContext>,
 ): LedgerRow[] {
   const labels = auctioneerLabels(meta);
-  const none = { released: 0, augment: 0, grunnel: 0, withheld: 0 };
   const rows: LedgerRow[] = [];
   for (const m of meta) {
-    const goalOffset = goalOffsetOf(m.targetFunding);
     const c = ctx.get(m.auctionId);
-    if (!c && !(m.status === 'Closed' && goalOffset)) continue;
-    const { released, augment, grunnel, withheld } = c ?? none;
-    const balance = balanceOf(released, augment, withheld, goalOffset);
-    rows.push({
-      auctionId: m.auctionId,
-      season: m.season,
-      auctionNumber: m.auctionNumber,
-      name: m.name,
-      auctioneer: labels.get(auctioneerKey(m.auctioneer)) ?? m.auctioneer,
-      source: m.source,
-      withheld,
-      released,
-      augment,
-      grunnel,
-      fundingGoal: m.targetFunding,
-      goalOffset,
-      balance,
-      covered: isCovered(balance),
-    });
+    if (!c && !(m.status === 'Closed' && goalOffsetOf(m.targetFunding))) continue;
+    rows.push(ledgerRowOf(m, c, labels));
   }
-  return rows.sort((a, b) =>
-    Number(b.season) - Number(a.season) || b.auctionNumber - a.auctionNumber);
+  return rows.sort(newestFirst);
+}
+
+const NO_CONTEXT = { released: 0, augment: 0, grunnel: 0, withheld: 0 };
+
+const newestFirst = (a: LedgerRow, b: LedgerRow) =>
+  Number(b.season) - Number(a.season) || b.auctionNumber - a.auctionNumber;
+
+function ledgerRowOf(
+  m: AuctionMeta, c: AuctionContext | undefined, labels: Map<string, string>,
+): LedgerRow {
+  const goalOffset = goalOffsetOf(m.targetFunding);
+  const { released, augment, grunnel, withheld } = c ?? NO_CONTEXT;
+  const balance = balanceOf(released, augment, withheld, goalOffset);
+  return {
+    auctionId: m.auctionId,
+    season: m.season,
+    auctionNumber: m.auctionNumber,
+    name: m.name,
+    auctioneer: labels.get(auctioneerKey(m.auctioneer)) ?? m.auctioneer,
+    source: m.source,
+    withheld,
+    released,
+    augment,
+    grunnel,
+    fundingGoal: m.targetFunding,
+    goalOffset,
+    balance,
+    covered: isCovered(balance),
+  };
 }
 
 export type LedgerAgg = {
@@ -191,6 +200,204 @@ export function ledgerByAuctioneer(rows: LedgerRow[]): LedgerAgg[] {
 }
 
 export const ledgerOverall = (rows: LedgerRow[]): LedgerAgg => aggregate('Overall', rows);
+
+// --- View 1, second lens: the full order (backlog SITE-13) -----------------
+// The custom lens above asks "did this auctioneer depart from custom?", so an
+// auction that kept its fee at a $7,500 goal reads $0 whatever the fee was
+// worth. This lens asks the other question community feedback raised — "who came
+// out ahead in dollars?" — and so measures against the order's real cost,
+// $8,000, AND debits the fee the auctioneer kept. Releasing the fee is then just
+// the absence of a debit. The two lenses differ by `$500 − fee value`, which is
+// why this is a second lens and never a bare "$7,500 / $8,000" baseline switch:
+// $8,000 without the debit credits every ordinary auction $500 for the discount
+// that bought the fee it kept.
+//
+// THE KEPT FEE IS ESTIMATED, NEVER RECORDED. Writing it as withheld rows would
+// put one on nearly every auction and break the rule that withheld means an
+// exception (the maintainer's objection, 2026-09-24). It is derived here, per
+// render, and the view labels it an estimate.
+//
+// The estimate, as settled by the maintainer 2026-10-15:
+//   - the fee is NINE Random Ultra Rares — the guarantee — plus, in the Golden
+//     Ticket era, one Golden Ticket;
+//   - each is priced at its SEASON's rate, from the sales of that season;
+//   - a season with no sales yet (the start of one) borrows the most recent
+//     EARLIER season that has them — never a later one, so a season before any
+//     Random Ultra Rare sold (2018–2020) is NOT COMPUTABLE rather than priced
+//     at a later rate;
+//   - a thin season (one Golden Ticket sale) is used as it stands: the trend is
+//     toward more auctions including the fee, so it fills in.
+//
+// What the auction released, or recorded as withheld, is not kept fee: the first
+// is already credited as Included and the second already debited as Withheld, so
+// counting either again would count it twice.
+
+// One fee component's price for a season, and where it came from. `season` is
+// the season whose sales set the rate, which differs from the season it prices
+// when the rate was borrowed; `n` is how many sales (Random UR: lots) it averages.
+export type FeeRate = { rate: number; n: number; season: string };
+export type SeasonFeeRates = { rur: FeeRate | null; gt: FeeRate | null };
+
+export function feeRatesBySeason(
+  meta: AuctionMeta[], items: ContextItem[], sales: Sale[],
+): Map<string, SeasonFeeRates> {
+  const seasonOf = new Map(meta.map((m) => [m.auctionId, m.season]));
+  // Random UR: quantity-weighted, off the released context rows, because those
+  // carry the lot TOTAL and the count — a price row is a per-token rate with no
+  // quantity (see rollupByAuction).
+  const rur = new Map<string, { value: number; qty: number; n: number }>();
+  // Golden Ticket: one per auction, context row first, as rollupByAuction does.
+  const gtByAuction = new Map<string, number>();
+  for (const it of items) {
+    if (it.provenance !== 'released-payment') continue;
+    const season = seasonOf.get(it.auctionId);
+    if (!season) continue;
+    if (isRandomUltraRare(it.name) && it.quantity > 0) {
+      const e = rur.get(season) ?? { value: 0, qty: 0, n: 0 };
+      e.value += it.value; e.qty += it.quantity; e.n++;
+      rur.set(season, e);
+    } else if (isGoldenTicket(it.name)) gtByAuction.set(it.auctionId, it.value);
+  }
+  for (const s of sales) {
+    if (!isGoldenTicket(s.displayName) && !isGoldenTicket(s.item)) continue;
+    if (!gtByAuction.has(s.auctionId)) gtByAuction.set(s.auctionId, s.price);
+  }
+  const gt = new Map<string, number[]>();
+  for (const [auctionId, price] of gtByAuction) {
+    const season = seasonOf.get(auctionId);
+    if (season) bucket(gt, season, price);
+  }
+
+  const own = new Map<string, SeasonFeeRates>();
+  for (const [season, e] of rur) {
+    own.set(season, { rur: { rate: e.value / e.qty, n: e.n, season }, gt: null });
+  }
+  for (const [season, prices] of gt) {
+    const r = own.get(season) ?? { rur: null, gt: null };
+    r.gt = { rate: mean(prices)!, n: prices.length, season };
+    own.set(season, r);
+  }
+
+  // Every season the metadata knows, oldest first, each falling back to the
+  // nearest earlier season with sales of that component.
+  const seasons = [...new Set(meta.map((m) => m.season))].sort((a, b) => Number(a) - Number(b));
+  const out = new Map<string, SeasonFeeRates>();
+  let lastRur: FeeRate | null = null, lastGt: FeeRate | null = null;
+  for (const season of seasons) {
+    const o = own.get(season);
+    if (o?.rur) lastRur = o.rur;
+    if (o?.gt) lastGt = o.gt;
+    out.set(season, { rur: lastRur, gt: lastGt });
+  }
+  return out;
+}
+
+// What one auction kept of its fee, estimated. `value` is ≤ 0, like withheld.
+export type FeeKept = {
+  value: number;
+  rurKept: number;      // Random Ultra Rares neither released nor recorded withheld
+  gtKept: boolean;      // a Golden Ticket was owed and neither released nor withheld
+  rur: FeeRate | null;  // the rates used — null when that part was not needed
+  gt: FeeRate | null;
+};
+
+// The Trent reward points counted as a subsidy, on request. The custom lens
+// never counts them, and the reason still holds: they are a PRICE term (bidders
+// price the points into their bids — the same tokens sell 6–15% higher at Trent),
+// not a FUNDING term. But "who came out ahead in dollars" is the question some
+// readers will insist the points belong in, so this lens offers them as an
+// opt-in augment, off by default. Points are earned on what bidders spend, and
+// what they spend is the goal — the ≥$750 an auction the declined proposal was
+// sized at (backlog § Dropped).
+export function trentSubsidyOf(m: AuctionMeta): number {
+  if (m.source !== 'Trent' || m.targetFunding == null) return 0;
+  return trentRewardRate(m.auctionId) * m.targetFunding;
+}
+
+export type FullOrderRow = LedgerRow & {
+  // The order cost minus this auction's goal: $0 for $8,000, +$500 for $7,500.
+  // null for a goal above the order cost — a pooled auction for several orders
+  // has more than one fee, and this lens prices one.
+  orderOffset: number | null;
+  // null when NOT COMPUTABLE: a fee component was kept and no sale of it exists
+  // in this season or any earlier one, or the goal is not a single order's.
+  feeKept: FeeKept | null;
+  // Trent's reward points at this auction (0 elsewhere). Counted only when the
+  // view asks — see fullOrderBalanceOf.
+  trentSubsidy: number;
+  // released + augment + withheld + orderOffset + feeKept.value, Grunnel and the
+  // subsidy excluded. null when the fee is not computable.
+  fullBalance: number | null;
+};
+
+export function feeKeptOf(
+  m: AuctionMeta,
+  counts: { rurReleased: number; rurWithheld: number; gtReleased: boolean; gtWithheld: boolean },
+  rates: SeasonFeeRates | undefined,
+): FeeKept | null {
+  const rurKept = Math.max(0, ERAS.feeRandomUltraRares - counts.rurReleased - counts.rurWithheld);
+  const gtKept = inGoldenTicketEra(m.closeDate) && !counts.gtReleased && !counts.gtWithheld;
+  const rur = rurKept > 0 ? rates?.rur ?? null : null;
+  const gt = gtKept ? rates?.gt ?? null : null;
+  if ((rurKept > 0 && !rur) || (gtKept && !gt)) return null;
+  const value = -((rur ? rurKept * rur.rate : 0) + (gt ? gt.rate : 0));
+  return { value: value || 0, rurKept, gtKept, rur, gt };
+}
+
+// Every CLOSED auction, not just those with context: under this lens an auction
+// that recorded nothing still kept a fee, so leaving it out would show only the
+// auctions that did something unusual and flatter every auctioneer's total.
+export function fullOrderLedger(
+  meta: AuctionMeta[], ctx: Map<string, AuctionContext>, items: ContextItem[], sales: Sale[],
+): FullOrderRow[] {
+  const labels = auctioneerLabels(meta);
+  const rates = feeRatesBySeason(meta, items, sales);
+  const counts = new Map<string, { rurReleased: number; rurWithheld: number; gtReleased: boolean; gtWithheld: boolean }>();
+  const countsOf = (id: string) => {
+    const found = counts.get(id);
+    if (found) return found;
+    const made = { rurReleased: 0, rurWithheld: 0, gtReleased: false, gtWithheld: false };
+    counts.set(id, made);
+    return made;
+  };
+  for (const it of items) {
+    const released = it.provenance === 'released-payment';
+    const withheld = it.provenance === 'withheld';
+    if (!released && !withheld) continue;
+    const c = countsOf(it.auctionId);
+    if (isRandomUltraRare(it.name)) {
+      if (released) c.rurReleased += it.quantity; else c.rurWithheld += it.quantity;
+    } else if (isGoldenTicket(it.name)) {
+      if (released) c.gtReleased = true; else c.gtWithheld = true;
+    }
+  }
+  for (const s of sales) {
+    if (isGoldenTicket(s.displayName) || isGoldenTicket(s.item)) countsOf(s.auctionId).gtReleased = true;
+  }
+  const none = { rurReleased: 0, rurWithheld: 0, gtReleased: false, gtWithheld: false };
+
+  const rows: FullOrderRow[] = [];
+  for (const m of meta) {
+    if (m.status !== 'Closed') continue;
+    const base = ledgerRowOf(m, ctx.get(m.auctionId), labels);
+    const single = m.targetFunding != null && m.targetFunding <= ERAS.orderCost;
+    const orderOffset = single ? ERAS.orderCost - m.targetFunding! : null;
+    const feeKept = single ? feeKeptOf(m, counts.get(m.auctionId) ?? none, rates.get(m.season)) : null;
+    const fullBalance = orderOffset != null && feeKept
+      ? base.released + base.augment + base.withheld + orderOffset + feeKept.value
+      : null;
+    rows.push({ ...base, orderOffset, feeKept, trentSubsidy: trentSubsidyOf(m), fullBalance });
+  }
+  return rows.sort(newestFirst);
+}
+
+// The balance a reader sees under this lens, given the two opt-ins.
+export function fullOrderBalanceOf(
+  r: FullOrderRow, includeGrunnel: boolean, includeTrentSubsidy: boolean,
+): number | null {
+  if (r.fullBalance == null) return null;
+  return r.fullBalance + (includeGrunnel ? r.grunnel : 0) + (includeTrentSubsidy ? r.trentSubsidy : 0);
+}
 
 // --- View 2: Grunnel per auction vs the preorder benchmark -----------------
 // Grunnel drops offset expired preorder bonuses, so the question is whether a

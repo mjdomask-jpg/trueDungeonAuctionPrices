@@ -380,7 +380,13 @@ into the four analyses on the Analytics page's **Funding & Context** view
   target — or a pooled one above the order cost — contributes a **$0** offset, never
   the assumed default, so coverage is never fabricated. A closed auction with no
   context rows is listed when its goal alone moves the balance. Aggregated per
-  auctioneer and overall.
+  auctioneer and overall. A second lens, **full order** (`fullOrderLedger`,
+  `SITE-13`), measures every closed auction against `orderCost` and debits the
+  kept fee: (`feeRandomUltraRares` − released − withheld) × the season's Random UR
+  rate (`feeRatesBySeason`: quantity-weighted over released context rows) + the
+  season's mean Golden Ticket when one was owed and not released. A season with no
+  sales borrows the nearest earlier one; otherwise it is *n/a*. Trent's reward
+  points (`trentSubsidyOf`, rate × goal) are an opt-in augment under that lens only.
 - **Grunnel vs preorder** (`grunnelVsPreorder`) — mean Grunnel item value vs mean
   `Preorder`-category sale price, per season.
 - **Augmented vs non-augmented** (`augmentedVsNot`) — within one season, each
