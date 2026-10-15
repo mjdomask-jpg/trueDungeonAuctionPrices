@@ -706,6 +706,85 @@ console.log("\nThe auctioneer's fee (never a withheld row)\n");
 }
 
 // ===========================================================================
+// 6c-ii. The fee is the fee only when the auctioneer KEPT it
+// ===========================================================================
+// Until 2026-10-13 every withheld Random UR was dropped as the fee. 202718
+// (Mike Steele, $8,000 goal, the GT SOLD) proved that wrong: the fee had been
+// released, so its nine withheld Random URs were genuinely withheld and the
+// maintainer added them by hand. The goal and the fee are one trade — kept at
+// $7,500, released at $8,000 — and a sold GT outranks the goal.
+//
+// Every goal here is CONSTRUCTED. A shipped `targetFunding` is a cell a
+// legitimate publish can change.
+console.log('\nKept or released: what decides the fee\n');
+{
+  const goalPlan = (rows, goal, style = 'Onyx Ultra Condensed') =>
+    A.alesievPlanImport(staged(rows), SEASON, TOKENS, false, style, undefined, undefined, goal);
+  const NINE = Array.from({ length: 9 }, (_, i) => [`Random Ultra Rare (${i + 1} of 9)`, 'Withheld', '']);
+  const withheldRUR = (p) => p.context.filter((r) => r.category === 'withheld' && r.Item === 'Random Ultra Rare');
+  const feeNote = (p) => (p.cautions || []).find((c) => /auctioneer's fee/.test(c)) || '';
+  const releasedNote = (p) => (p.cautions || []).find((c) => /written as WITHHELD/.test(c)) || '';
+
+  // KEPT — the customary goal, 20275's lower one, and a blank cell.
+  for (const [label, goal, why] of [
+    ['the customary $7,500 goal', '$7,500.00', /goal is \$7500/],
+    ["a goal below it (20275's $6,750)", '$6,750.00', /goal is \$6750/],
+    ['a goal one cent short of $8,000', '$7,999.99', /goal is \$7999\.99/],
+    ['a BLANK goal', '', /NO targetFunding/],
+  ]) {
+    const p = goalPlan([...NINE, ['Golden Ticket', 'Withheld', ''], ['Bead of Asgard', 'Withheld', '']], goal);
+    check(`${label}: the plan is clean`, p.ok, (p.aborts || []).join('\n'));
+    eq(`  ... the fee is dropped`, p.fee.length, 10);
+    eq(`  ... and no Random UR or GT is written`, p.context.filter((r) => /Random|Golden/.test(r.Item)).length, 0);
+    check(`  ... and the caution says why`, why.test(feeNote(p)), feeNote(p));
+  }
+
+  // RELEASED by the goal — 202718's shape, minus its sold GT.
+  for (const [label, goal] of [['an $8,000 goal', '$8,000.00'], ['a goal passed as the number 8000', 8000], ['a goal above $8,000', '$8,500.00']]) {
+    const p = goalPlan([...NINE, ['Golden Ticket', 'Withheld', ''], ['Bead of Asgard', 'Withheld', '']], goal);
+    check(`${label}: the plan is clean`, p.ok, (p.aborts || []).join('\n'));
+    eq('  ... nothing is dropped as the fee', p.fee.length, 0);
+    eq('  ... the nine Random URs are ONE withheld row', withheldRUR(p).length, 1);
+    eq('  ... of quantity nine', Number((withheldRUR(p)[0] || {}).quantity), 9);
+    eq('  ... with no price, for the sheet to estimate', (withheldRUR(p)[0] || {}).price, '');
+    check('  ... and the withheld GT is written too',
+      p.context.some((r) => r.category === 'withheld' && r.Item === 'Golden Ticket'), JSON.stringify(p.context));
+    check('  ... named in a caution that says why',
+      /goal is \$8/.test(releasedNote(p)) && /Random Ultra Rare \(9 of 9\)/.test(releasedNote(p)), releasedNote(p));
+  }
+
+  // RELEASED by a sold GT, whatever the goal says.
+  const soldGT = goalPlan([...NINE, ['Golden Ticket', 'Golden Ticket', '952']], '$7,500.00');
+  check('a SOLD Golden Ticket under a $7,500 goal: the plan is clean', soldGT.ok, (soldGT.aborts || []).join('\n'));
+  eq('  ... nothing is dropped as the fee', soldGT.fee.length, 0);
+  eq('  ... the Random URs are withheld', Number((withheldRUR(soldGT)[0] || {}).quantity), 9);
+  check('  ... the caution names the sold GT as the reason',
+    /Golden Ticket SOLD/.test(releasedNote(soldGT)), releasedNote(soldGT));
+  check('  ... and the GT itself is still a price', soldGT.prices.some((r) => r.Item === 'Golden Ticket'),
+    JSON.stringify(soldGT.prices));
+  eq('a sold GT outranks a blank goal too',
+    goalPlan([...NINE, ['Golden Ticket', 'Golden Ticket', '952']], '').fee.length, 0);
+
+  // Outside an Onyx auction there is no "accept as it stands" step, so a
+  // released Random UR must resolve through the context rule or abort.
+  const plain = goalPlan(NINE, '$8,000.00', 'Trade 2 Ultra Condensed');
+  check('released in a NON-Onyx auction, the Random URs still resolve', plain.ok, (plain.aborts || []).join('\n'));
+  eq('  ... to the corpus spelling', (withheldRUR(plain)[0] || {}).Item, 'Random Ultra Rare');
+
+  // Nothing to decide, nothing said.
+  const none = goalPlan([['Bead of Asgard', 'Withheld', '']], '$8,000.00');
+  eq('a file with no fee candidates raises neither fee caution', feeNote(none) + releasedNote(none), '');
+
+  // The GT list is a subset of the fee list: a sold GT is evidence about the
+  // FEE, so a spelling the fee rule does not know is not evidence either.
+  eq('every Golden Ticket name is also a fee name',
+    Object.keys(A.ALESIEV_GT_NAMES).filter((k) => A.ALESIEV_FEE_NAMES[k] !== true).join(', '), '');
+  eq('a sold Random UR is not a sold GT',
+    A.alesievFeeVerdict([{ name: 'Random Ultra Rare', rawName: 'Random Ultra Rare' }], '').released, false);
+  eq('a goal that is not a number reads as blank', A.alesievGoalAmount('TBD'), null);
+}
+
+// ===========================================================================
 // 6d. The export carries no auction id, so the wrong one gets imported
 // ===========================================================================
 // THIS HAPPENED, on 2026-09-22, and only because it was a dry run did it not
@@ -1148,7 +1227,11 @@ console.log('\nThe site API — final bids\n');
   eq('the fixture\'s auction is recorded, with the site id in its Link',
     target && sandbox.openAlesievId(target.Link), '39');
   eq('the site\'s closedAt is the closeDate 20275 records', read.closeDate, target.closeDate);
-  const p = A.alesievPlanImport(read.grid, target.auctionSeason, TOKENS, false, target.auctionStyle, PRICES, target.auctionId);
+  // 20275 was run at a $6,750 goal with the GT withheld, so the fee was KEPT.
+  // Constructed rather than read off auctionMetadata: a goal is a cell a
+  // publish can change, and this replay is about the file, not the cell.
+  const p = A.alesievPlanImport(read.grid, target.auctionSeason, TOKENS, false, target.auctionStyle, PRICES,
+    target.auctionId, '$6,750.00');
   check('the plan for 20275 is clean', p.ok, p.aborts.join('\n'));
 
   const money = (s) => Number(String(s).replace(/[$,\s]/g, ''));

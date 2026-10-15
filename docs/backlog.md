@@ -107,6 +107,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
 | **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, deferred |
 | **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
+| **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
 
 ---
 
@@ -2630,3 +2631,43 @@ latest at the end of season 2027. Count them with the Link:
 doing then, it is the SITE-11 pattern: the `AuctionSource` union, its display
 order and label, `deriveSource`, `eras.ts`, and the comments that enumerate
 venues.
+
+---
+
+## PIPE-16. The alesiev close dropped a released fee's withheld Random URs — RESOLVED 2026-10-13 (script side)
+
+**Found** importing `202718` (Mike Steele, $8,000 goal, Onyx Option B). The
+site listed nine Random Ultra Rares as `Withheld`; the close dropped all nine
+as the auctioneer's fee (`PIPE-11`) and named them in a caution, and the
+maintainer added `202718,2027,18,withheld,Random Ultra Rare,9,` by hand (#317).
+
+**Why.** `ALESIEV_FEE_NAMES` was built from ONE file, `20275` (Kusig, $6,750
+goal, the GT withheld too), and it read every withheld Random UR or GT as the
+fee by NAME alone. But the goal and the fee are one trade — the auctioneer
+keeps the fee at the customary $7,500 and releases it at $8,000 (16/16 GT
+releases measured for the ledger's goal offset, `SITE-13`). `202718` had an
+$8,000 goal and SOLD its Golden Ticket for $952: the fee was released, so
+the Random URs still kept back were genuinely withheld.
+
+**The rule, confirmed with the maintainer 2026-10-13**, checked in this order:
+
+| Signal | A withheld Random UR / GT is |
+|---|---|
+| A Golden Ticket among the **sold** lots | withheld — written to `contextItems` |
+| Goal **$8,000 or more** | withheld — written to `contextItems` |
+| Goal under $8,000 (`20275`'s $6,750 included), or **blank** | the fee — dropped, named in a caution |
+
+A blank goal falls to "kept" because that is the earlier behaviour and its
+lots are still named; the caution says nothing decided it. Every outcome
+names its lots and the reason, so a wrong reading shows in the dialog.
+`alesievPlanImport` now takes `targetFunding`; `test:alesiev` § *Kept or
+released* covers all three rows, and the `20275` replay passes its goal.
+
+**Limit.** The script sees only lots the site lists. A kept-back Random UR
+the auctioneer never put on the site cannot be caught by any rule here.
+
+**Open — `20274`.** Mike Steele again, "Option B with GT", $8,000 goal, GT
+sold at $1,251 — the same shape — and it records a withheld
+`Chosen Ultra Rare` x10 but no Random UR row at all. If the site listed
+withheld Random URs for site auction 37, they were dropped the same way. The
+count is on the site; the API token is not available outside Apps Script.

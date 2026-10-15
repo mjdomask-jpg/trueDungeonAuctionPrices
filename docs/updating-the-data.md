@@ -971,10 +971,29 @@ overstates the withheld block and every funding rollup above it.
 It is not a rare edge: on `20275`, the first real file, **10 of the 11 withheld
 rows were the fee** — nine Random Ultra Rares and a Golden Ticket.
 
+**But only when the auctioneer KEPT the fee** (since script `2026-10-13.1`,
+`PIPE-16`). The goal and the fee are one trade: keep it at the customary
+$7,500, release it at $8,000. A withheld Random UR in an auction that released
+the fee is not the fee; it was kept back from the group, and it is written as
+`withheld` like any other token. The import decides from two things, in this
+order:
+
+1. **A Golden Ticket SOLD** in this auction: the fee was released.
+2. **`targetFunding` of $8,000 or more**: the fee was released.
+3. Otherwise the fee was kept, and the lots are dropped. **A blank goal lands
+   here too**, so fill in `targetFunding` before running the close.
+
+`202718` is the case that found it: an $8,000 goal and a GT sold at $952, and
+its nine withheld Random URs had to be added by hand. Either way the CAUTION
+block names the lots and gives the reason.
+
 > **The dropped lots are named one by one in the CAUTION block, not counted.**
 > This is the only thing the import throws away on purpose, and a row discarded
 > in silence is a row nobody can check. **Read that list.** If something in it
-> is genuinely withheld, add the row by hand — the script will not.
+> is genuinely withheld, add the row by hand — the script will not. When the
+> fee was released, the same lots appear in a second caution saying they were
+> written AS withheld; if the auctioneer really did keep them, delete those
+> rows.
 
 The list of fee names is deliberately short, and it is the one rule in this
 importer that leans *tight* rather than loose. Every other name rule routes a
