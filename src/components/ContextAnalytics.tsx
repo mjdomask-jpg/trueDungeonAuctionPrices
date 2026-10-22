@@ -6,10 +6,12 @@ import {
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
   auctionLedger, ledgerBalanceOf, isCovered,
+  fullOrderLedger, fullOrderBalanceOf, feeRatesBySeason,
   grunnelPerAuction, augmentedVsNot,
   venueOverlapSeasons, venueComparisonSeason,
   orderVariantSeasons, standardVsTradeTwo,
   type LedgerRow, type GrunnelAuctionRow,
+  type FullOrderRow, type FeeKept, type FeeRate, type SeasonFeeRates,
 } from '../lib/contextAnalytics';
 import { ERAS, groupLabel, comparisonIncrement } from '../lib/eras';
 import { money, money0, moneyTight } from '../lib/format';
@@ -71,7 +73,7 @@ export function ContextAnalytics({
       )}
 
       {hasContext && analysis === 'ledger' && (
-        <LedgerView meta={meta} auctionContext={auctionContext} />
+        <LedgerView meta={meta} auctionContext={auctionContext} contextItems={contextItems} sales={sales} />
       )}
       {hasContext && analysis === 'grunnel' && (
         <GrunnelView meta={meta} sales={sales} contextItems={contextItems} />
@@ -161,17 +163,101 @@ function coveredBadge(covered: boolean) {
   );
 }
 
+// --- The full-order lens (backlog SITE-13) ---------------------------------
+// Its own explanations, because every term the custom lens explains means
+// something different here: the offset is measured from $8,000, and there is a
+// debit the custom lens does not have.
+
+type Lens = 'custom' | 'full';
+
+function FullGoalOffsetHelp() {
+  const cost = money0(ERAS.orderCost);
+  return (
+    <HintPopover label="What the goal offset means here">
+      How far the funding goal sat below the order's real cost, <strong>{cost}</strong> — the part
+      of the order the auctioneer paid for themselves. A {money0(ERAS.defaultTargetFunding)} goal is
+      {' '}+{money0(ERAS.orderCost - ERAS.defaultTargetFunding)}; a {cost} goal is nothing. <em>n/a</em>
+      {' '}means a pooled auction for more than one order, which has more than one fee.
+    </HintPopover>
+  );
+}
+
+function FeeKeptHelp() {
+  return (
+    <HintPopover label="How the kept fee is estimated">
+      The fee every {money0(ERAS.orderCost)} order carries — <strong>{ERAS.feeRandomUltraRares} Random
+      Ultra Rares</strong>, the guaranteed count, and from the {ERAS.goldenTicketFeeSeason} season a{' '}
+      <strong>Golden Ticket</strong> — less whatever the auction sold (counted as Included) or recorded
+      as withheld (counted as Withheld). Each is priced at its <strong>season's</strong> average sale.
+      A season with no sales yet borrows the most recent earlier season that has them; a season with
+      none before it at all is <em>n/a</em>, rather than priced at a later season's rate. It is an
+      estimate: nothing records what a kept fee was worth.
+    </HintPopover>
+  );
+}
+
+function FullBalanceHelp() {
+  return (
+    <HintPopover label="How Balance is calculated here">
+      Included + augments − withheld + goal offset − kept fee. This asks <strong>who came out ahead
+      in dollars</strong>: below zero, the auctioneer took more out of the order than they put in.
+      The custom lens asks a different question — whether the auctioneer departed from custom — and
+      reads an auction that kept its fee at a {money0(ERAS.defaultTargetFunding)} goal as $0. Grunnel
+      is left out unless <em>Include Grunnel</em> is ticked, for the same reason as in the custom lens.
+    </HintPopover>
+  );
+}
+
+function TrentSubsidyHelp() {
+  return (
+    <HintPopover label="About Trent's reward points">
+      Trent gives bidders {REWARD_PCT}% back in store points. Ticking this counts those points as an
+      <strong> augment</strong> on every Trent auction — {REWARD_PCT}% of its funding goal — as if Trent
+      had added that value to the order. <strong>It is off by default because the prices say bidders
+      pay for it</strong>: the same tokens sell 6–15% higher at Trent than on the forum in every season
+      measured, so the points are mostly returned to bidders out of their own bids. The{' '}
+      <em>Reward-adjusted</em> setting on the price pages shows them that way, as a discount.
+    </HintPopover>
+  );
+}
+
+// "Priced at …" — the rates behind a season's estimates, said once above the
+// table rather than in every row, and saying where a borrowed rate came from.
+function FeeRateLine({ season, rates }: { season: string; rates: SeasonFeeRates | undefined }) {
+  const from = (r: FeeRate, unit: string) =>
+    r.season === season
+      ? `${season}, ${r.n} ${unit}${r.n === 1 ? '' : 's'}`
+      : `from ${r.season} — none sold in ${season}`;
+  if (!rates?.rur) {
+    return (
+      <p className="an-note">
+        No Random Ultra Rare sold in or before {season}, so a kept fee cannot be estimated here — an
+        auction reads <em>n/a</em> unless it released its whole fee.
+      </p>
+    );
+  }
+  return (
+    <p className="an-note">
+      Kept fee priced at {ERAS.feeRandomUltraRares} × {money(rates.rur.rate)} a Random Ultra Rare
+      ({from(rates.rur, 'lot')})
+      {rates.gt && <> + {money0(rates.gt.rate)} a Golden Ticket ({from(rates.gt, 'sale')})</>}.
+    </p>
+  );
+}
+
 // One auction as a stacked card (mobile) — the wide ledger table can't fit a
 // phone, so each auction's figures sit in a small card instead of a scrolling row.
-function LedgerCard({ r, includeGrunnel }: { r: LedgerRow; includeGrunnel: boolean }) {
+function LedgerCard({ r, full, includeGrunnel, includeTrent }: {
+  r: LedgerRow; full: FullOrderRow | null; includeGrunnel: boolean; includeTrent: boolean;
+}) {
   const fig = (label: ReactNode, val: string, cls = '') => (
     <div className="led-fig">
       <span className="led-fig-label">{label}</span>
       <span className={`led-fig-val ${cls}`}>{val}</span>
     </div>
   );
-  const balance = ledgerBalanceOf(r, includeGrunnel);
-  const covered = isCovered(balance);
+  const balance = full ? fullOrderBalanceOf(full, includeGrunnel, includeTrent) : ledgerBalanceOf(r, includeGrunnel);
+  const augment = r.augment + (full && includeTrent ? full.trentSubsidy : 0);
   return (
     <div className="led-card">
       <div className="led-card-head">
@@ -180,37 +266,67 @@ function LedgerCard({ r, includeGrunnel }: { r: LedgerRow; includeGrunnel: boole
       </div>
       <div className="led-figs">
         {fig('Funding goal', r.fundingGoal == null ? 'n/a' : money0(r.fundingGoal))}
-        {fig(<>Goal offset <GoalOffsetHelp /></>, offsetText(r.goalOffset),
-          r.goalOffset == null ? 'muted' : r.goalOffset < 0 ? 'neg' : '')}
+        {full
+          ? fig(<>Goal offset <FullGoalOffsetHelp /></>, offsetText(full.orderOffset),
+            full.orderOffset == null ? 'muted' : '')
+          : fig(<>Goal offset <GoalOffsetHelp /></>, offsetText(r.goalOffset),
+            r.goalOffset == null ? 'muted' : r.goalOffset < 0 ? 'neg' : '')}
+        {full && fig(<>Kept fee <FeeKeptHelp /></>, feeKeptText(full.feeKept),
+          full.feeKept == null ? 'muted' : 'neg')}
         {fig('Withheld', r.withheld ? money0(r.withheld) : '—', 'neg')}
         {fig(<>Included <IncludedHelp /></>, r.released ? money0(r.released) : '—')}
-        {fig('Augments', r.augment ? money0(r.augment) : '—')}
+        {fig(full && includeTrent && full.trentSubsidy ? 'Augments (incl. points)' : 'Augments',
+          augment ? money0(augment) : '—')}
         {/* Not muted while it is IN the balance — a figure doing arithmetic
             should not look like a footnote. */}
         {fig('Grunnel', r.grunnel ? money0(r.grunnel) : '—', includeGrunnel ? '' : 'muted')}
       </div>
       <div className="led-balance-row">
-        <span className="led-fig-label">Balance <BalanceHelp /></span>
-        {/* up=red, down=green in this theme; a covered (≥0) balance reads green. */}
-        <span className={`led-balance-val diff ${balance >= 0 ? 'down' : 'up'}`}>{money0(balance)}</span>
-        {coveredBadge(covered)}
+        <span className="led-fig-label">Balance {full ? <FullBalanceHelp /> : <BalanceHelp />}</span>
+        {balance == null ? (
+          <span className="led-balance-val muted">n/a</span>
+        ) : (
+          <>
+            {/* up=red, down=green in this theme; a covered (≥0) balance reads green. */}
+            <span className={`led-balance-val diff ${balance >= 0 ? 'down' : 'up'}`}>{money0(balance)}</span>
+            {coveredBadge(isCovered(balance))}
+          </>
+        )}
       </div>
     </div>
   );
 }
 
+const feeKeptText = (f: FeeKept | null) => (f == null ? 'n/a' : f.value ? money0(f.value) : '—');
+
 function LedgerView({
-  meta, auctionContext,
+  meta, auctionContext, contextItems, sales,
 }: {
   meta: AuctionMeta[];
   auctionContext: Map<string, AuctionContext>;
+  contextItems: ContextItem[];
+  sales: Sale[];
 }) {
   const narrow = useMediaQuery(NARROW);
   // Off by default: the Grunnel-excluded balance is the one that answers "would
   // this have worked without the company's help", which is the question this
   // table gets asked. See ledgerBalanceOf.
   const [includeGrunnel, setIncludeGrunnel] = useState(false);
-  const rows = useMemo(() => auctionLedger(meta, auctionContext), [meta, auctionContext]);
+  // The custom lens is the default: it is the settled answer to the question
+  // the ledger was built for. The full-order lens is the other question.
+  const [lens, setLens] = useState<Lens>('custom');
+  // Off by default, and offered only under the full-order lens — see
+  // trentSubsidyOf for why the custom lens never counts the points.
+  const [includeTrent, setIncludeTrent] = useState(false);
+  const full = lens === 'full';
+  const customRows = useMemo(() => auctionLedger(meta, auctionContext), [meta, auctionContext]);
+  const fullRows = useMemo(
+    () => fullOrderLedger(meta, auctionContext, contextItems, sales),
+    [meta, auctionContext, contextItems, sales],
+  );
+  const feeRates = useMemo(() => feeRatesBySeason(meta, contextItems, sales), [meta, contextItems, sales]);
+  const rows: LedgerRow[] = full ? fullRows : customRows;
+  const fullOf = (r: LedgerRow): FullOrderRow | null => (full ? (r as FullOrderRow) : null);
   // Grouped by season (newest first — rows are sorted season-desc). A season
   // selector shows one year at a time: the ledger is per-auction bookkeeping with
   // no cross-year story, so stacking every season just made a 40+ row page.
@@ -232,7 +348,19 @@ function LedgerView({
     <section className="an-panel">
       <h2>Auction ledger — did augments cover withholdings?</h2>
       <p className="an-lede">
-        {narrow ? (
+        {full ? (narrow ? (
+          <>Per auction, against the order's real cost of {money0(ERAS.orderCost)}: what the auctioneer
+          put back, less what they <strong>withheld</strong> and the <strong>fee they kept</strong>{' '}
+          (estimated). Below zero, the auctioneer came out ahead.</>
+        ) : (
+          <>Who came out ahead in dollars? Each auction is measured against the order's real cost,{' '}
+          {money0(ERAS.orderCost)}: the <strong>goal offset</strong> is the part of it the auctioneer
+          paid themselves, and the <strong>fee they kept</strong> — the Random Ultra Rares and, from
+          2025, the Golden Ticket — is debited at an estimate. <strong>Balance</strong> = included +
+          augments − withheld + goal offset − kept fee; below zero, the auctioneer took more out of the
+          order than they put in. Every closed auction is listed, because one that recorded nothing
+          still kept a fee.</>
+        )) : narrow ? (
           <>Per auction: what the auctioneer <strong>withheld</strong> (estimated, negative) vs what
           they put back — bonuses <strong>included</strong>, personal <strong>augments</strong>, and a
           goal below {money0(ERAS.defaultTargetFunding)}. A <strong>Balance</strong> ≥ 0 means they
@@ -250,6 +378,13 @@ function LedgerView({
       </p>
 
       <div className="an-controls">
+        <label className="an-picker">
+          Measure against
+          <select value={lens} onChange={(e) => setLens(e.target.value as Lens)}>
+            <option value="custom">Custom — {money0(ERAS.defaultTargetFunding)} goal, fee kept</option>
+            <option value="full">Full order — {money0(ERAS.orderCost)}, kept fee debited</option>
+          </select>
+        </label>
         {seasons.length > 0 && (
           <label className="an-picker">
             Season
@@ -274,12 +409,26 @@ function LedgerView({
             up on its own.
           </HintPopover>
         </label>
+        {full && (
+          <label className="tenx-check">
+            <input
+              type="checkbox"
+              checked={includeTrent}
+              onChange={(e) => setIncludeTrent(e.target.checked)}
+            />
+            Count Trent's reward points
+            <TrentSubsidyHelp />
+          </label>
+        )}
       </div>
+
+      {full && <FeeRateLine season={season} rates={feeRates.get(season)} />}
 
       {narrow ? (
         <div className="led-cards">
           {seasonRows.map((r) => (
-            <LedgerCard key={r.auctionId} r={r} includeGrunnel={includeGrunnel} />
+            <LedgerCard key={r.auctionId} r={r} full={fullOf(r)}
+              includeGrunnel={includeGrunnel} includeTrent={includeTrent} />
           ))}
         </div>
       ) : (
@@ -289,17 +438,22 @@ function LedgerView({
               <tr>
                 <th className="left">Auction</th>
                 <th className="num">Funding goal</th>
-                <th className="num">Goal offset <GoalOffsetHelp /></th>
+                <th className="num">Goal offset {full ? <FullGoalOffsetHelp /> : <GoalOffsetHelp />}</th>
+                {full && <th className="num">Kept fee <FeeKeptHelp /></th>}
                 <th className="num">Withheld</th>
                 <th className="num">Included <IncludedHelp /></th>
                 <th className="num">Augments</th>
                 <th className="num">Grunnel</th>
-                <th className="num">Balance <BalanceHelp /></th>
+                <th className="num">Balance {full ? <FullBalanceHelp /> : <BalanceHelp />}</th>
               </tr>
             </thead>
             <tbody>
               {seasonRows.map((r) => {
-                const balance = ledgerBalanceOf(r, includeGrunnel);
+                const f = fullOf(r);
+                const balance = f ? fullOrderBalanceOf(f, includeGrunnel, includeTrent) : ledgerBalanceOf(r, includeGrunnel);
+                const offset = f ? f.orderOffset : r.goalOffset;
+                const points = f && includeTrent ? f.trentSubsidy : 0;
+                const augment = r.augment + points;
                 return (
                 <tr key={r.auctionId}>
                   <td className="left">
@@ -307,16 +461,26 @@ function LedgerView({
                     <span className="an-lsub">#{r.auctionNumber} · {r.auctioneer}</span>
                   </td>
                   <td className="num">{r.fundingGoal == null ? <span className="muted">n/a</span> : money0(r.fundingGoal)}</td>
-                  <td className={`num${r.goalOffset != null && r.goalOffset < 0 ? ' neg' : ''}`}>
-                    {r.goalOffset == null ? <span className="muted">n/a</span> : offsetText(r.goalOffset)}
+                  <td className={`num${offset != null && offset < 0 ? ' neg' : ''}`}>
+                    {offset == null ? <span className="muted">n/a</span> : offsetText(offset)}
                   </td>
+                  {f && (
+                    <td className={`num${f.feeKept ? ' neg' : ''}`}>
+                      {f.feeKept ? feeKeptText(f.feeKept) : <span className="muted">n/a</span>}
+                    </td>
+                  )}
                   <td className="num neg">{r.withheld ? money0(r.withheld) : '—'}</td>
                   <td className="num">{r.released ? money0(r.released) : '—'}</td>
-                  <td className="num">{r.augment ? money0(r.augment) : '—'}</td>
+                  <td className="num">
+                    {augment ? money0(augment) : '—'}
+                    {points > 0 && <span className="an-lsub">incl. {money0(points)} points</span>}
+                  </td>
                   {/* Not muted while it is IN the balance — a figure doing
                       arithmetic should not look like a footnote. */}
                   <td className={`num${includeGrunnel ? '' : ' muted'}`}>{r.grunnel ? money0(r.grunnel) : '—'}</td>
-                  <td className={`num diff ${balance >= 0 ? 'down' : 'up'}`}>{money0(balance)}</td>
+                  {balance == null
+                    ? <td className="num"><span className="muted">n/a</span></td>
+                    : <td className={`num diff ${balance >= 0 ? 'down' : 'up'}`}>{money0(balance)}</td>}
                 </tr>
                 );
               })}
