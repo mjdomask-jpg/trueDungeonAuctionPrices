@@ -103,7 +103,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-17** | ~~Season 2027 runs two different $8K orders and nothing records which~~ | **RESOLVED 2026-09-21 (repo side)** — a value in `auctionStyle`, not a column; seven rows relabelled and § 6 now holds the style to the trade-good counts. **The same edit in the workbook is what is left**, or the next publish reverts it |
 | **DATA-18** | A Random Ultra Rare's published price comes from a **lot total**, not a recorded sale — the only such row in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each derived rate with its lots |
 | **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
-| **DATA-19** | Four auctions' fee and withheld records disagree with their own threads — found checking the ledger's goal offset | the maintainer's workbook edit; paste rows are in the entry, and one value (202640) only the maintainer can supply |
+| **DATA-19** | ~~Four auctions' fee and withheld records disagree with their own threads~~ | **RESOLVED 2026-09-25** — all four corrected in the workbook and published in PR #287; `202640`'s release, the one value only the maintainer had, is nine Random URs for $387 ($43 each) |
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
 | **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, deferred |
 | **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
@@ -2444,7 +2444,22 @@ as an estimate. Open points:
   2018–2020 and should say so rather than borrow a later season's rate.
 - **Only 2027's GT price is 20274's own.** A season mean from one sale is thin.
 
-## DATA-19. Four auctions' fee and withheld records disagree with their threads — OPEN, workbook edit
+## DATA-19. Four auctions' fee and withheld records disagree with their threads — RESOLVED 2026-09-25
+
+**Resolved** in the workbook the day after it was found, and published in
+**PR #287** (`3d8ee85`, 2026-09-25). This entry stayed marked open until
+2026-10-15, when a check of `main` found every fix already there. What `main` holds:
+
+- **20226** — `Random Ultra Rare,8,$645.00`, all five withheld rows below, and
+  the $81 price row.
+- **202225** — `Random Ultra Rare,9,$599.00` and the $66 price row.
+- **202247** — the withheld Patron Pin row is gone; the pin's $161 sale stays in
+  `prices`.
+- **202640** — the value the thread could not give, supplied by the maintainer:
+  `Random Ultra Rare,9,$387.00` in `contextItems` and a $43 price row.
+
+The ledger column in the table below was measured before that publish and was
+not re-measured afterwards. The rest of the entry is kept as found.
 
 **Found 2026-09-24**, checking the goal offset before it shipped. An `$8,000`
 goal with no released fee reads as a $500 debit, and "no fee row" cannot tell
