@@ -18,7 +18,7 @@
 import { AUCTION_SOURCES, type AuctionMeta, type AuctionSource, type OrderVariant, type Sale } from './data';
 import { isGoldenTicket, isRandomUltraRare, type ContextItem, type AuctionContext } from './context';
 import { auctioneerKey, auctioneerLabels } from './analytics';
-import { ERAS, inGoldenTicketEra, trentRewardRate } from './eras';
+import { ERAS, owesGoldenTicket, trentRewardRate } from './eras';
 
 const mean = (xs: number[]): number | null =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
@@ -217,9 +217,9 @@ export const ledgerOverall = (rows: LedgerRow[]): LedgerAgg => aggregate('Overal
 // exception (the maintainer's objection, 2026-09-24). It is derived here, per
 // render, and the view labels it an estimate.
 //
-// The estimate, as settled by the maintainer 2026-10-15:
-//   - the fee is NINE Random Ultra Rares — the guarantee — plus, in the Golden
-//     Ticket era, one Golden Ticket;
+// The estimate, as settled by the maintainer 2026-10-15 and -22:
+//   - the fee is NINE Random Ultra Rares — the guarantee — plus, from the 2025
+//     season (owesGoldenTicket), one Golden Ticket;
 //   - each is priced at its SEASON's rate, from the sales of that season;
 //   - a season with no sales yet (the start of one) borrows the most recent
 //     EARLIER season that has them — never a later one, so a season before any
@@ -336,7 +336,7 @@ export function feeKeptOf(
   rates: SeasonFeeRates | undefined,
 ): FeeKept | null {
   const rurKept = Math.max(0, ERAS.feeRandomUltraRares - counts.rurReleased - counts.rurWithheld);
-  const gtKept = inGoldenTicketEra(m.closeDate) && !counts.gtReleased && !counts.gtWithheld;
+  const gtKept = owesGoldenTicket(m.season) && !counts.gtReleased && !counts.gtWithheld;
   const rur = rurKept > 0 ? rates?.rur ?? null : null;
   const gt = gtKept ? rates?.gt ?? null : null;
   if ((rurKept > 0 && !rur) || (gtKept && !gt)) return null;

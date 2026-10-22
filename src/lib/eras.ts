@@ -24,10 +24,17 @@ export const ERAS = {
   // dated table could replace this later without touching them.
   trentRewardRate: 0.1,
 
-  // The company began guaranteeing a Golden Ticket per $8k order around here; GTs
-  // then started appearing in normal auction sales. Derived from the data: the
-  // first GT sale is auction 202520, closed 2024-11-27 (audit §5).
+  // The first Golden Ticket SALE: auction 202520, closed 2024-11-27 (audit §5).
+  // That is when GTs started appearing in auction sales, NOT when the guarantee
+  // began — see goldenTicketFeeSeason.
   goldenTicketGuarantee: { firstSaleAuctionId: '202520', date: '2024-11-27' },
+
+  // The guarantee — one Golden Ticket in every $8k order's fee — came with the
+  // 2025 season's orders (maintainer, 2026-10-22). So every 2025 auction owed one,
+  // including the 23 that closed before the first GT sold; dating the fee by the
+  // first sale put them about $1,000 short of the rest of their season in the
+  // full-order lens. A SEASON rule, not a close date. Backlog SITE-13.
+  goldenTicketFeeSeason: 2025,
 
   // The advertised order cost, and the CUSTOMARY funding target: an auctioneer
   // keeps the fee (Random Ultra Rares, Golden Ticket) and pays the last $500
@@ -161,7 +168,14 @@ export function trentRewardRate(_auctionId?: string): number {
   return ERAS.trentRewardRate;
 }
 
-// True once the Golden-Ticket guarantee era has begun, by auction close date.
+// True when an auction's order carried a Golden Ticket in its fee — by SEASON,
+// because the guarantee came with a season's orders (goldenTicketFeeSeason).
+export function owesGoldenTicket(season: string): boolean {
+  return Number(season) >= ERAS.goldenTicketFeeSeason;
+}
+
+// True once Golden Tickets had begun appearing in auction SALES, by close date.
+// Not the fee rule: the guarantee predates the first sale (owesGoldenTicket).
 // Dates compare lexically as ISO 'YYYY-MM-DD'; a missing/'n/a' date is treated as
 // pre-era (all undated auctions are pre-2023, well before the guarantee).
 export function inGoldenTicketEra(closeDate: string): boolean {

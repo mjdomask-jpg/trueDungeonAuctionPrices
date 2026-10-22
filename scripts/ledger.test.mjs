@@ -178,8 +178,9 @@ const gtSale = (auctionId, season, price) => ({
 const FM = [
   fm('kept20', '2020', 7500, '2019-10-01'),            // before any Random UR sold
   fm('rur24', '2024', 8000, '2023-12-01'),             // sets 2024's rate: $50
-  fm('preGt25', '2025', 7500, '2024-10-01'),           // before the GT guarantee
-  fm('gt25', '2025', 7500, '2025-01-15'),              // GT owed, none sold yet
+  fm('plain24', '2024', 7500, '2024-01-10'),           // a season before the GT fee
+  fm('early25', '2025', 7500, '2024-10-01'),           // 2025, closed before any GT SOLD
+  fm('gtSold25', '2025', 8000, '2025-01-15'),          // sets 2025's GT rate: $1,100
   fm('rel26', '2026', 8000, '2025-12-01'),             // released the whole fee
   fm('gtOnly26', '2026', 8000, '2025-12-02'),          // 202718's shape
   fm('plain26', '2026', 7500, '2025-12-03'),           // the custom
@@ -196,9 +197,10 @@ const FI = [
   item('gtOnly26', 'withheld', 'Random Ultra Rare', 9, -400),
   item('part26', 'token', 'Random Ultra Rare', 6, 270),
 ];
-const FS = [gtSale('rel26', '2026', 1000)];
+const FS = [gtSale('gtSold25', '2025', 1100), gtSale('rel26', '2026', 1000)];
 const FC = new Map([
   ['rur24', ctx(450, 0, 0)],
+  ['gtSold25', ctx(1100, 0, 0)],
   ['rel26', ctx(1360, 0, 0)],
   ['gtOnly26', ctx(800, 0, -400)],
   ['part26', ctx(270, 0, 0)],
@@ -212,7 +214,7 @@ check('a Golden Ticket rate averages one price per auction, either feed ($1,000,
 check('a season with no sales borrows the most recent EARLIER one',
   rates.get('2027').rur.season === '2026' && rates.get('2025').rur.season === '2024');
 check('nothing is borrowed from a LATER season',
-  rates.get('2020').rur === null && rates.get('2025').gt === null);
+  rates.get('2020').rur === null && rates.get('2024').gt === null);
 
 const full = fullOrderLedger(FM, FC, FI, FS);
 const fr = (id) => full.find((r) => r.auctionId === id);
@@ -231,10 +233,18 @@ check('a partial release debits only what was kept (3 × $42 + GT)',
   fr('part26').feeKept.rurKept === 3 && near(fr('part26').fullBalance, 270 + 500 - (126 + 900)));
 check('a borrowed rate prices the start of a season',
   near(fr('plain27').feeKept.value, -fee26) && fr('plain27').feeKept.rur.season === '2026');
-check('no Golden Ticket is owed before its guarantee',
-  fr('preGt25').feeKept.gtKept === false && near(fr('preGt25').fullBalance, 500 - 450));
-check('a GT owed with no GT sale in or before its season ⇒ not computable',
-  fr('gt25').feeKept === null && fr('gt25').fullBalance === null);
+check('no Golden Ticket is owed before the 2025 season',
+  fr('plain24').feeKept.gtKept === false && near(fr('plain24').fullBalance, 500 - 450));
+check('the Golden Ticket is owed by SEASON — a 2025 auction closing before the first GT sold owes one',
+  fr('early25').feeKept.gtKept === true && near(fr('early25').fullBalance, 500 - (450 + 1100)),
+  fr('early25').fullBalance);
+{
+  const lone = [FM.find((m) => m.auctionId === 'rur24'), fm('lone25', '2025', 7500, '2024-10-01')];
+  const r = fullOrderLedger(lone, FC, FI.filter((i) => i.auctionId === 'rur24'), [])
+    .find((x) => x.auctionId === 'lone25');
+  check('a GT owed with no GT sale in or before its season ⇒ not computable',
+    r.feeKept === null && r.fullBalance === null);
+}
 check('no Random UR sale in or before the season ⇒ not computable',
   fr('kept20').feeKept === null && fullOrderBalanceOf(fr('kept20'), true, true) === null);
 check('a pooled auction has no single-order offset ⇒ not computable',

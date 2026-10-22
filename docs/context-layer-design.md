@@ -334,7 +334,7 @@ able to answer it — see item 5.
    picker adds the other question, "who came out ahead in dollars?". It measures
    against the `$8,000` order cost **and** debits the fee the auctioneer kept,
    estimated at render time and never written as rows. The fee is nine Random Ultra
-   Rares plus, in the Golden Ticket era, one Golden Ticket, each at its season's
+   Rares plus, from the 2025 season, one Golden Ticket, each at its season's
    average sale. A season with no sales borrows the nearest **earlier** one; with
    none earlier it reads *n/a* (2018–2020). Fee items released or recorded withheld
    are already in their own columns, so they are not debited again. Every closed

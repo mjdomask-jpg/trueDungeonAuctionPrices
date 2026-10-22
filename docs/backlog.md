@@ -102,7 +102,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
 | **DATA-17** | ~~Season 2027 runs two different $8K orders and nothing records which~~ | **RESOLVED 2026-09-21 (repo side)** — a value in `auctionStyle`, not a column; seven rows relabelled and § 6 now holds the style to the trade-good counts. **The same edit in the workbook is what is left**, or the next publish reverts it |
 | **DATA-18** | A Random Ultra Rare's published price comes from a **lot total**, not a recorded sale — the only such row in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each derived rate with its lots |
-| **SITE-13** | ~~The ledger has no "full order" lens~~ | **BUILT 2026-10-15** — a *Measure against* picker on the ledger; the kept fee is estimated at render time, never written as rows, with Trent's reward points as an opt-in. **One question left**: whether a 2025 auction that closed before 2024-11-27 owed a Golden Ticket |
+| **SITE-13** | ~~The ledger has no "full order" lens~~ | **BUILT 2026-10-15** — a *Measure against* picker on the ledger; the kept fee is estimated at render time, never written as rows, with Trent's reward points as an opt-in. A Golden Ticket is owed from the **2025 season** (settled 2026-10-22) |
 | **DATA-20** | 2025's four released Random UR lots are recorded as **10**; the guarantee is 9 | the maintainer's workbook edit — four `contextItems` quantities and four `prices` rates; paste rows in the entry |
 | **DATA-19** | ~~Four auctions' fee and withheld records disagree with their own threads~~ | **RESOLVED 2026-09-25** — all four corrected in the workbook and published in PR #287; `202640`'s release, the one value only the maintainer had, is nine Random URs for $387 ($43 each) |
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
@@ -2403,7 +2403,7 @@ shape.
 
 ---
 
-## SITE-13. The ledger has no "full order" lens — BUILT 2026-10-15, one question open
+## SITE-13. The ledger has no "full order" lens — BUILT 2026-10-15
 
 **Built** as a second lens on the Auction ledger: a *Measure against* picker,
 **Custom — $7,500 goal, fee kept** (the default, unchanged) or **Full order —
@@ -2439,14 +2439,15 @@ reasoning in § *Dropped* stands, and the checkbox's help states it. It is offer
 because "who came out ahead in dollars" is the question some readers will insist
 the points belong in.
 
-**Open — did a 2025 auction that closed before 2024-11-27 owe a Golden Ticket?**
-The lens uses the repo's existing era rule, `inGoldenTicketEra(closeDate)`, which
-starts the guarantee at the first Golden Ticket *sale* (`202520`). That puts 23 of
-2025's 43 closed auctions before it, and they are debited about **$1,000 less**
-than the rest of their season (−$355 vs −$1,353 for a $7,500 goal with nothing
-released). If the guarantee came with the 2025 season's orders, the rule should
-be `season ≥ 2025`. That is a one-line change in `feeKeptOf`, and only the
-maintainer can say which is true.
+**Settled 2026-10-22 — the Golden Ticket is owed from the 2025 SEASON.** As first
+built, the lens used the repo's existing era rule, `inGoldenTicketEra(closeDate)`,
+which dates the guarantee from the first Golden Ticket *sale* (`202520`, closed
+2024-11-27). That put 23 of 2025's 43 closed auctions before it, debited about
+**$1,000 less** than the rest of their season (−$355 vs −$1,353 for a $7,500 goal
+with nothing released). The maintainer confirmed that the guarantee came with the
+2025 season's orders, so the rule is now `owesGoldenTicket(season)`, i.e. season ≥
+`ERAS.goldenTicketFeeSeason` (2025). `inGoldenTicketEra` still says when GTs began
+*selling*, and nothing reads it any more.
 
 The entry as it stood before the build:
 
@@ -2573,22 +2574,24 @@ except four is nine. The four are AlanP's 2025 auctions, whose lots were titled
 **Each lot sold for one number**, so the TOTAL stays and only the count moves.
 The per-token rate in `prices` is that total ÷ the count, so it rises.
 
+Both blocks are tab-separated, for pasting into Sheets.
+
 `contextItems` — replace the quantity (totals unchanged):
 
 ```
-202534,2025,34,token,Random Ultra Rare,9,$345.00
-202537,2025,37,token,Random Ultra Rare,9,$275.00
-202540,2025,40,token,Random Ultra Rare,9,$360.00
-202543,2025,43,token,Random Ultra Rare,9,$410.00
+202534	2025	34	token	Random Ultra Rare	9	$345.00
+202537	2025	37	token	Random Ultra Rare	9	$275.00
+202540	2025	40	token	Random Ultra Rare	9	$360.00
+202543	2025	43	token	Random Ultra Rare	9	$410.00
 ```
 
 `prices` — replace the rate (was 34.5 / 27.5 / 36 / 41):
 
 ```
-202534,2025,34,Random Ultra Rare,38.33,Random Ultra Rare,Ultra Rare
-202537,2025,37,Random Ultra Rare,30.56,Random Ultra Rare,Ultra Rare
-202540,2025,40,Random Ultra Rare,40,Random Ultra Rare,Ultra Rare
-202543,2025,43,Random Ultra Rare,45.56,Random Ultra Rare,Ultra Rare
+202534	2025	34	Random Ultra Rare	38.33	Random Ultra Rare	Ultra Rare
+202537	2025	37	Random Ultra Rare	30.56	Random Ultra Rare	Ultra Rare
+202540	2025	40	Random Ultra Rare	40	Random Ultra Rare	Ultra Rare
+202543	2025	43	Random Ultra Rare	45.56	Random Ultra Rare	Ultra Rare
 ```
 
 **What it moves.** The ledger's Included is unchanged, since it reads the totals.

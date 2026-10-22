@@ -384,8 +384,8 @@ into the four analyses on the Analytics page's **Funding & Context** view
   `SITE-13`), measures every closed auction against `orderCost` and debits the
   kept fee: (`feeRandomUltraRares` − released − withheld) × the season's Random UR
   rate (`feeRatesBySeason`: quantity-weighted over released context rows) + the
-  season's mean Golden Ticket when one was owed and not released. A season with no
-  sales borrows the nearest earlier one; otherwise it is *n/a*. Trent's reward
+  season's mean Golden Ticket when one was owed (season ≥ 2025) and not released.
+  A season with no sales borrows the nearest earlier one; otherwise it is *n/a*. Trent's reward
   points (`trentSubsidyOf`, rate × goal) are an opt-in augment under that lens only.
 - **Grunnel vs preorder** (`grunnelVsPreorder`) — mean Grunnel item value vs mean
   `Preorder`-category sale price, per season.

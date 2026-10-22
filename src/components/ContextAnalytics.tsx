@@ -186,7 +186,7 @@ function FeeKeptHelp() {
   return (
     <HintPopover label="How the kept fee is estimated">
       The fee every {money0(ERAS.orderCost)} order carries — <strong>{ERAS.feeRandomUltraRares} Random
-      Ultra Rares</strong>, the guaranteed count, and from {ERAS.goldenTicketGuarantee.date} a{' '}
+      Ultra Rares</strong>, the guaranteed count, and from the {ERAS.goldenTicketFeeSeason} season a{' '}
       <strong>Golden Ticket</strong> — less whatever the auction sold (counted as Included) or recorded
       as withheld (counted as Withheld). Each is priced at its <strong>season's</strong> average sale.
       A season with no sales yet borrows the most recent earlier season that has them; a season with
