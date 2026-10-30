@@ -2464,7 +2464,27 @@ moved from Augments vs withheld into **Fee & goal**. As an augment, a default-on
 $750 a Trent auction would decide that auction's verdict, which is exactly the
 fault this revision removes, and the verdict column would no longer read the same
 under both lenses. In Fee & goal they are what they are: part of the order Trent
-pays back himself. The checkbox still turns them off. **Every closed auction is listed**, not only those with
+pays back himself. The checkbox still turns them off.
+
+**An Even band, and alike auctions shown once** (same day, maintainer). A total
+within **±$100** of zero reads **Even** rather than Covered or Short, on all
+three totals. That is the size of the ledger's own estimating error, measured
+over 2025–2027: a withheld token's same-season price varies ~15% (median; IQR
+10–21%), which is ±$60–$135 on a typical withheld total, and a kept Golden Ticket
+alone is ±$130–$200 (one standard deviation). `202730`'s −$20 against $389 of
+estimated withholding had read Short. `202645` (−$161 on $757 withheld) and
+`202632` (−$214) stay Short, as both are past their own estimates' error.
+`ERAS.ledgerEvenBand`, `verdictOf`.
+
+And Trent: since 2025, **81 of the full lens's 116 rows** were his, holding three
+distinct sets of figures (one per season) and not one recorded augment or
+withheld item. They are **collapsed, not dropped**: excluding them would hide a
+real answer to "who came out ahead" (−$78 an auction in 2027). `collapseAlike`
+names nobody. It merges an auctioneer's auctions in one season that recorded
+nothing and whose every remaining figure agrees, and only Trent qualifies today.
+The Traditional lens never lists such auctions anyway, because its membership
+rule needs something recorded or a goal other than $7,500. That rule is why
+Trent was absent there, not an exclusion by name. **Every closed auction is listed**, not only those with
 context, because one that recorded nothing still kept a fee. A pooled auction
 (goal above $8,000, `20251`) is *n/a*, because it carries more than one fee.
 The rates behind a season's estimates are stated above its table.

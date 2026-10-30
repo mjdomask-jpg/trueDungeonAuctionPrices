@@ -20,6 +20,9 @@
 //                                         while open
 //   Grunnel stays out unless asked        the toggle adds it on top of the offset
 //   the aggregate carries the offset      and a null offset sums as $0
+//   the Even band                         ±$100 of zero, inclusive, reads Even
+//   alike auctions                        identical, nothing-recorded auctions
+//                                         collapse per season and auctioneer
 //   the full-order lens (SITE-13)         $8,000 baseline + an estimated kept-fee
 //                                         debit; season rates borrow only from
 //                                         EARLIER seasons, else n/a; released or
@@ -133,8 +136,8 @@ check('fee & goal is included + goal offset',
 check('the net is the two subtotals added',
   rows.every((r) => near(r.balance, r.augmentsVsWithheld + r.feeAndGoal)));
 check('the verdict reads augments vs withheld, NOT the net: a released Golden Ticket cannot cover a shortfall (20274)',
-  row('gtIn').balance > 0 && !row('gtIn').covered);
-check('…nor can a goal below custom (20275 stays Short)', row('below').balance > 0 && !row('below').covered);
+  row('gtIn').balance > 0 && row('gtIn').verdict === 'short');
+check('…nor can a goal below custom (20275 stays Short)', row('below').balance > 0 && row('below').verdict === 'short');
 check('pooled auction: balance ignores its goal',
   near(row('pooled').balance, 900 + 4027 - 8175), row('pooled').balance);
 check('blank goal counts as $0', near(row('blank').balance, -50) && row('blank').goalOffset === null);
@@ -167,7 +170,7 @@ check('the aggregate balance is the sum of the row balances',
   near(all.balance, rows.reduce((a, r) => a + r.balance, 0)), all.balance);
 check('the aggregate verdict reads its augments vs withheld',
   near(all.augmentsVsWithheld, rows.reduce((a, r) => a + r.augmentsVsWithheld, 0))
-  && all.covered === (all.augmentsVsWithheld >= 0));
+  && all.verdict === an.verdictOf(all.augmentsVsWithheld));
 
 // --- the full-order lens (SITE-13) ------------------------------------------
 // Measured against the $8,000 order cost, with the fee the auctioneer KEPT
@@ -290,6 +293,56 @@ check('the points go into fee & goal and NEVER into augments vs withheld — the
   && near(fullOrderFiguresOf(fr('trent26'), false, false).feeAndGoal, 500 - fee26));
 check('a fee that cannot be priced blanks fee & goal and the net, never augments vs withheld',
   (() => { const x = fullOrderFiguresOf(fr('kept20'), false, false); return x.feeAndGoal === null && x.net === null && x.augmentsVsWithheld === 0; })());
+
+// --- Even: within the ledger's estimating error -----------------------------
+
+console.log('even band');
+const { verdictOf, collapseAlike } = an;
+check('the band is ±$100', ERAS.ledgerEvenBand === 100, ERAS.ledgerEvenBand);
+check('inside the band is Even, either side (202730\'s −$20, 20272\'s +$40)',
+  verdictOf(-20) === 'even' && verdictOf(40) === 'even' && verdictOf(0) === 'even');
+check('the band is inclusive: exactly ±$100 is Even',
+  verdictOf(100) === 'even' && verdictOf(-100) === 'even');
+check('past the band is Covered or Short (202645\'s −$161 stays Short)',
+  verdictOf(100.01) === 'covered' && verdictOf(-100.01) === 'short' && verdictOf(-161) === 'short');
+check('a row\'s verdict is its augments vs withheld through the band',
+  rows.every((r) => r.verdict === verdictOf(r.augmentsVsWithheld)));
+
+// --- auctions run identically are shown once --------------------------------
+// Trent's shape: every auction a $7,500 goal, nothing recorded, the same figures.
+
+console.log('alike auctions');
+const trent = (id, season, closeDate) => ({ ...fm(id, season, 7500, closeDate, { source: 'Trent' }), auctioneer: 'Trent' });
+const TM = [
+  ...FM,
+  trent('t1', '2026', '2025-11-01'), trent('t2', '2026', '2025-11-02'), trent('t3', '2026', '2025-11-03'),
+  trent('tAug', '2026', '2025-11-04'),                  // added something: stays its own row
+  trent('t27a', '2027', '2026-10-02'), trent('t27b', '2027', '2026-10-03'),
+];
+const TC = new Map([...FC, ['tAug', ctx(0, 200, 0)]]);
+const trows = fullOrderLedger(TM, TC, FI, FS);
+const e26 = collapseAlike(trows.filter((r) => r.season === '2026'));
+const g26 = e26.find((e) => e.alike > 1);
+check('identical auctions with nothing recorded collapse to one entry, with their count',
+  g26 && g26.alike === 3 && e26.filter((e) => e.row.auctioneer === 'Trent').length === 2, JSON.stringify(e26.map((e) => [e.row.auctionId, e.alike])));
+check('the entry carries the range of auction numbers it stands for',
+  (() => { const ns = TM.filter((m) => ['t1', 't2', 't3'].includes(m.auctionId)).map((m) => m.auctionNumber);
+    return g26.firstNumber === Math.min(...ns) && g26.lastNumber === Math.max(...ns); })());
+check('an auction that recorded anything stays its own row', e26.find((e) => e.row.auctionId === 'tAug')?.alike === 1);
+check('auctioneers who recorded nothing but appear once are untouched',
+  e26.filter((e) => e.row.auctioneer !== 'Trent').every((e) => e.alike === 1)
+  && e26.filter((e) => e.row.auctioneer !== 'Trent').length === trows.filter((r) => r.season === '2026' && r.auctioneer !== 'Trent').length);
+check('seasons never merge: 2027\'s pair is its own group',
+  (() => { const all = collapseAlike(trows); const t = all.filter((e) => e.alike > 1);
+    return t.length === 2 && t.some((e) => e.row.season === '2027' && e.alike === 2); })());
+check('nothing is lost: the entries account for every row',
+  collapseAlike(trows).reduce((a, e) => a + e.alike, 0) === trows.length);
+check('the order holds — a group sits where its newest member did',
+  (() => { const ids = trows.map((r) => r.auctionId); const es = collapseAlike(trows).map((e) => ids.indexOf(e.row.auctionId));
+    return es.every((v, i) => i === 0 || v > es[i - 1]); })());
+check('a different estimated fee keeps auctions apart (the rule names nobody, it compares figures)',
+  (() => { const a = trows.find((r) => r.auctionId === 't1'), b = { ...a, auctionId: 'tX', feeKept: { ...a.feeKept, value: a.feeKept.value - 1 } };
+    return collapseAlike([a, b]).length === 2; })());
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${pass} passed, ${fail} failed`);

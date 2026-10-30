@@ -51,6 +51,15 @@ export const ERAS = {
   // 2026-10-15, backlog SITE-13).
   feeRandomUltraRares: 9,
 
+  // The Auction Ledger reads a total within ±this as EVEN rather than Covered or
+  // Short (maintainer, 2026-10-30). It is the size of the ledger's own estimating
+  // error, measured that day over 2025–2027: a withheld token's same-season price
+  // varies ~15% (median; IQR 10–21%), which on a typical $400–$900 withheld total
+  // is ±$60–$135, and a kept Golden Ticket alone is ±$130–$200. A −$20 against
+  // $389 of estimated withholding is a wash, not a shortfall. About 1.25% of the
+  // order, and a round number a reader can check.
+  ledgerEvenBand: 100,
+
   // Withheld estimates average an item's sales from at most this many of the most
   // recent prior same-season auctions (by close date) in which it sold — so the
   // estimate reflects the item's value near when it was withheld, not stale early-

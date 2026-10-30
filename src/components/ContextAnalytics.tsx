@@ -5,13 +5,14 @@ import {
 } from '../lib/data';
 import type { ContextItem, AuctionContext } from '../lib/context';
 import {
-  auctionLedger, ledgerFiguresOf, isCovered,
+  auctionLedger, ledgerFiguresOf, verdictOf, collapseAlike,
   fullOrderLedger, fullOrderFiguresOf, feeRatesBySeason,
   grunnelPerAuction, augmentedVsNot,
   venueOverlapSeasons, venueComparisonSeason,
   orderVariantSeasons, standardVsTradeTwo,
   type LedgerRow, type GrunnelAuctionRow,
   type FullOrderRow, type FeeKept, type FeeRate, type SeasonFeeRates,
+  type Verdict, type LedgerEntry,
 } from '../lib/contextAnalytics';
 import { ERAS, groupLabel, comparisonIncrement } from '../lib/eras';
 import { money, money0, moneyTight } from '../lib/format';
@@ -118,8 +119,12 @@ function IncludedHelp() {
 function AugmentsVsWithheldHelp() {
   return (
     <HintPopover label="How Augments vs withheld is calculated">
-      Augments − withheld: did the auctioneer's own additions cover what they held back? At or
-      above zero the auction is <strong>Covered</strong>. It is the same under both{' '}
+      Augments − withheld: did the auctioneer's own additions cover what they held back? More than
+      {' '}{money0(ERAS.ledgerEvenBand)} above zero is <strong>Covered</strong>, more than{' '}
+      {money0(ERAS.ledgerEvenBand)} below is <strong>Short</strong>, and anything between is{' '}
+      <strong>Even</strong>: withheld items are valued at an estimate, and a token's price within a
+      season varies by about 15%, so a few dollars either way is a wash. The same band applies to
+      Fee &amp; goal and the Net. It is the same under both{' '}
       <em>Measure against</em> choices. <strong>The fee and the goal are kept out of it</strong> and
       shown beside it instead, because the Golden Ticket alone is worth about $1,000 and would
       otherwise decide the verdict for almost every auction. Grunnel is kept out too — a drop from a
@@ -183,13 +188,14 @@ function GoalOffsetHelp() {
 const signed0 = (n: number) => (n > 0 ? '+' : '') + money0(n);
 const offsetText = (n: number | null) => (n == null ? 'n/a' : n === 0 ? '—' : signed0(n));
 
-function coveredBadge(covered: boolean) {
-  return (
-    <span className={`an-verdict ${covered ? 'yes' : 'no'}`}>
-      {covered ? 'Covered' : 'Short'}
-    </span>
-  );
+const VERDICT_LABEL: Record<Verdict, string> = { covered: 'Covered', even: 'Even', short: 'Short' };
+function verdictBadge(v: Verdict) {
+  return <span className={`an-verdict ${v}`}>{VERDICT_LABEL[v]}</span>;
 }
+// The colour a total takes: green covered, red short, plain within the Even
+// band — which applies to all three totals, since each rests on the same
+// estimates. Note up=red, down=green in this theme.
+const verdictTone = (v: Verdict) => (v === 'covered' ? 'down' : v === 'short' ? 'up' : 'even');
 
 // --- The full-order lens (backlog SITE-13) ---------------------------------
 // Its own explanations, because every term the custom lens explains means
@@ -295,9 +301,10 @@ function FeeRateLine({ season, rates }: { season: string; rates: SeasonFeeRates 
 
 // One auction as a stacked card (mobile) — the wide ledger table can't fit a
 // phone, so each auction's figures sit in a small card instead of a scrolling row.
-function LedgerCard({ r, full, includeGrunnel, includeTrent }: {
-  r: LedgerRow; full: FullOrderRow | null; includeGrunnel: boolean; includeTrent: boolean;
+function LedgerCard({ e, full, includeGrunnel, includeTrent }: {
+  e: LedgerEntry<LedgerRow>; full: FullOrderRow | null; includeGrunnel: boolean; includeTrent: boolean;
 }) {
+  const r = e.row;
   const fig = (label: ReactNode, val: string, cls = '') => (
     <div className="led-fig">
       <span className="led-fig-label">{label}</span>
@@ -306,27 +313,30 @@ function LedgerCard({ r, full, includeGrunnel, includeTrent }: {
   );
   const figs = full ? fullOrderFiguresOf(full, includeGrunnel, includeTrent) : ledgerFiguresOf(r, includeGrunnel);
   const points = full && includeTrent ? full.trentSubsidy : 0;
-  // One subtotal line: the verdict chip rides only on Augments vs withheld,
-  // because that is the question the heading asks.
-  const total = (label: ReactNode, val: number | null, verdict = false) => (
-    <div className="led-balance-row">
-      <span className="led-fig-label">{label}</span>
-      {val == null ? (
-        <span className="led-balance-val muted">n/a</span>
-      ) : (
-        <>
-          {/* up=red, down=green in this theme; a covered (≥0) figure reads green. */}
-          <span className={`led-balance-val diff ${val >= 0 ? 'down' : 'up'}`}>{signed0(val)}</span>
-          {verdict && coveredBadge(isCovered(val))}
-        </>
-      )}
-    </div>
-  );
+  // One subtotal line. Augments vs withheld always carries its verdict chip,
+  // because that is the question the heading asks; the other two show one only
+  // on a wash (isWash), which their colour alone cannot say.
+  const total = (label: ReactNode, val: number | null, verdict = false) => {
+    const v = val == null ? null : verdictOf(val);
+    return (
+      <div className="led-balance-row">
+        <span className="led-fig-label">{label}</span>
+        {val == null || v == null ? (
+          <span className="led-balance-val muted">n/a</span>
+        ) : (
+          <>
+            <span className={`led-balance-val diff ${verdictTone(v)}`}>{signed0(val)}</span>
+            {(verdict || isWash(val)) && verdictBadge(v)}
+          </>
+        )}
+      </div>
+    );
+  };
   return (
     <div className="led-card">
       <div className="led-card-head">
-        <span className="led-name">{r.name || `#${r.auctionNumber}`}</span>
-        <span className="led-sub">#{r.auctionNumber} · {r.auctioneer}</span>
+        <span className="led-name">{entryName(e)}</span>
+        <span className="led-sub">{entrySub(e)}</span>
       </div>
       <div className="led-figs">
         {fig('Withheld', r.withheld ? money0(r.withheld) : '—', 'neg')}
@@ -366,11 +376,31 @@ function LedgerCard({ r, full, includeGrunnel, includeTrent }: {
 const LEDGER_CARDS = '(max-width: 1079px)';
 
 const feeKeptText = (f: FeeKept | null) => (f == null ? 'n/a' : f.value ? money0(f.value) : '—');
-// A subtotal cell: signed, and coloured by its sign (up=red, down=green here).
-const totalCell = (val: number | null, cls = '', note: ReactNode = null) =>
-  val == null
-    ? <td className={`num ${cls}`}><span className="muted">n/a</span></td>
-    : <td className={`num diff ${val >= 0 ? 'down' : 'up'} ${cls}`}>{signed0(val)}{note}</td>;
+// A total that is Even without being zero — the −$20 that needs the word, where
+// a $0 says it on its own and a label under every one is noise.
+const isWash = (val: number) => verdictOf(val) === 'even' && Math.abs(val) >= 0.5;
+
+// A subtotal cell: signed, coloured by its verdict, and saying "even" in words
+// on a wash — plain text alone would read as a styling slip.
+const totalCell = (val: number | null, cls = '', note: ReactNode = null) => {
+  if (val == null) return <td className={`num ${cls}`}><span className="muted">n/a</span></td>;
+  return (
+    <td className={`num diff ${verdictTone(verdictOf(val))} ${cls}`}>
+      {signed0(val)}
+      {isWash(val) && <span className="an-lsub">even</span>}
+      {note}
+    </td>
+  );
+};
+
+// What names a ledger entry. A collapsed group is named by its auctioneer and
+// count, and says its figures are each auction's, since the row shows one set.
+const entryName = (e: LedgerEntry<LedgerRow>) =>
+  e.alike > 1 ? `${e.row.auctioneer} · ${e.alike} auctions` : (e.row.name || `#${e.row.auctionNumber}`);
+const entrySub = (e: LedgerEntry<LedgerRow>) =>
+  e.alike > 1
+    ? `#${e.firstNumber} to #${e.lastNumber} · run identically, nothing added or withheld · figures per auction`
+    : `#${e.row.auctionNumber} · ${e.row.auctioneer}`;
 
 function LedgerView({
   meta, auctionContext, contextItems, sales,
@@ -419,6 +449,8 @@ function LedgerView({
     () => bySeason.find(([s]) => s === season)?.[1] ?? [],
     [bySeason, season],
   );
+  // Auctions run identically, with nothing recorded, show once (collapseAlike).
+  const entries = useMemo(() => collapseAlike(seasonRows), [seasonRows]);
 
   return (
     <section className="an-panel">
@@ -426,8 +458,9 @@ function LedgerView({
       <p className="an-lede">
         {narrow ? (
           <><strong>Augments vs withheld</strong> answers the question: did the auctioneer's
-          augments cover what they <strong>withheld</strong> (estimated)? At or above zero it is
-          covered. <strong>Fee &amp; goal</strong> is how the auctioneer was paid,{' '}
+          augments cover what they <strong>withheld</strong> (estimated)? Within{' '}
+          ±{money0(ERAS.ledgerEvenBand)} of zero it is even. <strong>Fee &amp; goal</strong> is how the
+          auctioneer was paid,{' '}
           {full
             ? <>against the full {money0(ERAS.orderCost)} order — selling the whole fee at that goal is $0</>
             : <>against tradition — keep the fee, ask {money0(ERAS.defaultTargetFunding)}</>}
@@ -435,8 +468,9 @@ function LedgerView({
         ) : (
           <>For each auction, <strong>Augments vs withheld</strong> answers the question the ledger is
           asked: did the auctioneer's personal <strong>augments</strong> cover what they{' '}
-          <strong>withheld</strong> (an estimate)? It is green, and the auction covered, at or above
-          zero, and it reads the same whichever baseline is picked. <strong>Fee &amp; goal</strong> is a
+          <strong>withheld</strong> (an estimate)? Green is covered and red is short; within{' '}
+          ±{money0(ERAS.ledgerEvenBand)} of zero it reads <strong>even</strong>, because the estimates
+          are not that precise. It reads the same whichever baseline is picked. <strong>Fee &amp; goal</strong> is a
           separate question — how the auctioneer was paid —{' '}
           {full ? (
             <>measured against the full {money0(ERAS.orderCost)} order: selling the Random Ultra Rares
@@ -444,7 +478,8 @@ function LedgerView({
             reads $0, the <strong>fee they kept</strong> is debited at an estimate, and the{' '}
             <strong>goal offset</strong> is any part of the order they paid themselves. Trent's reward
             points count here too, unless unticked. Every closed auction is listed, because one that
-            recorded nothing still kept a fee.</>
+            recorded nothing still kept a fee — but an auctioneer's auctions that recorded nothing and
+            came out identical are shown once, as a group.</>
           ) : (
             <>measured against tradition: keep the fee and ask {money0(ERAS.defaultTargetFunding)}. A fee
             sold to bidders counts as <strong>included</strong>, and the <strong>goal offset</strong> is
@@ -506,8 +541,8 @@ function LedgerView({
 
       {cards ? (
         <div className="led-cards">
-          {seasonRows.map((r) => (
-            <LedgerCard key={r.auctionId} r={r} full={fullOf(r)}
+          {entries.map((e) => (
+            <LedgerCard key={e.row.auctionId} e={e} full={fullOf(e.row)}
               includeGrunnel={includeGrunnel} includeTrent={includeTrent} />
           ))}
         </div>
@@ -516,7 +551,7 @@ function LedgerView({
         // header could then only pin inside a box with its own scrollbar. Without
         // one it pins to the PAGE — and `cards` above guarantees the table fits.
         <div className="led-wrap">
-          <table className={`an-table led-table${seasonRows.length >= 4 ? ' banded' : ''}`}>
+          <table className={`an-table led-table${entries.length >= 4 ? ' banded' : ''}`}>
             {/* Two header rows: each subtotal heads the columns that make it up,
                 so the table reads as the two questions it answers. */}
             <thead>
@@ -544,7 +579,8 @@ function LedgerView({
               </tr>
             </thead>
             <tbody>
-              {seasonRows.map((r) => {
+              {entries.map((e) => {
+                const r = e.row;
                 const f = fullOf(r);
                 const figs = f ? fullOrderFiguresOf(f, includeGrunnel, includeTrent) : ledgerFiguresOf(r, includeGrunnel);
                 const offset = f ? f.orderOffset : r.goalOffset;
@@ -552,8 +588,8 @@ function LedgerView({
                 return (
                 <tr key={r.auctionId}>
                   <td className="left">
-                    <span className="an-lname">{r.name || `#${r.auctionNumber}`}</span>
-                    <span className="an-lsub">#{r.auctionNumber} · {r.auctioneer}</span>
+                    <span className="an-lname">{entryName(e)}</span>
+                    <span className="an-lsub">{entrySub(e)}</span>
                   </td>
                   <td className="num neg led-start">{r.withheld ? money0(r.withheld) : '—'}</td>
                   <td className="num">{r.augment ? money0(r.augment) : '—'}</td>

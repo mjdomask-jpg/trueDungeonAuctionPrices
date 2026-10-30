@@ -2004,8 +2004,12 @@ td.strong { font-weight: 600; color: var(--text-h); }
   border: 1px solid currentColor;
 }
 /* Covered is good → green (--diff-down); Short is bad → red (--diff-up). */
-.an-verdict.yes { color: var(--diff-down); }
-.an-verdict.no { color: var(--diff-up); }
+.an-verdict.covered { color: var(--diff-down); }
+.an-verdict.short { color: var(--diff-up); }
+/* Even: within the ledger's estimating error of zero (ERAS.ledgerEvenBand), so
+   neither colour — the body text's, as a chip that says so in words. */
+.an-verdict.even { color: var(--text); }
+.an-table td.diff.even, .led-balance-val.diff.even { color: var(--text-h); }
 /* A structural-confound caveat that sits with the number it qualifies — dashed
    so it reads as a caution, not an error. */
 .confound-note {

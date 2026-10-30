@@ -360,7 +360,11 @@ able to answer it — see item 5.
 
    The first subtotal is the same under both lenses, is computable for every auction
    (the full lens's *n/a* for 2018–2020 blanks only Fee & goal and Net), and no fee
-   estimate can move it. Grunnel adds to the Net only. Trent's points go into Fee &
+   estimate can move it. **Within ±$100 of zero any total reads *Even***, which is
+   the estimates' own error (backlog `SITE-13`, 2026-10-30). Under the full lens, an
+   auctioneer's auctions in a season that recorded nothing and came out identical
+   are shown once, with a count: Trent's were 81 of 116 rows since 2025. Grunnel
+   adds to the Net only. Trent's points go into Fee &
    goal, never Augments vs withheld: first offered as an augment, they put ~$750 into
    every Trent auction's verdict once they became the default.
 2. **How did Grunnel items contribute vs the preorder benchmark?** — per season, mean

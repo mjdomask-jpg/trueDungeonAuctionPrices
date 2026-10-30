@@ -32,7 +32,7 @@ function bucket<K>(map: Map<K, number[]>, key: K, value: number): void {
 // --- View 1: Auction Ledger ------------------------------------------------
 // Per auction: what the auctioneer withheld (negative) against what they put
 // back — released payment, personal augments — and how far their funding goal
-// sat from the customary one. Grunnel is shown but NOT counted toward "covered":
+// sat from the customary one. Grunnel is shown but NOT counted toward the verdict:
 // it is a company drop, not the auctioneer offsetting their own withholding
 // (design §6.1).
 //
@@ -58,7 +58,7 @@ function bucket<K>(map: Map<K, number[]>, key: K, value: number): void {
 // part a lens changes. Folding them into one number let a ~$1,000 Golden Ticket
 // decide the verdict on almost every auction: measured 2026-10-30 over the 15
 // auctions since 2025 with both augments and withholding, the one-number verdict
-// disagreed with augments − withheld on 11. So `covered` reads
+// disagreed with augments − withheld on 11. So `verdict` reads
 // augmentsVsWithheld, and `balance` (the net) is shown beside it, never instead.
 
 export type LedgerRow = {
@@ -95,8 +95,8 @@ export type LedgerRow = {
   // Grunnel-excluded answer and stay that way, so nothing downstream has to know
   // about the toggle.
   balance: number;
-  // augmentsVsWithheld ≥ 0. NOT the net — see the note above LedgerRow.
-  covered: boolean;
+  // verdictOf(augmentsVsWithheld). NOT the net — see the note above LedgerRow.
+  verdict: Verdict;
 };
 
 export function goalOffsetOf(targetFunding: number | null): number | null {
@@ -109,8 +109,15 @@ export function goalOffsetOf(targetFunding: number | null): number | null {
 const augmentsVsWithheldOf = (augment: number, withheld: number): number => augment + withheld;
 const feeAndGoalOf = (released: number, goalOffset: number | null): number => released + (goalOffset ?? 0);
 
-// A rounding guard so a $0.00 net reads as covered rather than a penny short.
-export const isCovered = (balance: number): boolean => balance >= -0.005;
+// Covered, Short, or EVEN: within ±ERAS.ledgerEvenBand of zero, which is the size
+// of the ledger's own estimating error (see eras.ts). A −$20 against $389 of
+// estimated withholding read Short until 2026-10-30, a precision the estimates
+// do not have. The band is inclusive, so exactly ±$100 is Even.
+export type Verdict = 'covered' | 'even' | 'short';
+export function verdictOf(total: number): Verdict {
+  if (Math.abs(total) <= ERAS.ledgerEvenBand + 0.005) return 'even';
+  return total > 0 ? 'covered' : 'short';
+}
 
 // The three figures a row shows. `feeAndGoal` and `net` are null under the
 // full-order lens when its fee estimate is not computable; `augmentsVsWithheld`
@@ -187,7 +194,7 @@ function ledgerRowOf(
     augmentsVsWithheld,
     feeAndGoal,
     balance,
-    covered: isCovered(augmentsVsWithheld),
+    verdict: verdictOf(augmentsVsWithheld),
   };
 }
 
@@ -202,7 +209,7 @@ export type LedgerAgg = {
   augmentsVsWithheld: number;
   feeAndGoal: number;
   balance: number;
-  covered: boolean;
+  verdict: Verdict;
 };
 
 function aggregate(key: string, rows: LedgerRow[]): LedgerAgg {
@@ -217,7 +224,7 @@ function aggregate(key: string, rows: LedgerRow[]): LedgerAgg {
   const balance = augmentsVsWithheld + feeAndGoal;
   return {
     key, n: rows.length, withheld, released, augment, grunnel, goalOffset,
-    augmentsVsWithheld, feeAndGoal, balance, covered: isCovered(augmentsVsWithheld),
+    augmentsVsWithheld, feeAndGoal, balance, verdict: verdictOf(augmentsVsWithheld),
   };
 }
 
@@ -451,6 +458,65 @@ export function fullOrderFiguresOf(
     : r.fullFeeAndGoal + (includeTrentSubsidy ? r.trentSubsidy : 0);
   const net = feeAndGoal == null ? null : r.augmentsVsWithheld + feeAndGoal + (includeGrunnel ? r.grunnel : 0);
   return { augmentsVsWithheld: r.augmentsVsWithheld, feeAndGoal, net };
+}
+
+// --- Alike auctions, shown once ---------------------------------------------
+// An auctioneer who runs every auction the same way fills the ledger with copies.
+// Trent is the case that forced it (maintainer, 2026-10-30): 81 of the full-order
+// lens's 116 rows since 2025 were his, holding THREE distinct sets of figures,
+// one per season, and not one recorded augment or withheld item. Dropping them
+// would hide a real answer to "who came out ahead" (his −$78 an auction in
+// 2027), so they are collapsed instead: one entry per season per auctioneer, its
+// figures per auction.
+//
+// The rule names nobody. Auctions collapse when they share a season and an
+// auctioneer, recorded NOTHING (no included, augment, withheld or Grunnel), and
+// every figure that could still differ agrees — the goal, both offsets, the
+// estimated kept fee and Trent's points. An auction with anything recorded stays
+// its own row, because that is where the ledger has something to say. Only Trent
+// qualifies today.
+export type LedgerEntry<T extends LedgerRow> = {
+  row: T;          // the newest of the group; its figures are every member's
+  alike: number;   // 1 for an ordinary row
+  firstNumber: number;
+  lastNumber: number;
+};
+
+const recordedNothing = (r: LedgerRow): boolean =>
+  !r.released && !r.augment && !r.withheld && !r.grunnel;
+
+function alikeKey(r: LedgerRow): string {
+  const f = r as Partial<FullOrderRow>;
+  return [
+    r.season, r.auctioneer, r.fundingGoal, r.goalOffset,
+    f.orderOffset, f.feeKept?.value.toFixed(2), f.trentSubsidy, f.fullFeeAndGoal?.toFixed(2),
+  ].join('|');
+}
+
+// Rows in, entries out, in the rows' order: a group sits where its newest member
+// did. A group of one is an ordinary row.
+export function collapseAlike<T extends LedgerRow>(rows: T[]): LedgerEntry<T>[] {
+  const groups = new Map<string, T[]>();
+  for (const r of rows) {
+    if (!recordedNothing(r)) continue;
+    const k = alikeKey(r);
+    (groups.get(k) ?? groups.set(k, []).get(k)!).push(r);
+  }
+  const out: LedgerEntry<T>[] = [];
+  const placed = new Set<string>();
+  for (const r of rows) {
+    const group = recordedNothing(r) ? groups.get(alikeKey(r)) : undefined;
+    if (!group || group.length < 2) {
+      out.push({ row: r, alike: 1, firstNumber: r.auctionNumber, lastNumber: r.auctionNumber });
+      continue;
+    }
+    const k = alikeKey(r);
+    if (placed.has(k)) continue;
+    placed.add(k);
+    const numbers = group.map((g) => g.auctionNumber);
+    out.push({ row: r, alike: group.length, firstNumber: Math.min(...numbers), lastNumber: Math.max(...numbers) });
+  }
+  return out;
 }
 
 export const fullOrderBalanceOf = (
