@@ -360,6 +360,11 @@ function LedgerCard({ r, full, includeGrunnel, includeTrent }: {
   );
 }
 
+// The widest the ledger table can be squeezed to is ~990px (measured 2026-10-30
+// over 2021 and 2025–2027, the full-order lens with Trent points being the
+// widest), and a 1080px window gives it 1025px. Below that, cards.
+const LEDGER_CARDS = '(max-width: 1079px)';
+
 const feeKeptText = (f: FeeKept | null) => (f == null ? 'n/a' : f.value ? money0(f.value) : '—');
 // A subtotal cell: signed, and coloured by its sign (up=red, down=green here).
 const totalCell = (val: number | null, cls = '', note: ReactNode = null) =>
@@ -376,6 +381,10 @@ function LedgerView({
   sales: Sale[];
 }) {
   const narrow = useMediaQuery(NARROW);
+  // Cards wherever the table would not fit, not only on a phone. Its header is
+  // pinned to the page, which needs no sideways scroller around it (see
+  // .led-wrap), so a table too wide for the page would push the PAGE sideways.
+  const cards = useMediaQuery(LEDGER_CARDS);
   // Off by default: the Grunnel-excluded net is the one that answers "would
   // this have worked without the company's help". See ledgerFiguresOf.
   const [includeGrunnel, setIncludeGrunnel] = useState(false);
@@ -495,7 +504,7 @@ function LedgerView({
 
       {full && <FeeRateLine season={season} rates={feeRates.get(season)} />}
 
-      {narrow ? (
+      {cards ? (
         <div className="led-cards">
           {seasonRows.map((r) => (
             <LedgerCard key={r.auctionId} r={r} full={fullOf(r)}
@@ -503,9 +512,10 @@ function LedgerView({
           ))}
         </div>
       ) : (
-        // an-pin: the two-row header names every figure, and Kept fee vs
-        // Included or Total vs Total is lost once it scrolls away.
-        <div className="an-scroll an-pin">
+        // No .an-scroll: a sideways scroller is a scroll container, and the
+        // header could then only pin inside a box with its own scrollbar. Without
+        // one it pins to the PAGE — and `cards` above guarantees the table fits.
+        <div className="led-wrap">
           <table className={`an-table led-table${seasonRows.length >= 4 ? ' banded' : ''}`}>
             {/* Two header rows: each subtotal heads the columns that make it up,
                 so the table reads as the two questions it answers. */}

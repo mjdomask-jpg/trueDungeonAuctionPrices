@@ -1905,8 +1905,33 @@ td.strong { font-weight: 600; color: var(--text-h); }
 .led-table td.left, .gr-table td.left, .an-auto td.left { white-space: normal; }
 /* The ledger's two subtotal groups: a spanning heading over each, and a rule
    down the left of each group so the columns read as the sums they are. */
-.led-table th.led-group { text-align: center; border-bottom: 1px solid var(--border); }
+.led-table th.led-group { text-align: center; }
 .led-table .led-start { border-left: 1px solid var(--border); }
+
+/* The ledger's header is pinned to the PAGE, so there is one scrollbar. The
+   .an-pin route (a height-capped box that scrolls itself) gave the table a
+   second one, which the maintainer rejected. Three things make page-sticky work:
+   - no scroll container between the table and the page: .led-wrap replaces
+     .an-scroll, whose `overflow-x: auto` would capture the header, and the view
+     shows cards wherever the table would not fit (LEDGER_CARDS);
+   - `overflow: clip` instead of .an-table's `hidden`: it still rounds the card's
+     corners but, unlike `hidden`, makes no scroll container;
+   - the whole THEAD sticks, not each th — the header is two rows, and a th
+     pinned at `top: 0` would slide the second row up under the first.
+   Collapsed-table borders stay behind with the table when the header moves, so
+   the header draws its rules as things that travel with the cell: ::after for
+   the underline (inside the cell, or the second row's opaque background covers
+   the first row's), an inset shadow for each group's left edge. */
+.led-table { overflow: clip; }
+.led-table thead { position: sticky; top: 0; z-index: 2; }
+.led-table thead th { position: relative; border-bottom: 0; }
+.led-table thead th::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  border-bottom: 1px solid var(--border);
+}
+.led-table thead th.led-start { border-left: 0; box-shadow: inset 1px 0 var(--border); }
 /* The ledger card's second and third groups of figures, below a subtotal line. */
 .led-figs-next { margin-top: 10px; }
 
@@ -1939,7 +1964,14 @@ td.strong { font-weight: 600; color: var(--text-h); }
 .src-chart .an-subhead { margin-bottom: 4px; }
 .gr-chart { margin-top: 18px; }
 /* Ledger mobile: one stacked card per auction (no horizontal scroll). */
-.led-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+/* A grid, because the ledger shows cards up to 1079px, not only on a phone: one
+   column there, and side by side on a tablet rather than stretched across it. */
+.led-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
 .led-card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 10px; padding: 12px 14px;
@@ -2118,20 +2150,6 @@ td.strong { font-weight: 600; color: var(--text-h); }
   left: 0; right: 0; bottom: -1px;
   border-bottom: 1px solid var(--border);
 }
-/* The ledger's header is TWO rows (the subtotal groups over their columns), and
-   pinning each th at `top: 0` would slide the second row up under the first. So
-   the whole thead sticks instead, and its cells go back to plain positioned
-   boxes for the ::after rule above. The group rules (.led-group's underline,
-   .led-start's left edge) are collapsed-table borders, which stay behind with
-   the table when the header moves — so in here they are drawn as inset shadows,
-   which travel with the cell. The underline comes free from ::after. */
-.an-scroll.an-pin .led-table thead { position: sticky; top: 0; z-index: 2; }
-.an-scroll.an-pin .led-table thead th { position: relative; top: auto; z-index: auto; }
-/* Inside the cell, not 1px below it: the second row is painted after the first
-   and its opaque background would cover the group underline. */
-.an-scroll.an-pin .led-table thead th::after { bottom: 0; }
-.an-scroll.an-pin .led-table thead th.led-group { border-bottom: 0; }
-.an-scroll.an-pin .led-table thead th.led-start { border-left: 0; box-shadow: inset 1px 0 var(--border); }
 .an-matrix { min-width: 620px; }
 
 /* Phone-only per-auctioneer list, rendered instead of that grid below 640px
