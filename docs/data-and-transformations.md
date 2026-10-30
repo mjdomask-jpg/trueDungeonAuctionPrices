@@ -372,21 +372,31 @@ either the sales or the context rows); "Non-augmented" is the complement of
 into the four analyses on the Analytics page's **Funding & Context** view
 (design §6), all pure over the parsed data:
 
-- **Auction ledger** (`auctionLedger`) — per auction, coverage = released +
-  personal-augments + goal offset (`defaultTargetFunding − targetFunding`, the customary
-  $7,500 baseline — design §6 item 1 says why not the order cost) −
-  withheld; `≥ 0` ⇒ *Covered*. Grunnel is shown but excluded from the verdict (a
+- **Auction ledger** (`auctionLedger`) — per auction, two subtotals and their net.
+  `augmentsVsWithheld` = personal augments − withheld, and the verdict reads this
+  alone: `verdictOf` gives *Covered* above `+ERAS.ledgerEvenBand` ($100), *Short*
+  below `−$100`, *Even* between. `feeAndGoal` = released + goal offset
+  (`defaultTargetFunding − targetFunding`, the customary $7,500 baseline — design §6
+  item 1 says why not the order cost). `balance` is the two added, shown as *Net*.
+  Grunnel is shown but excluded from all three (a
   company drop, not the auctioneer's own offset), and an auction with no recorded
   target — or a pooled one above the order cost — contributes a **$0** offset, never
   the assumed default, so coverage is never fabricated. A closed auction with no
   context rows is listed when its goal alone moves the balance. Aggregated per
   auctioneer and overall. A second lens, **full order** (`fullOrderLedger`,
-  `SITE-13`), measures every closed auction against `orderCost` and debits the
-  kept fee: (`feeRandomUltraRares` − released − withheld) × the season's Random UR
+  `SITE-13`), keeps `augmentsVsWithheld` and replaces the fee term with
+  `fullFeeAndGoal` = (`orderCost` − goal) − the kept fee. A released fee is the
+  baseline there and is **not** credited. Kept fee =
+  (`feeRandomUltraRares` − released − withheld) × the season's Random UR
   rate (`feeRatesBySeason`: quantity-weighted over released context rows) + the
   season's mean Golden Ticket when one was owed (season ≥ 2025) and not released.
   A season with no sales borrows the nearest earlier one; otherwise it is *n/a*. Trent's reward
-  points (`trentSubsidyOf`, rate × goal) are an opt-in augment under that lens only.
+  points (`trentSubsidyOf`, rate × goal) are added to `feeAndGoal` under that lens
+  only, on by default, and never to `augmentsVsWithheld`. `collapseAlike` shows an
+  auctioneer's identical, nothing-recorded auctions in a season as one entry
+  carrying a count and the range of auction numbers. Each row's `link` comes from
+  `auditLinks`: the auction's `Link` only when no other auction shares it and it
+  points below the site root (Trent's and Utaku's are live-auction pages, so null).
 - **Grunnel vs preorder** (`grunnelVsPreorder`) — mean Grunnel item value vs mean
   `Preorder`-category sale price, per season.
 - **Augmented vs non-augmented** (`augmentedVsNot`) — within one season, each

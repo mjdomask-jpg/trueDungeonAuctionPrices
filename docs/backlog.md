@@ -102,9 +102,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-12** | ~~The publisher's row-delta guard refuses a deletion someone meant~~ | **RESOLVED 2026-09-19** — three tiers; only an empty tab is still refused outright, and a big move takes a typed confirmation |
 | **DATA-17** | ~~Season 2027 runs two different $8K orders and nothing records which~~ | **RESOLVED 2026-09-21 (repo side)** — a value in `auctionStyle`, not a column; seven rows relabelled and § 6 now holds the style to the trade-good counts. **The same edit in the workbook is what is left**, or the next publish reverts it |
 | **DATA-18** | A Random Ultra Rare's published price comes from a **lot total**, not a recorded sale — the only such row in `prices.csv` | the threads hold the real per-lot sales and the grammars to read them; recrawling replaces each derived rate with its lots |
-| **SITE-13** | ~~The ledger has no "full order" lens~~ | **BUILT 2026-10-15** — a *Measure against* picker on the ledger; the kept fee is estimated at render time, never written as rows, with Trent's reward points as an opt-in. A Golden Ticket is owed from the **2025 season** (settled 2026-10-22) |
+| **SITE-13** | ~~The ledger has no "full order" lens~~ | **BUILT 2026-10-15** — a *Measure against* picker on the ledger; the kept fee is estimated at render time, never written as rows, with Trent's reward points as an opt-in. A Golden Ticket is owed from the **2025 season** (settled 2026-10-22). **Revised 2026-10-30**: a released fee is the full lens's baseline, not a credit, and the verdict reads *Augments vs withheld* alone, with *Fee & goal* beside it |
 | **DATA-20** | 2025's four released Random UR lots are recorded as **10**; the guarantee is 9 | the maintainer's workbook edit — four `contextItems` quantities and four `prices` rates; paste rows in the entry |
-| **SITE-13** | The ledger has no "full order" lens — a debit for the fee an auctioneer KEPT, against the $8,000 order cost | a call on whether to estimate the fee for every auction; the customary-baseline ledger shipped without it |
 | **DATA-19** | ~~Four auctions' fee and withheld records disagree with their own threads~~ | **RESOLVED 2026-09-25** — all four corrected in the workbook and published in PR #287; `202640`'s release, the one value only the maintainer had, is nine Random URs for $387 ($43 each) |
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
 | **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, deferred |
@@ -1528,7 +1527,7 @@ Reopening one needs a new fact.
 | **Coarse two-season pooling for active windows** | Dropped 2026-08-11 for exact date-windowed pricing. The 2025-2026 data shows a sharp post-Dec-1 spike for Oil of Enchantment and Elven Bismuth that pooling would fold into the cost and overstate. Accuracy was the point of the phase |
 | **`AltItem` / `AltQuantity` data columns for substitution** | D6, 2026-08-13: one substitution engine in code config, holding both the Omni rules and Wish Ring ⇄ 15,000 GP. There is no live Wish-Ring-only recipe, so the columns would mean authoring 43 rows to preserve today's behaviour. A per-line `NoSubstitute` stays a **documented seam**, to be added when a real exception appears |
 | **Two-line UNPICKED rows in the recipe drawer** | Declined 2026-09-12 by the maintainer, on the measurements in `SITE-3`. ~26 of 174 names still ellipsize on unpicked rows at 375px, and the only thing that would fix them is the same second line a picked row now gets — but there are ~178 unpicked rows to a handful of picked ones, so it would add ~26px to nearly every row and roughly DOUBLE the drawer's scroll length. A picker you have to scroll twice as far is worse than one that abbreviates a long name. Desktop already got these rows 183 → 312px from the wider drawer, for free. Reopen only if the drawer stops being a scrolling list |
-| **Counting Trent's reward points in the Auction Ledger** | Raised by community feedback 2026-09-24: Trent's 10% back in store points as a subsidy to count beside augments. Declined because it is a **price** term, not a **funding** term — remove the program and the order is funded identically, which is not true of an augment, a lowered goal or a withheld item. Measured the same day, the same tokens sell **6–15% higher** at Trent than on the forum in every season 2023–26 (median Trent÷Forum 1.06 / 1.15 / 1.13 / 1.06, Trent higher on 14–20 of ~22 tokens), consistent with bidders pricing the points into their bids and so paying for much of it themselves. It is already modelled where it belongs — the **Reward-adjusted** setting — so counting it in the ledger too would count it twice. And at ≥$750 an auction over 120 auctions it would add ≥$90,000, three times the whole ledger's net, from a program that changes nothing about the order. The Balance help text says it is left out and why. Reopen only if the points start funding the order itself. **Partly reopened 2026-10-15, as an OPT-IN only**: the maintainer expects a vocal reader to object regardless of the price data, so the full-order lens (`SITE-13`) carries a *Count Trent's reward points* checkbox, off by default, whose help states this reasoning. The custom lens still never counts them |
+| **Counting Trent's reward points in the Auction Ledger** | Raised by community feedback 2026-09-24: Trent's 10% back in store points as a subsidy to count beside augments. Declined because it is a **price** term, not a **funding** term — remove the program and the order is funded identically, which is not true of an augment, a lowered goal or a withheld item. Measured the same day, the same tokens sell **6–15% higher** at Trent than on the forum in every season 2023–26 (median Trent÷Forum 1.06 / 1.15 / 1.13 / 1.06, Trent higher on 14–20 of ~22 tokens), consistent with bidders pricing the points into their bids and so paying for much of it themselves. It is already modelled where it belongs — the **Reward-adjusted** setting — so counting it in the ledger too would count it twice. And at ≥$750 an auction over 120 auctions it would add ≥$90,000, three times the whole ledger's net, from a program that changes nothing about the order. The ledger's Net help text says it is left out and why. Reopen only if the points start funding the order itself. **Partly reopened 2026-10-15, as an OPT-IN only**: the maintainer expects a vocal reader to object regardless of the price data, so the full-order lens (`SITE-13`) carries a *Count Trent's reward points* checkbox, off by default, whose help states this reasoning. The custom lens still never counts them. **On by default since 2026-10-30** (maintainer), and counted in that lens's *Fee & goal*, never in *Augments vs withheld*, so the points cannot decide whether an auction covered its withholding |
 | **Automatic normalization of apostrophes in item names** | `Thor’' Mug of Melee` held a curly one AND a straight one; folding it mechanically gives `Thor''`. `validate-prices.mjs` § 8 errors on a curly apostrophe instead, and near-miss pairs are notes that are never merged automatically — `+1 Turkey Leg` and `+1 Turkey Leg of Smiting` are different tokens |
 
 ---
@@ -2422,13 +2421,80 @@ $8,000, kept fee debited**. Code: `fullOrderLedger`, `feeRatesBySeason` and
   them; a thin season is used as it stands. More auctions are releasing the fee,
   so the data fills in.
 
-**How it reads.** Balance = included + augments − withheld + (8,000 − goal) −
-kept fee. Kept fee = (9 − Random URs released − Random URs recorded withheld) ×
-the season's quantity-weighted Random UR rate, plus the season's mean Golden
-Ticket if one was owed and neither sold nor withheld. Anything released or
-withheld is already counted in its own column, so it is never debited twice —
-`20274` and `202718`, which withheld their Random URs and sold their Golden
-Tickets, show no kept fee. **Every closed auction is listed**, not only those with
+**How it reads** (as revised 2026-10-30, below). Augments vs withheld = augments
+− withheld, and carries the verdict. Fee & goal = (8,000 − goal) − kept fee. Net
+= the two added. Kept fee = (9 − Random URs released − Random URs recorded
+withheld) × the season's quantity-weighted Random UR rate, plus the season's mean
+Golden Ticket if one was owed and neither sold nor withheld. What was released is
+the baseline and what was withheld is already debited, so neither is debited
+again — `20274` and `202718`, which withheld their Random URs and sold their
+Golden Tickets, show no kept fee.
+
+**Revised 2026-10-30 — a release is the baseline, and the verdict is augments vs
+withheld** (maintainer's review, relaying the community members who asked for
+this lens). Two faults in the first build:
+
+- **The full lens still credited Included.** At an $8,000 baseline the fee is part
+  of what the order delivers, so a release counted twice — no debit *and* a credit.
+  An auction that sold everything at $8,000 and did nothing else read about
+  **+$1,200**; it now reads **$0**. The test pinned the old figure (`rel26` →
+  $1,360), which is why nothing caught it.
+- **One number carried the verdict**, in both lenses, and a ~$1,000 Golden Ticket
+  decided it. The question asked is "did the augments cover the withholdings?".
+  Measured over the 15 auctions since 2025 with both augments and withholding,
+  the old verdict disagreed with augments − withheld on **11** — `202717` withheld
+  $1,813 against $1,227 of augments and read +$725 *Covered*.
+
+So the ledger shows two subtotals: **Augments vs withheld**, the same in both
+lenses and the verdict's only input, and **Fee & goal**, the only part the lens
+changes (custom: included + (7,500 − goal)). **Net** adds them. Grunnel moves the
+Net only; Trent's points, offered as an augment, move Augments vs withheld. The
+first subtotal is computable for every auction, so 2018–2020 now get a verdict
+under the full lens too; only their Fee & goal and Net are *n/a*. **The verdict
+change reaches the custom lens as well**: a goal below $7,500 (`20275`) or a
+released fee no longer turns a short auction covered. That is shown in Fee & goal
+and the Net instead.
+
+**The custom lens is now labelled *Traditional*** (same day): "Custom", meant as
+in *customary*, read as a customised or customisable view. Only the wording
+changed; the code and these docs still call it the custom lens.
+
+**Trent's reward points are on by default under the full lens** (same day), and
+moved from Augments vs withheld into **Fee & goal**. As an augment, a default-on
+$750 a Trent auction would decide that auction's verdict, which is exactly the
+fault this revision removes, and the verdict column would no longer read the same
+under both lenses. In Fee & goal they are what they are: part of the order Trent
+pays back himself. The checkbox still turns them off.
+
+**An Even band, and alike auctions shown once** (same day, maintainer). A total
+within **±$100** of zero reads **Even** rather than Covered or Short, on all
+three totals. That is the size of the ledger's own estimating error, measured
+over 2025–2027: a withheld token's same-season price varies ~15% (median; IQR
+10–21%), which is ±$60–$135 on a typical withheld total, and a kept Golden Ticket
+alone is ±$130–$200 (one standard deviation). `202730`'s −$20 against $389 of
+estimated withholding had read Short. `202645` (−$161 on $757 withheld) and
+`202632` (−$214) stay Short, as both are past their own estimates' error.
+`ERAS.ledgerEvenBand`, `verdictOf`.
+
+And Trent: since 2025, **81 of the full lens's 116 rows** were his, holding three
+distinct sets of figures (one per season) and not one recorded augment or
+withheld item. They are **collapsed, not dropped**: excluding them would hide a
+real answer to "who came out ahead" (−$78 an auction in 2027). `collapseAlike`
+names nobody. It merges an auctioneer's auctions in one season that recorded
+nothing and whose every remaining figure agrees, and only Trent qualifies today.
+The Traditional lens never lists such auctions anyway, because its membership
+rule needs something recorded or a goal other than $7,500. That rule is why
+Trent was absent there, not an exclusion by name.
+
+**Auction names link to the auction, for auditing** (same day, maintainer).
+Every closed auction records a Link, but not every Link is the auction's own
+page. All of Trent's auctions share `trenttokens.com/collections/current-auction`,
+and auction.utakustradecaravan.com has no per-auction URL, so its rows hold the
+site root. Both show whatever is live now, which would send an auditor to the
+wrong lots. `auditLinks` therefore links only a URL that belongs to ONE auction
+and points below its site's root. It names no venue, so a venue that gains
+per-auction pages is linked as soon as its rows carry them. A collapsed group
+has no single page and is not linked. **Every closed auction is listed**, not only those with
 context, because one that recorded nothing still kept a fee. A pooled auction
 (goal above $8,000, `20251`) is *n/a*, because it carries more than one fee.
 The rates behind a season's estimates are stated above its table.

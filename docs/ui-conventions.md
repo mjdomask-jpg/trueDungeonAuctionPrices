@@ -495,6 +495,27 @@ table: Analytics → Historical → *Auctions by auctioneer and season*, which r
 to every auctioneer on record and is unreadable once the season columns scroll
 away.
 
+**Prefer pinning the header to the PAGE: one scrollbar, not two.** The maintainer
+rejected `.an-pin` for the Auction ledger (2026-10-30) because a box with its own
+scrollbar inside a scrolling page is always annoying. The ledger pins its header
+to the page instead, which works only when no scroll container sits between the
+header and the page:
+
+- **No `overflow-x: auto` wrapper.** The ledger sits in a plain `.led-wrap`, and
+  the view switches to cards wherever the table would not fit (`LEDGER_CARDS`,
+  set from the table's measured min-content width), so nothing ever needs to
+  scroll sideways. A table that can't fit and must scroll sideways cannot have a
+  page-pinned header; that is the case `.an-pin` is for.
+- **`overflow: clip`, not `hidden`, to round the corners.** `clip` clips without
+  making a scroll container; `hidden` makes one and captures the header.
+- **A two-row header sticks as the whole `thead`**, not per `th`, or the second
+  row slides up under the first. Its rules travel with it as `::after` (inside
+  the cell, `bottom: 0`, or the next row's background covers it) and inset
+  shadows, since collapsed borders stay behind with the table.
+
+The site's own header is not sticky, so `top: 0` is the page's top. Verify in
+headless Edge by scrolling the WINDOW and capturing the viewport without `clip`.
+
 
 - **4+ rows get alternating row shading.** `CategoryTable` and `CompareTable`
   apply `.banded` themselves based on `rows.length >= 4`; do the same rather than

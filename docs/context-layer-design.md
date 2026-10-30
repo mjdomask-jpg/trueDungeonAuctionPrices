@@ -336,11 +336,37 @@ able to answer it — see item 5.
    estimated at render time and never written as rows. The fee is nine Random Ultra
    Rares plus, from the 2025 season, one Golden Ticket, each at its season's
    average sale. A season with no sales borrows the nearest **earlier** one; with
-   none earlier it reads *n/a* (2018–2020). Fee items released or recorded withheld
-   are already in their own columns, so they are not debited again. Every closed
+   none earlier it reads *n/a* (2018–2020). A fee item recorded withheld is already
+   debited as Withheld, so it is not debited again. A fee item **released** is the
+   baseline: it is neither debited nor credited, so an auction that sells the whole
+   fee, withholds nothing, adds nothing and asks $8,000 nets **$0**. Every closed
    auction is listed, since one that recorded nothing still kept a fee. Trent's
-   reward points can be counted as an augment here, opt-in and off by default; the
-   custom lens still never counts them.
+   reward points are counted here in Fee & goal, **on by default** since 2026-10-30
+   and untickable; the custom lens (labelled *Traditional*) still never counts them.
+
+   **The balance is two subtotals, and the verdict belongs to the first (2026-10-30).**
+   As first built the full lens still credited Included, so a release counted twice —
+   no debit *and* a credit — and the auction above read about +$1,200. Worse, in both
+   lenses one number carried the verdict, and a ~$1,000 Golden Ticket decided it: over
+   the 15 auctions since 2025 with both augments and withholding, that verdict
+   disagreed with augments − withheld on **11**. The community's question is "did the
+   augments cover the withholdings?", so the ledger now shows:
+
+   | Subtotal | Custom lens | Full-order lens |
+   |---|---|---|
+   | **Augments vs withheld** — carries *Covered* / *Short* | augments − withheld | the same |
+   | **Fee & goal** — how the auctioneer was paid | included + (7,500 − goal) | (8,000 − goal) − kept fee |
+   | **Net** | the two added | the two added |
+
+   The first subtotal is the same under both lenses, is computable for every auction
+   (the full lens's *n/a* for 2018–2020 blanks only Fee & goal and Net), and no fee
+   estimate can move it. **Within ±$100 of zero any total reads *Even***, which is
+   the estimates' own error (backlog `SITE-13`, 2026-10-30). Under the full lens, an
+   auctioneer's auctions in a season that recorded nothing and came out identical
+   are shown once, with a count: Trent's were 81 of 116 rows since 2025. Grunnel
+   adds to the Net only. Trent's points go into Fee &
+   goal, never Augments vs withheld: first offered as an augment, they put ~$750 into
+   every Trent auction's verdict once they became the default.
 2. **How did Grunnel items contribute vs the preorder benchmark?** — per season, mean
    Grunnel item value vs mean **preorder** item value that season (the natural benchmark,
    since Grunnel offsets expired preorder bonuses). Phase-1 spot-check: preorder ≈ $2/yr
