@@ -2484,7 +2484,17 @@ names nobody. It merges an auctioneer's auctions in one season that recorded
 nothing and whose every remaining figure agrees, and only Trent qualifies today.
 The Traditional lens never lists such auctions anyway, because its membership
 rule needs something recorded or a goal other than $7,500. That rule is why
-Trent was absent there, not an exclusion by name. **Every closed auction is listed**, not only those with
+Trent was absent there, not an exclusion by name.
+
+**Auction names link to the auction, for auditing** (same day, maintainer).
+Every closed auction records a Link, but not every Link is the auction's own
+page. All of Trent's auctions share `trenttokens.com/collections/current-auction`,
+and auction.utakustradecaravan.com has no per-auction URL, so its rows hold the
+site root. Both show whatever is live now, which would send an auditor to the
+wrong lots. `auditLinks` therefore links only a URL that belongs to ONE auction
+and points below its site's root. It names no venue, so a venue that gains
+per-auction pages is linked as soon as its rows carry them. A collapsed group
+has no single page and is not linked. **Every closed auction is listed**, not only those with
 context, because one that recorded nothing still kept a fee. A pooled auction
 (goal above $8,000, `20251`) is *n/a*, because it carries more than one fee.
 The rates behind a season's estimates are stated above its table.

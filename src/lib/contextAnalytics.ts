@@ -66,6 +66,9 @@ export type LedgerRow = {
   season: string;
   auctionNumber: number;
   name: string;
+  // The auction's own page, for auditing it; null when its Link is not one — see
+  // auditLinks.
+  link: string | null;
   auctioneer: string;
   source: string;
   withheld: number;   // estimate, ≤ 0
@@ -156,13 +159,38 @@ export function auctionLedger(
   meta: AuctionMeta[], ctx: Map<string, AuctionContext>,
 ): LedgerRow[] {
   const labels = auctioneerLabels(meta);
+  const links = auditLinks(meta);
   const rows: LedgerRow[] = [];
   for (const m of meta) {
     const c = ctx.get(m.auctionId);
     if (!c && !(m.status === 'Closed' && goalOffsetOf(m.targetFunding))) continue;
-    rows.push(ledgerRowOf(m, c, labels));
+    rows.push(ledgerRowOf(m, c, labels, links));
   }
   return rows.sort(newestFirst);
+}
+
+// The link a reader can AUDIT an auction at — its own page, still showing that
+// auction — keyed by auctionId. Every closed auction records a Link, but not
+// every Link is that: Trent's 127 auctions all point at one
+// `collections/current-auction` page, and auction.utakustradecaravan.com has no
+// per-auction URL, so its rows hold the site root. Both show whatever is live
+// NOW, and linking a closed auction to them would send an auditor to the wrong
+// lots (measured 2026-10-30). So a link counts only when it belongs to ONE
+// auction and points below its site's root. The rule names no venue, and a
+// venue that gains per-auction pages is linked as soon as its rows carry them.
+export function auditLinks(meta: AuctionMeta[]): Map<string, string> {
+  const uses = new Map<string, number>();
+  for (const m of meta) if (m.link) uses.set(m.link, (uses.get(m.link) ?? 0) + 1);
+  const out = new Map<string, string>();
+  for (const m of meta) {
+    if (!m.link || uses.get(m.link) !== 1) continue;
+    let url: URL;
+    try { url = new URL(m.link); } catch { continue; }
+    if (!/^https?:$/.test(url.protocol)) continue;
+    if (url.pathname.replace(/\/+$/, '') === '' && !url.search) continue;
+    out.set(m.auctionId, m.link);
+  }
+  return out;
 }
 
 const NO_CONTEXT = { released: 0, augment: 0, grunnel: 0, withheld: 0 };
@@ -171,7 +199,7 @@ const newestFirst = (a: LedgerRow, b: LedgerRow) =>
   Number(b.season) - Number(a.season) || b.auctionNumber - a.auctionNumber;
 
 function ledgerRowOf(
-  m: AuctionMeta, c: AuctionContext | undefined, labels: Map<string, string>,
+  m: AuctionMeta, c: AuctionContext | undefined, labels: Map<string, string>, links: Map<string, string>,
 ): LedgerRow {
   const goalOffset = goalOffsetOf(m.targetFunding);
   const { released, augment, grunnel, withheld } = c ?? NO_CONTEXT;
@@ -183,6 +211,7 @@ function ledgerRowOf(
     season: m.season,
     auctionNumber: m.auctionNumber,
     name: m.name,
+    link: links.get(m.auctionId) ?? null,
     auctioneer: labels.get(auctioneerKey(m.auctioneer)) ?? m.auctioneer,
     source: m.source,
     withheld,
@@ -404,6 +433,7 @@ export function fullOrderLedger(
   meta: AuctionMeta[], ctx: Map<string, AuctionContext>, items: ContextItem[], sales: Sale[],
 ): FullOrderRow[] {
   const labels = auctioneerLabels(meta);
+  const links = auditLinks(meta);
   const rates = feeRatesBySeason(meta, items, sales);
   const counts = new Map<string, { rurReleased: number; rurWithheld: number; gtReleased: boolean; gtWithheld: boolean }>();
   const countsOf = (id: string) => {
@@ -432,7 +462,7 @@ export function fullOrderLedger(
   const rows: FullOrderRow[] = [];
   for (const m of meta) {
     if (m.status !== 'Closed') continue;
-    const base = ledgerRowOf(m, ctx.get(m.auctionId), labels);
+    const base = ledgerRowOf(m, ctx.get(m.auctionId), labels, links);
     const single = m.targetFunding != null && m.targetFunding <= ERAS.orderCost;
     const orderOffset = single ? ERAS.orderCost - m.targetFunding! : null;
     const feeKept = single ? feeKeptOf(m, counts.get(m.auctionId) ?? none, rates.get(m.season)) : null;

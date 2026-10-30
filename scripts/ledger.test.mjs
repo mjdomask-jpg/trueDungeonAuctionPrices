@@ -23,6 +23,8 @@
 //   the Even band                         ±$100 of zero, inclusive, reads Even
 //   alike auctions                        identical, nothing-recorded auctions
 //                                         collapse per season and auctioneer
+//   audit links                           only a link that is one auction's own
+//                                         page, never a shared or root one
 //   the full-order lens (SITE-13)         $8,000 baseline + an estimated kept-fee
 //                                         debit; season rates borrow only from
 //                                         EARLIER seasons, else n/a; released or
@@ -343,6 +345,35 @@ check('the order holds — a group sits where its newest member did',
 check('a different estimated fee keeps auctions apart (the rule names nobody, it compares figures)',
   (() => { const a = trows.find((r) => r.auctionId === 't1'), b = { ...a, auctionId: 'tX', feeKept: { ...a.feeKept, value: a.feeKept.value - 1 } };
     return collapseAlike([a, b]).length === 2; })());
+
+// --- audit links ---------------------------------------------------------------
+// A row links only to a page that is THAT auction's. Trent's auctions share one
+// live-auction page and Utaku's hold the site root; both show what is live now.
+
+console.log('audit links');
+const { auditLinks } = an;
+const lm = (id, link) => ({ ...meta(id, 7500), link });
+const LM = [
+  lm('forum', 'https://truedungeon.com/forum/topic/123-auction'),
+  lm('site', 'https://alesievauctions.com/auctions/39'),
+  lm('trentA', 'https://www.trenttokens.com/collections/current-auction'),
+  lm('trentB', 'https://www.trenttokens.com/collections/current-auction'),
+  lm('root', 'https://auction.utakustradecaravan.com/'),
+  lm('bare', 'https://example.com'),
+  lm('query', 'https://example.com/?auction=7'),
+  lm('blank', ''),
+  lm('notUrl', 'see thread'),
+  lm('js', 'javascript:alert(1)'),
+];
+const links = auditLinks(LM);
+check('an auction\'s own page is linked', links.get('forum') && links.get('site') === 'https://alesievauctions.com/auctions/39');
+check('a link shared by several auctions is not (Trent\'s live-auction page)', !links.has('trentA') && !links.has('trentB'));
+check('a site root is not (Utaku has no per-auction page)', !links.has('root') && !links.has('bare'));
+check('a root that names the auction in its query is', links.get('query') === 'https://example.com/?auction=7');
+check('blank, non-URL and non-http links are not', !links.has('blank') && !links.has('notUrl') && !links.has('js'));
+check('the ledger row carries the link, or null',
+  (() => { const r = auctionLedger(LM.map((m) => ({ ...m, targetFunding: 7150 })), new Map());
+    return r.find((x) => x.auctionId === 'forum').link === LM[0].link && r.find((x) => x.auctionId === 'trentA').link === null; })());
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${pass} passed, ${fail} failed`);

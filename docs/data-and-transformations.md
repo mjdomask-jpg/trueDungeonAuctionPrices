@@ -394,7 +394,9 @@ into the four analyses on the Analytics page's **Funding & Context** view
   points (`trentSubsidyOf`, rate × goal) are added to `feeAndGoal` under that lens
   only, on by default, and never to `augmentsVsWithheld`. `collapseAlike` shows an
   auctioneer's identical, nothing-recorded auctions in a season as one entry
-  carrying a count and the range of auction numbers.
+  carrying a count and the range of auction numbers. Each row's `link` comes from
+  `auditLinks`: the auction's `Link` only when no other auction shares it and it
+  points below the site root (Trent's and Utaku's are live-auction pages, so null).
 - **Grunnel vs preorder** (`grunnelVsPreorder`) — mean Grunnel item value vs mean
   `Preorder`-category sale price, per season.
 - **Augmented vs non-augmented** (`augmentedVsNot`) — within one season, each

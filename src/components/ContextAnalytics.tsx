@@ -395,8 +395,17 @@ const totalCell = (val: number | null, cls = '', note: ReactNode = null) => {
 
 // What names a ledger entry. A collapsed group is named by its auctioneer and
 // count, and says its figures are each auction's, since the row shows one set.
-const entryName = (e: LedgerEntry<LedgerRow>) =>
-  e.alike > 1 ? `${e.row.auctioneer} · ${e.alike} auctions` : (e.row.name || `#${e.row.auctionNumber}`);
+//
+// A single auction's name links to its own page, where it has one (auditLinks),
+// so a reader can check the figures against the lots. A group has no one page
+// to send them to, and its members' links are the venue's live page anyway.
+const entryName = (e: LedgerEntry<LedgerRow>): ReactNode => {
+  if (e.alike > 1) return `${e.row.auctioneer} · ${e.alike} auctions`;
+  const name = e.row.name || `#${e.row.auctionNumber}`;
+  return e.row.link
+    ? <a href={e.row.link} target="_blank" rel="noreferrer noopener">{name}</a>
+    : name;
+};
 const entrySub = (e: LedgerEntry<LedgerRow>) =>
   e.alike > 1
     ? `#${e.firstNumber} to #${e.lastNumber} · run identically, nothing added or withheld · figures per auction`

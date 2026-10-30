@@ -1896,6 +1896,11 @@ td.strong { font-weight: 600; color: var(--text-h); }
 .an-panel .muted { color: var(--text); opacity: 0.75; }
 /* Two-line auction cell in the ledger: name over season/number/auctioneer. */
 .an-lname { display: block; color: var(--text-h); }
+/* The ledger's auction names link to each auction's own page for auditing. Styled
+   as the open-auctions banner's link is: there is no site-wide link colour, and
+   the browser's default blue is near-invisible on the dark theme's card. */
+.an-lname a, .led-name a { color: var(--accent); text-decoration: none; }
+.an-lname a:hover, .led-name a:hover { text-decoration: underline; }
 .an-lsub { display: block; font-size: 12px; color: var(--text); opacity: 0.8; }
 /* Ledger desktop table: size to content (override the global fixed layout) so a
    long auction name wraps instead of overwriting the next column. .an-auto gives
