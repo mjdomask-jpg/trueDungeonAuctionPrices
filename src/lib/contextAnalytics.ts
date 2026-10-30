@@ -50,6 +50,16 @@ function bucket<K>(map: Map<K, number[]>, key: K, value: number): void {
 // would credit every ordinary auction $500 for the discount that bought the fee
 // it kept — coherent only if the kept fee is debited at the same time. That is
 // the second lens, fullOrderLedger below (backlog SITE-13).
+//
+// THE BALANCE IS TWO SUBTOTALS, AND THE VERDICT BELONGS TO THE FIRST. The
+// question the ledger is asked is "did the augments cover the withholdings?",
+// and that is augments − withheld — the same in both lenses. The fee and the goal
+// are a separate question, how the auctioneer was paid, and they are the only
+// part a lens changes. Folding them into one number let a ~$1,000 Golden Ticket
+// decide the verdict on almost every auction: measured 2026-10-30 over the 15
+// auctions since 2025 with both augments and withholding, the one-number verdict
+// disagreed with augments − withheld on 11. So `covered` reads
+// augmentsVsWithheld, and `balance` (the net) is shown beside it, never instead.
 
 export type LedgerRow = {
   auctionId: string;
@@ -71,15 +81,21 @@ export type LedgerRow = {
   // the order cost, which only a pooled multi-order auction has (20251) and
   // which says nothing about one order's custom. null counts as $0.
   goalOffset: number | null;
-  // released + augment + withheld + goalOffset. ≥ 0 ⇒ the auctioneer put back
-  // at least as much as custom asks of them. Grunnel is excluded (a company
+  // augment + withheld: did the auctioneer's own additions cover what they held
+  // back? The ledger's question, and the same under both lenses.
+  augmentsVsWithheld: number;
+  // released + goalOffset: how the fee and the goal sat against custom. The
+  // full-order lens scores this part differently — see fullFeeAndGoal.
+  feeAndGoal: number;
+  // augmentsVsWithheld + feeAndGoal, the net. Grunnel is excluded (a company
   // drop, not the auctioneer's own offset).
   //
-  // The view can add Grunnel back on request — see ledgerBalanceOf, which is
-  // where a row's DISPLAYED balance comes from. These two fields are the
+  // The view can add Grunnel back on request — see ledgerFiguresOf, which is
+  // where a row's DISPLAYED figures come from. These fields are the
   // Grunnel-excluded answer and stay that way, so nothing downstream has to know
   // about the toggle.
   balance: number;
+  // augmentsVsWithheld ≥ 0. NOT the net — see the note above LedgerRow.
   covered: boolean;
 };
 
@@ -89,17 +105,19 @@ export function goalOffsetOf(targetFunding: number | null): number | null {
   return ERAS.defaultTargetFunding - targetFunding;
 }
 
-function balanceOf(
-  released: number, augment: number, withheld: number, goalOffset: number | null,
-): number {
-  // withheld is ≤ 0, so adding it subtracts the withheld magnitude.
-  return released + augment + withheld + (goalOffset ?? 0);
-}
+// withheld is ≤ 0, so adding it subtracts the withheld magnitude.
+const augmentsVsWithheldOf = (augment: number, withheld: number): number => augment + withheld;
+const feeAndGoalOf = (released: number, goalOffset: number | null): number => released + (goalOffset ?? 0);
 
 // A rounding guard so a $0.00 net reads as covered rather than a penny short.
 export const isCovered = (balance: number): boolean => balance >= -0.005;
 
-// The balance a reader sees, given the "Include Grunnel" choice.
+// The three figures a row shows. `feeAndGoal` and `net` are null under the
+// full-order lens when its fee estimate is not computable; `augmentsVsWithheld`
+// never is, which is why the verdict can be given for every auction.
+export type LedgerFigures = { augmentsVsWithheld: number; feeAndGoal: number | null; net: number | null };
+
+// The figures a reader sees, given the "Include Grunnel" choice.
 //
 // THE DEFAULT — Grunnel excluded — IS THE ONE THAT ANSWERS THE QUESTION PEOPLE
 // ASK, which is "would this auction have worked without help from the company?".
@@ -108,14 +126,19 @@ export const isCovered = (balance: number): boolean => balance >= -0.005;
 // money (design §6.1). That has always been the rule here; the toggle exists
 // because the rule was invisible, not because it was wrong.
 //
-// Checking the box adds the drop back, which answers the other question — what
-// the auction's books looked like in total, whoever paid.
-export function ledgerBalanceOf(
-  r: { released: number; augment: number; grunnel: number; withheld: number; goalOffset: number | null },
-  includeGrunnel: boolean,
-): number {
-  return balanceOf(r.released, r.augment, r.withheld, r.goalOffset) + (includeGrunnel ? r.grunnel : 0);
+// Checking the box adds the drop to the NET, which answers the other question —
+// what the auction's books looked like in total, whoever paid. It never moves
+// augmentsVsWithheld: a drop from the company is not the auctioneer's augment.
+export function ledgerFiguresOf(r: LedgerRow, includeGrunnel: boolean): LedgerFigures {
+  return {
+    augmentsVsWithheld: r.augmentsVsWithheld,
+    feeAndGoal: r.feeAndGoal,
+    net: r.balance + (includeGrunnel ? r.grunnel : 0),
+  };
 }
+
+export const ledgerBalanceOf = (r: LedgerRow, includeGrunnel: boolean): number =>
+  ledgerFiguresOf(r, includeGrunnel).net!;
 
 // One row per auction with context, PLUS every closed auction whose goal alone
 // moves its balance. An auction with no context rows and a $7,150 goal is a
@@ -145,7 +168,9 @@ function ledgerRowOf(
 ): LedgerRow {
   const goalOffset = goalOffsetOf(m.targetFunding);
   const { released, augment, grunnel, withheld } = c ?? NO_CONTEXT;
-  const balance = balanceOf(released, augment, withheld, goalOffset);
+  const augmentsVsWithheld = augmentsVsWithheldOf(augment, withheld);
+  const feeAndGoal = feeAndGoalOf(released, goalOffset);
+  const balance = augmentsVsWithheld + feeAndGoal;
   return {
     auctionId: m.auctionId,
     season: m.season,
@@ -159,8 +184,10 @@ function ledgerRowOf(
     grunnel,
     fundingGoal: m.targetFunding,
     goalOffset,
+    augmentsVsWithheld,
+    feeAndGoal,
     balance,
-    covered: isCovered(balance),
+    covered: isCovered(augmentsVsWithheld),
   };
 }
 
@@ -172,6 +199,8 @@ export type LedgerAgg = {
   augment: number;
   grunnel: number;
   goalOffset: number;
+  augmentsVsWithheld: number;
+  feeAndGoal: number;
   balance: number;
   covered: boolean;
 };
@@ -183,8 +212,13 @@ function aggregate(key: string, rows: LedgerRow[]): LedgerAgg {
   const augment = sum((r) => r.augment);
   const grunnel = sum((r) => r.grunnel);
   const goalOffset = sum((r) => r.goalOffset ?? 0);
-  const balance = balanceOf(released, augment, withheld, goalOffset);
-  return { key, n: rows.length, withheld, released, augment, grunnel, goalOffset, balance, covered: isCovered(balance) };
+  const augmentsVsWithheld = augmentsVsWithheldOf(augment, withheld);
+  const feeAndGoal = feeAndGoalOf(released, goalOffset);
+  const balance = augmentsVsWithheld + feeAndGoal;
+  return {
+    key, n: rows.length, withheld, released, augment, grunnel, goalOffset,
+    augmentsVsWithheld, feeAndGoal, balance, covered: isCovered(augmentsVsWithheld),
+  };
 }
 
 // One aggregate per auctioneer, most-withheld first (largest |withheld|).
@@ -212,6 +246,13 @@ export const ledgerOverall = (rows: LedgerRow[]): LedgerAgg => aggregate('Overal
 // $8,000 without the debit credits every ordinary auction $500 for the discount
 // that bought the fee it kept.
 //
+// SO THE RELEASED FEE IS NOT CREDITED HERE. At an $8,000 baseline the Random
+// Ultra Rares and the Golden Ticket are part of what the order delivers: an
+// auction that sells all of it, withholds nothing, adds nothing and asks $8,000
+// nets $0. The first build (PR #324) still added Included, so a release counted
+// twice — no debit AND a credit — and that auction read about +$1,200, the
+// Golden Ticket outweighing almost any augment (maintainer, 2026-10-30).
+//
 // THE KEPT FEE IS ESTIMATED, NEVER RECORDED. Writing it as withheld rows would
 // put one on nearly every auction and break the rule that withheld means an
 // exception (the maintainer's objection, 2026-09-24). It is derived here, per
@@ -229,8 +270,8 @@ export const ledgerOverall = (rows: LedgerRow[]): LedgerAgg => aggregate('Overal
 //     toward more auctions including the fee, so it fills in.
 //
 // What the auction released, or recorded as withheld, is not kept fee: the first
-// is already credited as Included and the second already debited as Withheld, so
-// counting either again would count it twice.
+// is the baseline and the second is already debited as Withheld, so debiting
+// either would count it twice.
 
 // One fee component's price for a season, and where it came from. `season` is
 // the season whose sales set the rate, which differs from the season it prices
@@ -305,8 +346,9 @@ export type FeeKept = {
 // never counts them, and the reason still holds: they are a PRICE term (bidders
 // price the points into their bids — the same tokens sell 6–15% higher at Trent),
 // not a FUNDING term. But "who came out ahead in dollars" is the question some
-// readers will insist the points belong in, so this lens offers them as an
-// opt-in augment, off by default. Points are earned on what bidders spend, and
+// readers will insist the points belong in, so this lens counts them in Fee &
+// goal — ON by default since 2026-10-30 (maintainer: this lens is that
+// question), and untickable. Points are earned on what bidders spend, and
 // what they spend is the goal — the ≥$750 an auction the declined proposal was
 // sized at (backlog § Dropped).
 export function trentSubsidyOf(m: AuctionMeta): number {
@@ -323,10 +365,14 @@ export type FullOrderRow = LedgerRow & {
   // in this season or any earlier one, or the goal is not a single order's.
   feeKept: FeeKept | null;
   // Trent's reward points at this auction (0 elsewhere). Counted only when the
-  // view asks — see fullOrderBalanceOf.
+  // view asks — see fullOrderFiguresOf.
   trentSubsidy: number;
-  // released + augment + withheld + orderOffset + feeKept.value, Grunnel and the
-  // subsidy excluded. null when the fee is not computable.
+  // orderOffset + feeKept.value: this lens's fee-and-goal subtotal. `released`
+  // is NOT in it — releasing the fee is the baseline. null when the fee is not
+  // computable.
+  fullFeeAndGoal: number | null;
+  // augmentsVsWithheld + fullFeeAndGoal, Grunnel and the subsidy excluded. null
+  // when the fee is not computable.
   fullBalance: number | null;
 };
 
@@ -383,21 +429,33 @@ export function fullOrderLedger(
     const single = m.targetFunding != null && m.targetFunding <= ERAS.orderCost;
     const orderOffset = single ? ERAS.orderCost - m.targetFunding! : null;
     const feeKept = single ? feeKeptOf(m, counts.get(m.auctionId) ?? none, rates.get(m.season)) : null;
-    const fullBalance = orderOffset != null && feeKept
-      ? base.released + base.augment + base.withheld + orderOffset + feeKept.value
-      : null;
-    rows.push({ ...base, orderOffset, feeKept, trentSubsidy: trentSubsidyOf(m), fullBalance });
+    const fullFeeAndGoal = orderOffset != null && feeKept ? orderOffset + feeKept.value : null;
+    const fullBalance = fullFeeAndGoal == null ? null : base.augmentsVsWithheld + fullFeeAndGoal;
+    rows.push({ ...base, orderOffset, feeKept, trentSubsidy: trentSubsidyOf(m), fullFeeAndGoal, fullBalance });
   }
   return rows.sort(newestFirst);
 }
 
-// The balance a reader sees under this lens, given the two opt-ins.
-export function fullOrderBalanceOf(
+// The figures a reader sees under this lens, given the two toggles. Trent's
+// points go into FEE & GOAL — part of the order Trent pays back himself — and
+// never into augmentsVsWithheld. They were first offered as an augment, but once
+// they became the default (2026-10-30) that put ~$750 into every Trent
+// auction's verdict, the same swamping the Golden Ticket did, and made the
+// verdict differ between lenses. Grunnel moves only the net, as in the custom
+// lens.
+export function fullOrderFiguresOf(
   r: FullOrderRow, includeGrunnel: boolean, includeTrentSubsidy: boolean,
-): number | null {
-  if (r.fullBalance == null) return null;
-  return r.fullBalance + (includeGrunnel ? r.grunnel : 0) + (includeTrentSubsidy ? r.trentSubsidy : 0);
+): LedgerFigures {
+  const feeAndGoal = r.fullFeeAndGoal == null
+    ? null
+    : r.fullFeeAndGoal + (includeTrentSubsidy ? r.trentSubsidy : 0);
+  const net = feeAndGoal == null ? null : r.augmentsVsWithheld + feeAndGoal + (includeGrunnel ? r.grunnel : 0);
+  return { augmentsVsWithheld: r.augmentsVsWithheld, feeAndGoal, net };
 }
+
+export const fullOrderBalanceOf = (
+  r: FullOrderRow, includeGrunnel: boolean, includeTrentSubsidy: boolean,
+): number | null => fullOrderFiguresOf(r, includeGrunnel, includeTrentSubsidy).net;
 
 // --- View 2: Grunnel per auction vs the preorder benchmark -----------------
 // Grunnel drops offset expired preorder bonuses, so the question is whether a

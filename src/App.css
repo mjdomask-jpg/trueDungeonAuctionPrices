@@ -1903,6 +1903,12 @@ td.strong { font-weight: 600; color: var(--text-h); }
    overrunning the next under the global table-layout:fixed + nowrap). */
 .led-table, .gr-table, .an-auto { table-layout: auto; }
 .led-table td.left, .gr-table td.left, .an-auto td.left { white-space: normal; }
+/* The ledger's two subtotal groups: a spanning heading over each, and a rule
+   down the left of each group so the columns read as the sums they are. */
+.led-table th.led-group { text-align: center; border-bottom: 1px solid var(--border); }
+.led-table .led-start { border-left: 1px solid var(--border); }
+/* The ledger card's second and third groups of figures, below a subtotal line. */
+.led-figs-next { margin-top: 10px; }
 
 /* Season + Trent-pricing pickers on one row (Trent vs Forum), wrapping on a
    phone so neither select is crushed. */
@@ -2112,6 +2118,20 @@ td.strong { font-weight: 600; color: var(--text-h); }
   left: 0; right: 0; bottom: -1px;
   border-bottom: 1px solid var(--border);
 }
+/* The ledger's header is TWO rows (the subtotal groups over their columns), and
+   pinning each th at `top: 0` would slide the second row up under the first. So
+   the whole thead sticks instead, and its cells go back to plain positioned
+   boxes for the ::after rule above. The group rules (.led-group's underline,
+   .led-start's left edge) are collapsed-table borders, which stay behind with
+   the table when the header moves — so in here they are drawn as inset shadows,
+   which travel with the cell. The underline comes free from ::after. */
+.an-scroll.an-pin .led-table thead { position: sticky; top: 0; z-index: 2; }
+.an-scroll.an-pin .led-table thead th { position: relative; top: auto; z-index: auto; }
+/* Inside the cell, not 1px below it: the second row is painted after the first
+   and its opaque background would cover the group underline. */
+.an-scroll.an-pin .led-table thead th::after { bottom: 0; }
+.an-scroll.an-pin .led-table thead th.led-group { border-bottom: 0; }
+.an-scroll.an-pin .led-table thead th.led-start { border-left: 0; box-shadow: inset 1px 0 var(--border); }
 .an-matrix { min-width: 620px; }
 
 /* Phone-only per-auctioneer list, rendered instead of that grid below 640px

@@ -66,7 +66,7 @@ try {
   process.exit(1);
 }
 
-const { auctionLedger, ledgerBalanceOf, ledgerOverall, goalOffsetOf } = an;
+const { auctionLedger, ledgerBalanceOf, ledgerFiguresOf, ledgerOverall, goalOffsetOf } = an;
 
 // --- fixtures --------------------------------------------------------------
 
@@ -120,8 +120,21 @@ check('customary goal: balance is included + augments − withheld',
   near(row('custom').balance, 50), row('custom').balance);
 check('released fee at $8,000: GT credited AND the $500 goal debited (20274 → $537.09)',
   near(row('gtIn').balance, 1251 + 379.09 - 593 - 500), row('gtIn').balance);
-check('goal below custom turns a short auction covered (20275: −$191 → +$559)',
-  near(row('below').balance, 492 - 683 + 750) && row('below').covered, row('below').balance);
+check('goal below custom lifts the NET (20275: −$191 → +$559)',
+  near(row('below').balance, 492 - 683 + 750) && near(row('below').feeAndGoal, 750), row('below').balance);
+
+// --- the two subtotals, and which one carries the verdict ----------------------
+
+console.log('subtotals and verdict');
+check('augments vs withheld is augments − withheld, nothing else',
+  near(row('gtIn').augmentsVsWithheld, 379.09 - 593) && near(row('custom').augmentsVsWithheld, 50));
+check('fee & goal is included + goal offset',
+  near(row('gtIn').feeAndGoal, 1251 - 500) && near(row('custom').feeAndGoal, 0));
+check('the net is the two subtotals added',
+  rows.every((r) => near(r.balance, r.augmentsVsWithheld + r.feeAndGoal)));
+check('the verdict reads augments vs withheld, NOT the net: a released Golden Ticket cannot cover a shortfall (20274)',
+  row('gtIn').balance > 0 && !row('gtIn').covered);
+check('…nor can a goal below custom (20275 stays Short)', row('below').balance > 0 && !row('below').covered);
 check('pooled auction: balance ignores its goal',
   near(row('pooled').balance, 900 + 4027 - 8175), row('pooled').balance);
 check('blank goal counts as $0', near(row('blank').balance, -50) && row('blank').goalOffset === null);
@@ -130,7 +143,7 @@ check('blank goal counts as $0', near(row('blank').balance, -50) && row('blank')
 
 console.log('membership');
 check('a closed auction with no context but a non-customary goal is listed',
-  row('goalOnly') && near(row('goalOnly').balance, 350) && row('goalOnly').covered);
+  row('goalOnly') && near(row('goalOnly').balance, 350) && near(row('goalOnly').feeAndGoal, 350));
 check('a closed auction with no context and the customary goal is not',
   row('goalOnlyCustom') === undefined);
 check('an OPEN auction is never listed on its goal alone', row('openGoalOnly') === undefined);
@@ -145,11 +158,16 @@ const g = row('grunnel');
 check('Grunnel is out of the stored balance', near(g.balance, 400 - 100 - 500), g.balance);
 check('the toggle adds Grunnel on top of the offset',
   near(ledgerBalanceOf(g, true), 400 - 100 - 500 + 250) && near(ledgerBalanceOf(g, false), g.balance));
+check('the toggle never moves augments vs withheld — a company drop is not an augment',
+  near(ledgerFiguresOf(g, true).augmentsVsWithheld, 300) && near(ledgerFiguresOf(g, true).feeAndGoal, -500));
 const all = ledgerOverall(rows);
 const offsets = rows.reduce((a, r) => a + (r.goalOffset ?? 0), 0);
 check('the aggregate sums the offset, a null one as $0', near(all.goalOffset, offsets), all.goalOffset);
 check('the aggregate balance is the sum of the row balances',
   near(all.balance, rows.reduce((a, r) => a + r.balance, 0)), all.balance);
+check('the aggregate verdict reads its augments vs withheld',
+  near(all.augmentsVsWithheld, rows.reduce((a, r) => a + r.augmentsVsWithheld, 0))
+  && all.covered === (all.augmentsVsWithheld >= 0));
 
 // --- the full-order lens (SITE-13) ------------------------------------------
 // Measured against the $8,000 order cost, with the fee the auctioneer KEPT
@@ -157,7 +175,7 @@ check('the aggregate balance is the sum of the row balances',
 // Golden Ticket in its era. Every figure below is constructed.
 
 console.log('full-order lens');
-const { fullOrderLedger, fullOrderBalanceOf, feeRatesBySeason, trentSubsidyOf } = an;
+const { fullOrderLedger, fullOrderBalanceOf, fullOrderFiguresOf, feeRatesBySeason, trentSubsidyOf } = an;
 
 let fn = 0;
 const fm = (id, season, targetFunding, closeDate, { status = 'Closed', source = 'Forum' } = {}) => ({
@@ -225,12 +243,19 @@ check('the custom: +$500 offset less the whole fee ($378 + $900)',
   && near(fr('plain26').fullBalance, 500 - fee26), fr('plain26').fullBalance);
 check('the two lenses differ by $500 − fee value',
   near(fr('plain26').fullBalance - fr('plain26').balance, 500 - fee26));
-check('a released fee is not debited, and an $8,000 goal offsets nothing',
-  near(fr('rel26').feeKept.value, 0) && near(fr('rel26').fullBalance, 1360));
+check('the whole fee sold at $8,000, nothing withheld or added, nets $0 — a release is the baseline, not a credit',
+  near(fr('rel26').feeKept.value, 0) && near(fr('rel26').fullFeeAndGoal, 0) && near(fr('rel26').fullBalance, 0),
+  fr('rel26').fullBalance);
 check('Random URs recorded WITHHELD are not debited twice',
-  fr('gtOnly26').feeKept.rurKept === 0 && near(fr('gtOnly26').fullBalance, 400));
-check('a partial release debits only what was kept (3 × $42 + GT)',
-  fr('part26').feeKept.rurKept === 3 && near(fr('part26').fullBalance, 270 + 500 - (126 + 900)));
+  fr('gtOnly26').feeKept.rurKept === 0 && near(fr('gtOnly26').fullBalance, -400));
+check('a partial release debits only what was kept (3 × $42 + GT), and credits nothing for the six sold',
+  fr('part26').feeKept.rurKept === 3 && near(fr('part26').fullBalance, 500 - (126 + 900)));
+check('augments vs withheld is the same under both lenses',
+  (() => {
+    const custom = auctionLedger(FM, FC);
+    const both = custom.filter((c) => fr(c.auctionId));
+    return both.length >= 4 && both.every((c) => near(c.augmentsVsWithheld, fr(c.auctionId).augmentsVsWithheld));
+  })() && near(fr('gtOnly26').augmentsVsWithheld, -400));
 check('a borrowed rate prices the start of a season',
   near(fr('plain27').feeKept.value, -fee26) && fr('plain27').feeKept.rur.season === '2026');
 check('no Golden Ticket is owed before the 2025 season',
@@ -259,6 +284,12 @@ check('Trent\'s points are 10% of the goal, and only at Trent',
 check('the points count only when asked',
   near(fullOrderBalanceOf(fr('trent26'), false, false), 500 - fee26)
   && near(fullOrderBalanceOf(fr('trent26'), false, true), 500 - fee26 + 750));
+check('the points go into fee & goal and NEVER into augments vs withheld — they must not decide the verdict',
+  near(fullOrderFiguresOf(fr('trent26'), false, true).augmentsVsWithheld, 0)
+  && near(fullOrderFiguresOf(fr('trent26'), false, true).feeAndGoal, 500 - fee26 + 750)
+  && near(fullOrderFiguresOf(fr('trent26'), false, false).feeAndGoal, 500 - fee26));
+check('a fee that cannot be priced blanks fee & goal and the net, never augments vs withheld',
+  (() => { const x = fullOrderFiguresOf(fr('kept20'), false, false); return x.feeAndGoal === null && x.net === null && x.augmentsVsWithheld === 0; })());
 
 rmSync(work, { recursive: true, force: true });
 console.log(`\n${fail ? '✗ FAIL' : '✓ OK'} — ${pass} passed, ${fail} failed`);
