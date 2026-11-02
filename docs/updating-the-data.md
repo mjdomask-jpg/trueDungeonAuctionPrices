@@ -291,7 +291,7 @@ open. [Importing the close](#importing-an-alesievauctionscom-close) writes
 into Not Found, so nothing you would look at ever says "failed". Sites 51 and 52
 (`202732`, `202733`) went that way in November 2026 and sat as Open here until
 the auctioneer mentioned it. **The API still knows them**: it answers with
-status `unfunded`, and that is what marked both on the first real scan.
+status `Unfunded`, and that is what marked both on the first real scan.
 
 So every scan asks the API about each recorded site auction that has no
 `closeDate` and an `outcome` that is blank or `Pending`, and writes
@@ -299,7 +299,7 @@ So every scan asks the API about each recorded site auction that has no
 
 | The API says | What the scan does |
 |---|---|
-| A `status` that reads as failed: `unfunded` (seen on 51 and 52), or `Failed`, `Cancelled`, `Withdrawn`… | **Marks it `Failed`.** This is the rule that has fired |
+| A `status` that reads as failed: `Unfunded` (seen on 51 and 52), or `Failed`, `Cancelled`, `Withdrawn`… | **Marks it `Failed`.** This is the rule that has fired |
 | Off its list of valid auctions **and** `/auctions/:id` answers 404 | **Marks it `Failed`.** Not seen yet; this covers the API deleting a failed auction the way the public page does. Both are needed: either one alone could be a passing fault |
 | 404, but still on the list, or the list couldn't be read | A note. The next scan looks again |
 | A `closedAt` on a row still open here | A note: it closed, so [import its close](#importing-an-alesievauctionscom-close) |
