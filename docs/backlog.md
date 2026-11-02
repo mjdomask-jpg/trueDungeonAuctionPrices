@@ -109,6 +109,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, deferred |
 | **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
 | **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
+| **SITE-15** | A Transmutes view on the analytics page — recipe material statistics | **PARKED by the maintainer (2026-11-02)** — ideas measured, nothing built; two counting rules to settle first |
 
 ---
 
@@ -2840,3 +2841,123 @@ sold at $1,251 — the same shape — and it records a withheld
 `Chosen Ultra Rare` x10 but no Random UR row at all. If the site listed
 withheld Random URs for site auction 37, they were dropped the same way. The
 count is on the site; the API token is not available outside Apps Script.
+
+---
+
+## SITE-15. A Transmutes view on the analytics page — PARKED (maintainer, 2026-11-02)
+
+**The ask.** The company is designing new tokens, and the maintainer wants
+recipe statistics ready to hand when arguing about them. For example: the
+average quantity of each trade good (Ink, Plank, Steel…) a Relic or Legendary
+has needed over the last X years. Everything below was measured on 2026-10-30
+from `transmuteRecipes.csv` (180 recipes, 2012–2027), joined to
+`tokenMetadata.csv` by `ResolvedYear` + `Item` for the trade tier, and priced
+from `prices.csv`. **Nothing is built.** The measuring scripts were throwaway,
+so the method is written down here instead.
+
+### Chase recipes are not "the ones with no trade goods"
+
+The original framing left out chase Legendaries because they need no materials.
+**That is true of exactly one recipe.** `Totem of Wonder` (2024) takes no trade
+goods, but `Rune Giant Totem` (2025) and `Gear Golem Totem` (2026) each take 3
+of seven Trade 1 goods (21 in all, no Munition) beside their 40-piece set. **Every
+chase recipe does have a `(40 unique)` ingredient**: `50 GP Idol`, `50 GP Rune`,
+`Golem Piece`. Filter on that rather than on zero goods. It is the only rule
+that removes all three and nothing else. If the chase sets change shape (the
+domain skill names 20-piece Herald and Stalker sets), revisit it.
+
+### The headline numbers
+
+Average goods per **crafting step**, chase recipes excluded (the source token
+is not counted):
+
+| Level | Era | n | Trade 1 | Trade 2 | Trade 3 | Trade 4 |
+|---|---|---|---|---|---|---|
+| Relic | 2012–19 | 22 | 44.5 | 7.4 | 0.1 | 0 |
+| Relic | 2020–23 | 15 | **98.8** | 9.3 | 1.0 | 0 |
+| Relic | 2024–27 | 18 | 54.4 | 9.7 | 0.8 | 0 |
+| Legendary | 2012–19 | 21 | 79.6 | 7.2 | 1.2 | 2.0 |
+| Legendary | 2020–23 | 12 | **144.1** | 7.1 | 1.8 | 1.8 |
+| Legendary | 2024–27 | 14 | 99.0 | 7.2 | 1.6 | 1.6 |
+| Mythic | 2024–27 | 5 | **351** | 50 | 10 | 0.8 |
+
+- 2020–23 was the peak. Since then a Legendary step needs about 31% fewer
+  Trade 1 goods and a Relic step about 45% fewer. 2027 is climbing again
+  (Legendary 125, Relic 92 total goods).
+- Since 2023, Plank, Silk and Stone carry equal quantities: every 2025 Relic
+  averages 10.4 of each.
+- **A Legendary from scratch** (Relic step + Legendary step) needs about
+  **210–230 Trade 1 + Trade 2 goods** in 2025–2027, against about 120 for the
+  Legendary step alone.
+- **2–7 recipes per level per year**, so single-year bars are noise. Default
+  to eras or a rolling three-year window.
+
+### The worked argument that prompted this: a keep-a-consumable Legendary
+
+A proposed Legendary lets the player keep one scroll or potion per game.
+**4 rare potions = 1 Alchemist's Ink, and 4 rare scrolls = 1 Alchemist's
+Parchment** (the maintainer's rates). Each recent Legendary was costed from
+scratch at that season's median auction price. The starting token and any
+named ingredient with no auction row were floored at a generic `Ultra Rare`,
+and the Eldritch Ore Bar was priced at 25 Gold Bars per `derivedPrices.csv`,
+so these figures are a **floor**:
+
+| Season | Build cost | Ink (median) | In Ink | Rare potions | Parchment (median) | Rare scrolls |
+|---|---|---|---|---|---|---|
+| 2025 | $1,453–$1,608 | $3.03 | 480–531 | ~1,920–2,120 | $2.25 | ~2,580–2,860 |
+| 2026 | $1,473–$1,561 | $2.36 | 624–661 | ~2,500–2,650 | $1.60 | ~3,680–3,900 |
+| 2027 | $1,371–$1,469 | $2.53 | 542–581 | ~2,170–2,320 | $1.50 | ~3,660–3,920 |
+
+**One use per game, so break-even is about 1,900–2,650 games at best** (always
+keeping the potion), which is about two centuries at 10 games a year. Valuing a kept
+potion at a **whole** Ink still needs 480–660 games. The largest cost lines are
+Golden Fleece, the Eldritch Ore Bar, Oil of Enchantment and Elven Bismuth, not
+Ink. Caveat for the argument: this values the keep ability alone, not any
+other power the token has.
+
+### Stats the view could carry
+
+**How many goods a recipe needs**
+1. Goods by good per level over a chosen year range, as a stacked bar (the ask).
+2. The from-scratch cost of a Legendary (Relic step + Legendary step).
+3. How much each level up multiplies the cost (Exalted → Relic → Legendary → Mythic).
+4. Higher trade tiers converted to Trade 1. Trade 5 recipes are in the CSV,
+   but there is one Trade 3 recipe and no Trade 4, so that conversion has no
+   data below Trade 5 yet.
+5. How many recipes share the same quantities each year, to show the designers
+   moving to fixed recipe patterns.
+
+**Recipe demand against auction supply**
+6. Goods the season's recipes call for (each recipe counted once) against goods sold
+   that season (`rawPricesData` lots). This shows which good is the bottleneck.
+   We don't know how many times each token is actually crafted.
+7. Orders per Legendary. For example, "one Legendary uses X% of an 8K order's
+   Planks." This is likely the most persuasive framing for an argument.
+
+**Dollars** (the Build Calculator engine already prices recipes)
+8. Material cost per level over time at each season's prices, by good.
+9. Fewer goods but more dollars? Quantity trend against price trend.
+10. Build-vs-buy premium where finished tokens have recorded sales.
+11. The break-even above, generalised: a cost expressed in units of one
+    cheap material ("this Legendary = N Ink").
+
+**Recipe catalogue**
+12. Recipe count per year and level. 2026 has 32.
+13. "Any Ultra Rare" requirements per level (129 `IngredientType = Ultra Rare` rows).
+
+**For arguing about new tokens**
+14. Where a proposed recipe ranks against history, e.g. "this Relic needs 140
+    goods, the 95th percentile of every Relic". `Source = forum-pdf`
+    (`PIPE-6`) is the natural home for a proposed recipe, and no row uses it yet.
+
+### To decide before building
+
+- **Tokens with more than one recipe.** `Kilgor's +4 Savage Sword` has two and
+  `Smith's Charm of Unified Synergy` three, and some versions skip the Relic step.
+  Should the view count each recipe, or only the cheapest?
+- **Counting across tiers.** Report each trade tier separately rather than
+  adding 20 Planks and one Eldritch Ore Bar into one total, unless stat 4's
+  Trade 1 conversion is built first.
+
+**Revisit when** the maintainer wants the view, or the next time a proposed
+recipe needs an argument.
