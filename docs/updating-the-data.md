@@ -266,8 +266,8 @@ token](#the-sites-api-token-once).
   for that card only.
 
 Either way, a row whose fields came off the page **says so in its `notes`**.
-The scan's summary says which path it took. It also names any recorded site
-auction that has dropped off the API's list, which suggests it was withdrawn or
+The scan's summary says which path it took. It also names any *closed* recorded
+site auction that has dropped off the API's list, which suggests it was withdrawn or
 deleted on the site; nothing is changed for it. The API is stricter than the cards in one
 way: a card only shows the badges that apply, so a missing badge meant "no",
 but the API can say `false`, so a *missing* tag now leaves the cell blank with a
@@ -282,6 +282,41 @@ is 11pm on the 18th, a day early. If the API says an auction has already
 closed (`closedAt`), the proposal notes the date, but the row is still created
 open. [Importing the close](#importing-an-alesievauctionscom-close) writes
 `closeDate` from that same field, together with the prices.
+
+### A failed site auction is marked for you
+
+**This is the one thing the scan writes to `auctionMetadata` without asking**
+(since script `2026-11-02.1`). A failed auction on alesievauctions.com is not
+relabelled; it is **deleted**. It drops off the listing and its page turns
+into Not Found, so nothing you would look at ever says "failed". Sites 51 and 52
+(`202732`, `202733`) went that way in November 2026 and sat as Open here until
+the auctioneer mentioned it.
+
+So every scan asks the API about each recorded site auction that has no
+`closeDate` and an `outcome` that is blank or `Pending`, and writes
+`outcome = Failed` on the row when the site says the auction is gone:
+
+| The API says | What the scan does |
+|---|---|
+| Off its list of valid auctions **and** `/auctions/:id` answers 404 | **Marks it `Failed`.** Both are needed: either one alone could be a passing fault |
+| A `status` that reads as failed (`Failed`, `Cancelled`, `Unfunded`, `Withdrawn`…) | **Marks it `Failed`.** No such status has been seen yet; this covers the site starting to label failures instead of deleting them |
+| 404, but still on the list, or the list couldn't be read | A note. The next scan looks again |
+| A `closedAt` on a row still open here | A note: it closed, so [import its close](#importing-an-alesievauctionscom-close) |
+| A status it has never seen (not `Upcoming`, `Live`, `Closing` or `Funded`) | A note quoting it. If it means failed, the word belongs in `OPEN_ALESIEV_FAILED_STATUS_RE` |
+| Still live past its scheduled end, not closed | A note asking whether it failed or was extended |
+| Any other error | A note. Nothing changes |
+
+Only the `outcome` cell is written, and `Status` computes `Failed` from it as
+usual. The row is re-read just before the write, so a row that was sorted or edited
+while the scan ran is skipped with a note rather than having the wrong row
+marked. The summary lists every row it marked under **MARKED FAILED**, and the
+change shows up in the next publish PR like any other edit.
+
+**If one is wrong, clear its `outcome` cell.** A row already `Failed` is never
+written again, but the scan still checks it: if the site starts answering for
+it again, the summary says so and tells you to clear the cell. If the
+auctioneer relisted the auction under a new number, the new one is proposed as
+usual. The old row is then better deleted than left `Failed`.
 
 Three more things worth knowing:
 
