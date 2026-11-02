@@ -2166,7 +2166,7 @@ console.log('\nalesievauctions.com API — the auction list\n');
 // ===========================================================================
 // The first two failures on the site (51 and 52, November 2026) vanished from
 // the public page — off the listing, and the auction page is Not Found — while
-// the API kept answering for them with status `unfunded`. The scan marks such
+// the API kept answering for them with status `Unfunded`. The scan marks such
 // a row `Failed` with no review step, so the bar is what is tested here: a
 // status that says so (measured), or gone from the list AND a 404 (not yet).
 //
@@ -2194,11 +2194,20 @@ console.log('\nalesievauctions.com — failed auctions\n');
   const verdict = (list, answers) => plain(O.openAlesievFailedVerdicts(unsettled, list, answers));
 
   // What 51 and 52 actually answered on the first real scan: still known to
-  // the API, status `unfunded`, while the public page said Not Found.
-  const measured = verdict(['91'], { 91: card(91, 'unfunded') });
-  eq('the MEASURED answer — status "unfunded" — marks the row failed', measured.failed.map((f) => f.auctionId).join(','), '202791');
-  check('  ... saying the status was why', /status is "unfunded"/.test(measured.failed[0].why), measured.failed[0].why);
+  // the API, status `Unfunded`, while the public page said Not Found.
+  const measured = verdict(['91'], { 91: card(91, 'Unfunded') });
+  eq('the MEASURED answer — status "Unfunded" — marks the row failed', measured.failed.map((f) => f.auctionId).join(','), '202791');
+  check('  ... saying the status was why', /status is "Unfunded"/.test((measured.failed[0] || {}).why || ""), JSON.stringify(measured.failed));
   eq('  ... and nothing else is said about it', measured.notes.length, 0);
+  // The site capitalises its statuses (`Unfunded`, `Funded`, `Live`) and
+  // nothing promises it always will. Dropping the `i` flag would make a
+  // re-cased status pass in silence — or, for the known list, raise a note on
+  // every open row every week.
+  for (const s of ['unfunded', 'UNFUNDED', 'Unfunded']) {
+    eq(`the status check ignores case: "${s}" marks the row`, verdict(['91'], { 91: card(91, s) }).failed.length, 1);
+  }
+  check('  ... because the failed pattern is case-insensitive', O.OPEN_ALESIEV_FAILED_STATUS_RE.flags.includes('i'), O.OPEN_ALESIEV_FAILED_STATUS_RE.flags);
+  eq('the known-status list ignores case too: "LIVE" raises no note', verdict(['91'], { 91: card(91, 'LIVE') }).notes.length, 0);
 
   // The unobserved rule: the API deleting a failed auction too.
   const deleted = verdict(['90', '92', '94'], { 91: gone });

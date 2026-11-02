@@ -19,7 +19,7 @@
  * auction that the site's API says has FAILED gets `outcome = Failed` written
  * straight onto its existing row, with no review step, at the operator's
  * request — a failed auction there vanishes from the public site, so nothing
- * a person would look at says so, while the API still answers `unfunded`.
+ * a person would look at says so, while the API still answers `Unfunded`.
  * The evidence bar for that write is in
  * `openAlesievFailedVerdicts`, and the dialog names every row it touched.
  *
@@ -49,7 +49,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-11-02.2';
+var OPEN_VERSION = '2026-11-02.3';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -1505,10 +1505,10 @@ var OPEN_FAILED_OUTCOME = 'Failed';
 /**
  * An API `status` that says the auction did not happen.
  *
- * **`unfunded` is the one MEASURED value.** The two auctions that prompted
+ * **`Unfunded` is the one MEASURED value.** The two auctions that prompted
  * this (site 51 and 52, `202732` and `202733`, November 2026) vanished from
  * the PUBLIC site — off the listing page, and `/auctions/51` is its Not Found
- * page — yet the API still answers for both, with status `unfunded`, and that
+ * page — yet the API still answers for both, with status `Unfunded`, and that
  * is what marked them on the first real scan (2026-11-02). So the page and the
  * API disagree about a failed auction, and the API is the one that says what
  * happened.
@@ -1566,7 +1566,7 @@ function openAlesievUnsettled(metaRows) {
  *
  *   1. **Said so.** The API answers with a `status` matching
  *      OPEN_ALESIEV_FAILED_STATUS_RE. This is the rule that has fired: the
- *      first two failures (site 51 and 52) answered `unfunded`.
+ *      first two failures (site 51 and 52) answered `Unfunded`.
  *   2. **Gone.** Off the API's list of valid auctions AND `/auctions/:id`
  *      answers 404 — the API deleting a failed auction the way the public
  *      page already does. UNOBSERVED: kept because the page shows the site
