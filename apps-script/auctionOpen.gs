@@ -18,8 +18,9 @@
  * ONE CELL is the exception, since 2026-11-02: a recorded alesievauctions.com
  * auction that the site's API says has FAILED gets `outcome = Failed` written
  * straight onto its existing row, with no review step, at the operator's
- * request — failed auctions there are deleted rather than relabelled, so
- * nothing visible ever says so. The evidence bar for that write is in
+ * request — a failed auction there vanishes from the public site, so nothing
+ * a person would look at says so, while the API still answers `unfunded`.
+ * The evidence bar for that write is in
  * `openAlesievFailedVerdicts`, and the dialog names every row it touched.
  *
  * THIS FILE IS THE SOURCE OF TRUTH. It lives in the repo and is copied into the
@@ -48,7 +49,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-11-02.1';
+var OPEN_VERSION = '2026-11-02.2';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -1504,13 +1505,18 @@ var OPEN_FAILED_OUTCOME = 'Failed';
 /**
  * An API `status` that says the auction did not happen.
  *
- * NO FAILED STATUS HAS EVER BEEN SEEN. The two auctions that prompted this
- * (site 51 and 52, `202732` and `202733`, November 2026) were not relabelled
- * on the site — they vanished: off the listing page, and `/auctions/51` is the
- * site's Not Found page. So the 404 rule in `openAlesievFailedVerdicts` is the
- * one with evidence behind it, and this one is the guess. The guess is safe in
- * the direction that matters: `Funded` matches neither `unfunded` nor `not
- * funded`, and a status this misses leaves the row alone.
+ * **`unfunded` is the one MEASURED value.** The two auctions that prompted
+ * this (site 51 and 52, `202732` and `202733`, November 2026) vanished from
+ * the PUBLIC site — off the listing page, and `/auctions/51` is its Not Found
+ * page — yet the API still answers for both, with status `unfunded`, and that
+ * is what marked them on the first real scan (2026-11-02). So the page and the
+ * API disagree about a failed auction, and the API is the one that says what
+ * happened.
+ *
+ * The other words are guesses at how the site might phrase a different
+ * ending. They are safe in the direction that matters: `Funded` matches
+ * neither `unfunded` nor `not funded`, and a status this misses leaves the row
+ * alone and is a note (OPEN_ALESIEV_KNOWN_STATUS_RE).
  */
 var OPEN_ALESIEV_FAILED_STATUS_RE = /fail|cancel|unfunded|not[\s_-]*funded|withdrawn|expired|abandon/i;
 
@@ -1558,14 +1564,16 @@ function openAlesievUnsettled(metaRows) {
  * Because nobody approves the write, a row is marked only on one of two
  * pieces of evidence, each a statement by the SITE rather than an inference:
  *
- *   1. **Gone.** Off the API's list of valid auctions AND `/auctions/:id`
- *      answers 404. This is what a failed auction looked like when the first
- *      two failed (site 51 and 52): deleted, not relabelled. BOTH are needed,
+ *   1. **Said so.** The API answers with a `status` matching
+ *      OPEN_ALESIEV_FAILED_STATUS_RE. This is the rule that has fired: the
+ *      first two failures (site 51 and 52) answered `unfunded`.
+ *   2. **Gone.** Off the API's list of valid auctions AND `/auctions/:id`
+ *      answers 404 — the API deleting a failed auction the way the public
+ *      page already does. UNOBSERVED: kept because the page shows the site
+ *      does delete them somewhere, and the API may follow. BOTH are needed,
  *      and the list must have been read: a 404 alone could be a passing fault
  *      on one endpoint, and an absence from the list alone is what a closed
  *      auction the site tidied away would look like.
- *   2. **Said so.** The API answers with a `status` matching
- *      OPEN_ALESIEV_FAILED_STATUS_RE.
  *
  * Everything short of that is a note and nothing is written: a 404 on an
  * auction still listed, a listed auction the API could not answer for, an
