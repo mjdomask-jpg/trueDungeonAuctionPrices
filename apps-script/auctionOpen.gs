@@ -7,12 +7,20 @@
  * `auctionMetadata` row each new one needs. Proposals land in a review tab. A human ticks the ones that
  * are real, and a second menu item appends those to `auctionMetadata`.
  *
- * NOTHING here writes to a live tab on its own. Phase 2's Trent importer is the
- * project's one unattended writer, and it earned that by reproducing 659 lots
- * exactly. This phase cannot make the same claim: category 584 carries charity
- * auctions, eBay listings, discussion threads and cancelled auctions alongside
- * the real ones, and no title test separates them reliably (measured — see
- * `openLooksLikeEightK`). So it proposes candidates, and a person decides.
+ * Nothing here CREATES a live row on its own. Phase 2's Trent importer is the
+ * project's one unattended writer of rows, and it earned that by reproducing
+ * 659 lots exactly. This phase cannot make the same claim: category 584
+ * carries charity auctions, eBay listings, discussion threads and cancelled
+ * auctions alongside the real ones, and no title test separates them reliably
+ * (measured — see `openLooksLikeEightK`). So it proposes candidates, and a
+ * person decides.
+ *
+ * ONE CELL is the exception, since 2026-11-02: a recorded alesievauctions.com
+ * auction that the site's API says has FAILED gets `outcome = Failed` written
+ * straight onto its existing row, with no review step, at the operator's
+ * request — failed auctions there are deleted rather than relabelled, so
+ * nothing visible ever says so. The evidence bar for that write is in
+ * `openAlesievFailedVerdicts`, and the dialog names every row it touched.
  *
  * THIS FILE IS THE SOURCE OF TRUTH. It lives in the repo and is copied into the
  * workbook's Apps Script editor, not edited there. `npm run test:open` replays
@@ -40,7 +48,7 @@
  * and check what the repo's `main` already holds first, because a bump that
  * matches the existing value is a silent no-op.
  */
-var OPEN_VERSION = '2026-09-29.1';
+var OPEN_VERSION = '2026-11-02.1';
 
 var OPEN_TABS = {
   review: 'auctionOpenReview',
@@ -1471,15 +1479,158 @@ function openAlesievApiIds(json) {
  * withdrawn or deleted on the site since it was promoted. That is a note, not a
  * change: the row may be a real closed auction the site tidied away, and only a
  * person can say. Returned as `auctionId (site N)` strings, sorted by site id.
+ *
+ * `skip` is a set of site ids the failed check (`openAlesievFailedVerdicts`)
+ * already speaks for, so one auction is not reported twice in two voices.
  */
-function openAlesievDroppedFromList(listIds, metaRows) {
+function openAlesievDroppedFromList(listIds, metaRows, skip) {
   var listed = {}, out = [], recorded = openRecordedAlesiev(metaRows || []);
   for (var i = 0; i < (listIds || []).length; i++) listed[String(listIds[i])] = true;
   var ids = [];
-  for (var id in recorded) if (Object.prototype.hasOwnProperty.call(recorded, id) && !listed[id]) ids.push(id);
+  for (var id in recorded) {
+    if (Object.prototype.hasOwnProperty.call(recorded, id) && !listed[id] && !(skip && skip[id])) ids.push(id);
+  }
   ids.sort(function (a, b) { return Number(a) - Number(b); });
   for (var j = 0; j < ids.length; j++) out.push(recorded[ids[j]] + ' (site ' + ids[j] + ')');
   return out;
+}
+
+/**
+ * The `outcome` a failed auction gets. One of HARDEN_VOCABULARY's values, and
+ * the one `validate-prices.mjs` reads as "did not fund and sold nothing".
+ */
+var OPEN_FAILED_OUTCOME = 'Failed';
+
+/**
+ * An API `status` that says the auction did not happen.
+ *
+ * NO FAILED STATUS HAS EVER BEEN SEEN. The two auctions that prompted this
+ * (site 51 and 52, `202732` and `202733`, November 2026) were not relabelled
+ * on the site — they vanished: off the listing page, and `/auctions/51` is the
+ * site's Not Found page. So the 404 rule in `openAlesievFailedVerdicts` is the
+ * one with evidence behind it, and this one is the guess. The guess is safe in
+ * the direction that matters: `Funded` matches neither `unfunded` nor `not
+ * funded`, and a status this misses leaves the row alone.
+ */
+var OPEN_ALESIEV_FAILED_STATUS_RE = /fail|cancel|unfunded|not[\s_-]*funded|withdrawn|expired|abandon/i;
+
+/**
+ * Every status the site has been SEEN to use: `Upcoming` (the first listing),
+ * `Live` and `Funded` (the listing chips, 2026-11-02), `Closing` (the forum
+ * manifest). Anything else on an open row is a note, so a failure the site
+ * starts labelling in words this regex misses is reported, not passed over.
+ */
+var OPEN_ALESIEV_KNOWN_STATUS_RE = /^(?:upcoming|live|closing|funded)$/i;
+
+/**
+ * Recorded site auctions whose fate is still open, and the failed ones to keep
+ * an eye on: no `closeDate`, and an `outcome` of blank (Open), `Pending` or
+ * `Failed`. Each carries `index`, its position in `metaRows` — the sheet row is
+ * `index + 2` — so the write can find it again and check it has not moved.
+ *
+ * `Ended` is left out: it has finished, and only its prices are missing. A row
+ * with a `closeDate` is left out whatever it says.
+ *
+ * `Failed` rows are in so a row this scan marked can be seen to come BACK. The
+ * write is automatic, so its undo has to be visible: an auction the site lists
+ * again is a note telling the operator to clear the cell. Newest first, so a
+ * cap drops the oldest.
+ */
+function openAlesievUnsettled(metaRows) {
+  var out = [];
+  for (var i = 0; i < (metaRows || []).length; i++) {
+    var r = metaRows[i], siteId = openAlesievId(r.Link);
+    if (!siteId || String(r.closeDate || '').trim()) continue;
+    var outcome = String(r.outcome || '').trim();
+    if (outcome !== '' && outcome !== 'Pending' && outcome !== OPEN_FAILED_OUTCOME) continue;
+    out.push({ siteId: siteId, auctionId: r.auctionId, index: i, outcome: outcome });
+  }
+  out.sort(function (a, b) { return Number(b.siteId) - Number(a.siteId); });
+  return out;
+}
+
+/**
+ * Which unsettled rows have FAILED, from the API's answers. Returns
+ * `{ failed, notes }`; `failed` rows carry `why` and are written by the scan
+ * with no review step — the operator asked for exactly that, so they no longer
+ * have to keep checking the site by hand.
+ *
+ * Because nobody approves the write, a row is marked only on one of two
+ * pieces of evidence, each a statement by the SITE rather than an inference:
+ *
+ *   1. **Gone.** Off the API's list of valid auctions AND `/auctions/:id`
+ *      answers 404. This is what a failed auction looked like when the first
+ *      two failed (site 51 and 52): deleted, not relabelled. BOTH are needed,
+ *      and the list must have been read: a 404 alone could be a passing fault
+ *      on one endpoint, and an absence from the list alone is what a closed
+ *      auction the site tidied away would look like.
+ *   2. **Said so.** The API answers with a `status` matching
+ *      OPEN_ALESIEV_FAILED_STATUS_RE.
+ *
+ * Everything short of that is a note and nothing is written: a 404 on an
+ * auction still listed, a listed auction the API could not answer for, an
+ * auction off the list that the API still answers for. A `closedAt` on an
+ * open row is a note too — that auction CLOSED, and the close import writes
+ * its date alongside its prices.
+ *
+ * A row already `Failed` is never written again; if the site lists it once
+ * more and answers with a status that is not a failure, the note says to clear
+ * the cell. `answers` is keyed by site id: `{ card }` or `{ error, code }`. An
+ * id with no answer (no token, or past the cap) is skipped silently — the scan
+ * says once that it could not ask. `today` (ISO, the spreadsheet's calendar) is
+ * only for the note on an auction past its scheduled end; omit it to skip that.
+ */
+function openAlesievFailedVerdicts(unsettled, siteList, answers, today) {
+  var failed = [], notes = [], listed = null, i;
+  answers = answers || {};
+  if (siteList) { listed = {}; for (i = 0; i < siteList.length; i++) listed[String(siteList[i])] = true; }
+  for (i = 0; i < (unsettled || []).length; i++) {
+    var u = unsettled[i], answer = answers[u.siteId];
+    if (!answer) continue;
+    var label = u.auctionId + ' (site ' + u.siteId + ')';
+    var onList = listed ? !!listed[u.siteId] : null;
+    var wasFailed = u.outcome === OPEN_FAILED_OUTCOME;
+    var mark = function (why) {
+      if (!wasFailed) failed.push({ index: u.index, auctionId: u.auctionId, siteId: u.siteId, outcome: u.outcome, why: why });
+    };
+
+    if (answer.card) {
+      var status = String(answer.card.status || '');
+      if (OPEN_ALESIEV_FAILED_STATUS_RE.test(status)) { mark('the API\'s status is "' + status + '"'); continue; }
+      if (wasFailed) {
+        notes.push(OPEN_ALESIEV_SOURCE + ': ' + label + ' is marked Failed, but the API answers for it again with status "' +
+          status + '"' + (onList === false ? '' : ' and lists it') + '. If it is running after all, clear its outcome cell.');
+        continue;
+      }
+      if (answer.card.closeDate) {
+        notes.push(OPEN_ALESIEV_SOURCE + ': ' + label + ' closed on ' + answer.card.closeDate + ' (status "' + status +
+          '") per the site, and auctionMetadata still has it open. Import its close to record the date and prices.');
+      }
+      if (onList === false) {
+        notes.push(OPEN_ALESIEV_SOURCE + ': ' + label + ' is off the API\'s list of valid auctions but the API still answers ' +
+          'for it (status "' + status + '"). Nothing was changed.');
+      }
+      if (!answer.card.closeDate && !OPEN_ALESIEV_KNOWN_STATUS_RE.test(status)) {
+        notes.push(OPEN_ALESIEV_SOURCE + ': ' + label + ' has a status this scan has never seen, "' + status +
+          '". If that means it failed, add the word to OPEN_ALESIEV_FAILED_STATUS_RE. Nothing was changed.');
+      } else if (!answer.card.closeDate && today && answer.card.endDate && answer.card.endDate < today) {
+        notes.push(OPEN_ALESIEV_SOURCE + ': ' + label + ' was scheduled to end ' + answer.card.endDate +
+          ' and has not closed (status "' + status + '"). Did it fail, or was it extended? Nothing was changed.');
+      }
+      continue;
+    }
+    if (wasFailed) continue;
+    if (answer.code === 404 && onList === false) {
+      mark('it is gone from the API\'s list of valid auctions and the API has no such auction (HTTP 404)');
+    } else if (answer.code === 404) {
+      notes.push(OPEN_ALESIEV_SOURCE + ': the API has no auction ' + u.siteId + ' (' + u.auctionId + ', still open here), ' +
+        (onList ? 'yet its list still names it' : 'and its list could not be read to confirm') +
+        '. Not marked Failed on one answer; the next scan will look again.');
+    } else {
+      notes.push(OPEN_ALESIEV_SOURCE + ': could not check whether ' + label + ' has failed — ' + answer.error + '.');
+    }
+  }
+  return { failed: failed, notes: notes };
 }
 
 /**
@@ -2958,13 +3109,22 @@ function openDescribeScan(plan) {
     lines.push('  ' + (p.verdict === 'candidate' ? '*' : ' ') + ' ' + p.openDate + '  ' + p.auctionId + '  ' +
       p.auctioneer + ' — ' + p.auctionName);
   }
+  var marked = plan.failedMarked || [];
+  if (marked.length) {
+    lines.push('');
+    lines.push('MARKED FAILED in ' + OPEN_TABS.metadata + ' (outcome = ' + OPEN_FAILED_OUTCOME + '):');
+    for (i = 0; i < marked.length; i++) lines.push('  • ' + marked[i]);
+    lines.push('  If one is wrong, clear its outcome cell. A relisted auction is also worth deleting if the site gave it a new number.');
+  }
   if (plan.notes.length) {
     lines.push('');
     for (i = 0; i < plan.notes.length; i++) lines.push('  ' + plan.notes[i]);
   }
   lines.push('');
-  lines.push('Nothing has been written to ' + OPEN_TABS.metadata + '. Tick the rows you want in ' +
-    OPEN_TABS.review + ', fill in the blank columns, then run "Promote approved auctions".');
+  // Says what was written, because the footer used to promise "nothing" and a
+  // dialog that is right every week but this one trains nobody to read it.
+  lines.push((marked.length ? 'Nothing else has been written to ' : 'Nothing has been written to ') + OPEN_TABS.metadata +
+    '. Tick the rows you want in ' + OPEN_TABS.review + ', fill in the blank columns, then run "Promote approved auctions".');
   return lines.join('\n');
 }
 
@@ -3013,8 +3173,11 @@ function openAlesievApiGet(path) {
   }
   var json = null;
   try { json = JSON.parse(response.getContentText()); } catch (e) { json = null; }
-  var problem = openAlesievApiProblem(response.getResponseCode(), json);
-  return problem ? { error: problem } : { json: json };
+  var code = response.getResponseCode();
+  var problem = openAlesievApiProblem(code, json);
+  // `code` travels with the error because a 404 is EVIDENCE to the failed
+  // check (openAlesievFailedVerdicts) and every other failure is not.
+  return problem ? { error: problem, code: code } : { json: json, code: code };
 }
 
 /**
@@ -3217,12 +3380,36 @@ function scanAuctionOpens() {
       fetchNotes.push(OPEN_ALESIEV_SOURCE + ': the API auction list carried ' + listParsed.bad.length +
         ' entr(y/ies) that are not auction ids, skipped: ' + listParsed.bad.join(', '));
     }
-    var dropped = openAlesievDroppedFromList(siteList, metaRows);
+  }
+
+  // Recorded site auctions still open (or Pending, or marked Failed): has any
+  // of them failed, or come back? Asked by id whether or not the list could be
+  // read — a failed STATUS needs no list — but a 404 counts only beside it.
+  var unsettled = openAlesievUnsettled(metaRows), unsettledAnswers = {}, unsettledAsked = {};
+  if (hasToken) {
+    for (i = 0; i < unsettled.length && i < OPEN_ALESIEV_API_FETCH_CAP; i++) {
+      var uid = unsettled[i].siteId, uGot = openAlesievApiGet('/auctions/' + encodeURIComponent(uid));
+      unsettledAnswers[uid] = uGot.error ? { error: uGot.error, code: uGot.code } : openAlesievApiCard(uGot.json, uid);
+      unsettledAsked[uid] = true;
+    }
+    if (unsettled.length > OPEN_ALESIEV_API_FETCH_CAP) {
+      fetchNotes.push(OPEN_ALESIEV_SOURCE + ': ' + (unsettled.length - OPEN_ALESIEV_API_FETCH_CAP) +
+        ' older open or failed auction(s) were not checked for failure this run (API cap ' + OPEN_ALESIEV_API_FETCH_CAP + ').');
+    }
+  } else if (unsettled.length) {
+    fetchNotes.push(OPEN_ALESIEV_SOURCE + ': with no API token, ' + unsettled.length +
+      ' open auction(s) could not be checked for failure.');
+  }
+  var verdicts = openAlesievFailedVerdicts(unsettled, siteList, unsettledAnswers, openTodayIso(ss.getSpreadsheetTimeZone()));
+  fetchNotes = fetchNotes.concat(verdicts.notes);
+  if (siteList) {
+    var dropped = openAlesievDroppedFromList(siteList, metaRows, unsettledAsked);
     if (dropped.length) {
       fetchNotes.push(OPEN_ALESIEV_SOURCE + ': recorded but no longer on the API\'s list of valid auctions — ' +
         'withdrawn or deleted on the site? Nothing was changed: ' + dropped.join(', '));
     }
   }
+  var failedMarked = openMarkFailed(verdicts.failed, fetchNotes);
 
   var selection = openSelectFeedItems(feedItems, metaRows, {});
   var topics = [];
@@ -3274,6 +3461,7 @@ function scanAuctionOpens() {
     utakuState: utakuState.json || null, utakuHistory: Array.isArray(utakuHistory.json) ? utakuHistory.json : null,
   });
   plan.notes = plan.notes.concat(fetchNotes);
+  plan.failedMarked = failedMarked;
   plan.notes.push('Looked at forum topics with a post since ' + selection.cutoff + ': ' +
     selection.selected.length + ' fetched, ' + selection.skipped.recorded + ' already recorded, ' +
     selection.skipped.old + ' older than the cutoff' +
@@ -3286,6 +3474,45 @@ function scanAuctionOpens() {
 
   openWriteReview(plan.proposals, openRecordedAuctionIds(metaRows));
   ui.alert('Scan complete (script ' + OPEN_VERSION + ')', openDescribeScan(plan), ui.ButtonSet.OK);
+}
+
+/**
+ * Write `outcome = Failed` on each row `openAlesievFailedVerdicts` found, and
+ * return what was written, one line per row, for the dialog.
+ *
+ * The row is READ AGAIN first. Its position came from a read at the start of
+ * a scan that fetches a dozen pages, and a row sorted, inserted above or
+ * edited in that time must not have its neighbour marked. So the Link must
+ * still name the same site auction, `closeDate` must still be blank and
+ * `outcome` must still say what it said; otherwise it is a note and the next
+ * scan looks again. Only the one cell is written — `Status` is a formula and
+ * computes `Failed` from it.
+ */
+function openMarkFailed(failed, notes) {
+  if (!failed || !failed.length) return [];
+  var sheet = SpreadsheetApp.getActive().getSheetByName(OPEN_TABS.metadata);
+  var headers = openHeaders(OPEN_TABS.metadata).map(function (h) { return String(h).trim(); });
+  var linkCol = headers.indexOf('Link'), closeCol = headers.indexOf('closeDate'), outcomeCol = headers.indexOf('outcome');
+  if (linkCol < 0 || closeCol < 0 || outcomeCol < 0) {
+    notes.push(OPEN_ALESIEV_SOURCE + ': ' + failed.length + ' failed auction(s) found but NOT marked — ' + OPEN_TABS.metadata +
+      ' is missing its Link, closeDate or outcome column.');
+    return [];
+  }
+  var done = [];
+  for (var i = 0; i < failed.length; i++) {
+    var f = failed[i], row = f.index + 2;
+    var cells = sheet.getRange(row, 1, 1, headers.length).getDisplayValues()[0];
+    if (openAlesievId(cells[linkCol]) !== f.siteId || String(cells[closeCol]).trim() !== '' ||
+        String(cells[outcomeCol]).trim() !== f.outcome) {
+      notes.push(OPEN_ALESIEV_SOURCE + ': ' + f.auctionId + ' (site ' + f.siteId + ') looks failed (' + f.why + '), but row ' +
+        row + ' changed while the scan ran, so it was NOT marked. The next scan will look again.');
+      continue;
+    }
+    sheet.getRange(row, outcomeCol + 1).setValue(OPEN_FAILED_OUTCOME);
+    done.push(f.auctionId + ' (site ' + f.siteId + ', row ' + row + ') — ' + f.why);
+  }
+  SpreadsheetApp.flush();
+  return done;
 }
 
 /**
@@ -3448,6 +3675,10 @@ if (typeof module !== 'undefined') {
     openAlesievMergeApi: openAlesievMergeApi,
     openAlesievApiIds: openAlesievApiIds,
     openAlesievDroppedFromList: openAlesievDroppedFromList,
+    openAlesievUnsettled: openAlesievUnsettled,
+    openAlesievFailedVerdicts: openAlesievFailedVerdicts,
+    OPEN_ALESIEV_FAILED_STATUS_RE: OPEN_ALESIEV_FAILED_STATUS_RE,
+    OPEN_FAILED_OUTCOME: OPEN_FAILED_OUTCOME,
     openRecordedAlesiev: openRecordedAlesiev,
     openRecordedAuctionIds: openRecordedAuctionIds,
     openPromotedId: openPromotedId,

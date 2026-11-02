@@ -110,6 +110,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
 | **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
 | **SITE-15** | A Transmutes view on the analytics page — recipe material statistics | **PARKED by the maintainer (2026-11-02)** — ideas measured, nothing built; two counting rules to settle first |
+| **PIPE-17** | ~~A failed alesievauctions.com auction sits as Open until someone mentions it~~ | **RESOLVED 2026-11-02 (script side)** — the scan marks `outcome = Failed` itself. **`202732` and `202733` (site 51, 52) are the first two**, and the first scan on `2026-11-02.1` should mark them |
 
 ---
 
@@ -2841,6 +2842,44 @@ sold at $1,251 — the same shape — and it records a withheld
 `Chosen Ultra Rare` x10 but no Random UR row at all. If the site listed
 withheld Random URs for site auction 37, they were dropped the same way. The
 count is on the site; the API token is not available outside Apps Script.
+
+---
+
+## PIPE-17. A failed alesievauctions.com auction sat as Open — RESOLVED 2026-11-02 (script side)
+
+**Found by the auctioneer, not by anything here.** Alesiev mentioned that two
+auctions had failed. Both were still Open in `auctionMetadata`: site 51
+(`202732`, Kusig) and 52 (`202733`, Flik). On the site neither was
+*relabelled*. Both were **deleted**: gone from the listing, and
+`/auctions/51` is the Not Found page. So the only signal is an absence, which
+is why nothing caught it. The scan already noted a recorded auction missing
+from the API's list, but it said "nothing was changed" and filed it beside
+closed auctions the site might simply have tidied away.
+
+**Built.** `auctionOpen.gs` `2026-11-02.1` asks `/auctions/:id` for every
+recorded site row with no `closeDate` and an `outcome` that is blank or `Pending`,
+and writes `outcome = Failed` with **no review step**. That is the
+maintainer's explicit ask, and the first time this file writes to a live row.
+It writes only on one of two pieces of evidence (`openAlesievFailedVerdicts`):
+
+- **off the API's list AND a 404**, which matches what 51 and 52 look like on the
+  page. Either one alone is a note.
+- **a `status` matching `OPEN_ALESIEV_FAILED_STATUS_RE`.** No such status has
+  ever been seen; this is the guess, and `Funded` cannot match it.
+
+The row is re-read before the write and skipped if it moved. Rows already
+`Failed` are still asked about, so a relisted auction shows up as a note to
+clear the cell. `test:open` § *failed auctions* covers each rule on
+constructed rows. None of it reads the shipped CSV, because these two rows
+are exactly what the next publish changes.
+
+**Not verified.** The API itself was not queried for 51 or 52. The token
+lives only in Script Properties, and the API answers nothing without it. The
+page says *deleted*. Whether the API's list also dropped them, and whether
+`/auctions/51` answers 404 rather than a card, is **inferred** from the page.
+If the API instead keeps them with a status this does not recognise, the
+first scan marks nothing and its notes will say what the API answered. Then
+add that status to the regex.
 
 ---
 

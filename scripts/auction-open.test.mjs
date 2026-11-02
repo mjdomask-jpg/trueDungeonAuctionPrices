@@ -2162,6 +2162,102 @@ console.log('\nalesievauctions.com API — the auction list\n');
 }
 
 // ===========================================================================
+// A recorded site auction that FAILED
+// ===========================================================================
+// The first two failures on the site (51 and 52, November 2026) were not
+// relabelled — they were deleted: off the listing, and the auction page is Not
+// Found. The scan marks such a row `Failed` with no review step, so the bar is
+// what is tested here: gone from the list AND a 404, or a status that says so.
+//
+// Every row is CONSTRUCTED. The shipped sheet's open rows are exactly the ones
+// this check exists to change, so a test reading them would break on the
+// publish that records them as failed.
+console.log('\nalesievauctions.com — failed auctions\n');
+{
+  const site = (n) => `https://alesievauctions.com/auctions/${n}`;
+  const ROWS = [
+    { auctionId: '202790', Link: site(90), closeDate: '2026-10-01', outcome: '' },     // closed
+    { auctionId: '202791', Link: site(91), closeDate: '', outcome: '' },               // open
+    { auctionId: '202792', Link: site(92), closeDate: '', outcome: 'Pending' },        // not started
+    { auctionId: '202793', Link: site(93), closeDate: '', outcome: 'Ended' },          // finished, unimported
+    { auctionId: '202794', Link: site(94), closeDate: '', outcome: 'Failed' },         // already failed
+    { auctionId: '202795', Link: 'https://www.trenttokens.com/x', closeDate: '', outcome: '' },
+  ];
+  const plain = (x) => JSON.parse(JSON.stringify(x));
+  const unsettled = plain(O.openAlesievUnsettled(ROWS));
+  eq('open, pending and failed site rows are checked, newest first', unsettled.map((u) => u.siteId).join(','), '94,92,91');
+  eq('  ... each keeping its row position for the write', unsettled.find((u) => u.siteId === '91').index, 1);
+
+  const gone = { error: 'the API has no such auction (HTTP 404)', code: 404 };
+  const card = (id, status, extra = {}) => ({ card: { id: String(id), status, closeDate: null, ...extra } });
+  const verdict = (list, answers) => plain(O.openAlesievFailedVerdicts(unsettled, list, answers));
+
+  // The rule with evidence behind it.
+  const deleted = verdict(['90', '92', '94'], { 91: gone });
+  eq('gone from the list AND a 404 marks the row failed', deleted.failed.map((f) => f.auctionId).join(','), '202791');
+  eq('  ... at its own row', deleted.failed[0].index, 1);
+  eq('  ... remembering what outcome said, so the write can check it has not moved', deleted.failed[0].outcome, '');
+  check('  ... saying why', /HTTP 404/.test(deleted.failed[0].why) && /list/.test(deleted.failed[0].why), deleted.failed[0].why);
+  eq('a PENDING auction deleted before it opened is failed too', verdict(['91'], { 92: gone }).failed.map((f) => f.siteId).join(','), '92');
+
+  // Each half alone is not enough.
+  const stillListed = verdict(['91'], { 91: gone });
+  eq('a 404 on an auction the list still names marks nothing', stillListed.failed.length, 0);
+  check('  ... and says so', stillListed.notes.some((n) => /no auction 91/.test(n) && /still names it/.test(n)), stillListed.notes.join(' | '));
+  const noList = verdict(null, { 91: gone });
+  eq('a 404 with no list to confirm it marks nothing', noList.failed.length, 0);
+  check('  ... and says the list could not be read', noList.notes.some((n) => /could not be read/.test(n)), noList.notes.join(' | '));
+  const offButLive = verdict(['90'], { 91: card(91, 'Live') });
+  eq('off the list but still answered for marks nothing', offButLive.failed.length, 0);
+  check('  ... and says so', offButLive.notes.some((n) => /off the API's list/.test(n)), offButLive.notes.join(' | '));
+  const outage = verdict(['90'], { 91: { error: 'the API answered HTTP 500', code: 500 } });
+  eq('any other error marks nothing, list or no list', outage.failed.length, 0);
+  check('  ... and says the check could not be made', outage.notes.some((n) => /could not check/.test(n) && /HTTP 500/.test(n)), outage.notes.join(' | '));
+
+  // The status rule.
+  for (const s of ['Failed', 'Cancelled', 'Canceled', 'Unfunded', 'Not Funded', 'not_funded', 'Withdrawn', 'Expired']) {
+    eq(`status "${s}" marks the row failed, listed or not`, verdict(['91'], { 91: card(91, s) }).failed.length, 1);
+  }
+  for (const s of ['Funded', 'Live', 'Upcoming', 'Closing', '']) {
+    eq(`status "${s}" does not`, verdict(['91'], { 91: card(91, s) }).failed.length, 0);
+  }
+  const odd = verdict(['91'], { 91: card(91, 'Suspended') });
+  check('a status never seen is a note naming the regex to extend, not a mark',
+    odd.failed.length === 0 && odd.notes.some((n) => /never seen, "Suspended"/.test(n) && /FAILED_STATUS_RE/.test(n)), odd.notes.join(' | '));
+  eq('a status the site is known to use is not', verdict(['91'], { 91: card(91, 'Live') }).notes.length, 0);
+  const overdue = plain(O.openAlesievFailedVerdicts(unsettled, ['91'], { 91: card(91, 'Live', { endDate: '2026-10-31' }) }, '2026-11-02'));
+  check('a live auction past its scheduled end is a question, not a mark',
+    overdue.failed.length === 0 && overdue.notes.some((n) => /scheduled to end 2026-10-31/.test(n)), overdue.notes.join(' | '));
+  eq('  ... and not before that end', plain(O.openAlesievFailedVerdicts(unsettled, ['91'],
+    { 91: card(91, 'Live', { endDate: '2027-01-31' }) }, '2026-11-02')).notes.length, 0);
+  const closed = verdict(['91'], { 91: card(91, 'Funded', { closeDate: '2026-10-22' }) });
+  eq('an open row the site says CLOSED is not failed', closed.failed.length, 0);
+  check('  ... it is a note pointing at the close import', closed.notes.some((n) => /closed on 2026-10-22/.test(n) && /Import its close/.test(n)), closed.notes.join(' | '));
+
+  // A row already Failed is never written again, and its coming back is seen.
+  eq('an already-Failed row is not marked twice', verdict(['90'], { 94: gone }).failed.length, 0);
+  eq('  ... and a 404 on it says nothing', verdict(['90'], { 94: gone }).notes.length, 0);
+  const back = verdict(['94'], { 94: card(94, 'Live') });
+  check('a Failed row the site answers for again is a note to clear the cell',
+    back.failed.length === 0 && back.notes.some((n) => /marked Failed/.test(n) && /clear its outcome/.test(n)), back.notes.join(' | '));
+  eq('an id with no answer (no token, or past the cap) is skipped silently', verdict(['90'], {}).notes.length, 0);
+
+  // The list note does not repeat what the failed check said.
+  eq('the "no longer listed" note skips ids the failed check asked about',
+    O.openAlesievDroppedFromList(['94'], ROWS, { 91: true, 92: true }).join(','), '202790 (site 90),202793 (site 93)');
+  eq('  ... and without a skip set behaves as before',
+    O.openAlesievDroppedFromList(['94'], ROWS).join(','), '202790 (site 90),202791 (site 91),202792 (site 92),202793 (site 93)');
+
+  // The dialog says what was written instead of promising nothing was.
+  const said = O.openDescribeScan({ proposals: [], notes: [], failedMarked: ['202791 (site 91, row 3) — gone'] });
+  check('a scan that marked a row says so', /MARKED FAILED/.test(said) && /202791/.test(said) && /Nothing else has been written/.test(said), said);
+  check('a scan that marked none still says nothing was written',
+    /Nothing has been written/.test(O.openDescribeScan({ proposals: [], notes: [] })), '');
+  check('the outcome written is one the sheet\'s dropdown and the validator accept',
+    O.OPEN_FAILED_OUTCOME === 'Failed', O.OPEN_FAILED_OUTCOME);
+}
+
+// ===========================================================================
 // auction.utakustradecaravan.com — the fourth source
 // ===========================================================================
 // The fixture is the stripped /api/state utakuClose.gs's test uses: Utaku's
