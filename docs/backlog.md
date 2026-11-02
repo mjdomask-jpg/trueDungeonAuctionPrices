@@ -110,7 +110,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
 | **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
 | **SITE-15** | A Transmutes view on the analytics page — recipe material statistics | **PARKED by the maintainer (2026-11-02)** — ideas measured, nothing built; two counting rules to settle first |
-| **PIPE-17** | ~~A failed alesievauctions.com auction sits as Open until someone mentions it~~ | **RESOLVED 2026-11-02 (script side)** — the scan marks `outcome = Failed` itself. **`202732` and `202733` (site 51, 52) are the first two**, and the first scan on `2026-11-02.1` should mark them |
+| **PIPE-17** | ~~A failed alesievauctions.com auction sits as Open until someone mentions it~~ | **RESOLVED 2026-11-02 (script side)** — the scan marks `outcome = Failed` itself. **Verified on the first real scan**: `202732` and `202733` (site 51, 52) marked off the API's status `unfunded`, and published (#334) |
 
 ---
 
@@ -2849,12 +2849,11 @@ count is on the site; the API token is not available outside Apps Script.
 
 **Found by the auctioneer, not by anything here.** Alesiev mentioned that two
 auctions had failed. Both were still Open in `auctionMetadata`: site 51
-(`202732`, Kusig) and 52 (`202733`, Flik). On the site neither was
-*relabelled*. Both were **deleted**: gone from the listing, and
-`/auctions/51` is the Not Found page. So the only signal is an absence, which
-is why nothing caught it. The scan already noted a recorded auction missing
-from the API's list, but it said "nothing was changed" and filed it beside
-closed auctions the site might simply have tidied away.
+(`202732`, Kusig) and 52 (`202733`, Flik). On the public site both had
+**vanished**: gone from the listing, and `/auctions/51` is the Not Found
+page. Nothing a person would look at said "failed", which is why nothing
+caught it. The scan only ever asked the API about auctions it had NOT yet
+recorded, so it never saw what the API said about these two.
 
 **Built.** `auctionOpen.gs` `2026-11-02.1` asks `/auctions/:id` for every
 recorded site row with no `closeDate` and an `outcome` that is blank or `Pending`,
@@ -2862,10 +2861,11 @@ and writes `outcome = Failed` with **no review step**. That is the
 maintainer's explicit ask, and the first time this file writes to a live row.
 It writes only on one of two pieces of evidence (`openAlesievFailedVerdicts`):
 
-- **off the API's list AND a 404**, which matches what 51 and 52 look like on the
-  page. Either one alone is a note.
-- **a `status` matching `OPEN_ALESIEV_FAILED_STATUS_RE`.** No such status has
-  ever been seen; this is the guess, and `Funded` cannot match it.
+- **a `status` matching `OPEN_ALESIEV_FAILED_STATUS_RE`.** This is the rule
+  that fired: the API answered `unfunded` for both. `Funded` cannot match it.
+- **off the API's list AND a 404.** Not seen. It is kept in case the API
+  starts deleting failed auctions the way the public page does. Either half
+  alone is a note.
 
 The row is re-read before the write and skipped if it moved. Rows already
 `Failed` are still asked about, so a relisted auction shows up as a note to
@@ -2873,13 +2873,16 @@ clear the cell. `test:open` § *failed auctions* covers each rule on
 constructed rows. None of it reads the shipped CSV, because these two rows
 are exactly what the next publish changes.
 
-**Not verified.** The API itself was not queried for 51 or 52. The token
-lives only in Script Properties, and the API answers nothing without it. The
-page says *deleted*. Whether the API's list also dropped them, and whether
-`/auctions/51` answers 404 rather than a card, is **inferred** from the page.
-If the API instead keeps them with a status this does not recognise, the
-first scan marks nothing and its notes will say what the API answered. Then
-add that status to the regex.
+**Verified 2026-11-02** on the first real scan. Both rows were marked off
+status `unfunded`, and the publish (#334) carried exactly those two `outcome`
+cells.
+
+**The lesson is in the order the rules were written.** Before the API was
+queried, the 404 rule was described as "the one with evidence behind it",
+because the public page showed Not Found. That was wrong: the page and the API
+disagree about a failed auction. The page evidence was about the PAGE.
+`OPEN_ALESIEV_KNOWN_STATUS_RE` is what would have caught it had the status
+been a word the regex missed: an unfamiliar status is a note quoting it.
 
 ---
 

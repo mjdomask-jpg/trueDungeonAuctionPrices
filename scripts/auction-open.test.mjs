@@ -2164,10 +2164,11 @@ console.log('\nalesievauctions.com API — the auction list\n');
 // ===========================================================================
 // A recorded site auction that FAILED
 // ===========================================================================
-// The first two failures on the site (51 and 52, November 2026) were not
-// relabelled — they were deleted: off the listing, and the auction page is Not
-// Found. The scan marks such a row `Failed` with no review step, so the bar is
-// what is tested here: gone from the list AND a 404, or a status that says so.
+// The first two failures on the site (51 and 52, November 2026) vanished from
+// the public page — off the listing, and the auction page is Not Found — while
+// the API kept answering for them with status `unfunded`. The scan marks such
+// a row `Failed` with no review step, so the bar is what is tested here: a
+// status that says so (measured), or gone from the list AND a 404 (not yet).
 //
 // Every row is CONSTRUCTED. The shipped sheet's open rows are exactly the ones
 // this check exists to change, so a test reading them would break on the
@@ -2192,7 +2193,14 @@ console.log('\nalesievauctions.com — failed auctions\n');
   const card = (id, status, extra = {}) => ({ card: { id: String(id), status, closeDate: null, ...extra } });
   const verdict = (list, answers) => plain(O.openAlesievFailedVerdicts(unsettled, list, answers));
 
-  // The rule with evidence behind it.
+  // What 51 and 52 actually answered on the first real scan: still known to
+  // the API, status `unfunded`, while the public page said Not Found.
+  const measured = verdict(['91'], { 91: card(91, 'unfunded') });
+  eq('the MEASURED answer — status "unfunded" — marks the row failed', measured.failed.map((f) => f.auctionId).join(','), '202791');
+  check('  ... saying the status was why', /status is "unfunded"/.test(measured.failed[0].why), measured.failed[0].why);
+  eq('  ... and nothing else is said about it', measured.notes.length, 0);
+
+  // The unobserved rule: the API deleting a failed auction too.
   const deleted = verdict(['90', '92', '94'], { 91: gone });
   eq('gone from the list AND a 404 marks the row failed', deleted.failed.map((f) => f.auctionId).join(','), '202791');
   eq('  ... at its own row', deleted.failed[0].index, 1);

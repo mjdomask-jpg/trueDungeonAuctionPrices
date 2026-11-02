@@ -286,11 +286,12 @@ open. [Importing the close](#importing-an-alesievauctionscom-close) writes
 ### A failed site auction is marked for you
 
 **This is the one thing the scan writes to `auctionMetadata` without asking**
-(since script `2026-11-02.1`). A failed auction on alesievauctions.com is not
-relabelled; it is **deleted**. It drops off the listing and its page turns
+(since script `2026-11-02.1`). A failed auction on alesievauctions.com
+**vanishes from the public site**. It drops off the listing and its page turns
 into Not Found, so nothing you would look at ever says "failed". Sites 51 and 52
 (`202732`, `202733`) went that way in November 2026 and sat as Open here until
-the auctioneer mentioned it.
+the auctioneer mentioned it. **The API still knows them**: it answers with
+status `unfunded`, and that is what marked both on the first real scan.
 
 So every scan asks the API about each recorded site auction that has no
 `closeDate` and an `outcome` that is blank or `Pending`, and writes
@@ -298,8 +299,8 @@ So every scan asks the API about each recorded site auction that has no
 
 | The API says | What the scan does |
 |---|---|
-| Off its list of valid auctions **and** `/auctions/:id` answers 404 | **Marks it `Failed`.** Both are needed: either one alone could be a passing fault |
-| A `status` that reads as failed (`Failed`, `Cancelled`, `Unfunded`, `Withdrawn`…) | **Marks it `Failed`.** No such status has been seen yet; this covers the site starting to label failures instead of deleting them |
+| A `status` that reads as failed: `unfunded` (seen on 51 and 52), or `Failed`, `Cancelled`, `Withdrawn`… | **Marks it `Failed`.** This is the rule that has fired |
+| Off its list of valid auctions **and** `/auctions/:id` answers 404 | **Marks it `Failed`.** Not seen yet; this covers the API deleting a failed auction the way the public page does. Both are needed: either one alone could be a passing fault |
 | 404, but still on the list, or the list couldn't be read | A note. The next scan looks again |
 | A `closedAt` on a row still open here | A note: it closed, so [import its close](#importing-an-alesievauctionscom-close) |
 | A status it has never seen (not `Upcoming`, `Live`, `Closing` or `Funded`) | A note quoting it. If it means failed, the word belongs in `OPEN_ALESIEV_FAILED_STATUS_RE` |
