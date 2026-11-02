@@ -324,7 +324,7 @@ auctionId,auctionSeason,auctionNumber,auctionName,auctionStyle,completionStyle,a
 202729,2027,29,Trent Auction 15,Trade 2 Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2026-10-12,2026-10-19,7,Closed,1,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$205.16,
 202730,2027,30,Jadziadax8's 8K Trade 2 Auction,Ultra Condensed,Lightning,Jadziadax8,https://alesievauctions.com/auctions/50,2026-10-18,2026-10-22,4,Closed,1,2,"$8,000.00",Yes,$653.18,,,$653.18,"$7,346.82",$219.00,
 202731,2027,31,Trent Auction 16,Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2026-10-19,2026-10-30,11,Closed,2,2,"$7,500.00",No,,,,$0.00,"$7,500.00",$236.62,
-202732,2027,32,Kusig's 8K Trade 2 - Everything Available,Ultra Condensed,Lightning,Kusig,https://alesievauctions.com/auctions/51,2026-10-20,,,Open,2,,"$8,000.00",No,,,,$0.00,"$8,000.00",$0.00,
-202733,2027,33,Flik's 8K Auction 2,Ultra Condensed,Lightning,Flik,https://alesievauctions.com/auctions/52,2026-10-20,,,Open,2,,"$8,000.00",No,,,,$0.00,"$8,000.00",$0.00,
+202732,2027,32,Kusig's 8K Trade 2 - Everything Available,Ultra Condensed,Lightning,Kusig,https://alesievauctions.com/auctions/51,2026-10-20,,,Failed,2,,"$8,000.00",No,,,,$0.00,"$8,000.00",$0.00,Failed
+202733,2027,33,Flik's 8K Auction 2,Ultra Condensed,Lightning,Flik,https://alesievauctions.com/auctions/52,2026-10-20,,,Failed,2,,"$8,000.00",No,,,,$0.00,"$8,000.00",$0.00,Failed
 202734,2027,34,Mike's $8K Super Condensed Auction Option B,Ultra Condensed,Lightning,Mike Steele,https://alesievauctions.com/auctions/53,2026-10-23,,,Open,2,,"$8,000.00",No,,,,$0.00,"$8,000.00",$0.00,
 202735,2027,35,Trent Auction 17,Trade 2 Ultra Condensed,Lightning,Trent,https://www.trenttokens.com/collections/current-auction,2026-10-30,,,Open,2,,"$7,500.00",No,,,,$0.00,"$7,500.00",$0.00,
