@@ -8,6 +8,12 @@
 // sources are asserted to produce the SAME plan, which is the reconciliation
 // this venue offers.
 //
+// Auctions #2 (= 202724, Onyx) and #3 (= 202728) are the maintainer's exports
+// from 2026-11-06, with no API fixture: the API had moved on by then. Their
+// pinned numbers were worked out by hand from the export too. Each fixture is
+// a FILE, so pinning its own counts is safe; the shipped CSVs are only ever
+// used relationally — membership, and "with the other one recorded".
+//
 // Run: node scripts/utaku-close.test.mjs
 
 import { readFileSync } from 'node:fs';
@@ -50,6 +56,8 @@ const PRICES = load('prices.csv');
 const ONYX = load('onyx.csv');
 const META = load('auctionMetadata.csv');
 const EXPORT = parseCSV(readFileSync(join(fixtureDir, 'utaku-auction-1-export.csv'), 'utf8'));
+const EXPORT_2 = parseCSV(readFileSync(join(fixtureDir, 'utaku-auction-2-export.csv'), 'utf8'));
+const EXPORT_3 = parseCSV(readFileSync(join(fixtureDir, 'utaku-auction-3-export.csv'), 'utf8'));
 const STATE_TEXT = readFileSync(join(fixtureDir, 'api-state-auction-1.json'), 'utf8');
 const STATE = JSON.parse(STATE_TEXT);
 const TARGET = META.find((m) => m.auctionId === '202722');
@@ -299,6 +307,127 @@ console.log('\nRefusals\n');
 
   const season = plain(U.utakuPlanImport(EXPORT, '2026', TOKENS, false, '', PRICES, '202622', null));
   check('the 2027 export picked against a 2026 auction aborts', !season.ok && season.aborts.some((x) => /looks like season 2027/.test(x)));
+}
+
+// ===========================================================================
+console.log('\nAuctions #2 and #3, planned\n');
+// ===========================================================================
+{
+  // Styles CONSTRUCTED, never read from auctionMetadata.csv — see WRONG above.
+  const ONYX_STYLE = 'Onyx Trade 2 Ultra Condensed';
+  const PLAIN_STYLE = 'Trade 2 Ultra Condensed';
+  // The recorded prices WITHOUT either auction, so this suite says the same
+  // thing before and after they are published; the publish case is built below.
+  const BEFORE = PRICES.filter((r) => r.auctionId !== '202724' && r.auctionId !== '202728');
+  const planFor = (values, id, style, prices = BEFORE) => plain(U.utakuPlanImport(values, '2027', TOKENS, false, style, prices, id, null));
+  const sortKeys = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  const lotsPerItem = (p) => { const c = {}; for (const r of p.raw) c[r.Item] = (c[r.Item] || 0) + 1; return sortKeys(c); };
+  const priceBlock = (p) => { const b = {}; for (const r of p.prices) (b[r.Item] ??= []).push(r.Price); return sortKeys(b); };
+  // The file's own Line total column, summed independently of the script.
+  const lineTotal = (values) => Math.round(values.slice(1).filter((r) => r[0]).reduce((s, r) => s + Number(r[3]) * 100, 0)) / 100;
+  const known2027 = new Set(TOKENS.filter((t) => t.auctionSeason === '2027').map((t) => t.Item));
+  const knownOnyx = new Set(ONYX.map((r) => r.Item));
+
+  const cases = [
+    {
+      label: '#2 (202724)', values: EXPORT_2, id: '202724', style: ONYX_STYLE, bids: 57, total: 7003, onyx: 21,
+      // chips 5/45 -> 1+5   Drake's 32 -> 8   Codex 1   Warden 2+1+4+1   Shirt 2+2   Wish 1
+      // PYP 1+6+1+5+3   Ink 40 -> 4   Parchment 40 -> 4   Aragonite 3+5+1+6   Darkwood 50 -> 5
+      // Steel 20/20 -> 2+2   Bismuth 3+10+3+4   Munition 20 -> 2   Hide 40 -> 4   Silk 50 -> 5
+      // Oil 20   Stone 50 -> 5   bars 45 -> 9   Patron 1
+      raw: 142,
+      lots: {
+        'Treasure Chip': 6, 'Preorder Bonus': 8, '8k Bonus': 1, '1k Bonus': 8, '2k Bonus': 4, 'Wish Ring': 1,
+        'Ultra Rare': 16, "Alchemist's Ink": 4, "Alchemist's Parchment": 4, Aragonite: 15, 'Darkwood Plank': 5,
+        'Dwarven Steel': 4, 'Elven Bismuth': 20, "Enchanter's Munition": 2, 'Minotaur Hide': 4, 'Mystic Silk': 5,
+        'Oil of Enchantment': 20, "Philosopher's Stone": 5, '1,000 GP Gold Bar': 9, 'Patron Pin': 1,
+      },
+      block: {
+        '1,000 GP Gold Bar': [6.75, 6.75], '1k Bonus': [61, 60], '2k Bonus': [79, 79], '8k Bonus': [1210],
+        "Alchemist's Ink": [2, 2], "Alchemist's Parchment": [1.5, 1.5], Aragonite: [7, 6.75],
+        'Darkwood Plank': [0.75, 0.75], 'Dwarven Steel': [1.75, 1.5], 'Elven Bismuth': [31, 30],
+        "Enchanter's Munition": [4, 4], 'Minotaur Hide': [2.75, 2.75], 'Mystic Silk': [1.25, 1.25],
+        'Oil of Enchantment': [41, 41], 'Patron Pin': [405], "Philosopher's Stone": [1.25, 1.25],
+        'Preorder Bonus': [0.75, 0.75], 'Treasure Chip': [6.25, 6], 'Ultra Rare': [49, 48], 'Wish Ring': [91],
+      },
+      split: ['Treasure Chips: 5 / 10+10+10+10+5 → 6 lot(s)', 'Dwarven Steel: 10+10 / 10+10 → 4 lot(s)', '1K Gold Bar: 5+5+5+5+5+5+5+5+5 → 9 lot(s)'],
+    },
+    {
+      label: '#3 (202728)', values: EXPORT_3, id: '202728', style: PLAIN_STYLE, bids: 41, total: 7001, onyx: 0,
+      // chips 50 -> 5   Drake's 32 -> 8   Codex 1   Warden 2+6   Shirt 1+1+1+1   Wish 1   PYP 3+31
+      // Ink 2/38 -> 1+4   Parchment 40 -> 4   Aragonite 15   Darkwood 50 -> 5   Steel 5/12/23 -> 1+2+3
+      // Bismuth 4+5+4+3+4   Munition 3/5/12 -> 1+1+2   Hide 40 -> 4   Silk 2/48 -> 1+5
+      // Oil 2+3+4+1+10   Stone 50 -> 5   bars 1/4/40 -> 1+1+8   Patron 1
+      raw: 166,
+      lots: {
+        'Treasure Chip': 5, 'Preorder Bonus': 8, '8k Bonus': 1, '1k Bonus': 8, '2k Bonus': 4, 'Wish Ring': 1,
+        'Ultra Rare': 34, "Alchemist's Ink": 5, "Alchemist's Parchment": 4, Aragonite: 15, 'Darkwood Plank': 5,
+        'Dwarven Steel': 6, 'Elven Bismuth': 20, "Enchanter's Munition": 4, 'Minotaur Hide': 4, 'Mystic Silk': 6,
+        'Oil of Enchantment': 20, "Philosopher's Stone": 5, '1,000 GP Gold Bar': 10, 'Patron Pin': 1,
+      },
+      block: {
+        '1,000 GP Gold Bar': [7, 6.75], '1k Bonus': [51, 50], '2k Bonus': [71, 70], '8k Bonus': [1255],
+        "Alchemist's Ink": [2.5, 2.25], "Alchemist's Parchment": [1.5, 1.5], Aragonite: [8.25, 8.25],
+        'Darkwood Plank': [0.75, 0.75], 'Dwarven Steel': [1.5, 1.25], 'Elven Bismuth': [33, 32],
+        "Enchanter's Munition": [4.25, 4], 'Minotaur Hide': [2.75, 2.75], 'Mystic Silk': [1.25, 1],
+        'Oil of Enchantment': [42, 41], 'Patron Pin': [360], "Philosopher's Stone": [1.5, 1.5],
+        'Preorder Bonus': [0.75, 0.75], 'Treasure Chip': [4.75, 4.75], 'Ultra Rare': [56, 55], 'Wish Ring': [96],
+      },
+      split: ['Dwarven Steel: 5 / 10+2 / 10+10+3 → 6 lot(s)', '1K Gold Bar: 1 / 4 / 5+5+5+5+5+5+5+5 → 10 lot(s)', "Alchemist's Ink: 2 / 10+10+10+8 → 5 lot(s)"],
+    },
+  ];
+
+  const plans = {};
+  for (const c of cases) {
+    const read = plain(U.utakuReadGrid(c.values, '2027'));
+    eq(`${c.label}: the "updated format" is #1's four columns`, c.values[0], HEADER);
+    eq(`${c.label}: ${c.bids} bids, no problems, no cautions`, [read.bids.length, read.problems.length, read.cautions.length], [c.bids, 0, 0]);
+
+    const p = planFor(c.values, c.id, c.style);
+    plans[c.id] = p;
+    check(`${c.label}: it plans cleanly`, p.ok && p.rowsComplete, p.aborts);
+    eq(`${c.label}: no cautions at all`, p.cautions, []);
+    eq(`${c.label}: season 2027 and nothing else`, p.seasons, ['2027']);
+    eq(`${c.label}: the bids total the file's own Line total column`, [p.exportTotal, lineTotal(c.values)], [c.total, c.total]);
+    eq(`${c.label}: ${c.raw} lots to rawPricesData`, p.raw.length, c.raw);
+    eq(`${c.label}: lots per Item`, lotsPerItem(p), sortKeys(c.lots));
+    eq(`${c.label}: the price block, max then min`, priceBlock(p), sortKeys(c.block));
+    eq(`${c.label}: ${p.prices.length} price rows — two per Item, one where it sold once`, p.prices.length,
+      Object.values(c.block).reduce((s, v) => s + v.length, 0));
+    eq(`${c.label}: ${c.onyx} Onyx rows`, p.onyx.length, c.onyx);
+    eq(`${c.label}: every Onyx name is one onyx.csv already holds`, p.onyx.filter((r) => !knownOnyx.has(r.Item)).map((r) => r.Item), []);
+    eq(`${c.label}: every price Item is a 2027 tokenMetadata Item`, p.prices.filter((r) => !known2027.has(r.Item)).map((r) => r.Item), []);
+    check(`${c.label}: every lot's price is its bid's per-token price × its size`,
+      p.raw.every((r) => { const n = r.trentName.match(/^(\d+)x /); return Math.round(r.Price * (n ? Number(n[1]) : 1) * 100) === Math.round(r.trentPrice * 100); }));
+    check(`${c.label}: no trentName carries a curly apostrophe or a season`, p.raw.every((r) => !/[‘’]/.test(r.trentName) && !/\b2027\b/.test(r.trentName)));
+    const written = p.raw.reduce((s, r) => s + r.trentPrice, 0) + p.onyx.reduce((s, r) => s + r.Price, 0);
+    eq(`${c.label}: every dollar lands exactly once`, Math.round(written * 100) / 100, c.total);
+    const text = U.utakuDescribePlan(p, c.id, null);
+    for (const line of c.split) check(`${c.label}: the dialog shows "${line}"`, text.includes(line), text);
+  }
+
+  // The remainders #3 has and #1 did not.
+  const bars3 = plans['202728'].raw.filter((r) => r.Item === '1,000 GP Gold Bar').map((r) => `${r.trentName} @ ${r.trentPrice}`);
+  eq('#3: a single gold bar is a 1x lot, four are a 4x lot, before the 5x lots', bars3.slice(0, 3), ['1x 1K Gold Bar @ 7', '4x 1K Gold Bar @ 28', '5x 1K Gold Bar @ 33.75']);
+  const steel3 = plans['202728'].raw.filter((r) => r.Item === 'Dwarven Steel').map((r) => r.trentName);
+  eq('#3: Dwarven Steel 5 / 12 / 23', steel3, ['5x Dwarven Steel', '10x Dwarven Steel', '2x Dwarven Steel', '10x Dwarven Steel', '10x Dwarven Steel', '3x Dwarven Steel']);
+
+  // The style cross-wiring: each export checked against the OTHER's style.
+  const asPlain = planFor(EXPORT_2, '202724', PLAIN_STYLE);
+  check('#2 under a non-Onyx style still plans, and cautions § 6', asPlain.ok && asPlain.cautions.some((c) => /21 Onyx token\(s\).*§ 6/.test(c)), asPlain.cautions);
+  const asOnyx = planFor(EXPORT_3, '202728', ONYX_STYLE);
+  check('#3 under an Onyx style cautions that it sells no Onyx', asOnyx.ok && asOnyx.cautions.some((c) => /sells no Onyx/.test(c)), asOnyx.cautions);
+
+  // What the next publish creates: one of them recorded, then the other imported.
+  // Both use the same staging tab, so the stale-tab case is THIS pair.
+  const recorded = (id) => plans[id].prices.map((r) => ({ auctionId: id, ...r }));
+  const third = planFor(EXPORT_3, '202728', PLAIN_STYLE, BEFORE.concat(recorded('202724')));
+  check('#3 imports cleanly with #2 already recorded — their shared prices do not collide', third.ok, third.aborts);
+  const second = planFor(EXPORT_2, '202724', ONYX_STYLE, BEFORE.concat(recorded('202728')));
+  check('#2 imports cleanly with #3 already recorded', second.ok, second.aborts);
+  const stale = planFor(EXPORT_2, '202728', PLAIN_STYLE, BEFORE.concat(recorded('202724')));
+  check("#2's export left in the tab and picked as 202728 aborts, naming 202724", !stale.ok &&
+    stale.aborts.some((x) => /these bids are auction 202724's/.test(x)), stale.aborts);
 }
 
 // ===========================================================================

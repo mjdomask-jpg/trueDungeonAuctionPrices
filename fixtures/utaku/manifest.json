@@ -15,6 +15,40 @@
       "reconciles": "Nothing recorded yet — 202722 has no price rows. It DOES reconcile with the API fixture beside it: the same 73 bids, and $7,007.45 is the site's own `raised`."
     },
     {
+      "file": "utaku-auction-2-export.csv",
+      "fetched": "2026-11-06",
+      "source": "The site's close export for auction #2, supplied by the maintainer on 2026-11-06 as `winners-auction-2 (4).csv`, one of Utaku's 'updated formats'. Byte-for-byte unchanged apart from git's line-ending handling, which treats it exactly as the #1 export.",
+      "headers": "Item | Quantity | Price/unit | Line total — the same four as #1, so the 'updated format' needed no code change.",
+      "shape": "one row per WINNING BID, as #1.",
+      "rows": 57,
+      "total": 7003,
+      "auction": "202724",
+      "season": "2027",
+      "notes": [
+        "The Onyx order: 20 `(Onyx)` tokens and a `Full Onyx C/U/R Set`, 21 rows, the size of every Onyx order. auctionMetadata records it `Onyx Trade 2 Ultra Condensed`, which agrees.",
+        "Its Trade 2 goods are Aragonite 15 / Elven Bismuth 20 / Oil of Enchantment 20 — the Trade 2 (Option B) counts.",
+        "No API fixture: the API holds only the current auction, and #2 was gone from it before this file arrived. The export is the only source."
+      ],
+      "reconciles": "Nothing recorded yet — 202724 has no price rows (outcome `Ended`). Every Line total is Quantity × Price/unit to the cent."
+    },
+    {
+      "file": "utaku-auction-3-export.csv",
+      "fetched": "2026-11-06",
+      "source": "The site's close export for auction #3, supplied by the maintainer on 2026-11-06 as `winners-auction-3.csv`. Byte-for-byte unchanged apart from git's line-ending handling.",
+      "headers": "Item | Quantity | Price/unit | Line total",
+      "shape": "one row per WINNING BID, as #1.",
+      "rows": 41,
+      "total": 7001,
+      "auction": "202728",
+      "season": "2027",
+      "notes": [
+        "Not an Onyx order — no `(Onyx)` row — and auctionMetadata records it `Trade 2 Ultra Condensed`, which agrees.",
+        "Its bids are LUMPIER than #1's or #2's — `PYP Ultra Rare, 31`, `1K Gold Bar, 40` — and it carries the short remainders a lot split has to keep: `Dwarven Steel, 23` is 10+10+3, `1K Gold Bar, 1` is a `1x` lot.",
+        "No API fixture, for the same reason as #2."
+      ],
+      "reconciles": "Nothing recorded yet — 202728 has no price rows and no closeDate. Every Line total is Quantity × Price/unit to the cent."
+    },
+    {
       "file": "api-state-auction-1.json",
       "url": "https://auction.utakustradecaravan.com/api/state",
       "fetched": "2026-09-29",
