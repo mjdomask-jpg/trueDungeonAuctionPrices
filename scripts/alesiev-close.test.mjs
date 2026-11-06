@@ -1021,6 +1021,83 @@ console.log('\nClearing the outcome cell (PIPE-9)\n');
 }
 
 // ===========================================================================
+// Keeping a recorded closeDate still clears the outcome (2026-11-06)
+// ===========================================================================
+// 202724 (Utaku's #2) was imported in full and published still `Ended`. The
+// operator kept its recorded 2026-10-11 at the close-date prompt — on advice
+// that this would clear Ended — and the outcome was only ever cleared INSIDE
+// the closeDate write, which keeping a date skips. Both site closes share the
+// step now (`alesievCloseDateNote`), so it is tested once, here.
+console.log('\nKeeping a recorded closeDate (202724)\n');
+{
+  eq('a chosen date is written (and the write clears the outcome)', A.alesievAfterImportStep('2026-10-11', ''), 'write');
+  eq('  ... even when one is already recorded', A.alesievAfterImportStep('2026-10-12', '2026-10-11'), 'write');
+  eq('a recorded date KEPT still has its outcome cleared', A.alesievAfterImportStep(null, '2026-10-11'), 'keep');
+  eq('  ... however the sheet displays it', A.alesievAfterImportStep('', '10/11/2026'), 'keep');
+  eq('no date at all leaves the outcome, since a blank date would compute Open', A.alesievAfterImportStep(null, ''), 'none');
+  eq('  ... whitespace is no date', A.alesievAfterImportStep('  ', '  '), 'none');
+
+  // A metadata tab, enough of one: the header, 202724's row as it was
+  // published, and a neighbour that must not be touched.
+  const HEADER = ['auctionId', 'auctionSeason', 'closeDate', 'Status', 'outcome'];
+  const fakeMetadata = (rows) => {
+    const grid = [HEADER, ...rows.map((r) => [...r])];
+    const writes = [];
+    const sheet = {
+      getDataRange: () => ({ getDisplayValues: () => grid.map((r) => [...r]) }),
+      getRange: (row, col) => ({
+        getFormula: () => '',
+        clearContent: () => { writes.push([row, col]); grid[row - 1][col - 1] = ''; },
+        getDisplayValue: () => grid[row - 1][col - 1],
+        setNumberFormat: () => {},
+        setValue: (v) => { writes.push([row, col, v]); grid[row - 1][col - 1] = v; },
+      }),
+    };
+    sandbox.SpreadsheetApp = { flush: () => {}, getActive: () => ({ getSheetByName: (n) => (n === sandbox.TABS.metadata ? sheet : null) }) };
+    return { grid, writes };
+  };
+  const target = { auctionId: '202724', outcome: 'Ended' };
+
+  const kept = fakeMetadata([['202722', '2027', '2026-09-29', 'Closed', ''], ['202724', '2027', '2026-10-11', 'Ended', 'Ended']]);
+  const said = A.alesievCloseDateNote(target, null, '2026-10-11');
+  check("202724's shape: the kept date's Ended is cleared", kept.grid[2][4] === '', JSON.stringify(kept.grid[2]));
+  check('  ... and nothing else is written — not the date, not the neighbour',
+    kept.writes.length === 1 && kept.writes[0][0] === 3 && kept.writes[0][1] === 5 && kept.grid[2][2] === '2026-10-11' && kept.grid[1].join() === '202722,2027,2026-09-29,Closed,',
+    JSON.stringify(kept.writes));
+  check('  ... and the report says the date was kept and the outcome cleared',
+    /closeDate kept as recorded \(2026-10-11\)/.test(said) && /outcome was "Ended" and has been cleared/.test(said), said);
+
+  const pending = fakeMetadata([['202724', '2027', '2026-10-11', 'Pending', 'Pending']]);
+  A.alesievCloseDateNote({ auctionId: '202724', outcome: 'Pending' }, null, '2026-10-11');
+  check('a kept date clears Pending the same way', pending.grid[1][4] === '', JSON.stringify(pending.grid[1]));
+
+  const failed = fakeMetadata([['202724', '2027', '2026-10-11', 'Failed', 'Cancelled']]);
+  const failedSaid = A.alesievCloseDateNote({ auctionId: '202724', outcome: 'Cancelled' }, null, '2026-10-11');
+  check('a value the script does not know is still not cleared, and says so',
+    failed.grid[1][4] === 'Cancelled' && /CAUTION/.test(failedSaid), failedSaid);
+
+  const none = fakeMetadata([['202724', '2027', '', 'Ended', 'Ended']]);
+  const noneSaid = A.alesievCloseDateNote(target, null, '');
+  check('no date at all: Ended is LEFT, so Status does not drop to Open', none.grid[1][4] === 'Ended' && none.writes.length === 0, JSON.stringify(none.writes));
+  check('  ... and the operator is reminded, which this path never did before', /REMEMBER THE outcome CELL/.test(noneSaid), noneSaid);
+
+  const written = fakeMetadata([['202724', '2027', '', 'Ended', 'Ended']]);
+  A.alesievCloseDateNote(target, '2026-10-11', '');
+  check('a written date still clears it, as before', written.grid[1][2] === '2026-10-11' && written.grid[1][4] === '', JSON.stringify(written.grid[1]));
+
+  fakeMetadata([['202722', '2027', '2026-09-29', 'Closed', '']]);
+  check('no row for the auction is a note, not a crash', /no row for auction 202724/.test(A.alesievClearOutcomeFor('202724')));
+
+  // The confirmation dialog names the cell before anything is written.
+  check('the "Writing to" list names the outcome cell on a kept date',
+    /outcome for 202724 \("Ended" cleared; closeDate 2026-10-11 kept\)/.test(A.alesievKeepDestination(target, null, '2026-10-11')),
+    A.alesievKeepDestination(target, null, '2026-10-11'));
+  eq('  ... and nothing when the date is written, or the outcome is blank',
+    A.alesievKeepDestination(target, '2026-10-11', '2026-10-11') + A.alesievKeepDestination({ auctionId: '202724', outcome: '' }, null, '2026-10-11'), '');
+  delete sandbox.SpreadsheetApp;
+}
+
+// ===========================================================================
 // 10. The picker — which auctions the importer offers
 //
 // Two defects, both found by the operator rather than by this suite, because
