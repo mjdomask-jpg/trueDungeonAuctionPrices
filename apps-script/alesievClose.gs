@@ -51,7 +51,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-10-13.1';
+var ALESIEV_VERSION = '2026-11-06.1';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -1682,6 +1682,8 @@ function alesievImport(fromExport) {
     destinations.push(ALESIEV_CONTEXT_TAB + ' from row ' + (ss.getSheetByName(ALESIEV_CONTEXT_TAB).getLastRow() + 1));
   }
   if (closeDate) destinations.push(TABS.metadata + ' closeDate for ' + target.auctionId);
+  var keepLine = alesievKeepDestination(target, closeDate, held);
+  if (keepLine) destinations.push(keepLine);
 
   var summary = alesievDescribePlan(plan, target.auctionId, closeDate,
     siteClose && closeDate === siteClose ? "the site's closedAt, " + built.closeTime + ' Eastern' : '');
@@ -1708,8 +1710,7 @@ function alesievImport(fromExport) {
     }));
   }
 
-  var dateNote = '';
-  if (closeDate) dateNote = '\n\n' + alesievWriteCloseDate(target.auctionId, closeDate);
+  var dateNote = alesievCloseDateNote(target, closeDate, held);
   SpreadsheetApp.flush();
 
   ui.alert('Imported (script ' + ALESIEV_VERSION + ')',
@@ -1810,6 +1811,82 @@ function alesievClearOutcome(sheet, rowIndex, outcomeCol, rowValues) {
 }
 
 /**
+ * What an import does about `closeDate` and `outcome` once its rows are
+ * written: `'write'`, `'keep'` or `'none'`. Pure, so the decision is tested
+ * without a workbook; `alesievCloseDateNote` acts on it.
+ *
+ *  - `'write'` — a date was chosen (the site's, or typed). `alesievWriteCloseDate`
+ *    writes it and clears a temporary outcome in the same pass.
+ *  - `'keep'` — no new date, but the row ALREADY records one and the operator
+ *    kept it. Nothing is written to `closeDate`, and **the outcome must still be
+ *    cleared**: the close has now arrived, which is what `Ended` and `Pending`
+ *    were waiting for, and the recorded date is what `Status` computes `Closed`
+ *    from once the cell is empty.
+ *  - `'none'` — no date at all. Clearing `Ended` here would make `Status`
+ *    compute `Open` from the blank date, which is worse than `Ended`, so the
+ *    cell is left and the operator reminded.
+ *
+ * Until 2026-11-06 there were only the first and third, and `'keep'` fell into
+ * `'none'` silently — with no reminder either, since the reminder was only ever
+ * shown by the two importers that never write a date. `202724` was published
+ * with every row imported and still read `Ended`, after the operator was told
+ * (wrongly) that keeping its recorded 2026-10-11 would clear it.
+ */
+function alesievAfterImportStep(closeDate, held) {
+  if (String(closeDate == null ? '' : closeDate).trim()) return 'write';
+  if (String(held == null ? '' : held).trim()) return 'keep';
+  return 'none';
+}
+
+/**
+ * Clear a temporary `outcome` on an auction whose recorded `closeDate` was
+ * kept — the `'keep'` step. Finds the row the way `alesievWriteCloseDate` does
+ * and reuses `alesievClearOutcome` for the clear and its read-back, so there is
+ * one definition of what may be cleared and how.
+ */
+function alesievClearOutcomeFor(auctionId) {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(TABS.metadata);
+  if (!sheet) throw new Error('no tab named "' + TABS.metadata + '"');
+  var values = sheet.getDataRange().getDisplayValues();
+  var header = values[0].map(function (h) { return String(h).trim(); });
+  var idCol = header.indexOf('auctionId');
+  var dateCol = header.indexOf('closeDate');
+  if (idCol === -1) return 'outcome NOT checked: ' + TABS.metadata + ' has no auctionId column.';
+  for (var r = 1; r < values.length; r++) {
+    if (String(values[r][idCol]).trim() !== String(auctionId)) continue;
+    var kept = dateCol === -1 ? '' : String(values[r][dateCol]).trim();
+    return 'closeDate kept as recorded' + (kept ? ' (' + kept + ')' : '') + '.' +
+      alesievClearOutcome(sheet, r, header.indexOf('outcome'), values[r]);
+  }
+  return 'outcome NOT checked: no row for auction ' + auctionId + ' in ' + TABS.metadata + '.';
+}
+
+/**
+ * The close-date-and-outcome step of an import, as the sentence to append to
+ * its report. Shared by this file's import and `utakuClose.gs`'s, which had the
+ * same gap.
+ */
+function alesievCloseDateNote(target, closeDate, held) {
+  var step = alesievAfterImportStep(closeDate, held);
+  if (step === 'write') return '\n\n' + alesievWriteCloseDate(target.auctionId, closeDate);
+  if (step === 'keep') return '\n\n' + alesievClearOutcomeFor(target.auctionId);
+  var reminder = closeOutcomeReminder(target.auctionId, target.outcome);
+  return reminder ? '\n\n' + reminder : '';
+}
+
+/**
+ * The line the confirmation dialog adds to "Writing to:" for the `'keep'` step,
+ * or '' — so the operator sees before writing that a cell they did not type in
+ * will change.
+ */
+function alesievKeepDestination(target, closeDate, held) {
+  if (alesievAfterImportStep(closeDate, held) !== 'keep') return '';
+  if (!closeOutcomeClears(target.outcome)) return '';
+  return TABS.metadata + ' outcome for ' + target.auctionId + ' ("' + String(target.outcome).trim() +
+    '" cleared; closeDate ' + String(held).trim() + ' kept)';
+}
+
+/**
  * Show the contextItems block in a copyable box AFTER a dry run.
  *
  * On a real import those rows are written, not pasted — this source names every
@@ -1896,6 +1973,10 @@ if (typeof module !== 'undefined') {
     alesievDescribePlan: alesievDescribePlan,
     alesievCloseDateProblem: alesievCloseDateProblem,
     alesievClearOutcome: alesievClearOutcome,
+    alesievAfterImportStep: alesievAfterImportStep,
+    alesievClearOutcomeFor: alesievClearOutcomeFor,
+    alesievCloseDateNote: alesievCloseDateNote,
+    alesievKeepDestination: alesievKeepDestination,
     alesievContextWorksheetText: alesievContextWorksheetText,
     alesievPriceWorksheetText: alesievPriceWorksheetText,
     alesievSiteAuctions: alesievSiteAuctions,
