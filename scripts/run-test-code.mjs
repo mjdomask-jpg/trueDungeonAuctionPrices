@@ -30,6 +30,7 @@ const suites = [
   ['test:harden', 'harden-sheet.test.mjs'],
   ['test:shopping', 'shopping-list.test.mjs'],
   ['test:ledger', 'ledger.test.mjs'],
+  ['test:sources', 'sources.test.mjs'],
 ];
 
 const results = [];

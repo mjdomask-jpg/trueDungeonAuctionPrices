@@ -18,16 +18,18 @@ import { BarChart } from './BarChart';
 // The days-to-close chart colours on the VENUE, not on the 40-odd auctioneers —
 // which would be indistinguishable — and not on "Trent vs everyone else", which
 // is what it did while Forum and Trent were the only two places an auction could
-// run. Since season 2027 there are three, and "everyone else" would have quietly
-// merged the forum with alesievauctions.com.
+// run. Since season 2027 there are four, and "everyone else" would have quietly
+// merged the forum with the two auction sites.
 //
 // Trent keeps --series-1 so a reader who knows the old chart sees his bars the
-// same colour they have always been; the new venue takes an unused hue rather
-// than displacing one.
+// same colour they have always been; each new venue takes an unused hue rather
+// than displacing one. Utaku's is green, not --series-6's red, which would read
+// as a warning on a chart about speed.
 const SOURCE_COLOR: Record<AuctionSource, string> = {
   Trent: 'var(--series-1)',
   Forum: 'var(--series-3)',
   Alesiev: 'var(--series-5)',
+  Utaku: 'var(--series-2)',
 };
 
 const CURRENT_COLOR = 'var(--series-1)';

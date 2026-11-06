@@ -14,7 +14,7 @@ import {
   type FullOrderRow, type FeeKept, type FeeRate, type SeasonFeeRates,
   type Verdict, type LedgerEntry,
 } from '../lib/contextAnalytics';
-import { ERAS, groupLabel, comparisonIncrement } from '../lib/eras';
+import { ERAS, groupLabel, comparisonIncrement, venuesWithoutLadder } from '../lib/eras';
 import { money, money0, moneyTight } from '../lib/format';
 import { BarChart } from './BarChart';
 import { HintPopover } from './HintPopover';
@@ -949,6 +949,7 @@ const VENUE_COLOR: Record<AuctionSource, string> = {
   Forum: 'var(--series-1)',
   Trent: 'var(--series-2)',
   Alesiev: 'var(--series-3)',
+  Utaku: 'var(--series-5)',
 };
 
 // Was this difference big enough to be more than bidding granularity? Returns
@@ -1038,6 +1039,11 @@ function VenueView({
   // publishes no ladder (the forum), the marker is withheld for every row rather
   // than computed from the other side alone.
   const stepsKnown = venues.length > 0 && comparisonIncrement(venues, 20) != null;
+  // Which venue(s) are why. Named rather than assumed to be the forum: in 2027
+  // there is no priced forum auction, and Utaku's site is the one without a
+  // ladder.
+  const unladdered = venuesWithoutLadder(venues)
+    .map((v) => (v === 'Forum' ? 'the forum' : SOURCE_LABEL[v]));
   const muted = rows.filter((r) => r.below != null).length;
   const pair = venues.length === 2;
 
@@ -1120,7 +1126,7 @@ function VenueView({
             {season}: {venues.map((v) => SOURCE_LABEL[v]).join(' vs ')} ·{' '}
             {rows.length} token{rows.length === 1 ? '' : 's'} sold at two or more
             {stepsKnown && muted > 0 && <> · {muted} differ by less than one bid increment</>}
-            {!stepsKnown && <> · bid-step marks unavailable: the forum publishes no fixed increment</>}
+            {!stepsKnown && <> · bid-step marks unavailable: no fixed increment on record for {unladdered.join(' or ')}</>}
           </p>
 
           <div className="an-scroll">

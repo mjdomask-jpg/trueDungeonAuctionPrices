@@ -333,7 +333,8 @@ retired.
 ## Auction context layer
 
 A layer *on top of* the core sales adds each auction's **context** — where it ran
-(Forum vs Trent vs Alesiev Auctions), which $8k order it sold (Standard vs
+(Forum vs Trent vs Alesiev Auctions vs Utaku's Trade Caravan, from the Link —
+`deriveSource`), which $8k order it sold (Standard vs
 Trade 2), its funding target, and the items that were **withheld**,
 **augmented** (personal-collection or released auctioneer payment), or dropped in
 by **Grunnel**. It is exported as **`contextItems.csv`** (one row per context
@@ -402,12 +403,16 @@ into the four analyses on the Analytics page's **Funding & Context** view
 - **Augmented vs non-augmented** (`augmentedVsNot`) — within one season, each
   token's average price in augmented vs non-augmented auctions, over tokens sold
   in **both** (holds the token constant instead of comparing group means).
-- **Trent vs another venue** (`trentVsSourceSeason`) — matched per token within
-  each season and restricted to seasons **both** venues ran, so neither token mix
-  nor time confounds the comparison; Trent shown nominal and reward-adjusted. The
-  other side is a parameter rather than "Forum", because since 2027 there are
-  three venues; `sourceOverlapSeasons` reports which ones Trent overlaps in each
-  season and the view offers a picker where there is more than one.
+- **Venue comparison** (`venueOverlapSeasons`, `venueComparisonSeason`) —
+  matched per token within one season, over every venue that shares at least one
+  token with another that season, so neither token mix nor time confounds the
+  comparison; Trent shown nominal or reward-adjusted. No venue is the anchor: a
+  column per venue, a signed Δ for two and a spread for three or more. Since
+  SITE-14 (2026-11-06) 2027 reads **Trent vs Alesiev Auctions vs Utaku's Trade
+  Caravan** — the season has no priced forum auction. Bid-step marks need a
+  ladder for EVERY venue on screen (`ERAS.bidIncrements`); the forum and Utaku's
+  site have none, and the note says which venue is why
+  (`venuesWithoutLadder`).
 - **Standard vs Trade 2** (`standardVsTradeTwo`) — within one season, each token's
   average price in Trade 2 auctions vs standard ones, over tokens sold in **both**.
   Seasons come from `orderVariantSeasons`, i.e. whichever hold both variants — 2027

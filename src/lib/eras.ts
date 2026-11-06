@@ -19,6 +19,10 @@ export const ERAS = {
   // each sentence. The quartile lede and the venue comparison both use it.
   alesievStartSeason: 2027,
 
+  // auction.utakustradecaravan.com, Utaku's own site, also debuted in season 2027
+  // (202722, closed 2026-09-29). Same rule again: copy only, never a cutoff.
+  utakuStartSeason: 2027,
+
   // Trent awards 100 points per $1 (~10% effective discount). Constant to date.
   // Written as a single rate but call sites go through trentRewardRate() so a
   // dated table could replace this later without touching them.
@@ -89,6 +93,12 @@ export const ERAS = {
   // The FORUM is deliberately absent. It has no single auctioneer and so no one
   // ladder, and inventing one would put a confident marker on the comparison we
   // know least about.
+  //
+  // So is UTAKU's site, for a different reason: it sets an increment PER ITEM
+  // (its API carries one on every item) rather than one ladder for the venue,
+  // and none has been supplied or checked against his lots. Add his bands here
+  // only once they are, and the venue comparison's step marks come back for
+  // every season he is in.
   bidIncrements: {
     Trent: [
       { under: 10, step: 0.25 },
@@ -145,8 +155,16 @@ export function groupLabel(group: string, season: string | number): string {
   return ranges.find((r) => year >= r.from && year <= r.to)?.label ?? group;
 }
 
+// The venues among `venues` with no ladder in ERAS.bidIncrements, in the order
+// given. The venue comparison names THESE when it withholds its step marks,
+// rather than blaming the forum: from 2027 the forum may not be on screen at
+// all, and Utaku's site is the venue without one.
+export function venuesWithoutLadder<V extends string>(venues: V[]): V[] {
+  return venues.filter((v) => !ERAS.bidIncrements[v]);
+}
+
 // The minimum bid step at a given price on a given venue, or null when that
-// venue publishes no ladder (the forum — see ERAS.bidIncrements).
+// venue publishes no ladder (the forum, Utaku's site — see ERAS.bidIncrements).
 export function bidIncrement(venue: string, price: number): number | null {
   const bands = ERAS.bidIncrements[venue];
   if (!bands) return null;

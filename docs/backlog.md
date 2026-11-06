@@ -106,8 +106,8 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **DATA-20** | 2025's four released Random UR lots are recorded as **10**; the guarantee is 9 | the maintainer's workbook edit — four `contextItems` quantities and four `prices` rates; paste rows in the entry |
 | **DATA-19** | ~~Four auctions' fee and withheld records disagree with their own threads~~ | **RESOLVED 2026-09-25** — all four corrected in the workbook and published in PR #287; `202640`'s release, the one value only the maintainer had, is nine Random URs for $387 ($43 each) |
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
-| **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, deferred |
-| **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
+| **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, resolved 2026-11-06 |
+| **SITE-14** | ~~A Utaku auction is shown as a Forum auction~~ | **RESOLVED 2026-11-06** — three closed auctions and a fourth open was enough; `AuctionSource` gains `'Utaku'`, labelled *Utaku's Trade Caravan*, derived from the Link's HOST. 2027 now has no priced forum auction |
 | **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
 | **SITE-15** | A Transmutes view on the analytics page — recipe material statistics | **PARKED by the maintainer (2026-11-02)** — ideas measured, nothing built; two counting rules to settle first |
 | **PIPE-17** | ~~A failed alesievauctions.com auction sits as Open until someone mentions it~~ | **RESOLVED 2026-11-02 (script side)** — the scan marks `outcome = Failed` itself. **Verified on the first real scan**: `202732` and `202733` (site 51, 52) marked off the API's status `Unfunded`, and published (#334) |
@@ -2765,12 +2765,12 @@ with the maintainer on 2026-09-29, before any code:
    `auctionStyle` was corrected, and the close imported and published, in #297:
    37 `prices`, 149 `rawPricesData` and 21 `onyx` rows, exactly the counts the
    dry run predicted. Its `auctioneer` became `Matt Soto` in #300.
-2. **The site calls this venue `Forum`** — `SITE-14`, **deferred** until it is
-   clear how many auctions he runs there.
+2. **The site called this venue `Forum`** until `SITE-14` (resolved 2026-11-06),
+   once it was clear he runs auctions there.
 3. **Courtesy, not code:** tell Utaku the importer reads `/api/state`, and that
    the bidders' maximum bids and nicknames are public in it.
 
-## SITE-14. A Utaku auction is shown as a Forum auction — DEFERRED (maintainer, 2026-09-30)
+## SITE-14. A Utaku auction is shown as a Forum auction — RESOLVED 2026-11-06
 
 `deriveSource` (`src/lib/data.ts`) knows two site hosts and calls everything
 else `Forum`, so `202722` and its per-lot data sit under Forum in the Source
@@ -2802,6 +2802,38 @@ latest at the end of season 2027. Count them with the Link:
 doing then, it is the SITE-11 pattern: the `AuctionSource` union, its display
 order and label, `deriveSource`, `eras.ts`, and the comments that enumerate
 venues.
+
+### Resolved 2026-11-06
+
+**Revisited by the maintainer** once Utaku's site had three closed auctions
+(`202722`, `202724`, `202728`, all imported) and a fourth open (`202736`). He
+neither stopped nor moved onto alesievauctions.com.
+
+**What shipped** — the pattern above, plus three things it did not foresee:
+
+- **The label is `Utaku's Trade Caravan`**, the site's own name. Its auctioneer
+  column already reads `Matt Soto`, and `Utaku` alone beside it reads like a
+  second person.
+- **The Link test is anchored on the HOST** (`UTAKU_HOST_RE` in `data.ts`).
+  Every Utaku row carries the bare site root because his site has no
+  per-auction URL, and a forum thread whose URL merely mentions the domain must
+  stay Forum, which is the case the pipeline's `openIsUtakuLink` test already
+  pins. His **44 forum auctions** as Matt Soto (2021-2023) stay Forum: the
+  venue is where an auction ran.
+- **2027 has no priced forum auction any more.** Its one Forum row, `202715`,
+  failed. So the venue comparison's 2027 reads Trent vs Alesiev Auctions vs
+  Utaku's Trade Caravan, and its *"bid-step marks unavailable: the forum
+  publishes no fixed increment"* would have blamed a venue not on screen. It now
+  names the venue(s) with no ladder (`venuesWithoutLadder`). **Utaku has none**
+  in `ERAS.bidIncrements`: his site sets an increment per item, not one ladder,
+  and nothing was supplied. Adding his bands would bring 2027's step marks back.
+
+**Found doing it:** the Quartiles lede said per-lot data came from Trent and
+Alesiev Auctions only, *"so auctions run anywhere else contribute no lots"*,
+while Utaku's lots had been charted since `202722`, and one forum close
+(`202647`, from a per-lot file) has some too. Corrected, and the lede now reads
+the labels from `SOURCE_LABEL` rather than retyping them. `npm run test:sources`
+(new) covers the derivation, the venue list, the ladders and the comparison.
 
 ---
 

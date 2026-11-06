@@ -18,20 +18,27 @@ export type Sale = {
 // Where an auction was run. Derived per-auction (see deriveSource), never from a
 // date cutoff — the first Trent auction closed Nov 2022 despite being season 2023
 // (docs/data-audit.md §3). 'Alesiev' is alesievauctions.com, the community-built
-// auction site that debuted in season 2027.
-export type AuctionSource = 'Forum' | 'Trent' | 'Alesiev';
+// auction site that debuted in season 2027. 'Utaku' is
+// auction.utakustradecaravan.com, Utaku's own auction site, whose first auction
+// (202722) closed 2026-09-29 — also season 2027 (backlog SITE-14).
+export type AuctionSource = 'Forum' | 'Trent' | 'Alesiev' | 'Utaku';
 
-// Display order wherever the three are listed together (the Source filter, the
-// days-to-close legend): oldest venue first, newest last.
-export const AUCTION_SOURCES: AuctionSource[] = ['Forum', 'Trent', 'Alesiev'];
+// Display order wherever the venues are listed together (the Source filter, the
+// days-to-close legend, the venue comparison's columns): oldest venue first,
+// newest last.
+export const AUCTION_SOURCES: AuctionSource[] = ['Forum', 'Trent', 'Alesiev', 'Utaku'];
 
-// What a reader sees. 'Alesiev' is the internal value; the label names the VENUE,
+// What a reader sees. The label names the VENUE. For 'Alesiev' that matters
 // because the site hosts auctions run by half a dozen different auctioneers and
-// "Alesiev" on its own reads like one of them.
+// "Alesiev" on its own reads like one of them. Utaku's site has one auctioneer
+// (Utaku is Matt Soto, which is what the auctioneer column says), so the label
+// is the site's own name: "Utaku" alone beside "Matt Soto" reads like a second
+// person.
 export const SOURCE_LABEL: Record<AuctionSource, string> = {
   Forum: 'Forum',
   Trent: 'Trent',
   Alesiev: 'Alesiev Auctions',
+  Utaku: "Utaku's Trade Caravan",
 };
 
 // Which of the two $8k orders an auction sold. Season 2027 is the first to offer
@@ -73,8 +80,8 @@ export type AuctionMeta = {
   closeDate: string;
   openDate: string;
   // --- Context layer (docs/context-layer-design.md §3.1) ---------------------
-  // Forum vs Trent vs Alesiev, derived from the link (and, for Trent's own shop,
-  // the auctioneer name). Not a stored column.
+  // Forum vs Trent vs Alesiev vs Utaku, derived from the link (and, for Trent's
+  // own shop, the auctioneer name). Not a stored column.
   source: AuctionSource;
   // Standard vs Trade 2, derived from the words in auctionStyle. Not a stored
   // column either; see deriveOrderVariant for why the sheet keeps it that way.
@@ -221,9 +228,20 @@ function yesNoOrNull(raw: string | undefined): boolean | null {
 
 // Which venue ran an auction, per auction. Never inferred from date (audit §3).
 // Every auction carries a Link (the pre-2023 forum threads were backfilled
-// 2026-08-14), and no pre-2023 link is a trenttokens.com or alesievauctions.com
-// URL, so the earlier seasons stay Forum exactly as before: Trent starts in 2023,
-// Alesiev in 2027.
+// 2026-08-14), and no pre-2023 link is a trenttokens.com, alesievauctions.com or
+// utakustradecaravan.com URL, so the earlier seasons stay Forum exactly as
+// before: Trent starts in 2023, Alesiev and Utaku in 2027.
+//
+// Utaku's 44 FORUM auctions (2021-2023, as Matt Soto) stay Forum, and that is
+// right: the venue is where an auction ran, not who ran it. Only the rows whose
+// Link is his site move.
+//
+// Utaku's test is ANCHORED ON THE HOST, where the other two are a loose search.
+// His site has no per-auction URL, so every one of his rows carries the bare
+// root — and a forum thread that merely mentions the site in its URL must not
+// read as his. The pipeline's `openIsUtakuLink` draws the same line and its test
+// pins that case; this keeps the site and the pipeline agreeing on what "a Utaku
+// row" is.
 //
 // The LINK is read before the auctioneer name, and that ordering is the point.
 // alesievauctions.com hosts auctions run by alesiev, Mike Steele, Kusig, Flik and
@@ -231,8 +249,11 @@ function yesNoOrNull(raw: string | undefined): boolean | null {
 // measured mistake that hid four rows of six from the pipeline's close picker
 // (CLAUDE.md, "All three close paths share ONE auction picker"). The auctioneer
 // check survives only as Trent's fallback, and today no Trent row needs it.
+const UTAKU_HOST_RE = /^https?:\/\/(?:[a-z0-9-]+\.)*utakustradecaravan\.com(?:[/:?#]|$)/i;
+
 export function deriveSource(auctioneer: string, link: string): AuctionSource {
   if (/alesievauctions\.com/i.test(link ?? '')) return 'Alesiev';
+  if (UTAKU_HOST_RE.test((link ?? '').trim())) return 'Utaku';
   if (/trenttokens\.com/i.test(link ?? '')) return 'Trent';
   if ((auctioneer ?? '').trim().toLowerCase() === 'trent') return 'Trent';
   return 'Forum';
