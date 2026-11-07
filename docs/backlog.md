@@ -2824,9 +2824,17 @@ neither stopped nor moved onto alesievauctions.com.
   failed. So the venue comparison's 2027 reads Trent vs Alesiev Auctions vs
   Utaku's Trade Caravan, and its *"bid-step marks unavailable: the forum
   publishes no fixed increment"* would have blamed a venue not on screen. It now
-  names the venue(s) with no ladder (`venuesWithoutLadder`). **Utaku has none**
-  in `ERAS.bidIncrements`: his site sets an increment per item, not one ladder,
-  and nothing was supplied. Adding his bands would bring 2027's step marks back.
+  names the venue(s) with no ladder (`venuesWithoutLadder`).
+- **Utaku's site has a ladder, and 2027 got its step marks for the first
+  time.** The site states it: *25¢ under $10, $1 from $10–$100, $5 over $100,
+  off-grid bids rounded down* (maintainer, 2026-11-06). Before the split, 2027's
+  comparison included "Forum", which has no ladder, so the marks never showed
+  for 2027. Checked against his exports: **#2 and #3 are 98 of 98 on the grid**,
+  while #1 is 53 of 73, its off-grid bids on a finer grid (5¢, 25¢), so the
+  ladder arrived after his first auction. 151 of 171 overall, the same order as
+  Trent's 86% and Alesiev's 94%. I first wrote that his site had no ladder,
+  reading the per-item `increment` in his API as the absence of one; the
+  maintainer corrected it from the site's own rules.
 
 **Found doing it:** the Quartiles lede said per-lot data came from Trent and
 Alesiev Auctions only, *"so auctions run anywhere else contribute no lots"*,

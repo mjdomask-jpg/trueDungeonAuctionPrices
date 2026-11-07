@@ -94,11 +94,19 @@ export const ERAS = {
   // ladder, and inventing one would put a confident marker on the comparison we
   // know least about.
   //
-  // So is UTAKU's site, for a different reason: it sets an increment PER ITEM
-  // (its API carries one on every item) rather than one ladder for the venue,
-  // and none has been supplied or checked against his lots. Add his bands here
-  // only once they are, and the venue comparison's step marks come back for
-  // every season he is in.
+  // UTAKU's site states its own, and it is the strictest of the three: "Bids
+  // must land on the regular increments (25¢ under $10, $1 from $10–$100, $5
+  // over $100) — anything off that grid is rounded down" (supplied by the
+  // maintainer from the site, 2026-11-06). Checked against all three of his
+  // exports: auctions #2 and #3 are 98 of 98 on it. #1 is 53 of 73 — its
+  // off-grid bids sit on a FINER grid (5¢ under $10: $4.10, $1.35; 25¢ to $100:
+  // $29.25), so the ladder came in after his first auction. Overall 151 of 171,
+  // 88%, the same order as Trent's and Alesiev's. Advisory as the others are,
+  // and for #1's lots it is if anything cautious: a coarser step marks more
+  // gaps as granularity, never fewer.
+  //
+  // "$1 from $10–$100" puts $100 itself in the $1 band, so that band ends at
+  // $100.01 — prices are whole cents, and `under` is exclusive.
   bidIncrements: {
     Trent: [
       { under: 10, step: 0.25 },
@@ -108,6 +116,11 @@ export const ERAS = {
     Alesiev: [
       { under: 10, step: 0.5 },
       { under: Infinity, step: 1 },
+    ],
+    Utaku: [
+      { under: 10, step: 0.25 },
+      { under: 100.01, step: 1 },
+      { under: Infinity, step: 5 },
     ],
   } as Record<string, { under: number; step: number }[]>,
 
@@ -157,14 +170,14 @@ export function groupLabel(group: string, season: string | number): string {
 
 // The venues among `venues` with no ladder in ERAS.bidIncrements, in the order
 // given. The venue comparison names THESE when it withholds its step marks,
-// rather than blaming the forum: from 2027 the forum may not be on screen at
-// all, and Utaku's site is the venue without one.
+// rather than blaming the forum by habit: from 2027 the forum may not be on
+// screen at all, and the next venue to join may arrive without a ladder.
 export function venuesWithoutLadder<V extends string>(venues: V[]): V[] {
   return venues.filter((v) => !ERAS.bidIncrements[v]);
 }
 
 // The minimum bid step at a given price on a given venue, or null when that
-// venue publishes no ladder (the forum, Utaku's site — see ERAS.bidIncrements).
+// venue publishes no ladder (the forum — see ERAS.bidIncrements).
 export function bidIncrement(venue: string, price: number): number | null {
   const bands = ERAS.bidIncrements[venue];
   if (!bands) return null;

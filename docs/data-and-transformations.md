@@ -410,8 +410,9 @@ into the four analyses on the Analytics page's **Funding & Context** view
   column per venue, a signed Δ for two and a spread for three or more. Since
   SITE-14 (2026-11-06) 2027 reads **Trent vs Alesiev Auctions vs Utaku's Trade
   Caravan** — the season has no priced forum auction. Bid-step marks need a
-  ladder for EVERY venue on screen (`ERAS.bidIncrements`); the forum and Utaku's
-  site have none, and the note says which venue is why
+  ladder for EVERY venue on screen (`ERAS.bidIncrements`). Trent, Alesiev
+  Auctions and Utaku's Trade Caravan each have one, so 2027 shows them; the
+  forum has none, and where it is on screen the note says it is why
   (`venuesWithoutLadder`).
 - **Standard vs Trade 2** (`standardVsTradeTwo`) — within one season, each token's
   average price in Trade 2 auctions vs standard ones, over tokens sold in **both**.

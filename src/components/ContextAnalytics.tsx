@@ -1040,8 +1040,8 @@ function VenueView({
   // than computed from the other side alone.
   const stepsKnown = venues.length > 0 && comparisonIncrement(venues, 20) != null;
   // Which venue(s) are why. Named rather than assumed to be the forum: in 2027
-  // there is no priced forum auction, and Utaku's site is the one without a
-  // ladder.
+  // there is no priced forum auction, and all three venues on screen have a
+  // ladder, so the marks are back; a future venue without one is named here.
   const unladdered = venuesWithoutLadder(venues)
     .map((v) => (v === 'Forum' ? 'the forum' : SOURCE_LABEL[v]));
   const muted = rows.filter((r) => r.below != null).length;
@@ -1109,8 +1109,10 @@ function VenueView({
             Hide sub-increment gaps
             <HintPopover label="About bid increments">
               Each venue enforces a minimum bid step, and they differ: Trent moves in $0.25 under
-              $10, $1 to $49, then $5; Alesiev Auctions in $0.50 under $10, then $1. A gap smaller
-              than the coarser of the two is inside the bidding granularity, so it is marked{' '}
+              $10, $1 to $49, then $5; Alesiev Auctions in $0.50 under $10, then $1;
+              Utaku's Trade Caravan in $0.25 under $10, $1 to $100, then $5. A gap smaller than
+              the coarsest step among the venues compared is inside the bidding granularity, so it
+              is marked{' '}
               <em>&lt; step</em> — tick this to hide those rows. It is a caution and not a
               verdict: an average over many lots can genuinely resolve finer than one increment.
             </HintPopover>

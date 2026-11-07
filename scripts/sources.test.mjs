@@ -105,11 +105,18 @@ console.log('\nThe venue list\n');
 console.log('\nBid ladders\n');
 // ---------------------------------------------------------------------------
 {
-  eq('Utaku has no ladder on record', eras.bidIncrement('Utaku', 5), null);
-  eq('  ... so a comparison including him has no step', eras.comparisonIncrement(['Trent', 'Alesiev', 'Utaku'], 5), null);
-  eq('Trent and Alesiev alone still have one', eras.comparisonIncrement(['Trent', 'Alesiev'], 5), 0.5);
-  eq('the venues to blame are named, in the order given', eras.venuesWithoutLadder(['Forum', 'Trent', 'Alesiev', 'Utaku']), ['Forum', 'Utaku']);
-  eq('  ... and none when every venue has one', eras.venuesWithoutLadder(['Trent', 'Alesiev']), []);
+  // His site's own words: "25¢ under $10, $1 from $10–$100, $5 over $100".
+  eq("Utaku's ladder: 25¢ under $10", eras.bidIncrement('Utaku', 9.99), 0.25);
+  eq('  ... $1 from $10', eras.bidIncrement('Utaku', 10), 1);
+  eq('  ... $1 at $100 itself — "$10–$100" includes it', eras.bidIncrement('Utaku', 100), 1);
+  eq('  ... $5 over $100', eras.bidIncrement('Utaku', 100.01), 5);
+  eq('  ... $5 at the Codex\'s $1,255', eras.bidIncrement('Utaku', 1255), 5);
+  eq('2027\'s three venues have a common step: the coarsest, Alesiev\'s 50¢ under $10', eras.comparisonIncrement(['Trent', 'Alesiev', 'Utaku'], 5), 0.5);
+  eq('  ... and his $5 over $100, where the others are coarser or equal', eras.comparisonIncrement(['Trent', 'Alesiev', 'Utaku'], 120), 5);
+  eq('  ... and at $60, Trent\'s $5 from $50 outranks his $1', eras.comparisonIncrement(['Trent', 'Utaku'], 60), 5);
+  eq('the forum still has none, so a comparison with it has no step', eras.comparisonIncrement(['Forum', 'Utaku'], 5), null);
+  eq('the venues to blame are named, in the order given', eras.venuesWithoutLadder(['Forum', 'Trent', 'Alesiev', 'Utaku']), ['Forum']);
+  eq('  ... and none when every venue has one', eras.venuesWithoutLadder(['Trent', 'Alesiev', 'Utaku']), []);
 }
 
 // ---------------------------------------------------------------------------
