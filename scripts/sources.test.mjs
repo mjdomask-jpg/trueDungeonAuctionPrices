@@ -89,16 +89,58 @@ console.log('\nThe venue list\n');
   eq("Utaku's label is his site's name", SOURCE_LABEL.Utaku, "Utaku's Trade Caravan");
   check('no two venues share a label', new Set(Object.values(SOURCE_LABEL)).size === AUCTION_SOURCES.length);
 
-  // The Source filter's options come from the data, in this order.
+  // The Source filter's options come from the data, in this order — and from
+  // SALES, not auction rows. 'f' is 2027's real shape: one forum auction, and
+  // it failed, so it sold nothing.
   const meta = [
     { auctionId: 'a', season: '2027', source: 'Utaku' },
     { auctionId: 'b', season: '2027', source: 'Trent' },
     { auctionId: 'c', season: '2027', source: 'Alesiev' },
+    { auctionId: 'f', season: '2027', source: 'Forum' },
     { auctionId: 'd', season: '2026', source: 'Forum' },
+    { auctionId: 'o', season: '2026', source: 'Trent' },
   ];
-  const by = ctx.sourcesBySeason(meta);
+  const sold = (auctionId, season) => ({ auctionId, season });
+  const by = ctx.sourcesBySeason(meta, [sold('a', '2027'), sold('b', '2027'), sold('b', '2027'), sold('c', '2027'), sold('d', '2026'), sold('o', '2026')]);
   eq('2027 offers Trent, Alesiev and Utaku, in display order', ctx.sourcesInSeasons(by, ['2027']), ['Trent', 'Alesiev', 'Utaku']);
-  eq('2026 offers only what it has', ctx.sourcesInSeasons(by, ['2026']), ['Forum']);
+  check('a venue whose only auction sold nothing is NOT offered', !ctx.sourcesInSeasons(by, ['2027']).includes('Forum'));
+  eq('2026 offers what it sold', ctx.sourcesInSeasons(by, ['2026']), ['Forum', 'Trent']);
+  eq('across all seasons, the union', ctx.sourcesInSeasons(by), ['Forum', 'Trent', 'Alesiev', 'Utaku']);
+  const onlyOpen = ctx.sourcesBySeason(meta, [sold('b', '2027')]);
+  eq('a season where only one venue has sold offers one, so the control hides', ctx.sourcesInSeasons(onlyOpen, ['2027']), ['Trent']);
+  eq('a sale whose auction is not in the metadata adds no venue', ctx.sourcesInSeasons(ctx.sourcesBySeason(meta, [sold('zz', '2027')]), ['2027']), []);
+  // 'o' is a Trent auction that sold ONLY Onyx; the provider passes both feeds
+  // together, so it counts — tested at the function, which is all that sees it.
+  check('one sale is enough, whichever feed it came from', ctx.sourcesInSeasons(ctx.sourcesBySeason(meta, [sold('o', '2026')]), ['2026']).includes('Trent'));
+}
+
+// ---------------------------------------------------------------------------
+console.log('\nSource options against the shipped data, relationally\n');
+// ---------------------------------------------------------------------------
+{
+  // The rule as an invariant over the real files: every venue offered for a
+  // season has a sale there, and every venue with a sale is offered. True
+  // however many auctions a publish adds, so it pins nothing that can move.
+  const meta = parseMeta(readFileSync(join(repo, 'public', 'data', 'auctionMetadata.csv'), 'utf8'));
+  const sales = [
+    ...data.parseSales(readFileSync(join(repo, 'public', 'data', 'prices.csv'), 'utf8')),
+    ...data.parseSales(readFileSync(join(repo, 'public', 'data', 'onyx.csv'), 'utf8')),
+  ];
+  const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
+  const by = ctx.sourcesBySeason(meta, sales);
+  const seasons = [...new Set(meta.map((m) => m.season))];
+  const bad = [];
+  for (const season of seasons) {
+    const offered = new Set(ctx.sourcesInSeasons(by, [season]));
+    const withSales = new Set(sales.filter((s) => s.season === season).map((s) => srcById.get(s.auctionId)).filter(Boolean));
+    for (const v of AUCTION_SOURCES) if (offered.has(v) !== withSales.has(v)) bad.push(`${season} ${v}`);
+    // An auction row with no sale must not be what puts its venue on offer.
+    for (const m of meta.filter((x) => x.season === season)) {
+      if (offered.has(m.source)) continue;
+      if (sales.some((s) => s.auctionId === m.auctionId)) bad.push(`${season} ${m.source} sold in ${m.auctionId} but is not offered`);
+    }
+  }
+  check('every season offers exactly the venues that sold something in it', bad.length === 0, bad.join(', '));
 }
 
 // ---------------------------------------------------------------------------
