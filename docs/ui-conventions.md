@@ -374,12 +374,24 @@ option reads a set memoised once in the provider (`goldenTicketAuctions`);
 auctions read as non-augmented rather than vanishing from both.
 
 **Source's options are DATA-DRIVEN, not a written list.** `FilterBar` reads
-`sourcesBySeason(meta)` from the provider and offers exactly the venues the
-seasons in view used, showing the control only where there is more than one.
+`sourcesBySeason(meta, sales)` from the provider and offers exactly the venues
+that have a recorded **sale** in the seasons in view, showing the control only
+where there is more than one. A sale, not an auction row: an option that
+empties the page when chosen is worse than no option, and a venue whose only
+auction failed or is still open has nothing to show (2027's Forum, 2026-11-06).
 So the dropdown is two options in 2024 and three in 2027 without a rule per
-year, and a fourth venue would need no UI change. Do not add an `<option>` here
-by hand — add the derivation to `deriveSource` and a label to `SOURCE_LABEL`,
-both in `lib/data.ts`, and every page follows.
+year. Do not add an `<option>` here by hand — add the derivation to
+`deriveSource` and a label to `SOURCE_LABEL`, both in `lib/data.ts`, and every
+page follows.
+
+**The fourth venue tested that claim (SITE-14, Utaku's site, 2026-11-06), and it
+held for the filter but not for everything.** What a new venue actually needs:
+the `AuctionSource` union, `AUCTION_SOURCES` (display order), `SOURCE_LABEL`,
+`deriveSource`; a colour in each `Record<AuctionSource, string>` — `tsc` finds
+those, so trust it; a ladder in `ERAS.bidIncrements` or a deliberate absence;
+and a grep for **prose that lists venues**, which `tsc` cannot find. The
+Quartiles lede named two venues while a third had been charted for six weeks.
+`npm run test:sources` covers the derivation.
 
 **Provenance badges reuse the popover-in-a-row pattern**, not a `title`: the
 `released` / `augment` / `grunnel` / withheld-`est.` badges are `HintPopover`s

@@ -55,7 +55,7 @@ export function FilterBar({
   // The venues these seasons actually used. Offered only when there is more than
   // one: with a single source the dropdown could only filter to what is already
   // on screen. Every season up to 2022 is Forum-only; 2023-2026 add Trent; 2027
-  // adds alesievauctions.com.
+  // adds alesievauctions.com and Utaku's site.
   //
   // Keyed on a JOINED STRING, not on `seasons` itself: every caller passes the
   // prop as an inline array (`seasons={[activeSeason]}`), so its identity changes

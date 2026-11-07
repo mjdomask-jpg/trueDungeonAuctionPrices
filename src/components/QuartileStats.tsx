@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { lastFiveAuctionNumbers, type Sale, type GroupRow } from '../lib/data';
+import { lastFiveAuctionNumbers, SOURCE_LABEL, type Sale, type GroupRow } from '../lib/data';
 import {
   parseRawSales, rawSeasons, quartilesByGroup,
   type RawSale, type QuartileItem,
@@ -68,10 +68,12 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
         quartile table. The box spans the middle half of sales (Q1–Q3), the line is the median,
         and the whiskers reach the furthest sale within 1.5×IQR; dots beyond them are outliers.
         Tokens are grouped exactly as on <strong>Timelines</strong>, so each chart holds
-        similarly-priced tokens. This uses the richer per-lot data — <strong>Trent</strong>'s
-        from {ERAS.trentStartSeason} on, and <strong>Alesiev Auctions</strong>' from{' '}
-        {ERAS.alesievStartSeason} — so auctions run anywhere else contribute no lots. Unsold
-        ($0.00) lots are excluded.
+        similarly-priced tokens. This uses the richer per-lot data, which comes from{' '}
+        <strong>{SOURCE_LABEL.Trent}</strong> from {ERAS.trentStartSeason} on, and from{' '}
+        <strong>{SOURCE_LABEL.Alesiev}</strong> and <strong>{SOURCE_LABEL.Utaku}</strong> from{' '}
+        {Math.min(ERAS.alesievStartSeason, ERAS.utakuStartSeason)}. A forum auction almost
+        always records only its high and low, so it rarely contributes lots. Unsold ($0.00)
+        lots are excluded.
       </p>
 
       <div className="controls">
@@ -102,7 +104,7 @@ export function QuartileStats({ sales, groupRows }: { sales: Sale[]; groupRows: 
       </div>
 
       {/* Which auctions the window actually rests on. The per-lot feed covers
-          Trent and alesievauctions.com, so the site-wide last five routinely
+          Trent and the two auction sites, so the site-wide last five routinely
           include auctions it has no rows for — a quartile drawn from two
           auctions should say it is. */}
       {grouped?.window && (

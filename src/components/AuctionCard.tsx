@@ -27,8 +27,9 @@ export function AuctionCard({
 
   // Metadata worth showing as chips. 'n/a' and blanks are dropped rather than
   // rendered as empty chips — 42 auctions carry no style or auctioneer at all.
-  // Source (Forum / Trent / Alesiev Auctions) rides along so the card says where
-  // the auction ran, matching what the former Augments & Withheld cards showed.
+  // Source (Forum / Trent / Alesiev Auctions / Utaku's Trade Caravan) rides
+  // along so the card says where the auction ran, matching what the former
+  // Augments & Withheld cards showed.
   //
   // De-duplicated, because on a Trent auction the auctioneer and the venue are
   // the same word and the row read "… Trent Trent". React was hiding that: the
