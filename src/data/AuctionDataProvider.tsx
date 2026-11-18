@@ -119,8 +119,13 @@ export function AuctionDataProvider({ children }: { children: ReactNode }) {
   // Trent-pricing control for seasons that have none. Memoised here beside
   // goldenTicketAuctions so every page shares one answer.
   const trentSeasons = useMemo(() => seasonsWithTrent(meta), [meta]);
-  // And which venues ran each season, which is what the Source dropdown offers.
-  const seasonSources = useMemo(() => sourcesBySeason(meta), [meta]);
+  // And which venues have SALES each season, which is what the Source dropdown
+  // offers — both feeds, so a venue that sold only Onyx still counts. A venue
+  // with nothing but a failed or still-open auction is not offered.
+  const seasonSources = useMemo(
+    () => sourcesBySeason(meta, [...sales, ...onyxSales]),
+    [meta, sales, onyxSales],
+  );
   // And which of the two $8k orders each season sold, which is what the Order
   // dropdown offers. Derived from auctionStyle per auction, so no column and no
   // year is hardcoded — a season with one order simply never shows the control.

@@ -353,23 +353,37 @@ export type ViewFilter = {
   order: OrderFilter;
 };
 
-// Which venues ran auctions in each season, so the Source control can offer
-// exactly the sources a page can actually show. Derived per auction (see
-// deriveSource), never from a calendar cutoff — the same rule as seasonsWithTrent
-// below, and for the same reason: a venue's first auction can close in the
-// calendar year before its season.
+// Which venues have DATA in each season, so the Source control offers exactly
+// the sources a page can actually show. Derived per auction (see deriveSource),
+// never from a calendar cutoff — the same rule as seasonsWithTrent below, and
+// for the same reason: a venue's first auction can close in the calendar year
+// before its season.
+//
+// "Has data" means at least one of its auctions that season has a recorded
+// SALE, in either feed (`sales` is prices.csv and onyx.csv together, so a venue
+// that sold only Onyx still counts). An auction row alone does not: until
+// 2026-11-06 this read auctionMetadata, so 2027 offered Forum on the strength of
+// ONE row, 202715, which failed and sold nothing — choosing it emptied the page.
+// The same goes for a venue whose only auction this season is still open, or
+// Pending, or Ended with its results not yet imported: nothing to show yet, so
+// nothing to offer, and it appears on the publish that brings its first sale.
 //
 // The Source control appears only where a season holds MORE THAN ONE of these.
 // That is what has always been meant by "hide it before 2023" — every season up
 // to 2022 is Forum-only, so the dropdown could only ever filter to what was
 // already on screen. Stating it as "more than one source" rather than "has Trent"
 // is what lets 2027 offer three without a second rule.
-export function sourcesBySeason(meta: AuctionMeta[]): Map<string, Set<AuctionSource>> {
+export function sourcesBySeason(
+  meta: AuctionMeta[], sales: Pick<Sale, 'auctionId' | 'season'>[],
+): Map<string, Set<AuctionSource>> {
+  const srcById = new Map(meta.map((m) => [m.auctionId, m.source]));
   const out = new Map<string, Set<AuctionSource>>();
-  for (const m of meta) {
-    let s = out.get(m.season);
-    if (!s) { s = new Set(); out.set(m.season, s); }
-    s.add(m.source);
+  for (const sale of sales) {
+    const src = srcById.get(sale.auctionId);
+    if (!src) continue; // a sale whose auction is not in the metadata has no venue to offer
+    let s = out.get(sale.season);
+    if (!s) { s = new Set(); out.set(sale.season, s); }
+    s.add(src);
   }
   return out;
 }

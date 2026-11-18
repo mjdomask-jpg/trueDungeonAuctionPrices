@@ -215,8 +215,12 @@ state shape, identical everywhere:
   prop listing which controls to show, defaulting to all.
 - **Each control only appears where there is something for it to act on.** A page
   passes the seasons it is showing (`seasons` prop).
-  - **Source** builds its options from `sourcesBySeason(meta)` and shows only where
-    those seasons used **more than one** venue. That is the general form of what used
+  - **Source** builds its options from `sourcesBySeason(meta, sales)` and shows only
+    where **more than one** venue has a recorded sale in those seasons (prices or
+    Onyx). A venue whose auctions that season all failed or have not closed is not
+    offered: until 2026-11-06 the list came from `auctionMetadata` rows alone, and
+    2027 offered Forum on the strength of one failed auction, `202715`, which
+    emptied the page when chosen. That is the general form of what used
     to be written as "hide it before 2023": every season up to 2022 is Forum-only, so
     the dropdown could only ever filter to what was already on screen. Stating the
     rule as "more than one source" rather than "has Trent" is what lets 2027 offer

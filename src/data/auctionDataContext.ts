@@ -25,7 +25,7 @@ export type AuctionData = {
   // FilterBar hides its Trent-pricing control where a season has none — pre-2023
   // there were no Trent auctions to reward-adjust.
   trentSeasons: Set<string>;
-  // Which venues ran auctions in each season (see sourcesBySeason). The FilterBar
+  // Which venues have sales in each season (see sourcesBySeason). The FilterBar
   // builds its Source options from this, and hides the control entirely for a
   // season with only one — there is nothing to filter between.
   seasonSources: Map<string, Set<AuctionSource>>;
