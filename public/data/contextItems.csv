@@ -837,6 +837,8 @@ auctionId,auctionSeason,auctionNumber,category,Item,quantity,priceAugmented
 20279,2027,9,token,Bead of Greed,1,$60.00
 20279,2027,9,token,Bead of Greed,1,$60.00
 20279,2027,9,token,Charm of Awakened Synergy,1,$302.00
+20279,2027,9,withheld,Ioun Stone Warden Wrath,1,
+20279,2027,9,withheld,Shirt of Cat's Gift,1,
 20279,2027,9,token,Golden Fleece,1,$46.00
 20279,2027,9,token,Ring of the Vampire Lord,1,$201.00
 20279,2027,9,token,Random Ultra Rare,9,$255.00
