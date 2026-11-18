@@ -108,10 +108,11 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **PIPE-14** | The alesievauctions.com API is wired in; three of four open questions answered the same day | **one optional ask left with the site's maintainer**: a Trade 2 tag (of doubtful value — 2027 only). The list endpoint, close time and timezone are **answered and built** |
 | **PIPE-15** | ~~auction.utakustradecaravan.com, the fourth venue~~ | **RESOLVED 2026-09-30** — close and open scan built (#294, #296); `202722` imported (#297) and its style and auctioneer corrected (#297, #300). Its own venue on the site is `SITE-14`, resolved 2026-11-06 |
 | **SITE-14** | ~~A Utaku auction is shown as a Forum auction~~ | **RESOLVED 2026-11-06** — three closed auctions and a fourth open was enough; `AuctionSource` gains `'Utaku'`, labelled *Utaku's Trade Caravan*, derived from the Link's HOST. 2027 now has no priced forum auction |
-| **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
+| **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **Superseded by `DATA-21` (2026-11-18)**: the goal rule is retired and a withheld fee item is always dropped. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
 | **SITE-15** | A Transmutes view on the analytics page — recipe material statistics | **PARKED by the maintainer (2026-11-02)** — ideas measured, nothing built; two counting rules to settle first |
 | **PIPE-18** | ~~A site close that KEEPS a recorded closeDate leaves `outcome = Ended` behind~~ | **RESOLVED 2026-11-06 (script side)** — both site closes clear it beside a kept date (`alesievCloseDateNote`), and remind when there is no date at all. **`202724` still needs its `outcome` emptied by hand** in the workbook, then a publish |
 | **PIPE-17** | ~~A failed alesievauctions.com auction sits as Open until someone mentions it~~ | **RESOLVED 2026-11-02 (script side)** — the scan marks `outcome = Failed` itself. **Verified on the first real scan**: `202732` and `202733` (site 51, 52) marked off the API's status `Unfunded`, and published (#334) |
+| **DATA-21** | Withheld Random Ultra Rare rows record a judgment, not a fact | **DECIDED 2026-11-18** — a fee item is recorded only when it SELLS; the alesiev close drops a withheld one whatever the goal (script `2026-11-18.1`). **Seven `contextItems` rows still to delete by hand**, listed in the entry |
 
 ---
 
@@ -2430,8 +2431,9 @@ $8,000, kept fee debited**. Code: `fullOrderLedger`, `feeRatesBySeason` and
 withheld) × the season's quantity-weighted Random UR rate, plus the season's mean
 Golden Ticket if one was owed and neither sold nor withheld. What was released is
 the baseline and what was withheld is already debited, so neither is debited
-again — `20274` and `202718`, which withheld their Random URs and sold their
-Golden Tickets, show no kept fee.
+again. (`20274` and `202718` were the examples here, showing no kept fee because
+their Random URs were recorded withheld; `DATA-21` deletes those rows, so their
+Random URs now read as kept fee.)
 
 **Revised 2026-10-30 — a release is the baseline, and the verdict is augments vs
 withheld** (maintainer's review, relaying the community members who asked for
@@ -2848,6 +2850,12 @@ the labels from `SOURCE_LABEL` rather than retyping them. `npm run test:sources`
 
 ## PIPE-16. The alesiev close dropped a released fee's withheld Random URs — RESOLVED 2026-10-13 (script side)
 
+> **Superseded 2026-11-18 by `DATA-21`.** The rule below rested on "an $8,000
+> goal releases the fee", which the data does not bear out. The goal check and
+> the sold-GT check are gone; a withheld fee item is dropped in every case. The
+> open `20274` question at the end is moot — its Random UR row is one of the
+> seven `DATA-21` deletes.
+
 **Found** importing `202718` (Mike Steele, $8,000 goal, Onyx Option B). The
 site listed nine Random Ultra Rares as `Withheld`; the close dropped all nine
 as the auctioneer's fee (`PIPE-11`) and named them in a caution, and the
@@ -3044,3 +3052,75 @@ other power the token has.
 
 **Revisit when** the maintainer wants the view, or the next time a proposed
 recipe needs an argument.
+
+---
+
+## DATA-21. Withheld Random Ultra Rare rows record a judgment, not a fact — DECIDED 2026-11-18
+
+**Found** auditing 2027's non-Trent auctions against the order contents, after
+BasicBraining reported that 20279's withheld 1k and 2k bonuses were missing
+(the export from the site had simply left them out; fixed by hand in #342).
+Working out what a missing Golden Ticket should mean led here.
+
+**The premise that failed.** `PIPE-16` (2026-10-13) wrote a withheld Random UR
+or Golden Ticket as a `withheld` row whenever a GT sold or the goal was $8,000
+or more, because "the goal and the fee are one trade — keep it at $7,500,
+release it at $8,000". The October fee sweep added rows on the same premise.
+Measured 2026-11-18, the 23 closed auctions from 2025 with an $8,000+ goal:
+
+| What happened to the fee | Auctions | Who |
+|---|---|---|
+| Whole fee released (GT and Random URs sold) | 13 | alesiev ×6, AlanP ×4, Kusig, Jadziadax8, Mike Steele (202645) |
+| GT sold, Random URs kept | 7 | Mike Steele ×4, Beertram ×2, Tyrael |
+| Random URs sold, GT kept | 3 | Flik ×2, alesiev (202640) |
+| Pooled order | 1 | Amanda (20251) |
+
+The release-to-goal direction holds (16/16 measured in September); the
+converse does not. Which part of the fee an auctioneer keeps is a habit and a
+philosophy — Mike Steele treats including the GT as a bonus, Alex and Kusig
+treat keeping any of it as holding back, Trent follows the convention he
+started under, and Flik does what he always has — and none of it can be read
+off a goal. The two partial shapes were also recorded inconsistently: the
+seven that kept Random URs carry `withheld` rows, which reach the verdict
+(*Augments vs withheld*) in BOTH lenses, while the three that kept the GT carry
+nothing, which reads as kept fee.
+
+**The decision (maintainer, 2026-11-18).** Record what happened, and leave the
+interpretation to the lenses: **a fee item — a Random Ultra Rare or the Golden
+Ticket — is recorded only when it SELLS**, as a price (and, for Random URs, the
+aggregated `token` row). Unsold, it is the fee kept, and the Full order lens
+estimates it from what did not sell. It is never a `withheld` row. The camps
+then differ only in which lens they read, and the verdict is built from facts
+every camp agrees on.
+
+**Done (repo).** `alesievClose.gs` `2026-11-18.1`: `alesievFeeVerdict`,
+`ALESIEV_GT_NAMES`, `ALESIEV_FEE_RELEASED_GOAL` and `alesievGoalAmount` are
+gone, `alesievPlanImport` no longer takes `targetFunding`, and every withheld
+`ALESIEV_FEE_NAMES` lot is dropped and named in a caution. `test:alesiev`
+§ 6c-ii pins 202718's shape (GT sold) and an $8,000 goal, both now dropped.
+The forum and Utaku closes already record Random URs only as sales. The site's
+ledger code is unchanged: it still counts a withheld Random UR row if one
+appears, and with none it reads all unsold Random URs as kept fee.
+
+**Open — the workbook.** Delete these seven `contextItems` rows (each
+`withheld, Random Ultra Rare, 9`, blank price), then publish and regenerate the
+withheld preview (`node scripts/gen-withheld-preview.mjs`):
+
+```
+202520	2025	20	withheld	Random Ultra Rare	9	
+202545	2025	45	withheld	Random Ultra Rare	9	
+20262	2026	2	withheld	Random Ultra Rare	9	
+20266	2026	6	withheld	Random Ultra Rare	9	
+202634	2026	34	withheld	Random Ultra Rare	9	
+20274	2027	4	withheld	Random Ultra Rare	9	
+202718	2027	18	withheld	Random Ultra Rare	9	
+```
+
+Each auction's verdict improves by the estimated value of nine Random URs. Its
+Full order Net stays roughly the same, since the kept-fee estimate picks them
+up; under Traditional, which never debits a kept fee, they drop out.
+
+**Related, not changed.** The kept fee is priced at the season average while a
+withheld row uses the last five prior sales. With no fee item ever a withheld
+row, no item is priced both ways, and a season figure charges every auctioneer
+who kept the same fee the same amount — kept deliberately.

@@ -706,82 +706,51 @@ console.log("\nThe auctioneer's fee (never a withheld row)\n");
 }
 
 // ===========================================================================
-// 6c-ii. The fee is the fee only when the auctioneer KEPT it
+// 6c-ii. The fee is dropped WHATEVER the goal, and whatever else sold
 // ===========================================================================
-// Until 2026-10-13 every withheld Random UR was dropped as the fee. 202718
-// (Mike Steele, $8,000 goal, the GT SOLD) proved that wrong: the fee had been
-// released, so its nine withheld Random URs were genuinely withheld and the
-// maintainer added them by hand. The goal and the fee are one trade — kept at
-// $7,500, released at $8,000 — and a sold GT outranks the goal.
-//
-// Every goal here is CONSTRUCTED. A shipped `targetFunding` is a cell a
-// legitimate publish can change.
-console.log('\nKept or released: what decides the fee\n');
+// From 2026-10-13 to 2026-11-18 a sold Golden Ticket or an $8,000 goal turned
+// the withheld fee into withheld ROWS, on the premise that an $8,000 goal
+// releases the fee. The data does not bear it out — 7 of 23 closed $8,000
+// auctions from 2025 sold the GT and kept the Random URs, 3 did the reverse —
+// so the maintainer settled that a fee item is recorded only when it sells
+// (backlog DATA-21). These are the two shapes that used to write rows: 202718's
+// (GT sold) and an $8,000 goal. Both must now drop the fee.
+console.log('\nThe fee is dropped whatever the goal\n');
 {
-  const goalPlan = (rows, goal, style = 'Onyx Ultra Condensed') =>
-    A.alesievPlanImport(staged(rows), SEASON, TOKENS, false, style, undefined, undefined, goal);
   const NINE = Array.from({ length: 9 }, (_, i) => [`Random Ultra Rare (${i + 1} of 9)`, 'Withheld', '']);
-  const withheldRUR = (p) => p.context.filter((r) => r.category === 'withheld' && r.Item === 'Random Ultra Rare');
+  const feeRows = (p) => p.context.filter((r) => /Random|Golden/.test(r.Item) && r.category === 'withheld');
   const feeNote = (p) => (p.cautions || []).find((c) => /auctioneer's fee/.test(c)) || '';
-  const releasedNote = (p) => (p.cautions || []).find((c) => /written as WITHHELD/.test(c)) || '';
 
-  // KEPT — the customary goal, 20275's lower one, and a blank cell.
-  for (const [label, goal, why] of [
-    ['the customary $7,500 goal', '$7,500.00', /goal is \$7500/],
-    ["a goal below it (20275's $6,750)", '$6,750.00', /goal is \$6750/],
-    ['a goal one cent short of $8,000', '$7,999.99', /goal is \$7999\.99/],
-    ['a BLANK goal', '', /NO targetFunding/],
-  ]) {
-    const p = goalPlan([...NINE, ['Golden Ticket', 'Withheld', ''], ['Bead of Asgard', 'Withheld', '']], goal);
-    check(`${label}: the plan is clean`, p.ok, (p.aborts || []).join('\n'));
-    eq(`  ... the fee is dropped`, p.fee.length, 10);
-    eq(`  ... and no Random UR or GT is written`, p.context.filter((r) => /Random|Golden/.test(r.Item)).length, 0);
-    check(`  ... and the caution says why`, why.test(feeNote(p)), feeNote(p));
-  }
-
-  // RELEASED by the goal — 202718's shape, minus its sold GT.
-  for (const [label, goal] of [['an $8,000 goal', '$8,000.00'], ['a goal passed as the number 8000', 8000], ['a goal above $8,000', '$8,500.00']]) {
-    const p = goalPlan([...NINE, ['Golden Ticket', 'Withheld', ''], ['Bead of Asgard', 'Withheld', '']], goal);
-    check(`${label}: the plan is clean`, p.ok, (p.aborts || []).join('\n'));
-    eq('  ... nothing is dropped as the fee', p.fee.length, 0);
-    eq('  ... the nine Random URs are ONE withheld row', withheldRUR(p).length, 1);
-    eq('  ... of quantity nine', Number((withheldRUR(p)[0] || {}).quantity), 9);
-    eq('  ... with no price, for the sheet to estimate', (withheldRUR(p)[0] || {}).price, '');
-    check('  ... and the withheld GT is written too',
-      p.context.some((r) => r.category === 'withheld' && r.Item === 'Golden Ticket'), JSON.stringify(p.context));
-    check('  ... named in a caution that says why',
-      /goal is \$8/.test(releasedNote(p)) && /Random Ultra Rare \(9 of 9\)/.test(releasedNote(p)), releasedNote(p));
-  }
-
-  // RELEASED by a sold GT, whatever the goal says.
-  const soldGT = goalPlan([...NINE, ['Golden Ticket', 'Golden Ticket', '952']], '$7,500.00');
-  check('a SOLD Golden Ticket under a $7,500 goal: the plan is clean', soldGT.ok, (soldGT.aborts || []).join('\n'));
-  eq('  ... nothing is dropped as the fee', soldGT.fee.length, 0);
-  eq('  ... the Random URs are withheld', Number((withheldRUR(soldGT)[0] || {}).quantity), 9);
-  check('  ... the caution names the sold GT as the reason',
-    /Golden Ticket SOLD/.test(releasedNote(soldGT)), releasedNote(soldGT));
-  check('  ... and the GT itself is still a price', soldGT.prices.some((r) => r.Item === 'Golden Ticket'),
+  // 202718's shape: nine withheld Random URs beside a SOLD Golden Ticket.
+  const soldGT = onyxPlan([...NINE, ['Golden Ticket', 'Golden Ticket', '952'], ['Bead of Asgard', 'Withheld', '']]);
+  check('a SOLD Golden Ticket beside withheld Random URs: the plan is clean', soldGT.ok,
+    (soldGT.aborts || []).join('\n'));
+  eq('  ... the nine Random URs are dropped as the fee', soldGT.fee.length, 9);
+  eq('  ... and none is written as withheld', feeRows(soldGT).length, 0);
+  check('  ... the GT itself is still a price', soldGT.prices.some((r) => r.Item === 'Golden Ticket'),
     JSON.stringify(soldGT.prices));
-  eq('a sold GT outranks a blank goal too',
-    goalPlan([...NINE, ['Golden Ticket', 'Golden Ticket', '952']], '').fee.length, 0);
+  eq('  ... and the genuine withheld token still lands',
+    soldGT.context.filter((r) => r.category === 'withheld').map((r) => r.Item).join(', '), 'Bead of Asgard');
+  check('  ... with every dropped lot named', /Random Ultra Rare \(9 of 9\)/.test(feeNote(soldGT)), feeNote(soldGT));
 
-  // Outside an Onyx auction there is no "accept as it stands" step, so a
-  // released Random UR must resolve through the context rule or abort.
-  const plain = goalPlan(NINE, '$8,000.00', 'Trade 2 Ultra Condensed');
-  check('released in a NON-Onyx auction, the Random URs still resolve', plain.ok, (plain.aborts || []).join('\n'));
-  eq('  ... to the corpus spelling', (withheldRUR(plain)[0] || {}).Item, 'Random Ultra Rare');
+  // An $8,000 goal, passed where the retired parameter used to sit. A plan that
+  // reads it again would turn these back into rows — that is the regression.
+  const goal = A.alesievPlanImport(staged([...NINE, ['Golden Ticket', 'Withheld', '']]), SEASON, TOKENS, false,
+    'Onyx Ultra Condensed', undefined, undefined, '$8,000.00');
+  check('an $8,000 goal: the plan is clean', goal.ok, (goal.aborts || []).join('\n'));
+  eq('  ... the Random URs AND the GT are dropped as the fee', goal.fee.length, 10);
+  eq('  ... and nothing is written as withheld', feeRows(goal).length, 0);
+  check('  ... the caution says the goal does not decide', /whatever the goal/.test(feeNote(goal)), feeNote(goal));
 
-  // Nothing to decide, nothing said.
-  const none = goalPlan([['Bead of Asgard', 'Withheld', '']], '$8,000.00');
-  eq('a file with no fee candidates raises neither fee caution', feeNote(none) + releasedNote(none), '');
+  // The same outside an Onyx auction, where a withheld Random UR used to have
+  // to resolve through the context rule.
+  const plain = A.alesievPlanImport(staged(NINE), SEASON, TOKENS, false, 'Trade 2 Ultra Condensed');
+  check('a NON-Onyx auction: the plan is clean', plain.ok, (plain.aborts || []).join('\n'));
+  eq('  ... and the Random URs are dropped there too', plain.fee.length, 9);
 
-  // The GT list is a subset of the fee list: a sold GT is evidence about the
-  // FEE, so a spelling the fee rule does not know is not evidence either.
-  eq('every Golden Ticket name is also a fee name',
-    Object.keys(A.ALESIEV_GT_NAMES).filter((k) => A.ALESIEV_FEE_NAMES[k] !== true).join(', '), '');
-  eq('a sold Random UR is not a sold GT',
-    A.alesievFeeVerdict([{ name: 'Random Ultra Rare', rawName: 'Random Ultra Rare' }], '').released, false);
-  eq('a goal that is not a number reads as blank', A.alesievGoalAmount('TBD'), null);
+  // Nothing to drop, nothing said.
+  const none = onyxPlan([['Bead of Asgard', 'Withheld', '']]);
+  eq('a file with no fee lots raises no fee caution', feeNote(none), '');
 }
 
 // ===========================================================================

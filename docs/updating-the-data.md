@@ -1007,29 +1007,22 @@ overstates the withheld block and every funding rollup above it.
 It is not a rare edge: on `20275`, the first real file, **10 of the 11 withheld
 rows were the fee** — nine Random Ultra Rares and a Golden Ticket.
 
-**But only when the auctioneer KEPT the fee** (since script `2026-10-13.1`,
-`PIPE-16`). The goal and the fee are one trade: keep it at the customary
-$7,500, release it at $8,000. A withheld Random UR in an auction that released
-the fee is not the fee; it was kept back from the group, and it is written as
-`withheld` like any other token. The import decides from two things, in this
-order:
-
-1. **A Golden Ticket SOLD** in this auction: the fee was released.
-2. **`targetFunding` of $8,000 or more**: the fee was released.
-3. Otherwise the fee was kept, and the lots are dropped. **A blank goal lands
-   here too**, so fill in `targetFunding` before running the close.
-
-`202718` is the case that found it: an $8,000 goal and a GT sold at $952, and
-its nine withheld Random URs had to be added by hand. Either way the CAUTION
-block names the lots and gives the reason.
+**Whatever the goal, and whatever else sold** (since script `2026-11-18.1`,
+`DATA-21`). A fee item — a Random Ultra Rare or the Golden Ticket — is recorded
+only when it SELLS. One the site tags `Withheld` is the fee kept, and the import
+drops it in every case. From `2026-10-13.1` to then, a sold Golden Ticket or a
+goal of $8,000 or more wrote those lots as `withheld` rows instead (`PIPE-16`),
+on the premise that an $8,000 goal releases the fee. It does not, reliably: of
+23 closed $8,000 auctions from 2025, 7 sold the Golden Ticket and kept the
+Random URs and 3 did the reverse. Which part an auctioneer keeps is a habit, and
+the site's Full order lens estimates a kept fee from what did NOT sell, so the
+row is not needed — and as a `withheld` row it was charged against the auction's
+verdict in both lenses. `targetFunding` no longer matters to this import.
 
 > **The dropped lots are named one by one in the CAUTION block, not counted.**
 > This is the only thing the import throws away on purpose, and a row discarded
 > in silence is a row nobody can check. **Read that list.** If something in it
-> is genuinely withheld, add the row by hand — the script will not. When the
-> fee was released, the same lots appear in a second caution saying they were
-> written AS withheld; if the auctioneer really did keep them, delete those
-> rows.
+> is not the fee, add the row by hand — the script will not.
 
 The list of fee names is deliberately short, and it is the one rule in this
 importer that leans *tight* rather than loose. Every other name rule routes a
