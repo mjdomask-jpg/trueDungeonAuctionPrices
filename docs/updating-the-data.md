@@ -1100,7 +1100,7 @@ so `Non-Onyx` does not read as Onyx.
 |---|---|
 | **Names every augment** | The forum file calls six different grunnel augments `Grunnel Augment` and leaves you to name them from the thread. This source names each one, so the `contextItems` rows come out complete. |
 | **Writes `closeDate`** | From the site's `closedAt` when the API sends one, and by asking you otherwise. It writes the date to `auctionMetadata`, then reads the cell back to check Sheets did not reformat it. `Status`, `daysToClose` and `Close Month` are formulas and follow on their own. |
-| **Clears `outcome`** | In the same pass. A `Pending` or `Ended` cell **outranks `closeDate`** in the `Status` formula, so writing the date alone leaves the auction un-Closed — and a `Pending` row carrying a `closeDate` is a hard error at the PR gate. It says what it cleared; it never does it silently. |
+| **Clears `outcome`** | In the same pass. A `Pending` or `Ended` cell **outranks `closeDate`** in the `Status` formula, so writing the date alone leaves the auction un-Closed — and a `Pending` row carrying a `closeDate` is a hard error at the PR gate. **Also when you KEEP a recorded date** (leave the prompt blank, or answer NO to replacing it): the close has arrived, so the outcome is cleared beside the date already there, and the *Writing to* list names that cell before you confirm. Only with **no date at all** is it left, because a blank date would make `Status` compute `Open`, and the dialog reminds you. It says what it cleared; it never does it silently. Since `2026-11-06.1`; before that, keeping a date left `Ended` behind with no word, which is how `202724` was published. |
 | **Refuses a re-import** | If `prices` already holds rows for the chosen auction it stops. An export you can download twice is easy to import twice. The **dry run still shows the whole plan** and hands you the rows, so picking up rows a newer script writes does not mean deleting the auction first. |
 | **Refuses the wrong auction** | **From the API it cannot happen:** the response names its auction, and one naming any auction but the one asked for is refused before a lot is read. The pasted export carries **no auction id**, so on that path, if the plan's prices match a *different* auction already in the spine, to the cent, it stops and names it. That is the stale-staging-tab mistake, and it happened: `20275`'s export left in the tab, `20272` picked, and both are season 2027 so the season check passed. |
 | **Checks the site's own total** (API only) | The lots must add up to the auction's `totalCurrentBids`. If they don't, the dialog says so as a caution. For auction 39 they agree exactly: $6,751.12. |
@@ -1298,7 +1298,8 @@ is needed only for the pasted-export fallback.
    any cautions.
 3. **TD auctions → Import Utaku close…** writes the rows and the `closeDate`
    (from the site's own close time), and clears a leftover `Pending`/`Ended`
-   `outcome`, exactly as the alesievauctions.com importer does.
+   `outcome`, exactly as the alesievauctions.com importer does — including when
+   you keep a close date already recorded, which the fallback asks about.
 
 **The fallback**: download the export, and bring it into the `utakuStaging` tab
 with **File → Import** (or paste from the original file). Then use the two

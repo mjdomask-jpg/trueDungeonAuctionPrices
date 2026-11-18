@@ -110,6 +110,7 @@ Last reconciled **2026-09-03**. Everything asserted below about the current
 | **SITE-14** | A Utaku auction is shown as a Forum auction | **DEFERRED by the maintainer (2026-09-30)** — wait to see how many auctions Utaku actually runs on his own site; he may stop, or move onto alesievauctions.com |
 | **PIPE-16** | ~~The alesiev close drops a withheld Random UR as the fee even when the fee was RELEASED~~ | **RESOLVED 2026-10-13 (script side)** — `alesievFeeVerdict` reads a sold GT and the goal. **`20274` may need its withheld Random URs added by hand**, the count from alesievauctions.com/auctions/37 |
 | **SITE-15** | A Transmutes view on the analytics page — recipe material statistics | **PARKED by the maintainer (2026-11-02)** — ideas measured, nothing built; two counting rules to settle first |
+| **PIPE-18** | ~~A site close that KEEPS a recorded closeDate leaves `outcome = Ended` behind~~ | **RESOLVED 2026-11-06 (script side)** — both site closes clear it beside a kept date (`alesievCloseDateNote`), and remind when there is no date at all. **`202724` still needs its `outcome` emptied by hand** in the workbook, then a publish |
 | **PIPE-17** | ~~A failed alesievauctions.com auction sits as Open until someone mentions it~~ | **RESOLVED 2026-11-02 (script side)** — the scan marks `outcome = Failed` itself. **Verified on the first real scan**: `202732` and `202733` (site 51, 52) marked off the API's status `Unfunded`, and published (#334) |
 
 ---

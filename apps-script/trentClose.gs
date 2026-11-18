@@ -56,7 +56,7 @@ var OLD_TAB_RE = /OLD$/;
  * otherwise "do I need to update the script?" has no answer but "re-paste and
  * hope".
  */
-var SCRIPT_VERSION = '2026-09-29.1';
+var SCRIPT_VERSION = '2026-11-06.1';
 
 /**
  * Trent's headers are not stable and neither are their positions: four sample
@@ -293,8 +293,11 @@ function closeOutcomeClears(outcome) {
  *
  * For the two importers that do NOT write `closeDate` — this one and
  * `forumClose.gs` — where the operator types the date by hand afterwards and
- * nothing is watching. `alesievClose.gs` writes the date itself and clears the
- * cell in the same pass, so it does not need this.
+ * nothing is watching. The two site closes (`alesievClose.gs`, `utakuClose.gs`)
+ * write the date themselves and clear the cell in the same pass, clear it
+ * beside a recorded date the operator KEPT, and show this only when there is
+ * no date at all (`alesievCloseDateNote`). Until 2026-11-06 the kept-date case
+ * did none of the three, which is how `202724` was published still `Ended`.
  *
  * Worth saying out loud even though § 4 catches it: the gate's message arrives
  * on a publish PR, hours later and three steps from the cause, and a red check

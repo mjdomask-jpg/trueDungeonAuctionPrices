@@ -65,7 +65,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var UTAKU_VERSION = '2026-09-29.2';
+var UTAKU_VERSION = '2026-11-06.1';
 
 /** The tab the operator pastes the site's export into. */
 var UTAKU_STAGING_TAB = 'utakuStaging';
@@ -765,6 +765,8 @@ function utakuImport(fromExport) {
   ];
   if (plan.onyx.length) destinations.push(TABS.onyx + ' from row ' + (ss.getSheetByName(TABS.onyx).getLastRow() + 1));
   if (closeDate) destinations.push(TABS.metadata + ' closeDate for ' + target.auctionId);
+  var keepLine = alesievKeepDestination(target, closeDate, held);
+  if (keepLine) destinations.push(keepLine);
 
   var summary = utakuDescribePlan(plan, target.auctionId, closeDate,
     siteClose && closeDate === siteClose ? "the site's close, " + built.closeTime + ' Eastern' : '');
@@ -778,7 +780,9 @@ function utakuImport(fromExport) {
   if (plan.onyx.length) {
     appendRows(TABS.onyx, plan.onyx.map(function (r) { return keyed([r.Item, r.Price, r['Display Name'], r.Category]); }));
   }
-  var dateNote = closeDate ? '\n\n' + alesievWriteCloseDate(target.auctionId, closeDate) : '';
+  // Write the date, or clear the outcome beside a recorded date that was kept,
+  // or remind — alesievClose.gs's one decision, shared so the two cannot drift.
+  var dateNote = alesievCloseDateNote(target, closeDate, held);
   SpreadsheetApp.flush();
   ui.alert('Imported (script ' + UTAKU_VERSION + ')', summary + dateNote + '\n\nWritten. Publish when you are ready.', ui.ButtonSet.OK);
 }
