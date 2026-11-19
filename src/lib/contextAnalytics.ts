@@ -307,7 +307,9 @@ export const ledgerOverall = (rows: LedgerRow[]): LedgerAgg => aggregate('Overal
 //
 // What the auction released, or recorded as withheld, is not kept fee: the first
 // is the baseline and the second is already debited as Withheld, so debiting
-// either would count it twice.
+// either would count it twice. Since DATA-21 (2026-11-18) a fee item is recorded
+// only when it sells, so a withheld Random UR or GT row should not exist; one
+// that does is still honoured here rather than counted twice.
 
 // One fee component's price for a season, and where it came from. `season` is
 // the season whose sales set the rate, which differs from the season it prices

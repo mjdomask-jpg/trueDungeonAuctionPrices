@@ -51,7 +51,7 @@
 // ===========================================================================
 
 /** Bump with any change to this file; shown in every dialog. */
-var ALESIEV_VERSION = '2026-11-06.1';
+var ALESIEV_VERSION = '2026-11-18.1';
 
 /** The tab the operator pastes the site's export into. */
 var ALESIEV_STAGING_TAB = 'alesievStaging';
@@ -289,16 +289,20 @@ var ALESIEV_CONTEXT_RULES = {
  * `token` row the way all 21 recorded appearances are shaped. Same name,
  * opposite treatment, and the thing that decides is column B.
  *
- * ## And only when the auctioneer KEPT the fee
+ * ## Whatever the goal says
  *
- * A name on this list is a fee CANDIDATE, not a verdict — see
- * `alesievFeeVerdict`. Until 2026-10-13 every withheld Random UR was dropped,
- * which was right for `20275` (Kusig, $6,750 goal, the GT withheld too) and
- * wrong for `202718` (Mike Steele, $8,000 goal, the GT SOLD at $952): the fee
- * had been released, so the nine Random URs that still never went to bidding
- * were genuinely withheld, and the maintainer had to add them by hand. The
- * goal and the fee are one trade — keep it at the customary $7,500, release it
- * at $8,000 — so the goal, and a sold GT, say which case a file is.
+ * A fee item is recorded only as what HAPPENED to it — sold, or not — and a
+ * withheld one is the fee kept, never a withheld row (maintainer, 2026-11-18,
+ * backlog `DATA-21`). From 2026-10-13 to that date a sold Golden Ticket or an
+ * $8,000 goal turned the candidates into withheld rows instead, on the premise
+ * that an $8,000 goal RELEASES the fee. The data does not bear that out: of 23
+ * closed $8,000 auctions from 2025, 13 released the whole fee, 7 sold the GT
+ * and kept the Random URs (Mike Steele says so in 20266's thread), and 3 sold
+ * the Random URs and kept the GT. Which part an auctioneer keeps is a habit
+ * and a philosophy, not a rule a goal can read, and recording one camp's view
+ * as a withheld row charged it against the auction in every ledger lens. The
+ * site's Full order lens estimates the kept fee at render time instead, from
+ * what was NOT sold, so dropping these rows loses nothing.
  */
 var ALESIEV_FEE_NAMES = {
   'random ultra rare': true,
@@ -308,25 +312,6 @@ var ALESIEV_FEE_NAMES = {
   'golden ticket': true,
   'golden ticket chance': true,
 };
-
-/**
- * The fee names that are the Golden Ticket. A SOLD one is proof the fee was
- * released, whatever the goal says: a fee the auctioneer kept is not put up for
- * bidding. Every key is also an `ALESIEV_FEE_NAMES` key — the test holds that.
- */
-var ALESIEV_GT_NAMES = {
-  'golden ticket': true,
-  'golden ticket chance': true,
-};
-
-/**
- * The goal at and above which the fee counts as RELEASED. The custom is keep
- * the fee at a $7,500 goal and release it at $8,000 — measured 16/16 across the
- * auctions that released a GT (the Funding & Context goal offset, 2026-09-24).
- * A goal BELOW this, including the customary $7,500 and `20275`'s $6,750, is
- * read as the fee kept.
- */
-var ALESIEV_FEE_RELEASED_GOAL = 8000;
 
 /**
  * The tab context rows are written to.
@@ -471,64 +456,6 @@ function alesievIsFeeName(name) {
   return ALESIEV_FEE_NAMES[alesievContextKey(name)] === true;
 }
 
-/**
- * An auction's `targetFunding` as a number, or null when it is blank or not a
- * number. `readTab` hands over display text (`$8,000.00`); a test may pass 8000.
- */
-function alesievGoalAmount(value) {
-  var text = String(value == null ? '' : value).replace(/[$,\s]/g, '');
-  if (!text) return null;
-  var n = Number(text);
-  return isFinite(n) ? n : null;
-}
-
-/**
- * Whether the auctioneer KEPT the fee, which decides what a withheld fee
- * candidate is. `{ released, reason }`. Checked in this order:
- *
- *   1. A Golden Ticket among the SOLD lots — released. A kept fee is not put up
- *      for bidding, so this outranks the goal.
- *   2. A goal of $8,000 or more — released.
- *   3. Anything else, a blank goal included — kept, which is the behaviour
- *      this file had before 2026-10-13. A blank goal is said so in the reason,
- *      because then nothing actually decided it.
- *
- * Released means the withheld Random URs and GT are not the fee: they were
- * kept back from a fee the auctioneer gave up, and they are written as
- * withheld like any other token. Kept means they are the fee, written nowhere.
- * Either way the dropped or written lots are named in a caution, so a wrong
- * reading is visible in the dialog.
- */
-function alesievFeeVerdict(soldLots, targetFunding) {
-  for (var i = 0; i < soldLots.length; i++) {
-    if (ALESIEV_GT_NAMES[alesievContextKey(soldLots[i].name)] === true) {
-      return {
-        released: true,
-        reason: 'a Golden Ticket SOLD ("' + soldLots[i].rawName + '"), so the auctioneer released the fee',
-      };
-    }
-  }
-  var goal = alesievGoalAmount(targetFunding);
-  if (goal !== null && goal >= ALESIEV_FEE_RELEASED_GOAL) {
-    return {
-      released: true,
-      reason: 'the goal is $' + goal + ', and a goal of $' + ALESIEV_FEE_RELEASED_GOAL + ' or more is the ' +
-        'auctioneer releasing the fee',
-    };
-  }
-  if (goal === null) {
-    return {
-      released: false,
-      reason: 'no Golden Ticket sold and the auction has NO targetFunding to go on, so the fee was assumed ' +
-        'kept. If the goal was $' + ALESIEV_FEE_RELEASED_GOAL + ', fill it in and run this again',
-    };
-  }
-  return {
-    released: false,
-    reason: 'the goal is $' + goal + ' and no Golden Ticket sold, so the auctioneer kept the fee',
-  };
-}
-
 // ===========================================================================
 // Pure — reading the staged export
 // ===========================================================================
@@ -590,12 +517,10 @@ function alesievReadStaging(values) {
     // A withheld item never sold, so a blank price is its EXPECTED shape rather
     // than a missing value. Every other destination needs a bid.
     //
-    // A fee CANDIDATE is set aside FIRST. The site tags the fee `Withheld`
-    // because it is a lot that drew no bid, but it is the cost of running the
-    // auction rather than a token kept back from the group — see
-    // ALESIEV_FEE_NAMES. Whether it really IS the fee depends on the goal and
-    // on lots elsewhere in the file, so alesievPlanImport decides
-    // (alesievFeeVerdict) and names every lot either way.
+    // The fee is set aside FIRST. The site tags it `Withheld` because it is a
+    // lot that drew no bid, but it is the auctioneer's fee kept rather than a
+    // token kept back from the group — see ALESIEV_FEE_NAMES. It is written
+    // nowhere, and alesievPlanImport names every lot in a caution.
     if (route.destination === 'context' && route.category === 'withheld') {
       if (alesievIsFeeName(lot.name)) out.fee.push(lot);
       else out.withheld.push(lot);
@@ -789,16 +714,14 @@ function alesievOnyxRows(onyxLots) {
  *     written — `ALESIEV_CONTEXT_RULES` — and were simply never consulted on
  *     this path.
  *
- *     **Only an auction that RELEASED the fee reaches this step.** Every one
- *     of the four current context rules is a Random UR spelling, and those
- *     are also `ALESIEV_FEE_NAMES`, so `alesievReadStaging` sets them aside as
- *     fee candidates. From 2026-09-19 they never came back; since 2026-10-13
- *     `alesievFeeVerdict` returns them here when the fee was released
- *     (`202718`: nine withheld Random URs at an $8,000 goal, written as one
- *     `Random Ultra Rare` x9 row). The two lists still answer different
- *     questions — "what does `contextItems` call this?" and "is this the
- *     auctioneer's fee?" — and a context rule for something that is NOT a fee
- *     would land here too.
+ *     **No withheld Random UR reaches this step today.** Every one of the four
+ *     current context rules is a Random UR spelling, and those are also
+ *     `ALESIEV_FEE_NAMES`, so `alesievReadStaging` sets them aside as the fee
+ *     (from 2026-10-13 to 2026-11-18 an $8,000 goal sent them back here as
+ *     withheld rows; `DATA-21` retired that). The step stays because the two
+ *     lists answer different questions — "what does `contextItems` call
+ *     this?" and "is this the auctioneer's fee?" — and a context rule for
+ *     something that is NOT a fee would land here.
  *
  *  2. **Then `tokenMetadata`, after the Onyx marker comes off.** This is the
  *     step that keeps ordinary withheld tokens honest, and it is not
@@ -1127,24 +1050,13 @@ function alesievAggregateBreakdown(contextLots) {
  * with an export you can download twice.
  */
 function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPriced, auctionStyle,
-  recordedPrices, targetAuctionId, targetFunding) {
+  recordedPrices, targetAuctionId) {
   var staged = alesievReadStaging(values);
   if (staged.error) return { ok: false, aborts: [staged.error], cautions: [], lots: 0 };
 
   var total = staged.lots.length + staged.onyx.length + staged.withheld.length +
     staged.augments.length + staged.context.length + staged.unsold.length + staged.fee.length;
   if (!total) return { ok: false, aborts: ['the staging tab has a header but no lots'], cautions: [], lots: 0 };
-
-  // Is a withheld fee candidate the fee? Only if the auctioneer kept it. When
-  // the fee was released, the candidates are ordinary withheld tokens and join
-  // the withheld block — see alesievFeeVerdict.
-  var feeVerdict = alesievFeeVerdict(staged.lots.concat(staged.augments, staged.context), targetFunding);
-  var released = [];
-  if (feeVerdict.released && staged.fee.length) {
-    released = staged.fee;
-    staged.withheld = staged.withheld.concat(staged.fee);
-    staged.fee = [];
-  }
 
   var index = buildTokenIndex(tokenMetadataRows);
   var aborts = staged.routeErrors.slice();
@@ -1248,16 +1160,10 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
   // this line is the only place it will show up.
   if (staged.fee.length) {
     cautions.push(staged.fee.length + " lot(s) are the auctioneer's fee and were written nowhere: " +
-      alesievLotNames(staged.fee).join(', ') + '. Why the fee: ' + feeVerdict.reason + '. The site tags the ' +
-      'fee `Withheld` because it drew no bid, but a fee is the cost of running the auction rather than a ' +
-      'token kept back from the group, so it is not a withheld row. Anything in that list that IS ' +
-      'genuinely withheld has to be added by hand.');
-  }
-  if (released.length) {
-    cautions.push(released.length + ' withheld lot(s) that look like the fee were written as WITHHELD: ' +
-      alesievLotNames(released).join(', ') + '. Why: ' + feeVerdict.reason + ', so these were kept back ' +
-      'from the group rather than taken as the fee. If the auctioneer did keep them as the fee, delete ' +
-      'their rows from ' + ALESIEV_CONTEXT_TAB + '.');
+      alesievLotNames(staged.fee).join(', ') + '. The site tags the fee `Withheld` because it drew no bid, ' +
+      'but a fee item is recorded only when it SELLS — whatever the goal — and the site estimates a kept ' +
+      'fee itself, so it is not a withheld row. Anything in that list that is NOT the fee has to be ' +
+      'added by hand.');
   }
   if (staged.ignored.length) {
     cautions.push('columns read: Item, Category and the ending bid. Ignored: ' + staged.ignored.join(', ') +
@@ -1282,8 +1188,6 @@ function alesievPlanImport(values, targetSeason, tokenMetadataRows, alreadyPrice
     contextLots: staged.context,
     unsold: staged.unsold,
     fee: staged.fee,
-    feeReleased: released,
-    feeVerdict: feeVerdict,
     unresolved: result.unresolved,
     withheldLots: staged.withheld,
     augmentLots: staged.augments,
@@ -1575,8 +1479,7 @@ function alesievBuildPlan(target, fromExport) {
     alreadyPriced,
     target.auctionStyle,
     recordedPrices,
-    target.auctionId,
-    target.targetFunding);
+    target.auctionId);
   plan.source = lots.source;
   plan.cautions = lots.cautions.concat(plan.cautions);
   return { plan: plan, closeDate: lots.closeDate || null, closeTime: lots.closeTime || '' };
@@ -1954,8 +1857,6 @@ if (typeof module !== 'undefined') {
     alesievContextKey: alesievContextKey,
     alesievContextRule: alesievContextRule,
     alesievIsFeeName: alesievIsFeeName,
-    alesievFeeVerdict: alesievFeeVerdict,
-    alesievGoalAmount: alesievGoalAmount,
     alesievFindColumn: alesievFindColumn,
     alesievReadStaging: alesievReadStaging,
     alesievFinalBidsGrid: alesievFinalBidsGrid,
@@ -1984,8 +1885,6 @@ if (typeof module !== 'undefined') {
     alesievPickerLine: alesievPickerLine,
     ALESIEV_CONTEXT_RULES: ALESIEV_CONTEXT_RULES,
     ALESIEV_FEE_NAMES: ALESIEV_FEE_NAMES,
-    ALESIEV_GT_NAMES: ALESIEV_GT_NAMES,
-    ALESIEV_FEE_RELEASED_GOAL: ALESIEV_FEE_RELEASED_GOAL,
     ALESIEV_AUGMENT_CATEGORIES: ALESIEV_AUGMENT_CATEGORIES,
     ALESIEV_IGNORED_HEADERS: ALESIEV_IGNORED_HEADERS,
     ALESIEV_STAGING_TAB: ALESIEV_STAGING_TAB,
